@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="Egg::GameObject">
+    <DisplayString>{{ Owner={Owner}, Signature={Signature} }}</DisplayString>
+    <Expand>
+       <Item Name="[TransformComponent]" Condition="(Signature &amp; 1) == 1">((TransformComponent*)Data)</Item>
+       <Item Name="[ScriptComponent]" Condition="(Signature &amp; 2) == 2">((ScriptComponent*)Data + 44)</Item>
+       <Item Name="[MeshComponent]" Condition="(Signature &amp; 4) == 4">((MeshComponent*)(Data + 52))</Item>
+    </Expand>
+  </Type>
+  <Type Name="TransformComponent">
+    <DisplayString>{{ Position={Position}, Rotation={Rotation}, Scale={Scale} }}</DisplayString>
+  </Type>
+  <Type Name="Egg::Math::Float4">
+    <DisplayString>{{ Float4, x={x}, y={y}, z={z}, w={w} }}</DisplayString>
+    <!-- override default list so that the swizzle does not show -->
+    <Expand>
+      <Item Name="[x]">x</Item>
+      <Item Name="[y]">y</Item>
+      <Item Name="[z]">z</Item>
+      <Item Name="[w]">w</Item>
+    </Expand>
+  </Type>
+  <Type Name="Egg::Math::Float3">
+    <DisplayString>{{ Float3, x={x}, y={y}, z={z} }}</DisplayString>
+    <!-- override default list so that the swizzle does not show -->
+    <Expand>
+      <Item Name="[x]">x</Item>
+      <Item Name="[y]">y</Item>
+      <Item Name="[z]">z</Item>
+    </Expand>
+  </Type>
+  <Type Name="Egg::Math::Float2">
+    <DisplayString>{{ Float2, x={x}, y={y} }}</DisplayString>
+    <!-- override default list so that the swizzle does not show -->
+    <Expand>
+      <Item Name="[x]">x</Item>
+      <Item Name="[y]">y</Item>
+    </Expand>
+  </Type>
+</AutoVisualizer>

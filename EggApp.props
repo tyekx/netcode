@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <EggPath>PATH=C:\sdk\assimp\bin\x64</EggPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LocalDebuggerEnvironment>PATH={bin_dirs};%PATH%;</LocalDebuggerEnvironment>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalDependencies>Egg.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="EggPath">
+      <Value>$(EggPath)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,49 @@
+﻿<UserControl
+    x:Class="EggEditor.UC_TransformComponent"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EggEditor"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DesignHeight="220"
+    d:DesignWidth="300">
+
+    <Grid Background="#FFA6CAEE" Width="295" Height="220">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="25"/>
+            <RowDefinition Height="25"/>
+            <RowDefinition Height="35"/>
+            <RowDefinition Height="25"/>
+            <RowDefinition Height="35"/>
+            <RowDefinition Height="25"/>
+            <RowDefinition Height="35"/>
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <StackPanel Background="#FF004178" Grid.Row="0" Grid.ColumnSpan="3">
+            <TextBlock Text="TransformComponent" VerticalAlignment="Center" HorizontalAlignment="Center" Height="25" FontSize="16"></TextBlock>
+        </StackPanel>
+
+        <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Text="Position (X,Y,Z):" Foreground="Black" VerticalAlignment="Bottom" Padding="5,0,5,0"/>
+        <TextBlock Grid.Row="3" Grid.ColumnSpan="3" Text="Rotation (X,Y,Z):" Foreground="Black" VerticalAlignment="Bottom" Padding="5,0,5,0"/>
+        <TextBlock Grid.Row="5" Grid.ColumnSpan="3" Text="Scale (X,Y,Z):" Foreground="Black" VerticalAlignment="Bottom" Padding="5,0,5,0"/>
+
+        <TextBox Grid.Row="2" Grid.Column="0" Text="{x:Bind Mode=TwoWay, Path=Component.PositionX}"></TextBox>
+        <TextBox Grid.Row="2" Grid.Column="1" Text="{x:Bind Mode=TwoWay, Path=Component.PositionY}"></TextBox>
+        <TextBox Grid.Row="2" Grid.Column="2" Text="{x:Bind Mode=TwoWay, Path=Component.PositionZ}"></TextBox>
+
+        <TextBox Grid.Row="4" Grid.Column="0" Text="{x:Bind Mode=TwoWay, Path=Component.RotationX}"></TextBox>
+        <TextBox Grid.Row="4" Grid.Column="1" Text="{x:Bind Mode=TwoWay, Path=Component.RotationY}"></TextBox>
+        <TextBox Grid.Row="4" Grid.Column="2" Text="{x:Bind Mode=TwoWay, Path=Component.RotationZ}"></TextBox>
+
+        <TextBox Grid.Row="6" Grid.Column="0" Text="{x:Bind Mode=TwoWay, Path=Component.ScaleX}"></TextBox>
+        <TextBox Grid.Row="6" Grid.Column="1" Text="{x:Bind Mode=TwoWay, Path=Component.ScaleY}"></TextBox>
+        <TextBox Grid.Row="6" Grid.Column="2" Text="{x:Bind Mode=TwoWay, Path=Component.ScaleZ}"></TextBox>
+
+    </Grid>
+</UserControl>

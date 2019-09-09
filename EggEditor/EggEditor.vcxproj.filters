@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>a5dc586f-e2c8-406d-a010-a9fc98a95c50</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets">
+      <UniqueIdentifier>50dd8c37-992d-48be-821f-a8fb77a95fe1</UniqueIdentifier>
+      <Extensions>bmp;fbx;gif;jpg;jpeg;tga;tiff;tif;png</Extensions>
+    </Filter>
+    <Filter Include="Xaml">
+      <UniqueIdentifier>{ca8c33e3-ff0b-474b-8779-8f12ab191846}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Serializer">
+      <UniqueIdentifier>{ec9ee6bb-12ac-4c9a-a8e5-ede846ca022c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Xaml\AssetBrowser">
+      <UniqueIdentifier>{00631906-86a4-454d-9d2d-07aad123e8a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Xaml\Properties">
+      <UniqueIdentifier>{a4220bcf-fa1f-42e1-a3b9-65edb0ec2d9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Xaml\Scene">
+      <UniqueIdentifier>{d0bd9e24-8e24-4d93-9960-c71f4a3b0341}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Xaml\AssetEditor">
+      <UniqueIdentifier>{e1dd6256-4edd-441e-a8d3-33a7cb96c036}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="Auxiliary.cpp">
+      <Filter>Xaml</Filter>
+    </ClCompile>
+    <ClCompile Include="Adapters.cpp">
+      <Filter>Xaml</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="ConstantBufferTypes.h" />
+    <ClInclude Include="ggl005App.h" />
+    <ClInclude Include="Auxiliary.h">
+      <Filter>Xaml</Filter>
+    </ClInclude>
+    <ClInclude Include="EggProject.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="JsonSerializer.h">
+      <Filter>Serializer</Filter>
+    </ClInclude>
+    <ClInclude Include="Adapters.h">
+      <Filter>Xaml</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\LockScreenLogo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SplashScreen.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square150x150Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\StoreLogo.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Wide310x150Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="MainPage.xaml">
+      <Filter>Xaml</Filter>
+    </Page>
+    <Page Include="UC_Asset.xaml">
+      <Filter>Xaml\AssetBrowser</Filter>
+    </Page>
+    <Page Include="UC_BreadCrumb.xaml">
+      <Filter>Xaml\AssetBrowser</Filter>
+    </Page>
+    <Page Include="UC_ProjectFolder.xaml">
+      <Filter>Xaml\AssetBrowser</Filter>
+    </Page>
+    <Page Include="UC_AddComponent.xaml">
+      <Filter>Xaml\Properties</Filter>
+    </Page>
+    <Page Include="UC_MeshComponent.xaml">
+      <Filter>Xaml\Properties</Filter>
+    </Page>
+    <Page Include="UC_ScriptComponent.xaml">
+      <Filter>Xaml\Properties</Filter>
+    </Page>
+    <Page Include="UC_TransformComponent.xaml">
+      <Filter>Xaml\Properties</Filter>
+    </Page>
+    <Page Include="UC_GameObject.xaml">
+      <Filter>Xaml\Scene</Filter>
+    </Page>
+    <Page Include="UC_AssetEditor.xaml">
+      <Filter>Xaml\AssetEditor</Filter>
+    </Page>
+    <Page Include="UC_AssetBrowser.xaml">
+      <Filter>Xaml\AssetBrowser</Filter>
+    </Page>
+    <Page Include="UC_Properties.xaml">
+      <Filter>Xaml\Properties</Filter>
+    </Page>
+    <Page Include="UC_Scene.xaml">
+      <Filter>Xaml\Scene</Filter>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <Filter>Xaml</Filter>
+    </ApplicationDefinition>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,348 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{f3cf27d1-9fc3-4b06-aa81-70867789ae4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math">
+      <UniqueIdentifier>{c76fb140-ceaa-4268-b77f-2406ec79c7ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mesh">
+      <UniqueIdentifier>{3975ca39-e5c6-4edb-ad6d-5072b939714f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Camera">
+      <UniqueIdentifier>{97d8db53-4b3d-44de-a700-44f93e245cf1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lua">
+      <UniqueIdentifier>{ddad10d9-5d97-4b51-ba70-2e1fb599016c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{fbf485cf-845a-4308-971b-5e59637c08dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components">
+      <UniqueIdentifier>{caa87bb9-a58f-41f2-bf06-0823412d769d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System">
+      <UniqueIdentifier>{68dabe5a-4e7b-4ed4-92c5-004bbb94bc43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Serializer">
+      <UniqueIdentifier>{d6e6d7cf-b81c-4c14-bf1b-5d8deda83c36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="App">
+      <UniqueIdentifier>{34632bc3-ab27-44ff-9868-a746b6ec55eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics">
+      <UniqueIdentifier>{6c153833-f01b-4513-a021-dbcaf1d7a1d9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Utility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="d3dx12.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Bool1.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Bool2.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Bool2Swizzle.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Bool3.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Bool3Swizzle.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Bool4.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Bool4Swizzle.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Float1.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Float2.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Float2Swizzle.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Float3.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Float3Swizzle.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Float4.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Float4Swizzle.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Float4x4.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Int1.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Int2.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Int2Swizzle.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Int3.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Int3Swizzle.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Int4.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Int4Swizzle.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Math.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\UInt1.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\UInt2.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\UInt2Swizzle.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\UInt3.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\UInt3Swizzle.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\UInt4.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\UInt4Swizzle.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh\Shaded.h">
+      <Filter>Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh\Material.h">
+      <Filter>Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh\Geometry.h">
+      <Filter>Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh\Prefabs.h">
+      <Filter>Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Importer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera\Camera.h">
+      <Filter>Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaScript.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaApi.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="TransformComponent.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="ScriptComponent.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaManager.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="Path.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="ProgramArgs.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="EggMpl.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Components.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshComponent.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaScriptFile.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="Stopwatch.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="JsonSerializer.h">
+      <Filter>Serializer</Filter>
+    </ClInclude>
+    <ClInclude Include="App.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="SimpleApp.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="Vertex.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture2D.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="PsoManager.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="ConstantBuffer.hpp">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObjectObserver.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneObserver.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="EggSceneConf.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Utility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Internal.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Bool1.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Bool2.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Bool3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Bool4.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Float1.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Float2.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Float3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Float4.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Float4x4.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Int1.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Int2.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Int3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Int4.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\UInt1.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\UInt2.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\UInt3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\UInt4.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Importer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Path.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="LuaApi.cpp">
+      <Filter>Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="Stopwatch.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="JsonSerializer.cpp">
+      <Filter>Serializer</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="PsoManager.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture2D.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObject.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shaders\DefaultPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\DefaultVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\cbBasicVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Shaders\RootSignatures.hlsli">
+      <Filter>Shaders</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="Egg.natvis" />
+  </ItemGroup>
+</Project>

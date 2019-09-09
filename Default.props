@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <OutDir>$(SolutionDir)Bin\</OutDir>
+    <IntDir>$(SolutionDir)Build\$(ProjectName)\</IntDir>
+    <IncludePath>C:\sdk\json11\include;C:\sdk\lua\include;$(SolutionDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>C:\sdk\json11\lib\$(Configuration)\$(PlatformTarget)\;C:\sdk\lua\lib\;$(OutDir);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <FxCompile>
+      <ShaderModel>5.0</ShaderModel>
+      <ObjectFileOutput>$(OutDir)Shaders\%(Filename).cso</ObjectFileOutput>
+    </FxCompile>
+    <Link>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;d3dcompiler.lib;lua5.3.0-static.lib;json11.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <ResourceCompile />
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>
