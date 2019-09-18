@@ -14,6 +14,7 @@ extern "C" __declspec(dllimport) int __stdcall IsDebuggerPresent();
 #endif
 
 #include "MainPage.xaml.h"
+#include "UC_AssetBrowser.xaml.h"
 #include "UC_Properties.xaml.h"
 #include "UC_Scene.xaml.h"
 
@@ -41,29 +42,34 @@ void ::EggEditor::MainPage::Connect(int __connectionId, ::Platform::Object^ __ta
         break;
     case 2:
         {
-            ::Windows::UI::Xaml::Controls::Button^ element2 = safe_cast<::Windows::UI::Xaml::Controls::Button^>(__target);
-            (safe_cast<::Windows::UI::Xaml::Controls::Button^>(element2))->Click += ref new ::Windows::UI::Xaml::RoutedEventHandler(this, (void (::EggEditor::MainPage::*)
-                (::Platform::Object^, ::Windows::UI::Xaml::RoutedEventArgs^))&MainPage::BtnOutput_OnClick);
+            this->assetBrowserControl = safe_cast<::EggEditor::UC_AssetBrowser^>(__target);
         }
         break;
     case 3:
         {
             ::Windows::UI::Xaml::Controls::Button^ element3 = safe_cast<::Windows::UI::Xaml::Controls::Button^>(__target);
             (safe_cast<::Windows::UI::Xaml::Controls::Button^>(element3))->Click += ref new ::Windows::UI::Xaml::RoutedEventHandler(this, (void (::EggEditor::MainPage::*)
-                (::Platform::Object^, ::Windows::UI::Xaml::RoutedEventArgs^))&MainPage::BtnAssets_OnClick);
+                (::Platform::Object^, ::Windows::UI::Xaml::RoutedEventArgs^))&MainPage::BtnOutput_OnClick);
         }
         break;
     case 4:
         {
-            this->propertiesControl = safe_cast<::EggEditor::UC_Properties^>(__target);
+            ::Windows::UI::Xaml::Controls::Button^ element4 = safe_cast<::Windows::UI::Xaml::Controls::Button^>(__target);
+            (safe_cast<::Windows::UI::Xaml::Controls::Button^>(element4))->Click += ref new ::Windows::UI::Xaml::RoutedEventHandler(this, (void (::EggEditor::MainPage::*)
+                (::Platform::Object^, ::Windows::UI::Xaml::RoutedEventArgs^))&MainPage::BtnAssets_OnClick);
         }
         break;
     case 5:
         {
-            this->sceneControl = safe_cast<::EggEditor::UC_Scene^>(__target);
+            this->propertiesControl = safe_cast<::EggEditor::UC_Properties^>(__target);
         }
         break;
     case 6:
+        {
+            this->sceneControl = safe_cast<::EggEditor::UC_Scene^>(__target);
+        }
+        break;
+    case 7:
         {
             this->swapChainPanel = safe_cast<::Windows::UI::Xaml::Controls::SwapChainPanel^>(__target);
             (safe_cast<::Windows::UI::Xaml::Controls::SwapChainPanel^>(this->swapChainPanel))->SizeChanged += ref new ::Windows::UI::Xaml::SizeChangedEventHandler(this, (void (::EggEditor::MainPage::*)
@@ -72,45 +78,52 @@ void ::EggEditor::MainPage::Connect(int __connectionId, ::Platform::Object^ __ta
                 (::Platform::Object^, ::Windows::UI::Xaml::Input::PointerRoutedEventArgs^))&MainPage::SwapChainPanel_PointerPressed);
         }
         break;
-    case 7:
+    case 8:
         {
             this->BtnReset = safe_cast<::Windows::UI::Xaml::Controls::Button^>(__target);
             (safe_cast<::Windows::UI::Xaml::Controls::Button^>(this->BtnReset))->Click += ref new ::Windows::UI::Xaml::RoutedEventHandler(this, (void (::EggEditor::MainPage::*)
                 (::Platform::Object^, ::Windows::UI::Xaml::RoutedEventArgs^))&MainPage::BtnReset_OnClick);
         }
         break;
-    case 8:
+    case 9:
         {
             this->BtnPause = safe_cast<::Windows::UI::Xaml::Controls::Button^>(__target);
             (safe_cast<::Windows::UI::Xaml::Controls::Button^>(this->BtnPause))->Click += ref new ::Windows::UI::Xaml::RoutedEventHandler(this, (void (::EggEditor::MainPage::*)
                 (::Platform::Object^, ::Windows::UI::Xaml::RoutedEventArgs^))&MainPage::BtnPause_OnClick);
         }
         break;
-    case 9:
+    case 10:
         {
             this->BtnStart = safe_cast<::Windows::UI::Xaml::Controls::Button^>(__target);
             (safe_cast<::Windows::UI::Xaml::Controls::Button^>(this->BtnStart))->Click += ref new ::Windows::UI::Xaml::RoutedEventHandler(this, (void (::EggEditor::MainPage::*)
                 (::Platform::Object^, ::Windows::UI::Xaml::RoutedEventArgs^))&MainPage::BtnStart_OnClick);
         }
         break;
-    case 10:
-        {
-            ::Windows::UI::Xaml::Controls::Button^ element10 = safe_cast<::Windows::UI::Xaml::Controls::Button^>(__target);
-            (safe_cast<::Windows::UI::Xaml::Controls::Button^>(element10))->Click += ref new ::Windows::UI::Xaml::RoutedEventHandler(this, (void (::EggEditor::MainPage::*)
-                (::Platform::Object^, ::Windows::UI::Xaml::RoutedEventArgs^))&MainPage::BtnPreview_OnClick);
-        }
-        break;
     case 11:
         {
             ::Windows::UI::Xaml::Controls::Button^ element11 = safe_cast<::Windows::UI::Xaml::Controls::Button^>(__target);
             (safe_cast<::Windows::UI::Xaml::Controls::Button^>(element11))->Click += ref new ::Windows::UI::Xaml::RoutedEventHandler(this, (void (::EggEditor::MainPage::*)
-                (::Platform::Object^, ::Windows::UI::Xaml::RoutedEventArgs^))&MainPage::BtnAssetEditor_OnClick);
+                (::Platform::Object^, ::Windows::UI::Xaml::RoutedEventArgs^))&MainPage::BtnPreview_OnClick);
         }
         break;
     case 12:
         {
-            ::Windows::UI::Xaml::Controls::MenuFlyoutItem^ element12 = safe_cast<::Windows::UI::Xaml::Controls::MenuFlyoutItem^>(__target);
-            (safe_cast<::Windows::UI::Xaml::Controls::MenuFlyoutItem^>(element12))->Click += ref new ::Windows::UI::Xaml::RoutedEventHandler(this, (void (::EggEditor::MainPage::*)
+            ::Windows::UI::Xaml::Controls::Button^ element12 = safe_cast<::Windows::UI::Xaml::Controls::Button^>(__target);
+            (safe_cast<::Windows::UI::Xaml::Controls::Button^>(element12))->Click += ref new ::Windows::UI::Xaml::RoutedEventHandler(this, (void (::EggEditor::MainPage::*)
+                (::Platform::Object^, ::Windows::UI::Xaml::RoutedEventArgs^))&MainPage::BtnAssetEditor_OnClick);
+        }
+        break;
+    case 13:
+        {
+            ::Windows::UI::Xaml::Controls::MenuFlyoutItem^ element13 = safe_cast<::Windows::UI::Xaml::Controls::MenuFlyoutItem^>(__target);
+            (safe_cast<::Windows::UI::Xaml::Controls::MenuFlyoutItem^>(element13))->Click += ref new ::Windows::UI::Xaml::RoutedEventHandler(this, (void (::EggEditor::MainPage::*)
+                (::Platform::Object^, ::Windows::UI::Xaml::RoutedEventArgs^))&MainPage::EditMenuBtnImport_OnClick);
+        }
+        break;
+    case 14:
+        {
+            ::Windows::UI::Xaml::Controls::MenuFlyoutItem^ element14 = safe_cast<::Windows::UI::Xaml::Controls::MenuFlyoutItem^>(__target);
+            (safe_cast<::Windows::UI::Xaml::Controls::MenuFlyoutItem^>(element14))->Click += ref new ::Windows::UI::Xaml::RoutedEventHandler(this, (void (::EggEditor::MainPage::*)
                 (::Platform::Object^, ::Windows::UI::Xaml::RoutedEventArgs^))&MainPage::FileMenuBtnNew_OnClick);
         }
         break;

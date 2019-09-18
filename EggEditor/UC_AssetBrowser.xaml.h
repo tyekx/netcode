@@ -16,11 +16,17 @@ namespace EggEditor
 		UC_ProjectFolder ^ rootFolder;
 		UC_ProjectFolder ^ currentFolder;
 
+		Platform::Object ^ eventInstance;
+
 	public:
 		UC_AssetBrowser();
 
+		void ImportAsset(Windows::Storage::StorageFile ^ file);
 
 	private:
+
+		event OpenAssetCallback ^ OpenAsset;
+
 		void CtxBtnNewProjectFolder_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e);
 		void CtxBtnNewMaterial_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e);
 		void CtxBtnNewShadedMesh_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e);
@@ -31,6 +37,7 @@ namespace EggEditor
 
 		void ProjectFolder_DoubleTap(Platform::Object ^ sender, Windows::UI::Xaml::Input::DoubleTappedRoutedEventArgs ^ e);
 		void ChangeProjectFolder(UC_ProjectFolder ^ folder);
+		void OpenAssetHandler(Platform::Object ^ obj);
 		/*
 		this function is a helper function for ChangeProjectFolder, do not call it
 		*/

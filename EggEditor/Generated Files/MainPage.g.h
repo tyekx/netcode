@@ -8,6 +8,7 @@
 
 
 namespace EggEditor {
+    ref class UC_AssetBrowser;
     ref class UC_Properties;
     ref class UC_Scene;
 }
@@ -43,6 +44,7 @@ namespace EggEditor
     
         class MainPage_obj1_Bindings;
     
+        private: ::EggEditor::UC_AssetBrowser^ assetBrowserControl;
         private: ::EggEditor::UC_Properties^ propertiesControl;
         private: ::EggEditor::UC_Scene^ sceneControl;
         private: ::Windows::UI::Xaml::Controls::SwapChainPanel^ swapChainPanel;

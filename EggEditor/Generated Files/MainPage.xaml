@@ -1,4 +1,4 @@
-﻿<Page
+﻿<Page x:ConnectionId='1'
     x:Class="EggEditor.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -6,7 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="#FF6F3478" Loaded="Page_Loaded"
+    Background="#FF6F3478"                     
     MinWidth="800"
     MinHeight="600">
 
@@ -35,7 +35,7 @@
 
         <MenuBar VerticalAlignment="Center" Height="35" Grid.ColumnSpan="3" Background="#FF004E83" BorderThickness="0,0,0,2">
             <MenuBarItem Title="File">
-                <MenuFlyoutItem Text="New" Icon="Add" Click="FileMenuBtnNew_OnClick"/>
+                <MenuFlyoutItem x:ConnectionId='14' Text="New" Icon="Add"                               />
                 <MenuFlyoutItem Text="Open" Icon="OpenFile">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Key="O" Modifiers="Control"></KeyboardAccelerator>
@@ -55,7 +55,7 @@
                     <MenuFlyoutItem Text="Material"></MenuFlyoutItem>
                     <MenuFlyoutItem Text="Project Folder"></MenuFlyoutItem>
                 </MenuFlyoutSubItem>
-                <MenuFlyoutItem Text="Import Asset" Icon="Import" Click="EditMenuBtnImport_OnClick">
+                <MenuFlyoutItem x:ConnectionId='13' Text="Import Asset" Icon="Import"                                  >
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Key="I" Modifiers="Control"></KeyboardAccelerator>
                     </MenuFlyoutItem.KeyboardAccelerators>
@@ -76,31 +76,31 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Horizontal">
-                    <Button Padding="10,0,10,0" Height="25" IsEnabled="{Binding MainWindowIndex, Converter={StaticResource XAMLIntNotEqualConverter}, ConverterParameter=0}" Click="BtnPreview_OnClick" >
+                    <Button x:ConnectionId='11' Padding="10,0,10,0" Height="25" IsEnabled="{Binding MainWindowIndex, Converter={StaticResource XAMLIntNotEqualConverter}, ConverterParameter=0}"                            >
                         <TextBlock Text="Preview" Height="25" FontSize="15" TextAlignment="Center" Width="80" FocusVisualPrimaryBrush="White" Foreground="#FFF0FCFF"></TextBlock>
                     </Button>
-                    <Button Padding="10,0,10,0" Height="25" IsEnabled="{Binding MainWindowIndex, Converter={StaticResource XAMLIntNotEqualConverter}, ConverterParameter=1}" Click="BtnAssetEditor_OnClick">
+                    <Button x:ConnectionId='12' Padding="10,0,10,0" Height="25" IsEnabled="{Binding MainWindowIndex, Converter={StaticResource XAMLIntNotEqualConverter}, ConverterParameter=1}"                               >
                         <TextBlock Text="Asset Editor" Height="25" FontSize="15" TextAlignment="Center" Width="80" FocusVisualPrimaryBrush="White" Foreground="#FFF0FCFF"></TextBlock>
                     </Button>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button x:Name="BtnReset" Padding="3,0,3,0" Background="#FFDE7900" Height="25" Click="BtnReset_OnClick">
+                    <Button x:ConnectionId='8' x:Name="BtnReset" Padding="3,0,3,0" Background="#FFDE7900" Height="25"                         >
                         <SymbolIcon Symbol="Refresh" HorizontalAlignment="Center" RenderTransformOrigin="0.5,0.5">
                             <SymbolIcon.RenderTransform>
                                 <CompositeTransform ScaleX="0.85" ScaleY="0.85"/>
                             </SymbolIcon.RenderTransform>
                         </SymbolIcon>
                     </Button>
-                    <Button x:Name="BtnPause" Padding="3,0,3,0" Background="DarkRed" Height="25" Click="BtnPause_OnClick">
+                    <Button x:ConnectionId='9' x:Name="BtnPause" Padding="3,0,3,0" Background="DarkRed" Height="25"                         >
                         <SymbolIcon Symbol="Pause" HorizontalAlignment="Left"></SymbolIcon>
                     </Button>
-                    <Button x:Name="BtnStart" Padding="3,0,3,0" Background="DarkGreen" Height="25" Click="BtnStart_OnClick">
+                    <Button x:ConnectionId='10' x:Name="BtnStart" Padding="3,0,3,0" Background="DarkGreen" Height="25"                         >
                         <SymbolIcon Symbol="Play" HorizontalAlignment="Left"></SymbolIcon>
                     </Button>
                 </StackPanel>
             </Grid>
-            <SwapChainPanel Visibility="{Binding MainWindowIndex, Converter={StaticResource XAMLIntEqualConverter}, ConverterParameter=0}" x:Name="swapChainPanel" SizeChanged="SwapChainPanel_SizeChanged" PointerPressed="SwapChainPanel_PointerPressed" Grid.Row="1"/>
+            <SwapChainPanel x:ConnectionId='7' Visibility="{Binding MainWindowIndex, Converter={StaticResource XAMLIntEqualConverter}, ConverterParameter=0}" x:Name="swapChainPanel"                                                                                         Grid.Row="1"/>
             <local:UC_AssetEditor Grid.Row="1" Visibility="{Binding MainWindowIndex, Converter={StaticResource XAMLIntEqualConverter}, ConverterParameter=1}"></local:UC_AssetEditor>
         </Grid>
 
@@ -112,7 +112,7 @@
             <StackPanel Height="25" Background="#FF55A6DE" Grid.Row="0">
                 <TextBlock Text="Scene" Height="25" FontSize="16" Padding="5,0,0,0" FocusVisualPrimaryBrush="White" Foreground="#FFF0FCFF"></TextBlock>
             </StackPanel>
-            <local:UC_Scene Grid.Row="1" x:Name="sceneControl"></local:UC_Scene>
+            <local:UC_Scene x:ConnectionId='6' Grid.Row="1" x:Name="sceneControl"></local:UC_Scene>
         </Grid>
         <Grid Grid.Column="2" Grid.Row="1" Grid.RowSpan="2" Background="#FFA6CAEE" BorderBrush="#FF007DB8" BorderThickness="5,0,0,0">
             <Grid.RowDefinitions>
@@ -122,7 +122,7 @@
             <StackPanel Height="25" Background="#FF55A6DE" Grid.Row="0">
                 <TextBlock Text="Properties" Height="25" FontSize="16" Padding="5,0,0,0" FocusVisualPrimaryBrush="White" Foreground="#FFF0FCFF"></TextBlock>
             </StackPanel>
-            <local:UC_Properties Grid.Row="1" x:Name="propertiesControl"></local:UC_Properties>
+            <local:UC_Properties x:ConnectionId='5' Grid.Row="1" x:Name="propertiesControl"></local:UC_Properties>
         </Grid>
         <Grid Grid.Column="1" Grid.Row="2" Background="#FFA6CAEE" BorderBrush="#FF007DB8" BorderThickness="0,5,0,0">
             <Grid.RowDefinitions>
@@ -131,10 +131,10 @@
             </Grid.RowDefinitions>
 
             <StackPanel Height="25" Orientation="Horizontal" Grid.Row="0">
-                <Button Padding="10,0,10,0" Height="25" IsEnabled="{Binding SubWindowIndex, Converter={StaticResource XAMLIntNotEqualConverter}, ConverterParameter=0}" Click="BtnOutput_OnClick" >
+                <Button x:ConnectionId='3' Padding="10,0,10,0" Height="25" IsEnabled="{Binding SubWindowIndex, Converter={StaticResource XAMLIntNotEqualConverter}, ConverterParameter=0}"                           >
                     <TextBlock Text="Output" Height="25" FontSize="15" TextAlignment="Center" Width="80" FocusVisualPrimaryBrush="White" Foreground="#FFF0FCFF"></TextBlock>
                 </Button>
-                <Button Padding="10,0,10,0" Height="25" IsEnabled="{Binding SubWindowIndex, Converter={StaticResource XAMLIntNotEqualConverter}, ConverterParameter=1}" Click="BtnAssets_OnClick">
+                <Button x:ConnectionId='4' Padding="10,0,10,0" Height="25" IsEnabled="{Binding SubWindowIndex, Converter={StaticResource XAMLIntNotEqualConverter}, ConverterParameter=1}"                          >
                     <TextBlock Text="Assets" Height="25" FontSize="15" TextAlignment="Center" Width="80" FocusVisualPrimaryBrush="White" Foreground="#FFF0FCFF"></TextBlock>
                 </Button>
             </StackPanel>
@@ -143,8 +143,9 @@
                 <TextBlock Text="Output window comes here"></TextBlock>
             </StackPanel>
 
-            <local:UC_AssetBrowser x:Name="assetBrowserControl" Grid.Row="1" Visibility="{Binding SubWindowIndex, Converter={StaticResource XAMLIntEqualConverter}, ConverterParameter=1}">
+            <local:UC_AssetBrowser x:ConnectionId='2' x:Name="assetBrowserControl" Grid.Row="1" Visibility="{Binding SubWindowIndex, Converter={StaticResource XAMLIntEqualConverter}, ConverterParameter=1}">
             </local:UC_AssetBrowser>
         </Grid>
     </Grid>
 </Page>
+

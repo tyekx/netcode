@@ -6,6 +6,8 @@
 
 namespace EggEditor {
 
+
+	public delegate void OpenAssetCallback(Platform::Object ^ asset);
 	/*
 	Converts to Boolean
 	*/
@@ -95,6 +97,23 @@ namespace EggEditor {
 			void set(Platform::String ^ str) {
 				text = str;
 				PropertyChanged(this, ref new Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"BreadCrumbText"));
+			}
+		}
+	};
+
+	[Windows::UI::Xaml::Data::Bindable]
+	public ref class AssetEditorDataContext sealed : public Windows::UI::Xaml::Data::INotifyPropertyChanged {
+		int assetType;
+	public:
+		virtual event Windows::UI::Xaml::Data::PropertyChangedEventHandler ^ PropertyChanged;
+
+		property int AssetType {
+			int get() {
+				return assetType;
+			}
+			void set(int v) {
+				assetType = v;
+				PropertyChanged(this, ref new Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"AssetType"));
 			}
 		}
 	};
@@ -196,13 +215,23 @@ namespace EggEditor {
 		Windows::UI::Color gradientStart;
 		Windows::UI::Color gradientStop;
 		Platform::String ^ overlayText;
+		Windows::UI::Xaml::Controls::Symbol assetIcon;
 		int editState;
 
 	public:
 		virtual event Windows::UI::Xaml::Data::PropertyChangedEventHandler ^ PropertyChanged;
 
-		AssetDataContext() : assetName{ L"" }, gradientStart{ 255,255,255,255 }, gradientStop{ 0,0,0,0 }, overlayText{ L"" }, editState{ 0 } {}
+		AssetDataContext() : assetName{ L"" }, gradientStart{ 255,255,255,255 }, gradientStop{ 0,0,0,0 }, overlayText{ L"" }, editState{ 0 }, assetIcon{ Windows::UI::Xaml::Controls::Symbol::Help } {}
 
+		property Windows::UI::Xaml::Controls::Symbol AssetIcon {
+			Windows::UI::Xaml::Controls::Symbol get() {
+				return assetIcon;
+			}
+			void set(Windows::UI::Xaml::Controls::Symbol sym) {
+				assetIcon = sym;
+				PropertyChanged(this, ref new Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"AssetIcon"));
+			}
+		}
 
 		property int EditState {
 			int get() {

@@ -24,4 +24,5 @@ using namespace Windows::UI::Xaml::Navigation;
 UC_AssetEditor::UC_AssetEditor()
 {
 	InitializeComponent();
+	TypedDataContext = (AssetEditorDataContext ^)DataContext;
 }

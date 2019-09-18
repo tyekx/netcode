@@ -29,8 +29,12 @@ UC_AssetBrowser::UC_AssetBrowser()
 	rootFolder = ref new UC_ProjectFolder(L"Root");
 	rootFolder->ContentChanged += ref new EggEditor::ContentChangedCallback(this, &EggEditor::UC_AssetBrowser::ProjectFolder_OnContentChanged);
 	ChangeProjectFolder(rootFolder);
+	eventInstance = ref new OpenAssetCallback(this, &UC_AssetBrowser::OpenAssetHandler);
 }
 
+void EggEditor::UC_AssetBrowser::OpenAssetHandler(Platform::Object ^ obj) {
+	OpenAsset(obj);
+}
 
 void EggEditor::UC_AssetBrowser::CtxBtnNewProjectFolder_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e) {
 
@@ -42,16 +46,29 @@ void EggEditor::UC_AssetBrowser::CtxBtnNewProjectFolder_OnClick(Platform::Object
 
 void EggEditor::UC_AssetBrowser::CtxBtnNewMaterial_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e) {
 	auto newMaterial = ref new UC_Asset(L"New Mat", ASSET_TYPE_MATERIAL);
+	newMaterial->OpenAsset += static_cast<OpenAssetCallback ^>(eventInstance);
 	newMaterial->ParentFolder = currentFolder;
 }
 
 void EggEditor::UC_AssetBrowser::CtxBtnNewShadedMesh_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e) {
 	auto newShadedMesh = ref new UC_Asset(L"New SM", ASSET_TYPE_SHADED_MESH);
+	newShadedMesh->OpenAsset += static_cast<OpenAssetCallback ^>(eventInstance);
 	newShadedMesh->ParentFolder = currentFolder;
 }
 
 void EggEditor::UC_AssetBrowser::BreadCrumb_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::Input::TappedRoutedEventArgs ^ e) {
 	ChangeProjectFolder((UC_ProjectFolder ^)(((UC_BreadCrumb ^)sender)->BreadCrumbRef));
+}
+
+
+void EggEditor::UC_AssetBrowser::ImportAsset(Windows::Storage::StorageFile ^ file) {
+
+	unsigned int assetType = UC_Asset::GetAssetTypeFromExtension(file->FileType);
+
+	if(assetType != UINT_MAX) {
+		auto newTexture = ref new UC_Asset(file->Name, assetType);
+		newTexture->ParentFolder = currentFolder;
+	}
 }
 
 void EggEditor::UC_AssetBrowser::ImplDetail_RecursiveAddBreadCrumb(UC_ProjectFolder ^ folder) {

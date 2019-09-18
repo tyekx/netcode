@@ -11,4 +11,6 @@ struct TransformComponent {
 	Float3 Scale;
 
 	TransformComponent() : Position{ Float4::UnitW }, Rotation{ Float4::UnitW }, Scale{ Float3::One } { }
+
+
 };

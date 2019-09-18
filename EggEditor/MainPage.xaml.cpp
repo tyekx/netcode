@@ -17,6 +17,7 @@
 #include "UC_BreadCrumb.xaml.h"
 #include "UC_Scene.xaml.h"
 #include "UC_Properties.xaml.h"
+#include "UC_AssetBrowser.xaml.h"
 
 using namespace EggEditor;
 
@@ -162,8 +163,10 @@ void EggEditor::MainPage::Page_Loaded(Platform::Object ^ sender, Windows::UI::Xa
 
 void EggEditor::MainPage::DispatcherTimer_Tick(Platform::Object ^ sender, Platform::Object ^ e) {
 	float dt = stopwatch.Restart();
+	totalTime += dt;
 	gameApp->Update(dt, totalTime);
 	gameApp->Render();
+	propertiesControl->Update();
 }
 
 
@@ -228,6 +231,22 @@ void EggEditor::MainPage::BtnReset_OnClick(Platform::Object ^ sender, Windows::U
 	gameApp->Render();
 }
 
+void EggEditor::MainPage::EditMenuBtnImport_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e) {
+	auto filePicker = ref new Windows::Storage::Pickers::FileOpenPicker();
+	filePicker->FileTypeFilter->Append(L".jpg");
+	filePicker->FileTypeFilter->Append(L".png");
+	filePicker->FileTypeFilter->Append(L".jpeg");
+	filePicker->FileTypeFilter->Append(L".obj");
+	auto asyncOpenFiles = filePicker->PickMultipleFilesAsync();
+
+	auto openTask = concurrency::create_task(asyncOpenFiles);
+
+	openTask.then([this](Windows::Foundation::Collections::IVectorView<Windows::Storage::StorageFile ^ > ^ result) -> void {
+		for(unsigned int i = 0; i < result->Size; ++i) {
+			assetBrowserControl->ImportAsset(result->GetAt(i));
+		}
+	});
+}
 
 void EggEditor::MainPage::FileMenuBtnNew_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e) {
 	auto picker = ref new Windows::Storage::Pickers::FileSavePicker();

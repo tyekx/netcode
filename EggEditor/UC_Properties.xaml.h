@@ -24,6 +24,11 @@ namespace EggEditor
 			goRef = reinterpret_cast<Egg::GameObject *>(gameObject->GetGameObject());
 			DataContext = gameObject->DataContext;
 		}
+
+		void Update() {
+
+		}
+
 	private:
 		void CtxAddTransformComponentBtn_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e);
 		void CtxAddScriptComponentBtn_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e);

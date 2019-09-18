@@ -33,14 +33,35 @@ UC_Asset::UC_Asset(Platform::String ^ text, UINT atype)
 		TypedDataContext->OverlayText = L"SM";
 		TypedDataContext->GradientStart = Windows::UI::Color{ 255, 238, 191, 227 };
 		TypedDataContext->GradientStop = Windows::UI::Color{ 255, 112, 61, 105 };
+		TypedDataContext->AssetIcon = Windows::UI::Xaml::Controls::Symbol::Page;
 		break;
 	case ASSET_TYPE_MATERIAL:
 		TypedDataContext->OverlayText = L"MAT";
 		TypedDataContext->GradientStart = Windows::UI::Color{ 255, 110, 220, 170 };
 		TypedDataContext->GradientStop = Windows::UI::Color{ 255, 70, 200, 190};
+		TypedDataContext->AssetIcon = Windows::UI::Xaml::Controls::Symbol::Page;
+		break;
+	case ASSET_TYPE_TEXTURE2D:
+		TypedDataContext->OverlayText = L"TEX2D";
+		TypedDataContext->GradientStart = Windows::UI::Color{ 255, 255, 160, 139 };
+		TypedDataContext->GradientStop = Windows::UI::Color{ 255, 232, 120, 116 };
+		TypedDataContext->AssetIcon = Windows::UI::Xaml::Controls::Symbol::Pictures;
+		break;
+	case ASSET_TYPE_MESH:
+		TypedDataContext->OverlayText = L"MESH";
+		TypedDataContext->GradientStart = Windows::UI::Color{ 255, 255, 160, 139 };
+		TypedDataContext->GradientStop = Windows::UI::Color{ 255, 232, 120, 116 };
+		TypedDataContext->AssetIcon = Windows::UI::Xaml::Controls::Symbol::ViewAll;
+		break;
+	case ASSET_TYPE_SHADER:
+		TypedDataContext->OverlayText = L"SHADER";
+		TypedDataContext->GradientStart = Windows::UI::Color{ 255, 255, 160, 139 };
+		TypedDataContext->GradientStop = Windows::UI::Color{ 255, 232, 120, 116 };
+		TypedDataContext->AssetIcon = Windows::UI::Xaml::Controls::Symbol::Edit;
 		break;
 	default:
-		TypedDataContext->OverlayText = L"?";
+		TypedDataContext->AssetIcon = Windows::UI::Xaml::Controls::Symbol::Help;
+		TypedDataContext->OverlayText = L"";
 		TypedDataContext->GradientStart = Windows::UI::Color{ 255, 207, 207, 207 };
 		TypedDataContext->GradientStop = Windows::UI::Color{ 255, 160, 160, 160};
 		break;
@@ -61,7 +82,15 @@ void EggEditor::UC_Asset::AssetDragStarting(Windows::UI::Xaml::UIElement ^ sende
 	case ASSET_TYPE_MATERIAL:
 		prefix = L"/MAT/";
 		break;
+	case ASSET_TYPE_TEXTURE2D:
+		prefix = L"/TEX2D/";
+		break;
+	case ASSET_TYPE_MESH:
+		prefix = L"/MESH/";
+		break;
 	}
+
+
 
 	currentlyDragging = this;
 	args->Data->RequestedOperation = Windows::ApplicationModel::DataTransfer::DataPackageOperation::Link |
@@ -87,4 +116,10 @@ void EggEditor::UC_Asset::TextBox_KeyDown(Platform::Object ^ sender, Windows::UI
 	if(e->Key == Windows::System::VirtualKey::Enter) {
 		TypedDataContext->EditState = 0;
 	}
+}
+
+
+void EggEditor::UC_Asset::CtxOpenInEditorBtn_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e)
+{
+	OpenAsset(this);
 }

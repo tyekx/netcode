@@ -94,6 +94,18 @@ template<typename TDeclaringType, typename TValue>
 }
 
 template<typename TDeclaringType, typename TValue>
+::Platform::Object^ GetValueTypeMember_AssetIcon(::Platform::Object^ instance)
+{
+    return ref new ::Platform::Box<TValue>(safe_cast<TDeclaringType^>(instance)->AssetIcon);
+}
+
+template<typename TDeclaringType, typename TValue>
+::Platform::Object^ GetValueTypeMember_AssetType(::Platform::Object^ instance)
+{
+    return ref new ::Platform::Box<TValue>(safe_cast<TDeclaringType^>(instance)->AssetType);
+}
+
+template<typename TDeclaringType, typename TValue>
 ::Platform::Object^ GetValueTypeMember_Signature(::Platform::Object^ instance)
 {
     return ref new ::Platform::Box<TValue>(safe_cast<TDeclaringType^>(instance)->Signature);
@@ -121,6 +133,12 @@ template<typename TDeclaringType>
 ::Platform::Object^ GetReferenceTypeMember_ParentFolder(::Platform::Object^ instance)
 {
     return safe_cast<TDeclaringType^>(instance)->ParentFolder;
+}
+
+template<typename TDeclaringType>
+::Platform::Object^ GetReferenceTypeMember_VirtualPath(::Platform::Object^ instance)
+{
+    return safe_cast<TDeclaringType^>(instance)->VirtualPath;
 }
 
 template<typename TDeclaringType>
@@ -166,6 +184,12 @@ template<typename TDeclaringType>
 }
 
 template<typename TDeclaringType, typename TValue>
+void SetEnumMember_AssetIcon(::Platform::Object^ instance, ::Platform::Object^ value)
+{
+    safe_cast<TDeclaringType^>(instance)->AssetIcon = safe_cast<::Platform::IBox<TValue>^>(value)->Value;
+}
+
+template<typename TDeclaringType, typename TValue>
 void SetValueTypeMember_SubWindowIndex(::Platform::Object^ instance, ::Platform::Object^ value)
 {
     safe_cast<TDeclaringType^>(instance)->SubWindowIndex = safe_cast<::Platform::IBox<TValue>^>(value)->Value;
@@ -193,6 +217,12 @@ template<typename TDeclaringType, typename TValue>
 void SetValueTypeMember_EditState(::Platform::Object^ instance, ::Platform::Object^ value)
 {
     safe_cast<TDeclaringType^>(instance)->EditState = safe_cast<::Platform::IBox<TValue>^>(value)->Value;
+}
+
+template<typename TDeclaringType, typename TValue>
+void SetValueTypeMember_AssetType(::Platform::Object^ instance, ::Platform::Object^ value)
+{
+    safe_cast<TDeclaringType^>(instance)->AssetType = safe_cast<::Platform::IBox<TValue>^>(value)->Value;
 }
 
 template<typename TDeclaringType, typename TValue>
@@ -311,7 +341,7 @@ const TypeInfo TypeInfos[] =
     //   6
     L"EggEditor.UC_Scene", L"",
     &ActivateType<::EggEditor::UC_Scene>, nullptr, nullptr, nullptr,
-    30, // Windows.UI.Xaml.Controls.UserControl
+    32, // Windows.UI.Xaml.Controls.UserControl
     0, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
     -1,
@@ -325,204 +355,218 @@ const TypeInfo TypeInfos[] =
     //   8
     L"EggEditor.UC_Asset", L"",
     nullptr, nullptr, nullptr, nullptr,
-    30, // Windows.UI.Xaml.Controls.UserControl
+    32, // Windows.UI.Xaml.Controls.UserControl
     0, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
     -1,
     //   9
     L"EggEditor.UC_Properties", L"",
     &ActivateType<::EggEditor::UC_Properties>, nullptr, nullptr, nullptr,
-    30, // Windows.UI.Xaml.Controls.UserControl
-    2, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    32, // Windows.UI.Xaml.Controls.UserControl
+    3, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
     -1,
     //  10
     L"EggEditor.UC_BreadCrumb", L"",
     nullptr, nullptr, nullptr, nullptr,
-    30, // Windows.UI.Xaml.Controls.UserControl
-    2, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    32, // Windows.UI.Xaml.Controls.UserControl
+    3, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
     -1,
     //  11
     L"EggEditor.UC_GameObject", L"",
     nullptr, nullptr, nullptr, nullptr,
-    30, // Windows.UI.Xaml.Controls.UserControl
-    4, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    32, // Windows.UI.Xaml.Controls.UserControl
+    5, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
     -1,
     //  12
     L"EggEditor.UC_AssetEditor", L"",
     &ActivateType<::EggEditor::UC_AssetEditor>, nullptr, nullptr, nullptr,
-    30, // Windows.UI.Xaml.Controls.UserControl
-    4, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    32, // Windows.UI.Xaml.Controls.UserControl
+    5, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
     -1,
     //  13
     L"EggEditor.UC_AssetBrowser", L"",
     &ActivateType<::EggEditor::UC_AssetBrowser>, nullptr, nullptr, nullptr,
-    30, // Windows.UI.Xaml.Controls.UserControl
-    4, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    32, // Windows.UI.Xaml.Controls.UserControl
+    5, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
     -1,
     //  14
     L"EggEditor.UC_AddComponent", L"",
     &ActivateType<::EggEditor::UC_AddComponent>, nullptr, nullptr, nullptr,
-    30, // Windows.UI.Xaml.Controls.UserControl
-    4, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    32, // Windows.UI.Xaml.Controls.UserControl
+    5, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
     -1,
     //  15
     L"Windows.UI.Xaml.UIElement", L"",
     nullptr, nullptr, nullptr, nullptr,
     -1,
-    4, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Metadata,
+    5, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Metadata,
     TypeInfo_Flags_IsSystemType | TypeInfo_Flags_None,
     -1,
     //  16
     L"EggEditor.AssetDataContext", L"",
     &ActivateType<::EggEditor::AssetDataContext>, nullptr, nullptr, nullptr,
     1, // Object
-    4, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    5, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_IsBindable | TypeInfo_Flags_None,
     -1,
     //  17
     L"EggEditor.UC_ProjectFolder", L"",
     nullptr, nullptr, nullptr, nullptr,
-    30, // Windows.UI.Xaml.Controls.UserControl
-    9, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    32, // Windows.UI.Xaml.Controls.UserControl
+    11, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
     -1,
     //  18
     L"EggEditor.UC_MeshComponent", L"",
     &ActivateType<::EggEditor::UC_MeshComponent>, nullptr, nullptr, nullptr,
-    30, // Windows.UI.Xaml.Controls.UserControl
-    12, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    32, // Windows.UI.Xaml.Controls.UserControl
+    15, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
     -1,
     //  19
     L"EggEditor.SceneDataContext", L"",
     &ActivateType<::EggEditor::SceneDataContext>, nullptr, nullptr, nullptr,
     1, // Object
-    12, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    15, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_IsBindable | TypeInfo_Flags_None,
     -1,
     //  20
     L"EggEditor.IntEqualConverter", L"",
     &ActivateType<::EggEditor::IntEqualConverter>, nullptr, nullptr, nullptr,
     1, // Object
-    13, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    16, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
     -1,
     //  21
     L"EggEditor.UC_ScriptComponent", L"",
     &ActivateType<::EggEditor::UC_ScriptComponent>, nullptr, nullptr, nullptr,
-    30, // Windows.UI.Xaml.Controls.UserControl
-    13, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    32, // Windows.UI.Xaml.Controls.UserControl
+    16, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
     -1,
     //  22
     L"EggEditor.MainPageDataContext", L"",
     &ActivateType<::EggEditor::MainPageDataContext>, nullptr, nullptr, nullptr,
     1, // Object
-    13, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    16, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_IsBindable | TypeInfo_Flags_None,
     -1,
     //  23
     L"Windows.UI.Xaml.Controls.Page", L"",
     nullptr, nullptr, nullptr, nullptr,
     -1,
-    15, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Metadata,
+    18, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Metadata,
     TypeInfo_Flags_IsSystemType | TypeInfo_Flags_None,
     -1,
     //  24
     L"EggEditor.IntNotEqualConverter", L"",
     &ActivateType<::EggEditor::IntNotEqualConverter>, nullptr, nullptr, nullptr,
     1, // Object
-    15, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    18, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
     -1,
     //  25
+    L"Windows.UI.Xaml.Controls.Symbol", L"",
+    nullptr, nullptr, nullptr, nullptr,
+    -1,
+    18, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Metadata,
+    TypeInfo_Flags_IsSystemType | TypeInfo_Flags_None,
+    -1,
+    //  26
     L"EggEditor.BreadCrumbDataContext", L"",
     &ActivateType<::EggEditor::BreadCrumbDataContext>, nullptr, nullptr, nullptr,
     1, // Object
-    15, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
-    TypeInfo_Flags_IsLocalType | TypeInfo_Flags_IsBindable | TypeInfo_Flags_None,
-    -1,
-    //  26
-    L"EggEditor.GameObjectDataContext", L"",
-    &ActivateType<::EggEditor::GameObjectDataContext>, nullptr, nullptr, nullptr,
-    1, // Object
-    16, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    18, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_IsBindable | TypeInfo_Flags_None,
     -1,
     //  27
-    L"EggEditor.UC_TransformComponent", L"",
-    &ActivateType<::EggEditor::UC_TransformComponent>, nullptr, nullptr, nullptr,
-    30, // Windows.UI.Xaml.Controls.UserControl
+    L"EggEditor.GameObjectDataContext", L"",
+    &ActivateType<::EggEditor::GameObjectDataContext>, nullptr, nullptr, nullptr,
+    1, // Object
     19, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
-    TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
+    TypeInfo_Flags_IsLocalType | TypeInfo_Flags_IsBindable | TypeInfo_Flags_None,
     -1,
     //  28
+    L"EggEditor.UC_TransformComponent", L"",
+    &ActivateType<::EggEditor::UC_TransformComponent>, nullptr, nullptr, nullptr,
+    32, // Windows.UI.Xaml.Controls.UserControl
+    22, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
+    -1,
+    //  29
     L"EggEditor.VM_TransformComponent", L"",
     nullptr, nullptr, nullptr, nullptr,
     1, // Object
-    20, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    23, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_IsReturnTypeStub | TypeInfo_Flags_None,
     -1,
-    //  29
+    //  30
+    L"EggEditor.AssetEditorDataContext", L"",
+    &ActivateType<::EggEditor::AssetEditorDataContext>, nullptr, nullptr, nullptr,
+    1, // Object
+    23, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    TypeInfo_Flags_IsLocalType | TypeInfo_Flags_IsBindable | TypeInfo_Flags_None,
+    -1,
+    //  31
     L"EggEditor.ProjectFolderDataContext", L"",
     &ActivateType<::EggEditor::ProjectFolderDataContext>, nullptr, nullptr, nullptr,
     1, // Object
-    20, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    24, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_IsBindable | TypeInfo_Flags_None,
     -1,
-    //  30
+    //  32
     L"Windows.UI.Xaml.Controls.UserControl", L"",
     nullptr, nullptr, nullptr, nullptr,
     -1,
-    22, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Metadata,
+    26, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Metadata,
     TypeInfo_Flags_IsSystemType | TypeInfo_Flags_None,
     -1,
-    //  31
+    //  33
     L"EggEditor.SignatureToVisibilityConverter", L"",
     &ActivateType<::EggEditor::SignatureToVisibilityConverter>, nullptr, nullptr, nullptr,
     1, // Object
-    22, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
-    TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
-    -1,
-    //  32
-    L"EggEditor.SignatureBitsToVisibilityConverter", L"",
-    &ActivateType<::EggEditor::SignatureBitsToVisibilityConverter>, nullptr, nullptr, nullptr,
-    1, // Object
-    22, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
-    TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
-    -1,
-    //  33
-    L"EggEditor.NegatedSignatureToVisibilityConverter", L"",
-    &ActivateType<::EggEditor::NegatedSignatureToVisibilityConverter>, nullptr, nullptr, nullptr,
-    1, // Object
-    22, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    26, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
     -1,
     //  34
+    L"EggEditor.SignatureBitsToVisibilityConverter", L"",
+    &ActivateType<::EggEditor::SignatureBitsToVisibilityConverter>, nullptr, nullptr, nullptr,
+    1, // Object
+    26, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
+    -1,
+    //  35
+    L"EggEditor.NegatedSignatureToVisibilityConverter", L"",
+    &ActivateType<::EggEditor::NegatedSignatureToVisibilityConverter>, nullptr, nullptr, nullptr,
+    1, // Object
+    26, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    TypeInfo_Flags_IsLocalType | TypeInfo_Flags_None,
+    -1,
+    //  36
     L"Windows.Foundation.Collections.IVector`1<Windows.UI.Xaml.UIElement>", L"",
     nullptr, &CollectionAdd<::Windows::Foundation::Collections::IVector<::Windows::UI::Xaml::UIElement^>, ::Windows::UI::Xaml::UIElement^>, nullptr, nullptr,
     -1,
-    22, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Metadata,
+    26, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Metadata,
     TypeInfo_Flags_IsReturnTypeStub | TypeInfo_Flags_None,
     -1,
-    //  35
+    //  37
     L"Windows.Foundation.Collections.IObservableVector`1<Windows.UI.Xaml.UIElement>", L"",
     nullptr, &CollectionAdd<::Windows::Foundation::Collections::IObservableVector<::Windows::UI::Xaml::UIElement^>, ::Windows::UI::Xaml::UIElement^>, nullptr, nullptr,
     -1,
-    22, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Metadata,
+    26, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Metadata,
     TypeInfo_Flags_IsReturnTypeStub | TypeInfo_Flags_None,
     -1,
     //  Last type here is for padding
     L"", L"",
     nullptr, nullptr, nullptr, nullptr,
     -1, 
-    22, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
+    26, 0, -1, ::Windows::UI::Xaml::Interop::TypeKind::Custom,
     TypeInfo_Flags_None,
 };
 
@@ -559,53 +603,53 @@ const UINT TypeInfoLookup[] = {
      22,   //  29
      24,   //  30
      25,   //  31
-     29,   //  32
-     29,   //  33
-     29,   //  34
-     30,   //  35
-     30,   //  36
-     31,   //  37
-     31,   //  38
-     31,   //  39
-     31,   //  40
-     32,   //  41
-     32,   //  42
-     32,   //  43
-     32,   //  44
-     33,   //  45
-     33,   //  46
-     33,   //  47
-     34,   //  48
-     34,   //  49
-     34,   //  50
-     34,   //  51
-     34,   //  52
-     34,   //  53
-     34,   //  54
-     34,   //  55
-     34,   //  56
-     34,   //  57
-     34,   //  58
-     34,   //  59
-     34,   //  60
-     34,   //  61
-     34,   //  62
-     34,   //  63
-     34,   //  64
-     34,   //  65
-     34,   //  66
-     34,   //  67
-     35,   //  68
-     35,   //  69
-     35,   //  70
-     35,   //  71
-     35,   //  72
-     35,   //  73
-     35,   //  74
-     35,   //  75
-     35,   //  76
-     35,   //  77
-     36,   //  78
+     30,   //  32
+     31,   //  33
+     31,   //  34
+     32,   //  35
+     32,   //  36
+     33,   //  37
+     33,   //  38
+     33,   //  39
+     33,   //  40
+     34,   //  41
+     34,   //  42
+     34,   //  43
+     34,   //  44
+     35,   //  45
+     35,   //  46
+     35,   //  47
+     36,   //  48
+     36,   //  49
+     36,   //  50
+     36,   //  51
+     36,   //  52
+     36,   //  53
+     36,   //  54
+     36,   //  55
+     36,   //  56
+     36,   //  57
+     36,   //  58
+     36,   //  59
+     36,   //  60
+     36,   //  61
+     36,   //  62
+     36,   //  63
+     36,   //  64
+     36,   //  65
+     36,   //  66
+     36,   //  67
+     37,   //  68
+     37,   //  69
+     37,   //  70
+     37,   //  71
+     37,   //  72
+     37,   //  73
+     37,   //  74
+     37,   //  75
+     37,   //  76
+     37,   //  77
+     38,   //  78
 };
 
 const TypeInfo* GetTypeInfo(::Platform::String^ typeName)
@@ -652,140 +696,168 @@ const MemberInfo MemberInfos[] =
     17, // EggEditor.UC_ProjectFolder
     -1,
     false, false, false,
-    //   2 - EggEditor.UC_BreadCrumb.TypedDataContext
+    //   2 - EggEditor.UC_Asset.VirtualPath
+    L"VirtualPath",
+    &GetReferenceTypeMember_VirtualPath<::EggEditor::UC_Asset>,
+    nullptr,
+    2, // String
+    -1,
+    true,  false, false,
+    //   3 - EggEditor.UC_BreadCrumb.TypedDataContext
     L"TypedDataContext",
     &GetReferenceTypeMember_TypedDataContext<::EggEditor::UC_BreadCrumb>,
     nullptr,
-    25, // EggEditor.BreadCrumbDataContext
+    26, // EggEditor.BreadCrumbDataContext
     -1,
     true,  false, false,
-    //   3 - EggEditor.UC_BreadCrumb.BreadCrumbRef
+    //   4 - EggEditor.UC_BreadCrumb.BreadCrumbRef
     L"BreadCrumbRef",
     &GetReferenceTypeMember_BreadCrumbRef<::EggEditor::UC_BreadCrumb>,
     nullptr,
     1, // Object
     -1,
     true,  false, false,
-    //   4 - EggEditor.AssetDataContext.GradientStop
+    //   5 - EggEditor.AssetDataContext.GradientStop
     L"GradientStop",
     &GetValueTypeMember_GradientStop<::EggEditor::AssetDataContext, ::Windows::UI::Color>,
     &SetValueTypeMember_GradientStop<::EggEditor::AssetDataContext, ::Windows::UI::Color>,
     4, // Windows.UI.Color
     -1,
     false, false, false,
-    //   5 - EggEditor.AssetDataContext.GradientStart
+    //   6 - EggEditor.AssetDataContext.GradientStart
     L"GradientStart",
     &GetValueTypeMember_GradientStart<::EggEditor::AssetDataContext, ::Windows::UI::Color>,
     &SetValueTypeMember_GradientStart<::EggEditor::AssetDataContext, ::Windows::UI::Color>,
     4, // Windows.UI.Color
     -1,
     false, false, false,
-    //   6 - EggEditor.AssetDataContext.OverlayText
+    //   7 - EggEditor.AssetDataContext.OverlayText
     L"OverlayText",
     &GetReferenceTypeMember_OverlayText<::EggEditor::AssetDataContext>,
     &SetReferenceTypeMember_OverlayText<::EggEditor::AssetDataContext, ::Platform::String>,
     2, // String
     -1,
     false, false, false,
-    //   7 - EggEditor.AssetDataContext.AssetName
+    //   8 - EggEditor.AssetDataContext.AssetName
     L"AssetName",
     &GetReferenceTypeMember_AssetName<::EggEditor::AssetDataContext>,
     &SetReferenceTypeMember_AssetName<::EggEditor::AssetDataContext, ::Platform::String>,
     2, // String
     -1,
     false, false, false,
-    //   8 - EggEditor.AssetDataContext.EditState
+    //   9 - EggEditor.AssetDataContext.EditState
     L"EditState",
     &GetValueTypeMember_EditState<::EggEditor::AssetDataContext, ::default::int32>,
     &SetValueTypeMember_EditState<::EggEditor::AssetDataContext, ::default::int32>,
     0, // Int32
     -1,
     false, false, false,
-    //   9 - EggEditor.UC_ProjectFolder.TypedDataContext
+    //  10 - EggEditor.AssetDataContext.AssetIcon
+    L"AssetIcon",
+    &GetValueTypeMember_AssetIcon<::EggEditor::AssetDataContext, ::Windows::UI::Xaml::Controls::Symbol>,
+    &SetEnumMember_AssetIcon<::EggEditor::AssetDataContext, ::Windows::UI::Xaml::Controls::Symbol>,
+    25, // Windows.UI.Xaml.Controls.Symbol
+    -1,
+    false, false, false,
+    //  11 - EggEditor.UC_ProjectFolder.TypedDataContext
     L"TypedDataContext",
     &GetReferenceTypeMember_TypedDataContext<::EggEditor::UC_ProjectFolder>,
     nullptr,
-    29, // EggEditor.ProjectFolderDataContext
+    31, // EggEditor.ProjectFolderDataContext
     -1,
     true,  false, false,
-    //  10 - EggEditor.UC_ProjectFolder.ParentFolder
+    //  12 - EggEditor.UC_ProjectFolder.ParentFolder
     L"ParentFolder",
     &GetReferenceTypeMember_ParentFolder<::EggEditor::UC_ProjectFolder>,
     &SetReferenceTypeMember_ParentFolder<::EggEditor::UC_ProjectFolder, ::EggEditor::UC_ProjectFolder>,
     17, // EggEditor.UC_ProjectFolder
     -1,
     false, false, false,
-    //  11 - EggEditor.UC_ProjectFolder.Children
+    //  13 - EggEditor.UC_ProjectFolder.VirtualPath
+    L"VirtualPath",
+    &GetReferenceTypeMember_VirtualPath<::EggEditor::UC_ProjectFolder>,
+    nullptr,
+    2, // String
+    -1,
+    true,  false, false,
+    //  14 - EggEditor.UC_ProjectFolder.Children
     L"Children",
     &GetReferenceTypeMember_Children<::EggEditor::UC_ProjectFolder>,
     nullptr,
-    35, // Windows.Foundation.Collections.IObservableVector`1<Windows.UI.Xaml.UIElement>
+    37, // Windows.Foundation.Collections.IObservableVector`1<Windows.UI.Xaml.UIElement>
     -1,
     true,  false, false,
-    //  12 - EggEditor.SceneDataContext.GameObjects
+    //  15 - EggEditor.SceneDataContext.GameObjects
     L"GameObjects",
     &GetReferenceTypeMember_GameObjects<::EggEditor::SceneDataContext>,
     nullptr,
-    34, // Windows.Foundation.Collections.IVector`1<Windows.UI.Xaml.UIElement>
+    36, // Windows.Foundation.Collections.IVector`1<Windows.UI.Xaml.UIElement>
     -1,
     true,  false, false,
-    //  13 - EggEditor.MainPageDataContext.SubWindowIndex
+    //  16 - EggEditor.MainPageDataContext.SubWindowIndex
     L"SubWindowIndex",
     &GetValueTypeMember_SubWindowIndex<::EggEditor::MainPageDataContext, ::default::int32>,
     &SetValueTypeMember_SubWindowIndex<::EggEditor::MainPageDataContext, ::default::int32>,
     0, // Int32
     -1,
     false, false, false,
-    //  14 - EggEditor.MainPageDataContext.MainWindowIndex
+    //  17 - EggEditor.MainPageDataContext.MainWindowIndex
     L"MainWindowIndex",
     &GetValueTypeMember_MainWindowIndex<::EggEditor::MainPageDataContext, ::default::int32>,
     &SetValueTypeMember_MainWindowIndex<::EggEditor::MainPageDataContext, ::default::int32>,
     0, // Int32
     -1,
     false, false, false,
-    //  15 - EggEditor.BreadCrumbDataContext.BreadCrumbText
+    //  18 - EggEditor.BreadCrumbDataContext.BreadCrumbText
     L"BreadCrumbText",
     &GetReferenceTypeMember_BreadCrumbText<::EggEditor::BreadCrumbDataContext>,
     &SetReferenceTypeMember_BreadCrumbText<::EggEditor::BreadCrumbDataContext, ::Platform::String>,
     2, // String
     -1,
     false, false, false,
-    //  16 - EggEditor.GameObjectDataContext.EditState
+    //  19 - EggEditor.GameObjectDataContext.EditState
     L"EditState",
     &GetValueTypeMember_EditState<::EggEditor::GameObjectDataContext, ::default::int32>,
     &SetValueTypeMember_EditState<::EggEditor::GameObjectDataContext, ::default::int32>,
     0, // Int32
     -1,
     false, false, false,
-    //  17 - EggEditor.GameObjectDataContext.Signature
+    //  20 - EggEditor.GameObjectDataContext.Signature
     L"Signature",
     &GetValueTypeMember_Signature<::EggEditor::GameObjectDataContext, ::default::uint64>,
     &SetValueTypeMember_Signature<::EggEditor::GameObjectDataContext, ::default::uint64>,
     3, // UInt64
     -1,
     false, false, false,
-    //  18 - EggEditor.GameObjectDataContext.Name
+    //  21 - EggEditor.GameObjectDataContext.Name
     L"Name",
     &GetReferenceTypeMember_Name<::EggEditor::GameObjectDataContext>,
     &SetReferenceTypeMember_Name<::EggEditor::GameObjectDataContext, ::Platform::String>,
     2, // String
     -1,
     false, false, false,
-    //  19 - EggEditor.UC_TransformComponent.Component
+    //  22 - EggEditor.UC_TransformComponent.Component
     L"Component",
     &GetReferenceTypeMember_Component<::EggEditor::UC_TransformComponent>,
     nullptr,
-    28, // EggEditor.VM_TransformComponent
+    29, // EggEditor.VM_TransformComponent
     -1,
     true,  false, false,
-    //  20 - EggEditor.ProjectFolderDataContext.EditState
+    //  23 - EggEditor.AssetEditorDataContext.AssetType
+    L"AssetType",
+    &GetValueTypeMember_AssetType<::EggEditor::AssetEditorDataContext, ::default::int32>,
+    &SetValueTypeMember_AssetType<::EggEditor::AssetEditorDataContext, ::default::int32>,
+    0, // Int32
+    -1,
+    false, false, false,
+    //  24 - EggEditor.ProjectFolderDataContext.EditState
     L"EditState",
     &GetValueTypeMember_EditState<::EggEditor::ProjectFolderDataContext, ::default::int32>,
     &SetValueTypeMember_EditState<::EggEditor::ProjectFolderDataContext, ::default::int32>,
     0, // Int32
     -1,
     false, false, false,
-    //  21 - EggEditor.ProjectFolderDataContext.FolderName
+    //  25 - EggEditor.ProjectFolderDataContext.FolderName
     L"FolderName",
     &GetReferenceTypeMember_FolderName<::EggEditor::ProjectFolderDataContext>,
     &SetReferenceTypeMember_FolderName<::EggEditor::ProjectFolderDataContext, ::Platform::String>,

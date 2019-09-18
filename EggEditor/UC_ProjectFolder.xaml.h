@@ -39,6 +39,15 @@ namespace EggEditor
 		void InsertAsset(Windows::UI::Xaml::UIElement ^ asset);
 		void InsertFolder(Windows::UI::Xaml::UIElement ^ folder);
 
+		property Platform::String ^ VirtualPath {
+			Platform::String ^ get() {
+				if(parentFolder == nullptr) {
+					return L"/";
+				}
+				return parentFolder->VirtualPath + TypedDataContext->FolderName + L"/";
+			}
+		}
+
 		property UC_ProjectFolder ^ ParentFolder {
 			UC_ProjectFolder ^ get() {
 				return parentFolder;
