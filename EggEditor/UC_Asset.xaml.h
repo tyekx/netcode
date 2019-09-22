@@ -8,18 +8,7 @@
 #include "Auxiliary.h"
 #include "UC_Asset.g.h"
 #include "UC_ProjectFolder.xaml.h"
-
-#define ASSET_TYPE_SHADED_MESH 0x0000
-#define ASSET_TYPE_MATERIAL 0x0001
-#define ASSET_TYPE_TEXTURE2D 0x0002
-#define ASSET_TYPE_MESH 0x0003
-#define ASSET_TYPE_SHADER 0x4000
-#define ASSET_TYPE_VERTEX_SHADER 0x4001
-#define ASSET_TYPE_GEOMETRY_SHADER 0x4002
-#define ASSET_TYPE_DOMAIN_SHADER 0x4003
-#define ASSET_TYPE_HULL_SHADER 0x4004
-#define ASSET_TYPE_PIXEL_SHADER 0x4005
-#define ASSET_TYPE_COMPUTE_SHADER 0x4006
+#include "AssetDataContext.h"
 
 namespace EggEditor
 {
@@ -28,7 +17,6 @@ namespace EggEditor
 	public ref class UC_Asset sealed
 	{
 		UC_ProjectFolder ^ parentFolder;
-		unsigned int assetType;
 
 		void ImplDetail_InsertAssetIntoParent();
 
@@ -43,12 +31,6 @@ namespace EggEditor
 		}
 
 		event OpenAssetCallback ^ OpenAsset;
-
-		property int AssetType {
-			int get() {
-				return assetType;
-			}
-		}
 
 		property Platform::String ^ VirtualPath {
 			Platform::String ^ get() {

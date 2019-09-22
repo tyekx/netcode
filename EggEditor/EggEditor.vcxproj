@@ -51,9 +51,9 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media /Y /I </Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Adapters.h" />
+    <ClInclude Include="AssetDataContext.h" />
     <ClInclude Include="Auxiliary.h" />
     <ClInclude Include="ConstantBufferTypes.h" />
-    <ClInclude Include="EggProject.h" />
     <ClInclude Include="ggl005App.h" />
     <ClInclude Include="JsonSerializer.h" />
     <ClInclude Include="pch.h" />
@@ -163,6 +163,7 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media /Y /I </Command>
     <ClCompile Include="App.xaml.cpp">
       <DependentUpon>App.xaml</DependentUpon>
     </ClCompile>
+    <ClCompile Include="AssetDataContext.cpp" />
     <ClCompile Include="Auxiliary.cpp" />
     <ClCompile Include="MainPage.xaml.cpp">
       <DependentUpon>MainPage.xaml</DependentUpon>

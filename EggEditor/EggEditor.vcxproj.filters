@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Common">
-      <UniqueIdentifier>a5dc586f-e2c8-406d-a010-a9fc98a95c50</UniqueIdentifier>
-    </Filter>
     <Filter Include="Assets">
       <UniqueIdentifier>50dd8c37-992d-48be-821f-a8fb77a95fe1</UniqueIdentifier>
       <Extensions>bmp;fbx;gif;jpg;jpeg;tga;tiff;tif;png</Extensions>
@@ -26,6 +23,9 @@
     <Filter Include="Xaml\AssetEditor">
       <UniqueIdentifier>{e1dd6256-4edd-441e-a8d3-33a7cb96c036}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Xaml\Asset">
+      <UniqueIdentifier>{6ba5e43c-67ea-453c-8cfd-66e5810d9558}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -35,6 +35,9 @@
     <ClCompile Include="Adapters.cpp">
       <Filter>Xaml</Filter>
     </ClCompile>
+    <ClCompile Include="AssetDataContext.cpp">
+      <Filter>Xaml\Asset</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -43,14 +46,14 @@
     <ClInclude Include="Auxiliary.h">
       <Filter>Xaml</Filter>
     </ClInclude>
-    <ClInclude Include="EggProject.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="JsonSerializer.h">
       <Filter>Serializer</Filter>
     </ClInclude>
     <ClInclude Include="Adapters.h">
       <Filter>Xaml</Filter>
+    </ClInclude>
+    <ClInclude Include="AssetDataContext.h">
+      <Filter>Xaml\Asset</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -82,9 +85,6 @@
   <ItemGroup>
     <Page Include="MainPage.xaml">
       <Filter>Xaml</Filter>
-    </Page>
-    <Page Include="UC_Asset.xaml">
-      <Filter>Xaml\AssetBrowser</Filter>
     </Page>
     <Page Include="UC_BreadCrumb.xaml">
       <Filter>Xaml\AssetBrowser</Filter>
@@ -118,6 +118,9 @@
     </Page>
     <Page Include="UC_Scene.xaml">
       <Filter>Xaml\Scene</Filter>
+    </Page>
+    <Page Include="UC_Asset.xaml">
+      <Filter>Xaml\Asset</Filter>
     </Page>
   </ItemGroup>
   <ItemGroup>

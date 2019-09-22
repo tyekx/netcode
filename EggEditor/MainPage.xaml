@@ -101,7 +101,9 @@
                 </StackPanel>
             </Grid>
             <SwapChainPanel Visibility="{Binding MainWindowIndex, Converter={StaticResource XAMLIntEqualConverter}, ConverterParameter=0}" x:Name="swapChainPanel" SizeChanged="SwapChainPanel_SizeChanged" PointerPressed="SwapChainPanel_PointerPressed" Grid.Row="1"/>
-            <local:UC_AssetEditor Grid.Row="1" Visibility="{Binding MainWindowIndex, Converter={StaticResource XAMLIntEqualConverter}, ConverterParameter=1}"></local:UC_AssetEditor>
+            <Grid Visibility="{Binding MainWindowIndex, Converter={StaticResource XAMLIntEqualConverter}, ConverterParameter=1}" Grid.Row="1">
+                <local:UC_AssetEditor x:Name="assetEditorControl"></local:UC_AssetEditor>
+            </Grid>
         </Grid>
 
         <Grid Grid.Row="1" Grid.RowSpan="2" Background="#FFA6CAEE" BorderBrush="#FF007DB8" BorderThickness="0,0,5,0">

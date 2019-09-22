@@ -1,6 +1,5 @@
 #pragma once
 
-#include "EggProject.h"
 #include <Egg/GameObjectObserver.h>
 #include "Adapters.h"
 
@@ -207,81 +206,6 @@ namespace EggEditor {
 		}
 
 		SceneDataContext();
-	};
-
-	[Windows::UI::Xaml::Data::Bindable]
-	public ref class AssetDataContext sealed : public Windows::UI::Xaml::Data::INotifyPropertyChanged {
-		Platform::String ^ assetName;
-		Windows::UI::Color gradientStart;
-		Windows::UI::Color gradientStop;
-		Platform::String ^ overlayText;
-		Windows::UI::Xaml::Controls::Symbol assetIcon;
-		int editState;
-
-	public:
-		virtual event Windows::UI::Xaml::Data::PropertyChangedEventHandler ^ PropertyChanged;
-
-		AssetDataContext() : assetName{ L"" }, gradientStart{ 255,255,255,255 }, gradientStop{ 0,0,0,0 }, overlayText{ L"" }, editState{ 0 }, assetIcon{ Windows::UI::Xaml::Controls::Symbol::Help } {}
-
-		property Windows::UI::Xaml::Controls::Symbol AssetIcon {
-			Windows::UI::Xaml::Controls::Symbol get() {
-				return assetIcon;
-			}
-			void set(Windows::UI::Xaml::Controls::Symbol sym) {
-				assetIcon = sym;
-				PropertyChanged(this, ref new Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"AssetIcon"));
-			}
-		}
-
-		property int EditState {
-			int get() {
-				return editState;
-			}
-			void set(int val) {
-				editState = val;
-				PropertyChanged(this, ref new Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"EditState"));
-			}
-		}
-
-		property Platform::String ^ AssetName {
-			Platform::String ^ get() {
-				return assetName;
-			}
-			void set(Platform::String ^ str) {
-				assetName = str;
-				PropertyChanged(this, ref new Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"AssetName"));
-			}
-		}
-
-		property Platform::String ^ OverlayText {
-			Platform::String ^ get() {
-				return overlayText;
-			}
-			void set(Platform::String ^ str) {
-				overlayText = str;
-				PropertyChanged(this, ref new Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"OverlayText"));
-			}
-		}
-
-		property Windows::UI::Color GradientStart {
-			Windows::UI::Color get() {
-				return gradientStart;
-			}
-			void set(Windows::UI::Color c) {
-				gradientStart = c;
-				PropertyChanged(this, ref new Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"GradientStart"));
-			}
-		}
-
-		property Windows::UI::Color GradientStop {
-			Windows::UI::Color get() {
-				return gradientStop;
-			}
-			void set(Windows::UI::Color c) {
-				gradientStop = c;
-				PropertyChanged(this, ref new Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"GradientStop"));
-			}
-		}
 	};
 
 	[Windows::UI::Xaml::Data::Bindable]

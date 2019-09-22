@@ -20,7 +20,7 @@ namespace EggEditor
 
 		void SetAsset(UC_Asset ^ asset) {
 			currentlyEditing = asset;
-			TypedDataContext->AssetType = asset->AssetType;
+			TypedDataContext->AssetType = asset->TypedDataContext->AssetType;
 		}
 
 		UC_AssetEditor();

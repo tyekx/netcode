@@ -23,9 +23,9 @@ namespace EggEditor
 
 		void ImportAsset(Windows::Storage::StorageFile ^ file);
 
-	private:
-
 		event OpenAssetCallback ^ OpenAsset;
+
+	private:
 
 		void CtxBtnNewProjectFolder_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e);
 		void CtxBtnNewMaterial_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e);
