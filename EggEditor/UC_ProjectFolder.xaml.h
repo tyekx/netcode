@@ -7,6 +7,7 @@
 
 #include "Auxiliary.h"
 #include "UC_ProjectFolder.g.h"
+#include "ProjectFolderDataContext.h"
 
 namespace EggEditor
 {
@@ -17,52 +18,12 @@ namespace EggEditor
 	[Windows::Foundation::Metadata::WebHostHidden]
 	public ref class UC_ProjectFolder sealed 
 	{
-		UC_ProjectFolder ^ parentFolder;
-		Platform::Collections::Vector<Windows::UI::Xaml::UIElement ^> ^ children;
-
-
 	public:
 		event EggEditor::ContentChangedCallback ^ ContentChanged;
 
-		UC_ProjectFolder(Platform::String^ folderName);
+		UC_ProjectFolder();
+
 		void ProjectFolderDragStarting(Windows::UI::Xaml::UIElement ^ sender, Windows::UI::Xaml::DragStartingEventArgs ^ args);
-
-		property Windows::Foundation::Collections::IObservableVector<Windows::UI::Xaml::UIElement ^> ^ Children {
-			Windows::Foundation::Collections::IObservableVector<Windows::UI::Xaml::UIElement ^> ^ get() {
-				return children;
-			}
-		}
-
-		void AssetRenamed(Windows::UI::Xaml::UIElement ^ asset);
-		void FolderRenamed(Windows::UI::Xaml::UIElement ^ folder);
-
-		void InsertAsset(Windows::UI::Xaml::UIElement ^ asset);
-		void InsertFolder(Windows::UI::Xaml::UIElement ^ folder);
-
-		property Platform::String ^ VirtualPath {
-			Platform::String ^ get() {
-				if(parentFolder == nullptr) {
-					return L"/";
-				}
-				return parentFolder->VirtualPath + TypedDataContext->FolderName + L"/";
-			}
-		}
-
-		property UC_ProjectFolder ^ ParentFolder {
-			UC_ProjectFolder ^ get() {
-				return parentFolder;
-			}
-			void set(UC_ProjectFolder ^ pf) {
-				if(parentFolder) {
-					unsigned int id;
-					if(parentFolder->Children->IndexOf(this, &id)) {
-						parentFolder->Children->RemoveAt(id);
-					}
-				}
-				parentFolder = pf;
-				parentFolder->InsertFolder(this);
-			}
-		}
 
 		property ProjectFolderDataContext ^ TypedDataContext {
 			ProjectFolderDataContext ^ get() {

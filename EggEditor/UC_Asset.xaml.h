@@ -7,7 +7,6 @@
 
 #include "Auxiliary.h"
 #include "UC_Asset.g.h"
-#include "UC_ProjectFolder.xaml.h"
 #include "AssetDataContext.h"
 
 namespace EggEditor
@@ -16,13 +15,11 @@ namespace EggEditor
 	[Windows::Foundation::Metadata::WebHostHidden]
 	public ref class UC_Asset sealed
 	{
-		UC_ProjectFolder ^ parentFolder;
-
-		void ImplDetail_InsertAssetIntoParent();
-
 		static UC_Asset ^ currentlyDragging;
 	public:
+		UC_Asset();
 		UC_Asset(Platform::String^ text, UINT atype);
+		event OpenAssetCallback ^ OpenAsset;
 
 		static property UC_Asset ^ CurrentlyDragging {
 			UC_Asset ^ get() {
@@ -30,27 +27,9 @@ namespace EggEditor
 			}
 		}
 
-		event OpenAssetCallback ^ OpenAsset;
-
 		property Platform::String ^ VirtualPath {
 			Platform::String ^ get() {
-				return ParentFolder->VirtualPath + TypedDataContext->AssetName;
-			}
-		}
-
-		property UC_ProjectFolder ^ ParentFolder {
-			UC_ProjectFolder ^ get() {
-				return parentFolder;
-			}
-			void set(UC_ProjectFolder ^ val) {
-				if(parentFolder) {
-					unsigned int id;
-					if(parentFolder->Children->IndexOf(this, &id)) {
-						parentFolder->Children->RemoveAt(id);
-					}
-				}
-				parentFolder = val;
-				ImplDetail_InsertAssetIntoParent();
+				return L"";
 			}
 		}
 		

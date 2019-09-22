@@ -9,14 +9,6 @@
     d:DesignHeight="80"
     d:DesignWidth="80">
 
-    <UserControl.DataContext>
-        <local:ProjectFolderDataContext/>
-    </UserControl.DataContext>
-
-    <UserControl.Resources>
-        <local:IntEqualConverter x:Key="XAMLIntToVisibilityConverter"></local:IntEqualConverter>
-    </UserControl.Resources>
-
     <Grid Width="80" Height="80" CanDrag="True" DragStarting="ProjectFolderDragStarting" DragOver="ProjectFolderDragOver" Drop="ProjectFolderDrop" x:Name="mainGrid">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="8*"/>
@@ -50,7 +42,21 @@
                 <CompositeTransform ScaleX="1.6" ScaleY="1.6"/>
             </SymbolIcon.RenderTransform>
         </SymbolIcon>
-        <TextBlock Visibility="{Binding EditState, Converter={StaticResource XAMLIntToVisibilityConverter}, ConverterParameter=0}" x:Name="projectFolderName" Grid.Row="1" Grid.ColumnSpan="3" TextAlignment="Center" FontSize="12" TextWrapping="Wrap" TextTrimming="WordEllipsis" Text="{Binding FolderName, Mode=OneWay}"></TextBlock>
-        <TextBox  Visibility="{Binding EditState, Converter={StaticResource XAMLIntToVisibilityConverter}, ConverterParameter=1}" Grid.Row="1" TextAlignment="Center" VerticalContentAlignment="Center" Grid.ColumnSpan="3" Text="{Binding FolderName, Mode=TwoWay}" FontSize="12" TextWrapping="Wrap" KeyDown="TextBox_KeyDown" FocusDisengaged="TextBox_FocusDisengaged" BorderThickness="1,1,1,1" Padding="1,1,1,1"></TextBox>
+        <TextBlock Visibility="{Binding UI.EditState, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter=0}"
+                   x:Name="projectFolderName"
+                   Grid.Row="1"
+                   Grid.ColumnSpan="3"
+                   TextAlignment="Center"
+                   FontSize="12"
+                   TextWrapping="Wrap"
+                   TextTrimming="WordEllipsis"
+                   Text="{Binding Name, Mode=OneWay}" />
+        <TextBox Grid.Row="1" Grid.ColumnSpan="3"
+                 Text="{Binding Name, Mode=TwoWay}" 
+                 Visibility="{Binding UI.EditState, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter=1}"
+                 KeyDown="TextBox_KeyDown"
+                 Padding="1"
+                 BorderThickness="1"
+                 TextWrapping="Wrap"></TextBox>
     </Grid>
 </UserControl>

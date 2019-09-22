@@ -1,5 +1,7 @@
 #pragma once
 
+#include "IAssetBrowserItem.h"
+
 #define ASSET_TYPE_SHADED_MESH 0x0000
 #define ASSET_TYPE_MATERIAL 0x0001
 #define ASSET_TYPE_TEXTURE2D 0x0002
@@ -80,15 +82,68 @@ namespace EggEditor {
 
 
 	[Windows::UI::Xaml::Data::Bindable]
-	public ref class AssetDataContext sealed : public Windows::UI::Xaml::Data::INotifyPropertyChanged {
+	public ref class AssetDataContext sealed : public IAssetBrowserItem, public Windows::UI::Xaml::Data::INotifyPropertyChanged {
 		Platform::String ^ assetName;
 		int assetType;
 		AssetUIDataContext ^ uiContext;
-
+		IAssetBrowserItem ^ parentFolder;
+		bool isDirty;
 		void SetAssetType(int value);
 
 	public:
+
 		virtual event Windows::UI::Xaml::Data::PropertyChangedEventHandler ^ PropertyChanged;
+
+		virtual void AddChild(IAssetBrowserItem ^ item) {
+			return;
+		}
+
+		virtual property bool IsAsset {
+			bool get() {
+				return true;
+			}
+		}
+
+		virtual property bool IsContentDirty {
+			bool get() {
+				return isDirty;
+			}
+		}
+
+		virtual property bool IsDirty {
+			bool get() {
+				return isDirty;
+			}
+			void set(bool v) {
+				v = isDirty;
+				PropertyChanged(this, ref new Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"IsDirty"));
+			}
+		}
+
+		virtual property Windows::Foundation::Collections::IObservableVector<IAssetBrowserItem ^> ^ Children {
+			Windows::Foundation::Collections::IObservableVector<IAssetBrowserItem ^> ^ get() {
+				return nullptr;
+			}
+		}
+
+		virtual property IAssetBrowserItem ^ ParentFolder {
+			IAssetBrowserItem ^ get() {
+				return parentFolder;
+			}
+			void set(IAssetBrowserItem ^ val) {
+				if(!val->IsAsset) {
+					if(parentFolder != nullptr) {
+						unsigned int id;
+						if(parentFolder->Children->IndexOf(this, &id)) {
+							parentFolder->Children->RemoveAt(id);
+						}
+					}
+					parentFolder = val;
+					parentFolder->AddChild(this);
+					PropertyChanged(this, ref new Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"ParentFolder"));
+				}
+			}
+		}
 
 		AssetDataContext() : assetName{ L"" } {
 			uiContext = ref new AssetUIDataContext();
@@ -111,13 +166,13 @@ namespace EggEditor {
 			}
 		}
 
-		property Platform::String ^ AssetName {
+		virtual property Platform::String ^ Name {
 			Platform::String ^ get() {
 				return assetName;
 			}
 			void set(Platform::String ^ str) {
 				assetName = str;
-				PropertyChanged(this, ref new Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"AssetName"));
+				PropertyChanged(this, ref new Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"Name"));
 			}
 		}
 	};

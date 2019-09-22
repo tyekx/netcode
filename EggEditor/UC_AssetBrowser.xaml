@@ -9,6 +9,10 @@
     d:DesignHeight="300"
     d:DesignWidth="400">
 
+    <UserControl.Resources>
+        <local:BoolToVisibilityConverter x:Key="BoolToVisibility"></local:BoolToVisibilityConverter>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="25"/>
@@ -26,11 +30,25 @@
             </MenuFlyout>
         </Grid.ContextFlyout>
 
-        <StackPanel x:Name="breadCrumbPanel" Orientation="Horizontal"></StackPanel>
+        <StackPanel x:Name="breadCrumbPanel" Orientation="Horizontal">
+            
+        </StackPanel>
 
         <ScrollViewer Grid.Row="1">
             <GridView x:Name="assetBrowserPanel" FlowDirection="LeftToRight" CanDragItems="True">
-                
+                <GridView.ItemTemplate>
+                    <DataTemplate x:DataType="local:IAssetBrowserItem">
+                        <Grid>
+                            <Grid Visibility="{Binding IsAsset, Converter={StaticResource BoolToVisibility}, ConverterParameter=0}">
+                                <local:UC_ProjectFolder DataContext="{Binding}" DoubleTapped="ProjectFolder_DoubleTap">
+                                </local:UC_ProjectFolder>
+                            </Grid>
+                            <Grid Visibility="{Binding IsAsset, Converter={StaticResource BoolToVisibility}, ConverterParameter=1}">
+                                <local:UC_Asset DataContext="{Binding}"></local:UC_Asset>
+                            </Grid>
+                        </Grid>
+                    </DataTemplate>
+                </GridView.ItemTemplate>
             </GridView>
         </ScrollViewer>
         

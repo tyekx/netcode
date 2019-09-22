@@ -17,6 +17,21 @@ Platform::Object ^ EggEditor::IntEqualConverter::ConvertBack(Platform::Object ^ 
 	throw ref new Platform::NotImplementedException();
 }
 
+Platform::Object ^ EggEditor::BoolToVisibilityConverter::Convert(Platform::Object ^ value, Windows::UI::Xaml::Interop::TypeName targetType, Platform::Object ^ parameter, Platform::String ^ language)
+{
+	Platform::String ^ v = (Platform::String ^)parameter;
+
+	if((bool)value == (std::stoi(v->Data()) > 0)) {
+		return Windows::UI::Xaml::Visibility::Visible;
+	}
+	return Windows::UI::Xaml::Visibility::Collapsed;
+}
+
+Platform::Object ^ EggEditor::BoolToVisibilityConverter::ConvertBack(Platform::Object ^ value, Windows::UI::Xaml::Interop::TypeName targetType, Platform::Object ^ parameter, Platform::String ^ language)
+{
+	throw ref new Platform::NotImplementedException();
+}
+
 Platform::Object ^ EggEditor::IntNotEqualConverter::Convert(Platform::Object ^ value, Windows::UI::Xaml::Interop::TypeName targetType, Platform::Object ^ parameter, Platform::String ^ language)
 {
 	Platform::String ^ v = (Platform::String ^)parameter;

@@ -23,12 +23,17 @@ using namespace Windows::UI::Xaml::Navigation;
 
 UC_Asset ^ UC_Asset::currentlyDragging{ nullptr };
 
+
+UC_Asset::UC_Asset()
+{
+	InitializeComponent();
+}
+
 UC_Asset::UC_Asset(Platform::String ^ text, UINT atype)
 {
 	InitializeComponent();
-	TypedDataContext->AssetName = text;
+	TypedDataContext->Name = text;
 	TypedDataContext->AssetType = (int)atype;
-
 }
 
 
@@ -58,14 +63,6 @@ void EggEditor::UC_Asset::AssetDragStarting(Windows::UI::Xaml::UIElement ^ sende
 	args->Data->RequestedOperation = Windows::ApplicationModel::DataTransfer::DataPackageOperation::Link |
 									Windows::ApplicationModel::DataTransfer::DataPackageOperation::Move;
 }
-
-
-
-
-void EggEditor::UC_Asset::ImplDetail_InsertAssetIntoParent() {
-	parentFolder->InsertAsset(this);
-}
-
 
 void EggEditor::UC_Asset::MenuFlyoutItem_Click(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e)
 {

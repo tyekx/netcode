@@ -48,13 +48,20 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media /Y /I </Command>
       <Command>
       </Command>
     </CustomBuildStep>
+    <Link>
+      <AdditionalOptions>/NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Adapters.h" />
     <ClInclude Include="AssetDataContext.h" />
     <ClInclude Include="Auxiliary.h" />
     <ClInclude Include="ConstantBufferTypes.h" />
+    <ClInclude Include="EggProject.h" />
+    <ClInclude Include="EggProjectManager.h" />
     <ClInclude Include="ggl005App.h" />
+    <ClInclude Include="IAssetBrowserItem.h" />
+    <ClInclude Include="IDialogHandler.h" />
     <ClInclude Include="JsonSerializer.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.xaml.h">
@@ -63,6 +70,8 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media /Y /I </Command>
     <ClInclude Include="MainPage.xaml.h">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="ProjectFolderDataContext.h" />
+    <ClInclude Include="Static.h" />
     <ClInclude Include="UC_AddComponent.xaml.h">
       <DependentUpon>UC_AddComponent.xaml</DependentUpon>
     </ClInclude>
@@ -165,12 +174,15 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media /Y /I </Command>
     </ClCompile>
     <ClCompile Include="AssetDataContext.cpp" />
     <ClCompile Include="Auxiliary.cpp" />
+    <ClCompile Include="EggProjectManager.cpp" />
     <ClCompile Include="MainPage.xaml.cpp">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ProjectFolderDataContext.cpp" />
+    <ClCompile Include="Static.cpp" />
     <ClCompile Include="UC_AddComponent.xaml.cpp">
       <DependentUpon>UC_AddComponent.xaml</DependentUpon>
     </ClCompile>

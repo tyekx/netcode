@@ -9,14 +9,6 @@
     d:DesignHeight="80"
     d:DesignWidth="80">
 
-    <UserControl.DataContext>
-        <local:AssetDataContext />
-    </UserControl.DataContext>
-
-    <UserControl.Resources>
-        <local:IntEqualConverter x:Key="XAMLIntEqualConverter" />
-    </UserControl.Resources>
-
     <Grid Width="80" Height="80" CanDrag="True" DragStarting="AssetDragStarting">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="8*"/>
@@ -51,12 +43,12 @@
         </SymbolIcon>
         <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding UI.OverlayText}" FontSize="12" FontWeight="Bold" VerticalAlignment="Bottom" HorizontalAlignment="Center" Padding="0,0,0,10"/>
         <TextBlock Grid.Row="1" Grid.ColumnSpan="3"
-                   Visibility="{Binding UI.EditState, Converter={StaticResource XAMLIntEqualConverter}, ConverterParameter=0}"
+                   Visibility="{Binding UI.EditState, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter=0}"
                    TextAlignment="Center" FontSize="12" TextWrapping="Wrap" TextTrimming="WordEllipsis"
-                   Text="{Binding AssetName}"></TextBlock>
+                   Text="{Binding Name}"></TextBlock>
         <TextBox Grid.Row="1" Grid.ColumnSpan="3"
-                 Text="{Binding AssetName, Mode=TwoWay}" 
-                 Visibility="{Binding UI.EditState, Converter={StaticResource XAMLIntEqualConverter}, ConverterParameter=1}"
+                 Text="{Binding Name, Mode=TwoWay}" 
+                 Visibility="{Binding UI.EditState, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter=1}"
                  KeyDown="TextBox_KeyDown"
                  Padding="1"
                  BorderThickness="1"

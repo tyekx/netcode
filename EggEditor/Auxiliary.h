@@ -30,6 +30,17 @@ namespace EggEditor {
 	};
 
 	/*
+	Converts To Visibility
+	*/
+	public ref class BoolToVisibilityConverter sealed : public Windows::UI::Xaml::Data::IValueConverter {
+	public:
+
+		// Inherited via IValueConverter
+		virtual Platform::Object ^ Convert(Platform::Object ^ value, Windows::UI::Xaml::Interop::TypeName targetType, Platform::Object ^ parameter, Platform::String ^ language);
+		virtual Platform::Object ^ ConvertBack(Platform::Object ^ value, Windows::UI::Xaml::Interop::TypeName targetType, Platform::Object ^ parameter, Platform::String ^ language);
+	};
+
+	/*
 	* Converts To Visibility
 	*/
 	public ref class SignatureToVisibilityConverter sealed : public Windows::UI::Xaml::Data::IValueConverter {
@@ -53,34 +64,6 @@ namespace EggEditor {
 	public:
 		virtual Platform::Object ^ Convert(Platform::Object ^ value, Windows::UI::Xaml::Interop::TypeName targetType, Platform::Object ^ parameter, Platform::String ^ language);
 		virtual Platform::Object ^ ConvertBack(Platform::Object ^ value, Windows::UI::Xaml::Interop::TypeName targetType, Platform::Object ^ parameter, Platform::String ^ language);
-	};
-
-	[Windows::UI::Xaml::Data::Bindable]
-	public ref class ProjectFolderDataContext sealed : public Windows::UI::Xaml::Data::INotifyPropertyChanged {
-		Platform::String ^ folderName;
-		int editState;
-	public:
-		virtual event Windows::UI::Xaml::Data::PropertyChangedEventHandler ^ PropertyChanged;
-
-		property Platform::String ^ FolderName {
-			Platform::String ^ get() {
-				return folderName;
-			}
-			void set(Platform::String ^ str) {
-				folderName = str;
-				PropertyChanged(this, ref new Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"FolderName"));
-			}
-		}
-
-		property int EditState {
-			int get() {
-				return editState;
-			}
-			void set(int val) {
-				editState = val;
-				PropertyChanged(this, ref new Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"EditState"));
-			}
-		}
 	};
 
 	[Windows::UI::Xaml::Data::Bindable]

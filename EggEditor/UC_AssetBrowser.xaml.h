@@ -6,24 +6,20 @@
 #pragma once
 
 #include "UC_AssetBrowser.g.h"
-#include "UC_ProjectFolder.xaml.h"
+#include "ProjectFolderDataContext.h"
 
 namespace EggEditor
 {
 	[Windows::Foundation::Metadata::WebHostHidden]
 	public ref class UC_AssetBrowser sealed
 	{
-		UC_ProjectFolder ^ rootFolder;
-		UC_ProjectFolder ^ currentFolder;
-
-		Platform::Object ^ eventInstance;
+		ProjectFolderDataContext ^ rootFolder;
+		ProjectFolderDataContext ^ currentFolder;
 
 	public:
 		UC_AssetBrowser();
 
 		void ImportAsset(Windows::Storage::StorageFile ^ file);
-
-		event OpenAssetCallback ^ OpenAsset;
 
 	private:
 
@@ -33,14 +29,12 @@ namespace EggEditor
 
 
 		void BreadCrumb_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::Input::TappedRoutedEventArgs ^ e);
-		void ProjectFolder_OnContentChanged(Platform::Object ^ sender);
-
 		void ProjectFolder_DoubleTap(Platform::Object ^ sender, Windows::UI::Xaml::Input::DoubleTappedRoutedEventArgs ^ e);
-		void ChangeProjectFolder(UC_ProjectFolder ^ folder);
+		void ChangeProjectFolder(ProjectFolderDataContext ^ folder);
 		void OpenAssetHandler(Platform::Object ^ obj);
 		/*
 		this function is a helper function for ChangeProjectFolder, do not call it
 		*/
-		void ImplDetail_RecursiveAddBreadCrumb(UC_ProjectFolder ^ folder);
+		void ImplDetail_RecursiveAddBreadCrumb(ProjectFolderDataContext ^ folder);
 	};
 }

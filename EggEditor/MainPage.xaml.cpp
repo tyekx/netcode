@@ -42,7 +42,6 @@ MainPage::MainPage()
 	InitializeComponent();
 	totalTime = 0.0f;
 
-	assetBrowserControl->OpenAsset += ref new EggEditor::OpenAssetCallback(this, &EggEditor::MainPage::OnOpenAsset);
 	sceneControl->GameObjectSelected += ref new EggEditor::GameObjectSelectedCallback(propertiesControl, &UC_Properties::OnGameObjectSelected);
 }
 
