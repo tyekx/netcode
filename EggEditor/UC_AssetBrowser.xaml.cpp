@@ -8,6 +8,8 @@
 #include "UC_Asset.xaml.h"
 #include "UC_BreadCrumb.xaml.h"
 #include "Static.h"
+#include "EggProjectManager.h"
+
 using namespace EggEditor;
 
 using namespace Platform;
@@ -33,6 +35,8 @@ UC_AssetBrowser::UC_AssetBrowser()
 
 void EggEditor::UC_AssetBrowser::CtxBtnNewProjectFolder_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e) {
 	//Static::Project->CloseProject();
+	auto man = ref new EggProjectManager();
+	man->OpenProject(Dispatcher);
 	auto newFolder = ref new ProjectFolderDataContext();
 	newFolder->Name = L"New Folder";
 	newFolder->ParentFolder = currentFolder;

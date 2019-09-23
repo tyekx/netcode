@@ -29,11 +29,11 @@
     <Filter Include="Common">
       <UniqueIdentifier>{3dfe4809-eed2-4921-babd-1c1c380760fc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Xaml\Project">
-      <UniqueIdentifier>{ce2d47cd-72c0-4699-80d6-5470a1d84028}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Static">
       <UniqueIdentifier>{cb9c6b0b-f2c2-4554-b233-4bed16719638}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Project">
+      <UniqueIdentifier>{ce2d47cd-72c0-4699-80d6-5470a1d84028}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -54,7 +54,7 @@
       <Filter>Static</Filter>
     </ClCompile>
     <ClCompile Include="EggProjectManager.cpp">
-      <Filter>Xaml\Project</Filter>
+      <Filter>Project</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -80,7 +80,7 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="EggProject.h">
-      <Filter>Xaml\Project</Filter>
+      <Filter>Project</Filter>
     </ClInclude>
     <ClInclude Include="Static.h">
       <Filter>Static</Filter>
@@ -89,7 +89,10 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="EggProjectManager.h">
-      <Filter>Xaml\Project</Filter>
+      <Filter>Project</Filter>
+    </ClInclude>
+    <ClInclude Include="ConcurrencyHelper.h">
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

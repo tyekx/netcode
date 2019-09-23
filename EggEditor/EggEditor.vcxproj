@@ -56,6 +56,7 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media /Y /I </Command>
     <ClInclude Include="Adapters.h" />
     <ClInclude Include="AssetDataContext.h" />
     <ClInclude Include="Auxiliary.h" />
+    <ClInclude Include="ConcurrencyHelper.h" />
     <ClInclude Include="ConstantBufferTypes.h" />
     <ClInclude Include="EggProject.h" />
     <ClInclude Include="EggProjectManager.h" />

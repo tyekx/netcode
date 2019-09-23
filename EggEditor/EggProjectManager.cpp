@@ -1,37 +1,70 @@
 #include "pch.h"
 #include "EggProjectManager.h"
+#include "ConcurrencyHelper.h"
 
-Windows::Foundation::IAsyncOperation<bool> ^ EggEditor::EggProjectManager::OpenProject() {
+concurrency::task<bool> EggEditor::EggProjectManager::OpenProject(Windows::UI::Core::CoreDispatcher ^ dispatcher) {
+	auto openProjectFunction = [dispatcher]() -> bool {
 
-	return concurrency::create_async([]() -> bool {
+		Windows::Storage::StorageFile ^ file = nullptr;
+
+		auto openOnUithread = dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
+							 ref new Windows::UI::Core::DispatchedHandler([&file]() -> void {
+			auto filePicker = ref new Windows::Storage::Pickers::FileOpenPicker();
+			filePicker->FileTypeFilter->Append(L".eggproj");
+
+			auto asyncOpenFiles = filePicker->PickSingleFileAsync();
+
+			auto openTask = concurrency::create_task(asyncOpenFiles);
+
+			file = openTask.get();
+		}));
+
+		auto oTask = concurrency::create_task(openOnUithread);
+
+		oTask.get();
+
+		if(file != nullptr) {
+			OutputDebugString(file->Path->Data());
+		} else {
+			OutputDebugString(L"No file were opened\r\n");
+		}
+
+		return true;
+	};
+
+
+	if(HasProject) {
+		return ConcurrencyHelper::ChainConditionalConcurrentCalls<bool>(CloseProject(),
+																		openProjectFunction,
+																		true);
+	}
+
+	return concurrency::create_task(openProjectFunction);
+}
+
+concurrency::task<bool> EggEditor::EggProjectManager::SaveProjectAs() {
+
+	return concurrency::create_task([]() -> bool {
 		return true;
 	});
 }
 
-Windows::Foundation::IAsyncOperation<bool> ^ EggEditor::EggProjectManager::SaveProjectAs() {
-
-	return concurrency::create_async([]() -> bool {
+concurrency::task<bool> EggEditor::EggProjectManager::SaveProject() {
+	return concurrency::create_task([]() -> bool {
 		return true;
 	});
 }
 
-Windows::Foundation::IAsyncOperation<bool> ^ EggEditor::EggProjectManager::SaveProject() {
+concurrency::task<bool> EggEditor::EggProjectManager::CloseProject() {
 
-	return concurrency::create_async([]() -> bool {
+	return concurrency::create_task([]() -> bool {
 		return true;
 	});
 }
 
-Windows::Foundation::IAsyncOperation<bool> ^ EggEditor::EggProjectManager::CloseProject() {
+concurrency::task<bool> EggEditor::EggProjectManager::NewProject() {
 
-	return concurrency::create_async([]() -> bool {
-		return true;
-	});
-}
-
-Windows::Foundation::IAsyncOperation<bool> ^ EggEditor::EggProjectManager::NewProject() {
-
-	return concurrency::create_async([]() -> bool {
+	return concurrency::create_task([]() -> bool {
 		return true;
 	});
 }

@@ -32,14 +32,12 @@ namespace EggEditor {
 			}
 		}
 
-
-
-		 Windows::Foundation::IAsyncOperation<bool> ^ OpenProject();
-		 Windows::Foundation::IAsyncOperation<bool> ^ SaveProjectAs();
-		 Windows::Foundation::IAsyncOperation<bool> ^ SaveProject();
-		 Windows::Foundation::IAsyncOperation<bool> ^ CloseProject();
-		 Windows::Foundation::IAsyncOperation<bool> ^ NewProject();
-
+	internal:
+		 concurrency::task<bool> OpenProject(Windows::UI::Core::CoreDispatcher^ dispatcher);
+		 concurrency::task<bool> SaveProjectAs();
+		 concurrency::task<bool> SaveProject();
+		 concurrency::task<bool> CloseProject();
+		 concurrency::task<bool> NewProject();
 	};
 
 }
