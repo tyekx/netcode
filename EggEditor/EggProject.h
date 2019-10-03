@@ -50,52 +50,6 @@ namespace EggEditor {
 			}
 		}
 
-		/*
-		void NewProject(IDialogHandler ^ handler) {
-			if(projectOpen) {
-				CloseProject(nullptr);
-			}
-		}
-
-		void OpenProject() {
-
-		}
-
-		void SaveProject() {
-
-		}
-		void CloseProject(IDialogHandler ^ handler) {
-			EggProject ^ pThis = this;
-
-			if(Root->IsContentDirty) {
-				auto dialog = ref new Windows::UI::Xaml::Controls::ContentDialog();
-				dialog->Title = L"Unsaved Changes";
-				dialog->PrimaryButtonText = L"Save";
-				dialog->SecondaryButtonText = L"Discard";
-				dialog->CloseButtonText = L"Cancel";
-				dialog->DefaultButton = Windows::UI::Xaml::Controls::ContentDialogButton::Primary;
-				auto asyncPromise = dialog->ShowAsync();
-
-				auto task = concurrency::create_task(asyncPromise);
-
-				task.then([handler, pThis](Windows::UI::Xaml::Controls::ContentDialogResult result) -> void {
-					switch(result) {
-					case Windows::UI::Xaml::Controls::ContentDialogResult::Primary:
-						if(handler != nullptr) handler->PrimaryOption();
-						break;
-					case Windows::UI::Xaml::Controls::ContentDialogResult::Secondary:
-						if(handler != nullptr) handler->SecondaryOption();
-						break;
-					default:
-						if(handler != nullptr) handler->Cancel();
-						break;
-					}
-				});
-			} else {
-				if(handler != nullptr) handler->SecondaryOption();
-			}
-		}*/
-
 		void Serialize(IJsonWriter ^ writer) {
 
 		}

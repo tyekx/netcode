@@ -28,21 +28,32 @@ using namespace Windows::UI::Xaml::Navigation;
 UC_AssetBrowser::UC_AssetBrowser()
 {
 	InitializeComponent();
-	rootFolder = ref new ProjectFolderDataContext();
-	rootFolder->Name = L"/";
+	Static::ProjectManager->OnOpened += ref new EggEditor::ProjectEventCallback(this, &EggEditor::UC_AssetBrowser::EventHandler_OpenedProject);
+}
+
+void EggEditor::UC_AssetBrowser::EventHandler_OpenedProject(EggEditor::EggProject ^ proj) {
+	rootFolder = (ProjectFolderDataContext ^)proj->Root;
 	ChangeProjectFolder(rootFolder);
 }
 
+void EggEditor::UC_AssetBrowser::EventHandler_ClosedProject(EggEditor::EggProject ^ proj) {
+	ChangeProjectFolder(nullptr);
+	rootFolder = nullptr;
+}
+
 void EggEditor::UC_AssetBrowser::CtxBtnNewProjectFolder_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e) {
-	//Static::Project->CloseProject();
-	auto man = ref new EggProjectManager();
-	man->OpenProject(Dispatcher);
+	if(currentFolder == nullptr) {
+		return;
+	}
 	auto newFolder = ref new ProjectFolderDataContext();
 	newFolder->Name = L"New Folder";
 	newFolder->ParentFolder = currentFolder;
 }
 
 void EggEditor::UC_AssetBrowser::CtxBtnNewMaterial_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e) {
+	if(currentFolder == nullptr) {
+		return;
+	}
 	auto newMaterial = ref new AssetDataContext();
 	newMaterial->AssetType = ASSET_TYPE_MATERIAL;
 	newMaterial->Name = L"New material";
@@ -50,6 +61,9 @@ void EggEditor::UC_AssetBrowser::CtxBtnNewMaterial_OnClick(Platform::Object ^ se
 }
 
 void EggEditor::UC_AssetBrowser::CtxBtnNewShadedMesh_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e) {
+	if(currentFolder == nullptr) {
+		return;
+	}
 	auto newShadedMesh = ref new AssetDataContext();
 	newShadedMesh->Name = L"New SM";
 	newShadedMesh->AssetType = ASSET_TYPE_SHADED_MESH;
@@ -57,11 +71,18 @@ void EggEditor::UC_AssetBrowser::CtxBtnNewShadedMesh_OnClick(Platform::Object ^ 
 }
 
 void EggEditor::UC_AssetBrowser::BreadCrumb_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::Input::TappedRoutedEventArgs ^ e) {
+	if(currentFolder == nullptr) {
+		return;
+	}
 	ChangeProjectFolder((ProjectFolderDataContext ^)(((UC_BreadCrumb ^)sender)->BreadCrumbRef));
 }
 
 
 void EggEditor::UC_AssetBrowser::ImportAsset(Windows::Storage::StorageFile ^ file) {
+	if(currentFolder == nullptr) {
+		return;
+	}
+
 	unsigned int assetType = UC_Asset::GetAssetTypeFromExtension(file->FileType);
 
 	if(assetType != UINT_MAX) {
@@ -88,6 +109,12 @@ void EggEditor::UC_AssetBrowser::ImplDetail_RecursiveAddBreadCrumb(ProjectFolder
 
 void EggEditor::UC_AssetBrowser::ChangeProjectFolder(ProjectFolderDataContext ^ folder) {
 	currentFolder = folder;
+
+	if(currentFolder == nullptr) {
+		breadCrumbPanel->Children->Clear();
+		return;
+	}
+
 	assetBrowserPanel->ItemsSource = folder->Children;
 
 	/*

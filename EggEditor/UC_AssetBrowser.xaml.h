@@ -6,6 +6,7 @@
 #pragma once
 
 #include "UC_AssetBrowser.g.h"
+#include "EggProject.h"
 #include "ProjectFolderDataContext.h"
 
 namespace EggEditor
@@ -23,6 +24,9 @@ namespace EggEditor
 
 	private:
 
+		void EventHandler_OpenedProject(EggProject ^ proj);
+		void EventHandler_ClosedProject(EggProject ^ proj);
+
 		void CtxBtnNewProjectFolder_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e);
 		void CtxBtnNewMaterial_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e);
 		void CtxBtnNewShadedMesh_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e);
@@ -33,7 +37,7 @@ namespace EggEditor
 		void ChangeProjectFolder(ProjectFolderDataContext ^ folder);
 		void OpenAssetHandler(Platform::Object ^ obj);
 		/*
-		this function is a helper function for ChangeProjectFolder, do not call it
+		Implementation details
 		*/
 		void ImplDetail_RecursiveAddBreadCrumb(ProjectFolderDataContext ^ folder);
 	};

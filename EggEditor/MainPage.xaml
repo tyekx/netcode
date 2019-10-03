@@ -36,7 +36,7 @@
         <MenuBar VerticalAlignment="Center" Height="35" Grid.ColumnSpan="3" Background="#FF004E83" BorderThickness="0,0,0,2">
             <MenuBarItem Title="File">
                 <MenuFlyoutItem Text="New" Icon="Add" Click="FileMenuBtnNew_OnClick"/>
-                <MenuFlyoutItem Text="Open" Icon="OpenFile">
+                <MenuFlyoutItem Text="Open" Icon="OpenFile" Click="FileMenuBtnOpenProject_OnClick">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Key="O" Modifiers="Control"></KeyboardAccelerator>
                     </MenuFlyoutItem.KeyboardAccelerators>

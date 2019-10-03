@@ -18,6 +18,7 @@
 #include "UC_Scene.xaml.h"
 #include "UC_Properties.xaml.h"
 #include "UC_AssetBrowser.xaml.h"
+#include "Static.h"
 
 using namespace EggEditor;
 
@@ -254,7 +255,7 @@ void EggEditor::MainPage::EditMenuBtnImport_OnClick(Platform::Object ^ sender, W
 	});
 }
 
-void EggEditor::MainPage::FileMenuBtnNew_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e) {
+void EggEditor::MainPage::FileMenuBtnNew_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e) {/*
 	auto picker = ref new Windows::Storage::Pickers::FileSavePicker();
 	auto fileTypePostfixes = ref new Platform::Collections::Vector<Platform::String^>();
 	fileTypePostfixes->Append(L".eggproj");
@@ -286,6 +287,20 @@ void EggEditor::MainPage::FileMenuBtnNew_OnClick(Platform::Object ^ sender, Wind
 			});
 		}
 
-    });
+    });*/
 
+	auto newProjectTask = Static::ProjectManager->NewProject();
+
+	newProjectTask.then([](bool result) -> void {
+		if(result) {
+			Static::ProjectManager->InvokeOnOpened();
+		}
+	});
+}
+
+
+void EggEditor::MainPage::FileMenuBtnOpenProject_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e)
+{
+	// from here, the proper events will be fired
+	Static::ProjectManager->OpenProject();
 }

@@ -1,18 +1,18 @@
 #pragma once
 
-#include "EggProject.h"
+#include "EggProjectManager.h"
 
 namespace EggEditor {
 
-	public ref class Static sealed {
-		static EggProject ^ project;
-	public:
-		static property EggProject ^ Project {
-			EggProject ^ get() {
-				if(project == nullptr) {
-					project = ref new EggProject();
+	ref class Static sealed {
+		static EggProjectManager ^ projectManager;
+	internal:
+		static property EggProjectManager ^ ProjectManager {
+			EggProjectManager ^ get() {
+				if(projectManager == nullptr) {
+					projectManager = ref new EggProjectManager();
 				}
-				return project;
+				return projectManager;
 			}
 		}
 	};

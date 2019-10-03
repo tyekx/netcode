@@ -40,9 +40,10 @@ namespace EggEditor
 
 
 		void FileMenuBtnNew_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e);
+		void FileMenuBtnOpenProject_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e);
+
 		void EditMenuBtnImport_OnClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e);
+
 		void OnOpenAsset(Platform::Object ^ asset);
-
-
 	};
 }

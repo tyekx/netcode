@@ -32,8 +32,13 @@ namespace EggEditor {
 			}
 		}
 
+
+		void InvokeOnOpened() {
+			OnOpened(projectFile);
+		}
+
 	internal:
-		 concurrency::task<bool> OpenProject(Windows::UI::Core::CoreDispatcher^ dispatcher);
+		 concurrency::task<bool> OpenProject();
 		 concurrency::task<bool> SaveProjectAs();
 		 concurrency::task<bool> SaveProject();
 		 concurrency::task<bool> CloseProject();
