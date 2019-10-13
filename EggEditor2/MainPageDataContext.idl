@@ -1,0 +1,18 @@
+import "ProjectDataContext.idl";
+
+namespace EggEditor2{
+
+	[bindable]
+	[default_interface]
+	runtimeclass MainPageDataContext : Windows.UI.Xaml.Data.INotifyPropertyChanged {
+
+		MainPageDataContext();
+
+		ProjectDataContext Project;
+
+		Int32 MainWindowState;
+		Int32 SubWindowState;
+
+	}
+
+}

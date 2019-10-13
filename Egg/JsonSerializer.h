@@ -16,7 +16,7 @@ namespace Egg {
 
 			static json11::Json Serialize(const TransformComponent & tcomp);
 
-			static json11::Json Serialize(const MeshComponent & mc);
+			static json11::Json Serialize(const ModelComponent & mc);
 
 			static json11::Json Serialize(const ScriptComponent & mc);
 
@@ -30,7 +30,7 @@ namespace Egg {
 
 			static bool Deserialize(const json11::Json & json, TransformComponent & tcomp);
 
-			static bool Deserialize(const json11::Json & json, MeshComponent & mcomp);
+			static bool Deserialize(const json11::Json & json, ModelComponent & mcomp);
 
 			static bool Deserialize(const json11::Json & json, ScriptComponent & scomp);
 

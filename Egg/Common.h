@@ -9,6 +9,8 @@
 #include <memory>
 #include <vector>
 #include <dxgi1_6.h>
+#include <wrl.h>
+
 
 template<typename T>
 using com_ptr = Microsoft::WRL::ComPtr<T>;

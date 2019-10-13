@@ -37,7 +37,11 @@ namespace Egg {
 		float elapsedTime;
 	public:
 		virtual ~App() = default;
-		App() = default;
+		App() : device{ nullptr }, swapChain{ nullptr }, commandQueue{ nullptr }, viewPort{}, scissorRect{}, backBufferDepth{ }, rtvDescriptorHandleIncrementSize{}, rtvHandle{}, rtvDescriptorHeap{ nullptr }, 
+			renderTargets{}, aspectRatio{ 1.0 }, fence{ nullptr }, fenceEvent{ NULL }, fenceValue{ 0 }, frameIndex{ 0 }, stopwatch{}, scene{ nullptr }, elapsedTime{ 0.0f } {
+		
+			stopwatch.Reset();
+		}
 
 		void Run() {
 			float deltaTime = stopwatch.Restart();
@@ -166,13 +170,14 @@ namespace Egg {
 		/*
 		User input
 		*/
-		virtual void ClearInput() { }
 
-		virtual void KeyPressed(uint8_t keyIndex, uint8_t modifiers) { }
-		virtual void KeyReleased(uint8_t keyIndex, uint8_t modifiers) { }
+		virtual void KeyPressed(uint32_t keyCode) { }
+		virtual void KeyReleased(uint32_t keyCode) { }
 
-		virtual void MousePressed(uint8_t mouseKeyIndex, uint8_t modifiers) { }
-		virtual void MouseReleased(uint8_t mouseKeyIndex, uint8_t modifiers) { }
+		virtual void Focused() { }
+		virtual void Blur() { }
+
+		virtual void MouseMove(int x, int y) { }
 
 		/*
 		Editor

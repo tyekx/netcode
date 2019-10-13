@@ -2,4 +2,6 @@
 Build/
 Bin/
 EggEditor/Generated\ Files
+EggEditor2/Generated\ Files
+EggEditor2/x64
 packages/

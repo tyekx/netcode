@@ -1,0 +1,18 @@
+﻿<UserControl
+    x:Class="EggEditor2.UC_EditableTextBlock"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EggEditor2"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <UserControl.DataContext>
+        <local:EditableTextBlockDataContext x:Name="TypedDataContext" />
+    </UserControl.DataContext>
+    
+    <Grid>
+        <TextBox></TextBox>
+    </Grid>
+    
+</UserControl>

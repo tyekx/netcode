@@ -98,7 +98,9 @@ concurrency::task<bool> EggEditor::EggProjectManager::NewProject() {
 	
 	auto saveTask = concurrency::create_task(saveAsync);
 
-	return saveTask.then([](Windows::Storage::StorageFile^ file) -> bool {
+	return saveTask.then([this](Windows::Storage::StorageFile^ file) -> bool {
+
+
 		return file != nullptr;
 	});
 }

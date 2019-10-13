@@ -11,6 +11,36 @@
   <Type Name="TransformComponent">
     <DisplayString>{{ Position={Position}, Rotation={Rotation}, Scale={Scale} }}</DisplayString>
   </Type>
+  <Type Name="Egg::Asset::Model">
+    <Expand>
+      <ArrayItems>
+        <Size>bonesLength</Size>
+        <ValuePointer>bones</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  <Type Name="Egg::Math::Float4x4">
+    <DisplayString>{{ Float4x4, Trace = ({ _00 }, {_11}, {_22}, {_33}) }}</DisplayString>
+    <!-- override default list so that the swizzle does not show -->
+    <Expand>
+      <Item Name="[00]">_00</Item>
+      <Item Name="[01]">_01</Item>
+      <Item Name="[02]">_02</Item>
+      <Item Name="[03]">_03</Item>
+      <Item Name="[10]">_10</Item>
+      <Item Name="[11]">_11</Item>
+      <Item Name="[12]">_12</Item>
+      <Item Name="[13]">_13</Item>
+      <Item Name="[20]">_20</Item>
+      <Item Name="[21]">_21</Item>
+      <Item Name="[22]">_22</Item>
+      <Item Name="[23]">_23</Item>
+      <Item Name="[30]">_30</Item>
+      <Item Name="[31]">_31</Item>
+      <Item Name="[32]">_32</Item>
+      <Item Name="[33]">_33</Item>
+    </Expand>
+  </Type>
   <Type Name="Egg::Math::Float4">
     <DisplayString>{{ Float4, x={x}, y={y}, z={z}, w={w} }}</DisplayString>
     <!-- override default list so that the swizzle does not show -->

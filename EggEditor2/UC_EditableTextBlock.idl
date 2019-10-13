@@ -1,0 +1,20 @@
+namespace EggEditor2
+{
+	[bindable]
+	[default_interface]
+	runtimeclass EditableTextBlockDataContext : Windows.UI.Xaml.Data.INotifyPropertyChanged {
+		EditableTextBlockDataContext();
+	
+		Boolean IsEditing;
+
+		String Text;
+	}
+
+    [default_interface]
+    runtimeclass UC_EditableTextBlock : Windows.UI.Xaml.Controls.UserControl
+    {
+        UC_EditableTextBlock();
+
+		String Value;
+    }
+}

@@ -25,7 +25,7 @@
 	};
 }
 
- bool Egg::Serializer::JsonSerializer::Deserialize(const json11::Json & json, MeshComponent & mcomp) {
+ bool Egg::Serializer::JsonSerializer::Deserialize(const json11::Json & json, ModelComponent & mcomp) {
 	 return false;
 }
 
@@ -112,7 +112,7 @@
 	return true;
 }
 
- json11::Json Egg::Serializer::JsonSerializer::Serialize(const MeshComponent & mc) {
+ json11::Json Egg::Serializer::JsonSerializer::Serialize(const ModelComponent & mc) {
 	 return json11::Json::object{};
 }
 
@@ -133,8 +133,8 @@
 		obj["transformComponent"] = Serialize(*(go->GetComponent<TransformComponent>()));
 	}
 
-	if(go->HasComponent<MeshComponent>()) {
-		obj["meshComponent"] = Serialize(*(go->GetComponent<MeshComponent>()));
+	if(go->HasComponent<ModelComponent>()) {
+		obj["meshComponent"] = Serialize(*(go->GetComponent<ModelComponent>()));
 	}
 
 	if(go->HasComponent<ScriptComponent>()) {

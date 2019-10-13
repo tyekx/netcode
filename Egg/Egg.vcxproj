@@ -40,9 +40,20 @@
       <PreprocessorDefinitions>_EGG_SDK_VERSION=$(TargetPlatformVersion.Substring(5,5));%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Lib />
+    <Lib>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Animation.h" />
+    <ClInclude Include="AnimationComponent.h" />
     <ClInclude Include="App.h" />
+    <ClInclude Include="Asset\Animation.h" />
+    <ClInclude Include="Asset\Bone.h" />
+    <ClInclude Include="Asset\Material.h" />
+    <ClInclude Include="Asset\Mesh.h" />
+    <ClInclude Include="Asset\Model.h" />
+    <ClInclude Include="Blackboard.h" />
     <ClInclude Include="Camera\Camera.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Components.h" />
@@ -50,14 +61,18 @@
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="EggMpl.hpp" />
     <ClInclude Include="EggSceneConf.h" />
+    <ClInclude Include="Exporter.h" />
+    <ClInclude Include="File.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectObserver.h" />
     <ClInclude Include="Importer.h" />
+    <ClInclude Include="Input.h" />
     <ClInclude Include="JsonSerializer.h" />
     <ClInclude Include="LuaApi.h" />
     <ClInclude Include="LuaManager.h" />
     <ClInclude Include="LuaScript.h" />
     <ClInclude Include="LuaScriptFile.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="Math\Bool1.h" />
     <ClInclude Include="Math\Bool2.h" />
     <ClInclude Include="Math\Bool2Swizzle.hpp" />
@@ -88,18 +103,23 @@
     <ClInclude Include="Math\UInt3Swizzle.hpp" />
     <ClInclude Include="Math\UInt4.h" />
     <ClInclude Include="Math\UInt4Swizzle.hpp" />
-    <ClInclude Include="MeshComponent.h" />
+    <ClInclude Include="ModelComponent.h" />
     <ClInclude Include="Mesh\Geometry.h" />
-    <ClInclude Include="Mesh\Material.h" />
+    <ClInclude Include="Mesh\MultiMesh.h" />
     <ClInclude Include="Mesh\Prefabs.h" />
     <ClInclude Include="Mesh\Shaded.h" />
     <ClInclude Include="Path.h" />
+    <ClInclude Include="PhysxComponent.h" />
+    <ClInclude Include="PhysxSystem.h" />
+    <ClInclude Include="PipelineState.h" />
     <ClInclude Include="ProgramArgs.h" />
     <ClInclude Include="PsoManager.h" />
+    <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneObserver.h" />
     <ClInclude Include="ScriptComponent.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="Signature.h" />
     <ClInclude Include="SimpleApp.h" />
     <ClInclude Include="Stopwatch.h" />
     <ClInclude Include="Texture2D.h" />
@@ -108,8 +128,10 @@
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Exporter.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Importer.cpp" />
+    <ClCompile Include="Input.cpp" />
     <ClCompile Include="Internal.cpp" />
     <ClCompile Include="JsonSerializer.cpp" />
     <ClCompile Include="LuaApi.cpp" />
@@ -130,7 +152,10 @@
     <ClCompile Include="Math\UInt2.cpp" />
     <ClCompile Include="Math\UInt3.cpp" />
     <ClCompile Include="Math\UInt4.cpp" />
+    <ClCompile Include="Mesh\Geometry.cpp" />
     <ClCompile Include="Path.cpp" />
+    <ClCompile Include="PhysxSystem.cpp" />
+    <ClCompile Include="PipelineState.cpp" />
     <ClCompile Include="PsoManager.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Shader.cpp" />
@@ -139,6 +164,12 @@
     <ClCompile Include="Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Shaders\AvatarVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\AvatarPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
     <FxCompile Include="Shaders\cbBasicVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
@@ -159,6 +190,9 @@
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="Egg.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

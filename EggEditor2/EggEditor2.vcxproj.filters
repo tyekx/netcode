@@ -1,0 +1,178 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Midl Include="App.idl" />
+    <Midl Include="MainPage.idl" />
+    <Midl Include="ProjectDataContext.idl">
+      <Filter>DataContexts</Filter>
+    </Midl>
+    <Midl Include="ProjectFolderDataContext.idl">
+      <Filter>DataContexts</Filter>
+    </Midl>
+    <Midl Include="AssetDataContext.idl">
+      <Filter>DataContexts</Filter>
+    </Midl>
+    <Midl Include="AssetUIDataContext.idl">
+      <Filter>DataContexts</Filter>
+    </Midl>
+    <Midl Include="ProjectFolderUIDataContext.idl">
+      <Filter>DataContexts</Filter>
+    </Midl>
+    <Midl Include="IAsset.idl">
+      <Filter>DataContexts</Filter>
+    </Midl>
+    <Midl Include="IntParamToVisibility.idl">
+      <Filter>Converters</Filter>
+    </Midl>
+    <Midl Include="MainPageDataContext.idl">
+      <Filter>DataContexts</Filter>
+    </Midl>
+    <Midl Include="AssetBrowserDataContext.idl">
+      <Filter>DataContexts</Filter>
+    </Midl>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="App.cpp" />
+    <ClCompile Include="MainPage.cpp" />
+    <ClCompile Include="ProjectDataContext.cpp">
+      <Filter>DataContexts</Filter>
+    </ClCompile>
+    <ClCompile Include="AssetUIDataContext.cpp">
+      <Filter>DataContexts</Filter>
+    </ClCompile>
+    <ClCompile Include="AssetDataContext.cpp">
+      <Filter>DataContexts</Filter>
+    </ClCompile>
+    <ClCompile Include="ProjectFolderDataContext.cpp">
+      <Filter>DataContexts</Filter>
+    </ClCompile>
+    <ClCompile Include="ProjectFolderUIDataContext.cpp">
+      <Filter>DataContexts</Filter>
+    </ClCompile>
+    <ClCompile Include="Generated Files\module.g.cpp" />
+    <ClCompile Include="IntParamToVisibility.cpp">
+      <Filter>Converters</Filter>
+    </ClCompile>
+    <ClCompile Include="MainPageDataContext.cpp">
+      <Filter>DataContexts</Filter>
+    </ClCompile>
+    <ClCompile Include="AssetBrowserDataContext.cpp">
+      <Filter>DataContexts</Filter>
+    </ClCompile>
+    <ClCompile Include="EditableTextBlockDataContext.cpp">
+      <Filter>DataContexts</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="ProjectDataContext.h">
+      <Filter>DataContexts</Filter>
+    </ClInclude>
+    <ClInclude Include="AssetUIDataContext.h">
+      <Filter>DataContexts</Filter>
+    </ClInclude>
+    <ClInclude Include="AssetDataContext.h">
+      <Filter>DataContexts</Filter>
+    </ClInclude>
+    <ClInclude Include="ProjectFolderUIDataContext.h">
+      <Filter>DataContexts</Filter>
+    </ClInclude>
+    <ClInclude Include="ProjectFolderDataContext.h">
+      <Filter>DataContexts</Filter>
+    </ClInclude>
+    <ClInclude Include="IntParamToVisibility.h">
+      <Filter>Converters</Filter>
+    </ClInclude>
+    <ClInclude Include="MainPageDataContext.h">
+      <Filter>DataContexts</Filter>
+    </ClInclude>
+    <ClInclude Include="AssetBrowserDataContext.h">
+      <Filter>DataContexts</Filter>
+    </ClInclude>
+    <ClInclude Include="EditableTextBlockDataContext.h">
+      <Filter>DataContexts</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\Wide310x150Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\StoreLogo.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square150x150Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SplashScreen.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\LockScreenLogo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Assets">
+      <UniqueIdentifier>{e48dc53e-40b1-40cb-970a-f89935452892}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Xaml">
+      <UniqueIdentifier>{d2ef996a-2424-4e42-bff7-0d630c04baa8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DataContexts">
+      <UniqueIdentifier>{0b503552-101a-47d6-bea3-f9accd59ce65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Converters">
+      <UniqueIdentifier>{2300185e-a3d2-4fa7-85a8-49b350ef43ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Xaml\Asset">
+      <UniqueIdentifier>{0144116d-3b0c-4b59-a7fd-4b5a915653d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Xaml\Folder">
+      <UniqueIdentifier>{f344939e-8784-4975-b915-e3b3cea4ab41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Xaml\Common">
+      <UniqueIdentifier>{057f8226-1417-4325-a707-ef2b85bf6b45}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PropertySheet.props" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="MainPage.xaml">
+      <Filter>Xaml</Filter>
+    </Page>
+    <Page Include="UC_Asset.xaml">
+      <Filter>Xaml\Asset</Filter>
+    </Page>
+    <Page Include="UC_AssetBrowser.xaml">
+      <Filter>Xaml\Asset</Filter>
+    </Page>
+    <Page Include="UC_AssetEditor.xaml">
+      <Filter>Xaml\Asset</Filter>
+    </Page>
+    <Page Include="UC_ProjectFolder.xaml">
+      <Filter>Xaml\Folder</Filter>
+    </Page>
+    <Page Include="UC_EditableTextBlock.xaml">
+      <Filter>Xaml\Common</Filter>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <Filter>Xaml</Filter>
+    </ApplicationDefinition>
+  </ItemGroup>
+</Project>

@@ -12,6 +12,9 @@ namespace Egg {
 		static std::wstring ShaderRoot;
 
 	public:
+
+		static bool FileExists(const wchar_t * path);
+
 		static void SetMediaRoot(const std::wstring & mediaPath);
 		static void SetShaderRoot(const std::wstring & shaderPath);
 

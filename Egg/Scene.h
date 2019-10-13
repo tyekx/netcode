@@ -21,7 +21,7 @@ namespace Egg {
 		Scene(const Scene &) = delete;
 		void operator=(const Scene &) = delete;
 
-		Scene(unsigned int maxSize = 100) : Objects{ nullptr }, ObjectCount{ 0 }, MaxCount{ maxSize } EGG_DEBUG_ENGINE_CONSTRUCT_OBSERVER {
+		Scene(unsigned int maxSize = 512) : Objects{ nullptr }, ObjectCount{ 0 }, MaxCount{ maxSize } EGG_DEBUG_ENGINE_CONSTRUCT_OBSERVER{
 			Objects = reinterpret_cast<GameObject *>(std::malloc(MaxCount * sizeof(GameObject)));
 		}
 

@@ -1,0 +1,20 @@
+import "IAsset.idl";
+
+namespace EggEditor2{
+
+
+	[bindable]
+	[default_interface]
+	runtimeclass AssetBrowserDataContext : Windows.UI.Xaml.Data.INotifyPropertyChanged {
+
+		AssetBrowserDataContext();
+		
+		IAsset Root{ get; };
+		IAsset CurrentFolder{ get; };
+
+		Windows.Foundation.Collections.IObservableVector<IAsset> BreadCrumbs{ get; };
+
+		void ChangeFolder(IAsset folder);
+
+	}
+}

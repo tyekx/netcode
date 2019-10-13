@@ -1,0 +1,12 @@
+namespace EggEditor2{
+
+	[bindable]
+	[default_interface]
+	runtimeclass ProjectDataContext : Windows.UI.Xaml.Data.INotifyPropertyChanged {
+		String Name;
+		String FilePath;
+
+		ProjectDataContext();
+	}
+
+}

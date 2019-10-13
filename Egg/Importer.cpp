@@ -8,6 +8,7 @@
 #include <assimp/postprocess.h>
 
 #include <system_error>
+#include <cstdio>
 
 #include <DirectXTex/DirectXTex.h>
 
@@ -119,11 +120,86 @@ namespace Egg {
 			Egg::Mesh::Geometry::P geometry = Egg::Mesh::IndexedGeometry::Create(device, &(vertices.at(0)), (unsigned int)(vertices.size() * sizeof(PNT_Vertex)), (unsigned int)sizeof(PNT_Vertex),
 																				 &(indices.at(0)), (unsigned int)(indices.size() * 4), DXGI_FORMAT_R32_UINT);
 
-			geometry->AddInputElement({ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
-			geometry->AddInputElement({ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
-			geometry->AddInputElement({ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+			geometry->SetVertexType(Egg::PNT_Vertex::type);
 
 			return geometry;
+		}
+
+
+		void ImportModel(const MediaPath & mediaFile, Asset::Model & model) {
+			std::string mediaFilePath = Egg::Utility::ToNarrowString(mediaFile.GetAbsolutePath());
+			ImportModel(mediaFilePath.c_str(), model);
+		}
+
+		void ImportModel(const char * filePath, Asset::Model & m) {
+			std::string path = filePath;
+
+			FILE * file;
+			errno_t r = fopen_s(&file, path.c_str(), "rb");
+
+			ASSERT(r == 0, "Failed to open file for reading: %s", path.c_str());
+
+			if(file == nullptr) {
+				return;
+			}
+
+			unsigned int totalSize;
+			fread(&totalSize, sizeof(unsigned int), 1, file);
+
+			LinearAllocator allocator{ totalSize };
+			m.memoryAllocation = allocator.ptr;
+
+			fread(&m.meshesLength, sizeof(unsigned int), 1, file);
+
+			m.meshes = reinterpret_cast<Asset::Mesh *>(allocator.Allocate(m.meshesLength * sizeof(Asset::Mesh)));
+
+			for(unsigned int i = 0; i < m.meshesLength; ++i) {
+				fread(&m.meshes[i].materialId, sizeof(unsigned int), 1, file);
+				fread(&m.meshes[i].vertexType, sizeof(unsigned int), 1, file);
+				fread(&m.meshes[i].vertexSize, sizeof(unsigned int), 1, file);
+				fread(&m.meshes[i].verticesLength, sizeof(unsigned int), 1, file);
+
+				m.meshes[i].vertices = allocator.Allocate(m.meshes[i].verticesLength);
+
+				fread(m.meshes[i].vertices, 1, m.meshes[i].verticesLength, file);
+
+				fread(&m.meshes[i].indicesLength, sizeof(unsigned int), 1, file);
+
+				m.meshes[i].indices = reinterpret_cast<unsigned int *>(allocator.Allocate(m.meshes[i].indicesLength * sizeof(unsigned int)));
+
+				fread(m.meshes[i].indices, sizeof(unsigned int), m.meshes[i].indicesLength, file);
+			}
+
+			fread(&m.materialsLength, sizeof(unsigned int), 1, file);
+			m.materials = reinterpret_cast<Asset::Material *>(allocator.Allocate(m.materialsLength * sizeof(Asset::Material)));
+			fread(m.materials, sizeof(Asset::Material), m.materialsLength, file);
+
+			fread(&m.bonesLength, sizeof(unsigned int), 1, file);
+			m.bones = reinterpret_cast<Asset::Bone *>(allocator.Allocate(m.bonesLength * sizeof(Asset::Bone)));
+			fread(m.bones, sizeof(Asset::Bone), m.bonesLength, file);
+
+			fread(&m.animationsLength, sizeof(unsigned int), 1, file);
+			m.animations = reinterpret_cast<Asset::Animation *>(allocator.Allocate(m.animationsLength * sizeof(Asset::Animation)));
+			for(unsigned int i = 0; i < m.animationsLength; ++i) {
+				fread(m.animations[i].name, 1, sizeof(m.animations[i].name), file);
+				fread(&m.animations[i].duration, sizeof(double), 1, file);
+				fread(&m.animations[i].ticksPerSecond, sizeof(double), 1, file);
+				fread(&m.animations[i].boneDataLength, sizeof(unsigned int), 1, file);
+
+				m.animations[i].boneData = reinterpret_cast<Asset::BoneAnimation *>(allocator.Allocate(m.animations[i].boneDataLength * sizeof(Asset::BoneAnimation)));
+				for(unsigned int j = 0; j < m.animations[i].boneDataLength; ++j) {
+					fread(&(m.animations[i].boneData[j].boneId), sizeof(int), 1, file);
+					fread(&(m.animations[i].boneData[j].preState), sizeof(Egg::Asset::AnimationState), 1, file);
+					fread(&(m.animations[i].boneData[j].postState), sizeof(Egg::Asset::AnimationState), 1, file);
+					fread(&(m.animations[i].boneData[j].keysLength), sizeof(unsigned int), 1, file);
+
+					m.animations[i].boneData[j].keys = reinterpret_cast<Asset::AnimationKey *>(allocator.Allocate(m.animations[i].boneData[j].keysLength * sizeof(Asset::AnimationKey)));
+					fread(m.animations[i].boneData[j].keys, sizeof(Asset::AnimationKey), m.animations[i].boneData[j].keysLength, file);
+				}
+			}
+
+			fclose(file);
+
 		}
 	}
 }

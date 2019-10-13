@@ -2,6 +2,7 @@
 
 #include "../Common.h"
 #include "../Utility.h"
+#include "../Vertex.h"
 
 namespace Egg {
 	namespace Mesh {
@@ -12,7 +13,7 @@ namespace Egg {
 			D3D12_INPUT_LAYOUT_DESC inputLayout;
 			D3D12_PRIMITIVE_TOPOLOGY topology;
 		public:
-			Geometry() : inputElements{}, inputLayout{}, topology{ D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST } {}
+			Geometry();
 
 			void SetTopology(D3D12_PRIMITIVE_TOPOLOGY top) {
 				topology = top;
@@ -24,6 +25,37 @@ namespace Egg {
 
 			void AddInputElement(const D3D12_INPUT_ELEMENT_DESC & ied) {
 				inputElements.push_back(ied);
+			}
+
+			void SetVertexType(unsigned int type) {
+				inputElements.clear();
+
+				AddInputElement({ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+				AddInputElement({ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+				AddInputElement({ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+
+				switch(type) {
+					case PNTWB_Vertex::type:
+						{
+							AddInputElement({ "WEIGHTS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+							AddInputElement({ "BONEIDS", 0, DXGI_FORMAT_R32G32B32A32_SINT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+						}
+						break;
+					case PNTWBTB_Vertex::type:
+						{
+							AddInputElement({ "WEIGHTS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+							AddInputElement({ "BONEIDS", 0, DXGI_FORMAT_R32G32B32A32_SINT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+							AddInputElement({ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 60, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+							AddInputElement({ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 72, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+						}
+						break;
+					case PNTTB_Vertex::type:
+						{
+							AddInputElement({ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+							AddInputElement({ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+						}
+						break;
+				}
 			}
 
 			virtual void Draw(ID3D12GraphicsCommandList * commandList) = 0;

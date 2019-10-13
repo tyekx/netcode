@@ -20,7 +20,6 @@ namespace Egg {
 		public:
 			Egg::Math::Float3 Position;
 			Egg::Math::Float3 Ahead;
-			Egg::Math::Float3 Right;
 
 			float Fov;
 			float Aspect;

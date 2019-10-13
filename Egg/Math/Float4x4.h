@@ -74,6 +74,8 @@ namespace Egg {
 			static Float4x4 Scaling(const Float3& factors) noexcept;
 
 			static Float4x4 Translation(const Float3& offset) noexcept;
+			
+			static Float4x4 Rotation(const Float4 & quaternion) noexcept;
 
 			static Float4x4 Rotation(const Float3& axis, float angle) noexcept;
 

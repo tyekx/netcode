@@ -1,0 +1,11 @@
+﻿<Application
+    x:Class="EggEditor2.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EggEditor2">
+
+    <Application.Resources>
+        <local:IntParamToVisibility x:Name="IntParamToVisibility"></local:IntParamToVisibility>
+    </Application.Resources>
+    
+</Application>

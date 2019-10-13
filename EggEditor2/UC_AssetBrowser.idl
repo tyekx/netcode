@@ -1,0 +1,8 @@
+namespace EggEditor2
+{
+    [default_interface]
+    runtimeclass UC_AssetBrowser : Windows.UI.Xaml.Controls.UserControl
+    {
+        UC_AssetBrowser();
+    }
+}

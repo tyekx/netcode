@@ -5,8 +5,8 @@
   <PropertyGroup>
     <OutDir>$(SolutionDir)Bin\</OutDir>
     <IntDir>$(SolutionDir)Build\$(ProjectName)\</IntDir>
-    <IncludePath>C:\sdk\json11\include;C:\sdk\lua\include;$(SolutionDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
-    <LibraryPath>C:\sdk\json11\lib\$(Configuration)\$(PlatformTarget)\;C:\sdk\lua\lib\;$(OutDir);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IncludePath>C:\sdk\physx\PhysX\include;C:\sdk\json11\include;C:\sdk\physx\PxShared\include;C:\sdk\lua\include;$(SolutionDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>C:\sdk\physx\PhysX\bin\win.x86_64.vc142.md\debug;C:\sdk\json11\lib\$(Configuration)\$(PlatformTarget)\;C:\sdk\lua\lib\;$(OutDir);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <FxCompile>
@@ -14,7 +14,7 @@
       <ObjectFileOutput>$(OutDir)Shaders\%(Filename).cso</ObjectFileOutput>
     </FxCompile>
     <Link>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;d3dcompiler.lib;lua5.3.0-static.lib;json11.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;d3dcompiler.lib;lua5.3.0-static.lib;json11.lib;PhysX_64.lib;PhysXFoundation_64.lib;PhysXCommon_64.lib;PhysXPvdSDK_static_64.lib;PhysXExtensions_static_64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile />
   </ItemDefinitionGroup>

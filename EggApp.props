@@ -2,7 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <EggPath>PATH=C:\sdk\assimp\bin\x64</EggPath>
+    <EggPath>PATH=C:\sdk\assimp5\bin;C:\sdk\physx\PhysX\bin\win.x86_64.vc142.mt\debug</EggPath>
   </PropertyGroup>
   <PropertyGroup>
     <LocalDebuggerEnvironment>PATH={bin_dirs};%PATH%;</LocalDebuggerEnvironment>

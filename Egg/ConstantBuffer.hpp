@@ -4,6 +4,9 @@
 #include <sstream>
 
 namespace Egg {
+	/*
+	* T must have a constexpr static int id field. Which should be a unique identifier for that specific Type
+	*/
 	template<typename T>
 	class ConstantBuffer {
 		UINT8 * mappedPtr;

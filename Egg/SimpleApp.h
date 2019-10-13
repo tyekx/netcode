@@ -37,6 +37,8 @@ namespace Egg {
 
 	public:
 
+		SimpleApp() : Egg::App{}, commandAllocator{ nullptr }, commandList{ nullptr }, depthStencilBuffer{ nullptr }, dsvHeap{ nullptr } { }
+
 		virtual void Render() override {
 			PopulateCommandList();
 

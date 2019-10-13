@@ -6,6 +6,14 @@ namespace Egg {
 	std::wstring Path::MediaRoot{};
 	std::wstring Path::ShaderRoot{};
 
+
+	bool Path::FileExists(const wchar_t * path) {
+		DWORD attribs = GetFileAttributesW(path);
+
+		return (attribs != INVALID_FILE_ATTRIBUTES) &&
+			!(attribs & FILE_ATTRIBUTE_DIRECTORY);
+	}
+
 	void Path::SetMediaRoot(const std::wstring & mediaPath) {
 		ASSERT(Path::MediaRoot.empty(), "Media Root is already set, its value is not meant to be changed after being initialized");
 
