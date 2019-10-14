@@ -12,6 +12,46 @@
 
 using namespace Egg::Math;
 
+using Quaternion = Float4;
+
+Quaternion Slerp(const Quaternion & arg0, const Quaternion & arg1, float t) {
+
+	Quaternion v0 = arg0.Normalize();
+	Quaternion v1 = arg1.Normalize();
+
+	// Compute the cosine of the angle between the two vectors.
+	double dot = v0.Dot(v1);
+
+	// If the dot product is negative, slerp won't take
+	// the shorter path. Note that v1 and -v1 are equivalent when
+	// the negation is applied to all four components. Fix by 
+	// reversing one quaternion.
+	if(dot < 0.0f) {
+		v1 = -v1;
+		dot = -dot;
+	}
+
+	const double DOT_THRESHOLD = 0.9995;
+	if(dot > DOT_THRESHOLD) {
+		// If the inputs are too close for comfort, linearly interpolate
+		// and normalize the result.
+
+		Quaternion result = v0 + (v1 - v0) * t;
+		return result.Normalize();
+	}
+
+	// Since dot is in range [0, DOT_THRESHOLD], acos is safe
+	float theta_0 = acosf(dot);        // theta_0 = angle between input vectors
+	float theta = theta_0 * t;          // theta = angle between v0 and result
+	float sin_theta = sinf(theta);     // compute this value only once
+	float sin_theta_0 = sinf(theta_0); // compute this value only once
+
+	float s0 = cosf(theta) - dot * sin_theta / sin_theta_0;  // == sin(theta_0 - theta) / sin(theta_0)
+	float s1 = sin_theta / sin_theta_0;
+
+	return ( v0 * s0) + ( v1 * s1);
+}
+
 class EggApp : public Egg::SimpleApp {
 protected:
 	Egg::Mesh::MultiMesh::P multi;
@@ -30,10 +70,10 @@ public:
 	EggApp() : Egg::SimpleApp{}, multi{}, ybotModel{}, cb{}, perFrameCb{}, boneDataCb{}, baseCam{}, pxSys{}, scene{}, speed{}, mouseSpeed{}, animT{ 0.0f } { }
 
 	void UpdateAnimation(float dt) {
-		animT += dt;
+		animT += dt * 10.0f;
 
 
-		Egg::Asset::Animation & a = ybotModel.animations[2];
+		Egg::Asset::Animation & a = ybotModel.animations[0];
 		animT = fmodf(animT, (float)a.duration);
 		
 		float timeSinceLastTick = 0.0f;
@@ -50,6 +90,7 @@ public:
 
 		float lerpArg = timeSinceLastTick / timeGap;
 
+		Float4x4 locals[64];
 		for(unsigned int i = 0; i < a.boneDataLength; ++i) {
 			Float3 posA = a.boneData[i].keys[keysId - 1].position;
 			Float3 posB = a.boneData[i].keys[keysId].position;
@@ -57,19 +98,20 @@ public:
 
 			Float4 quatA = a.boneData[i].keys[keysId - 1].rotation;
 			Float4 quatB = a.boneData[i].keys[keysId].rotation;
-			Float4x4 R = Float4x4::Rotation(quatA * (1 - lerpArg) + quatB * lerpArg);
+			Float4x4 R = Float4x4::Rotation(Slerp(quatA, quatB, lerpArg));
 
 			Float3 scaleA = a.boneData[i].keys[keysId - 1].scale;
 			Float3 scaleB = a.boneData[i].keys[keysId].scale;
 			Float4x4 S = Float4x4::Scaling(scaleA * (1 - lerpArg) + scaleB * lerpArg);
 
-			boneDataCb->BindTransform[i] = S * R * T;
+			locals[i] = R * T;
 		}
 
+
 		Float4x4 toRoot[64];
-		toRoot[0] = boneDataCb->BindTransform[0];
+		toRoot[0] = locals[0];
 		for(unsigned int i = 1; i < a.boneDataLength; ++i) {
-			toRoot[i] = boneDataCb->BindTransform[i] * toRoot[ybotModel.bones[i].parentId];
+			toRoot[i] = locals[i] * toRoot[ybotModel.bones[i].parentId];
 		}
 
 		for(unsigned int i = 0; i < a.boneDataLength; ++i) {
@@ -83,8 +125,8 @@ public:
 	virtual void Update(float dt, float T) override {
 		pxSys.Simulate(dt);
 
-		float scale = 0.001f;
-		cb->Model = Float4x4::Scaling(Float3{ scale, scale, scale }) * Float4x4::Translation(Float3{ 0.0f, 0.0f, 0.3f });
+		float scale = 0.1f;
+		cb->Model = Float4x4::Scaling(Float3{ scale, scale, scale }) * Float4x4::Translation(Float3{ 0.0f, 0.0f, 0.0f });
 		cb->InvModel = cb->Model.Invert();
 		cb.Upload();
 
@@ -205,14 +247,14 @@ public:
 
 		pxSys.CreateResources();
 
-		speed = 1.0f;
+		speed = 10.0f;
 		mouseSpeed = 3.5f;
 
 		Egg::Input::SetAxis("Vertical", 'W', 'S');
 		Egg::Input::SetAxis("Horizontal", 'D', 'A');
 
 		baseCam.Ahead = Float3::UnitZ;
-		baseCam.Position = Float3::Zero;
+		baseCam.Position = Float3{ 0.0f, 0.0f, -25.0f };
 	}
 
 	virtual void ReleaseResources() override {
@@ -239,7 +281,7 @@ public:
 		pso->SetDepthStencilState(CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT));
 		pso->SetDSVFormat(DXGI_FORMAT_D32_FLOAT);
 
-		for(unsigned int i = 0; i < ybotModel.meshesLength; ++i) {
+		for(unsigned int i = 0; i < 2; ++i) {
 
 			Egg::Mesh::Geometry::P geom = Egg::Mesh::IndexedGeometry::Create(device.Get(), 
 																			 ybotModel.meshes[i].vertices, ybotModel.meshes[i].verticesLength, ybotModel.meshes[i].vertexSize,

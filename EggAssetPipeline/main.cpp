@@ -216,6 +216,9 @@ void ProcessBones(std::vector<ProcessedBone> & dst, const ImportedModel & model,
 			b.parentIndex = GetIndex(dst, GetParentName(node->mParent));
 			b.offsetMatrix = refBone->offsetMatrix;
 			dst.push_back(b);
+		} else {
+
+			printf("Bone not referenced: %s\r\n", node->mName.C_Str());
 		}
 	}
 
@@ -535,7 +538,7 @@ void ProcessAnimation(const wchar_t* file, std::vector<ProcessedBone> & bones, s
 	Assimp::Importer importer;
 
 	const aiScene * scene = importer.ReadFile(path.c_str(), aiProcess_LimitBoneWeights | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeGraph | aiProcess_OptimizeMeshes);
-
+	
 	ASSERT(scene != nullptr, "Failed to load obj file: '%s'. Assimp error message: '%s'", path.c_str(), importer.GetErrorString());
 
 	ASSERT(scene->HasMeshes(), "FBX file: '%s' does not contain a mesh.", path.c_str());
@@ -631,6 +634,93 @@ unsigned int CalculateRequiredMemory(ImportedModel & model, std::vector<Processe
 	return acc;
 }
 
+bool Equal(const Egg::Math::Float4x4 & a, const Egg::Math::Float4x4 & b) {
+	for(int i = 0; i < 16; ++i) {
+		if(a.l[0] != b.l[0]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool Equal(Egg::Asset::Model & a, Egg::Asset::Model & b) {
+	if(a.animationsLength != b.animationsLength ||
+	   a.bonesLength != b.bonesLength ||
+	   a.materialsLength != b.materialsLength ||
+	   a.meshesLength != b.meshesLength) {
+		return false;
+	}
+
+	printf("Integrity: Lengths OK\r\n");
+
+	for(int i = 0; i < a.animationsLength; ++i) {
+		if(a.animations[i].boneDataLength != b.animations[i].boneDataLength ||
+		   a.animations[i].duration != b.animations[i].duration ||
+		   memcmp(a.animations[i].name, b.animations[i].name, sizeof(Egg::Asset::Animation::name)) != 0 ||
+		   a.animations[i].ticksPerSecond != b.animations[i].ticksPerSecond) {
+			return false;
+		}
+
+		for(int j = 0; j < a.animations[i].boneDataLength; ++j) {
+			auto & boneA = a.animations[i].boneData[j];
+			auto & boneB = b.animations[i].boneData[j];
+
+			if(boneA.boneId != boneB.boneId ||
+			   boneA.keysLength != boneB.keysLength ||
+			   boneA.postState != boneB.postState ||
+			   boneA.preState != boneB.preState) {
+				return false;
+			}
+
+			for(int k = 0; k < a.animations[i].boneData[j].keysLength; ++k) {
+				auto & keyA = boneA.keys[k];
+				auto & keyB = boneB.keys[k];
+
+				if((keyA.position != keyB.position).Any() ||
+				   (keyA.rotation != keyB.rotation).Any() ||
+				   (keyA.scale != keyB.scale).Any() ||
+				   keyA.time != keyB.time) {
+					return false;
+				}
+			}
+
+		}
+
+	}
+
+	printf("Integrity: Animations OK\r\n");
+
+	for(int i = 0; i < a.bonesLength; ++i) {
+		if(a.bones[i].parentId != b.bones[i].parentId ||
+		   !Equal(a.bones[i].transform, b.bones[i].transform) ||
+		   memcmp(a.bones[i].name, b.bones[i].name, sizeof(Egg::Asset::Bone::name)) != 0) {
+			return false;
+		}
+	}
+
+	printf("Integrity: Bones OK\r\n");
+
+	for(int i = 0; i < a.meshesLength; ++i) {
+		if(a.meshes[i].indicesLength != b.meshes[i].indicesLength ||
+		   a.meshes[i].verticesLength != b.meshes[i].verticesLength ||
+		   a.meshes[i].materialId != b.meshes[i].materialId ||
+		   a.meshes[i].vertexSize != b.meshes[i].vertexSize ||
+		   a.meshes[i].vertexType != b.meshes[i].vertexType) {
+			return false;
+		}
+
+		if(memcmp(a.meshes[i].vertices, b.meshes[i].vertices, a.meshes[i].verticesLength) != 0 ||
+		   memcmp(a.meshes[i].indices, b.meshes[i].indices, a.meshes[i].indicesLength * sizeof(unsigned int)) != 0) {
+			return false;
+		}
+	}
+
+	printf("Integrity: Meshes OK\r\n");
+	printf("Integrity: Materials Skipped\r\n");
+
+	return true;
+}
+
 /*
 * Transforms into Egg::Asset::Model format
 */
@@ -714,6 +804,15 @@ void WriteBinary(const char * dest, ImportedModel & model, std::vector<Processed
 
 
 	Egg::Exporter::ExportModel(dest, m);
+
+	Egg::Asset::Model imported;
+	Egg::Importer::ImportModel(dest, imported);
+
+	if(Equal(imported, m)) {
+		printf("Integrity check: OK\r\n");
+	} else {
+		printf("Integrity check: FAILED\r\n");
+	}
 
 
 	unsigned int verticesInBytes = 0;

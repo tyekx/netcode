@@ -31,7 +31,6 @@ namespace Egg {
 			gpsoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 			gpsoDesc.InputLayout = geometry->GetInputLayout();
 			pipelineDesc->ApplyToDescriptor(gpsoDesc);
-			gpsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
 
 			gpso = psoMan->Get(gpsoDesc);
 
