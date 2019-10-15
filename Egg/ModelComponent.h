@@ -2,22 +2,22 @@
 
 #include "Mesh/Shaded.h"
 #include "ConstantBuffer.hpp"
-#include "Math/Float4x4.h"
+
+#include <DirectXMath.h>
 
 
 __declspec(align(16)) struct PerFrameCb {
 	constexpr static int id = 0;
 
-	Egg::Math::Float4x4 View;
-	Egg::Math::Float4x4 Proj;
+	DirectX::XMFLOAT4X4A ViewProj;
 
 };
 
 __declspec(align(16)) struct PerObjectCb {
 	constexpr static int id = 1;
 
-	Egg::Math::Float4x4 Model;
-	Egg::Math::Float4x4 InvModel;
+	DirectX::XMFLOAT4X4A Model;
+	DirectX::XMFLOAT4X4A InvModel;
 };
 
 struct ModelComponent {

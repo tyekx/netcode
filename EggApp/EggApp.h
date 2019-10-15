@@ -2,55 +2,12 @@
 
 #include <Egg/SimpleApp.h>
 #include <Egg/Importer.h>
-#include <Egg/Math/Math.h>
 #include <Egg/ConstantBuffer.hpp>
 #include <Egg/Camera/Camera.h>
-#include <Egg/Input.h>
 #include <Egg/PhysxSystem.h>
 #include <Egg/Scene.h>
 #include <Egg/Mesh/MultiMesh.h>
-
-using namespace Egg::Math;
-
-using Quaternion = Float4;
-
-Quaternion Slerp(const Quaternion & arg0, const Quaternion & arg1, float t) {
-
-	Quaternion v0 = arg0.Normalize();
-	Quaternion v1 = arg1.Normalize();
-
-	// Compute the cosine of the angle between the two vectors.
-	double dot = v0.Dot(v1);
-
-	// If the dot product is negative, slerp won't take
-	// the shorter path. Note that v1 and -v1 are equivalent when
-	// the negation is applied to all four components. Fix by 
-	// reversing one quaternion.
-	if(dot < 0.0f) {
-		v1 = -v1;
-		dot = -dot;
-	}
-
-	const double DOT_THRESHOLD = 0.9995;
-	if(dot > DOT_THRESHOLD) {
-		// If the inputs are too close for comfort, linearly interpolate
-		// and normalize the result.
-
-		Quaternion result = v0 + (v1 - v0) * t;
-		return result.Normalize();
-	}
-
-	// Since dot is in range [0, DOT_THRESHOLD], acos is safe
-	float theta_0 = acosf(dot);        // theta_0 = angle between input vectors
-	float theta = theta_0 * t;          // theta = angle between v0 and result
-	float sin_theta = sinf(theta);     // compute this value only once
-	float sin_theta_0 = sinf(theta_0); // compute this value only once
-
-	float s0 = cosf(theta) - dot * sin_theta / sin_theta_0;  // == sin(theta_0 - theta) / sin(theta_0)
-	float s1 = sin_theta / sin_theta_0;
-
-	return ( v0 * s0) + ( v1 * s1);
-}
+#include <Egg/Input.h>
 
 class EggApp : public Egg::SimpleApp {
 protected:
@@ -68,10 +25,9 @@ protected:
 public:
 
 	EggApp() : Egg::SimpleApp{}, multi{}, ybotModel{}, cb{}, perFrameCb{}, boneDataCb{}, baseCam{}, pxSys{}, scene{}, speed{}, mouseSpeed{}, animT{ 0.0f } { }
-
+	
 	void UpdateAnimation(float dt) {
-		animT += dt * 10.0f;
-
+		animT += dt * 60.0f;
 
 		Egg::Asset::Animation & a = ybotModel.animations[0];
 		animT = fmodf(animT, (float)a.duration);
@@ -79,43 +35,54 @@ public:
 		float timeSinceLastTick = 0.0f;
 		float timeGap = 0.0f;
 		unsigned int keysId = 0;
-		for(unsigned int i = 1; i < a.boneData[0].keysLength; ++i) {
-			if(animT >= (float)a.boneData[0].keys[i - 1].time && (float)a.boneData[0].keys[i].time >= animT) {
+		for(unsigned int i = 1; i < a.keysLength; ++i) {
+			if(animT >= (float)(a.times[i - 1]) && (float)(a.times[i]) >= animT) {
 				keysId = i;
-				timeSinceLastTick = animT - a.boneData[0].keys[i - 1].time;
-				timeGap = a.boneData[0].keys[i].time - a.boneData[0].keys[i - 1].time;
+				timeSinceLastTick = animT - (float)(a.times[i - 1]);
+				timeGap = (float)((a.times[i]) - (a.times[i - 1]));
 				break;
 			}
 		}
 
 		float lerpArg = timeSinceLastTick / timeGap;
 
-		Float4x4 locals[64];
-		for(unsigned int i = 0; i < a.boneDataLength; ++i) {
-			Float3 posA = a.boneData[i].keys[keysId - 1].position;
-			Float3 posB = a.boneData[i].keys[keysId].position;
-			Float4x4 T = Float4x4::Translation(posA * (1 - lerpArg) + posB * lerpArg);
+		DirectX::XMFLOAT4 unitW{ 0.0f, 0.0f, 0.0f, 1.0f };
+		DirectX::XMVECTOR rotationSource = DirectX::XMLoadFloat4(&unitW);
+		DirectX::XMFLOAT4X4A locals[64];
 
-			Float4 quatA = a.boneData[i].keys[keysId - 1].rotation;
-			Float4 quatB = a.boneData[i].keys[keysId].rotation;
-			Float4x4 R = Float4x4::Rotation(Slerp(quatA, quatB, lerpArg));
+		Egg::Asset::AnimationKey * keysPrev = a.keys + ((keysId -1)* a.bonesLength);
+		Egg::Asset::AnimationKey * keysNext = a.keys + (keysId * a.bonesLength);
+		for(unsigned int i = 0; i < a.bonesLength; ++i) {
 
-			Float3 scaleA = a.boneData[i].keys[keysId - 1].scale;
-			Float3 scaleB = a.boneData[i].keys[keysId].scale;
-			Float4x4 S = Float4x4::Scaling(scaleA * (1 - lerpArg) + scaleB * lerpArg);
+			DirectX::XMVECTOR posA = DirectX::XMLoadFloat3(&keysPrev[i].position);
+			DirectX::XMVECTOR posB = DirectX::XMLoadFloat3(&keysNext[i].position);
+			DirectX::XMVECTOR T = DirectX::XMVectorLerp(posA, posB, lerpArg);
 
-			locals[i] = R * T;
+			DirectX::XMVECTOR quatA = DirectX::XMLoadFloat4(&keysPrev[i].rotation);
+			DirectX::XMVECTOR quatB = DirectX::XMLoadFloat4(&keysNext[i].rotation);
+			DirectX::XMVECTOR R = DirectX::XMQuaternionSlerp(quatA, quatB, lerpArg);
+
+			DirectX::XMVECTOR scaleA = DirectX::XMLoadFloat3(&keysPrev[i].scale);
+			DirectX::XMVECTOR scaleB = DirectX::XMLoadFloat3(&keysNext[i].scale);
+			DirectX::XMVECTOR S = DirectX::XMVectorLerp(scaleA, scaleB, lerpArg);
+
+			DirectX::XMMATRIX srt = DirectX::XMMatrixAffineTransformation(S, rotationSource, R, T);
+			DirectX::XMStoreFloat4x4A(&(locals[i]), srt);
 		}
 
 
-		Float4x4 toRoot[64];
+		DirectX::XMFLOAT4X4A toRoot[64];
 		toRoot[0] = locals[0];
-		for(unsigned int i = 1; i < a.boneDataLength; ++i) {
-			toRoot[i] = locals[i] * toRoot[ybotModel.bones[i].parentId];
+		for(unsigned int i = 1; i < a.bonesLength; ++i) {
+			DirectX::XMMATRIX local = DirectX::XMLoadFloat4x4A(&(locals[i]));
+			DirectX::XMMATRIX root = DirectX::XMLoadFloat4x4A(&(toRoot[ybotModel.bones[i].parentId]));
+			DirectX::XMStoreFloat4x4A(&(toRoot[i]), DirectX::XMMatrixMultiply(local, root));
 		}
 
-		for(unsigned int i = 0; i < a.boneDataLength; ++i) {
-			boneDataCb->BindTransform[i] = ybotModel.bones[i].transform * toRoot[i];
+		for(unsigned int i = 0; i < a.bonesLength; ++i) {
+			DirectX::XMMATRIX root = DirectX::XMLoadFloat4x4A(&(toRoot[i]));
+			DirectX::XMMATRIX offset = DirectX::XMLoadFloat4x4(&ybotModel.bones[i].transform);
+			DirectX::XMStoreFloat4x4A(&(boneDataCb->BindTransform[i]), DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(offset, root)));
 		}
 
 		boneDataCb.Upload();
@@ -124,34 +91,25 @@ public:
 
 	virtual void Update(float dt, float T) override {
 		pxSys.Simulate(dt);
+		float scale = 0.01f;
 
-		float scale = 0.1f;
-		cb->Model = Float4x4::Scaling(Float3{ scale, scale, scale }) * Float4x4::Translation(Float3{ 0.0f, 0.0f, 0.0f });
-		cb->InvModel = cb->Model.Invert();
+		DirectX::XMStoreFloat4x4A(&cb->Model, DirectX::XMMatrixIdentity());
+		DirectX::XMStoreFloat4x4A(&cb->InvModel, DirectX::XMMatrixIdentity());
 		cb.Upload();
+
+		
 
 		UpdateAnimation(dt);
 
-		Float3 movementVector = Float3::Zero;
-		movementVector += Float3::UnitZ * Egg::Input::GetAxis("Vertical");
-		movementVector += Float3::UnitX * Egg::Input::GetAxis("Horizontal");
-		if(movementVector.LengthSquared() > 0.0f) {
-			movementVector = movementVector.Normalize();
-			baseCam.Position += movementVector * speed * dt;
-		}
-
-		Int2 mouseDelta = Egg::Input::GetMouseDelta();
-		Float2 screenSize{ viewPort.Width, viewPort.Height };
-		Float2 mouseDeltaf{ (float)mouseDelta.x, (float)mouseDelta.y };
-		Float2 normalizedDelta = mouseDeltaf / screenSize;
-
-		Float4x4 aheadRotation = Float4x4::Rotation(Float3::UnitY, normalizedDelta.x * mouseSpeed) * Float4x4::Rotation(Float3::UnitX, normalizedDelta.y * mouseSpeed);
-
-		baseCam.Ahead = aheadRotation.Transform(Float4{ baseCam.Ahead, 1.0f }).xyz;
 
 		baseCam.UpdateMatrices();
-		perFrameCb->View = baseCam.GetViewMatrix();
-		perFrameCb->Proj = baseCam.GetProjMatrix();
+
+		DirectX::XMMATRIX view = DirectX::XMLoadFloat4x4A(&baseCam.GetViewMatrix());
+		DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4A(&baseCam.GetProjMatrix());
+
+		DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(view, proj);
+
+		DirectX::XMStoreFloat4x4A(&perFrameCb->ViewProj, DirectX::XMMatrixTranspose(vp));
 		perFrameCb.Upload();
 
 		Egg::Input::Reset();
@@ -166,7 +124,7 @@ public:
 	}
 
 	virtual void MouseMove(int x, int y) override {
-		Egg::Input::MouseMove(Int2{ x, y });
+		Egg::Input::MouseMove(DirectX::XMINT2{ x, y });
 	}
 
 	virtual void Blur() override {
@@ -178,6 +136,7 @@ public:
 	}
 
 	virtual void PopulateCommandList() override {
+
 		commandAllocator->Reset();
 		commandList->Reset(commandAllocator.Get(), nullptr);
 
@@ -194,9 +153,6 @@ public:
 		commandList->ClearRenderTargetView(rHandle, clearColor, 0, nullptr);
 		commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-		/*
-		* Run render system here
-		*/
 		auto meshes = multi->GetMeshes();
 		for(auto & i : meshes) {
 			auto mat = i->GetMaterial();
@@ -219,7 +175,7 @@ public:
 
 	void CreateSwapChainResources() override {
 		Egg::SimpleApp::CreateSwapChainResources();
-		baseCam.SetProj(0.9f, aspectRatio, 0.0001f, 100.0f);
+		baseCam.Aspect = aspectRatio;
 	}
 
 	/*
@@ -243,18 +199,14 @@ public:
 	virtual void CreateResources() override {
 		Egg::SimpleApp::CreateResources();
 
-		
-
 		pxSys.CreateResources();
 
-		speed = 10.0f;
-		mouseSpeed = 3.5f;
-
-		Egg::Input::SetAxis("Vertical", 'W', 'S');
-		Egg::Input::SetAxis("Horizontal", 'D', 'A');
-
-		baseCam.Ahead = Float3::UnitZ;
-		baseCam.Position = Float3{ 0.0f, 0.0f, -25.0f };
+		speed = 1.0f;
+		mouseSpeed = 1.5f;
+		baseCam.NearPlane = 1.0f;
+		baseCam.FarPlane = 1000.0f;
+		baseCam.Ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
+		baseCam.Position = DirectX::XMFLOAT3{ 0.0f, 75.0f, 180.0f };
 	}
 
 	virtual void ReleaseResources() override {
@@ -264,12 +216,13 @@ public:
 	virtual void LoadAssets() override {
 		cb.CreateResources(device.Get());
 		perFrameCb.CreateResources(device.Get());
+		
 		boneDataCb.CreateResources(device.Get());
 
 		com_ptr<ID3DBlob> avatarVS = Egg::Shader::LoadCso(L"AvatarVS.cso");
 		com_ptr<ID3DBlob> avatarPS = Egg::Shader::LoadCso(L"AvatarPS.cso");
 		com_ptr<ID3D12RootSignature> rootSig = Egg::Shader::LoadRootSignature(device.Get(), avatarVS.Get());
-		
+
 		Egg::Importer::ImportModel(L"ybot.eggasset", ybotModel);
 
 		multi = Egg::Mesh::MultiMesh::Create();
@@ -281,7 +234,7 @@ public:
 		pso->SetDepthStencilState(CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT));
 		pso->SetDSVFormat(DXGI_FORMAT_D32_FLOAT);
 
-		for(unsigned int i = 0; i < 2; ++i) {
+		for(unsigned int i = 0; i < ybotModel.meshesLength; ++i) {
 
 			Egg::Mesh::Geometry::P geom = Egg::Mesh::IndexedGeometry::Create(device.Get(), 
 																			 ybotModel.meshes[i].vertices, ybotModel.meshes[i].verticesLength, ybotModel.meshes[i].vertexSize,
@@ -295,6 +248,9 @@ public:
 
 			multi->Add(geom, mat);
 		}
+
+		//da.reset(new DebugAnimation{ L"StrafeRight.fbx" });
+		//da->CreateResources(device.Get(), psoManager.get());
 	}
 
 };

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Math/Math.h"
 #include <lua/lua.hpp>
 #include <string>
 
@@ -14,13 +13,14 @@ namespace LuaApi {
 
 		float GetFloatArg(lua_State * state, int arg);
 
+		/*
 		Egg::Math::Float2 GetFloat2Arg(lua_State * state, int arg);
 
 		Egg::Math::Float3 GetFloat3Arg(lua_State * state, int arg);
 
 		Egg::Math::Float4 GetFloat4Arg(lua_State * state, int arg);
 
-		void PushFloat4(lua_State * state, const Egg::Math::Float4 & f);
+		void PushFloat4(lua_State * state, const Egg::Math::Float4 & f);*/
 
 		void * GetInstance(lua_State * state);
 	}

@@ -184,18 +184,18 @@ namespace Egg {
 				fread(m.animations[i].name, 1, sizeof(m.animations[i].name), file);
 				fread(&m.animations[i].duration, sizeof(double), 1, file);
 				fread(&m.animations[i].ticksPerSecond, sizeof(double), 1, file);
-				fread(&m.animations[i].boneDataLength, sizeof(unsigned int), 1, file);
+				fread(&m.animations[i].keysLength, sizeof(unsigned int), 1, file);
+				fread(&m.animations[i].bonesLength, sizeof(unsigned int), 1, file);
 
-				m.animations[i].boneData = reinterpret_cast<Asset::BoneAnimation *>(allocator.Allocate(m.animations[i].boneDataLength * sizeof(Asset::BoneAnimation)));
-				for(unsigned int j = 0; j < m.animations[i].boneDataLength; ++j) {
-					fread(&(m.animations[i].boneData[j].boneId), sizeof(int), 1, file);
-					fread(&(m.animations[i].boneData[j].preState), sizeof(Egg::Asset::AnimationState), 1, file);
-					fread(&(m.animations[i].boneData[j].postState), sizeof(Egg::Asset::AnimationState), 1, file);
-					fread(&(m.animations[i].boneData[j].keysLength), sizeof(unsigned int), 1, file);
+				m.animations[i].preStates = reinterpret_cast<Asset::AnimationState *>(allocator.Allocate(m.animations[i].bonesLength * sizeof(Asset::AnimationState)));
+				m.animations[i].postStates = reinterpret_cast<Asset::AnimationState *>(allocator.Allocate(m.animations[i].bonesLength * sizeof(Asset::AnimationState)));
+				m.animations[i].times = reinterpret_cast<double *>(allocator.Allocate(m.animations[i].keysLength * sizeof(double)));
+				m.animations[i].keys = reinterpret_cast<Asset::AnimationKey *>(allocator.Allocate(m.animations[i].bonesLength * m.animations[i].keysLength * sizeof(Asset::AnimationKey)));
 
-					m.animations[i].boneData[j].keys = reinterpret_cast<Asset::AnimationKey *>(allocator.Allocate(m.animations[i].boneData[j].keysLength * sizeof(Asset::AnimationKey)));
-					fread(m.animations[i].boneData[j].keys, sizeof(Asset::AnimationKey), m.animations[i].boneData[j].keysLength, file);
-				}
+				fread(m.animations[i].preStates, sizeof(Asset::AnimationState), m.animations[i].bonesLength, file);
+				fread(m.animations[i].postStates, sizeof(Asset::AnimationState), m.animations[i].bonesLength, file);
+				fread(m.animations[i].times, sizeof(double), m.animations[i].keysLength, file);
+				fread(m.animations[i].keys, sizeof(Asset::AnimationKey), m.animations[i].keysLength * m.animations[i].bonesLength, file);
 			}
 
 			fclose(file);

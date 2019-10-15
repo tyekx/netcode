@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Math/Float4x4.h" 
+#include <DirectXMath.h>
 
 namespace Egg {
 
@@ -10,7 +10,7 @@ namespace Egg {
 
 			char name[28];
 			int parentId;
-			Egg::Math::Float4x4 transform;
+			DirectX::XMFLOAT4X4 transform;
 
 		};
 

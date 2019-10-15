@@ -1,7 +1,7 @@
 #include "LuaApi.h"
 #include "GameObject.h"
 #include "Utility.h"
-
+/*
 int LuaApi::LUA_API_GetRotation(lua_State * state) {
 	Egg::GameObject * pThis = reinterpret_cast<Egg::GameObject *>(Internal::GetInstance(state));
 
@@ -138,3 +138,4 @@ void * LuaApi::Internal::GetInstance(lua_State * state) {
 	lua_pop(state, 1);
 	return p;
 }
+*/

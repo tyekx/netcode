@@ -16,8 +16,7 @@ struct VSOutput {
 
 
 cbuffer PerFrameCb : register(b0) {
-	float4x4 viewMat;
-	float4x4 projMat;
+	float4x4 viewProj;
 }
 
 cbuffer PerObjectCb : register(b1) {
@@ -32,26 +31,28 @@ cbuffer BoneDataCb : register(b2) {
 [RootSignature(AvatarRootSignature)]
 VSOutput main(IAOutput iao)
 {
-	float weights[4] = { iao.weights[0], iao.weights[1], iao.weights[2], 1.0f - iao.weights[0] - iao.weights[1] - iao.weights[2] };
+	VSOutput vso;
+	float weights[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	weights[0] = iao.weights[0];
+	weights[1] = iao.weights[1];
+	weights[2] = iao.weights[2];
+	weights[3] = 1.0f - weights[0] - weights[1] - weights[2];
 
+	
 	float3 posL = float3(0, 0, 0);
 	float3 normalL = float3(0, 0, 0);
 
 	for(int i = 0; i < 4; ++i) {
-		if(iao.boneIds[i] == -1) {
-			break;
-		}
-		posL += weights[i] * (mul(boneTransforms[iao.boneIds[i]], float4(iao.position, 1)).xyz);
-		normalL += weights[i] * (mul(boneTransforms[iao.boneIds[i]], float4(iao.normal, 0)).xyz);
+		posL += weights[i] * (mul(float4(iao.position, 1), boneTransforms[iao.boneIds[i]]));
+		normalL += weights[i] * (mul(iao.normal, (float3x3)boneTransforms[iao.boneIds[i]]));
 	}
-
-	iao.position = posL;
 	iao.normal = normalL;
 
-	VSOutput vso;
-	vso.position = mul(projMat, mul(viewMat, mul(modelMat, float4(iao.position, 1.0f))));
+	float4 posW = mul(float4(posL, 1), modelMat);
+
+	vso.position = mul(posW, viewProj);
 	vso.normal = mul(float4(iao.normal, 0.0), invModelMat).xyz;
-	vso.texCoord = iao.texCoord + (boneTransforms[0][0]*0.00001);
+	vso.texCoord = iao.texCoord;
 
 	return vso;
 }

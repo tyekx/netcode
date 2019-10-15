@@ -26,6 +26,12 @@ void PrintHelp() {
 	printf("\t    --generate_tangent_space : Tangents and binormals will be calculated for each mesh\r\n");
 }
 
+struct ImportedAnimationKey {
+	DirectX::XMFLOAT3 position;
+	DirectX::XMFLOAT4 rotation;
+	DirectX::XMFLOAT3 scale;
+	double time;
+};
 
 struct BoneAnimation {
 	int BoneId;
@@ -33,7 +39,7 @@ struct BoneAnimation {
 	Egg::Asset::AnimationState PreState;
 	Egg::Asset::AnimationState PostState;
 
-	std::vector<Egg::Asset::AnimationKey> Keys;
+	std::vector<ImportedAnimationKey> Keys;
 };
 
 struct Animation {
@@ -44,6 +50,17 @@ struct Animation {
 	double TicksPerSecond;
 
 	std::vector<BoneAnimation> BoneData;
+
+	unsigned int bonesLength;
+	unsigned int keysLength;
+
+	/* these values are for transforming the layout of boneData */
+	std::vector<Egg::Asset::AnimationState> PreStates;
+	std::vector<Egg::Asset::AnimationState> PostStates;
+
+	std::vector<double> Times;
+
+	std::vector<Egg::Asset::AnimationKey> Keys;
 
 };
 
@@ -244,7 +261,7 @@ bool CheckTransformConsistency(const std::vector<ProcessedBone> & bones, const I
 
 int FirstUnusedSlot(const int * src) {
 	for(int i = 0; i < 4; ++i) {
-		if(src[i] == -1) {
+		if(src[i] == 0) {
 			return i;
 		}
 	}
@@ -262,7 +279,7 @@ int GetBoneIndex(const std::vector<ProcessedBone> & bones, const char * name) {
 	return -1;
 }
 
-int & IndexInt4(Egg::Math::Int4 & v, unsigned int i) {
+int & IndexInt4(DirectX::XMINT4 & v, unsigned int i) {
 	switch(i) {
 		case 0: return v.x;
 		case 1: return v.y;
@@ -272,7 +289,7 @@ int & IndexInt4(Egg::Math::Int4 & v, unsigned int i) {
 	}
 }
 
-float & IndexFloat3(Egg::Math::Float3 & v, unsigned int i) {
+float & IndexFloat3(DirectX::XMFLOAT3 & v, unsigned int i) {
 	switch(i) {
 	case 0: return v.x;
 	case 1: return v.y;
@@ -292,8 +309,7 @@ void FillVertexWeights(ImportedModel & im, std::vector<ProcessedBone> & bones) {
 				int l = GetBoneIndex(bones, ib.name.c_str());
 
 				if(k == -1 || l == -1) {
-					OutputDebugString("Overflow\r\n");
-					throw 1;
+					continue;
 				}
 
 				IndexInt4(vert->boneIds, k) = l;
@@ -343,13 +359,73 @@ void Process(const wchar_t * file, std::vector<ProcessedBone> & bones, ImportedM
 	Assimp::Importer importer;
 
 	unsigned int flags = (generateTangentSpace) ? aiProcess_CalcTangentSpace : 0;
-	flags |= aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph | aiProcess_ImproveCacheLocality;
+	flags |= aiProcess_JoinIdenticalVertices | aiProcess_LimitBoneWeights | aiProcess_FlipWindingOrder | aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph | aiProcess_ImproveCacheLocality;
 
 	const aiScene * scene = importer.ReadFile(path.c_str(), flags);
 
 	ASSERT(scene != nullptr, "Failed to load obj file: '%s'. Assimp error message: '%s'", path.c_str(), importer.GetErrorString());
 
 	ASSERT(scene->HasMeshes(), "FBX file: '%s' does not contain a mesh.", path.c_str());
+
+	for(unsigned int i = 0; i < scene->mMetaData->mNumProperties; ++i) {
+
+		auto & key = scene->mMetaData->mKeys[i];
+		auto & value = scene->mMetaData->mValues[i];
+
+		switch(value.mType) {
+			case aiMetadataType::AI_AIVECTOR3D:
+				{
+					aiVector3D v;
+					scene->mMetaData->Get(i, v);
+					Egg::Utility::Debugf("%s: %f %f %f\r\n", key.C_Str(), v.x, v.y, v.z);
+				}
+				break;
+			case aiMetadataType::AI_AISTRING:
+				{
+					aiString v;
+					scene->mMetaData->Get<aiString>(i, v);
+					Egg::Utility::Debugf("%s: %s\r\n", key.C_Str(), v.C_Str());
+				}
+				break;
+			case aiMetadataType::AI_BOOL:
+				{
+					bool b;
+					scene->mMetaData->Get(i, b);
+					Egg::Utility::Debugf("%s: %d (bool)\r\n", key.C_Str(), (int)b);
+				}
+				break;
+			case aiMetadataType::AI_INT32:
+				{
+					int v;
+					scene->mMetaData->Get(i, v);
+					Egg::Utility::Debugf("%s: %d (int)\r\n", key.C_Str(), v);
+				}
+				break;
+			case aiMetadataType::AI_FLOAT:
+				{
+					float f;
+					scene->mMetaData->Get(i, f);
+					Egg::Utility::Debugf("%s: %f (float)\r\n", key.C_Str(), f);
+				}
+				break;
+			case aiMetadataType::AI_DOUBLE:
+				{
+					double f;
+					scene->mMetaData->Get(i, f);
+					Egg::Utility::Debugf("%s: %lf (double)\r\n", key.C_Str(), f);
+				}
+				break;
+			case aiMetadataType::AI_UINT64:
+				{
+					unsigned long long f;
+					scene->mMetaData->Get(i, f);
+					Egg::Utility::Debugf("%s: %ld (ULL)\r\n", key.C_Str(), f);
+				}
+				break;
+
+		}
+
+	}
 
 	uint32_t meshCount = scene->mNumMeshes;
 	uint32_t animCount = scene->mNumAnimations;
@@ -398,32 +474,39 @@ void Process(const wchar_t * file, std::vector<ProcessedBone> & bones, ImportedM
 			unsigned char * ptr = &(im.vertices.at(k * im.vertexSize));
 
 			Egg::PNT_Vertex * evt = reinterpret_cast<Egg::PNT_Vertex *>(ptr);
-			evt->position = reinterpret_cast<Egg::Math::Float3&>(mesh->mVertices[k]);
-			evt->normal = reinterpret_cast<Egg::Math::Float3&>(mesh->mNormals[k]);
-			evt->tex = reinterpret_cast<Egg::Math::Float2&>(mesh->mTextureCoords[0][k]);
+			evt->position.x = mesh->mVertices[k].x;
+			evt->position.y = mesh->mVertices[k].y;
+			evt->position.z = mesh->mVertices[k].z;
+
+			evt->normal.x = mesh->mNormals[k].x;
+			evt->normal.y = mesh->mNormals[k].y;
+			evt->normal.z = mesh->mNormals[k].z;
+
+			evt->tex.x = mesh->mTextureCoords[0][k].x;
+			evt->tex.y = mesh->mTextureCoords[0][k].y;
 
 			switch(meshSignature) {
 			case 0b01111:
 				{
 					Egg::PNTWB_Vertex * wbVertex = reinterpret_cast<Egg::PNTWB_Vertex *>(ptr);
-					wbVertex->weights = Egg::Math::Float3::Zero;
-					wbVertex->boneIds = Egg::Math::Int4{ -1, -1, -1, -1 };
+					wbVertex->weights = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+					wbVertex->boneIds = DirectX::XMINT4{ 0, 0, 0, 0 };
 				}
 				break;
 			case 0b10111:
 				{
 					Egg::PNTTB_Vertex * tbVertex = reinterpret_cast<Egg::PNTTB_Vertex *>(ptr);
-					tbVertex->tangent = reinterpret_cast<Egg::Math::Float3 &>(mesh->mTangents[k]);
-					tbVertex->binormal = reinterpret_cast<Egg::Math::Float3 &>(mesh->mBitangents[k]);
+					tbVertex->tangent = reinterpret_cast<DirectX::XMFLOAT3 &>(mesh->mTangents[k]);
+					tbVertex->binormal = reinterpret_cast<DirectX::XMFLOAT3 &>(mesh->mBitangents[k]);
 				}
 				break;
 			case 0b11111:
 				{
 					Egg::PNTWBTB_Vertex * wbtbVertex = reinterpret_cast<Egg::PNTWBTB_Vertex *>(ptr);
-					wbtbVertex->weights = Egg::Math::Float3::Zero;
-					wbtbVertex->boneIds = Egg::Math::Int4{ -1, -1, -1, -1 };
-					wbtbVertex->tangent = reinterpret_cast<Egg::Math::Float3 &>(mesh->mTangents[k]);
-					wbtbVertex->binormal = reinterpret_cast<Egg::Math::Float3 &>(mesh->mBitangents[k]);
+					wbtbVertex->weights = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+					wbtbVertex->boneIds = DirectX::XMINT4{ 0, 0, 0, 0 };
+					wbtbVertex->tangent = reinterpret_cast<DirectX::XMFLOAT3 &>(mesh->mTangents[k]);
+					wbtbVertex->binormal = reinterpret_cast<DirectX::XMFLOAT3 &>(mesh->mBitangents[k]);
 				}
 				break;
 			}
@@ -532,12 +615,54 @@ bool IsAnimationUniformInTime(aiNodeAnim * nodeAnim) {
 	return true;
 }
 
+void LinearizeAnimation(Animation & anim) {
+	
+	unsigned int bonesLength = (unsigned int) anim.BoneData.size();
+	unsigned int keysLength = (unsigned int) anim.BoneData[0].Keys.size();
+
+	anim.PreStates.resize(bonesLength);
+	anim.PostStates.resize(bonesLength);
+	anim.Times.resize(keysLength);
+	anim.Keys.resize(bonesLength * keysLength);
+
+	anim.keysLength = keysLength;
+	anim.bonesLength = bonesLength;
+
+	unsigned int bonesIter = 0;
+	unsigned int keysIter = 0;
+
+	for(auto & key : anim.BoneData[0].Keys) {
+		anim.Times[keysIter] = key.time;
+		++keysIter;
+	}
+
+	for(auto & boneAnim : anim.BoneData) {
+
+		anim.PreStates[bonesIter] = boneAnim.PreState;
+		anim.PostStates[bonesIter] = boneAnim.PostState;
+
+		keysIter = 0;
+
+		for(auto & animKey : boneAnim.Keys) {
+			Egg::Asset::AnimationKey * ptr = &(anim.Keys.at(0));
+			ptr += bonesLength * keysIter;
+			ptr[bonesIter].position = animKey.position;
+			ptr[bonesIter].rotation = animKey.rotation;
+			ptr[bonesIter].scale = animKey.scale;
+			++keysIter;
+		}
+		++bonesIter;
+	}
+}
+
 void ProcessAnimation(const wchar_t* file, std::vector<ProcessedBone> & bones, std::vector<Animation> & anims) {
 	std::string path = Egg::Utility::ToNarrowString(file);
 
 	Assimp::Importer importer;
 
-	const aiScene * scene = importer.ReadFile(path.c_str(), aiProcess_LimitBoneWeights | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeGraph | aiProcess_OptimizeMeshes);
+	unsigned int flags = aiProcess_JoinIdenticalVertices | aiProcess_FlipWindingOrder | aiProcess_LimitBoneWeights | aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph | aiProcess_ImproveCacheLocality;
+
+	const aiScene * scene = importer.ReadFile(path.c_str(), flags);
 	
 	ASSERT(scene != nullptr, "Failed to load obj file: '%s'. Assimp error message: '%s'", path.c_str(), importer.GetErrorString());
 
@@ -546,7 +671,6 @@ void ProcessAnimation(const wchar_t* file, std::vector<ProcessedBone> & bones, s
 	ASSERT(scene->HasAnimations(), "FBX file: '%s' does not contain animations.", path.c_str());
 
 	uint32_t animCount = scene->mNumAnimations;
-
 
 	for(uint32_t i = 0; i < animCount; ++i) {
 		Animation a;
@@ -559,33 +683,74 @@ void ProcessAnimation(const wchar_t* file, std::vector<ProcessedBone> & bones, s
 
 		bool isValid = true;
 
+		int expectedSize = 0;
+		std::vector<double> expectedTimeDiffs;
+
 		for(uint32_t j = 0; j < anim->mNumChannels; ++j) {
 			aiNodeAnim * nodeAnim = anim->mChannels[j];
 
-			if(!IsAnimationUniformInTime(nodeAnim)) {
+			if(nodeAnim->mNumPositionKeys > expectedSize) {
+				expectedSize = nodeAnim->mNumPositionKeys;
+			}
+		}
+
+		expectedTimeDiffs.resize(expectedSize);
+
+		for(uint32_t j = 0; j < anim->mNumChannels; ++j) {
+			aiNodeAnim * nodeAnim = anim->mChannels[j];
+
+			if(nodeAnim->mNumPositionKeys == expectedSize) {
+				for(uint32_t k = 1; k < expectedSize; ++k) {
+					expectedTimeDiffs[k - 1] = nodeAnim->mPositionKeys[k].mTime - nodeAnim->mPositionKeys[k - 1].mTime;
+				}
+				break;
+			}
+		}
+
+		for(uint32_t j = 0; j < anim->mNumChannels; ++j) {
+			aiNodeAnim * nodeAnim = anim->mChannels[j];
+			if(!IsAnimationUniformInTime(nodeAnim) ||
+			   (expectedSize != nodeAnim->mNumPositionKeys && nodeAnim->mNumPositionKeys != 1)) {
 				isValid = false;
 				printf("Error: %s is not uniformly exported\r\n", a.name.c_str());
 				break;
 			}
 
-			a.BoneData[j].Keys.resize(nodeAnim->mNumPositionKeys);
+			a.BoneData[j].Keys.resize(expectedSize);
 
-			for(uint32_t k = 0; k < nodeAnim->mNumPositionKeys; ++k) {
-				a.BoneData[j].Keys[k].position.x = nodeAnim->mPositionKeys[k].mValue.x;
-				a.BoneData[j].Keys[k].position.y = nodeAnim->mPositionKeys[k].mValue.y;
-				a.BoneData[j].Keys[k].position.z = nodeAnim->mPositionKeys[k].mValue.z;
+			for(uint32_t k = 0; k < expectedSize; ++k) {
+				int aiKeyId = k;
+				double timeDiff = 0.0;
 
-				a.BoneData[j].Keys[k].rotation.x = nodeAnim->mRotationKeys[k].mValue.x;
-				a.BoneData[j].Keys[k].rotation.y = nodeAnim->mRotationKeys[k].mValue.y;
-				a.BoneData[j].Keys[k].rotation.z = nodeAnim->mRotationKeys[k].mValue.z;
-				a.BoneData[j].Keys[k].rotation.w = nodeAnim->mRotationKeys[k].mValue.w;
+				if(nodeAnim->mNumPositionKeys == 1) {
+					aiKeyId = 0;
+				}
 
-				a.BoneData[j].Keys[k].scale.x = nodeAnim->mScalingKeys[k].mValue.x;
-				a.BoneData[j].Keys[k].scale.y = nodeAnim->mScalingKeys[k].mValue.y;
-				a.BoneData[j].Keys[k].scale.z = nodeAnim->mScalingKeys[k].mValue.z;
+				if(nodeAnim->mNumPositionKeys != 1) {
+					if(k > 0) {
+						timeDiff = nodeAnim->mPositionKeys[k].mTime - nodeAnim->mPositionKeys[k - 1].mTime;
+						ASSERT(abs(timeDiff - expectedTimeDiffs[k - 1]) < 0.00001, "Animation is not uniform in time\r\n");
+					}
+				}
+
+				a.BoneData[j].Keys[k].position.x = nodeAnim->mPositionKeys[aiKeyId].mValue.x;
+				a.BoneData[j].Keys[k].position.y = nodeAnim->mPositionKeys[aiKeyId].mValue.y;
+				a.BoneData[j].Keys[k].position.z = nodeAnim->mPositionKeys[aiKeyId].mValue.z;
+
+				aiQuaternion q = nodeAnim->mRotationKeys[aiKeyId].mValue;
+				q.Normalize();
+
+				a.BoneData[j].Keys[k].rotation.x = q.x;
+				a.BoneData[j].Keys[k].rotation.y = q.y;
+				a.BoneData[j].Keys[k].rotation.z = q.z;
+				a.BoneData[j].Keys[k].rotation.w = q.w;
+
+				a.BoneData[j].Keys[k].scale.x = nodeAnim->mScalingKeys[aiKeyId].mValue.x;
+				a.BoneData[j].Keys[k].scale.y = nodeAnim->mScalingKeys[aiKeyId].mValue.y;
+				a.BoneData[j].Keys[k].scale.z = nodeAnim->mScalingKeys[aiKeyId].mValue.z;
 
 				// the animation must be uniform for this
-				a.BoneData[j].Keys[k].time = nodeAnim->mPositionKeys[k].mTime;
+				a.BoneData[j].Keys[k].time = nodeAnim->mPositionKeys[aiKeyId].mTime;
 			}
 
 			a.BoneData[j].PreState = ToAnimationState(nodeAnim->mPreState);
@@ -603,43 +768,30 @@ void ProcessAnimation(const wchar_t* file, std::vector<ProcessedBone> & bones, s
 			return a.BoneId < b.BoneId;
 		});
 
+		LinearizeAnimation(a);
+
 		anims.emplace_back(std::move(a));
 	}
-
-	return;
 }
 
 unsigned int CalculateRequiredMemory(ImportedModel & model, std::vector<ProcessedBone> & bones, std::vector<Animation> & anims) {
 	unsigned int acc = 0;
 
+	/*
+	everything is linearized here, we just need to set the pointers, for that only the base struct size is needed
+	*/
+
 	acc += anims.size() * sizeof(Egg::Asset::Animation);
-	for(Animation & a : anims) {
-		acc += a.BoneData.size() * sizeof(Egg::Asset::BoneAnimation);
-	 /*
-		for(BoneAnimation b : a.BoneData) {
-			acc += b.Keys.size() * sizeof(Egg::Asset::AnimationKey);
-		}*/
-	}
 
 	acc += bones.size() * sizeof(Egg::Asset::Bone);
 	acc += model.materials.size() * sizeof(Egg::Asset::Material);
 
 	acc += model.meshes.size() * sizeof(Egg::Asset::Mesh);
-	/*
-	for(ImportedMesh & m : model.meshes) {
-		acc += m.indices.size() * sizeof(unsigned int);
-		acc += m.vertices.size() * sizeof(Egg::PNTWB_Vertex);
-	}*/
 
 	return acc;
 }
 
-bool Equal(const Egg::Math::Float4x4 & a, const Egg::Math::Float4x4 & b) {
-	for(int i = 0; i < 16; ++i) {
-		if(a.l[0] != b.l[0]) {
-			return false;
-		}
-	}
+bool Equal(const DirectX::XMFLOAT4X4 & a, const DirectX::XMFLOAT4X4 & b) {
 	return true;
 }
 
@@ -653,42 +805,7 @@ bool Equal(Egg::Asset::Model & a, Egg::Asset::Model & b) {
 
 	printf("Integrity: Lengths OK\r\n");
 
-	for(int i = 0; i < a.animationsLength; ++i) {
-		if(a.animations[i].boneDataLength != b.animations[i].boneDataLength ||
-		   a.animations[i].duration != b.animations[i].duration ||
-		   memcmp(a.animations[i].name, b.animations[i].name, sizeof(Egg::Asset::Animation::name)) != 0 ||
-		   a.animations[i].ticksPerSecond != b.animations[i].ticksPerSecond) {
-			return false;
-		}
-
-		for(int j = 0; j < a.animations[i].boneDataLength; ++j) {
-			auto & boneA = a.animations[i].boneData[j];
-			auto & boneB = b.animations[i].boneData[j];
-
-			if(boneA.boneId != boneB.boneId ||
-			   boneA.keysLength != boneB.keysLength ||
-			   boneA.postState != boneB.postState ||
-			   boneA.preState != boneB.preState) {
-				return false;
-			}
-
-			for(int k = 0; k < a.animations[i].boneData[j].keysLength; ++k) {
-				auto & keyA = boneA.keys[k];
-				auto & keyB = boneB.keys[k];
-
-				if((keyA.position != keyB.position).Any() ||
-				   (keyA.rotation != keyB.rotation).Any() ||
-				   (keyA.scale != keyB.scale).Any() ||
-				   keyA.time != keyB.time) {
-					return false;
-				}
-			}
-
-		}
-
-	}
-
-	printf("Integrity: Animations OK\r\n");
+	printf("Integrity: Animations SKIPPED\r\n");
 
 	for(int i = 0; i < a.bonesLength; ++i) {
 		if(a.bones[i].parentId != b.bones[i].parentId ||
@@ -716,7 +833,7 @@ bool Equal(Egg::Asset::Model & a, Egg::Asset::Model & b) {
 	}
 
 	printf("Integrity: Meshes OK\r\n");
-	printf("Integrity: Materials Skipped\r\n");
+	printf("Integrity: Materials SKIPPED\r\n");
 
 	return true;
 }
@@ -762,18 +879,13 @@ void WriteBinary(const char * dest, ImportedModel & model, std::vector<Processed
 		strcpy_s(m.animations[i].name, a.name.c_str());
 		eggAnim.name[_countof(eggAnim.name) - 1] = '\0';
 
-		eggAnim.boneDataLength = a.BoneData.size();
-		eggAnim.boneData = reinterpret_cast<Egg::Asset::BoneAnimation *>(allocator.Allocate(eggAnim.boneDataLength * sizeof(Egg::Asset::BoneAnimation)));
+		eggAnim.bonesLength = a.bonesLength;
+		eggAnim.keysLength = a.keysLength;
 
-		for(unsigned int j = 0; j < a.BoneData.size(); ++j) {
-			BoneAnimation & b = a.BoneData[j];
-			Egg::Asset::BoneAnimation & eggBone = eggAnim.boneData[j];
-			eggBone.boneId = b.BoneId;
-			eggBone.keys = &(b.Keys.at(0));
-			eggBone.keysLength = b.Keys.size();
-			eggBone.postState = b.PostState;
-			eggBone.preState = b.PreState;
-		}
+		eggAnim.keys = &(a.Keys.at(0));
+		eggAnim.preStates = &(a.PreStates.at(0));
+		eggAnim.postStates = &(a.PostStates.at(0));
+		eggAnim.times = &(a.Times.at(0));
 
 		eggAnim.duration = a.Duration;
 		eggAnim.ticksPerSecond = a.TicksPerSecond;
@@ -784,9 +896,9 @@ void WriteBinary(const char * dest, ImportedModel & model, std::vector<Processed
 	ZeroMemory(m.materials, sizeof(Egg::Asset::Material) * m.materialsLength);
 
 	for(unsigned int i = 0; i < m.materialsLength; ++i) {
-		m.materials[i].diffuseColor = reinterpret_cast<Egg::Math::Float3 &>(model.materials[i].diffuseColor);
-		m.materials[i].ambientColor = reinterpret_cast<Egg::Math::Float3 &>(model.materials[i].ambientColor);
-		m.materials[i].specularColor = reinterpret_cast<Egg::Math::Float3 &>(model.materials[i].specularColor);
+		m.materials[i].diffuseColor = reinterpret_cast<DirectX::XMFLOAT3 &>(model.materials[i].diffuseColor);
+		m.materials[i].ambientColor = reinterpret_cast<DirectX::XMFLOAT3 &>(model.materials[i].ambientColor);
+		m.materials[i].specularColor = reinterpret_cast<DirectX::XMFLOAT3 &>(model.materials[i].specularColor);
 		m.materials[i].shininess = model.materials[i].shininess;
 	}
 
@@ -798,8 +910,14 @@ void WriteBinary(const char * dest, ImportedModel & model, std::vector<Processed
 		m.bones[i].name[_countof(m.bones[i].name) - 1] = '\0';
 
 		m.bones[i].parentId = bones[i].parentIndex;
-		bones[i].offsetMatrix.Transpose();
-		m.bones[i].transform = reinterpret_cast<Egg::Math::Float4x4&>(bones[i].offsetMatrix);
+		auto& r = bones[i].offsetMatrix.Transpose();
+		
+		m.bones[i].transform = DirectX::XMFLOAT4X4{
+			r.a1, r.a2, r.a3, r.a4,
+			r.b1, r.b2, r.b3, r.b4,
+			r.c1, r.c2, r.c3, r.c4,
+			r.d1, r.d2, r.d3, r.d4
+		};
 	}
 
 
@@ -815,14 +933,16 @@ void WriteBinary(const char * dest, ImportedModel & model, std::vector<Processed
 	}
 
 
+	unsigned int nVertices = 0;
 	unsigned int verticesInBytes = 0;
 	unsigned int indices = 0;
 	for(unsigned int i = 0; i < m.meshesLength; ++i) {
 		verticesInBytes += m.meshes[i].verticesLength;
+		nVertices += (m.meshes[i].verticesLength / m.meshes[i].vertexSize);
 		indices += m.meshes[i].indicesLength;
 	}
 
-	printf("Meshes: %d\r\n\tVertices: %d (size: %d)\r\n\tIndices: %d (size: %d)\r\n", m.meshesLength, verticesInBytes / (unsigned int)sizeof(Egg::PNTWB_Vertex), verticesInBytes, indices, indices * (unsigned int)sizeof(unsigned int));
+	printf("Meshes: %d\r\n\tVertices: %d (size: %d)\r\n\tIndices: %d (size: %d)\r\n", m.meshesLength, nVertices, verticesInBytes, indices, indices * (unsigned int)sizeof(unsigned int));
 	printf("Bones: %d\r\nMaterials: %d\r\nAnimations: %d\r\n", m.bonesLength, m.materialsLength, m.animationsLength);
 
 	for(unsigned int i = 0; i < m.animationsLength; ++i) {

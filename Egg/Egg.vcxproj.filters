@@ -4,9 +4,6 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{f3cf27d1-9fc3-4b06-aa81-70867789ae4a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Math">
-      <UniqueIdentifier>{c76fb140-ceaa-4268-b77f-2406ec79c7ad}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Camera">
       <UniqueIdentifier>{97d8db53-4b3d-44de-a700-44f93e245cf1}</UniqueIdentifier>
     </Filter>
@@ -31,9 +28,6 @@
     <Filter Include="Components\Systems">
       <UniqueIdentifier>{d338157d-799f-4c10-b1aa-f5f8e88c3926}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Input">
-      <UniqueIdentifier>{ddddd5ed-b8da-452f-b73a-06dff2d17fe5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Asset">
       <UniqueIdentifier>{a15afac8-bda1-46db-8b99-9647baa28104}</UniqueIdentifier>
     </Filter>
@@ -46,18 +40,6 @@
     <Filter Include="Model\Mesh">
       <UniqueIdentifier>{3975ca39-e5c6-4edb-ad6d-5072b939714f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Math\Bool">
-      <UniqueIdentifier>{1c3ce3f1-4832-4313-a476-9b2b5f05c0f9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Math\Int">
-      <UniqueIdentifier>{167ad97e-1b0d-4c93-b6d5-2728abb3dd14}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Math\UInt">
-      <UniqueIdentifier>{793419b8-b31e-4e79-ad88-6fafcc26a99b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Math\Float">
-      <UniqueIdentifier>{d3c60c10-b931-4058-b242-2bc13423cd5c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Model\Material">
       <UniqueIdentifier>{ccf9c152-33c0-40c2-8719-0d1808263e02}</UniqueIdentifier>
     </Filter>
@@ -66,16 +48,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Math\Math.h">
-      <Filter>Math</Filter>
-    </ClInclude>
     <ClInclude Include="Mesh\Shaded.h">
       <Filter>Model\Mesh</Filter>
     </ClInclude>
     <ClInclude Include="Mesh\Geometry.h">
-      <Filter>Model\Mesh</Filter>
-    </ClInclude>
-    <ClInclude Include="Mesh\Prefabs.h">
       <Filter>Model\Mesh</Filter>
     </ClInclude>
     <ClInclude Include="Camera\Camera.h">
@@ -116,9 +92,6 @@
     </ClInclude>
     <ClInclude Include="Stopwatch.h">
       <Filter>Utility</Filter>
-    </ClInclude>
-    <ClInclude Include="JsonSerializer.h">
-      <Filter>Serialization</Filter>
     </ClInclude>
     <ClInclude Include="App.h">
       <Filter>App</Filter>
@@ -165,9 +138,6 @@
     <ClInclude Include="PhysxSystem.h">
       <Filter>Components\Systems</Filter>
     </ClInclude>
-    <ClInclude Include="Input.h">
-      <Filter>Input</Filter>
-    </ClInclude>
     <ClInclude Include="RenderSystem.h">
       <Filter>Components\Systems</Filter>
     </ClInclude>
@@ -207,93 +177,6 @@
     <ClInclude Include="Mesh\MultiMesh.h">
       <Filter>Model\Mesh</Filter>
     </ClInclude>
-    <ClInclude Include="Math\Bool1.h">
-      <Filter>Math\Bool</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Bool2.h">
-      <Filter>Math\Bool</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Bool2Swizzle.hpp">
-      <Filter>Math\Bool</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Bool3.h">
-      <Filter>Math\Bool</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Bool3Swizzle.hpp">
-      <Filter>Math\Bool</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Bool4.h">
-      <Filter>Math\Bool</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Bool4Swizzle.hpp">
-      <Filter>Math\Bool</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Int1.h">
-      <Filter>Math\Int</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Int2.h">
-      <Filter>Math\Int</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Int2Swizzle.hpp">
-      <Filter>Math\Int</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Int3.h">
-      <Filter>Math\Int</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Int3Swizzle.hpp">
-      <Filter>Math\Int</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Int4.h">
-      <Filter>Math\Int</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Int4Swizzle.hpp">
-      <Filter>Math\Int</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\UInt1.h">
-      <Filter>Math\UInt</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\UInt2.h">
-      <Filter>Math\UInt</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\UInt2Swizzle.hpp">
-      <Filter>Math\UInt</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\UInt3.h">
-      <Filter>Math\UInt</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\UInt3Swizzle.hpp">
-      <Filter>Math\UInt</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\UInt4.h">
-      <Filter>Math\UInt</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\UInt4Swizzle.hpp">
-      <Filter>Math\UInt</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Float1.h">
-      <Filter>Math\Float</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Float2.h">
-      <Filter>Math\Float</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Float2Swizzle.hpp">
-      <Filter>Math\Float</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Float3.h">
-      <Filter>Math\Float</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Float3Swizzle.hpp">
-      <Filter>Math\Float</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Float4.h">
-      <Filter>Math\Float</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Float4Swizzle.hpp">
-      <Filter>Math\Float</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Float4x4.h">
-      <Filter>Math\Float</Filter>
-    </ClInclude>
     <ClInclude Include="Material.h">
       <Filter>Model\Material</Filter>
     </ClInclude>
@@ -309,6 +192,10 @@
     <ClInclude Include="ModelComponent.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="Input.h" />
+    <ClInclude Include="AnimationController.h">
+      <Filter>Model\Animation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
@@ -319,9 +206,6 @@
     </ClCompile>
     <ClCompile Include="Stopwatch.cpp">
       <Filter>Utility</Filter>
-    </ClCompile>
-    <ClCompile Include="JsonSerializer.cpp">
-      <Filter>Serialization</Filter>
     </ClCompile>
     <ClCompile Include="Shader.cpp">
       <Filter>Graphics</Filter>
@@ -347,9 +231,6 @@
     <ClCompile Include="PhysxSystem.cpp">
       <Filter>Components\Systems</Filter>
     </ClCompile>
-    <ClCompile Include="Input.cpp">
-      <Filter>Input</Filter>
-    </ClCompile>
     <ClCompile Include="Exporter.cpp">
       <Filter>Serialization</Filter>
     </ClCompile>
@@ -359,60 +240,10 @@
     <ClCompile Include="PipelineState.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Math\Bool1.cpp">
-      <Filter>Math\Bool</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\Bool2.cpp">
-      <Filter>Math\Bool</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\Bool3.cpp">
-      <Filter>Math\Bool</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\Bool4.cpp">
-      <Filter>Math\Bool</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\Int1.cpp">
-      <Filter>Math\Int</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\Int2.cpp">
-      <Filter>Math\Int</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\Int3.cpp">
-      <Filter>Math\Int</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\Int4.cpp">
-      <Filter>Math\Int</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\UInt1.cpp">
-      <Filter>Math\UInt</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\UInt2.cpp">
-      <Filter>Math\UInt</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\UInt3.cpp">
-      <Filter>Math\UInt</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\UInt4.cpp">
-      <Filter>Math\UInt</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\Float1.cpp">
-      <Filter>Math\Float</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\Float2.cpp">
-      <Filter>Math\Float</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\Float3.cpp">
-      <Filter>Math\Float</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\Float4.cpp">
-      <Filter>Math\Float</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\Float4x4.cpp">
-      <Filter>Math\Float</Filter>
-    </ClCompile>
     <ClCompile Include="Mesh\Geometry.cpp">
       <Filter>Model\Mesh</Filter>
     </ClCompile>
+    <ClCompile Include="Input.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DefaultPS.hlsl">

@@ -1,16 +1,17 @@
 #pragma once
 
-#include "Math/Math.h"
 
-using Egg::Math::Float4;
-using Egg::Math::Float3;
 
 struct TransformComponent {
-	Float4 Position;
-	Float4 Rotation;
-	Float3 Scale;
+	DirectX::XMFLOAT4 Position;
+	DirectX::XMFLOAT4 Rotation;
+	DirectX::XMFLOAT3 Scale;
 
-	TransformComponent() : Position{ Float4::UnitW }, Rotation{ Float4::UnitW }, Scale{ Float3::One } { }
+
+
+	TransformComponent() : Position{ 0.0f, 0.0f, 0.0f, 1.0f }, Rotation{ 0.0f, 0.0f, 0.0f, 1.0f }, Scale{ 1.0f, 1.0f, 1.0f } {
+
+	}
 
 
 };

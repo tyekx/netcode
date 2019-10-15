@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Math/Math.h"
+#include <DirectXMath.h>
 
 namespace Egg {
 
@@ -8,9 +8,9 @@ namespace Egg {
 
 		struct Material {
 
-			Egg::Math::Float3 diffuseColor;
-			Egg::Math::Float3 ambientColor;
-			Egg::Math::Float3 specularColor;
+			DirectX::XMFLOAT3 diffuseColor;
+			DirectX::XMFLOAT3 ambientColor;
+			DirectX::XMFLOAT3 specularColor;
 			float shininess;
 
 			char diffuseTexture[64];

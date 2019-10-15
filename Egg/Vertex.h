@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Math/Float3.h"
-#include "Math/UInt4.h"
+#include <DirectXMath.h>
 
 namespace Egg {
 	/*
@@ -10,9 +9,9 @@ namespace Egg {
 	struct PNT_Vertex {
 		constexpr static int type = 0;
 
-		Egg::Math::Float3 position;
-		Egg::Math::Float3 normal;
-		Egg::Math::Float2 tex;
+		DirectX::XMFLOAT3 position;
+		DirectX::XMFLOAT3 normal;
+		DirectX::XMFLOAT2 tex;
 	};
 
 	/*
@@ -21,11 +20,11 @@ namespace Egg {
 	struct PNTTB_Vertex {
 		constexpr static int type = 1;
 
-		Egg::Math::Float3 position;
-		Egg::Math::Float3 normal;
-		Egg::Math::Float2 tex;
-		Egg::Math::Float3 tangent;
-		Egg::Math::Float3 binormal;
+		DirectX::XMFLOAT3 position;
+		DirectX::XMFLOAT3 normal;
+		DirectX::XMFLOAT2 tex;
+		DirectX::XMFLOAT3 tangent;
+		DirectX::XMFLOAT3 binormal;
 	};
 
 	/*
@@ -34,11 +33,11 @@ namespace Egg {
 	struct PNTWB_Vertex {
 		constexpr static int type = 2;
 
-		Egg::Math::Float3 position;
-		Egg::Math::Float3 normal;
-		Egg::Math::Float2 tex;
-		Egg::Math::Float3 weights;
-		Egg::Math::Int4 boneIds;
+		DirectX::XMFLOAT3 position;
+		DirectX::XMFLOAT3 normal;
+		DirectX::XMFLOAT2 tex;
+		DirectX::XMFLOAT3 weights;
+		DirectX::XMINT4 boneIds;
 	};
 
 	/*
@@ -48,13 +47,13 @@ namespace Egg {
 	struct PNTWBTB_Vertex {
 		constexpr static int type = 3;
 
-		Egg::Math::Float3 position;
-		Egg::Math::Float3 normal;
-		Egg::Math::Float2 tex;
-		Egg::Math::Float3 weights;
-		Egg::Math::Int4 boneIds;
-		Egg::Math::Float3 tangent;
-		Egg::Math::Float3 binormal;
+		DirectX::XMFLOAT3 position;
+		DirectX::XMFLOAT3 normal;
+		DirectX::XMFLOAT2 tex;
+		DirectX::XMFLOAT3 weights;
+		DirectX::XMINT4 boneIds;
+		DirectX::XMFLOAT3 tangent;
+		DirectX::XMFLOAT3 binormal;
 	};
 
 }

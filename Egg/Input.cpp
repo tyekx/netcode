@@ -3,8 +3,8 @@
 namespace Egg {
 
 	bool Input::IsFocused{ false };
-	Math::Int2 Input::LastMousePos{ -1, -1 };
-	Math::Int2 Input::MouseDelta{};
+	DirectX::XMINT2 Input::LastMousePos{ -1, -1 };
+	DirectX::XMINT2 Input::MouseDelta{};
 	std::map<std::string, Input::Axis> Input::AxisMap{ };
 
 	Input::Axis::Axis() : PositiveKey{ 0 }, NegativeKey{ 0 }, CurrentValue{ 0.0f } { }
@@ -59,7 +59,7 @@ namespace Egg {
 		AxisMap[name] = Axis{ posKey, negKey };
 	}
 
-	void Input::MouseMove(const Math::Int2 & xy) {
+	void Input::MouseMove(const DirectX::XMINT2 & xy) {
 		if(!IsFocused) {
 			return;
 		}
@@ -68,16 +68,18 @@ namespace Egg {
 			return;
 		}
 
-		MouseDelta += (xy - LastMousePos);
+		MouseDelta.x += xy.x - LastMousePos.x;
+		MouseDelta.y += xy.y - LastMousePos.y;
+
 		LastMousePos = xy;
 	}
 
-	Math::Int2 Input::GetMouseDelta() {
+	DirectX::XMINT2 Input::GetMouseDelta() {
 		return MouseDelta;
 	}
 
 	void Input::Reset() {
-		MouseDelta = Math::Int2::Zero;
+		MouseDelta = DirectX::XMINT2{ 0,0 };
 	}
 
 }

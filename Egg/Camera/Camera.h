@@ -1,37 +1,44 @@
 #pragma once
 
-#include "../Math/Math.h"
+
+#include <DirectXMath.h>
 
 namespace Egg {
 	namespace Camera {
 		/// Basic camera interface, to be implemented by camera type classes.
 		class BaseCamera {
-			Egg::Math::Float4x4 ViewMatrix;
-			Egg::Math::Float4x4 ProjMatrix;
+			DirectX::XMFLOAT4X4A ViewMatrix;
+			DirectX::XMFLOAT4X4A ProjMatrix;
 
 			virtual void UpdateView() {
-				ViewMatrix = Egg::Math::Float4x4::View(Position, Ahead, Egg::Math::Float3::UnitY);
+				DirectX::XMVECTOR pos = DirectX::XMLoadFloat3(&Position);
+				DirectX::XMVECTOR ahead = DirectX::XMLoadFloat3(&Ahead);
+				DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&Up);
+				DirectX::XMStoreFloat4x4(&ViewMatrix, DirectX::XMMatrixLookToRH(pos, ahead, up));
 			}
 
 			virtual void UpdateProj() {
-				ProjMatrix = Egg::Math::Float4x4::Proj(Fov, Aspect, NearPlane, FarPlane);
+				DirectX::XMStoreFloat4x4(&ProjMatrix, DirectX::XMMatrixPerspectiveFovRH(Fov, Aspect, NearPlane, FarPlane));
 			}
 
 		public:
-			Egg::Math::Float3 Position;
-			Egg::Math::Float3 Ahead;
+			DirectX::XMFLOAT3 Position;
+			DirectX::XMFLOAT3 Ahead;
+			DirectX::XMFLOAT3 Up;
 
 			float Fov;
 			float Aspect;
 			float NearPlane;
 			float FarPlane;
 
+			BaseCamera() : ViewMatrix{}, ProjMatrix{}, Position{}, Ahead{}, Up{ 0.0f, 1.0f, 0.0f }, Fov{ 1.0f }, Aspect{ 1.0f }, NearPlane{ 0.0f }, FarPlane{ 1.0f } { }
+
 			virtual void UpdateMatrices() {
 				UpdateProj();
 				UpdateView();
 			}
 
-			void SetView(const Egg::Math::Float3 & position, const Egg::Math::Float3 & a) {
+			void SetView(const DirectX::XMFLOAT3 & position, const DirectX::XMFLOAT3 & a) {
 				Position = position;
 				Ahead = a;
 				UpdateView();
@@ -45,11 +52,11 @@ namespace Egg {
 				UpdateProj();
 			}
 
-			virtual const Egg::Math::Float4x4& GetViewMatrix() {
+			virtual const DirectX::XMFLOAT4X4A & GetViewMatrix() {
 				return ViewMatrix;
 			}
 
-			virtual const Egg::Math::Float4x4& GetProjMatrix() {
+			virtual const DirectX::XMFLOAT4X4A & GetProjMatrix() {
 				return ProjMatrix;
 			}
 

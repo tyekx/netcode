@@ -37,7 +37,7 @@ namespace Egg {
 			memset(constantBufferAssoc, -1, sizeof(constantBufferAssoc));
 		}
 
-		void ConstantBufferSlot(int rootSignatureSlot, int cbvId) {
+		void ConstantBufferSlot(int cbvId, int rootSignatureSlot) {
 			ASSERT(MAX_CONSTANT_BUFFER_COUNT > cbvId && cbvId >= 0, "Constant buffer index must be between 0 and MAX_CONSTANT_BUFFER_COUNT");
 
 			ASSERT(constantBufferAssoc[cbvId] == -1, "Constant buffer slot already occupied");
@@ -54,6 +54,8 @@ namespace Egg {
 		void BindConstantBuffer(ID3D12GraphicsCommandList * gcl, Egg::ConstantBuffer<T> & cbuffer) {
 			if(constantBufferAssoc[T::id] != -1) {
 				gcl->SetGraphicsRootConstantBufferView(constantBufferAssoc[T::id], cbuffer.GetGPUVirtualAddress());
+			} else {
+				OutputDebugString("Cbuffer was not found\r\n");
 			}
 		}
 

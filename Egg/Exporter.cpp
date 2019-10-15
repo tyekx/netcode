@@ -11,12 +11,10 @@ namespace Egg {
 
 			acc += m.animationsLength * sizeof(Asset::Animation);
 			for(unsigned int i = 0; i < m.animationsLength; ++i) {
-
-				acc += sizeof(Asset::BoneAnimation) * m.animations[i].boneDataLength;
-
-				for(unsigned j = 0; j < m.animations[i].boneDataLength; ++j) {
-					acc += sizeof(Asset::AnimationKey) * m.animations[i].boneData[j].keysLength;
-				}
+				acc += sizeof(Asset::AnimationKey) * m.animations[i].bonesLength * m.animations[i].keysLength;
+				acc += sizeof(double) * m.animations[i].keysLength;
+				acc += sizeof(Asset::AnimationState) * m.animations[i].bonesLength;
+				acc += sizeof(Asset::AnimationState) * m.animations[i].bonesLength;
 			}
 
 			acc += sizeof(Asset::Bone) * m.bonesLength;
@@ -68,16 +66,13 @@ namespace Egg {
 				fwrite(m.animations[i].name, 1, sizeof(m.animations[i].name), file);
 				fwrite(&m.animations[i].duration, sizeof(double), 1, file);
 				fwrite(&m.animations[i].ticksPerSecond, sizeof(double), 1, file);
-				fwrite(&m.animations[i].boneDataLength, sizeof(unsigned int), 1, file);
+				fwrite(&m.animations[i].keysLength, sizeof(unsigned int), 1, file);
+				fwrite(&m.animations[i].bonesLength, sizeof(unsigned int), 1, file);
 
-				for(unsigned int j = 0; j < m.animations[i].boneDataLength; ++j) {
-					fwrite(&(m.animations[i].boneData[j].boneId), sizeof(int), 1, file);
-					fwrite(&(m.animations[i].boneData[j].preState), sizeof(Egg::Asset::AnimationState), 1, file);
-					fwrite(&(m.animations[i].boneData[j].postState), sizeof(Egg::Asset::AnimationState), 1, file);
-					fwrite(&(m.animations[i].boneData[j].keysLength), sizeof(unsigned int), 1, file);
-
-					fwrite(m.animations[i].boneData[j].keys, sizeof(Asset::AnimationKey), m.animations[i].boneData[j].keysLength, file);
-				}
+				fwrite(m.animations[i].preStates, sizeof(Asset::AnimationState), m.animations[i].bonesLength, file);
+				fwrite(m.animations[i].postStates, sizeof(Asset::AnimationState), m.animations[i].bonesLength, file);
+				fwrite(m.animations[i].times, sizeof(double), m.animations[i].keysLength, file);
+				fwrite(m.animations[i].keys, sizeof(Asset::AnimationKey), m.animations[i].keysLength * m.animations[i].bonesLength, file);
 			}
 
 			fclose(file);

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../Math/Math.h"
+
+#include <DirectXMath.h>
 
 namespace Egg {
 
@@ -14,21 +15,11 @@ namespace Egg {
 		};
 
 		struct AnimationKey {
-			Egg::Math::Float3 position;
-			Egg::Math::Float4 rotation;
-			Egg::Math::Float3 scale;
-			double time;
+			DirectX::XMFLOAT3 position;
+			DirectX::XMFLOAT4 rotation;
+			DirectX::XMFLOAT3 scale;
 		};
 
-		struct BoneAnimation {
-			int boneId;
-
-			AnimationState preState;
-			AnimationState postState;
-
-			unsigned int keysLength;
-			AnimationKey * keys;
-		};
 
 		struct Animation {
 			char name[56];
@@ -36,8 +27,28 @@ namespace Egg {
 			double duration;
 			double ticksPerSecond;
 
-			unsigned int boneDataLength;
-			BoneAnimation * boneData;
+			unsigned int keysLength;
+			unsigned int bonesLength;
+
+			/*
+			* Length of this array is bonesLength,
+			* for each bone we have a pre and a post state
+			*/
+			AnimationState * preStates;
+			AnimationState * postStates;
+
+			/*
+			* Length of this array is keysLength
+			* for each animation key we have a timestamp
+			*/
+			double * times;
+
+			/*
+			* This is a linearized structure, to access a row:
+			* keys + (bonesLength * i) will give the i-th row containing bonesLength of useful data.
+			* Therefore i is expected to be between [0, keysLength-1]
+			*/
+			AnimationKey * keys;
 		};
 
 	}
