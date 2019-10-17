@@ -8,11 +8,16 @@ namespace Egg {
 		depthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 		depthStencilState.DepthEnable = FALSE;
 		depthStencilState.StencilEnable = FALSE;
+		topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		dsvFormat = DXGI_FORMAT_UNKNOWN;
 	}
 
 	com_ptr<ID3D12RootSignature> PipelineState::GetRootSignature() {
 		return rootSignature;
+	}
+
+	void PipelineState::SetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology) {
+		topology = primitiveTopology;
 	}
 
 	void PipelineState::SetDepthStencilState(const D3D12_DEPTH_STENCIL_DESC & dsd) {
@@ -61,6 +66,7 @@ namespace Egg {
 		psoDesc.SampleDesc.Count = 1;
 		psoDesc.SampleDesc.Quality = 0;
 		psoDesc.SampleMask = UINT_MAX;
+		psoDesc.PrimitiveTopologyType = topology;
 	}
 
 }

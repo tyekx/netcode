@@ -54,12 +54,14 @@
     <ClInclude Include="Asset\Material.h" />
     <ClInclude Include="Asset\Mesh.h" />
     <ClInclude Include="Asset\Model.h" />
+    <ClInclude Include="BasicGeometry.h" />
     <ClInclude Include="Blackboard.h" />
     <ClInclude Include="Camera\Camera.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Components.h" />
     <ClInclude Include="ConstantBuffer.hpp" />
     <ClInclude Include="d3dx12.h" />
+    <ClInclude Include="DebugPhysx.h" />
     <ClInclude Include="EggMpl.hpp" />
     <ClInclude Include="EggSceneConf.h" />
     <ClInclude Include="Exporter.h" />
@@ -97,6 +99,7 @@
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DebugPhysx.cpp" />
     <ClCompile Include="Exporter.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Importer.cpp" />
@@ -124,6 +127,12 @@
     <FxCompile Include="Shaders\cbBasicVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Shaders\DebugPhysxPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\DebugPhysxVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\DefaultPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>

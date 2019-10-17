@@ -655,6 +655,91 @@ void LinearizeAnimation(Animation & anim) {
 	}
 }
 
+
+
+double NextKeyframe(double prevKeyframe, aiAnimation * anim) {
+	double candidate = 500000.0;
+
+	for(unsigned int i = 0; i < anim->mNumChannels; ++i) {
+		for(unsigned int j = 0; j < anim->mChannels[i]->mNumPositionKeys; ++j) {
+			if((anim->mChannels[i]->mPositionKeys[j].mTime - prevKeyframe) > 0.001) {
+				if((anim->mChannels[i]->mPositionKeys[j].mTime - candidate) < -0.001) {
+					candidate = anim->mChannels[i]->mPositionKeys[j].mTime;
+				}
+			}
+		}
+	}
+
+	return candidate;
+}
+
+int IsKeyframePresent(double tl, aiNodeAnim* anim) {
+	for(unsigned int i = 0; i < anim->mNumPositionKeys; ++i) {
+		if(abs(anim->mPositionKeys[i].mTime - tl) < 0.001) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+ImportedAnimationKey ToImportedAnimKey(aiNodeAnim * anim, unsigned int keyId) {
+	aiVectorKey * posKey = anim->mPositionKeys + keyId;
+	aiQuatKey * rotKey = anim->mRotationKeys + keyId;
+	aiVectorKey * scaleKey = anim->mScalingKeys + keyId;
+
+	DirectX::XMFLOAT3 posStValue{ posKey->mValue.x, posKey->mValue.y, posKey->mValue.z };
+	DirectX::XMFLOAT4 rotStValue{ rotKey->mValue.x, rotKey->mValue.y, rotKey->mValue.z, rotKey->mValue.w };
+	DirectX::XMFLOAT3 scaleStValue{ scaleKey->mValue.x, scaleKey->mValue.y, scaleKey->mValue.z };
+
+	ImportedAnimationKey ak;
+	ak.position = posStValue;
+	ak.rotation = rotStValue;
+	ak.scale = scaleStValue;
+	ak.time = posKey->mTime;
+
+	return ak;
+}
+
+ImportedAnimationKey GenerateKey(double tl, aiNodeAnim * anim) {
+	ImportedAnimationKey ak;
+	for(unsigned int j = 0; j < anim->mNumPositionKeys; ++j) {
+		double t = anim->mPositionKeys[j].mTime;
+
+		if(t > tl) {
+			ASSERT(j != 0, "Not implemented case\r\n");
+
+			ImportedAnimationKey ak0 = ToImportedAnimKey(anim, j - 1);
+			ImportedAnimationKey ak1 = ToImportedAnimKey(anim, j);
+
+			double lerpArg = (tl - ak0.time) / (ak1.time - ak0.time);
+
+			DirectX::XMVECTOR pos0 = DirectX::XMLoadFloat3(&ak0.position);
+			DirectX::XMVECTOR pos1 = DirectX::XMLoadFloat3(&ak1.position);
+			DirectX::XMStoreFloat3(&ak.position, DirectX::XMVectorLerp(pos0, pos1, lerpArg));
+
+			DirectX::XMVECTOR quat0 = DirectX::XMLoadFloat4(&ak0.rotation);
+			DirectX::XMVECTOR quat1 = DirectX::XMLoadFloat4(&ak1.rotation);
+			DirectX::XMStoreFloat4(&ak.rotation, DirectX::XMQuaternionSlerp(quat0, quat1, lerpArg));
+
+			DirectX::XMVECTOR scale0 = DirectX::XMLoadFloat3(&ak0.scale);
+			DirectX::XMVECTOR scale1 = DirectX::XMLoadFloat3(&ak1.scale);
+			DirectX::XMStoreFloat3(&ak.scale, DirectX::XMVectorLerp(scale0, scale1, lerpArg));
+
+			ak.time = tl;
+
+			return ak;
+		}
+	}
+
+	if(anim->mNumPositionKeys == 1) {
+		ak = ToImportedAnimKey(anim, 0);
+		ak.time = tl;
+		return ak;
+	}
+	
+	ASSERT(false, "timeline issues\r\n");
+}
+
 void ProcessAnimation(const wchar_t* file, std::vector<ProcessedBone> & bones, std::vector<Animation> & anims) {
 	std::string path = Egg::Utility::ToNarrowString(file);
 
@@ -679,90 +764,56 @@ void ProcessAnimation(const wchar_t* file, std::vector<ProcessedBone> & bones, s
 		a.name = ExtractFileName(path);
 		a.TicksPerSecond = anim->mTicksPerSecond;
 		a.Duration = anim->mDuration;
-		a.BoneData.resize(anim->mNumChannels);
+		a.BoneData.resize(bones.size());
 
 		bool isValid = true;
 
-		int expectedSize = 0;
-		std::vector<double> expectedTimeDiffs;
+
+		double tl = 0.0;
 
 		for(uint32_t j = 0; j < anim->mNumChannels; ++j) {
 			aiNodeAnim * nodeAnim = anim->mChannels[j];
+			int boneId = GetIndex(bones, nodeAnim->mNodeName.C_Str());
 
-			if(nodeAnim->mNumPositionKeys > expectedSize) {
-				expectedSize = nodeAnim->mNumPositionKeys;
+			if(boneId == -1) {
+				continue;
 			}
-		}
 
-		expectedTimeDiffs.resize(expectedSize);
-
-		for(uint32_t j = 0; j < anim->mNumChannels; ++j) {
-			aiNodeAnim * nodeAnim = anim->mChannels[j];
-
-			if(nodeAnim->mNumPositionKeys == expectedSize) {
-				for(uint32_t k = 1; k < expectedSize; ++k) {
-					expectedTimeDiffs[k - 1] = nodeAnim->mPositionKeys[k].mTime - nodeAnim->mPositionKeys[k - 1].mTime;
-				}
-				break;
-			}
-		}
-
-		for(uint32_t j = 0; j < anim->mNumChannels; ++j) {
-			aiNodeAnim * nodeAnim = anim->mChannels[j];
-			if(!IsAnimationUniformInTime(nodeAnim) ||
-			   (expectedSize != nodeAnim->mNumPositionKeys && nodeAnim->mNumPositionKeys != 1)) {
+			if(!IsAnimationUniformInTime(nodeAnim)) {
 				isValid = false;
 				printf("Error: %s is not uniformly exported\r\n", a.name.c_str());
 				break;
 			}
-
-			a.BoneData[j].Keys.resize(expectedSize);
-
-			for(uint32_t k = 0; k < expectedSize; ++k) {
-				int aiKeyId = k;
-				double timeDiff = 0.0;
-
-				if(nodeAnim->mNumPositionKeys == 1) {
-					aiKeyId = 0;
-				}
-
-				if(nodeAnim->mNumPositionKeys != 1) {
-					if(k > 0) {
-						timeDiff = nodeAnim->mPositionKeys[k].mTime - nodeAnim->mPositionKeys[k - 1].mTime;
-						ASSERT(abs(timeDiff - expectedTimeDiffs[k - 1]) < 0.00001, "Animation is not uniform in time\r\n");
-					}
-				}
-
-				a.BoneData[j].Keys[k].position.x = nodeAnim->mPositionKeys[aiKeyId].mValue.x;
-				a.BoneData[j].Keys[k].position.y = nodeAnim->mPositionKeys[aiKeyId].mValue.y;
-				a.BoneData[j].Keys[k].position.z = nodeAnim->mPositionKeys[aiKeyId].mValue.z;
-
-				aiQuaternion q = nodeAnim->mRotationKeys[aiKeyId].mValue;
-				q.Normalize();
-
-				a.BoneData[j].Keys[k].rotation.x = q.x;
-				a.BoneData[j].Keys[k].rotation.y = q.y;
-				a.BoneData[j].Keys[k].rotation.z = q.z;
-				a.BoneData[j].Keys[k].rotation.w = q.w;
-
-				a.BoneData[j].Keys[k].scale.x = nodeAnim->mScalingKeys[aiKeyId].mValue.x;
-				a.BoneData[j].Keys[k].scale.y = nodeAnim->mScalingKeys[aiKeyId].mValue.y;
-				a.BoneData[j].Keys[k].scale.z = nodeAnim->mScalingKeys[aiKeyId].mValue.z;
-
-				// the animation must be uniform for this
-				a.BoneData[j].Keys[k].time = nodeAnim->mPositionKeys[aiKeyId].mTime;
-			}
-
-			a.BoneData[j].PreState = ToAnimationState(nodeAnim->mPreState);
-			a.BoneData[j].PostState = ToAnimationState(nodeAnim->mPostState);
-			a.BoneData[j].BoneId = GetBoneIndex(bones, nodeAnim->mNodeName.C_Str());
-
-			ASSERT(a.BoneData[j].BoneId != -1, "Bone named '%s' was not found.", nodeAnim->mNodeName.C_Str());
 		}
 
 		if(!isValid) {
 			continue;
 		}
+
+		do {
+			for(uint32_t j = 0; j < anim->mNumChannels; ++j) {
+				aiNodeAnim * nodeAnim = anim->mChannels[j];
+				int boneId = GetIndex(bones, nodeAnim->mNodeName.C_Str());
+
+
+				if(boneId != -1) {
+					int keyFrame = IsKeyframePresent(tl, nodeAnim);
+
+					a.BoneData[boneId].BoneId = boneId;
+
+					if(keyFrame != -1) {
+						a.BoneData[boneId].Keys.push_back(ToImportedAnimKey(nodeAnim, keyFrame));
+					} else {
+						a.BoneData[boneId].Keys.push_back(GenerateKey(tl, nodeAnim));
+					}
+				}
+
+
+			}
+
+			tl = NextKeyframe(tl, anim);
+
+		} while(tl < 400000.0);
 
 		std::sort(a.BoneData.begin(), a.BoneData.end(), [](auto a, auto b) -> bool {
 			return a.BoneId < b.BoneId;

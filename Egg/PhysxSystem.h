@@ -9,16 +9,18 @@
 namespace Egg {
 
 	class PhysxSystem {
+
+	public:
 		physx::PxDefaultAllocator allocator;
 		physx::PxDefaultErrorCallback errorCallback;
-
 		physx::PxFoundation * foundation;
 		physx::PxPhysics * physics;
 		physx::PxPvd * debugger;
 		physx::PxScene * scene;
 		physx::PxDefaultCpuDispatcher * dispatcher;
+		physx::PxControllerManager * controllerManager;
+		physx::PxRigidStatic * groundPlane;
 
-	public:
 		constexpr static SignatureType Required() {
 			return (0x1ULL << TupleIndexOf<PhysxComponent, COMPONENTS_T>::value);
 		}
@@ -72,6 +74,7 @@ namespace Egg {
 			sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
 
 			scene = physics->createScene(sceneDesc);
+			controllerManager = PxCreateControllerManager(*scene);
 			physx::PxPvdSceneClient * pvdClient = scene->getScenePvdClient();
 			if(pvdClient) {
 				pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
@@ -79,9 +82,10 @@ namespace Egg {
 				pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
 			}
 			physx::PxMaterial * groundMaterial = physics->createMaterial(0.5f, 0.5f, 0.6f);
-			physx::PxRigidStatic * groundPlane = physx::PxCreatePlane(*physics, physx::PxPlane{ 0, 1.0f, 0, 0 }, *groundMaterial);
+			groundPlane = physx::PxCreatePlane(*physics, physx::PxPlane{ 0, 1.0f, 0, 0 }, *groundMaterial);
 
 			scene->addActor(*groundPlane);
+
 		}
 
 		void Simulate(float dt) {

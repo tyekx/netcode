@@ -8,6 +8,9 @@
 #include <Egg/Scene.h>
 #include <Egg/Mesh/MultiMesh.h>
 #include <Egg/Input.h>
+#include <Egg/AnimationController.h>
+#include <Egg/BasicGeometry.h>
+#include <Egg/DebugPhysx.h>
 
 class EggApp : public Egg::SimpleApp {
 protected:
@@ -16,93 +19,84 @@ protected:
 	Egg::ConstantBuffer<PerObjectCb> cb;
 	Egg::ConstantBuffer<PerFrameCb> perFrameCb;
 	Egg::ConstantBuffer<BoneDataCb> boneDataCb;
+	std::unique_ptr<Egg::AnimationController> animCtrl;
+	std::unique_ptr<Egg::DebugPhysx> debugCharacter;
+	std::unique_ptr<Egg::DebugPhysx> debugGround;
+	physx::PxController * controller;
 	Egg::Camera::BaseCamera baseCam;
 	Egg::PhysxSystem pxSys;
 	Egg::Scene scene;
+	DirectX::XMFLOAT3A velocity;
 	float speed;
 	float mouseSpeed;
 	float animT;
+	bool onGround;
 public:
 
-	EggApp() : Egg::SimpleApp{}, multi{}, ybotModel{}, cb{}, perFrameCb{}, boneDataCb{}, baseCam{}, pxSys{}, scene{}, speed{}, mouseSpeed{}, animT{ 0.0f } { }
+	EggApp() : Egg::SimpleApp{}, multi{}, ybotModel{}, cb{}, perFrameCb{}, boneDataCb{}, animCtrl{ nullptr }, debugCharacter{}, debugGround{}, controller{ nullptr }, baseCam{}, pxSys{}, scene{}, speed{}, mouseSpeed{}, animT{ 0.0f }, onGround{ false } { }
 	
-	void UpdateAnimation(float dt) {
-		animT += dt * 60.0f;
-
-		Egg::Asset::Animation & a = ybotModel.animations[0];
-		animT = fmodf(animT, (float)a.duration);
-		
-		float timeSinceLastTick = 0.0f;
-		float timeGap = 0.0f;
-		unsigned int keysId = 0;
-		for(unsigned int i = 1; i < a.keysLength; ++i) {
-			if(animT >= (float)(a.times[i - 1]) && (float)(a.times[i]) >= animT) {
-				keysId = i;
-				timeSinceLastTick = animT - (float)(a.times[i - 1]);
-				timeGap = (float)((a.times[i]) - (a.times[i - 1]));
-				break;
-			}
-		}
-
-		float lerpArg = timeSinceLastTick / timeGap;
-
-		DirectX::XMFLOAT4 unitW{ 0.0f, 0.0f, 0.0f, 1.0f };
-		DirectX::XMVECTOR rotationSource = DirectX::XMLoadFloat4(&unitW);
-		DirectX::XMFLOAT4X4A locals[64];
-
-		Egg::Asset::AnimationKey * keysPrev = a.keys + ((keysId -1)* a.bonesLength);
-		Egg::Asset::AnimationKey * keysNext = a.keys + (keysId * a.bonesLength);
-		for(unsigned int i = 0; i < a.bonesLength; ++i) {
-
-			DirectX::XMVECTOR posA = DirectX::XMLoadFloat3(&keysPrev[i].position);
-			DirectX::XMVECTOR posB = DirectX::XMLoadFloat3(&keysNext[i].position);
-			DirectX::XMVECTOR T = DirectX::XMVectorLerp(posA, posB, lerpArg);
-
-			DirectX::XMVECTOR quatA = DirectX::XMLoadFloat4(&keysPrev[i].rotation);
-			DirectX::XMVECTOR quatB = DirectX::XMLoadFloat4(&keysNext[i].rotation);
-			DirectX::XMVECTOR R = DirectX::XMQuaternionSlerp(quatA, quatB, lerpArg);
-
-			DirectX::XMVECTOR scaleA = DirectX::XMLoadFloat3(&keysPrev[i].scale);
-			DirectX::XMVECTOR scaleB = DirectX::XMLoadFloat3(&keysNext[i].scale);
-			DirectX::XMVECTOR S = DirectX::XMVectorLerp(scaleA, scaleB, lerpArg);
-
-			DirectX::XMMATRIX srt = DirectX::XMMatrixAffineTransformation(S, rotationSource, R, T);
-			DirectX::XMStoreFloat4x4A(&(locals[i]), srt);
-		}
-
-
-		DirectX::XMFLOAT4X4A toRoot[64];
-		toRoot[0] = locals[0];
-		for(unsigned int i = 1; i < a.bonesLength; ++i) {
-			DirectX::XMMATRIX local = DirectX::XMLoadFloat4x4A(&(locals[i]));
-			DirectX::XMMATRIX root = DirectX::XMLoadFloat4x4A(&(toRoot[ybotModel.bones[i].parentId]));
-			DirectX::XMStoreFloat4x4A(&(toRoot[i]), DirectX::XMMatrixMultiply(local, root));
-		}
-
-		for(unsigned int i = 0; i < a.bonesLength; ++i) {
-			DirectX::XMMATRIX root = DirectX::XMLoadFloat4x4A(&(toRoot[i]));
-			DirectX::XMMATRIX offset = DirectX::XMLoadFloat4x4(&ybotModel.bones[i].transform);
-			DirectX::XMStoreFloat4x4A(&(boneDataCb->BindTransform[i]), DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(offset, root)));
-		}
-
-		boneDataCb.Upload();
-
-	}
 
 	virtual void Update(float dt, float T) override {
-		pxSys.Simulate(dt);
-		float scale = 0.01f;
 
-		DirectX::XMStoreFloat4x4A(&cb->Model, DirectX::XMMatrixIdentity());
+		float vertical = Egg::Input::GetAxis("Vertical");
+		float horizontal =	Egg::Input::GetAxis("Horizontal");
+
+		DirectX::XMFLOAT3A vertComponent{ 0.0f, 0.0f, vertical };
+		DirectX::XMFLOAT3A horComponent{ horizontal, 0.0f, 0.0f };
+		DirectX::XMFLOAT3A gravityComponent{ 0.0f, -9.81f, 0.0f };
+
+
+		float devCamX = Egg::Input::GetAxis("DevCameraX");
+		float devCamZ = Egg::Input::GetAxis("DevCameraZ");
+		float devCamY = Egg::Input::GetAxis("DevCameraY");
+
+		DirectX::XMFLOAT3A devCam = { devCamX, devCamY, devCamZ };
+		DirectX::XMVECTOR devCamVec = DirectX::XMLoadFloat3A(&devCam);
+		DirectX::XMVECTOR devCamPos = DirectX::XMLoadFloat3(&baseCam.Position);
+		devCamVec = DirectX::XMVectorScale(devCamVec, speed * dt);
+		devCamPos = DirectX::XMVectorAdd(devCamVec, devCamPos);
+		DirectX::XMStoreFloat3(&baseCam.Position, devCamPos);
+
+		DirectX::XMVECTOR dir = DirectX::XMVectorAdd(DirectX::XMLoadFloat3A(&vertComponent), DirectX::XMLoadFloat3A(&horComponent));
+		if(!onGround) {
+			dir = DirectX::XMVectorAdd(dir, DirectX::XMLoadFloat3A(&gravityComponent));
+		}
+		dir = DirectX::XMVector3Normalize(dir);
+		dir = DirectX::XMVectorScale(dir, speed * dt);
+
+		DirectX::XMFLOAT3A dirResult;
+		DirectX::XMStoreFloat3A(&dirResult, dir);
+
+		physx::PxControllerCollisionFlags result = controller->move(physx::PxVec3(dirResult.x, dirResult.y, dirResult.z), 0.0f, dt, physx::PxControllerFilters{});
+
+		if(result.isSet(physx::PxControllerCollisionFlag::eCOLLISION_DOWN)) {
+			onGround = true;
+		}
+
+		pxSys.Simulate(dt);
+		debugCharacter->AfterPhysxUpdate();
+		debugGround->AfterPhysxUpdate();
+
+		auto pxV3 = controller->getPosition();
+		
+
+
+		DirectX::XMMATRIX Tr = DirectX::XMMatrixTranslation(pxV3.x, pxV3.y, pxV3.z);
+		devCamVec = DirectX::XMVector3Transform(devCamPos, Tr);
+		DirectX::XMStoreFloat3(&baseCam.Position, devCamVec);
+
+		DirectX::XMMATRIX offset = DirectX::XMMatrixMultiply(DirectX::XMMatrixTranslation(0.0f, -100.0f, 0.0f), Tr);
+
+		DirectX::XMStoreFloat4x4A(&cb->Model, DirectX::XMMatrixTranspose(offset));
 		DirectX::XMStoreFloat4x4A(&cb->InvModel, DirectX::XMMatrixIdentity());
 		cb.Upload();
 
-		
-
-		UpdateAnimation(dt);
+		animCtrl->Animate(boneDataCb->BindTransform, dt);
+		boneDataCb.Upload();
 
 
 		baseCam.UpdateMatrices();
+		DirectX::XMStoreFloat3(&baseCam.Position, devCamPos);
 
 		DirectX::XMMATRIX view = DirectX::XMLoadFloat4x4A(&baseCam.GetViewMatrix());
 		DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4A(&baseCam.GetProjMatrix());
@@ -153,6 +147,9 @@ public:
 		commandList->ClearRenderTargetView(rHandle, clearColor, 0, nullptr);
 		commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
+		debugCharacter->Draw(commandList.Get(), perFrameCb);
+		debugGround->Draw(commandList.Get(), perFrameCb);
+		
 		auto meshes = multi->GetMeshes();
 		for(auto & i : meshes) {
 			auto mat = i->GetMaterial();
@@ -199,14 +196,21 @@ public:
 	virtual void CreateResources() override {
 		Egg::SimpleApp::CreateResources();
 
+		Egg::Input::SetAxis("Vertical", 'W', 'S');
+		Egg::Input::SetAxis("Horizontal", 'A', 'D');
+
+		Egg::Input::SetAxis("DevCameraX", VK_NUMPAD4, VK_NUMPAD6);
+		Egg::Input::SetAxis("DevCameraZ", VK_NUMPAD8, VK_NUMPAD5);
+		Egg::Input::SetAxis("DevCameraY", VK_NUMPAD7, VK_NUMPAD9);
+
 		pxSys.CreateResources();
 
-		speed = 1.0f;
+		speed = 250.0f;
 		mouseSpeed = 1.5f;
 		baseCam.NearPlane = 1.0f;
 		baseCam.FarPlane = 1000.0f;
 		baseCam.Ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
-		baseCam.Position = DirectX::XMFLOAT3{ 0.0f, 75.0f, 180.0f };
+		baseCam.Position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 180.0f };
 	}
 
 	virtual void ReleaseResources() override {
@@ -224,6 +228,39 @@ public:
 		com_ptr<ID3D12RootSignature> rootSig = Egg::Shader::LoadRootSignature(device.Get(), avatarVS.Get());
 
 		Egg::Importer::ImportModel(L"ybot.eggasset", ybotModel);
+
+		animCtrl.reset(new Egg::AnimationController{ ybotModel.animations, ybotModel.animationsLength,
+													 ybotModel.bones, ybotModel.bonesLength });
+
+		physx::PxCapsuleControllerDesc cd;
+		cd.behaviorCallback = NULL;
+		cd.climbingMode = physx::PxCapsuleClimbingMode::eEASY;
+		cd.contactOffset = 0.1f;
+		cd.density = 10.0f;
+		cd.invisibleWallHeight = 0.0f;
+		cd.material = pxSys.physics->createMaterial(0.5f, 0.6f, 0.6f);
+		cd.position = physx::PxExtendedVec3{ 0.0f, 200.0f, 0.0f };
+		cd.nonWalkableMode = physx::PxControllerNonWalkableMode::ePREVENT_CLIMBING;
+		cd.registerDeletionListener = true;
+		cd.reportCallback = NULL;
+		cd.scaleCoeff = 0.8f;
+		cd.slopeLimit = 0.7071f;
+		cd.stepOffset = 5.0f;
+		cd.upDirection = physx::PxVec3{ 0.0f, 1.0f, 0.0f };
+		cd.volumeGrowth = 1.5f;
+		cd.height = 80.0f;
+		cd.radius = 60.0f;
+
+		controller = pxSys.controllerManager->createController(cd);
+
+		debugCharacter.reset(new Egg::DebugPhysx{ device.Get(), psoManager.get(), controller->getActor() });
+
+		debugGround.reset(new Egg::DebugPhysx{ device.Get(), psoManager.get(), pxSys.groundPlane });
+
+		DirectX::XMMATRIX groundScaling = DirectX::XMMatrixScaling(2000.0f, 2000.0f, 2000.0f);
+		
+		DirectX::XMStoreFloat4x4A(&debugGround->offset, groundScaling);
+
 
 		multi = Egg::Mesh::MultiMesh::Create();
 

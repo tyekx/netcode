@@ -14,9 +14,10 @@
       <ObjectFileOutput>$(OutDir)Shaders\%(Filename).cso</ObjectFileOutput>
     </FxCompile>
     <Link>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;d3dcompiler.lib;lua5.3.0-static.lib;json11.lib;PhysX_64.lib;PhysXFoundation_64.lib;PhysXCommon_64.lib;PhysXPvdSDK_static_64.lib;PhysXExtensions_static_64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;d3dcompiler.lib;lua5.3.0-static.lib;json11.lib;PhysX_64.lib;PhysXFoundation_64.lib;PhysXCommon_64.lib;PhysXPvdSDK_static_64.lib;PhysXExtensions_static_64.lib;PhysXCharacterKinematic_static_64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile />
+    <Lib />
   </ItemDefinitionGroup>
   <ItemGroup />
 </Project>

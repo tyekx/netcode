@@ -27,7 +27,6 @@ namespace Egg {
 			D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsoDesc;
 			ZeroMemory(&gpsoDesc, sizeof(gpsoDesc));
 			gpsoDesc.NumRenderTargets = 1;
-			gpsoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 			gpsoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 			gpsoDesc.InputLayout = geometry->GetInputLayout();
 			pipelineDesc->ApplyToDescriptor(gpsoDesc);

@@ -14,6 +14,7 @@ namespace Egg {
 			D3D12_RASTERIZER_DESC rasterizerState;
 			D3D12_DEPTH_STENCIL_DESC depthStencilState;
 			DXGI_FORMAT dsvFormat;
+			D3D12_PRIMITIVE_TOPOLOGY_TYPE topology;
 		public:
 
 			PipelineState();
@@ -37,6 +38,8 @@ namespace Egg {
 			void SetDSVFormat(DXGI_FORMAT format);
 
 			void ApplyToDescriptor(D3D12_GRAPHICS_PIPELINE_STATE_DESC & psoDesc);
+
+			void SetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology);
 
 
 		GG_ENDCLASS

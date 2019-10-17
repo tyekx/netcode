@@ -196,6 +196,12 @@
     <ClInclude Include="AnimationController.h">
       <Filter>Model\Animation</Filter>
     </ClInclude>
+    <ClInclude Include="BasicGeometry.h">
+      <Filter>Model\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugPhysx.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
@@ -244,6 +250,9 @@
       <Filter>Model\Mesh</Filter>
     </ClCompile>
     <ClCompile Include="Input.cpp" />
+    <ClCompile Include="DebugPhysx.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DefaultPS.hlsl">
@@ -259,6 +268,12 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\AvatarVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\DebugPhysxVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\DebugPhysxPS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

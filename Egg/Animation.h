@@ -10,6 +10,5 @@ namespace Egg {
 	using Animation = Asset::Animation;
 	using AnimationKey = Asset::AnimationKey;
 	using AnimationState = Asset::AnimationState;
-	using BoneAnimation = Asset::BoneAnimation;
 
 }
