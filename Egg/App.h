@@ -8,6 +8,10 @@
 
 namespace Egg {
 
+	enum class DisplayMode {
+		WINDOWED, FULLSCREEN, BORDERLESS
+	};
+
 	class App {
 	protected:
 		com_ptr<ID3D12Device> device;
@@ -15,6 +19,7 @@ namespace Egg {
 		com_ptr<ID3D12CommandQueue> commandQueue;
 
 		// swap chain resources
+		DXGI_SWAP_CHAIN_DESC swapChainDesc;
 		D3D12_VIEWPORT viewPort;
 		D3D12_RECT scissorRect;
 		unsigned int backBufferDepth;
@@ -33,12 +38,41 @@ namespace Egg {
 		// timer objects
 		Egg::Stopwatch stopwatch;
 		std::unique_ptr<Egg::Scene> scene;
-	protected:
+
 		float elapsedTime;
+		DisplayMode mode;
+		DirectX::XMUINT2 lastWindowedSize;
+
+		/*
+		* Internal resize implementation
+		*/
+		void ImplDetailResize(int w, int h, DisplayMode modeToSet, IDXGIOutput * optMonitor = nullptr) {
+			ReleaseSwapChainResources();
+
+			DX_API("Failed to get swap chain desc")
+				swapChain->GetDesc(&swapChainDesc);
+
+			BOOL fullscreenMode = FALSE;
+			DX_API("Failed to get fullscreen state")
+				swapChain->GetFullscreenState(&fullscreenMode, nullptr);
+
+			if(!fullscreenMode) {
+				lastWindowedSize.x = swapChainDesc.BufferDesc.Width;
+				lastWindowedSize.y = swapChainDesc.BufferDesc.Height;
+			}
+
+			if(swapChainDesc.BufferDesc.Width != UINT(w) || swapChainDesc.BufferDesc.Height != UINT(h)) {
+				DX_API("Failed to resize buffers")
+					swapChain->ResizeBuffers(swapChainDesc.BufferCount, UINT(w), UINT(h), DXGI_FORMAT_UNKNOWN, swapChainDesc.Flags);
+			}
+
+			CreateSwapChainResources();
+		}
+
 	public:
 		virtual ~App() = default;
-		App() : device{ nullptr }, swapChain{ nullptr }, commandQueue{ nullptr }, viewPort{}, scissorRect{}, backBufferDepth{ }, rtvDescriptorHandleIncrementSize{}, rtvHandle{}, rtvDescriptorHeap{ nullptr }, 
-			renderTargets{}, aspectRatio{ 1.0 }, fence{ nullptr }, fenceEvent{ NULL }, fenceValue{ 0 }, frameIndex{ 0 }, stopwatch{}, scene{ nullptr }, elapsedTime{ 0.0f } {
+		App() : device{ nullptr }, swapChain{ nullptr }, commandQueue{ nullptr }, swapChainDesc{}, viewPort{}, scissorRect{}, backBufferDepth{ }, rtvDescriptorHandleIncrementSize{}, rtvHandle{}, rtvDescriptorHeap{ nullptr },
+			renderTargets{}, aspectRatio{ 1.0 }, fence{ nullptr }, fenceEvent{ NULL }, fenceValue{ 0 }, frameIndex{ 0 }, stopwatch{}, scene{ nullptr }, elapsedTime{ 0.0f }, mode{ DisplayMode::WINDOWED }, lastWindowedSize{ }{
 		
 			stopwatch.Reset();
 		}
@@ -58,25 +92,68 @@ namespace Egg {
 			return scene.get();
 		}
 
-		virtual void CreateSwapChainResources() {
-			DXGI_SWAP_CHAIN_DESC scDesc;
-			swapChain->GetDesc(&scDesc);
+		com_ptr<IDXGIOutput> GetContainingOutput() {
+			com_ptr<IDXGIOutput> output;
 
-			backBufferDepth = scDesc.BufferCount;
+			DX_API("Failed to get swap chain containing output")
+				swapChain->GetContainingOutput(output.GetAddressOf());
+
+			return output;
+		}
+
+		virtual void SetDisplayMode(DisplayMode newMode) {
+			if(mode == newMode) {
+				return;
+			}
+
+			com_ptr<IDXGIOutput> output;
+
+			DX_API("Failed to get swap chain containing output")
+				swapChain->GetContainingOutput(output.GetAddressOf());
+
+			DXGI_OUTPUT_DESC outputDesc;
+
+			DX_API("Failed to get output desc")
+				output->GetDesc(&outputDesc);
+
+
+
+			if((newMode == DisplayMode::FULLSCREEN)) {
+				DX_API("Failed to set fullscreen mode")
+					swapChain->SetFullscreenState(TRUE, output.Get());
+			}
+
+			if(newMode != DisplayMode::WINDOWED) {
+				ImplDetailResize(outputDesc.DesktopCoordinates.right - outputDesc.DesktopCoordinates.left, outputDesc.DesktopCoordinates.bottom - outputDesc.DesktopCoordinates.top, newMode, output.Get());
+			} else {
+				output.Reset();
+				ImplDetailResize(lastWindowedSize.x, lastWindowedSize.y, newMode, nullptr);
+			}
+			
+			mode = newMode;
+		}
+
+		virtual void CreateSwapChainResources() {
+			swapChain->GetDesc(&swapChainDesc);
+
+			backBufferDepth = swapChainDesc.BufferCount;
 
 			viewPort.TopLeftX = 0;
 			viewPort.TopLeftY = 0;
-			viewPort.Width = (float)scDesc.BufferDesc.Width;
-			viewPort.Height = (float)scDesc.BufferDesc.Height;
+			viewPort.Width = (float)swapChainDesc.BufferDesc.Width;
+			viewPort.Height = (float)swapChainDesc.BufferDesc.Height;
 			viewPort.MinDepth = 0.0f;
 			viewPort.MaxDepth = 1.0f;
+
+			lastWindowedSize.x = swapChainDesc.BufferDesc.Width;
+			lastWindowedSize.y = swapChainDesc.BufferDesc.Height;
 
 			aspectRatio = viewPort.Width / (float)viewPort.Height;
 
 			scissorRect.left = 0;
 			scissorRect.top = 0;
-			scissorRect.right = scDesc.BufferDesc.Width;
-			scissorRect.bottom = scDesc.BufferDesc.Height;
+			scissorRect.right = swapChainDesc.BufferDesc.Width;
+			scissorRect.bottom = swapChainDesc.BufferDesc.Height;
 
 			// Create Render Target View Descriptor Heap, like a RenderTargetView** on the GPU. A set of pointers.
 
@@ -141,15 +218,15 @@ namespace Egg {
 			device.Reset();
 		}
 
+
+
 		virtual void Resize(int width, int height) {
-			ReleaseSwapChainResources();
-			DX_API("Failed to resize swap chain")
-				swapChain->ResizeBuffers(backBufferDepth, width, height, DXGI_FORMAT_UNKNOWN, 0);
-			CreateSwapChainResources();
+			ImplDetailResize(width, height, mode, nullptr);
 		}
 
 		virtual void Destroy() {
 			ReleaseSwapChainResources();
+			swapChain->SetFullscreenState(FALSE, nullptr);
 			ReleaseResources();
 			ReleaseAssets();
 		}

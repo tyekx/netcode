@@ -26,9 +26,9 @@ namespace Egg {
 		D3D12_PLACED_SUBRESOURCE_FOOTPRINT psf;
 		psf.Offset = 0;
 		psf.Footprint.Depth = 1;
-		psf.Footprint.Height = resourceDesc.Height;
-		psf.Footprint.Width = resourceDesc.Width;
-		psf.Footprint.RowPitch = (DirectX::BitsPerPixel(resourceDesc.Format) / 8U) * resourceDesc.Width;
+		psf.Footprint.Height = (UINT32)resourceDesc.Height;
+		psf.Footprint.Width = (UINT32)resourceDesc.Width;
+		psf.Footprint.RowPitch = (UINT32)((DirectX::BitsPerPixel(resourceDesc.Format) / 8U) * resourceDesc.Width);
 		psf.Footprint.Format = resourceDesc.Format;
 		CD3DX12_TEXTURE_COPY_LOCATION src{ uploadResource.Get(), psf };
 		commandList->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);

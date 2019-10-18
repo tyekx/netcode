@@ -26,6 +26,7 @@ cbuffer PerObjectCb : register(b1) {
 
 cbuffer BoneDataCb : register(b2) {
 	float4x4 boneTransforms[128];
+	float4x4 toRootTransforms[128];
 }
 
 [RootSignature(AvatarRootSignature)]
@@ -43,7 +44,7 @@ VSOutput main(IAOutput iao)
 	float3 normalL = float3(0, 0, 0);
 
 	for(int i = 0; i < 4; ++i) {
-		posL += weights[i] * (mul(float4(iao.position, 1), boneTransforms[iao.boneIds[i]]));
+		posL += weights[i] * (mul(float4(iao.position, 1), boneTransforms[iao.boneIds[i]]).xyz);
 		normalL += weights[i] * (mul(iao.normal, (float3x3)boneTransforms[iao.boneIds[i]]));
 	}
 	iao.normal = normalL;

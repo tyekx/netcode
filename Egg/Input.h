@@ -25,7 +25,11 @@ namespace Egg {
 		static DirectX::XMINT2 MouseDelta;
 		static bool IsFocused;
 		static std::map<std::string, Axis> AxisMap;
+		static BYTE InputBuffer[2048];
 	public:
+		static void CreateResources();
+		static void ReadRawMouse(WPARAM wParam, LPARAM lParam);
+
 		static void KeyPressed(uint32_t keyCode);
 		static void KeyReleased(uint32_t keyCode);
 
@@ -35,14 +39,9 @@ namespace Egg {
 		static void MouseMove(const DirectX::XMINT2 & xy);
 		static DirectX::XMINT2 GetMouseDelta();
 
-		static void Blur() {
-			LastMousePos = DirectX::XMINT2{ -1, -1 };
-			IsFocused = false;
-		}
+		static void Blur();
 
-		static void Focused() {
-			IsFocused = true;
-		}
+		static void Focused();
 
 		/*
 		* Reset must be called after updating the scene and processing the inputs, otherwise some inputs will not register

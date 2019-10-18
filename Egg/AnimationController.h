@@ -4,6 +4,8 @@
 #include "Input.h"
 #include "Asset/Bone.h"
 #include <algorithm>
+#include "ConstantBuffer.hpp"
+#include "AnimationComponent.h"
 
 
 namespace Egg {
@@ -95,7 +97,7 @@ namespace Egg {
 		/*
 		* Will write dstTransforms, size expected to match the constant buffer type's max bone count
 		*/
-		void Animate(DirectX::XMFLOAT4X4A * dstTransforms, float dt) {
+		void Animate(ConstantBuffer<BoneDataCb> & boneData, float dt) {
 			float h = Input::GetAxis("Horizontal");
 			float v = Input::GetAxis("Vertical");
 
@@ -229,9 +231,9 @@ namespace Egg {
 			DirectX::XMFLOAT3A zeroValue{ 0,0,0 };
 			DirectX::XMVECTOR zero = DirectX::XMLoadFloat3A(&zeroValue);
 
-			for(unsigned int i = 0; i < bonesLength; ++i) {
+			for(int i = 0; i < bonesLength; ++i) {
 
-				dstTransforms[i] = identity;
+				
 
 				DirectX::XMVECTOR S = DirectX::XMLoadFloat3A(&zeroValue);
 				DirectX::XMVECTOR R = DirectX::XMLoadFloat4(&unitW);
@@ -254,21 +256,19 @@ namespace Egg {
 
 				}
 
-				DirectX::XMStoreFloat4x4A(dstTransforms + i, DirectX::XMMatrixAffineTransformation(S, rotationSource, R, T));
+				DirectX::XMStoreFloat4x4A(&(boneData->ToRootTransform[i]), DirectX::XMMatrixAffineTransformation(S, rotationSource, R, T));
 			}
 
-			DirectX::XMFLOAT4X4A toRoot[64];
-			toRoot[0] = dstTransforms[0];
-			for(unsigned int i = 1; i < bonesLength; ++i) {
-				DirectX::XMMATRIX local = DirectX::XMLoadFloat4x4A(&(dstTransforms[i]));
-				DirectX::XMMATRIX root = DirectX::XMLoadFloat4x4A(&(toRoot[bones[i].parentId]));
-				DirectX::XMStoreFloat4x4A(&(toRoot[i]), DirectX::XMMatrixMultiply(local, root));
+			for(int i = 1; i < bonesLength; ++i) {
+				DirectX::XMMATRIX local = DirectX::XMLoadFloat4x4A(&(boneData->ToRootTransform[i]));
+				DirectX::XMMATRIX root = DirectX::XMLoadFloat4x4A(&(boneData->ToRootTransform[bones[i].parentId]));
+				DirectX::XMStoreFloat4x4A(&(boneData->ToRootTransform[i]), DirectX::XMMatrixMultiply(local, root));
 			}
 
-			for(unsigned int i = 0; i < bonesLength; ++i) {
-				DirectX::XMMATRIX root = DirectX::XMLoadFloat4x4A(&(toRoot[i]));
+			for(int i = 0; i < bonesLength; ++i) {
+				DirectX::XMMATRIX root = DirectX::XMLoadFloat4x4A(&(boneData->ToRootTransform[i]));
 				DirectX::XMMATRIX offset = DirectX::XMLoadFloat4x4(&bones[i].transform);
-				DirectX::XMStoreFloat4x4A(dstTransforms + i, DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(offset, root)));
+				DirectX::XMStoreFloat4x4A(&(boneData->BindTransform[i]), DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(offset, root)));
 			}
 		}
 

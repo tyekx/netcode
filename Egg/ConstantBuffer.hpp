@@ -4,6 +4,7 @@
 #include <sstream>
 
 namespace Egg {
+
 	/*
 	* T must have a constexpr static int id field. Which should be a unique identifier for that specific Type
 	*/
@@ -70,4 +71,77 @@ namespace Egg {
 			return &data;
 		}
 	};
+
+	template<typename T, unsigned int N_ELEMENTS>
+	class ConstantBufferArray {
+		UINT8 * mappedPtr;
+		com_ptr<ID3D12Resource> constantBuffer;
+
+		__declspec(align(256)) struct PaddedType {
+			T value;
+		};
+
+		PaddedType data[N_ELEMENTS];
+	public:	
+		ConstantBufferArray() : mappedPtr{ nullptr }, constantBuffer{ nullptr } {
+			static_assert(__alignof(T) % 16 == 0, "ConstantBuffer type must be aligned to 16 bytes, otherwise you'll get funny glitches, use __declspec(align(16)) before your class specification");
+			static_assert(!std::is_polymorphic<T>::value, "Polymorphic classes are strongly discouraged as constant buffers (the Vtable will offset the layout, remove any virtual keywords)");
+		}
+
+		~ConstantBufferArray() {
+			ReleaseResources();
+		}
+
+		void CreateResources(ID3D12Device * device) {
+			DX_API("Failed to create constant buffer resource")
+				device->CreateCommittedResource(
+					&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+					D3D12_HEAP_FLAG_NONE,
+					&CD3DX12_RESOURCE_DESC::Buffer(sizeof(PaddedType) * N_ELEMENTS),
+					D3D12_RESOURCE_STATE_GENERIC_READ,
+					nullptr,
+					IID_PPV_ARGS(constantBuffer.GetAddressOf()));
+
+			CD3DX12_RANGE rr(0, 0);
+			DX_API("Failed to map constant buffer")
+				constantBuffer->Map(0, &rr, reinterpret_cast<void **>(&mappedPtr));
+
+			// for debugging purposes, this will name and index the constant buffers for easier identifications
+			static int Id = 0;
+			std::wstringstream wss;
+			wss << "CB(" << typeid(T).name() << ")[" << N_ELEMENTS << "]#" << Id++;
+			constantBuffer->SetName(wss.str().c_str());
+		}
+
+		D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const {
+			return constantBuffer->GetGPUVirtualAddress();
+		}
+
+		void ReleaseResources() {
+			if(constantBuffer != nullptr) {
+				constantBuffer->Unmap(0, nullptr);
+				constantBuffer.Reset();
+			}
+			mappedPtr = nullptr;
+		}
+
+		void Upload() {
+			memcpy(mappedPtr, data, sizeof(PaddedType) * N_ELEMENTS);
+		}
+
+		D3D12_GPU_VIRTUAL_ADDRESS AddressAt(unsigned int i) const {
+			D3D12_GPU_VIRTUAL_ADDRESS startAddr = GetGPUVirtualAddress();
+			startAddr += sizeof(PaddedType) * i;
+			return startAddr;
+		}
+
+		T & operator[](unsigned int i) {
+			ASSERT(i < N_ELEMENTS, "Out of range");
+			return data[i].value;
+		}
+
+
+	};
+
+
 }

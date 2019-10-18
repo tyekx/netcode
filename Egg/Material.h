@@ -16,43 +16,32 @@ namespace Egg {
 	private:
 		com_ptr<ID3D12PipelineState> gpso;
 		Egg::PipelineState::P psoDesc;
-		Egg::Mesh::Geometry::P geometry;
 		int constantBufferAssoc[MAX_CONSTANT_BUFFER_COUNT];
 
 	public:
 		~Material() = default;
 		Material(const Material &) = delete;
 
-		Material(Egg::PsoManager * psoMan, Egg::Mesh::Geometry::P geom, Egg::PipelineState::P pipelineDesc) : gpso{ nullptr }, psoDesc{ pipelineDesc }, geometry{ geom } {
-			D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsoDesc;
-			ZeroMemory(&gpsoDesc, sizeof(gpsoDesc));
-			gpsoDesc.NumRenderTargets = 1;
-			gpsoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-			gpsoDesc.InputLayout = geometry->GetInputLayout();
-			pipelineDesc->ApplyToDescriptor(gpsoDesc);
+		Material(Egg::PsoManager * psoMan, Egg::Mesh::Geometry::P geom, Egg::PipelineState::P pipelineDesc);
 
-			gpso = psoMan->Get(gpsoDesc);
+		Material(Egg::PsoManager * psoMan, const D3D12_INPUT_LAYOUT_DESC & layout, Egg::PipelineState::P pipelineDesc);
 
-			memset(constantBufferAssoc, -1, sizeof(constantBufferAssoc));
-		}
+		void ConstantBufferSlot(int cbvId, int rootSignatureSlot);
 
-		void ConstantBufferSlot(int cbvId, int rootSignatureSlot) {
-			ASSERT(MAX_CONSTANT_BUFFER_COUNT > cbvId && cbvId >= 0, "Constant buffer index must be between 0 and MAX_CONSTANT_BUFFER_COUNT");
-
-			ASSERT(constantBufferAssoc[cbvId] == -1, "Constant buffer slot already occupied");
-
-			constantBufferAssoc[cbvId] = rootSignatureSlot;
-		}
-
-		void ApplyPipelineState(ID3D12GraphicsCommandList * gcl) {
-			gcl->SetGraphicsRootSignature(psoDesc->GetRootSignature().Get());
-			gcl->SetPipelineState(gpso.Get());
-		}
+		void ApplyPipelineState(ID3D12GraphicsCommandList * gcl);
 
 		template<typename T>
 		void BindConstantBuffer(ID3D12GraphicsCommandList * gcl, Egg::ConstantBuffer<T> & cbuffer) {
 			if(constantBufferAssoc[T::id] != -1) {
 				gcl->SetGraphicsRootConstantBufferView(constantBufferAssoc[T::id], cbuffer.GetGPUVirtualAddress());
+			} else {
+				OutputDebugString("Cbuffer was not found\r\n");
+			}
+		}
+
+		void BindConstantBuffer(ID3D12GraphicsCommandList * gcl, unsigned int cbufferTypeId, D3D12_GPU_VIRTUAL_ADDRESS addr) {
+			if(constantBufferAssoc[cbufferTypeId] != -1) {
+				gcl->SetGraphicsRootConstantBufferView(constantBufferAssoc[cbufferTypeId], addr);
 			} else {
 				OutputDebugString("Cbuffer was not found\r\n");
 			}

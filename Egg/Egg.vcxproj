@@ -57,11 +57,14 @@
     <ClInclude Include="BasicGeometry.h" />
     <ClInclude Include="Blackboard.h" />
     <ClInclude Include="Camera\Camera.h" />
+    <ClInclude Include="CharacterController.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Components.h" />
     <ClInclude Include="ConstantBuffer.hpp" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DebugPhysx.h" />
+    <ClInclude Include="DebugPhysxActor.h" />
+    <ClInclude Include="DebugPhysxRaycast.h" />
     <ClInclude Include="EggMpl.hpp" />
     <ClInclude Include="EggSceneConf.h" />
     <ClInclude Include="Exporter.h" />
@@ -75,6 +78,7 @@
     <ClInclude Include="LuaScript.h" />
     <ClInclude Include="LuaScriptFile.h" />
     <ClInclude Include="Material.h" />
+    <ClInclude Include="EggMath.h" />
     <ClInclude Include="ModelComponent.h" />
     <ClInclude Include="Mesh\Geometry.h" />
     <ClInclude Include="Mesh\MultiMesh.h" />
@@ -99,13 +103,18 @@
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BasicGeometry.cpp" />
+    <ClCompile Include="CharacterController.cpp" />
     <ClCompile Include="DebugPhysx.cpp" />
+    <ClCompile Include="DebugPhysxActor.cpp" />
     <ClCompile Include="Exporter.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Importer.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Internal.cpp" />
     <ClCompile Include="LuaApi.cpp" />
+    <ClCompile Include="EggMath.cpp" />
+    <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh\Geometry.cpp" />
     <ClCompile Include="Path.cpp" />
     <ClCompile Include="PhysxSystem.cpp" />
@@ -130,6 +139,9 @@
     </FxCompile>
     <FxCompile Include="Shaders\DebugPhysxPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\DebugPhysxRayVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\DebugPhysxVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>

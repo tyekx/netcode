@@ -46,6 +46,9 @@
     <Filter Include="Model\Animation">
       <UniqueIdentifier>{4f83584f-fd50-4e2b-a924-2c48b44efe86}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Gameplay">
+      <UniqueIdentifier>{bffaa71e-00d8-49ff-9929-3cb9b6726e3c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Mesh\Shaded.h">
@@ -192,7 +195,6 @@
     <ClInclude Include="ModelComponent.h">
       <Filter>Components</Filter>
     </ClInclude>
-    <ClInclude Include="Input.h" />
     <ClInclude Include="AnimationController.h">
       <Filter>Model\Animation</Filter>
     </ClInclude>
@@ -200,6 +202,19 @@
       <Filter>Model\Mesh</Filter>
     </ClInclude>
     <ClInclude Include="DebugPhysx.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="EggMath.h" />
+    <ClInclude Include="DebugPhysxActor.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="CharacterController.h">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Input.h">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugPhysxRaycast.h">
       <Filter>Graphics</Filter>
     </ClInclude>
   </ItemGroup>
@@ -249,9 +264,22 @@
     <ClCompile Include="Mesh\Geometry.cpp">
       <Filter>Model\Mesh</Filter>
     </ClCompile>
-    <ClCompile Include="Input.cpp" />
     <ClCompile Include="DebugPhysx.cpp">
       <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="EggMath.cpp" />
+    <ClCompile Include="BasicGeometry.cpp">
+      <Filter>Model\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Model\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugPhysxActor.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="CharacterController.cpp" />
+    <ClCompile Include="Input.cpp">
+      <Filter>Gameplay</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -274,6 +302,9 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\DebugPhysxPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\DebugPhysxRayVS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

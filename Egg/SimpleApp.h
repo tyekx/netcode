@@ -119,6 +119,11 @@ namespace Egg {
 			Egg::App::ReleaseSwapChainResources();
 		}
 
+		virtual void SetDisplayMode(DisplayMode mode) override {
+			WaitForPreviousFrame();
+			App::SetDisplayMode(mode);
+		}
+
 		virtual void Resize(int width, int height) override {
 			WaitForPreviousFrame();
 			App::Resize(width, height);

@@ -8,8 +8,61 @@
 #include <shellapi.h>
 
 std::unique_ptr<Egg::App> app{ nullptr };
-
+HWND windowHandle;
 UINT_PTR timerHandle = 0;
+Egg::DisplayMode displayMode = Egg::DisplayMode::WINDOWED;
+RECT lastWindowPos;
+
+void SetDisplayMode(Egg::DisplayMode mode) {
+	if(displayMode == mode) {
+		return;
+	}
+
+	app->SetDisplayMode(mode);
+	
+	if(displayMode == Egg::DisplayMode::WINDOWED) {
+		GetWindowRect(windowHandle, &lastWindowPos);
+
+		SetWindowLong(windowHandle, GWL_STYLE, WS_OVERLAPPEDWINDOW & ~(WS_CAPTION | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU | WS_THICKFRAME));
+
+		com_ptr<IDXGIOutput> containingOutput = app->GetContainingOutput();
+
+		DXGI_OUTPUT_DESC outputDesc;
+
+		DX_API("Failed to get output desc")
+			containingOutput->GetDesc(&outputDesc);
+
+		SetWindowPos(
+			windowHandle,
+			HWND_TOPMOST,
+			outputDesc.DesktopCoordinates.left,
+			outputDesc.DesktopCoordinates.top,
+			outputDesc.DesktopCoordinates.right,
+			outputDesc.DesktopCoordinates.bottom,
+			SWP_FRAMECHANGED | SWP_NOACTIVATE);
+
+		ShowWindow(windowHandle, SW_MAXIMIZE);
+	}
+
+	if(mode == Egg::DisplayMode::WINDOWED) {
+		// Restore the window's attributes and size.
+		SetWindowLong(windowHandle, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+
+		SetWindowPos(
+			windowHandle,
+			HWND_NOTOPMOST,
+			lastWindowPos.left,
+			lastWindowPos.top,
+			lastWindowPos.right,
+			lastWindowPos.bottom,
+			SWP_FRAMECHANGED | SWP_NOACTIVATE);
+
+		ShowWindow(windowHandle, SW_NORMAL);
+	}
+
+	displayMode = mode;
+}
+
 
 void TimerProcess(HWND windowHandle, UINT a1, UINT_PTR a2, DWORD a3) {
 	PostMessage(windowHandle, WM_PAINT, 0, 0);
@@ -28,32 +81,38 @@ LRESULT CALLBACK WindowProcess(HWND windowHandle, UINT message, WPARAM wParam, L
 				int width = LOWORD(lParam);
 				app->Resize(width, height);
 			}
-			break;
+			return 0;
 
 		case WM_KEYDOWN:
 			app->KeyPressed(wParam);
-			break;
+			return 0;
 
 		case WM_KEYUP: 
 			app->KeyReleased(wParam);
-			break;
+			return 0;
 
-		case WM_MOUSEMOVE: 
-			if(app != nullptr) {
-				int x = LOWORD(lParam);
-				int y = HIWORD(lParam);
-				app->MouseMove(x, y);
+		case WM_SYSKEYDOWN:
+			// Handle ALT+ENTER:
+			if((wParam == VK_RETURN) && (lParam & (1 << 29)))
+			{
+				if(displayMode == Egg::DisplayMode::WINDOWED) {
+					SetDisplayMode(Egg::DisplayMode::FULLSCREEN);
+				} else {
+					SetDisplayMode(Egg::DisplayMode::WINDOWED);
+				}
+				return 0;
 			}
+			// Send all other WM_SYSKEYDOWN messages to the default WndProc.
 			break;
 
 		case WM_KILLFOCUS:
 			app->Blur();
-			break;
+			return 0;
 
 		case WM_ACTIVATE:
 		case WM_SETFOCUS:
 			app->Focused();
-			break;
+			return 0;
 
 		case WM_NCLBUTTONDOWN:
 			timerHandle = SetTimer(windowHandle, 0, 16, TimerProcess);
@@ -65,27 +124,35 @@ LRESULT CALLBACK WindowProcess(HWND windowHandle, UINT message, WPARAM wParam, L
 
 		case WM_PAINT:
 			app->Run();
-			break;
+			return 0;
+
+		case WM_INPUT:
+			Egg::Input::ReadRawMouse(wParam, lParam);
+			return 0;
 	}
 
 	return DefWindowProcW(windowHandle, message, wParam, lParam);
 }
 
 HWND InitWindow(HINSTANCE hInstance) {
-	const wchar_t * windowClassName = L"ClassName";
+	const wchar_t * windowClassName = L"EggClass";
 
-	WNDCLASSW windowClass;
-	ZeroMemory(&windowClass, sizeof(WNDCLASSW));
+	WNDCLASSEXW windowClass;
+	ZeroMemory(&windowClass, sizeof(WNDCLASSEXW));
 
+	windowClass.cbSize = sizeof(WNDCLASSEXW);
 	windowClass.lpfnWndProc = WindowProcess;
 	windowClass.lpszClassName = windowClassName;
 	windowClass.hInstance = hInstance;
+	windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+	windowClass.style = CS_HREDRAW | CS_VREDRAW;
+	
 
-	RegisterClassW(&windowClass);
+	RegisterClassExW(&windowClass);
 
 	HWND wnd = CreateWindowExW(0,
 							   windowClassName,
-							   L"Textures",
+							   L"Netcode3D",
 							   WS_OVERLAPPEDWINDOW,
 							   CW_USEDEFAULT,
 							   CW_USEDEFAULT,
@@ -104,7 +171,7 @@ HWND InitWindow(HINSTANCE hInstance) {
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR command, _In_ INT nShowCmd) {
 
-	HWND windowHandle = InitWindow(hInstance);
+	windowHandle = InitWindow(hInstance);
 	// DirectX stuff
 	com_ptr<ID3D12Debug3> debugController{ nullptr };
 	com_ptr<IDXGIFactory6> dxgiFactory{ nullptr };
@@ -141,6 +208,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	DX_API("Failed to create device")
 		D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&device));
 
+	BOOL syncSupport = FALSE;
+
+	DX_API("Failed to query sync support")
+		dxgiFactory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &syncSupport, sizeof(syncSupport));
+
 	// Create Command Queue
 
 	D3D12_COMMAND_QUEUE_DESC commandQueueDesc;
@@ -164,26 +236,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swapChainDesc.BufferCount = 2; // back buffer depth
 	swapChainDesc.Scaling = DXGI_SCALING_NONE;
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
-	swapChainDesc.Flags = 0;
-
-	DXGI_SWAP_CHAIN_FULLSCREEN_DESC swapChainFullscreenDesc = { 0 };
-	swapChainFullscreenDesc.RefreshRate = DXGI_RATIONAL{ 60, 1 };
-	swapChainFullscreenDesc.Windowed = true;
-	swapChainFullscreenDesc.Scaling = DXGI_MODE_SCALING_CENTERED;
-	swapChainFullscreenDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UPPER_FIELD_FIRST;
+	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
+	swapChainDesc.Flags = (syncSupport) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 	com_ptr<IDXGISwapChain1> tempSwapChain;
 
 	DX_API("Failed to create swap chain for HWND")
-		dxgiFactory->CreateSwapChainForHwnd(commandQueue.Get(), windowHandle, &swapChainDesc, &swapChainFullscreenDesc, NULL, tempSwapChain.GetAddressOf());
+		dxgiFactory->CreateSwapChainForHwnd(commandQueue.Get(), windowHandle, &swapChainDesc, NULL, NULL, tempSwapChain.GetAddressOf());
 
 	DX_API("Failed to cast swap chain")
 		tempSwapChain.As(&swapChain);
 
 	DX_API("Failed to make window association") // disable ALT+Enter shortcut to full screen mode
 		dxgiFactory->MakeWindowAssociation(windowHandle, DXGI_MWA_NO_ALT_ENTER);
+
+	Egg::Input::CreateResources();
 
 	app = std::make_unique<EggApp>();
 	app->SetDevice(device);
@@ -194,9 +262,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	app->CreateResources();
 	app->LoadAssets();
 
-	ShowWindow(windowHandle, nShowCmd);
-	MSG winMessage = { 0 };
+	///app->SetDisplayMode(Egg::DisplayMode::BORDERLESS);
 
+	ShowWindow(windowHandle, nShowCmd);
+
+	MSG winMessage = { 0 };
 
 	while(winMessage.message != WM_QUIT) {
 		if(PeekMessage(&winMessage, NULL, 0, 0, PM_REMOVE)) {

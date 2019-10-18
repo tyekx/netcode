@@ -26,7 +26,7 @@ namespace Egg {
 
 			void * memoryAllocation;
 
-			Model() : meshesLength{ 0 }, meshes{ nullptr },
+			Model() noexcept : meshesLength{ 0 }, meshes{ nullptr },
 					  materialsLength{ 0 }, materials{ nullptr },
 					  animationsLength{ 0 }, animations{ nullptr },
 					  bonesLength{ 0 }, bones{ nullptr },
@@ -35,6 +35,22 @@ namespace Egg {
 			}
 
 			Model(const Model &) = delete;
+
+			Model(Model && m) noexcept : Model() {
+				std::swap(meshesLength, m.meshesLength);
+				std::swap(meshes, m.meshes);
+
+				std::swap(materialsLength, m.materialsLength);
+				std::swap(materials, m.materials);
+
+				std::swap(animationsLength, m.animationsLength);
+				std::swap(animations, m.animations);
+
+				std::swap(bonesLength, m.bonesLength);
+				std::swap(bones, m.bones);
+
+				std::swap(memoryAllocation, m.memoryAllocation);
+			}
 
 			Model & operator=(Model m) noexcept {
 				std::swap(meshesLength, m.meshesLength);
@@ -50,6 +66,8 @@ namespace Egg {
 				std::swap(bones, m.bones);
 
 				std::swap(memoryAllocation, m.memoryAllocation);
+
+				return *this;
 			}
 
 			~Model() noexcept {
