@@ -10,7 +10,8 @@
 #define AvatarRootSignature "RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT )," \
                  "CBV(b0)," \
 				 "CBV(b1)," \
-				 "CBV(b2)," 
+				 "CBV(b2)," \
+				 "CBV(b3)," 
 
 #define DebugPhysxRS "RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT )," \
                  "CBV(b0)," \

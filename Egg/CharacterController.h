@@ -13,38 +13,8 @@
 
 namespace Egg {
 
-	class TestCallback : physx::PxSimulationEventCallback {
-		// Inherited via PxSimulationEventCallback
-
-		void onConstraintBreak(physx::PxConstraintInfo * constraints, physx::PxU32 count) override
-		{
-		}
-
-		void onWake(physx::PxActor ** actors, physx::PxU32 count) override
-		{
-		}
-
-		void  onSleep(physx::PxActor ** actors, physx::PxU32 count) override
-		{
-		}
-
-		void onContact(const physx::PxContactPairHeader & pairHeader, const physx::PxContactPair * pairs, physx::PxU32 nbPairs) override
-		{
-		}
-
-		void onTrigger(physx::PxTriggerPair * pairs, physx::PxU32 count) override
-		{
-
-		}
-
-		void onAdvance(const physx::PxRigidBody * const * bodyBuffer, const physx::PxTransform * poseBuffer, const physx::PxU32 count) override 
-		{
-		}
-
-	};
-
 	class CharacterController {
-
+	public:
 		struct Hitbox {
 			int BoneId;
 			physx::PxShape * shape;
@@ -52,12 +22,14 @@ namespace Egg {
 
 		ConstantBuffer<BoneDataCb> boneDataCb;
 		ConstantBuffer<PerObjectCb> cb;
+		ConstantBufferVector<PerMeshCb> * meshesRef;
 		std::unique_ptr<Egg::AnimationController> animCtrl;
 		Egg::Asset::Model characterModel;
 		Egg::Mesh::MultiMesh::P multiMesh;
 		physx::PxController * controller;
 		bool onGround;
 		float speed;
+		DirectX::XMFLOAT3A airVelocity;
 
 		std::vector<Hitbox> hitboxes;
 
@@ -124,12 +96,20 @@ namespace Egg {
 		void Update(float dt) {
 			float vertical = Egg::Input::GetAxis("Vertical");
 			float horizontal = Egg::Input::GetAxis("Horizontal");
+			float jump = Egg::Input::GetAxis("Jump");
 
 			DirectX::XMFLOAT3A movementComponents{ horizontal, 0.0f, vertical };
 
-			if(!onGround) {
-				movementComponents.y = -9.81f;
+			if(onGround && jump > 0.0f) {
+				airVelocity.y = 500.0f;
+				onGround = false;
+				animCtrl->StartJump();
 			}
+
+			if(!onGround) {
+				airVelocity.y -= 981.0f * dt; // 9.81 m/s^2 = 981 cm/s^2
+			}
+
 
 			DirectX::XMVECTOR dir = DirectX::XMLoadFloat3A(&movementComponents);
 			dir = DirectX::XMVector3Normalize(dir);
@@ -137,11 +117,13 @@ namespace Egg {
 
 			DirectX::XMFLOAT3A dirResult;
 			DirectX::XMStoreFloat3A(&dirResult, dir);
+			dirResult.y = airVelocity.y * dt;
 
 			physx::PxControllerCollisionFlags result = controller->move(physx::PxVec3(dirResult.x, dirResult.y, dirResult.z), 0.0f, dt, physx::PxControllerFilters{});
 
-			if(result.isSet(physx::PxControllerCollisionFlag::eCOLLISION_DOWN)) {
+			if(!onGround && result.isSet(physx::PxControllerCollisionFlag::eCOLLISION_DOWN)) {
 				onGround = true;
+				animCtrl->EndJump();
 			}
 
 			auto pxV3 = controller->getPosition();
@@ -168,15 +150,17 @@ namespace Egg {
 				mat->BindConstantBuffer(gcl, pfcb);
 				mat->BindConstantBuffer(gcl, boneDataCb);
 				mat->BindConstantBuffer(gcl, cb);
+				mat->BindConstantBuffer(gcl, PerMeshCb::id, meshesRef->TranslateAddr(i->GetMeshData()));
 
 				auto geom = i->GetGeometry();
 				geom->Draw(gcl);
 			}
 		}
 
-		void CreateResources(ID3D12Device * device, Egg::PsoManager * psoMan, Egg::DebugPhysx* dbPx, physx::PxControllerManager* ctrlManager) {
+		void CreateResources(ID3D12Device * device, Egg::PsoManager * psoMan, Egg::DebugPhysx* dbPx, physx::PxControllerManager* ctrlManager, ConstantBufferVector<PerMeshCb> & meshesCb) {
 			boneDataCb.CreateResources(device);
 			cb.CreateResources(device);
+			meshesRef = &meshesCb;
 
 			com_ptr<ID3DBlob> avatarVS = Egg::Shader::LoadCso(L"AvatarVS.cso");
 			com_ptr<ID3DBlob> avatarPS = Egg::Shader::LoadCso(L"AvatarPS.cso");
@@ -229,11 +213,17 @@ namespace Egg {
 				geom->SetVertexType(characterModel.meshes[i].vertexType);
 				Egg::Material::P mat = Egg::Material::Create(psoMan, geom, pso);
 
-				mat->ConstantBufferSlot(0, PerFrameCb::id);
+				mat->ConstantBufferSlot(0, PerMeshCb::id);
 				mat->ConstantBufferSlot(1, PerObjectCb::id);
 				mat->ConstantBufferSlot(2, BoneDataCb::id);
+				mat->ConstantBufferSlot(3, PerFrameCb::id);
 
-				multiMesh->Add(geom, mat);
+				PerMeshCb * perMeshData = meshesCb.Next();
+				perMeshData->diffuseColor = DirectX::XMFLOAT4A{ characterModel.materials[i].diffuseColor.x, characterModel.materials[i].diffuseColor.y, characterModel.materials[i].diffuseColor.z, 1.0f };
+				perMeshData->fresnelR0 = DirectX::XMFLOAT3{ 0.05f, 0.05f, 0.05f };
+				perMeshData->shininess = 2.0f;
+
+				multiMesh->Add(geom, mat, perMeshData);
 			}
 		}
 

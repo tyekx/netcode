@@ -36,6 +36,7 @@ namespace Egg {
 				gcl->SetGraphicsRootConstantBufferView(constantBufferAssoc[T::id], cbuffer.GetGPUVirtualAddress());
 			} else {
 				OutputDebugString("Cbuffer was not found\r\n");
+				__debugbreak();
 			}
 		}
 

@@ -18,6 +18,7 @@ protected:
 	Egg::Mesh::MultiMesh::P multi;
 	Egg::ConstantBuffer<PerObjectCb> cb;
 	Egg::ConstantBuffer<PerFrameCb> perFrameCb;
+	Egg::ConstantBufferVector<PerMeshCb> meshesCb;
 	std::unique_ptr<Egg::DebugPhysx> debugPhysx;
 	Egg::CharacterController chCtrl;
 	Egg::Camera::BaseCamera baseCam;
@@ -29,6 +30,11 @@ protected:
 	float mouseSpeed;
 	float animT;
 	bool fireEnabled;
+
+	Egg::Mesh::MultiMesh::P railgunMesh;
+	Egg::Asset::Model railgun;
+	Egg::ConstantBuffer<PerObjectCb> perObjCb;
+	Egg::ConstantBuffer<BoneDataCb> railgunBoneCb;
 
 public:
 
@@ -46,12 +52,20 @@ public:
 		float devCamY = Egg::Input::GetAxis("DevCameraY");
 
 		DirectX::XMINT2 mouseDelta = Egg::Input::GetMouseDelta();
-		DirectX::XMFLOAT2A windowSize{ viewPort.Width, viewPort.Height };
 
-		DirectX::XMFLOAT2A normalizedMouseDelta{ -(float)(mouseDelta.x), -(float)mouseDelta.y };
+		DirectX::XMFLOAT2A normalizedMouseDelta{ -(float)(mouseDelta.x), -(float)(mouseDelta.y) };
 
-		cameraPitch = mouseSpeed * normalizedMouseDelta.y * dt;
-		cameraYaw = mouseSpeed * normalizedMouseDelta.x * dt;
+		cameraPitch += mouseSpeed * normalizedMouseDelta.y * dt;
+		cameraPitch = std::clamp(cameraPitch, -(DirectX::XM_PIDIV2 - 0.00001f), (DirectX::XM_PIDIV2 - 0.00001f));
+		cameraYaw += mouseSpeed * normalizedMouseDelta.x * dt;
+
+		if(cameraYaw < (-DirectX::XM_PI)) {
+			cameraYaw += DirectX::XM_2PI;
+		}
+
+		if(cameraYaw > (DirectX::XM_PI)) {
+			cameraYaw -= DirectX::XM_2PI;
+		}
 
 		DirectX::XMVECTOR cameraYawQuat = DirectX::XMQuaternionRotationRollPitchYaw(0.0f, cameraYaw, 0.0f);
 
@@ -65,12 +79,26 @@ public:
 		devCamVec = DirectX::XMVectorScale(devCamVec, speed * dt);
 		devCamPos = DirectX::XMVectorAdd(devCamVec, devCamPos);
 
+		DirectX::XMFLOAT3 minusUnitZ{ 0.0f, 0.0f, -1.0f };
 		DirectX::XMVECTOR cameraQuat = DirectX::XMQuaternionRotationRollPitchYaw(cameraPitch, cameraYaw, 0.0f);
-		DirectX::XMVECTOR aheadStart = DirectX::XMLoadFloat3(&baseCam.Ahead);
+		DirectX::XMVECTOR aheadStart = DirectX::XMLoadFloat3(&minusUnitZ);
 		DirectX::XMVECTOR camUp = DirectX::XMLoadFloat3(&baseCam.Up);
 		DirectX::XMStoreFloat3(&baseCam.Ahead, DirectX::XMVector3Normalize(DirectX::XMVector3Rotate(aheadStart, cameraQuat)));
-		DirectX::XMStoreFloat3(&baseCam.Up, DirectX::XMVector3Normalize(DirectX::XMVector3Rotate(camUp, cameraYawQuat)));
 		DirectX::XMStoreFloat3(&baseCam.Position, devCamPos);
+
+		DirectX::XMMATRIX rightHandTransform = DirectX::XMLoadFloat4x4A(&chCtrl.boneDataCb->ToRootTransform[28]);
+		DirectX::XMMATRIX parentTransform = DirectX::XMLoadFloat4x4A(&chCtrl.cb->Model);
+		DirectX::XMMATRIX scaling = DirectX::XMMatrixScaling(0.7f, 0.7f, 0.7f);
+		DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationRollPitchYaw(0.1f, -0.3f, -DirectX::XM_PIDIV2 - 0.07f);
+		DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(-11.0f, -3.0f, 2.0f);
+		DirectX::XMMATRIX localTransform = DirectX::XMMatrixMultiply(scaling, rotation);
+
+		localTransform = DirectX::XMMatrixMultiply(localTransform, translation);
+		localTransform = DirectX::XMMatrixMultiply(localTransform, rightHandTransform);
+		localTransform = DirectX::XMMatrixMultiply(localTransform, DirectX::XMMatrixTranspose(parentTransform));
+		DirectX::XMStoreFloat4x4A(&perObjCb->Model, DirectX::XMMatrixTranspose(localTransform));
+	//	perObjCb->InvModel = identity;
+		perObjCb.Upload();
 
 		if(Egg::Input::GetAxis("Fire") > 0.0f) {
 			if(fireEnabled) {
@@ -107,6 +135,9 @@ public:
 
 		DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(view, proj);
 
+		perFrameCb->eyePos = DirectX::XMFLOAT3A{ baseCam.Position.x, baseCam.Position.y, baseCam.Position.z };
+		perFrameCb->Light.position = DirectX::XMFLOAT4A{ 1.0f, 0.0f, 0.0f, 0.0f };
+		perFrameCb->Light.intensity = DirectX::XMFLOAT3A{ 1.0f, 1.0f, 1.0f };
 		DirectX::XMStoreFloat4x4A(&perFrameCb->ViewProj, DirectX::XMMatrixTranspose(vp));
 		perFrameCb.Upload();
 
@@ -154,6 +185,19 @@ public:
 
 		debugPhysx->Draw(commandList.Get(), perFrameCb);
 		chCtrl.Draw(commandList.Get(), perFrameCb);
+
+		for(auto & rim : railgunMesh->GetMeshes()) {
+			auto mat = rim->GetMaterial();
+			auto geom = rim->GetGeometry();
+
+			mat->ApplyPipelineState(commandList.Get());
+			mat->BindConstantBuffer(commandList.Get(), perObjCb);
+			mat->BindConstantBuffer(commandList.Get(), perFrameCb);
+			mat->BindConstantBuffer(commandList.Get(), railgunBoneCb);
+			mat->BindConstantBuffer(commandList.Get(), PerMeshCb::id, meshesCb.TranslateAddr(rim->GetMeshData()));
+
+			geom->Draw(commandList.Get());
+		}
 		
 
 
@@ -192,6 +236,7 @@ public:
 
 		Egg::Input::SetAxis("Vertical", 'W', 'S');
 		Egg::Input::SetAxis("Horizontal", 'A', 'D');
+		Egg::Input::SetAxis("Jump", VK_SPACE, 0);
 
 		Egg::Input::SetAxis("DevCameraX", VK_NUMPAD4, VK_NUMPAD6);
 		Egg::Input::SetAxis("DevCameraZ", VK_NUMPAD8, VK_NUMPAD5);
@@ -202,9 +247,9 @@ public:
 		pxSys.CreateResources();
 
 		speed = 250.0f;
-		mouseSpeed = 0.35f;
+		mouseSpeed = 0.20f;
 		baseCam.NearPlane = 1.0f;
-		baseCam.FarPlane = 1000.0f;
+		baseCam.FarPlane = 10000.0f;
 		baseCam.Ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
 		baseCam.Position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 180.0f };
 	}
@@ -216,12 +261,63 @@ public:
 	virtual void LoadAssets() override {
 		cb.CreateResources(device.Get());
 		perFrameCb.CreateResources(device.Get());
+		railgunBoneCb.CreateResources(device.Get());
+		perObjCb.CreateResources(device.Get());
+		meshesCb.CreateResources(device.Get());
 
+
+
+		DirectX::XMMATRIX m = DirectX::XMMatrixIdentity();
+		DirectX::XMFLOAT4X4A identity;
+		DirectX::XMStoreFloat4x4A(&identity, m);
+		for(int i = 0; i < 128; ++i) {
+			railgunBoneCb->BindTransform[i] = identity;
+		}
+		railgunBoneCb.Upload();
+
+		DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationRollPitchYaw(-DirectX::XM_PIDIV2, 0.0f, 0.0f);
+
+		DirectX::XMStoreFloat4x4A(&perObjCb->Model, DirectX::XMMatrixTranspose(rotation));
+		perObjCb->InvModel = identity;
+		perObjCb.Upload();
 
 		Egg::Asset::Model ybotModel;
 		Egg::Importer::ImportModel(L"ybot.eggasset", ybotModel);
 		
+		Egg::Importer::ImportModel(L"railgun.eggasset", railgun);
 
+		com_ptr<ID3DBlob> avatarVS = Egg::Shader::LoadCso(L"AvatarVS.cso");
+		com_ptr<ID3DBlob> avatarPS = Egg::Shader::LoadCso(L"AvatarPS.cso");
+		com_ptr<ID3D12RootSignature> rootSig = Egg::Shader::LoadRootSignature(device.Get(), avatarVS.Get());
+
+		railgunMesh = Egg::Mesh::MultiMesh::Create();
+
+		Egg::PipelineState::P pso = Egg::PipelineState::Create();
+		pso->SetRootSignature(rootSig);
+		pso->SetVertexShader(avatarVS);
+		pso->SetPixelShader(avatarPS);
+		pso->SetDepthStencilState(CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT));
+		pso->SetDSVFormat(DXGI_FORMAT_D32_FLOAT);
+
+		for(unsigned int i = 0; i < railgun.meshesLength; ++i) {
+
+			Egg::Mesh::Geometry::P geom = Egg::Mesh::IndexedGeometry::Create(device.Get(),
+																			 railgun.meshes[i].vertices, railgun.meshes[i].verticesLength, railgun.meshes[i].vertexSize,
+																			 railgun.meshes[i].indices, railgun.meshes[i].indicesLength * (UINT32)sizeof(unsigned int));
+			geom->SetVertexType(railgun.meshes[i].vertexType);
+			Egg::Material::P mat = Egg::Material::Create(psoManager.get(), geom, pso);
+
+			mat->ConstantBufferSlot(0, PerMeshCb::id);
+			mat->ConstantBufferSlot(1, PerObjectCb::id);
+			mat->ConstantBufferSlot(2, BoneDataCb::id);
+			mat->ConstantBufferSlot(3, PerFrameCb::id);
+
+			PerMeshCb * meshData = meshesCb.Next();
+			meshData->diffuseColor = DirectX::XMFLOAT4A{ railgun.materials[i].diffuseColor.x, railgun.materials[i].diffuseColor.y, railgun.materials[i].diffuseColor.z, 1.0f };
+			meshData->fresnelR0 = DirectX::XMFLOAT3{ 0.05f, 0.05f, 0.05f };
+			meshData->shininess = 2.0f;
+			railgunMesh->Add(geom, mat, meshData);
+		}
 
 
 		debugPhysx.reset(new Egg::DebugPhysx{});
@@ -231,9 +327,9 @@ public:
 			.SetOffset(0, DirectX::XMMatrixScaling(2000.0f, 2000.0f, 2000.0f));
 
 		chCtrl.SetCharacterModel(std::move(ybotModel));
-		chCtrl.CreateResources(device.Get(), psoManager.get(), debugPhysx.get(), pxSys.controllerManager);
+		chCtrl.CreateResources(device.Get(), psoManager.get(), debugPhysx.get(), pxSys.controllerManager, meshesCb);
 
-
+		meshesCb.Upload();
 
 
 	}

@@ -85,6 +85,8 @@ struct ImportedMaterial {
 	aiColor3D ambientColor;
 	aiColor3D specularColor;
 	float shininess;
+	std::string diffuseTexPath;
+	std::string normalTexPath;
 };
 
 struct ImportedModel {
@@ -562,9 +564,45 @@ void Process(const wchar_t * file, std::vector<ProcessedBone> & bones, ImportedM
 
 		ImportedMaterial imat;
 		aiString str;
+
 		if(AI_SUCCESS == mat->Get(AI_MATKEY_NAME, str)) {
 			Egg::Utility::Debugf("Prop: name | value '%s'\r\n", str.C_Str());
 		}
+
+
+		unsigned int diffuseCount = mat->GetTextureCount(aiTextureType_DIFFUSE);
+		unsigned int normalCount = mat->GetTextureCount(aiTextureType_NORMALS);
+
+
+		if(diffuseCount > 0) {
+			if(diffuseCount > 1) {
+				printf("Warning: only 1 diffuse map is supported as of now\r\n\tMultiple found on material: '%s'\r\n", str.C_Str());
+			}
+
+			aiString texPath;
+
+			if(AI_SUCCESS == mat->GetTexture(aiTextureType_DIFFUSE, 0, &texPath)) {
+				imat.diffuseTexPath = texPath.C_Str();
+			} else {
+				printf("Warning: failed to get diffuse texture path\r\n");
+			}
+
+		}
+
+		if(normalCount > 0) {
+			if(normalCount > 1) {
+				printf("Warning: only 1 normal map is supported as of now\r\n\tMultiple found on material: '%s'\r\n", str.C_Str());
+			}
+
+			aiString texPath;
+			if(AI_SUCCESS == mat->GetTexture(aiTextureType_NORMALS, 0, &texPath)) {
+				imat.normalTexPath = texPath.C_Str();
+			} else {
+				printf("Warning: failed to get diffuse texture path\r\n");
+			}
+		}
+
+		
 
 		if(AI_SUCCESS != mat->Get(AI_MATKEY_COLOR_DIFFUSE, imat.diffuseColor)) {
 			Egg::Utility::Debugf("Failed to get diffuse color\r\n");
@@ -951,6 +989,12 @@ void WriteBinary(const char * dest, ImportedModel & model, std::vector<Processed
 		m.materials[i].ambientColor = reinterpret_cast<DirectX::XMFLOAT3 &>(model.materials[i].ambientColor);
 		m.materials[i].specularColor = reinterpret_cast<DirectX::XMFLOAT3 &>(model.materials[i].specularColor);
 		m.materials[i].shininess = model.materials[i].shininess;
+
+		strcpy_s(m.materials[i].diffuseTexture, model.materials[i].diffuseTexPath.c_str());
+		m.materials[i].diffuseTexture[_countof(m.materials[i].diffuseTexture) - 1] = '\0';
+
+		strcpy_s(m.materials[i].normalTexture, model.materials[i].normalTexPath.c_str());
+		m.materials[i].normalTexture[_countof(m.materials[i].normalTexture) - 1] = '\0';
 	}
 
 	m.bonesLength = bones.size();

@@ -10,14 +10,6 @@
 
 namespace Egg {
 
-	class AnimationTransition {
-
-		
-
-	public:
-		float TransitionTime;
-	};
-
 	class AnimationController {
 
 		struct AnimationBuffer {
@@ -30,6 +22,7 @@ namespace Egg {
 			int animId;
 			float weight;
 			float timeline;
+			float animSpeed;
 			Animation * animationRef;
 		};
 
@@ -40,13 +33,13 @@ namespace Egg {
 		unsigned int playingAnimationCount;
 		AnimationClip currentAnimations[10];
 		AnimationBuffer buffer[10][128];
-		
+		int InAir;
 		
 
 		void AddAnimationIfNotExists(unsigned int animId, float dt) {
 			for(unsigned int i = 0; i < playingAnimationCount; ++i) {
 				if(currentAnimations[i].animId == animId) {
-					currentAnimations[i].weight += 5.0f * dt;
+					currentAnimations[i].weight += currentAnimations[i].animSpeed * 5.0f * dt;
 					currentAnimations[i].weight = std::min(currentAnimations[i].weight, 1.0f);
 					return;
 				}
@@ -54,6 +47,7 @@ namespace Egg {
 
 			currentAnimations[playingAnimationCount].animId = animId;
 			currentAnimations[playingAnimationCount].animationRef = animations + animId;
+			currentAnimations[playingAnimationCount].animSpeed = 1.0f;
 			if(playingAnimationCount == 0) {
 				currentAnimations[playingAnimationCount].weight = 1.0f;
 			} else {
@@ -74,6 +68,14 @@ namespace Egg {
 			}
 		}
 
+		void StopAnimation(int animId) {
+			for(unsigned int i = 0; i < playingAnimationCount; ++i) {
+				if(currentAnimations[i].animId == animId) {
+					currentAnimations[i].animSpeed = 0.0f;
+				}
+			}
+		}
+
 		void ReduceAllExcept(int id, float dt) {
 			for(unsigned int i = 0; i < playingAnimationCount; ++i) {
 				AnimationClip * anim = currentAnimations + i;
@@ -83,7 +85,18 @@ namespace Egg {
 				}
 
 				anim->weight -= 5.0f * dt;
+				anim->weight = std::max(anim->weight, 0.0f);
 			}
+		}
+
+		bool IsFinished(int id, float dt) {
+			for(unsigned int i = 0; i < playingAnimationCount; ++i) {
+				AnimationClip * anim = currentAnimations + i;
+				if(anim->animId == id) {
+					return (anim->timeline + 60.0f * dt) >= (float)anim->animationRef->duration;
+				}
+			}
+			return true;
 		}
 
 	public:
@@ -92,6 +105,16 @@ namespace Egg {
 			animationsLength = animsLength;
 			bones = skeleton;
 			bonesLength = skeletonLength;
+			InAir = 2;
+		}
+
+		void StartJump() {
+			// riflejump: 5
+			InAir = 3;
+		}
+
+		void EndJump() {
+			InAir = 1;
 		}
 
 		/*
@@ -100,6 +123,7 @@ namespace Egg {
 		void Animate(ConstantBuffer<BoneDataCb> & boneData, float dt) {
 			float h = Input::GetAxis("Horizontal");
 			float v = Input::GetAxis("Vertical");
+
 
 			/*
 			4: RifleIdle
@@ -114,7 +138,29 @@ namespace Egg {
 			13: StrafeRight
 			*/
 
-			if(v > 0.0f && h > 0.0f) {
+			if(InAir > 0) {
+
+				if(InAir == 3) {
+					AddAnimationIfNotExists(5, dt);
+					ReduceAllExcept(5, dt);
+					if(IsFinished(5, dt)) {
+						StopAnimation(5);
+						InAir = 2;
+					}
+				}
+
+				if(InAir == 2) {
+					AddAnimationIfNotExists(3, dt);
+					ReduceAllExcept(3, dt);
+				}
+
+				if(InAir == 1) {
+					AddAnimationIfNotExists(2, 0.2f);
+					ReduceAllExcept(2, dt);
+					InAir = 0;
+
+				}
+			} else if(v > 0.0f && h > 0.0f) {
 				// forwardleft
 				AddAnimationIfNotExists(10, dt);
 				ReduceAllExcept(10, dt);
@@ -180,7 +226,7 @@ namespace Egg {
 			
 
 			for(unsigned int i = 0; i < playingAnimationCount; ++i) {
-				currentAnimations[i].timeline += dt * 60.0f;
+				currentAnimations[i].timeline += currentAnimations[i].animSpeed * dt * 60.0f;
 
 				Animation * anim = currentAnimations[i].animationRef;
 				float aT = currentAnimations[i].timeline;

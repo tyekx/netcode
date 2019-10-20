@@ -13,8 +13,8 @@ namespace Egg {
 			DirectX::XMFLOAT3 specularColor;
 			float shininess;
 
-			char diffuseTexture[64];
-			char normalTexture[64];
+			char diffuseTexture[256];
+			char normalTexture[256];
 
 			Material() : diffuseColor{}, ambientColor{}, specularColor{}, shininess{} {
 				diffuseTexture[0] = '\0';

@@ -49,6 +49,12 @@
     <Filter Include="Gameplay">
       <UniqueIdentifier>{bffaa71e-00d8-49ff-9929-3cb9b6726e3c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Memory">
+      <UniqueIdentifier>{e5730774-81ed-487c-90dc-7e0c274ba856}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\GPSO">
+      <UniqueIdentifier>{1491eebe-75df-4767-b9cd-191dd33c1259}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Mesh\Shaded.h">
@@ -217,6 +223,18 @@
     <ClInclude Include="DebugPhysxRaycast.h">
       <Filter>Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Allocation.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="ConstantBufferTypes.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Light.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Prototyping.h">
+      <Filter>Graphics\GPSO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
@@ -281,6 +299,9 @@
     <ClCompile Include="Input.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
+    <ClCompile Include="Allocation.cpp">
+      <Filter>Memory</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DefaultPS.hlsl">
@@ -318,5 +339,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
+    <None Include="Shaders\Lighting.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

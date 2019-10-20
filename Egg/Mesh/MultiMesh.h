@@ -13,8 +13,8 @@ namespace Egg {
 			MultiMesh() : meshes{} { }
 			~MultiMesh() = default;
 
-			void Add(Egg::Mesh::Geometry::P geometry, Egg::Material::P material) {
-				meshes.push_back(Egg::Mesh::Shaded::Create(geometry, material));
+			void Add(Egg::Mesh::Geometry::P geometry, Egg::Material::P material, PerMeshCb * cb) {
+				meshes.push_back(Egg::Mesh::Shaded::Create(geometry, material, cb));
 			}
 
 			void Add(Egg::Mesh::Shaded::P shaded) {

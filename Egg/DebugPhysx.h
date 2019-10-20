@@ -85,7 +85,7 @@ namespace Egg {
 			actors.clear();
 
 			for(int i = 0; i < numRays; ++i) {
-				raycasts[i].ReleaseResources();
+				raycasts[(startRays + i) % MAX_RAY_COUNT].ReleaseResources();
 			}
 
 			std::free(raycasts);

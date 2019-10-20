@@ -47,7 +47,7 @@ namespace Egg {
 		dispatcher = physx::PxDefaultCpuDispatcherCreate(2);
 
 		physx::PxSceneDesc sceneDesc{ physics->getTolerancesScale() };
-		sceneDesc.gravity = physx::PxVec3{ 0.0f, -9.81f, 0.0f };
+		sceneDesc.gravity = physx::PxVec3{ 0.0f, -981.0f, 0.0f };
 		sceneDesc.cpuDispatcher = dispatcher;
 		sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
 
@@ -60,7 +60,11 @@ namespace Egg {
 			pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
 		}
 		physx::PxMaterial * groundMaterial = physics->createMaterial(0.5f, 0.5f, 0.6f);
-		groundPlane = physx::PxCreatePlane(*physics, physx::PxPlane{ 0, 1.0f, 0, 0 }, *groundMaterial);
+		groundPlane = physx::PxCreatePlane(*physics, physx::PxPlane{ 0.0f, 1.0f, 0.0f, 0 }, *groundMaterial);
+		physx::PxTransform planeTransform;
+		//planeTransform.q = physx::PxQuat{ physx::PxIdentity };
+		//planeTransform.p = physx::PxVec3{ 0.0f, 0.0f, 0.0f };
+		//groundPlane->setGlobalPose(planeTransform);
 
 		scene->addActor(*groundPlane);
 	}

@@ -1,4 +1,5 @@
 #include "RootSignatures.hlsli"
+#include "Lighting.hlsli"
 
 struct IAOutput {
 	float3 position : POSITION;
@@ -14,9 +15,8 @@ struct VSOutput {
 	float2 texCoord : TEXCOORD;
 };
 
-
-cbuffer PerFrameCb : register(b0) {
-	float4x4 viewProj;
+cbuffer PerMeshCb : register(b0) {
+	Material material;
 }
 
 cbuffer PerObjectCb : register(b1) {
@@ -28,6 +28,13 @@ cbuffer BoneDataCb : register(b2) {
 	float4x4 boneTransforms[128];
 	float4x4 toRootTransforms[128];
 }
+
+cbuffer PerFrameCb : register(b3) {
+	float4x4 viewProj;
+	float4 eyePos;
+	Light light;
+}
+
 
 [RootSignature(AvatarRootSignature)]
 VSOutput main(IAOutput iao)

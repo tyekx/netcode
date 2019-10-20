@@ -5,7 +5,7 @@ namespace Egg {
 
 	void DebugPhysxActor::AfterPhysxUpdate() {
 		physx::PxTransform transform = actorReference->getGlobalPose();
-		//DirectX::XMFLOAT4A quatSource{ transform.q.x, transform.q.y, transform.q.z, transform.q.w };
+		DirectX::XMFLOAT4A quatSource{ transform.q.x, transform.q.y, transform.q.z, transform.q.w };
 
 		DirectX::XMMATRIX translationMat = DirectX::XMMatrixTranslation(transform.p.x, transform.p.y, transform.p.z);
 		//DirectX::XMVECTOR quat = DirectX::XMLoadFloat4(&quatSource);
@@ -30,7 +30,7 @@ namespace Egg {
 			DirectX::XMMATRIX rtMat = DirectX::XMMatrixRotationQuaternion(rot);
 
 			DirectX::XMMATRIX local = DirectX::XMMatrixMultiply(rtMat, trMat);
-			DirectX::XMStoreFloat4x4A(&perShapeCb[i].local, DirectX::XMMatrixTranspose( local));
+			DirectX::XMStoreFloat4x4A(&perShapeCb[i].local, DirectX::XMMatrixTranspose(local));
 		}
 
 		perShapeCb.Upload();
@@ -42,7 +42,8 @@ namespace Egg {
 
 		unsigned int geomId = 0;
 		for(auto i : geometry) {
-			debugMaterial->BindConstantBuffer(cl, DebugPhysxShapeCb::id, perShapeCb.AddressAt(geomId++));
+			debugMaterial->BindConstantBuffer(cl, DebugPhysxShapeCb::id, perShapeCb.AddressAt(geomId));
+			++geomId;
 			i->Draw(cl);
 		}
 	}

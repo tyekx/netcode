@@ -45,6 +45,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Allocation.h" />
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AnimationComponent.h" />
     <ClInclude Include="AnimationController.h" />
@@ -61,6 +62,7 @@
     <ClInclude Include="Common.h" />
     <ClInclude Include="Components.h" />
     <ClInclude Include="ConstantBuffer.hpp" />
+    <ClInclude Include="ConstantBufferTypes.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DebugPhysx.h" />
     <ClInclude Include="DebugPhysxActor.h" />
@@ -73,6 +75,7 @@
     <ClInclude Include="GameObjectObserver.h" />
     <ClInclude Include="Importer.h" />
     <ClInclude Include="Input.h" />
+    <ClInclude Include="Light.h" />
     <ClInclude Include="LuaApi.h" />
     <ClInclude Include="LuaManager.h" />
     <ClInclude Include="LuaScript.h" />
@@ -88,6 +91,7 @@
     <ClInclude Include="PhysxSystem.h" />
     <ClInclude Include="PipelineState.h" />
     <ClInclude Include="ProgramArgs.h" />
+    <ClInclude Include="Prototyping.h" />
     <ClInclude Include="PsoManager.h" />
     <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="Scene.h" />
@@ -103,6 +107,7 @@
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Allocation.cpp" />
     <ClCompile Include="BasicGeometry.cpp" />
     <ClCompile Include="CharacterController.cpp" />
     <ClCompile Include="DebugPhysx.cpp" />
@@ -165,6 +170,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
+    <None Include="Shaders\Lighting.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

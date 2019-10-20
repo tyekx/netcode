@@ -3,6 +3,7 @@
 #include "../Common.h"
 #include "Geometry.h"
 #include "../Material.h"
+#include "../ConstantBufferTypes.h"
 
 
 namespace Egg {
@@ -12,9 +13,10 @@ namespace Egg {
 
 			Geometry::P geometry;
 			Material::P material;
+			PerMeshCb * perMeshData;
 		public:
-			Shaded(Geometry::P geom, Material::P mat) :
-				geometry{ geom }, material{ mat } { }
+			Shaded(Geometry::P geom, Material::P mat, PerMeshCb * cb) :
+				geometry{ geom }, material{ mat }, perMeshData{ cb } { }
 
 			~Shaded() = default;
 
@@ -24,6 +26,10 @@ namespace Egg {
 
 			Material::P GetMaterial() {
 				return material;
+			}
+
+			PerMeshCb * GetMeshData() {
+				return perMeshData;
 			}
 
 		GG_ENDCLASS
