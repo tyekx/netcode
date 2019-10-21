@@ -8,9 +8,9 @@ namespace Egg {
 		DirectX::XMFLOAT4A quatSource{ transform.q.x, transform.q.y, transform.q.z, transform.q.w };
 
 		DirectX::XMMATRIX translationMat = DirectX::XMMatrixTranslation(transform.p.x, transform.p.y, transform.p.z);
-		//DirectX::XMVECTOR quat = DirectX::XMLoadFloat4(&quatSource);
-		//DirectX::XMMATRIX rotationMat = DirectX::XMMatrixRotationQuaternion(quat);
-		DirectX::XMMATRIX model = DirectX::XMMatrixTranspose(translationMat);
+		DirectX::XMVECTOR quat = DirectX::XMLoadFloat4(&quatSource);
+		DirectX::XMMATRIX rotationMat = DirectX::XMMatrixRotationQuaternion(quat);
+		DirectX::XMMATRIX model = DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(rotationMat, translationMat));
 		DirectX::XMStoreFloat4x4A(&perObject->Model, model);
 
 		
