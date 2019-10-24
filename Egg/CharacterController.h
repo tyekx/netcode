@@ -7,7 +7,7 @@
 #include "PsoManager.h"
 #include "Mesh/MultiMesh.h"
 #include "ModelComponent.h"
-#include "Shader.h"
+#include "ShaderProgram.h"
 #include "PhysxSystem.h"
 #include "DebugPhysx.h"
 
@@ -162,9 +162,9 @@ namespace Egg {
 			cb.CreateResources(device);
 			meshesRef = &meshesCb;
 
-			com_ptr<ID3DBlob> avatarVS = Egg::Shader::LoadCso(L"AvatarVS.cso");
-			com_ptr<ID3DBlob> avatarPS = Egg::Shader::LoadCso(L"AvatarPS.cso");
-			com_ptr<ID3D12RootSignature> rootSig = Egg::Shader::LoadRootSignature(device, avatarVS.Get());
+			com_ptr<ID3DBlob> avatarVS = Egg::ShaderProgram::LoadCso(L"AvatarVS.cso");
+			com_ptr<ID3DBlob> avatarPS = Egg::ShaderProgram::LoadCso(L"AvatarPS.cso");
+			com_ptr<ID3D12RootSignature> rootSig = Egg::ShaderProgram::LoadRootSignature(device, avatarVS.Get());
 
 			animCtrl.reset(new Egg::AnimationController{ characterModel.animations, characterModel.animationsLength,
 														 characterModel.bones, characterModel.bonesLength });
@@ -199,7 +199,7 @@ namespace Egg {
 			
 			controller = ctrlManager->createController(cd);
 
-			AttachHitboxes();
+			//AttachHitboxes();
 
 			//dbPx->AddActor(actor);
 			dbPx->AddActor(controller->getActor());

@@ -2,7 +2,7 @@
 
 #include "BasicGeometry.h"
 #include "PhysxSystem.h"
-#include "Shader.h"
+#include "ShaderProgram.h"
 #include <array>
 
 namespace Egg {

@@ -19,9 +19,14 @@ namespace Egg {
 
 			DirectX::TexMetadata metaData;
 			DirectX::ScratchImage sImage;
+			DirectX::ScratchImage outputIm;
 
 			DX_API("Failed to load image: %S", wstr.c_str())
 				DirectX::LoadFromWICFile(wstr.c_str(), 0, &metaData, sImage);
+
+			bool isPow2 = Egg::Utility::IsPowerOf2((unsigned int)metaData.width);
+
+			DirectX::GenerateMipMaps(sImage.GetImages(), sImage.GetImageCount(), sImage.GetMetadata(), DirectX::TEX_FILTER_BOX, 3, outputIm);
 
 			D3D12_RESOURCE_DESC rdsc;
 			ZeroMemory(&rdsc, sizeof(D3D12_RESOURCE_DESC));

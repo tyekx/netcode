@@ -91,13 +91,13 @@
     <ClInclude Include="PhysxSystem.h" />
     <ClInclude Include="PipelineState.h" />
     <ClInclude Include="ProgramArgs.h" />
-    <ClInclude Include="Prototyping.h" />
     <ClInclude Include="PsoManager.h" />
     <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneObserver.h" />
     <ClInclude Include="ScriptComponent.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="ShaderProgram.h" />
     <ClInclude Include="Signature.h" />
     <ClInclude Include="SimpleApp.h" />
     <ClInclude Include="Stopwatch.h" />
@@ -126,7 +126,7 @@
     <ClCompile Include="PipelineState.cpp" />
     <ClCompile Include="PsoManager.cpp" />
     <ClCompile Include="Scene.cpp" />
-    <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="ShaderProgram.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
     <ClCompile Include="Texture2D.cpp" />
     <ClCompile Include="Utility.cpp" />
@@ -170,6 +170,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
+    <None Include="EggShaderLib.hlsli" />
     <None Include="Shaders\Lighting.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

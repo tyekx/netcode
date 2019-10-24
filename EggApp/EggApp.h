@@ -12,6 +12,7 @@
 #include <Egg/DebugPhysx.h>
 #include <Egg/CharacterController.h>
 #include <Egg/EggMath.h>
+#include <Egg/Shader.h>
 
 class EggApp : public Egg::SimpleApp {
 protected:
@@ -152,11 +153,6 @@ public:
 		Egg::Input::KeyReleased(keyCode);
 	}
 
-	/*
-	virtual void MouseMove(int x, int y) override {
-		Egg::Input::MouseMove(DirectX::XMINT2{ x, y });
-	}*/
-
 	virtual void Blur() override {
 		Egg::Input::Blur();
 	}
@@ -185,19 +181,6 @@ public:
 
 		debugPhysx->Draw(commandList.Get(), perFrameCb);
 		chCtrl.Draw(commandList.Get(), perFrameCb);
-
-		for(auto & rim : railgunMesh->GetMeshes()) {
-			auto mat = rim->GetMaterial();
-			auto geom = rim->GetGeometry();
-
-			mat->ApplyPipelineState(commandList.Get());
-			mat->BindConstantBuffer(commandList.Get(), perObjCb);
-			mat->BindConstantBuffer(commandList.Get(), perFrameCb);
-			mat->BindConstantBuffer(commandList.Get(), railgunBoneCb);
-			mat->BindConstantBuffer(commandList.Get(), PerMeshCb::id, meshesCb.TranslateAddr(rim->GetMeshData()));
-
-			geom->Draw(commandList.Get());
-		}
 		
 
 
@@ -259,6 +242,18 @@ public:
 	}
 
 	virtual void LoadAssets() override {
+
+		Egg::Shader s;
+		s.Define("IAO_HAS_NORMAL", "");
+		s.Define("IAO_HAS_TEXCOORD", "");
+		s.Define("IAO_HAS_SKELETON", "");
+		s.Define("SHADER_CB_USE_PERMESH", "");
+		s.Define("SHADER_CB_USE_PEROBJECT", "");
+		s.Define("SHADER_CB_USE_PERFRAME", "");
+		s.Define("SHADER_TEX_DIFFUSE", "");
+		s.Define("SHADER_NUM_LIGHTS", 1);
+		s.Compile();
+
 		cb.CreateResources(device.Get());
 		perFrameCb.CreateResources(device.Get());
 		railgunBoneCb.CreateResources(device.Get());
@@ -286,9 +281,9 @@ public:
 		
 		Egg::Importer::ImportModel(L"railgun.eggasset", railgun);
 
-		com_ptr<ID3DBlob> avatarVS = Egg::Shader::LoadCso(L"AvatarVS.cso");
-		com_ptr<ID3DBlob> avatarPS = Egg::Shader::LoadCso(L"AvatarPS.cso");
-		com_ptr<ID3D12RootSignature> rootSig = Egg::Shader::LoadRootSignature(device.Get(), avatarVS.Get());
+		com_ptr<ID3DBlob> avatarVS = Egg::ShaderProgram::LoadCso(L"AvatarVS.cso");
+		com_ptr<ID3DBlob> avatarPS = Egg::ShaderProgram::LoadCso(L"AvatarPS.cso");
+		com_ptr<ID3D12RootSignature> rootSig = Egg::ShaderProgram::LoadRootSignature(device.Get(), avatarVS.Get());
 
 		railgunMesh = Egg::Mesh::MultiMesh::Create();
 
@@ -318,7 +313,6 @@ public:
 			meshData->shininess = 2.0f;
 			railgunMesh->Add(geom, mat, meshData);
 		}
-
 
 		debugPhysx.reset(new Egg::DebugPhysx{});
 		debugPhysx->CreateResources(device.Get(), psoManager.get());

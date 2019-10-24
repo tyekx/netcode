@@ -32,12 +32,12 @@ namespace Egg {
 			startRays = 0;
 			numRays = 0;
 
-			com_ptr<ID3DBlob> debugPhysxVS = Egg::Shader::LoadCso(L"DebugPhysxVS.cso");
-			com_ptr<ID3DBlob> debugPhysxPS = Egg::Shader::LoadCso(L"DebugPhysxPS.cso");
-			com_ptr<ID3D12RootSignature> debugPhysxRS = Egg::Shader::LoadRootSignature(device, debugPhysxVS.Get());
+			com_ptr<ID3DBlob> debugPhysxVS = Egg::ShaderProgram::LoadCso(L"DebugPhysxVS.cso");
+			com_ptr<ID3DBlob> debugPhysxPS = Egg::ShaderProgram::LoadCso(L"DebugPhysxPS.cso");
+			com_ptr<ID3D12RootSignature> debugPhysxRS = Egg::ShaderProgram::LoadRootSignature(device, debugPhysxVS.Get());
 
-			com_ptr<ID3DBlob> debugPhysxRayVS = Egg::Shader::LoadCso(L"DebugPhysxRayVS.cso");
-			com_ptr<ID3D12RootSignature> debugPhysxRayRS = Egg::Shader::LoadRootSignature(device, debugPhysxRayVS.Get());
+			com_ptr<ID3DBlob> debugPhysxRayVS = Egg::ShaderProgram::LoadCso(L"DebugPhysxRayVS.cso");
+			com_ptr<ID3D12RootSignature> debugPhysxRayRS = Egg::ShaderProgram::LoadRootSignature(device, debugPhysxRayVS.Get());
 
 			static D3D12_INPUT_ELEMENT_DESC inputElements[2];
 			inputElements[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };

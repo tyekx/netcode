@@ -163,9 +163,9 @@ public:
 
 		luaManager = std::make_unique<LuaManager>();
 
-		com_ptr<ID3DBlob> vertexShader = Egg::Shader::LoadCso(L"cbBasicVS.cso");
-		com_ptr<ID3DBlob> pixelShader = Egg::Shader::LoadCso(L"DefaultPS.cso");
-		com_ptr<ID3D12RootSignature> rootSig = Egg::Shader::LoadRootSignature(device.Get(), vertexShader.Get());
+		com_ptr<ID3DBlob> vertexShader = Egg::ShaderProgram::LoadCso(L"cbBasicVS.cso");
+		com_ptr<ID3DBlob> pixelShader = Egg::ShaderProgram::LoadCso(L"DefaultPS.cso");
+		com_ptr<ID3D12RootSignature> rootSig = Egg::ShaderProgram::LoadRootSignature(device.Get(), vertexShader.Get());
 
 		CD3DX12_RASTERIZER_DESC rsd{ D3D12_DEFAULT };
 		rsd.FillMode = D3D12_FILL_MODE_WIREFRAME;

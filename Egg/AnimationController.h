@@ -10,13 +10,13 @@
 
 namespace Egg {
 
-	class AnimationController {
+	struct AnimationBuffer {
+		DirectX::XMFLOAT3A position;
+		DirectX::XMFLOAT4A rotation;
+		DirectX::XMFLOAT3A scale;
+	};
 
-		struct AnimationBuffer {
-			DirectX::XMFLOAT3A position;
-			DirectX::XMFLOAT4A rotation;
-			DirectX::XMFLOAT3A scale;
-		};
+	class AnimationController {
 
 		struct AnimationClip {
 			int animId;

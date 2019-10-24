@@ -3,7 +3,7 @@
 #include "Common.h"
 #include "Mesh/Shaded.h"
 #include "App.h"
-#include "Shader.h"
+#include "ShaderProgram.h"
 
 namespace Egg {
 

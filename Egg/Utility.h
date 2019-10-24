@@ -8,6 +8,19 @@ namespace Egg {
 	namespace Utility {
 
 		/*
+		Checkes for an unsigned int if its a power of 2. Wasteful approach but working for edge cases including 0.
+		*/
+		constexpr bool IsPowerOf2(unsigned int v) {
+			unsigned int bitCount = 0;
+			for(; v > 0; v >>= 0x1) {
+				if(v & 0x1) {
+					++bitCount;
+				}
+			}
+			return bitCount == 1;
+		}
+
+		/*
 		Takes a number and returns its closest multiplicative of 256. The returned number is always bigger or equal than the input number
 		*/
 		constexpr unsigned int Align256(unsigned int v) {

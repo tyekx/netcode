@@ -52,9 +52,6 @@
     <Filter Include="Memory">
       <UniqueIdentifier>{e5730774-81ed-487c-90dc-7e0c274ba856}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Graphics\GPSO">
-      <UniqueIdentifier>{1491eebe-75df-4767-b9cd-191dd33c1259}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Mesh\Shaded.h">
@@ -109,9 +106,6 @@
       <Filter>App</Filter>
     </ClInclude>
     <ClInclude Include="Texture2D.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader.h">
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="PsoManager.h">
@@ -232,8 +226,11 @@
     <ClInclude Include="Light.h">
       <Filter>Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Prototyping.h">
-      <Filter>Graphics\GPSO</Filter>
+    <ClInclude Include="ShaderProgram.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -245,9 +242,6 @@
     </ClCompile>
     <ClCompile Include="Stopwatch.cpp">
       <Filter>Utility</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="PsoManager.cpp">
       <Filter>Graphics</Filter>
@@ -302,6 +296,9 @@
     <ClCompile Include="Allocation.cpp">
       <Filter>Memory</Filter>
     </ClCompile>
+    <ClCompile Include="ShaderProgram.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DefaultPS.hlsl">
@@ -340,6 +337,9 @@
   <ItemGroup>
     <None Include="cpp.hint" />
     <None Include="Shaders\Lighting.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="EggShaderLib.hlsli">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

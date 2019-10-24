@@ -1,22 +1,22 @@
-#include "Shader.h"
+#include "ShaderProgram.h"
 #include "Utility.h"
 
-Egg::Shader::Shader(com_ptr<ID3DBlob> && blobRvalue) : byteCode{ std::move(blobRvalue) } { }
+Egg::ShaderProgram::ShaderProgram(com_ptr<ID3DBlob> && blobRvalue) : byteCode{ std::move(blobRvalue) } { }
 
-D3D12_SHADER_BYTECODE Egg::Shader::GetByteCode() const {
+D3D12_SHADER_BYTECODE Egg::ShaderProgram::GetByteCode() const {
 	D3D12_SHADER_BYTECODE bc;
 	bc.BytecodeLength = byteCode->GetBufferSize();
 	bc.pShaderBytecode = byteCode->GetBufferPointer();
 	return bc;
 }
 
-com_ptr<ID3D12RootSignature> Egg::Shader::LoadRootSignature(ID3D12Device * device, const ShaderPath & filename) {
+com_ptr<ID3D12RootSignature> Egg::ShaderProgram::LoadRootSignature(ID3D12Device * device, const ShaderPath & filename) {
 	com_ptr<ID3DBlob> rootSigBlob = LoadCso(filename.GetAbsolutePath());
 
 	return LoadRootSignature(device, rootSigBlob.Get());
 }
 
-com_ptr<ID3D12RootSignature> Egg::Shader::LoadRootSignature(ID3D12Device * device, ID3DBlob * blobWithRootSignature) {
+com_ptr<ID3D12RootSignature> Egg::ShaderProgram::LoadRootSignature(ID3D12Device * device, ID3DBlob * blobWithRootSignature) {
 	com_ptr<ID3D12RootSignature> rootSig{ nullptr };
 
 	DX_API("Failed to create root signature")
@@ -26,7 +26,7 @@ com_ptr<ID3D12RootSignature> Egg::Shader::LoadRootSignature(ID3D12Device * devic
 	return rootSig;
 }
 
-com_ptr<ID3DBlob> Egg::Shader::LoadCso(const ShaderPath & shaderPath) {
+com_ptr<ID3DBlob> Egg::ShaderProgram::LoadCso(const ShaderPath & shaderPath) {
 	std::wstring filename = shaderPath.GetAbsolutePath();
 
 	std::ifstream file{ filename.c_str(), std::ios::binary | std::ios::in | std::ios::ate };

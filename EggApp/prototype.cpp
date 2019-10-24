@@ -1,5 +1,5 @@
 #include <initializer_list>
-
+/*
 
 enum class StateBehaviour {
 	NONE, LOOP, ONCE
@@ -86,7 +86,7 @@ public:
 
 void funct() {
 
-	Blackboard({
+	Blackboard bc({
 					AnimationState{ "Idle",			StateBehaviour::LOOP },
 					AnimationState{ "Forward",		StateBehaviour::LOOP },
 					AnimationState{ "JumpStart",	StateBehaviour::ONCE },
@@ -106,3 +106,4 @@ void funct() {
 }
 
 
+*/
