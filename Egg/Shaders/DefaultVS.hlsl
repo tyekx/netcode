@@ -9,13 +9,21 @@ struct IAOutput
 
 struct VSOutput {
 	float4 position : SV_Position;
-	float3 color : COLOR;
+	float2 texCoord : TEXCOORD;
 };
 
-[RootSignature(RootSig0)]
+cbuffer PerObjectCb : register(b0) {
+	float4x4 model;
+}
+
+cbuffer PerFrameCb : register(b1) {
+	float4x4 viewProj;
+}
+
+[RootSignature(RootSig1)]
 VSOutput main(IAOutput iao) {
 	VSOutput vso;
-	vso.position = float4(iao.position, 1.0f);
-	vso.color = iao.normal;
+	vso.position = mul(mul(float4(iao.position, 1.0f), model), viewProj);
+	vso.texCoord = iao.texCoord;
 	return vso;
 }

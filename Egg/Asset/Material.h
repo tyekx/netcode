@@ -21,6 +21,10 @@ namespace Egg {
 				normalTexture[0] = '\0';
 			}
 
+			bool HasTextures() const {
+				return HasDiffuseTexture() || HasNormalTexture();
+			}
+
 			bool HasDiffuseTexture() const {
 				return diffuseTexture[0] == '\0';
 			}

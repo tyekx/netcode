@@ -35,3 +35,5 @@ CB_TYPE struct PerMeshCb {
 	DirectX::XMFLOAT3 fresnelR0;
 	float shininess;
 };
+
+int GetConstantBufferIdFromName(const char * name);

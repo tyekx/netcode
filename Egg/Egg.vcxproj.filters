@@ -52,14 +52,20 @@
     <Filter Include="Memory">
       <UniqueIdentifier>{e5730774-81ed-487c-90dc-7e0c274ba856}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics\Debug">
+      <UniqueIdentifier>{6056ac49-bc8e-480d-a212-d3b0cd479a98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Legacy">
+      <UniqueIdentifier>{5b7bff1e-8dc4-4a3d-9580-df830884edf4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Resource">
+      <UniqueIdentifier>{558741a0-ed22-4b3c-aeed-1151cf341cb1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Internal">
+      <UniqueIdentifier>{ea3e0ca0-758c-4346-b62a-50611b58db72}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Mesh\Shaded.h">
-      <Filter>Model\Mesh</Filter>
-    </ClInclude>
-    <ClInclude Include="Mesh\Geometry.h">
-      <Filter>Model\Mesh</Filter>
-    </ClInclude>
     <ClInclude Include="Camera\Camera.h">
       <Filter>Camera</Filter>
     </ClInclude>
@@ -104,12 +110,6 @@
     </ClInclude>
     <ClInclude Include="SimpleApp.h">
       <Filter>App</Filter>
-    </ClInclude>
-    <ClInclude Include="Texture2D.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="PsoManager.h">
-      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="ConstantBuffer.hpp">
       <Filter>Graphics</Filter>
@@ -174,12 +174,6 @@
     <ClInclude Include="Asset\Material.h">
       <Filter>Asset</Filter>
     </ClInclude>
-    <ClInclude Include="PipelineState.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Mesh\MultiMesh.h">
-      <Filter>Model\Mesh</Filter>
-    </ClInclude>
     <ClInclude Include="Material.h">
       <Filter>Model\Material</Filter>
     </ClInclude>
@@ -201,21 +195,12 @@
     <ClInclude Include="BasicGeometry.h">
       <Filter>Model\Mesh</Filter>
     </ClInclude>
-    <ClInclude Include="DebugPhysx.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="EggMath.h" />
-    <ClInclude Include="DebugPhysxActor.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="CharacterController.h">
       <Filter>Gameplay</Filter>
     </ClInclude>
     <ClInclude Include="Input.h">
       <Filter>Gameplay</Filter>
-    </ClInclude>
-    <ClInclude Include="DebugPhysxRaycast.h">
-      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Allocation.h">
       <Filter>Memory</Filter>
@@ -226,10 +211,73 @@
     <ClInclude Include="Light.h">
       <Filter>Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="DebugPhysx.h">
+      <Filter>Graphics\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugPhysxActor.h">
+      <Filter>Graphics\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugPhysxRaycast.h">
+      <Filter>Graphics\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="PsoManager.h">
+      <Filter>Graphics\Legacy</Filter>
+    </ClInclude>
     <ClInclude Include="ShaderProgram.h">
+      <Filter>Graphics\Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Graphics\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="CommittedTexture2D.h">
+      <Filter>Graphics\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="CommittedVBuffer.h">
+      <Filter>Graphics\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="CommittedIBuffer.h">
+      <Filter>Graphics\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceManager.h">
       <Filter>Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Shader.h">
+    <ClInclude Include="ShaderCodeCollection.h">
+      <Filter>Graphics\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="RootSignatureLibrary.h">
+      <Filter>Graphics\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="RootSignatureDesc.h">
+      <Filter>Graphics\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Model\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="PreprocessorDefinitions.h">
+      <Filter>Graphics\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryLibrary.h">
+      <Filter>Graphics\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="GPSOLibrary.h">
+      <Filter>Graphics\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="Multi.h">
+      <Filter>Model\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Geometry.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderCodeLibrary.h">
+      <Filter>Graphics\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceAllocator.h">
+      <Filter>Graphics\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureLibrary.h">
+      <Filter>Graphics\Internal</Filter>
+    </ClInclude>
+    <ClInclude Include="InputLayout.h">
       <Filter>Graphics</Filter>
     </ClInclude>
   </ItemGroup>
@@ -242,12 +290,6 @@
     </ClCompile>
     <ClCompile Include="Stopwatch.cpp">
       <Filter>Utility</Filter>
-    </ClCompile>
-    <ClCompile Include="PsoManager.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Texture2D.cpp">
-      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="GameObject.cpp">
       <Filter>Scene</Filter>
@@ -270,24 +312,12 @@
     <ClCompile Include="Importer.cpp">
       <Filter>Serialization</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineState.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Mesh\Geometry.cpp">
-      <Filter>Model\Mesh</Filter>
-    </ClCompile>
-    <ClCompile Include="DebugPhysx.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="EggMath.cpp" />
     <ClCompile Include="BasicGeometry.cpp">
       <Filter>Model\Mesh</Filter>
     </ClCompile>
     <ClCompile Include="Material.cpp">
       <Filter>Model\Material</Filter>
-    </ClCompile>
-    <ClCompile Include="DebugPhysxActor.cpp">
-      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="CharacterController.cpp" />
     <ClCompile Include="Input.cpp">
@@ -296,8 +326,29 @@
     <ClCompile Include="Allocation.cpp">
       <Filter>Memory</Filter>
     </ClCompile>
+    <ClCompile Include="DebugPhysx.cpp">
+      <Filter>Graphics\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugPhysxActor.cpp">
+      <Filter>Graphics\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="PsoManager.cpp">
+      <Filter>Graphics\Legacy</Filter>
+    </ClCompile>
     <ClCompile Include="ShaderProgram.cpp">
+      <Filter>Graphics\Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="ConstantBufferTypes.cpp">
       <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="CommittedTexture2D.cpp">
+      <Filter>Graphics\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="CommittedVBuffer.cpp">
+      <Filter>Graphics\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="CommittedIBuffer.cpp">
+      <Filter>Graphics\Resource</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

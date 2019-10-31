@@ -38,6 +38,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <PreprocessorDefinitions>_EGG_SDK_VERSION=$(TargetPlatformVersion.Substring(5,5));%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Lib />
     <Lib>
@@ -59,6 +60,9 @@
     <ClInclude Include="Blackboard.h" />
     <ClInclude Include="Camera\Camera.h" />
     <ClInclude Include="CharacterController.h" />
+    <ClInclude Include="CommittedIBuffer.h" />
+    <ClInclude Include="CommittedTexture2D.h" />
+    <ClInclude Include="CommittedVBuffer.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Components.h" />
     <ClInclude Include="ConstantBuffer.hpp" />
@@ -73,8 +77,12 @@
     <ClInclude Include="File.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectObserver.h" />
+    <ClInclude Include="Geometry.h" />
+    <ClInclude Include="GeometryLibrary.h" />
+    <ClInclude Include="GPSOLibrary.h" />
     <ClInclude Include="Importer.h" />
     <ClInclude Include="Input.h" />
+    <ClInclude Include="InputLayout.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="LuaApi.h" />
     <ClInclude Include="LuaManager.h" />
@@ -82,26 +90,31 @@
     <ClInclude Include="LuaScriptFile.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="EggMath.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="ModelComponent.h" />
-    <ClInclude Include="Mesh\Geometry.h" />
-    <ClInclude Include="Mesh\MultiMesh.h" />
-    <ClInclude Include="Mesh\Shaded.h" />
+    <ClInclude Include="Multi.h" />
     <ClInclude Include="Path.h" />
     <ClInclude Include="PhysxComponent.h" />
     <ClInclude Include="PhysxSystem.h" />
-    <ClInclude Include="PipelineState.h" />
+    <ClInclude Include="PreprocessorDefinitions.h" />
     <ClInclude Include="ProgramArgs.h" />
     <ClInclude Include="PsoManager.h" />
     <ClInclude Include="RenderSystem.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="ResourceAllocator.h" />
+    <ClInclude Include="ResourceManager.h" />
+    <ClInclude Include="RootSignatureDesc.h" />
+    <ClInclude Include="RootSignatureLibrary.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneObserver.h" />
     <ClInclude Include="ScriptComponent.h" />
-    <ClInclude Include="Shader.h" />
+    <ClInclude Include="ShaderCodeCollection.h" />
+    <ClInclude Include="ShaderCodeLibrary.h" />
     <ClInclude Include="ShaderProgram.h" />
     <ClInclude Include="Signature.h" />
     <ClInclude Include="SimpleApp.h" />
     <ClInclude Include="Stopwatch.h" />
-    <ClInclude Include="Texture2D.h" />
+    <ClInclude Include="TextureLibrary.h" />
     <ClInclude Include="TransformComponent.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="Vertex.h" />
@@ -110,6 +123,10 @@
     <ClCompile Include="Allocation.cpp" />
     <ClCompile Include="BasicGeometry.cpp" />
     <ClCompile Include="CharacterController.cpp" />
+    <ClCompile Include="CommittedIBuffer.cpp" />
+    <ClCompile Include="CommittedTexture2D.cpp" />
+    <ClCompile Include="CommittedVBuffer.cpp" />
+    <ClCompile Include="ConstantBufferTypes.cpp" />
     <ClCompile Include="DebugPhysx.cpp" />
     <ClCompile Include="DebugPhysxActor.cpp" />
     <ClCompile Include="Exporter.cpp" />
@@ -120,15 +137,12 @@
     <ClCompile Include="LuaApi.cpp" />
     <ClCompile Include="EggMath.cpp" />
     <ClCompile Include="Material.cpp" />
-    <ClCompile Include="Mesh\Geometry.cpp" />
     <ClCompile Include="Path.cpp" />
     <ClCompile Include="PhysxSystem.cpp" />
-    <ClCompile Include="PipelineState.cpp" />
     <ClCompile Include="PsoManager.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="ShaderProgram.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
-    <ClCompile Include="Texture2D.cpp" />
     <ClCompile Include="Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
