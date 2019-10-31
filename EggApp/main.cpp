@@ -205,8 +205,26 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	DX_API("Failed to create DXGI factory")
 		CreateDXGIFactory1(IID_PPV_ARGS(dxgiFactory.GetAddressOf()));
 
+	D3D12_FEATURE_DATA_FEATURE_LEVELS queryFeatureLevels;
+	D3D_FEATURE_LEVEL possibleFeatureLevels[] = {
+		D3D_FEATURE_LEVEL_11_0,
+		D3D_FEATURE_LEVEL_11_1,
+		D3D_FEATURE_LEVEL_12_0,
+		D3D_FEATURE_LEVEL_12_1
+	};
+
+	//dxgiFactory->CheckFeatureSupport(, &queryFeatureLevels, sizeof(queryFeatureLevels));
+
 	DX_API("Failed to create device")
-		D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&device));
+		D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(device.GetAddressOf()));
+	
+	DX_API("Failed to query feature support")
+		device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &queryFeatureLevels, sizeof(D3D12_FEATURE_FEATURE_LEVELS));
+
+	device.Reset();
+
+	DX_API("Failed to create maximum feature level device")
+		D3D12CreateDevice(nullptr, queryFeatureLevels.MaxSupportedFeatureLevel, IID_PPV_ARGS(device.GetAddressOf()));
 
 	BOOL syncSupport = FALSE;
 
