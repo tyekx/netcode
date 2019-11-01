@@ -4,7 +4,11 @@
 #include "MovementController.h"
 #include "Asset/Animation.h"
 
-namespace Egg {
+namespace Egg::Animation {
+
+	enum class TransitionBehaviour : unsigned {
+		NONE = 0, STOP_AND_LERP = 1, LERP = 2
+	};
 
 	enum class StateBehaviour {
 		NONE, LOOP, ONCE
@@ -12,47 +16,50 @@ namespace Egg {
 
 	class AnimationState {
 	public:
-		std::string name;
+
+		using mov_query_func_t = bool (MovementController:: *)() const;
+		using anim_query_func_t = bool(AnimationState:: *)() const;
+
+
+		class Transition {
+		public:
+			mov_query_func_t movQueryFunction;
+			anim_query_func_t animQueryFunction;
+
+			AnimationState * targetState;
+
+			TransitionBehaviour behaviour;
+
+			Transition();
+
+			Transition(mov_query_func_t movQueryFunc, anim_query_func_t animQueryFunc, AnimationState * targetState, TransitionBehaviour howToTransition);
+
+			bool operator()(MovementController * movCtrl, AnimationState * currentState) const;
+		};
+
+		char name[32];
 		StateBehaviour behaviour;
 		unsigned int id;
+		Asset::Animation * animationRef;
+		Transition * transitions;
+		UINT transitionsLength;
+
 		float weight;
 		float animTime;
 		float animSpeed;
 		float animTicksPerSecond;
 		float animDuration;
-		Asset::Animation * animationRef;
 
-		void SetAnimationRef(Asset::Animation * aRef) {
-			animationRef = aRef;
-			animDuration = (float)aRef->duration;
-			animTicksPerSecond = (float)aRef->ticksPerSecond;
-		}
+		void SetAnimationRef(Asset::Animation * aRef);
 
-		AnimationState(const std::string & name, unsigned int animId, StateBehaviour behaviour) :
-			name{ name }, behaviour{ behaviour }, id{ animId }, weight{ 0.0f }, animTime{ 0.0f }, animSpeed{ 0.0f }, animTicksPerSecond{ 0.0f }, animDuration{ 0.0f }, animationRef{ nullptr } { }
+		AnimationState(const AnimationState & a);
 
-		void Update(float dt) {
-			animTime += animSpeed * (animTicksPerSecond * dt);
+		AnimationState(const std::string & name, unsigned int animId, StateBehaviour behaviour);
 
-			switch(behaviour) {
-			case StateBehaviour::LOOP:
-				animTime = fmodf(animTime, animDuration);
-				break;
-			case StateBehaviour::ONCE:
-				animTime = fminf(animTime, animDuration);
-				break;
-			default:
-				break;
-			}
-		}
+		void Update(float dt);
 
-		bool IsFinished() const {
-			return false;
-		}
+		bool IsFinished() const;
 
-		bool IsPlaying() const {
-			return false;
-		}
+		bool IsPlaying() const;
 	};
-
 }

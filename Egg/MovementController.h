@@ -1,44 +1,56 @@
 #pragma once
 
+#include "Input.h"
+
 namespace Egg {
 
 
 	class MovementController {
+		float dirX;
+		float dirY;
+		float dirZ;
+
 	public:
+		void Update() {
+			dirX = Input::GetAxis("Horizontal");
+			dirY = Input::GetAxis("Vertical");
+			dirZ = Input::GetAxis("Jump");
+		}
+
 		bool IsMovingForward() const {
-			return false;
+			return dirY > 0.0f && dirX == 0.0f && IsOnGround();
 		}
 
 		bool IsMovingLeft() const {
-			return false;
+			return dirY == 0.0f && dirX > 0.0f && IsOnGround();
 		}
 
 		bool IsMovingRight() const {
-			return false;
+			return dirY == 0.0f && dirX < 0.0f && IsOnGround();
 		}
 
 		bool IsMovingBackward() const {
-			return IsOnGround(); // and only AxisY is active
+			return dirY < 0.0f && dirX == 0.0f && IsOnGround();
 		}
 
 		bool IsMovingForwardLeft() const {
-			return false;
+			return dirY > 0.0f && dirX > 0.0f && IsOnGround();
 		}
 
 		bool IsMovingForwardRight() const {
-			return false;
+			return dirY > 0.0f && dirX < 0.0f && IsOnGround();
 		}
 
 		bool IsMovingBackwardLeft() const {
-			return false;
+			return dirY < 0.0f && dirX > 0.0f && IsOnGround();
 		}
 
 		bool IsMovingBackwardRight() const {
-			return false;
+			return dirY < 0.0f && dirX < 0.0f && IsOnGround();
 		}
 
 		bool IsJumping() const {
-			return false;
+			return dirZ > 0.0f;
 		}
 
 		bool IsFiring() const {
@@ -46,11 +58,11 @@ namespace Egg {
 		}
 
 		bool IsOnGround() const {
-			return false;
+			return dirZ == 0.0f;
 		}
 
 		bool IsIdle() const {
-			return true;
+			return dirX == 0.0f && dirY == 0.0f && IsOnGround();
 		}
 	};
 

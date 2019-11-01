@@ -2,6 +2,7 @@
 
 #include "Utility.h"
 #include "Vertex.h"
+#include "LinearAllocator.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -67,8 +68,7 @@ namespace Egg::Importer {
 		unsigned int totalSize;
 		fread(&totalSize, sizeof(unsigned int), 1, file);
 
-		LinearAllocator allocator{ totalSize };
-		m.memoryAllocation = allocator.ptr;
+		Memory::LinearAllocator allocator{ totalSize };
 
 		fread(&m.meshesLength, sizeof(unsigned int), 1, file);
 
@@ -120,6 +120,8 @@ namespace Egg::Importer {
 		}
 
 		fclose(file);
+
+		m.memoryAllocation = allocator.Detach();
 
 	}
 }

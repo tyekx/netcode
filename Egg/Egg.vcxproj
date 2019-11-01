@@ -82,6 +82,7 @@
     <ClInclude Include="Input.h" />
     <ClInclude Include="InputLayout.h" />
     <ClInclude Include="Light.h" />
+    <ClInclude Include="LinearAllocator.h" />
     <ClInclude Include="LuaApi.h" />
     <ClInclude Include="LuaManager.h" />
     <ClInclude Include="LuaScript.h" />
@@ -118,7 +119,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Allocation.cpp" />
+    <ClCompile Include="AnimationState.cpp" />
     <ClCompile Include="BasicGeometry.cpp" />
+    <ClCompile Include="Blackboard.cpp" />
     <ClCompile Include="CharacterController.cpp" />
     <ClCompile Include="CommittedIBuffer.cpp" />
     <ClCompile Include="CommittedTexture2D.cpp" />
@@ -131,6 +134,7 @@
     <ClCompile Include="Importer.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Internal.cpp" />
+    <ClCompile Include="LinearAllocator.cpp" />
     <ClCompile Include="LuaApi.cpp" />
     <ClCompile Include="EggMath.cpp" />
     <ClCompile Include="Material.cpp" />
@@ -138,6 +142,7 @@
     <ClCompile Include="PhysxSystem.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
+    <ClCompile Include="Transition.cpp" />
     <ClCompile Include="Utility.cpp" />
   </ItemGroup>
   <ItemGroup>

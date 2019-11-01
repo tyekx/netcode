@@ -271,6 +271,9 @@
     <ClInclude Include="CharacterController.h">
       <Filter>Model\Legacy</Filter>
     </ClInclude>
+    <ClInclude Include="LinearAllocator.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
@@ -334,6 +337,18 @@
     </ClCompile>
     <ClCompile Include="CommittedIBuffer.cpp">
       <Filter>Graphics\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="LinearAllocator.cpp">
+      <Filter>Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="Blackboard.cpp">
+      <Filter>Model\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationState.cpp">
+      <Filter>Model\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Transition.cpp">
+      <Filter>Model\Animation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

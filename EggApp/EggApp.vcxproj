@@ -49,7 +49,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="prototype.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EggApp.h" />
