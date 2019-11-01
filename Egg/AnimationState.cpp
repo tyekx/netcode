@@ -29,6 +29,7 @@ namespace Egg::Animation {
 		transitions = a.transitions;
 		transitionsLength = a.transitionsLength;
 		weight = a.weight;
+		weightVelocity = a.weightVelocity;
 		animTime = a.animTime;
 		animSpeed = a.animSpeed;
 		animTicksPerSecond = a.animTicksPerSecond;
@@ -43,6 +44,7 @@ namespace Egg::Animation {
 		transitions{ nullptr },
 		transitionsLength{ 0 },
 		weight{ 0.0f },
+		weightVelocity{ 1.0f },
 		animTime{ 0.0f },
 		animSpeed{ 1.0f },
 		animTicksPerSecond{ 0.0f },

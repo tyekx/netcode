@@ -274,6 +274,9 @@
     <ClInclude Include="LinearAllocator.h">
       <Filter>Memory</Filter>
     </ClInclude>
+    <ClInclude Include="AnimationBlender.h">
+      <Filter>Model\Animation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
@@ -348,6 +351,9 @@
       <Filter>Model\Animation</Filter>
     </ClCompile>
     <ClCompile Include="Transition.cpp">
+      <Filter>Model\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationBlender.cpp">
       <Filter>Model\Animation</Filter>
     </ClCompile>
   </ItemGroup>

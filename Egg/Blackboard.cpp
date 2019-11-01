@@ -20,6 +20,7 @@ namespace Egg::Animation {
 			AnimationState::Transition * t = currentState->transitions + i;
 
 			if((*t)(movCtrl, currentState)) {
+				currentState->weightVelocity = -5.0f;
 				switch(t->behaviour) {
 				case TransitionBehaviour::STOP_AND_LERP:
 					currentState->animSpeed = 0.0f;
@@ -28,29 +29,27 @@ namespace Egg::Animation {
 				currentState = t->targetState;
 				currentState->animTime = 0.0f;
 				currentState->animSpeed = 1.0f;
+				currentState->weightVelocity = 5.0f;
+				blender->ActivateState(currentState);
 				break;
 			}
 		}
 	}
 
-	void Blackboard::Bind(BoneDataCb * writeDest) {
-		dest = writeDest;
-	}
+	Blackboard::Blackboard() : allocator{}, prevState{ nullptr }, currentState{ nullptr }, states{ nullptr }, statesLength{ 0 }, blender{ nullptr } { }
 
-	Blackboard::Blackboard() : allocator{}, prevState{ nullptr }, currentState{ nullptr }, bones{ nullptr }, dest{ nullptr }, states{ nullptr }, statesLength{ 0 } { }
-
-	void Blackboard::CreateResources(Asset::Model * model, unsigned int animationsLength,
+	void Blackboard::CreateResources(Asset::Model * model, BoneDataCb * writeDest, unsigned int animationsLength,
 						const std::initializer_list<AnimationState> & sts,
 						const std::initializer_list<TransitionInit> &transitions) {
 
-		bones = model->bones;
-
-		UINT requiredSize = sts.size() * sizeof(AnimationState) + transitions.size() * sizeof(AnimationState::Transition);
+		UINT requiredSize = static_cast<UINT>(sts.size() * sizeof(AnimationState) + transitions.size() * sizeof(AnimationState::Transition) + sizeof(AnimationBlender));
 		allocator.Initialize(requiredSize);
 
+		blender = allocator.Allocate<AnimationBlender>();
+		new (blender) AnimationBlender{ model->bones, model->bonesLength, writeDest };
 
 		// step1: allocate and initialize states
-		states = static_cast<AnimationState *>(allocator.Allocate(sizeof(AnimationState) * sts.size()));
+		states = static_cast<AnimationState *>(allocator.Allocate(static_cast<UINT>(sizeof(AnimationState) * sts.size())));
 		statesLength = static_cast<UINT>(sts.size());
 
 		UINT idx = 0;
@@ -95,66 +94,17 @@ namespace Egg::Animation {
 		currentState = states;
 		currentState->animTime = 0.0f;
 		currentState->animSpeed = 1.0f;
+		currentState->weightVelocity = 5.0f;
+		blender->ActivateState(currentState);
 	}
 
 	void Blackboard::Update(float dt, MovementController * movCtrl) {
 		currentState->Update(dt);
 		CheckCurrentTransitions(movCtrl);
+		blender->ActivateState(currentState);
 
-		Egg::Asset::Animation * a = currentState->animationRef;
-		float t = currentState->animTime;
-		UINT idx;
-		for(idx = 1; idx < a->keysLength; ++idx) {
-			if(a->times[idx - 1] <= t && a->times[idx] >= t) {
-				t = (t - a->times[idx - 1]) / (a->times[idx] - a->times[idx - 1]);
-				break;
-			}
-		}
-
-		auto * startKey = (a->keys + (idx - 1) * a->bonesLength);
-		auto * endKey = (a->keys + idx * a->bonesLength);
-
-		DirectX::XMVECTOR stPos;
-		DirectX::XMVECTOR endPos;
-
-		DirectX::XMVECTOR stQuat;
-		DirectX::XMVECTOR endQuat;
-
-		DirectX::XMVECTOR stScale;
-		DirectX::XMVECTOR endScale;
-
-		DirectX::XMMATRIX toRoot[128];
-		int parentId;
-
-		DirectX::XMMATRIX bindTrans;
-
-		for(UINT i = 0; i < a->bonesLength; ++i) {
-			stPos = DirectX::XMLoadFloat3(&startKey[i].position);
-			stQuat = DirectX::XMLoadFloat4(&startKey[i].rotation);
-			stScale = DirectX::XMLoadFloat3(&startKey[i].scale);
-
-			endPos = DirectX::XMLoadFloat3(&endKey[i].position);
-			endQuat = DirectX::XMLoadFloat4(&endKey[i].rotation);
-			endScale = DirectX::XMLoadFloat3(&endKey[i].scale);
-
-			stPos = DirectX::XMVectorLerp(stPos, endPos, t);
-			stQuat = DirectX::XMQuaternionSlerp(stQuat, endQuat, t);
-			stScale = DirectX::XMVectorLerp(stScale, endScale, t);
-
-			toRoot[i] = DirectX::XMMatrixAffineTransformation(stScale, DirectX::XMQuaternionIdentity(), stQuat, stPos);
-
-			parentId = bones[i].parentId;
-			if(parentId > -1) {
-				toRoot[i] = DirectX::XMMatrixMultiply(toRoot[i], toRoot[bones[i].parentId]);
-			}
-
-			DirectX::XMStoreFloat4x4A(dest->ToRootTransform + i, DirectX::XMMatrixTranspose(toRoot[i]));
-
-			bindTrans = DirectX::XMLoadFloat4x4(&bones[i].transform);
-			bindTrans = DirectX::XMMatrixMultiply(bindTrans, toRoot[i]);
-
-			DirectX::XMStoreFloat4x4A(dest->BindTransform + i, DirectX::XMMatrixTranspose(bindTrans));
-		}
+		blender->UpdateStates(dt);
+		blender->Blend();
 	}
 
 }

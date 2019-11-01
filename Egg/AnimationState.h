@@ -45,6 +45,7 @@ namespace Egg::Animation {
 		UINT transitionsLength;
 
 		float weight;
+		float weightVelocity;
 		float animTime;
 		float animSpeed;
 		float animTicksPerSecond;

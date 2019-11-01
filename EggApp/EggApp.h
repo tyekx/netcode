@@ -264,9 +264,7 @@ public:
 		modelComponent->multiMesh = resourceManager->LoadAssets(&ybotModel);
 		auto * animComponent = playerObject->AddComponent<AnimationComponent>();
 
-		//@TODO: would be better to handle this inside the animation system
-		animComponent->blackBoard.Bind(modelComponent->multiMesh.boneDataCb);
-		animComponent->blackBoard.CreateResources(&ybotModel, ybotModel.animationsLength, {
+		animComponent->blackBoard.CreateResources(&ybotModel, modelComponent->multiMesh.boneDataCb, ybotModel.animationsLength, {
 					{ "Idle",			4,		Egg::Animation::StateBehaviour::LOOP },
 					{ "Forward",		6,		Egg::Animation::StateBehaviour::LOOP },
 					{ "Backward",		7,		Egg::Animation::StateBehaviour::LOOP },

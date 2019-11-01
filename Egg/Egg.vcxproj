@@ -47,6 +47,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Allocation.h" />
+    <ClInclude Include="AnimationBlender.h" />
     <ClInclude Include="AnimationComponent.h" />
     <ClInclude Include="AnimationController.h" />
     <ClInclude Include="AnimationState.h" />
@@ -119,6 +120,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Allocation.cpp" />
+    <ClCompile Include="AnimationBlender.cpp" />
     <ClCompile Include="AnimationState.cpp" />
     <ClCompile Include="BasicGeometry.cpp" />
     <ClCompile Include="Blackboard.cpp" />
