@@ -61,6 +61,9 @@
     <Filter Include="Graphics\Internal">
       <UniqueIdentifier>{ea3e0ca0-758c-4346-b62a-50611b58db72}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Model\Legacy">
+      <UniqueIdentifier>{2d9e6581-8568-4776-ac07-a5085a215761}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera\Camera.h">
@@ -165,9 +168,6 @@
     <ClInclude Include="Material.h">
       <Filter>Model\Material</Filter>
     </ClInclude>
-    <ClInclude Include="Animation.h">
-      <Filter>Model\Animation</Filter>
-    </ClInclude>
     <ClInclude Include="Blackboard.h">
       <Filter>Model\Animation</Filter>
     </ClInclude>
@@ -177,16 +177,10 @@
     <ClInclude Include="ModelComponent.h">
       <Filter>Components</Filter>
     </ClInclude>
-    <ClInclude Include="AnimationController.h">
-      <Filter>Model\Animation</Filter>
-    </ClInclude>
     <ClInclude Include="BasicGeometry.h">
       <Filter>Model\Mesh</Filter>
     </ClInclude>
     <ClInclude Include="EggMath.h" />
-    <ClInclude Include="CharacterController.h">
-      <Filter>Gameplay</Filter>
-    </ClInclude>
     <ClInclude Include="Input.h">
       <Filter>Gameplay</Filter>
     </ClInclude>
@@ -261,6 +255,21 @@
     </ClInclude>
     <ClInclude Include="InputLayout.h">
       <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationState.h">
+      <Filter>Model\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Transition.h">
+      <Filter>Model\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationController.h">
+      <Filter>Model\Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="MovementController.h">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="CharacterController.h">
+      <Filter>Model\Legacy</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

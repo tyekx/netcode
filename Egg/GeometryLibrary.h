@@ -40,7 +40,10 @@ namespace Egg::Graphics::Internal {
 
 			if(mesh->indices != nullptr) {
 				ibuffer = std::make_unique<Resource::Committed::IBuffer>();
-				ibuffer->CreateResources(device, CD3DX12_RESOURCE_DESC::Buffer(mesh->indicesLength), mesh->indices, mesh->indicesLength, DXGI_FORMAT_R32_UINT);
+
+
+
+				ibuffer->CreateResources(device, CD3DX12_RESOURCE_DESC::Buffer(mesh->indicesLength * 4U), mesh->indices, mesh->indicesLength * 4U, DXGI_FORMAT_R32_UINT);
 				//ibuffer->UploadResources(gcl);
 			}
 

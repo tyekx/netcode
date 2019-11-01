@@ -8,6 +8,8 @@ namespace Egg::Graphics::Internal {
 	struct ConstantBufferAllocation {
 		D3D12_GPU_VIRTUAL_ADDRESS gpuAddr;
 		T * data;
+
+		ConstantBufferAllocation() : gpuAddr{ 0 }, data{ nullptr } { }
 	};
 
 	class ResourceAllocator : public Resource::IResource {

@@ -5,7 +5,7 @@
 
 namespace Egg::Asset {
 
-	enum class AnimationState {
+	enum class AnimationEdge {
 		DEFAULT = 0,
 		CONSTANT = 1,
 		LINEAR = 2,
@@ -32,8 +32,8 @@ namespace Egg::Asset {
 		* Length of this array is bonesLength,
 		* for each bone we have a pre and a post state
 		*/
-		AnimationState * preStates;
-		AnimationState * postStates;
+		AnimationEdge * preStates;
+		AnimationEdge * postStates;
 
 		/*
 		* Length of this array is keysLength

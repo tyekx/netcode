@@ -10,6 +10,7 @@ namespace Egg {
 		std::unique_ptr<Material[]> material;
 		std::unique_ptr<Mesh[]> meshes;
 		PerObjectCb * perObjectCb;
+		BoneDataCb * boneDataCb;
 		D3D12_GPU_VIRTUAL_ADDRESS perObjectCbAddr;
 
 		void InitWithLength(UINT len) {
@@ -18,13 +19,11 @@ namespace Egg {
 			meshes = std::make_unique<Mesh[]>(length);
 		}
 
-		inline void Draw(ID3D12GraphicsCommandList * gcl) {
+		inline void Draw(ID3D12GraphicsCommandList * gcl, D3D12_GPU_VIRTUAL_ADDRESS perFrameData) {
 			for(UINT i = 0; i < length; ++i) {
 				material[i].SetPipelineState(gcl);
-				int perObjCbId = material[i].cbAssoc[PerObjectCb::id];
-				if(perObjCbId != -1) {
-					gcl->SetGraphicsRootConstantBufferView((UINT)perObjCbId, perObjectCbAddr);
-				}
+				material[i].BindConstantBuffer(gcl, PerObjectCb::id, perObjectCbAddr);
+				material[i].BindConstantBuffer(gcl, PerFrameCb::id, perFrameData);
 				meshes[i].Draw(gcl);
 			}
 		}
@@ -33,12 +32,13 @@ namespace Egg {
 			InitWithLength(len);
 		}
 
-		Multi() : length{ 0 }, material{ nullptr }, meshes{ nullptr }, perObjectCb{ nullptr }, perObjectCbAddr{ 0 } { }
+		Multi() : length{ 0 }, material{ nullptr }, meshes{ nullptr }, perObjectCb{ nullptr }, boneDataCb{ nullptr }, perObjectCbAddr{ 0 } { }
 		~Multi() = default;
 
 		Multi(const Multi & m) : Multi{} {
 			InitWithLength(m.length);
 
+			boneDataCb = m.boneDataCb;
 			perObjectCb = m.perObjectCb;
 			perObjectCbAddr = m.perObjectCbAddr;
 			for(UINT i = 0; i < length; ++i) {
@@ -51,6 +51,7 @@ namespace Egg {
 			std::swap(length, m.length);
 			std::swap(material, m.material);
 			std::swap(meshes, m.meshes);
+			std::swap(boneDataCb, m.boneDataCb);
 			std::swap(perObjectCb, m.perObjectCb);
 			std::swap(perObjectCbAddr, m.perObjectCbAddr);
 		}
@@ -59,6 +60,7 @@ namespace Egg {
 			std::swap(length, m.length);
 			std::swap(material, m.material);
 			std::swap(meshes, m.meshes);
+			std::swap(boneDataCb, m.boneDataCb);
 			std::swap(perObjectCb, m.perObjectCb);
 			std::swap(perObjectCbAddr, m.perObjectCbAddr);
 			return *this;

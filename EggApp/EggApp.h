@@ -13,15 +13,38 @@
 #include <Egg/EggMath.h>
 #include <Egg/ResourceManager.h>
 
+class AnimationSystem {
+
+
+public:
+	constexpr static SignatureType Required() {
+		return (0x1ULL << TupleIndexOf<AnimationComponent, COMPONENTS_T>::value);
+	}
+
+	constexpr static SignatureType Incompatible() {
+		return (0x0ULL);
+	}
+
+	void Run(Egg::GameObject * go, float dt, Egg::MovementController* movCtrl) {
+
+		if((go->GetSignature() & Required()) != 0) {
+			AnimationComponent * animComponent = go->GetComponent<AnimationComponent>();
+			animComponent->blackBoard.Update(dt, movCtrl);
+		}
+
+	}
+
+};
+
 class EggApp : public Egg::SimpleApp {
 protected:
-
+	Egg::Asset::Model ybotModel;
 	std::unique_ptr<Egg::Scene> scene;
 	std::unique_ptr<Egg::Graphics::ResourceManager> resourceManager;
 	Egg::ConstantBuffer<PerFrameCb> perFrameCb;
 	std::unique_ptr<Egg::DebugPhysx> debugPhysx;
-	Egg::CharacterController chCtrl;
 	Egg::Camera::BaseCamera baseCam;
+	AnimationSystem animSys;
 	Egg::PhysxSystem pxSys;
 	DirectX::XMFLOAT3A velocity;
 	float cameraPitch;
@@ -38,8 +61,6 @@ public:
 	}
 
 	virtual void Update(float dt, float T) override {
-		//chCtrl.Update(dt);
-		//const auto & chPos = chCtrl.GetPosition();
 
 		float devCamX = Egg::Input::GetAxis("DevCameraX");
 		float devCamZ = Egg::Input::GetAxis("DevCameraZ");
@@ -63,7 +84,6 @@ public:
 
 		DirectX::XMVECTOR cameraYawQuat = DirectX::XMQuaternionRotationRollPitchYaw(0.0f, cameraYaw, 0.0f);
 
-
 		DirectX::XMFLOAT3A devCam = { devCamX, devCamY, devCamZ };
 		DirectX::XMVECTOR devCamVec = DirectX::XMLoadFloat3A(&devCam);
 
@@ -80,6 +100,11 @@ public:
 		DirectX::XMStoreFloat3(&baseCam.Ahead, DirectX::XMVector3Normalize(DirectX::XMVector3Rotate(aheadStart, cameraQuat)));
 		DirectX::XMStoreFloat3(&baseCam.Position, devCamPos);
 
+
+		for(UINT i = 0; i < scene->GetObjectCount(); ++i) {
+			auto* go = scene->operator[](i);
+			animSys.Run(go, dt, nullptr);
+		}
 
 		//DirectX::XMVECTOR offsetedPos = DirectX::XMVectorAdd(devCamPos, LoadPxExtendedVec3(chPos) );
 
@@ -151,7 +176,7 @@ public:
 				DirectX::XMStoreFloat4x4A(&model->multiMesh.perObjectCb->Model, DirectX::XMMatrixIdentity());
 				DirectX::XMStoreFloat4x4A(&model->multiMesh.perObjectCb->InvModel, DirectX::XMMatrixIdentity());
 				
-				model->multiMesh.Draw(commandList.Get());
+				model->multiMesh.Draw(commandList.Get(), perFrameCb.GetGPUVirtualAddress());
 				
 			}
 		}
@@ -226,7 +251,6 @@ public:
 		DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationRollPitchYaw(-DirectX::XM_PIDIV2, 0.0f, 0.0f);
 
 
-		Egg::Asset::Model ybotModel;
 		//Egg::Asset::Model railgun;
 
 		Egg::Importer::ImportModel(L"ybot.eggasset", ybotModel);
@@ -236,7 +260,25 @@ public:
 		playerObject->AddComponent<Egg::Transform>();
 		auto * modelComponent = playerObject->AddComponent<Egg::Model>();
 		modelComponent->multiMesh = resourceManager->LoadAssets(&ybotModel);
+		auto * animComponent = playerObject->AddComponent<AnimationComponent>();
 
+		//@TODO: would be better to handle this inside the animation system
+		animComponent->blackBoard.Bind(modelComponent->multiMesh.boneDataCb);
+		animComponent->blackBoard.CreateResources(&ybotModel, ybotModel.animationsLength, {
+					{ "Idle",		4,		Egg::StateBehaviour::LOOP },
+					{ "Forward",	6,		Egg::StateBehaviour::LOOP },
+					{ "JumpStart",	5,		Egg::StateBehaviour::ONCE },
+					{ "JumpLand",	2,		Egg::StateBehaviour::ONCE }
+				},
+			   {
+					{ "Idle",		 "Forward",		&Egg::MovementController::IsMovingForward,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
+					{ "Forward",   "Idle",		&Egg::MovementController::IsIdle,			nullptr,							Egg::Animation::TransitionBehaviour::LERP },
+					{ "Idle",		 "JumpStart",	&Egg::MovementController::IsJumping,			nullptr,							Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
+					{ "JumpStart", "JumpLoop",	&Egg::MovementController::IsJumping,			&Egg::AnimationState::IsFinished,	Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
+					{ "JumpStart", "JumpLand",	&Egg::MovementController::IsOnGround, 		nullptr,							Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
+					{ "JumpLoop",  "JumpLand",	&Egg::MovementController::IsOnGround,		nullptr,							Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
+					{ "JumpLand",  "Idle",		nullptr,									&Egg::AnimationState::IsFinished,	Egg::Animation::TransitionBehaviour::LERP },
+			   });
 		
 		//resourceManager->LoadAssets(&railgun);
 

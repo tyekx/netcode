@@ -1,12 +1,11 @@
 #pragma once
 
-#include "Animation.h"
 #include "Input.h"
 #include "Asset/Bone.h"
 #include <algorithm>
 #include "ConstantBuffer.hpp"
 #include "AnimationComponent.h"
-
+/*
 
 namespace Egg {
 
@@ -117,9 +116,6 @@ namespace Egg {
 			InAir = 1;
 		}
 
-		/*
-		* Will write dstTransforms, size expected to match the constant buffer type's max bone count
-		*/
 		void Animate(ConstantBuffer<BoneDataCb> & boneData, float dt) {
 			float h = Input::GetAxis("Horizontal");
 			float v = Input::GetAxis("Vertical");
@@ -136,7 +132,7 @@ namespace Egg {
 			11: ForwardRight
 			12: StrafeLeft
 			13: StrafeRight
-			*/
+			*
 
 			if(InAir > 0) {
 
@@ -197,25 +193,6 @@ namespace Egg {
 				AddAnimationIfNotExists(4, dt);
 				ReduceAllExcept(4, dt);
 			}
-
-			/*
-			if(Input::GetAxis("Vertical") > 0.0f && Input::GetAxis("Horizontal"))
-			if(Input::GetAxis("Vertical") > 0.0f) {
-				ReduceAnimationWeights({ 13, 12, 7, 4 }, dt);
-				AddAnimationIfNotExists(6, dt); // RifleRun
-			} else if(Input::GetAxis("Vertical") < 0.0f) {
-				ReduceAnimationWeights({ 13, 12, 6, 4 }, dt);
-				AddAnimationIfNotExists(7, dt);
-			} else if(Input::GetAxis("Horizontal") > 0.0f) {
-				ReduceAnimationWeights({ 13, 7, 6, 4 }, dt);
-				AddAnimationIfNotExists(12, dt);
-			} else if(Input::GetAxis("Horizontal") < 0.0f) {
-				ReduceAnimationWeights({ 12, 7, 6, 4 }, dt);
-				AddAnimationIfNotExists(13, dt);
-			} else {
-				ReduceAnimationWeights({ 13, 12, 7, 6 }, dt);
-				AddAnimationIfNotExists(4, dt);
-			}*/
 
 			CleanCurrentAnimations();
 
@@ -322,3 +299,4 @@ namespace Egg {
 	};
 
 }
+*/

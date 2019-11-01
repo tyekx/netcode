@@ -2,11 +2,11 @@
 
 #include "ConstantBuffer.hpp"
 #include <DirectXMath.h>
-
+#include "Blackboard.h"
 
 
 struct AnimationComponent {
 
-	void * pointer;
+	Egg::Animation::Blackboard blackBoard;
 
 };

@@ -53,11 +53,26 @@ namespace Egg::Graphics::Internal {
 			ShaderPath path{ L"EggShaderLib.hlsli" };
 			Egg::Utility::SlurpFile(file, L"C:/work/directx12/Egg/EggShaderLib.hlsli");
 			com_ptr<ID3DBlob> errorMsg;
-			
+
+			/*
+			com_ptr<ID3DBlob> preprocessed;
+			DX_API("Failed to preprocess shader")
+			D3DPreprocess(file.c_str(), file.size(), nullptr, preprocDefinitions.get(), nullptr, preprocessed.GetAddressOf(), errorMsg.GetAddressOf());
+
+			if(errorMsg != nullptr) {
+				Egg::Utility::Debugf("Error while preprocessing shader (-Wall): \r\n");
+				Egg::Utility::DebugPrintBlob(errorMsg);
+				return;
+			}
+
+			Egg::Utility::Debugf("Successful preproc:\r\n");
+			Egg::Utility::DebugPrintBlob(preprocessed); */
+
+
 			D3DCompile(file.c_str(), file.size(), nullptr, preprocDefinitions.get(), nullptr, vertexShaderEntry, "vs_5_0", 0, 0, vsByteCode.GetAddressOf(), errorMsg.GetAddressOf());
 
 			if(errorMsg != nullptr) {
-				Egg::Utility::Debugf("Error while compiling vertex shader (all warnings are treated as errors): \r\n");
+				Egg::Utility::Debugf("Error while compiling vertex shader (-Wall): \r\n");
 				Egg::Utility::DebugPrintBlob(errorMsg);
 				return;
 			}
@@ -65,7 +80,7 @@ namespace Egg::Graphics::Internal {
 			D3DCompile(file.c_str(), file.size(), nullptr, preprocDefinitions.get(), nullptr, pixelShaderEntry, "ps_5_0", 0, 0, psByteCode.GetAddressOf(), errorMsg.GetAddressOf());
 
 			if(errorMsg != nullptr) {
-				Egg::Utility::Debugf("Error while compiling pixel shader (all warnings are treated as errors): \r\n");
+				Egg::Utility::Debugf("Error while compiling pixel shader (-Wall): \r\n");
 				Egg::Utility::DebugPrintBlob(errorMsg);
 				return;
 			}

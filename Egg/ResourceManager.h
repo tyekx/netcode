@@ -90,6 +90,7 @@ namespace Egg::Graphics {
 			s.Define("SHADER_CB_USE_PERMESH");
 			s.Define("SHADER_CB_USE_PERFRAME");
 			s.Define("SHADER_CB_USE_PEROBJECT");
+			s.Define("SHADER_NUM_LIGHTS", 1);
 
 			if(mesh->vertexType == Egg::PNT_Vertex::type ||
 			   mesh->vertexType == Egg::PNTWB_Vertex::type ||
@@ -130,6 +131,20 @@ namespace Egg::Graphics {
 			m.perObjectCb = alloc.data;
 			m.perObjectCbAddr = alloc.gpuAddr;
 
+		    Internal::ConstantBufferAllocation<BoneDataCb> boneDataAlloc; 
+			if(model->animationsLength > 0) {
+				boneDataAlloc = resourceAlloc.AllocateConstantBuffer<BoneDataCb>();
+
+				m.boneDataCb = boneDataAlloc.data;
+
+				for(int bi = 0; bi < 128; ++bi) {
+					DirectX::XMFLOAT4X4A identity;
+					DirectX::XMStoreFloat4x4A(&identity, DirectX::XMMatrixIdentity());
+					m.boneDataCb->BindTransform[bi] = identity;
+					m.boneDataCb->ToRootTransform[bi] = identity;
+				}
+			}
+
 			for(UINT i = 0; i < model->meshesLength; ++i) {
 				Internal::PreprocessorDefinitions defs = GetDefinitions(model->meshes + i, model->materials + i, model);
 
@@ -144,12 +159,20 @@ namespace Egg::Graphics {
 				ID3D12PipelineState * gpso = gpsoLib.GetPipelineState(rs, shaderColl, geom);
 
 				auto perMeshAlloc = resourceAlloc.AllocateConstantBuffer<PerMeshCb>();
+				
+				DirectX::XMFLOAT3 kd = model->materials[i].diffuseColor;
+				perMeshAlloc.data->diffuseColor = DirectX::XMFLOAT4A{ kd.x, kd.y, kd.z, 1.0f };
+				perMeshAlloc.data->fresnelR0 = DirectX::XMFLOAT3{ 0.05f, 0.05f, 0.05f };
+				perMeshAlloc.data->shininess = model->materials[i].shininess;
 
 				D3D12_GPU_DESCRIPTOR_HANDLE texturesDheapEntry = textureLib.LoadTextures(model->materials + i);
 
 				m.material[i] = ComposeMaterial(rs, gpso, shaderColl.GetBindpoints(), rsDesc.GetDesc(), perMeshAlloc, texturesDheapEntry);
 				m.meshes[i] = geom->GetMesh();
 				m.meshes[i].perMeshCb = perMeshAlloc.data;
+				if(m.material[i].cbAssoc[BoneDataCb::id] != -1) {
+					m.material[i].boneDataCbAddr = boneDataAlloc.gpuAddr;
+				}
 			}
 
 			return m;

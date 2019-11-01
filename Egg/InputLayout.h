@@ -11,7 +11,7 @@ namespace Egg::Graphics {
 	public:
 		void CreateResources(const std::initializer_list<D3D12_INPUT_ELEMENT_DESC> & elems) {
 			elements = elems;
-			layout.NumElements = elements.size();
+			layout.NumElements = (UINT)elements.size();
 			layout.pInputElementDescs = &(elements.at(0));
 		}
 

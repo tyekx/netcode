@@ -36,8 +36,8 @@ struct ImportedAnimationKey {
 struct BoneAnimation {
 	int BoneId;
 
-	Egg::Asset::AnimationState PreState;
-	Egg::Asset::AnimationState PostState;
+	Egg::Asset::AnimationEdge PreState;
+	Egg::Asset::AnimationEdge PostState;
 
 	std::vector<ImportedAnimationKey> Keys;
 };
@@ -55,8 +55,8 @@ struct Animation {
 	unsigned int keysLength;
 
 	/* these values are for transforming the layout of boneData */
-	std::vector<Egg::Asset::AnimationState> PreStates;
-	std::vector<Egg::Asset::AnimationState> PostStates;
+	std::vector<Egg::Asset::AnimationEdge> PreStates;
+	std::vector<Egg::Asset::AnimationEdge> PostStates;
 
 	std::vector<double> Times;
 
@@ -118,12 +118,12 @@ std::string ExtractFileName(const std::string & src) {
 	return preExtension.substr(indexOfSlash + 1);
 }
 
-Egg::Asset::AnimationState ToAnimationState(aiAnimBehaviour behaviour) {
+Egg::Asset::AnimationEdge ToAnimationState(aiAnimBehaviour behaviour) {
 	switch(behaviour) {
-		case aiAnimBehaviour_DEFAULT: return Egg::Asset::AnimationState::DEFAULT;
-		case aiAnimBehaviour_CONSTANT: return Egg::Asset::AnimationState::CONSTANT;
-		case aiAnimBehaviour_LINEAR: return Egg::Asset::AnimationState::LINEAR;
-		case aiAnimBehaviour_REPEAT: return Egg::Asset::AnimationState::REPEAT;
+		case aiAnimBehaviour_DEFAULT: return Egg::Asset::AnimationEdge::DEFAULT;
+		case aiAnimBehaviour_CONSTANT: return Egg::Asset::AnimationEdge::CONSTANT;
+		case aiAnimBehaviour_LINEAR: return Egg::Asset::AnimationEdge::LINEAR;
+		case aiAnimBehaviour_REPEAT: return Egg::Asset::AnimationEdge::REPEAT;
 		default: throw 1;
 	}
 }

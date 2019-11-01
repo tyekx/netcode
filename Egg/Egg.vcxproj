@@ -47,9 +47,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Allocation.h" />
-    <ClInclude Include="Animation.h" />
     <ClInclude Include="AnimationComponent.h" />
     <ClInclude Include="AnimationController.h" />
+    <ClInclude Include="AnimationState.h" />
     <ClInclude Include="App.h" />
     <ClInclude Include="Asset\Animation.h" />
     <ClInclude Include="Asset\Bone.h" />
@@ -90,6 +90,7 @@
     <ClInclude Include="EggMath.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="ModelComponent.h" />
+    <ClInclude Include="MovementController.h" />
     <ClInclude Include="Multi.h" />
     <ClInclude Include="Path.h" />
     <ClInclude Include="PhysxComponent.h" />
@@ -111,6 +112,7 @@
     <ClInclude Include="Stopwatch.h" />
     <ClInclude Include="TextureLibrary.h" />
     <ClInclude Include="TransformComponent.h" />
+    <ClInclude Include="Transition.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="Vertex.h" />
   </ItemGroup>

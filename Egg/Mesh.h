@@ -14,6 +14,7 @@ namespace Egg {
 		UINT vertexCount;
 		PerMeshCb * perMeshCb;
 
+
 		inline void Draw(ID3D12GraphicsCommandList * gcl) {
 			gcl->IASetPrimitiveTopology(topology);
 			gcl->IASetVertexBuffers(0, 1, &vbv);

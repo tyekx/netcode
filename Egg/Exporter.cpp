@@ -13,8 +13,8 @@ namespace Egg {
 			for(unsigned int i = 0; i < m.animationsLength; ++i) {
 				acc += sizeof(Asset::AnimationKey) * m.animations[i].bonesLength * m.animations[i].keysLength;
 				acc += sizeof(double) * m.animations[i].keysLength;
-				acc += sizeof(Asset::AnimationState) * m.animations[i].bonesLength;
-				acc += sizeof(Asset::AnimationState) * m.animations[i].bonesLength;
+				acc += sizeof(Asset::AnimationEdge) * m.animations[i].bonesLength;
+				acc += sizeof(Asset::AnimationEdge) * m.animations[i].bonesLength;
 			}
 
 			acc += sizeof(Asset::Bone) * m.bonesLength;
@@ -69,8 +69,8 @@ namespace Egg {
 				fwrite(&m.animations[i].keysLength, sizeof(unsigned int), 1, file);
 				fwrite(&m.animations[i].bonesLength, sizeof(unsigned int), 1, file);
 
-				fwrite(m.animations[i].preStates, sizeof(Asset::AnimationState), m.animations[i].bonesLength, file);
-				fwrite(m.animations[i].postStates, sizeof(Asset::AnimationState), m.animations[i].bonesLength, file);
+				fwrite(m.animations[i].preStates, sizeof(Asset::AnimationEdge), m.animations[i].bonesLength, file);
+				fwrite(m.animations[i].postStates, sizeof(Asset::AnimationEdge), m.animations[i].bonesLength, file);
 				fwrite(m.animations[i].times, sizeof(double), m.animations[i].keysLength, file);
 				fwrite(m.animations[i].keys, sizeof(Asset::AnimationKey), m.animations[i].keysLength * m.animations[i].bonesLength, file);
 			}

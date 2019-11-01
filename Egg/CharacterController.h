@@ -8,7 +8,7 @@
 #include "PhysxSystem.h"
 #include "DebugPhysx.h"
 #include "Multi.h"
-
+/*
 namespace Egg {
 
 	class CharacterController {
@@ -20,7 +20,6 @@ namespace Egg {
 
 		Multi multiMesh;
 
-		std::unique_ptr<Egg::AnimationController> animCtrl;
 		Egg::Asset::Model characterModel;
 		physx::PxController * controller;
 		bool onGround;
@@ -69,7 +68,7 @@ namespace Egg {
 
 		void Update(float dt) {
 			return;
-		/*	float vertical = Egg::Input::GetAxis("Vertical");
+		float vertical = Egg::Input::GetAxis("Vertical");
 			float horizontal = Egg::Input::GetAxis("Horizontal");
 			float jump = Egg::Input::GetAxis("Jump");
 
@@ -105,7 +104,6 @@ namespace Egg {
 			DirectX::XMMATRIX Tr = DirectX::XMMatrixTranslation((float)pxV3.x, (float)pxV3.y, (float)pxV3.z);
 
 			DirectX::XMMATRIX offset = DirectX::XMMatrixMultiply(DirectX::XMMatrixTranslation(0.0f, -100.0f, 0.0f), Tr);
-			*/
 		}
 
 		void Draw(ID3D12GraphicsCommandList * gcl, ConstantBuffer<PerFrameCb> & pfcb) {
@@ -164,3 +162,5 @@ namespace Egg {
 	};
 
 }
+
+			*/

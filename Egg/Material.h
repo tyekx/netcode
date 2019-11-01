@@ -24,10 +24,11 @@ namespace Egg {
 		D3D12_GPU_DESCRIPTOR_HANDLE texturesDescriptor;
 		UINT texturesRootSigSlot;
 		D3D12_GPU_VIRTUAL_ADDRESS perMeshCbAddr;
+		D3D12_GPU_VIRTUAL_ADDRESS boneDataCbAddr;
 		std::unique_ptr<int[]> cbAssoc;
 
 		~Material() = default;
-		Material() noexcept : pso{ nullptr }, rootSignature{ nullptr }, texturesDescriptor{ }, texturesRootSigSlot{ 0 }, perMeshCbAddr{ }, cbAssoc{ nullptr } {
+		Material() noexcept : pso{ nullptr }, rootSignature{ nullptr }, texturesDescriptor{ }, texturesRootSigSlot{ 0 }, perMeshCbAddr{ }, boneDataCbAddr{}, cbAssoc{ nullptr } {
 
 		}
 
@@ -37,6 +38,7 @@ namespace Egg {
 			std::swap(texturesDescriptor, m.texturesDescriptor);
 			std::swap(texturesRootSigSlot, m.texturesRootSigSlot);
 			std::swap(perMeshCbAddr, m.perMeshCbAddr);
+			std::swap(boneDataCbAddr, m.boneDataCbAddr);
 			std::swap(cbAssoc, m.cbAssoc);
 		}
 
@@ -46,6 +48,7 @@ namespace Egg {
 			texturesDescriptor = m.texturesDescriptor;
 			texturesRootSigSlot = m.texturesRootSigSlot;
 			perMeshCbAddr = m.perMeshCbAddr;
+			boneDataCbAddr = m.boneDataCbAddr;
 			InitCbAssoc();
 			DeepCopy(m.cbAssoc.get());
 			return *this;
@@ -57,6 +60,7 @@ namespace Egg {
 			std::swap(texturesDescriptor, m.texturesDescriptor);
 			std::swap(texturesRootSigSlot, m.texturesRootSigSlot);
 			std::swap(perMeshCbAddr, m.perMeshCbAddr);
+			std::swap(boneDataCbAddr, m.boneDataCbAddr);
 			std::swap(cbAssoc, m.cbAssoc);
 			return *this;
 		}
@@ -79,6 +83,7 @@ namespace Egg {
 			if(texturesDescriptor.ptr != 0) {
 				gcl->SetGraphicsRootDescriptorTable(texturesRootSigSlot, texturesDescriptor);
 			}
+			BindConstantBuffer(gcl, BoneDataCb::id, boneDataCbAddr);
 			BindConstantBuffer(gcl, PerMeshCb::id, perMeshCbAddr);
 		}
 	};

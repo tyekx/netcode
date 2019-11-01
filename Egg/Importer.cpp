@@ -108,13 +108,13 @@ namespace Egg::Importer {
 			fread(&m.animations[i].keysLength, sizeof(unsigned int), 1, file);
 			fread(&m.animations[i].bonesLength, sizeof(unsigned int), 1, file);
 
-			m.animations[i].preStates = reinterpret_cast<Asset::AnimationState *>(allocator.Allocate(m.animations[i].bonesLength * sizeof(Asset::AnimationState)));
-			m.animations[i].postStates = reinterpret_cast<Asset::AnimationState *>(allocator.Allocate(m.animations[i].bonesLength * sizeof(Asset::AnimationState)));
+			m.animations[i].preStates = reinterpret_cast<Asset::AnimationEdge *>(allocator.Allocate(m.animations[i].bonesLength * sizeof(Asset::AnimationEdge)));
+			m.animations[i].postStates = reinterpret_cast<Asset::AnimationEdge *>(allocator.Allocate(m.animations[i].bonesLength * sizeof(Asset::AnimationEdge)));
 			m.animations[i].times = reinterpret_cast<double *>(allocator.Allocate(m.animations[i].keysLength * sizeof(double)));
 			m.animations[i].keys = reinterpret_cast<Asset::AnimationKey *>(allocator.Allocate(m.animations[i].bonesLength * m.animations[i].keysLength * sizeof(Asset::AnimationKey)));
 
-			fread(m.animations[i].preStates, sizeof(Asset::AnimationState), m.animations[i].bonesLength, file);
-			fread(m.animations[i].postStates, sizeof(Asset::AnimationState), m.animations[i].bonesLength, file);
+			fread(m.animations[i].preStates, sizeof(Asset::AnimationEdge), m.animations[i].bonesLength, file);
+			fread(m.animations[i].postStates, sizeof(Asset::AnimationEdge), m.animations[i].bonesLength, file);
 			fread(m.animations[i].times, sizeof(double), m.animations[i].keysLength, file);
 			fread(m.animations[i].keys, sizeof(Asset::AnimationKey), m.animations[i].keysLength * m.animations[i].bonesLength, file);
 		}
