@@ -3,13 +3,10 @@
 #include "EggMpl.hpp"
 #include "Components.h"
 #include <iostream>
-#include "GameObjectObserver.h"
-#include "EggSceneConf.h"
 
 
 
 namespace Egg {
-	struct IGameObjectObserver;
 
 	class GameObject {
 		constexpr static unsigned int DataSize = TupleSizeofSum<COMPONENTS_T>::value;
@@ -19,10 +16,9 @@ namespace Egg {
 		uint8_t Data[DataSize];
 		std::string Name;
 
-		EGG_DEBUG_ENGINE_DEFINE_OBSERVER(Egg::IGameObjectObserver)
 
 	public:
-		GameObject(unsigned int id) : Id{ id }, Owner { nullptr }, Signature{ 0ULL }, Data{} EGG_DEBUG_ENGINE_CONSTRUCT_OBSERVER {
+		GameObject(unsigned int id) : Id{ id }, Owner { nullptr }, Signature{ 0ULL }, Data{}  {
 			memset(Data, 0, DataSize);
 		}
 
@@ -67,7 +63,6 @@ namespace Egg {
 				T * ptr = reinterpret_cast<T *>(Data + TupleOffsetOf<T, COMPONENTS_T>::value);
 				new (ptr) T(std::forward<U>(args)...);
 				Signature |= (1ULL << TupleIndexOf<T, COMPONENTS_T>::value);
-				EGG_DEBUG_ENGINE_NOTIFY_OBSERVER(GameObjectSignatureChanged, this);
 				return ptr;
 			}
 			return nullptr;
@@ -79,7 +74,6 @@ namespace Egg {
 				T * ptr = reinterpret_cast<T *>(Data + TupleOffsetOf<T, COMPONENTS_T>::value);
 				ptr->~T();
 				Signature &= (~(1ULL << TupleIndexOf<T, COMPONENTS_T>::value));
-				EGG_DEBUG_ENGINE_NOTIFY_OBSERVER(GameObjectSignatureChanged, this);
 			}
 		}
 

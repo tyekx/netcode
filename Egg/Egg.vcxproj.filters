@@ -55,9 +55,6 @@
     <Filter Include="Graphics\Debug">
       <UniqueIdentifier>{6056ac49-bc8e-480d-a212-d3b0cd479a98}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Graphics\Legacy">
-      <UniqueIdentifier>{5b7bff1e-8dc4-4a3d-9580-df830884edf4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Graphics\Resource">
       <UniqueIdentifier>{558741a0-ed22-4b3c-aeed-1151cf341cb1}</UniqueIdentifier>
     </Filter>
@@ -113,15 +110,6 @@
     </ClInclude>
     <ClInclude Include="ConstantBuffer.hpp">
       <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="GameObjectObserver.h">
-      <Filter>Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneObserver.h">
-      <Filter>Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="EggSceneConf.h">
-      <Filter>Scene</Filter>
     </ClInclude>
     <ClInclude Include="PhysxComponent.h">
       <Filter>Components</Filter>
@@ -219,12 +207,6 @@
     </ClInclude>
     <ClInclude Include="DebugPhysxRaycast.h">
       <Filter>Graphics\Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="PsoManager.h">
-      <Filter>Graphics\Legacy</Filter>
-    </ClInclude>
-    <ClInclude Include="ShaderProgram.h">
-      <Filter>Graphics\Legacy</Filter>
     </ClInclude>
     <ClInclude Include="Resource.h">
       <Filter>Graphics\Resource</Filter>
@@ -331,12 +313,6 @@
     </ClCompile>
     <ClCompile Include="DebugPhysxActor.cpp">
       <Filter>Graphics\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="PsoManager.cpp">
-      <Filter>Graphics\Legacy</Filter>
-    </ClCompile>
-    <ClCompile Include="ShaderProgram.cpp">
-      <Filter>Graphics\Legacy</Filter>
     </ClCompile>
     <ClCompile Include="ConstantBufferTypes.cpp">
       <Filter>Graphics</Filter>

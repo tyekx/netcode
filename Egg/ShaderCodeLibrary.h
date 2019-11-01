@@ -9,8 +9,20 @@
 namespace Egg::Graphics::Internal {
 
 	class ShaderCodeLibrary {
+		struct StorageItem {
+			PreprocessorDefinitions definitions;
+			com_ptr<ID3DBlob> VS;
+			com_ptr<ID3DBlob> PS;
+		};
+
+		std::vector<StorageItem> items;
 
 		bool Exists(const PreprocessorDefinitions & pd) {
+			for(const auto & i : items) {
+				if(i.definitions == pd) {
+					return true;
+				}
+			}
 			return false;
 		}
 
@@ -41,7 +53,7 @@ namespace Egg::Graphics::Internal {
 			ShaderPath path{ L"EggShaderLib.hlsli" };
 			Egg::Utility::SlurpFile(file, L"C:/work/directx12/Egg/EggShaderLib.hlsli");
 			com_ptr<ID3DBlob> errorMsg;
-
+			
 			D3DCompile(file.c_str(), file.size(), nullptr, preprocDefinitions.get(), nullptr, vertexShaderEntry, "vs_5_0", 0, 0, vsByteCode.GetAddressOf(), errorMsg.GetAddressOf());
 
 			if(errorMsg != nullptr) {
@@ -57,19 +69,36 @@ namespace Egg::Graphics::Internal {
 				Egg::Utility::DebugPrintBlob(errorMsg);
 				return;
 			}
+
+			StorageItem item;
+			item.VS = std::move(vsByteCode);
+			item.PS = std::move(psByteCode);
+			item.definitions = pd;
+
+			items.push_back(item);
 		}
 
-		ShaderCodeCollection FindCollection(const PreprocessorDefinitions & pd) {
-			return ShaderCodeCollection{};
+		ShaderCodeCollection GetCollection(const PreprocessorDefinitions & pd) {
+			ShaderCodeCollection coll;
+			for(auto & i : items) {
+				if(i.definitions == pd) {
+					coll.pixelShader = i.PS.Get();
+					coll.vertexShader = i.VS.Get();
+					break;
+				}
+			}
+			return coll;
 		}
 
 	public:
+		ShaderCodeLibrary() : items{} { }
+
 		ShaderCodeCollection GetShaderCodeCollection(const PreprocessorDefinitions & pd) {
 			if(!Exists(pd)) {
 				CompileWith(pd);
 			}
 
-			return FindCollection(pd);
+			return GetCollection(pd);
 		}
 	};
 

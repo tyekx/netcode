@@ -2,7 +2,6 @@
 
 #include "BasicGeometry.h"
 #include "PhysxSystem.h"
-#include "ShaderProgram.h"
 #include <array>
 
 namespace Egg {
@@ -17,7 +16,7 @@ namespace Egg {
 
 	class DebugPhysxActor {
 		physx::PxRigidActor * actorReference;
-		std::vector<Egg::Mesh::Geometry::P> geometry;
+		std::vector<Egg::Mesh> geometry;
 		ConstantBuffer<PerObjectCb> perObject;
 		Egg::Material* debugMaterial;
 		std::array<physx::PxShape*, 16> shapes;

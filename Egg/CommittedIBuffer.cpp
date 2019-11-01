@@ -22,6 +22,13 @@ namespace Egg::Graphics::Resource::Committed {
 		indexBufferView.Format = format;
 	}
 
+	void IBuffer::CreateResources(ID3D12Device * device, const D3D12_RESOURCE_DESC & resDesc, const void * srcData, UINT64 sizeInBytes, DXGI_FORMAT format) {
+		SetDesc(resDesc);
+		SetFormat(format);
+		CreateResources(device);
+		CopyToUploadBuffer(srcData, sizeInBytes);
+	}
+
 	void IBuffer::CreateResources(ID3D12Device * device) {
 		DX_API("Failed to upload buffer for committed vertex buffer")
 			device->CreateCommittedResource(
@@ -50,7 +57,11 @@ namespace Egg::Graphics::Resource::Committed {
 	}
 
 	void IBuffer::UploadResources(ID3D12GraphicsCommandList * copyCommandList) {
-		copyCommandList->CopyBufferRegion(resource.Get(), 0, uploadResource.Get(), 0, resourceDesc.Width);
+		if(uploadResource == nullptr) {
+			return;
+		}
+		copyCommandList->CopyBufferRegion(resource.Get(), 0, uploadResource.Get(), 0, resourceDesc.Width); 
+		copyCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER));
 	}
 
 	void IBuffer::ReleaseUploadResources() {

@@ -27,8 +27,13 @@ namespace Egg::Graphics {
 		Internal::ResourceAllocator resourceAlloc;
 	public:
 
+		ResourceManager() : codeLib{}, rsLib{ }, geomLib{ }, gpsoLib{}, textureLib{}, resourceAlloc{} { }
+
 		virtual void CreateResources(ID3D12Device * device) override {
-		
+			rsLib.CreateResources(device);
+			geomLib.CreateResources(device);
+			gpsoLib.CreateResources(device);
+			resourceAlloc.CreateResources(device);
 		}
 
 		virtual void ReleaseResources() override {
@@ -36,11 +41,11 @@ namespace Egg::Graphics {
 		}
 
 		virtual void UploadResources(ID3D12GraphicsCommandList * copyCommandList) override {
-
+			geomLib.UploadResources(copyCommandList);
 		}
 
 		virtual void ReleaseUploadResources() override {
-
+			geomLib.ReleaseUploadResources();
 		}
 
 		Material ComposeMaterial(ID3D12RootSignature * rootSig,

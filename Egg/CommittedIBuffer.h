@@ -15,6 +15,8 @@ namespace Egg::Graphics::Resource::Committed {
 
 		void SetFormat(DXGI_FORMAT format);
 
+		void CreateResources(ID3D12Device * device, const D3D12_RESOURCE_DESC & resDesc, const void * srcData, UINT64 sizeInBytes, DXGI_FORMAT format);
+
 		virtual void CreateResources(ID3D12Device * device)  override;
 
 		virtual void ReleaseResources() override;

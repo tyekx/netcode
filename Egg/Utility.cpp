@@ -3,7 +3,6 @@
 #include <streambuf>
 #include <fstream>
 #include <map>
-#include <codecvt>
 #include <locale>
 
 /*
@@ -85,19 +84,20 @@ void Egg::Utility::GetAdapters(IDXGIFactory6 * dxgiFactory, std::vector<com_ptr<
 }
 
 std::string Egg::Utility::ToNarrowString(const std::wstring & wideString) {
-	std::wstring_convert<
-		std::codecvt_utf8_utf16< std::wstring::value_type >,
-		std::wstring::value_type
-	> utf16conv;
-	return utf16conv.to_bytes(wideString);
+	std::string str;
+	str.resize(wideString.size());
+	BOOL usedDefault = FALSE;
+	WideCharToMultiByte(0, 0, wideString.c_str(), (int)wideString.size(), &(str.at(0)), (int)str.size(), 0, &usedDefault);
+
+	return str;
 }
 
 std::wstring Egg::Utility::ToWideString(const std::string & narrowString) {
-	std::wstring_convert<
-		std::codecvt_utf8_utf16< std::wstring::value_type >,
-		std::wstring::value_type
-	> utf16conv;
-	return utf16conv.from_bytes(narrowString);
+	std::wstring ws;
+	ws.resize(narrowString.size());
+	MultiByteToWideChar(0, 0, narrowString.c_str(), (int)narrowString.size(), &(ws.at(0)), (int)ws.size());
+
+	return ws;
 }
 
 bool Egg::Utility::SlurpFile(std::string & dstBuffer, const std::wstring & filepath) {

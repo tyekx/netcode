@@ -1,21 +1,17 @@
 #pragma once
 
-namespace Egg {
+namespace Egg::Asset {
 
-	namespace Asset {
+	struct Mesh {
+		unsigned int materialId;
+		unsigned int vertexType;
+		unsigned int vertexSize;
 
-		struct Mesh {
-			unsigned int materialId;
-			unsigned int vertexType;
-			unsigned int vertexSize;
+		unsigned int verticesLength;
+		void * vertices;
 
-			unsigned int verticesLength;
-			void * vertices;
-
-			unsigned int indicesLength;
-			unsigned int * indices;
-		};
-
-	}
+		unsigned int indicesLength;
+		unsigned int * indices;
+	};
 
 }

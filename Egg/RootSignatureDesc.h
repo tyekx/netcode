@@ -26,6 +26,25 @@ namespace Egg::Graphics::Internal {
 		}
 	public:
 
+		RootSignatureDesc() : rootParams{}, staticSamplers{}, rootSigDesc{} { }
+
+		RootSignatureDesc(const RootSignatureDesc & rs) : rootParams{ rs.rootParams }, staticSamplers{ rs.staticSamplers }, rootSigDesc{ rs.rootSigDesc } {
+
+		}
+
+		RootSignatureDesc(RootSignatureDesc && rs) noexcept : RootSignatureDesc{} {
+			std::swap(rootParams, rs.rootParams);
+			std::swap(staticSamplers, rs.staticSamplers);
+			rootSigDesc = rs.rootSigDesc;
+		}
+
+		RootSignatureDesc & operator=(RootSignatureDesc rs) noexcept {
+			std::swap(rootParams, rs.rootParams);
+			std::swap(staticSamplers, rs.staticSamplers);
+			rootSigDesc = rs.rootSigDesc;
+			return *this;
+		}
+
 		bool operator==(const RootSignatureDesc & rs) const {
 			if(rootSigDesc.NumParameters != rs.rootSigDesc.NumParameters ||
 			   rootSigDesc.NumStaticSamplers != rs.rootSigDesc.NumStaticSamplers ||
@@ -34,13 +53,16 @@ namespace Egg::Graphics::Internal {
 			}
 
 			for(UINT i = 0; i < rootSigDesc.NumParameters; ++i) {
-				if(!memcmp(rootSigDesc.pParameters + i, rs.rootSigDesc.pParameters + i, sizeof(D3D12_ROOT_PARAMETER))) {
+
+
+
+				if(memcmp(rootSigDesc.pParameters + i, rs.rootSigDesc.pParameters + i, sizeof(D3D12_ROOT_PARAMETER)) != 0) {
 					return false;
 				}
 			}
 
 			for(UINT i = 0; i < rootSigDesc.NumStaticSamplers; ++i) {
-				if(!memcmp(rootSigDesc.pStaticSamplers + i, rs.rootSigDesc.pStaticSamplers + i, sizeof(D3D12_STATIC_SAMPLER_DESC))) {
+				if(memcmp(rootSigDesc.pStaticSamplers + i, rs.rootSigDesc.pStaticSamplers + i, sizeof(D3D12_STATIC_SAMPLER_DESC)) != 0) {
 					return false;
 				}
 			}
@@ -125,7 +147,7 @@ namespace Egg::Graphics::Internal {
 			rootSigDesc.NumParameters = rootParams.size();
 			rootSigDesc.pParameters = &(rootParams.at(0));
 			rootSigDesc.NumStaticSamplers = staticSamplers.size();
-			rootSigDesc.pStaticSamplers = &(staticSamplers.at(0));
+			rootSigDesc.pStaticSamplers = (staticSamplers.size() > 0) ? &(staticSamplers.at(0)) : nullptr;
 		}
 
 		const D3D12_ROOT_SIGNATURE_DESC & GetDesc() const {

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Mesh/Geometry.h"
 #include "Path.h"
 #include "Asset/Model.h"
 

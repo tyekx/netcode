@@ -39,7 +39,7 @@ namespace Egg::Graphics {
 
 			m.vertexCount = m.vbv.SizeInBytes / m.vbv.StrideInBytes;
 
-			m.topology = D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+			m.topology = D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 			m.perMeshCb = nullptr;
 
 			return m;

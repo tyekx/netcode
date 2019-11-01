@@ -2,18 +2,14 @@
 
 #include <DirectXMath.h>
 
-namespace Egg {
+namespace Egg::Asset {
 
-	namespace Asset {
+	struct Bone {
 
-		struct Bone {
+		char name[28];
+		int parentId;
+		DirectX::XMFLOAT4X4 transform;
 
-			char name[28];
-			int parentId;
-			DirectX::XMFLOAT4X4 transform;
-
-		};
-
-	}
+	};
 
 }

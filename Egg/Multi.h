@@ -39,6 +39,8 @@ namespace Egg {
 		Multi(const Multi & m) : Multi{} {
 			InitWithLength(m.length);
 
+			perObjectCb = m.perObjectCb;
+			perObjectCbAddr = m.perObjectCbAddr;
 			for(UINT i = 0; i < length; ++i) {
 				meshes[i] = m.meshes[i];
 				material[i] = m.material[i];
@@ -49,12 +51,16 @@ namespace Egg {
 			std::swap(length, m.length);
 			std::swap(material, m.material);
 			std::swap(meshes, m.meshes);
+			std::swap(perObjectCb, m.perObjectCb);
+			std::swap(perObjectCbAddr, m.perObjectCbAddr);
 		}
 
 		Multi & operator=(Multi m) noexcept {
 			std::swap(length, m.length);
 			std::swap(material, m.material);
 			std::swap(meshes, m.meshes);
+			std::swap(perObjectCb, m.perObjectCb);
+			std::swap(perObjectCbAddr, m.perObjectCbAddr);
 			return *this;
 		}
 	};

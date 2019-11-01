@@ -38,13 +38,13 @@ namespace Egg {
 	}
 
 	void DebugPhysxActor::Draw(ID3D12GraphicsCommandList * cl) {
-		debugMaterial->BindConstantBuffer(cl, perObject);
+	//	debugMaterial->BindConstantBuffer(cl, perObject);
 
 		unsigned int geomId = 0;
 		for(auto i : geometry) {
 			debugMaterial->BindConstantBuffer(cl, DebugPhysxShapeCb::id, perShapeCb.AddressAt(geomId));
 			++geomId;
-			i->Draw(cl);
+			i.Draw(cl);
 		}
 	}
 
@@ -56,6 +56,7 @@ namespace Egg {
 		physx::PxU32 numShapes = actorRef->getNbShapes();
 
 		actorRef->getShapes(shapes.data(), numShapes);
+		/*
 		for(unsigned int i = 0; i < numShapes; ++i) {
 			physx::PxGeometryType::Enum type = shapes[i]->getGeometryType();
 
@@ -89,7 +90,7 @@ namespace Egg {
 
 			geometry.push_back(geom);
 		}
-
+		*/
 		perShapeCb.Upload();
 	}
 

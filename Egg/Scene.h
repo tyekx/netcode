@@ -3,7 +3,6 @@
 #include <json11/json11.hpp>
 #include "Utility.h"
 #include "GameObject.h"
-#include "SceneObserver.h"
 
 namespace Egg {
 
@@ -15,13 +14,12 @@ namespace Egg {
 		unsigned int MaxCount;
 		std::string Name;
 
-		EGG_DEBUG_ENGINE_DEFINE_OBSERVER(Egg::ISceneObserver)
 
 	public:
 		Scene(const Scene &) = delete;
 		void operator=(const Scene &) = delete;
 
-		Scene(unsigned int maxSize = 512) : Objects{ nullptr }, ObjectCount{ 0 }, MaxCount{ maxSize } EGG_DEBUG_ENGINE_CONSTRUCT_OBSERVER{
+		Scene(unsigned int maxSize = 512) : Objects{ nullptr }, ObjectCount{ 0 }, MaxCount{ maxSize } {
 			Objects = reinterpret_cast<GameObject *>(std::malloc(MaxCount * sizeof(GameObject)));
 		}
 
@@ -39,7 +37,7 @@ namespace Egg {
 
 		void Reset();
 
-		GameObject * Next();
+		GameObject * New();
 
 		unsigned int GetObjectCount() const {
 			return ObjectCount;

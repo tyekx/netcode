@@ -176,7 +176,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	com_ptr<ID3D12Debug3> debugController{ nullptr };
 	com_ptr<IDXGIFactory6> dxgiFactory{ nullptr };
 	com_ptr<IDXGISwapChain3> swapChain{ nullptr };
-	com_ptr<ID3D12Device> device{ nullptr };
+	com_ptr<ID3D12Device5> device{ nullptr };
 	com_ptr<ID3D12CommandQueue> commandQueue{ nullptr };
 	 
 	int argc;
@@ -213,13 +213,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		D3D_FEATURE_LEVEL_12_1
 	};
 
+	queryFeatureLevels.pFeatureLevelsRequested = possibleFeatureLevels;
+	queryFeatureLevels.NumFeatureLevels = _countof(possibleFeatureLevels);
+	queryFeatureLevels.MaxSupportedFeatureLevel = D3D_FEATURE_LEVEL_11_0;
+
 	//dxgiFactory->CheckFeatureSupport(, &queryFeatureLevels, sizeof(queryFeatureLevels));
 
 	DX_API("Failed to create device")
 		D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(device.GetAddressOf()));
 	
 	DX_API("Failed to query feature support")
-		device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &queryFeatureLevels, sizeof(D3D12_FEATURE_FEATURE_LEVELS));
+		device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &queryFeatureLevels, sizeof(D3D12_FEATURE_DATA_FEATURE_LEVELS));
 
 	device.Reset();
 
@@ -279,8 +283,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	app->CreateSwapChainResources();
 	app->CreateResources();
 	app->LoadAssets();
-
-	///app->SetDisplayMode(Egg::DisplayMode::BORDERLESS);
 
 	ShowWindow(windowHandle, nShowCmd);
 

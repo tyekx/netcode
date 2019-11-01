@@ -64,6 +64,9 @@ namespace Egg::Graphics::Resource::Committed {
 	}
 
 	void Texture2D::UploadResources(ID3D12GraphicsCommandList * copyCommandList) {
+		if(uploadResource == nullptr) {
+			return;
+		}
 		CD3DX12_TEXTURE_COPY_LOCATION dst{ resource.Get(), 0 };
 		D3D12_PLACED_SUBRESOURCE_FOOTPRINT psf;
 		psf.Offset = 0;

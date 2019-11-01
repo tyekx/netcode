@@ -57,7 +57,11 @@ namespace Egg::Graphics::Resource::Committed {
 	}
 
 	void VBuffer::UploadResources(ID3D12GraphicsCommandList * copyCommandList) {
+		if(uploadResource == nullptr) {
+			return;
+		}
 		copyCommandList->CopyBufferRegion(resource.Get(), 0, uploadResource.Get(), 0, resourceDesc.Width);
+		copyCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
 	}
 
 	void VBuffer::ReleaseUploadResources() {

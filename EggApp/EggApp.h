@@ -6,20 +6,19 @@
 #include <Egg/Camera/Camera.h>
 #include <Egg/PhysxSystem.h>
 #include <Egg/Scene.h>
-#include <Egg/Mesh/MultiMesh.h>
 #include <Egg/Input.h>
 #include <Egg/BasicGeometry.h>
 #include <Egg/DebugPhysx.h>
 #include <Egg/CharacterController.h>
 #include <Egg/EggMath.h>
-#include <Egg/Shader.h>
+#include <Egg/ResourceManager.h>
 
 class EggApp : public Egg::SimpleApp {
 protected:
-	Egg::Mesh::MultiMesh::P multi;
-	Egg::ConstantBuffer<PerObjectCb> cb;
+
+	std::unique_ptr<Egg::Scene> scene;
+	std::unique_ptr<Egg::Graphics::ResourceManager> resourceManager;
 	Egg::ConstantBuffer<PerFrameCb> perFrameCb;
-	Egg::ConstantBufferVector<PerMeshCb> meshesCb;
 	std::unique_ptr<Egg::DebugPhysx> debugPhysx;
 	Egg::CharacterController chCtrl;
 	Egg::Camera::BaseCamera baseCam;
@@ -31,22 +30,16 @@ protected:
 	float mouseSpeed;
 	float animT;
 	bool fireEnabled;
-
-	Egg::Mesh::MultiMesh::P railgunMesh;
-	Egg::Asset::Model railgun;
-	Egg::ConstantBuffer<PerObjectCb> perObjCb;
-	Egg::ConstantBuffer<BoneDataCb> railgunBoneCb;
-
 public:
 
-	EggApp() : Egg::SimpleApp{}, multi{}, cb{}, perFrameCb{}, debugPhysx{}, baseCam{}, pxSys{}, speed{}, mouseSpeed{}, animT{ 0.0f }, fireEnabled{ true } {
+	EggApp() : Egg::SimpleApp{}, perFrameCb{}, debugPhysx{}, baseCam{}, pxSys{}, speed{}, mouseSpeed{}, animT{ 0.0f }, fireEnabled{ true } {
 		cameraPitch = 0.0f;
 		cameraYaw = 0.0f;
 	}
 
 	virtual void Update(float dt, float T) override {
-		chCtrl.Update(dt);
-		const auto & chPos = chCtrl.GetPosition();
+		//chCtrl.Update(dt);
+		//const auto & chPos = chCtrl.GetPosition();
 
 		float devCamX = Egg::Input::GetAxis("DevCameraX");
 		float devCamZ = Egg::Input::GetAxis("DevCameraZ");
@@ -87,41 +80,6 @@ public:
 		DirectX::XMStoreFloat3(&baseCam.Ahead, DirectX::XMVector3Normalize(DirectX::XMVector3Rotate(aheadStart, cameraQuat)));
 		DirectX::XMStoreFloat3(&baseCam.Position, devCamPos);
 
-		DirectX::XMMATRIX rightHandTransform = DirectX::XMLoadFloat4x4A(&chCtrl.boneDataCb->ToRootTransform[28]);
-		DirectX::XMMATRIX parentTransform = DirectX::XMLoadFloat4x4A(&chCtrl.cb->Model);
-		DirectX::XMMATRIX scaling = DirectX::XMMatrixScaling(0.7f, 0.7f, 0.7f);
-		DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationRollPitchYaw(0.1f, -0.3f, -DirectX::XM_PIDIV2 - 0.07f);
-		DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(-11.0f, -3.0f, 2.0f);
-		DirectX::XMMATRIX localTransform = DirectX::XMMatrixMultiply(scaling, rotation);
-
-		localTransform = DirectX::XMMatrixMultiply(localTransform, translation);
-		localTransform = DirectX::XMMatrixMultiply(localTransform, rightHandTransform);
-		localTransform = DirectX::XMMatrixMultiply(localTransform, DirectX::XMMatrixTranspose(parentTransform));
-		DirectX::XMStoreFloat4x4A(&perObjCb->Model, DirectX::XMMatrixTranspose(localTransform));
-	//	perObjCb->InvModel = identity;
-		perObjCb.Upload();
-
-		if(Egg::Input::GetAxis("Fire") > 0.0f) {
-			if(fireEnabled) {
-				float len = 2000.0;
-				physx::PxVec3 dir = ToPxVec3(baseCam.Ahead);
-				physx::PxVec3 origin = ToPxVec3(baseCam.Position);
-				physx::PxRaycastBuffer hit;
-				physx::PxHitFlags hitFlags = physx::PxHitFlag::eDEFAULT;
-				bool b = pxSys.scene->raycast(origin, dir, len, hit);
-
-				if(b) {
-					debugPhysx->AddRaycast(baseCam.Ahead, baseCam.Position, len);
-				} else {
-					debugPhysx->AddRaycast(baseCam.Ahead, baseCam.Position, len, DirectX::XMFLOAT3{ 1.0f, 0.0f, 0.0f });
-				}
-
-
-				fireEnabled = false;
-			}
-		} else {
-			fireEnabled = true;
-		}
 
 		//DirectX::XMVECTOR offsetedPos = DirectX::XMVectorAdd(devCamPos, LoadPxExtendedVec3(chPos) );
 
@@ -179,10 +137,24 @@ public:
 		commandList->ClearRenderTargetView(rHandle, clearColor, 0, nullptr);
 		commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-		debugPhysx->Draw(commandList.Get(), perFrameCb);
-		chCtrl.Draw(commandList.Get(), perFrameCb);
+		//debugPhysx->Draw(commandList.Get(), perFrameCb);
+		//chCtrl.Draw(commandList.Get(), perFrameCb);
 		
+		for(UINT i = 0; i < scene->GetObjectCount(); ++i) {
+			auto * obj = scene->operator[](i);
 
+			if(obj->HasComponent<Egg::Transform>() && obj->HasComponent<Egg::Model>()) {
+				
+				Egg::Transform * transform = obj->GetComponent<Egg::Transform>();
+				Egg::Model * model = obj->GetComponent<Egg::Model>();
+	
+				DirectX::XMStoreFloat4x4A(&model->multiMesh.perObjectCb->Model, DirectX::XMMatrixIdentity());
+				DirectX::XMStoreFloat4x4A(&model->multiMesh.perObjectCb->InvModel, DirectX::XMMatrixIdentity());
+				
+				model->multiMesh.Draw(commandList.Get());
+				
+			}
+		}
 
 
 		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(renderTargets[frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -205,6 +177,8 @@ public:
 		DX_API("Failed to reset command list (UploadResources)")
 			commandList->Reset(commandAllocator.Get(), nullptr);
 
+		resourceManager->UploadResources(commandList.Get());
+
 		DX_API("Failed to close command list (UploadResources)")
 			commandList->Close();
 
@@ -212,6 +186,8 @@ public:
 		commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
 
 		WaitForPreviousFrame();
+
+		resourceManager->ReleaseUploadResources();
 	}
 
 	virtual void CreateResources() override {
@@ -242,88 +218,38 @@ public:
 	}
 
 	virtual void LoadAssets() override {
-
-		Egg::Shader s;
-		s.Define("IAO_HAS_NORMAL", "");
-		s.Define("IAO_HAS_TEXCOORD", "");
-		s.Define("IAO_HAS_SKELETON", "");
-		s.Define("SHADER_CB_USE_PERMESH", "");
-		s.Define("SHADER_CB_USE_PEROBJECT", "");
-		s.Define("SHADER_CB_USE_PERFRAME", "");
-		s.Define("SHADER_TEX_DIFFUSE", "");
-		s.Define("SHADER_NUM_LIGHTS", 1);
-		s.Compile();
-
-		cb.CreateResources(device.Get());
 		perFrameCb.CreateResources(device.Get());
-		railgunBoneCb.CreateResources(device.Get());
-		perObjCb.CreateResources(device.Get());
-		meshesCb.CreateResources(device.Get());
-
-
-
-		DirectX::XMMATRIX m = DirectX::XMMatrixIdentity();
-		DirectX::XMFLOAT4X4A identity;
-		DirectX::XMStoreFloat4x4A(&identity, m);
-		for(int i = 0; i < 128; ++i) {
-			railgunBoneCb->BindTransform[i] = identity;
-		}
-		railgunBoneCb.Upload();
+		scene = std::make_unique<Egg::Scene>();
+		resourceManager = std::make_unique<Egg::Graphics::ResourceManager>();
+		resourceManager->CreateResources(device.Get());
 
 		DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationRollPitchYaw(-DirectX::XM_PIDIV2, 0.0f, 0.0f);
 
-		DirectX::XMStoreFloat4x4A(&perObjCb->Model, DirectX::XMMatrixTranspose(rotation));
-		perObjCb->InvModel = identity;
-		perObjCb.Upload();
 
 		Egg::Asset::Model ybotModel;
+		//Egg::Asset::Model railgun;
+
 		Egg::Importer::ImportModel(L"ybot.eggasset", ybotModel);
+		//Egg::Importer::ImportModel(L"railgun.eggasset", railgun);
+
+		auto* playerObject = scene->New();
+		playerObject->AddComponent<Egg::Transform>();
+		auto * modelComponent = playerObject->AddComponent<Egg::Model>();
+		modelComponent->multiMesh = resourceManager->LoadAssets(&ybotModel);
+
 		
-		Egg::Importer::ImportModel(L"railgun.eggasset", railgun);
+		//resourceManager->LoadAssets(&railgun);
 
-		com_ptr<ID3DBlob> avatarVS = Egg::ShaderProgram::LoadCso(L"AvatarVS.cso");
-		com_ptr<ID3DBlob> avatarPS = Egg::ShaderProgram::LoadCso(L"AvatarPS.cso");
-		com_ptr<ID3D12RootSignature> rootSig = Egg::ShaderProgram::LoadRootSignature(device.Get(), avatarVS.Get());
 
-		railgunMesh = Egg::Mesh::MultiMesh::Create();
-
-		Egg::PipelineState::P pso = Egg::PipelineState::Create();
-		pso->SetRootSignature(rootSig);
-		pso->SetVertexShader(avatarVS);
-		pso->SetPixelShader(avatarPS);
-		pso->SetDepthStencilState(CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT));
-		pso->SetDSVFormat(DXGI_FORMAT_D32_FLOAT);
-
-		for(unsigned int i = 0; i < railgun.meshesLength; ++i) {
-
-			Egg::Mesh::Geometry::P geom = Egg::Mesh::IndexedGeometry::Create(device.Get(),
-																			 railgun.meshes[i].vertices, railgun.meshes[i].verticesLength, railgun.meshes[i].vertexSize,
-																			 railgun.meshes[i].indices, railgun.meshes[i].indicesLength * (UINT32)sizeof(unsigned int));
-			geom->SetVertexType(railgun.meshes[i].vertexType);
-			Egg::Material::P mat = Egg::Material::Create(psoManager.get(), geom, pso);
-
-			mat->ConstantBufferSlot(0, PerMeshCb::id);
-			mat->ConstantBufferSlot(1, PerObjectCb::id);
-			mat->ConstantBufferSlot(2, BoneDataCb::id);
-			mat->ConstantBufferSlot(3, PerFrameCb::id);
-
-			PerMeshCb * meshData = meshesCb.Next();
-			meshData->diffuseColor = DirectX::XMFLOAT4A{ railgun.materials[i].diffuseColor.x, railgun.materials[i].diffuseColor.y, railgun.materials[i].diffuseColor.z, 1.0f };
-			meshData->fresnelR0 = DirectX::XMFLOAT3{ 0.05f, 0.05f, 0.05f };
-			meshData->shininess = 2.0f;
-			railgunMesh->Add(geom, mat, meshData);
-		}
 
 		debugPhysx.reset(new Egg::DebugPhysx{});
-		debugPhysx->CreateResources(device.Get(), psoManager.get());
+		debugPhysx->CreateResources(device.Get());
 
-		debugPhysx->AddActor(pxSys.groundPlane)
-			.SetOffset(0, DirectX::XMMatrixScaling(2000.0f, 2000.0f, 2000.0f));
+		//debugPhysx->AddActor(pxSys.groundPlane)
+		//	.SetOffset(0, DirectX::XMMatrixScaling(2000.0f, 2000.0f, 2000.0f));
 
-		chCtrl.SetCharacterModel(std::move(ybotModel));
-		chCtrl.CreateResources(device.Get(), psoManager.get(), debugPhysx.get(), pxSys.controllerManager, meshesCb);
 
-		meshesCb.Upload();
+		UploadResources();
 
 
 	}

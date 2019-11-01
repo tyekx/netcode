@@ -8,9 +8,8 @@ void Egg::Scene::Reset() {
 	Objects = reinterpret_cast<Egg::GameObject *>(std::malloc(MaxCount * sizeof(Egg::GameObject)));
 }
 
-Egg::GameObject * Egg::Scene::Next() {
+Egg::GameObject * Egg::Scene::New() {
 	Egg::GameObject * ptr = Objects + ObjectCount;
 	new (ptr) Egg::GameObject(ObjectCount++);
-	EGG_DEBUG_ENGINE_NOTIFY_OBSERVER(SceneGameObjectAdded, ptr);
 	return ptr;
 }

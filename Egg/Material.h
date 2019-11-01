@@ -66,18 +66,20 @@ namespace Egg {
 			cbAssoc[typeId] = rootSigParamId;
 		}
 
+		inline void BindConstantBuffer(ID3D12GraphicsCommandList * gcl, int cbufferType, D3D12_GPU_VIRTUAL_ADDRESS addr) {
+			int cbufferid = cbAssoc[cbufferType];
+			if(cbufferid != -1) {
+				gcl->SetGraphicsRootConstantBufferView((UINT)cbufferid, addr);
+			}
+		}
+
 		inline void SetPipelineState(ID3D12GraphicsCommandList * gcl) {
 			gcl->SetGraphicsRootSignature(rootSignature);
 			gcl->SetPipelineState(pso);
 			if(texturesDescriptor.ptr != 0) {
 				gcl->SetGraphicsRootDescriptorTable(texturesRootSigSlot, texturesDescriptor);
 			}
-			if(cbAssoc != nullptr) {
-				int cbufferid = cbAssoc[PerMeshCb::id];
-				if(cbufferid != -1) {
-					gcl->SetGraphicsRootConstantBufferView((UINT)cbufferid, perMeshCbAddr);
-				}
-			}
+			BindConstantBuffer(gcl, PerMeshCb::id, perMeshCbAddr);
 		}
 	};
 

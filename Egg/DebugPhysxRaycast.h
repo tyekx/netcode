@@ -18,12 +18,12 @@ namespace Egg {
 
 	class DebugPhysxRaycast {
 		Egg::Material * debugMaterial;
-		Egg::Mesh::Geometry * rayGeometry;
+		Egg::Mesh * rayGeometry;
 		Egg::ConstantBuffer<PerRayCb> rayCb;
 		float timeRemaining;
 	public:
 
-		DebugPhysxRaycast(ID3D12Device * device, Egg::Material * mat, Egg::Mesh::Geometry * geom,
+		DebugPhysxRaycast(ID3D12Device * device, Egg::Material * mat, Egg::Mesh * geom,
 						  float lifeTime, const DirectX::XMFLOAT3 & dir, const DirectX::XMFLOAT3 & startPos, const DirectX::XMFLOAT3 & color, float length = 1000.0f
 						  ) : debugMaterial{ mat }, rayGeometry{ geom }, rayCb{}, timeRemaining{ lifeTime } {
 			rayCb.CreateResources(device);
@@ -58,7 +58,7 @@ namespace Egg {
 		}
 
 		void Draw(ID3D12GraphicsCommandList * gcl) {
-			debugMaterial->BindConstantBuffer(gcl, rayCb);
+			debugMaterial->BindConstantBuffer(gcl, Egg::PerRayCb::id, rayCb.GetGPUVirtualAddress());
 
 			rayGeometry->Draw(gcl);
 		}

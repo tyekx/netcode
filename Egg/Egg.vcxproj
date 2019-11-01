@@ -72,11 +72,9 @@
     <ClInclude Include="DebugPhysxActor.h" />
     <ClInclude Include="DebugPhysxRaycast.h" />
     <ClInclude Include="EggMpl.hpp" />
-    <ClInclude Include="EggSceneConf.h" />
     <ClInclude Include="Exporter.h" />
     <ClInclude Include="File.h" />
     <ClInclude Include="GameObject.h" />
-    <ClInclude Include="GameObjectObserver.h" />
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="GeometryLibrary.h" />
     <ClInclude Include="GPSOLibrary.h" />
@@ -98,7 +96,6 @@
     <ClInclude Include="PhysxSystem.h" />
     <ClInclude Include="PreprocessorDefinitions.h" />
     <ClInclude Include="ProgramArgs.h" />
-    <ClInclude Include="PsoManager.h" />
     <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ResourceAllocator.h" />
@@ -106,11 +103,9 @@
     <ClInclude Include="RootSignatureDesc.h" />
     <ClInclude Include="RootSignatureLibrary.h" />
     <ClInclude Include="Scene.h" />
-    <ClInclude Include="SceneObserver.h" />
     <ClInclude Include="ScriptComponent.h" />
     <ClInclude Include="ShaderCodeCollection.h" />
     <ClInclude Include="ShaderCodeLibrary.h" />
-    <ClInclude Include="ShaderProgram.h" />
     <ClInclude Include="Signature.h" />
     <ClInclude Include="SimpleApp.h" />
     <ClInclude Include="Stopwatch.h" />
@@ -139,9 +134,7 @@
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Path.cpp" />
     <ClCompile Include="PhysxSystem.cpp" />
-    <ClCompile Include="PsoManager.cpp" />
     <ClCompile Include="Scene.cpp" />
-    <ClCompile Include="ShaderProgram.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
     <ClCompile Include="Utility.cpp" />
   </ItemGroup>

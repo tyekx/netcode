@@ -1,9 +1,7 @@
 #pragma once
 
 #include "Common.h"
-#include "Mesh/Shaded.h"
 #include "App.h"
-#include "ShaderProgram.h"
 
 namespace Egg {
 
@@ -13,8 +11,6 @@ namespace Egg {
 		com_ptr<ID3D12GraphicsCommandList> commandList;
 		com_ptr<ID3D12Resource> depthStencilBuffer;
 		com_ptr<ID3D12DescriptorHeap> dsvHeap;
-
-		std::unique_ptr<PsoManager> psoManager;
 
 		virtual void PopulateCommandList() = 0;
 
@@ -56,8 +52,6 @@ namespace Egg {
 		virtual void CreateResources() override {
 			App::CreateResources();
 
-			psoManager.reset(new PsoManager{ device });
-
 			DX_API("Failed to create command allocator")
 				device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(commandAllocator.GetAddressOf()));
 
@@ -70,7 +64,6 @@ namespace Egg {
 		}
 
 		virtual void ReleaseResources() override {
-			psoManager.reset(nullptr);
 			commandList.Reset();
 			fence.Reset();
 			commandAllocator.Reset();

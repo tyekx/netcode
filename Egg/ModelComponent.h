@@ -1,16 +1,15 @@
 #pragma once
 
-#include "Mesh/Shaded.h"
-#include "ConstantBuffer.hpp"
+#include "ConstantBufferTypes.h"
+#include "Multi.h"
 
 #include <DirectXMath.h>
 
+namespace Egg {
 
-struct ModelComponent {
-	Egg::Mesh::Shaded::P ShadedMesh;
-	Egg::ConstantBuffer<PerObjectCb> Cbuffer;
+	struct Model {
+		Egg::Multi multiMesh;
 
-	ModelComponent(ID3D12Device * device) : ShadedMesh{ nullptr }, Cbuffer{} {
-		Cbuffer.CreateResources(device);
-	}
-};
+	};
+
+}
