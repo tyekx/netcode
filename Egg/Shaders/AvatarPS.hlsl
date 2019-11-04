@@ -8,7 +8,8 @@ struct VSOutput {
 };
 
 
-cbuffer PerMeshCb : register(b0) {
+cbuffer MaterialCb : register(b0)
+{
 	Material material;
 }
 

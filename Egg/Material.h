@@ -84,7 +84,7 @@ namespace Egg {
 				gcl->SetGraphicsRootDescriptorTable(texturesRootSigSlot, texturesDescriptor);
 			}
 			BindConstantBuffer(gcl, BoneDataCb::id, boneDataCbAddr);
-			BindConstantBuffer(gcl, PerMeshCb::id, perMeshCbAddr);
+			BindConstantBuffer(gcl, MaterialCb::id, perMeshCbAddr);
 		}
 	};
 

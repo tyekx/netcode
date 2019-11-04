@@ -2,6 +2,7 @@
 
 #include "ShaderCodeCollection.h"
 #include "Common.h"
+#include <map>
 
 namespace Egg::Graphics::Internal {
 
@@ -10,6 +11,7 @@ namespace Egg::Graphics::Internal {
 		std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
 		D3D12_DESCRIPTOR_RANGE descRange;
 		D3D12_ROOT_SIGNATURE_DESC rootSigDesc;
+		std::map<int, int> cbufferAssoc;
 
 		bool GenerateSamplerState(const ShaderBindpoint & bp, D3D12_STATIC_SAMPLER_DESC & dst) {
 			if(bp.name == "linearWrapSampler") {
@@ -31,7 +33,7 @@ namespace Egg::Graphics::Internal {
 
 		RootSignatureDesc() : rootParams{}, staticSamplers{}, rootSigDesc{} { }
 
-		RootSignatureDesc(const RootSignatureDesc & rs) : rootParams{ rs.rootParams }, staticSamplers{ rs.staticSamplers }, rootSigDesc{ rs.rootSigDesc } {
+		RootSignatureDesc(const RootSignatureDesc & rs) : rootParams{ rs.rootParams }, staticSamplers{ rs.staticSamplers }, rootSigDesc{ rs.rootSigDesc }, cbufferAssoc{} {
 
 		}
 
@@ -56,9 +58,6 @@ namespace Egg::Graphics::Internal {
 			}
 
 			for(UINT i = 0; i < rootSigDesc.NumParameters; ++i) {
-
-
-
 				if(memcmp(rootSigDesc.pParameters + i, rs.rootSigDesc.pParameters + i, sizeof(D3D12_ROOT_PARAMETER)) != 0) {
 					return false;
 				}
@@ -87,6 +86,8 @@ namespace Egg::Graphics::Internal {
 					cbufferParam.Descriptor.RegisterSpace = i.space;
 					cbufferParam.Descriptor.ShaderRegister = i.uid;
 					cbufferParam.ShaderVisibility = i.visibility;
+					
+					
 
 					rootParams.push_back(cbufferParam);
 				}

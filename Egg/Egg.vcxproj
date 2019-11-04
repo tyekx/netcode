@@ -71,6 +71,8 @@
     <ClInclude Include="DebugPhysxActor.h" />
     <ClInclude Include="DebugPhysxRaycast.h" />
     <ClInclude Include="DX12Engine.h" />
+    <ClInclude Include="DX12RenderItem.h" />
+    <ClInclude Include="DX12RenderItemAllocator.h" />
     <ClInclude Include="EggMpl.hpp" />
     <ClInclude Include="Exporter.h" />
     <ClInclude Include="File.h" />
@@ -78,6 +80,7 @@
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="GeometryLibrary.h" />
     <ClInclude Include="GPSOLibrary.h" />
+    <ClInclude Include="IEngine.h" />
     <ClInclude Include="Importer.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="InputLayout.h" />
@@ -90,7 +93,6 @@
     <ClInclude Include="Material.h" />
     <ClInclude Include="EggMath.h" />
     <ClInclude Include="Mesh.h" />
-    <ClInclude Include="ModelComponent.h" />
     <ClInclude Include="MovementController.h" />
     <ClInclude Include="Multi.h" />
     <ClInclude Include="Path.h" />

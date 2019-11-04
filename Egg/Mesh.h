@@ -12,7 +12,7 @@ namespace Egg {
 		D3D12_PRIMITIVE_TOPOLOGY topology;
 		UINT indexCount;
 		UINT vertexCount;
-		PerMeshCb * perMeshCb;
+		MaterialCb * perMeshCb;
 
 
 		inline void Draw(ID3D12GraphicsCommandList * gcl) {

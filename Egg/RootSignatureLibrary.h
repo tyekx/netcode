@@ -9,11 +9,20 @@ namespace Egg::Graphics::Internal {
 
 		ID3D12Device * device;
 
+		struct CbufferAssoc {
+			int assoc[16];
+
+			bool operator==(const CbufferAssoc & cba) const {
+				return memcmp(assoc, cba.assoc, sizeof(assoc));
+			}
+		};
+
 		struct StorageItem {
 			com_ptr<ID3D12RootSignature> rootSig;
 			RootSignatureDesc rootSigDesc;
 		};
 
+		std::vector<CbufferAssoc> associations;
 		std::vector<StorageItem> items;
 
 		bool Exist(const RootSignatureDesc & rd) {

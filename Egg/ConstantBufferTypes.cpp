@@ -7,7 +7,7 @@ static struct {
 	const char * name;
 } cbufferNames[] = { 
 
-	{ PerMeshCb::id, "PerMeshCb" },
+	{ MaterialCb::id, "MaterialCb" },
 	{ PerFrameCb::id, "PerFrameCb"},
 	{ BoneDataCb::id, "BoneDataCb"},
 	{ PerObjectCb::id, "PerObjectCb" },

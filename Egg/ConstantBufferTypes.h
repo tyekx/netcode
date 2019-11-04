@@ -31,7 +31,7 @@ CB_TYPE struct BoneDataCb {
 	DirectX::XMFLOAT4X4A ToRootTransform[MAX_BONE_COUNT];
 };
 
-CB_TYPE struct PerMeshCb {
+CB_TYPE struct MaterialCb {
 	constexpr static int id = 3;
 
 	DirectX::XMFLOAT4A diffuseColor;

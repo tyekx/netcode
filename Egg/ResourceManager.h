@@ -6,6 +6,8 @@
 #include "Asset/Model.h"
 #include "Multi.h"
 
+#include "DX12RenderItem.h"
+
 /*
 Internal includes
 */
@@ -56,7 +58,7 @@ namespace Egg::Graphics {
 								 ID3D12PipelineState * gpso,
 								 const Internal::ShaderBindpointCollection & bindpoints,
 								 const D3D12_ROOT_SIGNATURE_DESC & rootSigDesc,
-								 Internal::ConstantBufferAllocation<PerMeshCb> perMeshAlloc,
+								 Internal::ConstantBufferAllocation<MaterialCb> perMeshAlloc,
 								 D3D12_GPU_DESCRIPTOR_HANDLE texturesDheap) {
 			Material mat;
 
@@ -143,6 +145,65 @@ namespace Egg::Graphics {
 			return ComposeMaterial(rs, gpso, coll.GetBindpoints(), rsDesc.GetDesc(), {}, {});
 		}
 
+		void Compose(DX12::RenderItem * basePtr, Asset::Model * asset, Model & dst) {
+			dst.InitWithLength(asset->meshesLength);
+
+			Internal::ConstantBufferAllocation<PerObjectCb> perObjAlloc = resourceAlloc.AllocateConstantBuffer<PerObjectCb>();
+			Internal::ConstantBufferAllocation<BoneDataCb> boneDataAlloc;
+
+			if(asset->animationsLength > 0) {
+				boneDataAlloc = resourceAlloc.AllocateConstantBuffer<BoneDataCb>();
+			}
+
+			for(UINT i = 0; i < asset->meshesLength; ++i) {
+				DX12::RenderItem * item = basePtr + i;
+
+				Internal::PreprocessorDefinitions defs = GetDefinitions(asset->meshes + i, asset->materials + i, asset);
+
+				Internal::ShaderCodeCollection shaderColl = codeLib.GetShaderCodeCollection(defs);
+				shaderColl.ReflectBindpoints();
+
+				Internal::RootSignatureDesc rsDesc{ shaderColl.GetBindpoints() };
+				ID3D12RootSignature * rs = rsLib.GetRootSignature(rsDesc);
+
+				Geometry * geom = geomLib.GetGeometry(asset->meshes + i);
+
+				ID3D12PipelineState * gpso = gpsoLib.GetPipelineState(rs, shaderColl, geom);
+
+				auto perMeshAlloc = resourceAlloc.AllocateConstantBuffer<MaterialCb>();
+
+				DirectX::XMFLOAT3 kd = asset->materials[i].diffuseColor;
+				perMeshAlloc.data->diffuseColor = DirectX::XMFLOAT4A{ kd.x, kd.y, kd.z, 1.0f };
+				perMeshAlloc.data->fresnelR0 = DirectX::XMFLOAT3{ 0.05f, 0.05f, 0.05f };
+				perMeshAlloc.data->shininess = asset->materials[i].shininess;
+
+				D3D12_GPU_DESCRIPTOR_HANDLE texturesDheapEntry = textureLib.LoadTextures(asset->materials + i);
+
+				Material mat = ComposeMaterial(rs, gpso, shaderColl.GetBindpoints(), rsDesc.GetDesc(), perMeshAlloc, texturesDheapEntry);
+				Mesh mesh = geom->GetMesh();
+
+				item->boneDataCbAddr = boneDataAlloc.gpuAddr;
+				item->graphicsPso = mat.pso;
+				item->rootSignature = mat.rootSignature;
+				item->indexBufferView = mesh.ibv;
+				item->indexCount = mesh.indexCount;
+				item->vertexBufferView = mesh.vbv;
+				item->vertexCount = mesh.vertexCount;
+				item->perMeshCbAddr = perMeshAlloc.gpuAddr;
+				item->primitiveTopology = mesh.topology;
+				item->perObjectCbAddr = perObjAlloc.gpuAddr;
+				item->texturesHandle = mat.texturesDescriptor;
+				item->texturesRootSigSlot = mat.texturesRootSigSlot;
+				/*
+				m.meshes[i].perMeshCb = perMeshAlloc.data;
+				if(m.material[i].cbAssoc[BoneDataCb::id] != -1) {
+					m.material[i].boneDataCbAddr = boneDataAlloc.gpuAddr;
+				}*/
+			}
+
+		}
+
+		/*
 		Multi LoadAssets(Asset::Model * model) {
 
 			Multi m{ model->meshesLength };
@@ -179,7 +240,7 @@ namespace Egg::Graphics {
 
 				ID3D12PipelineState * gpso = gpsoLib.GetPipelineState(rs, shaderColl, geom);
 
-				auto perMeshAlloc = resourceAlloc.AllocateConstantBuffer<PerMeshCb>();
+				auto perMeshAlloc = resourceAlloc.AllocateConstantBuffer<MaterialCb>();
 				
 				DirectX::XMFLOAT3 kd = model->materials[i].diffuseColor;
 				perMeshAlloc.data->diffuseColor = DirectX::XMFLOAT4A{ kd.x, kd.y, kd.z, 1.0f };
@@ -198,6 +259,7 @@ namespace Egg::Graphics {
 
 			return m;
 		}
+		*/
 
 	};
 

@@ -95,7 +95,7 @@ struct Material {
 };
 
 #ifdef SHADER_CB_USE_PERMESH
-cbuffer PerMeshCb : register(b0) {
+cbuffer MaterialCb : register(b0) {
 	Material material;
 };
 #endif

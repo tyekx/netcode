@@ -5,64 +5,48 @@
 
 namespace Egg {
 
-	struct Multi {
-		UINT length;
-		std::unique_ptr<Material[]> material;
-		std::unique_ptr<Mesh[]> meshes;
+	struct Model {
+		UINT gpuResourcesHandle;
+
+		UINT meshesLength;
 		PerObjectCb * perObjectCb;
 		BoneDataCb * boneDataCb;
-		D3D12_GPU_VIRTUAL_ADDRESS perObjectCbAddr;
+		MaterialCb ** materials;
 
 		void InitWithLength(UINT len) {
-			length = len;
-			material = std::make_unique<Material[]>(length);
-			meshes = std::make_unique<Mesh[]>(length);
+			meshesLength = len;
+			materials = reinterpret_cast<MaterialCb **>(std::malloc(len * sizeof(MaterialCb *)));
+			memset(materials, 0, len * sizeof(MaterialCb *));
 		}
 
-		inline void Draw(ID3D12GraphicsCommandList * gcl, D3D12_GPU_VIRTUAL_ADDRESS perFrameData) {
-			for(UINT i = 0; i < length; ++i) {
-				material[i].SetPipelineState(gcl);
-				material[i].BindConstantBuffer(gcl, PerObjectCb::id, perObjectCbAddr);
-				material[i].BindConstantBuffer(gcl, PerFrameCb::id, perFrameData);
-				meshes[i].Draw(gcl);
-			}
-		}
-
-		Multi(UINT len) : Multi{} {
+		Model(UINT len) : Model{} {
 			InitWithLength(len);
 		}
 
-		Multi() : length{ 0 }, material{ nullptr }, meshes{ nullptr }, perObjectCb{ nullptr }, boneDataCb{ nullptr }, perObjectCbAddr{ 0 } { }
-		~Multi() = default;
+		Model() :gpuResourcesHandle{ 0 }, meshesLength{ 0 }, perObjectCb{ nullptr }, boneDataCb{ nullptr }, materials{ nullptr } { }
+		~Model() = default;
 
-		Multi(const Multi & m) : Multi{} {
-			InitWithLength(m.length);
-
+		Model(const Model & m) : Model{} {
+			InitWithLength(m.meshesLength);
 			boneDataCb = m.boneDataCb;
 			perObjectCb = m.perObjectCb;
-			perObjectCbAddr = m.perObjectCbAddr;
-			for(UINT i = 0; i < length; ++i) {
-				meshes[i] = m.meshes[i];
-				material[i] = m.material[i];
+			for(UINT i = 0; i < meshesLength; ++i) {
+				materials[i] = m.materials[i];
 			}
 		}
 
-		Multi(Multi && m) noexcept : Multi{} {
-			std::swap(length, m.length);
-			std::swap(material, m.material);
-			std::swap(meshes, m.meshes);
+		Model(Model && m) noexcept : Model{} {
+			std::swap(meshesLength, m.meshesLength);
+			std::swap(materials, m.materials);
 			std::swap(boneDataCb, m.boneDataCb);
 			std::swap(perObjectCb, m.perObjectCb);
-			std::swap(perObjectCbAddr, m.perObjectCbAddr);
 		}
 
-		Multi & operator=(Multi m) noexcept {
-			std::swap(length, m.length);
-			std::swap(material, m.material);
-			std::swap(meshes, m.meshes);
+		Model & operator=(Model m) noexcept {
+			std::swap(meshesLength, m.meshesLength);
+			std::swap(materials, m.materials);
 			std::swap(boneDataCb, m.boneDataCb);
 			std::swap(perObjectCb, m.perObjectCb);
-			std::swap(perObjectCbAddr, m.perObjectCbAddr);
 			return *this;
 		}
 	};

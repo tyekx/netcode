@@ -64,6 +64,9 @@
     <Filter Include="Graphics\Engine">
       <UniqueIdentifier>{5d7e5609-0356-417e-b0eb-d06f408754a6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics\Engine\DX12">
+      <UniqueIdentifier>{8a77180a-e90e-470d-8ebc-6be0af8642aa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera\Camera.h">
@@ -174,9 +177,6 @@
     <ClInclude Include="AnimationComponent.h">
       <Filter>Components</Filter>
     </ClInclude>
-    <ClInclude Include="ModelComponent.h">
-      <Filter>Components</Filter>
-    </ClInclude>
     <ClInclude Include="BasicGeometry.h">
       <Filter>Model\Mesh</Filter>
     </ClInclude>
@@ -268,11 +268,20 @@
     <ClInclude Include="AnimationBlender.h">
       <Filter>Animation</Filter>
     </ClInclude>
-    <ClInclude Include="DX12Engine.h">
-      <Filter>Graphics\Engine</Filter>
-    </ClInclude>
     <ClInclude Include="LinearClassifier.h">
       <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12RenderItem.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Engine.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="IEngine.h">
+      <Filter>Graphics\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12RenderItemAllocator.h">
+      <Filter>Graphics\Engine\DX12</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -3,117 +3,16 @@
 #include "Common.h"
 #include "Utility.h"
 #include "Resource.h"
+#include "DX12RenderItem.h"
+#include "DX12RenderItemAllocator.h"
+#include "ResourceManager.h"
+#include "IEngine.h"
+#include <map>
 
-namespace Egg::Graphics {
 
-	class IEngine {
-	public:
-		virtual ~IEngine() = default;
-	};
+namespace Egg::Graphics::DX12 {
 
-}
-
-namespace Egg::Graphics::Engine {
-
-	enum class RenderItemState : unsigned {
-		UNKNOWN = 0, IN_USE = 1, RETURNED = 2
-	};
-
-	class RenderItem {
-	public:
-		RenderItemState state;
-
-		ID3D12RootSignature * rootSignature;
-		ID3D12PipelineState * graphicsPso;
-
-		int * cbAssoc;
-		UINT cbAssocLength;
-
-		D3D12_GPU_VIRTUAL_ADDRESS boneDataCbAddr;
-
-		UINT texturesRootSigSlot;
-		D3D12_GPU_DESCRIPTOR_HANDLE texturesHandle;
-
-		D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
-		D3D12_INDEX_BUFFER_VIEW indexBufferView;
-
-		D3D12_GPU_VIRTUAL_ADDRESS perMeshCbAddr;
-		D3D_PRIMITIVE_TOPOLOGY primitiveTopology;
-
-		UINT vertexCount;
-		UINT indexCount;
-	};
-
-	struct RenderItemAllocation {
-		UINT handleStart;
-		
-		RenderItem * items;
-		UINT itemsLength;
-	};
-
-	class RenderItemAllocator {
-
-		constexpr static int PAGE_SIZE = 512;
-
-		struct RenderItemPage {
-			UINT maxContigousBlock;
-			UINT maxContigousBlockStartIndex;
-
-			void * allocatedMemory;
-			UINT allocatedMemoryLength;
-
-			RenderItemPage * nextPage;
-			RenderItemPage * prevPage;
-
-			RenderItemPage() :
-				maxContigousBlock{ static_cast<UINT>(PAGE_SIZE) }, 
-				maxContigousBlockStartIndex{ 0U },
-				allocatedMemory { std::malloc(PAGE_SIZE * sizeof(RenderItem)) },
-				allocatedMemoryLength { static_cast<UINT>(PAGE_SIZE * sizeof(RenderItem)) },
-				prevPage{ nullptr },
-				nextPage{ nullptr } {
-
-			}
-
-			~RenderItemPage() {
-				std::free(allocatedMemory);
-				allocatedMemory = nullptr;
-			}
-		};
-
-		RenderItemPage * startPage;
-		RenderItemPage * endPage;
-
-		void InsertFirstPage() {
-			startPage = new (std::nothrow) RenderItemPage();
-
-			if(startPage == nullptr) {
-				__debugbreak();
-			}
-
-			endPage = startPage;
-		}
-
-		void InsertPage() {
-			RenderItemPage * page = new (std::nothrow) RenderItemPage();
-
-			if(page == nullptr) {
-				__debugbreak();
-			}
-
-			page->nextPage = nullptr;
-			page->prevPage = endPage;
-			endPage->nextPage = page;
-			endPage = page;
-		}
-
-	public:
-		RenderItemAllocation Allocate(UINT numberOfItemsToAllocate) {
-
-		}
-	};
-
-	class DX12Engine : public IEngine {
+	class Engine : public IEngine {
 		HWND hwnd;
 
 		com_ptr<IDXGIFactory5> dxgiFactory;
@@ -129,6 +28,16 @@ namespace Egg::Graphics::Engine {
 
 		com_ptr<IDXGIOutput1> outputs[8];
 		UINT outputsLength;
+
+		ResourceManager resourceManager;
+
+		DX12::RenderItemAllocator renderItemAllocator;
+		
+		std::map<UINT, RenderItemAllocation> allocationsCache;
+
+		RenderItem ** renderItemBuffer;
+		UINT renderItemBufferLength;
+		
 
 		void CreateFactory() {
 			DX_API("Failed to create dxgi factory")
@@ -247,8 +156,8 @@ namespace Egg::Graphics::Engine {
 		
 
 	public:
-		void CreateResources(HWND parentWindow) {
-			hwnd = parentWindow;
+		virtual void CreateResources(void* parentWindow) override {
+			hwnd = static_cast<HWND>(parentWindow);
 
 			CreateFactory();
 
@@ -261,6 +170,50 @@ namespace Egg::Graphics::Engine {
 			CreateSwapChain();
 		}
 
+		void BeginRender() {
+			renderItemBufferLength = 0;
+		}
+
+		void Render(UINT item) {
+			ASSERT(allocationsCache.find(item) != allocationsCache.end(), "allocation was not found");
+
+			RenderItemAllocation & alloc = allocationsCache[item];
+			for(UINT i = 0; i < alloc.itemsLength; ++i) {
+				renderItemBuffer[renderItemBufferLength++] = alloc.items + i;
+			}
+		}
+
+		void Render(RenderItem * item) {
+
+		}
+
+		void EndRender() {
+			for(UINT i = 0; i < renderItemBufferLength; ++i) {
+				Render(renderItemBuffer[i]);
+			}
+		}
+
+		virtual UINT GetHandle(UINT numberOfItems) override {
+			RenderItemAllocation alloc = renderItemAllocator.Allocate(numberOfItems);
+
+			ASSERT(allocationsCache.find(alloc.handleStart) == allocationsCache.end(), "Overwriting renderitem allocation");
+
+			allocationsCache[alloc.handleStart] = alloc;
+			
+			return alloc.handleStart;
+		}
+
+		virtual Model LoadAssets(UINT handle, Asset::Model * model) override {
+			ASSERT(allocationsCache.find(handle) != allocationsCache.end(), "Failed to find allocation");
+
+			RenderItemAllocation & alloc = allocationsCache[handle];
+
+			Model m;
+
+			resourceManager.Compose(alloc.items, model, m);
+
+			return m;
+		}
 	};
 
 
