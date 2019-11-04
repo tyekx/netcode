@@ -34,6 +34,14 @@ namespace Egg {
 		ShaderPath(const wchar_t * relativeShaderPath);
 		ShaderPath(const std::wstring & relativeShaderPath);
 
+		bool operator==(const ShaderPath & p) const {
+			return p.relativePath == relativePath;
+		}
+
+		bool operator!=(const ShaderPath & p) const {
+			return !operator==(p);
+		}
+
 		const std::wstring & GetRelativePath() const;
 		const std::wstring & GetAbsolutePath() const;
 	};

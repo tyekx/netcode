@@ -39,4 +39,11 @@ CB_TYPE struct PerMeshCb {
 	float shininess;
 };
 
+CB_TYPE struct DebugPhysxShapeCb {
+	constexpr static int id = 15;
+
+	DirectX::XMFLOAT4X4A local;
+	DirectX::XMFLOAT4X4A offset;
+};
+
 int GetConstantBufferIdFromName(const char * name);

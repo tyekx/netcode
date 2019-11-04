@@ -50,7 +50,7 @@ namespace Egg::Graphics::Internal {
 			InputLayout il;
 			il.SetVertexType(mesh->vertexType);
 
-			si.geometry.CreateResources(std::move(vbuffer), std::move(ibuffer), std::move(il));
+			si.geometry.CreateResources(std::move(vbuffer), std::move(ibuffer), std::move(il), D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			si.meshRef = mesh;
 			items.emplace_back(std::move(si));
 		}

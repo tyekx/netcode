@@ -30,9 +30,11 @@ namespace Egg::Graphics {
 		ResourceManager() : codeLib{}, rsLib{ }, geomLib{ }, gpsoLib{}, textureLib{}, resourceAlloc{} { }
 
 		virtual void CreateResources(ID3D12Device * device) override {
+			codeLib.CreateResources(device);
 			rsLib.CreateResources(device);
 			geomLib.CreateResources(device);
 			gpsoLib.CreateResources(device);
+			textureLib.CreateResources(device);
 			resourceAlloc.CreateResources(device);
 		}
 
@@ -42,10 +44,12 @@ namespace Egg::Graphics {
 
 		virtual void UploadResources(ID3D12GraphicsCommandList * copyCommandList) override {
 			geomLib.UploadResources(copyCommandList);
+			textureLib.UploadResources(copyCommandList);
 		}
 
 		virtual void ReleaseUploadResources() override {
 			geomLib.ReleaseUploadResources();
+			textureLib.ReleaseUploadResources();
 		}
 
 		Material ComposeMaterial(ID3D12RootSignature * rootSig,
@@ -120,6 +124,23 @@ namespace Egg::Graphics {
 			}
 
 			return s;
+		}
+
+		void BeginRender(ID3D12GraphicsCommandList * gcl) {
+			textureLib.SetDescriptorHeap(gcl);
+		}
+
+
+		Material FromFiles(const ShaderPath & vs, const ShaderPath & ps, Geometry& geometry) {
+			Internal::ShaderCodeCollection coll = codeLib.GetShaderCodeCollection(vs, ps);
+			coll.ReflectBindpoints();
+
+			Internal::RootSignatureDesc rsDesc{ coll.GetBindpoints() };
+			ID3D12RootSignature * rs = rsLib.GetRootSignature(rsDesc);
+
+			ID3D12PipelineState * gpso = gpsoLib.GetPipelineState(rs, coll, &geometry);
+
+			return ComposeMaterial(rs, gpso, coll.GetBindpoints(), rsDesc.GetDesc(), {}, {});
 		}
 
 		Multi LoadAssets(Asset::Model * model) {

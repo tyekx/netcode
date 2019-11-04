@@ -2,7 +2,7 @@
 
 #include "Utility.h"
 #include "Vertex.h"
-#include "LinearAllocator.h"
+#include "LinearClassifier.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -27,7 +27,14 @@ namespace Egg::Importer {
 
 		bool isPow2 = Egg::Utility::IsPowerOf2((unsigned int)metaData.width);
 
-		//DirectX::GenerateMipMaps(sImage.GetImages(), sImage.GetImageCount(), sImage.GetMetadata(), DirectX::TEX_FILTER_BOX, 3, outputIm);
+		ASSERT(isPow2, "texture resolution must be power of 2");
+
+		ASSERT(metaData.width >= 512 && metaData.width == metaData.height, "Invalid texture parameters");
+
+		DX_API("Failed to generate mip levels")
+		DirectX::GenerateMipMaps(sImage.GetImages(), sImage.GetImageCount(), sImage.GetMetadata(), DirectX::TEX_FILTER_BOX, 4, outputIm);
+
+		metaData = outputIm.GetMetadata();
 
 		D3D12_RESOURCE_DESC rdsc;
 		ZeroMemory(&rdsc, sizeof(D3D12_RESOURCE_DESC));
@@ -35,7 +42,7 @@ namespace Egg::Importer {
 		rdsc.Height = (unsigned int)metaData.height;
 		rdsc.Width = (unsigned int)metaData.width;
 		rdsc.Format = metaData.format;
-		rdsc.MipLevels = 1;
+		rdsc.MipLevels = metaData.mipLevels;
 		rdsc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 		rdsc.Alignment = 0;
 		rdsc.SampleDesc.Count = 1;
@@ -44,7 +51,7 @@ namespace Egg::Importer {
 		rdsc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
 		Graphics::Resource::Committed::Texture2D texture;
-		texture.CreateResources(device, rdsc, sImage.GetPixels(), sImage.GetPixelsSize());
+		texture.CreateResources(device, rdsc, outputIm.GetPixels(), outputIm.GetPixelsSize());
 		return texture;
 	}
 
@@ -68,11 +75,11 @@ namespace Egg::Importer {
 		unsigned int totalSize;
 		fread(&totalSize, sizeof(unsigned int), 1, file);
 
-		Memory::LinearAllocator allocator{ totalSize };
+		Memory::LinearClassifier classifier{ totalSize };
 
 		fread(&m.meshesLength, sizeof(unsigned int), 1, file);
 
-		m.meshes = reinterpret_cast<Asset::Mesh *>(allocator.Allocate(m.meshesLength * sizeof(Asset::Mesh)));
+		m.meshes = reinterpret_cast<Asset::Mesh *>(classifier.Allocate(m.meshesLength * sizeof(Asset::Mesh)));
 
 		for(unsigned int i = 0; i < m.meshesLength; ++i) {
 			fread(&m.meshes[i].materialId, sizeof(unsigned int), 1, file);
@@ -80,27 +87,27 @@ namespace Egg::Importer {
 			fread(&m.meshes[i].vertexSize, sizeof(unsigned int), 1, file);
 			fread(&m.meshes[i].verticesLength, sizeof(unsigned int), 1, file);
 
-			m.meshes[i].vertices = allocator.Allocate(m.meshes[i].verticesLength);
+			m.meshes[i].vertices = classifier.Allocate(m.meshes[i].verticesLength);
 
 			fread(m.meshes[i].vertices, 1, m.meshes[i].verticesLength, file);
 
 			fread(&m.meshes[i].indicesLength, sizeof(unsigned int), 1, file);
 
-			m.meshes[i].indices = reinterpret_cast<unsigned int *>(allocator.Allocate(m.meshes[i].indicesLength * sizeof(unsigned int)));
+			m.meshes[i].indices = reinterpret_cast<unsigned int *>(classifier.Allocate(m.meshes[i].indicesLength * sizeof(unsigned int)));
 
 			fread(m.meshes[i].indices, sizeof(unsigned int), m.meshes[i].indicesLength, file);
 		}
 
 		fread(&m.materialsLength, sizeof(unsigned int), 1, file);
-		m.materials = reinterpret_cast<Asset::Material *>(allocator.Allocate(m.materialsLength * sizeof(Asset::Material)));
+		m.materials = reinterpret_cast<Asset::Material *>(classifier.Allocate(m.materialsLength * sizeof(Asset::Material)));
 		fread(m.materials, sizeof(Asset::Material), m.materialsLength, file);
 
 		fread(&m.bonesLength, sizeof(unsigned int), 1, file);
-		m.bones = reinterpret_cast<Asset::Bone *>(allocator.Allocate(m.bonesLength * sizeof(Asset::Bone)));
+		m.bones = reinterpret_cast<Asset::Bone *>(classifier.Allocate(m.bonesLength * sizeof(Asset::Bone)));
 		fread(m.bones, sizeof(Asset::Bone), m.bonesLength, file);
 
 		fread(&m.animationsLength, sizeof(unsigned int), 1, file);
-		m.animations = reinterpret_cast<Asset::Animation *>(allocator.Allocate(m.animationsLength * sizeof(Asset::Animation)));
+		m.animations = reinterpret_cast<Asset::Animation *>(classifier.Allocate(m.animationsLength * sizeof(Asset::Animation)));
 		for(unsigned int i = 0; i < m.animationsLength; ++i) {
 			fread(m.animations[i].name, 1, sizeof(m.animations[i].name), file);
 			fread(&m.animations[i].duration, sizeof(double), 1, file);
@@ -108,10 +115,10 @@ namespace Egg::Importer {
 			fread(&m.animations[i].keysLength, sizeof(unsigned int), 1, file);
 			fread(&m.animations[i].bonesLength, sizeof(unsigned int), 1, file);
 
-			m.animations[i].preStates = reinterpret_cast<Asset::AnimationEdge *>(allocator.Allocate(m.animations[i].bonesLength * sizeof(Asset::AnimationEdge)));
-			m.animations[i].postStates = reinterpret_cast<Asset::AnimationEdge *>(allocator.Allocate(m.animations[i].bonesLength * sizeof(Asset::AnimationEdge)));
-			m.animations[i].times = reinterpret_cast<double *>(allocator.Allocate(m.animations[i].keysLength * sizeof(double)));
-			m.animations[i].keys = reinterpret_cast<Asset::AnimationKey *>(allocator.Allocate(m.animations[i].bonesLength * m.animations[i].keysLength * sizeof(Asset::AnimationKey)));
+			m.animations[i].preStates = reinterpret_cast<Asset::AnimationEdge *>(classifier.Allocate(m.animations[i].bonesLength * sizeof(Asset::AnimationEdge)));
+			m.animations[i].postStates = reinterpret_cast<Asset::AnimationEdge *>(classifier.Allocate(m.animations[i].bonesLength * sizeof(Asset::AnimationEdge)));
+			m.animations[i].times = reinterpret_cast<double *>(classifier.Allocate(m.animations[i].keysLength * sizeof(double)));
+			m.animations[i].keys = reinterpret_cast<Asset::AnimationKey *>(classifier.Allocate(m.animations[i].bonesLength * m.animations[i].keysLength * sizeof(Asset::AnimationKey)));
 
 			fread(m.animations[i].preStates, sizeof(Asset::AnimationEdge), m.animations[i].bonesLength, file);
 			fread(m.animations[i].postStates, sizeof(Asset::AnimationEdge), m.animations[i].bonesLength, file);
@@ -121,7 +128,26 @@ namespace Egg::Importer {
 
 		fclose(file);
 
-		m.memoryAllocation = allocator.Detach();
+		m.memoryAllocation = classifier.Detach();
+
+
+		/*
+		Post processing: deleting every unresolved texture references
+		*/
+		for(unsigned int i = 0; i < m.materialsLength; ++i) {
+			if(m.materials[i].HasDiffuseTexture()) {
+				MediaPath mp{ Egg::Utility::ToWideString(m.materials[i].diffuseTexture) };
+				if(!Egg::Path::FileExists(mp.GetAbsolutePath().c_str())) {
+					ZeroMemory(m.materials[i].diffuseTexture, sizeof(m.materials[i].diffuseTexture));
+				}
+			}
+			if(m.materials[i].HasNormalTexture()) {
+				MediaPath mp{ Egg::Utility::ToWideString(m.materials[i].normalTexture) };
+				if(!Egg::Path::FileExists(mp.GetAbsolutePath().c_str())) {
+					ZeroMemory(m.materials[i].normalTexture, sizeof(m.materials[i].normalTexture));
+				}
+			}
+		}
 
 	}
 }

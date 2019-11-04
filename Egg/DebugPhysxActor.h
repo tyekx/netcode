@@ -4,21 +4,15 @@
 #include "PhysxSystem.h"
 #include <array>
 
+
 namespace Egg {
-
-
-	__declspec(align(16)) struct DebugPhysxShapeCb {
-		constexpr static int id = 15;
-
-		DirectX::XMFLOAT4X4A local;
-		DirectX::XMFLOAT4X4A offset;
-	};
 
 	class DebugPhysxActor {
 		physx::PxRigidActor * actorReference;
-		std::vector<Egg::Mesh> geometry;
+		std::vector<Egg::Graphics::Geometry> geometries;
+		std::vector<Egg::Mesh> meshes;
 		ConstantBuffer<PerObjectCb> perObject;
-		Egg::Material* debugMaterial;
+		Egg::Material debugMaterial;
 		std::array<physx::PxShape*, 16> shapes;
 		ConstantBufferArray<DebugPhysxShapeCb, 16> perShapeCb;
 
@@ -29,7 +23,19 @@ namespace Egg {
 			perShapeCb.Upload();
 		}
 
-		DebugPhysxActor(ID3D12Device * device, Egg::Material * mat, physx::PxRigidActor * actorRef);
+		void UploadResources(ID3D12GraphicsCommandList * gcl) {
+			for(auto & i : geometries) {
+				i.vertexBuffer->UploadResources(gcl);
+			}
+		}
+
+		void ReleaseUploadResources() {
+			for(auto & i : geometries) {
+				i.vertexBuffer->ReleaseUploadResources();
+			}
+		}
+
+		DebugPhysxActor(ID3D12Device * device, const Egg::Material & mat, physx::PxRigidActor * actorRef);
 
 		void AfterPhysxUpdate();
 

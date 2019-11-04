@@ -5,6 +5,7 @@
 #include "PreprocessorDefinitions.h"
 #include "ShaderCodeCollection.h"
 #include "Path.h"
+#include <fstream>
 
 namespace Egg::Graphics::Internal {
 
@@ -15,7 +16,23 @@ namespace Egg::Graphics::Internal {
 			com_ptr<ID3DBlob> PS;
 		};
 
+		struct FileBasedItem {
+			ShaderPath vsPath;
+			ShaderPath psPath;
+			com_ptr<ID3DBlob> VS;
+			com_ptr<ID3DBlob> PS;
+
+			FileBasedItem(const ShaderPath & vsP, const ShaderPath & psP, com_ptr<ID3DBlob> vs, com_ptr<ID3DBlob> ps) :
+				vsPath{ vsP }, psPath{ psP }, VS{ vs }, PS{ ps } {
+
+			}
+
+		};
+
+		ID3D12Device * device;
+
 		std::vector<StorageItem> items;
+		std::vector<FileBasedItem> filebasedStorage;
 
 		bool Exists(const PreprocessorDefinitions & pd) {
 			for(const auto & i : items) {
@@ -24,6 +41,60 @@ namespace Egg::Graphics::Internal {
 				}
 			}
 			return false;
+		}
+
+		bool Exist(const ShaderPath & vs, const ShaderPath & ps) {
+			for(const auto & i : filebasedStorage) {
+				if(i.vsPath == vs && i.psPath == ps) {
+					return true;
+				}
+			}
+			return  false;
+		}
+
+		com_ptr<ID3DBlob> LoadCSO(const ShaderPath & shaderPath) {
+			std::wstring filename = shaderPath.GetAbsolutePath();
+
+			std::ifstream file{ filename.c_str(), std::ios::binary | std::ios::in | std::ios::ate };
+
+			ASSERT(file.is_open(), "Failed to open blob file: %S", filename.c_str());
+
+			std::streamsize size = file.tellg();
+
+			file.seekg(0, std::ios::beg);
+
+			com_ptr<ID3DBlob> shaderByteCode{ nullptr };
+
+			DX_API("Failed to allocate memory for blob")
+				D3DCreateBlob((size_t)size, shaderByteCode.GetAddressOf());
+
+			if(file.read(reinterpret_cast<char *>(shaderByteCode->GetBufferPointer()), size)) {
+				return shaderByteCode;
+			} else {
+				ASSERT(false, "Failed to load CSO file: %S", filename.c_str());
+				return nullptr;
+			}
+		}
+
+		void LoadWith(const ShaderPath & vs, const ShaderPath & ps) {
+
+			com_ptr<ID3DBlob> vertexShader = LoadCSO(vs);
+			com_ptr<ID3DBlob> pixelShader = LoadCSO(ps);
+
+			FileBasedItem fbi{ vs, ps, vertexShader, pixelShader };
+			filebasedStorage.push_back(fbi);
+		}
+
+		ShaderCodeCollection GetCollection(const ShaderPath & vs, const ShaderPath & ps) {
+			ShaderCodeCollection coll;
+			for(const auto & i : filebasedStorage) {
+				if(i.vsPath == vs && i.psPath == ps) {
+					coll.vertexShader = i.VS.Get();
+					coll.pixelShader = i.PS.Get();
+					return coll;
+				}
+			}
+			return coll;
 		}
 
 		void CompileWith(const PreprocessorDefinitions & pd) {
@@ -97,8 +168,8 @@ namespace Egg::Graphics::Internal {
 			ShaderCodeCollection coll;
 			for(auto & i : items) {
 				if(i.definitions == pd) {
-					coll.pixelShader = i.PS.Get();
 					coll.vertexShader = i.VS.Get();
+					coll.pixelShader = i.PS.Get();
 					break;
 				}
 			}
@@ -106,7 +177,19 @@ namespace Egg::Graphics::Internal {
 		}
 
 	public:
-		ShaderCodeLibrary() : items{} { }
+
+		void CreateResources(ID3D12Device * dev) {
+			device = dev;
+		}
+
+		ShaderCodeLibrary() :device{ nullptr }, items{}, filebasedStorage{} { }
+
+		ShaderCodeCollection GetShaderCodeCollection(const ShaderPath & vs, const ShaderPath & ps) {
+			if(!Exist(vs, ps)) {
+				LoadWith(vs, ps);
+			}
+			return GetCollection(vs, ps);
+		}
 
 		ShaderCodeCollection GetShaderCodeCollection(const PreprocessorDefinitions & pd) {
 			if(!Exists(pd)) {

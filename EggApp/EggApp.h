@@ -9,7 +9,6 @@
 #include <Egg/Input.h>
 #include <Egg/BasicGeometry.h>
 #include <Egg/DebugPhysx.h>
-#include <Egg/CharacterController.h>
 #include <Egg/EggMath.h>
 #include <Egg/ResourceManager.h>
 
@@ -39,6 +38,7 @@ public:
 class EggApp : public Egg::SimpleApp {
 protected:
 	Egg::Asset::Model ybotModel;
+	Egg::Asset::Model railgun;
 	std::unique_ptr<Egg::Scene> scene;
 	std::unique_ptr<Egg::Graphics::ResourceManager> resourceManager;
 	Egg::ConstantBuffer<PerFrameCb> perFrameCb;
@@ -100,9 +100,31 @@ public:
 		DirectX::XMVECTOR camUp = DirectX::XMLoadFloat3(&baseCam.Up);
 		DirectX::XMStoreFloat3(&baseCam.Ahead, DirectX::XMVector3Normalize(DirectX::XMVector3Rotate(aheadStart, cameraQuat)));
 		DirectX::XMStoreFloat3(&baseCam.Position, devCamPos);
+		baseCam.UpdateMatrices();
 
+		DirectX::XMVECTOR weaponQuat = DirectX::XMQuaternionRotationRollPitchYaw(-DirectX::XM_PIDIV2, 0, 0);
 
 		movCtrl.Update();
+
+		for(UINT i = 0; i < scene->GetObjectCount(); ++i) {
+			auto * go = scene->operator[](i);
+			if(go->HasComponent<Egg::Transform>() && go->HasComponent<Egg::Model>()) {
+				Egg::Transform * transform = go->GetComponent<Egg::Transform>();
+				Egg::Model * model = go->GetComponent<Egg::Model>();
+
+				DirectX::XMVECTOR translation = DirectX::XMLoadFloat4(&transform->Position);
+				DirectX::XMVECTOR rotation = weaponQuat; //DirectX::XMLoadFloat4(&weaponQuat);
+				DirectX::XMVECTOR scaling = DirectX::XMLoadFloat3(&transform->Scale);
+
+				DirectX::XMMATRIX modelMat = DirectX::XMMatrixAffineTransformation(scaling, DirectX::XMQuaternionIdentity(), rotation, translation);
+
+				DirectX::XMVECTOR modelMatDet = DirectX::XMMatrixDeterminant(modelMat);
+
+				DirectX::XMStoreFloat4x4A(&model->multiMesh.perObjectCb->Model, DirectX::XMMatrixTranspose(modelMat));
+				DirectX::XMStoreFloat4x4A(&model->multiMesh.perObjectCb->InvModel, DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(&modelMatDet, modelMat)));
+			}
+		}
+
 		for(UINT i = 0; i < scene->GetObjectCount(); ++i) {
 			auto * go = scene->operator[](i);
 			animSys.Run(go, dt, &movCtrl);
@@ -112,9 +134,6 @@ public:
 
 		pxSys.Simulate(dt);
 		debugPhysx->AfterPhysxUpdate(dt);
-
-		baseCam.UpdateMatrices();
-		//DirectX::XMStoreFloat3(&baseCam.Position, devCamPos);
 
 		DirectX::XMMATRIX view = DirectX::XMLoadFloat4x4A(&baseCam.GetViewMatrix());
 		DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4A(&baseCam.GetProjMatrix());
@@ -164,7 +183,9 @@ public:
 		commandList->ClearRenderTargetView(rHandle, clearColor, 0, nullptr);
 		commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-		//debugPhysx->Draw(commandList.Get(), perFrameCb);
+		resourceManager->BeginRender(commandList.Get());
+
+		debugPhysx->Draw(commandList.Get(), perFrameCb.GetGPUVirtualAddress());
 		//chCtrl.Draw(commandList.Get(), perFrameCb);
 
 		for(UINT i = 0; i < scene->GetObjectCount(); ++i) {
@@ -174,9 +195,6 @@ public:
 
 				Egg::Transform * transform = obj->GetComponent<Egg::Transform>();
 				Egg::Model * model = obj->GetComponent<Egg::Model>();
-
-				DirectX::XMStoreFloat4x4A(&model->multiMesh.perObjectCb->Model, DirectX::XMMatrixIdentity());
-				DirectX::XMStoreFloat4x4A(&model->multiMesh.perObjectCb->InvModel, DirectX::XMMatrixIdentity());
 
 				model->multiMesh.Draw(commandList.Get(), perFrameCb.GetGPUVirtualAddress());
 
@@ -205,6 +223,7 @@ public:
 			commandList->Reset(commandAllocator.Get(), nullptr);
 
 		resourceManager->UploadResources(commandList.Get());
+		debugPhysx->UploadResources(commandList.Get());
 
 		DX_API("Failed to close command list (UploadResources)")
 			commandList->Close();
@@ -215,6 +234,7 @@ public:
 		WaitForPreviousFrame();
 
 		resourceManager->ReleaseUploadResources();
+		debugPhysx->ReleaseUploadResources();
 	}
 
 	virtual void CreateResources() override {
@@ -253,11 +273,28 @@ public:
 		DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationRollPitchYaw(-DirectX::XM_PIDIV2, 0.0f, 0.0f);
 
 
-		//Egg::Asset::Model railgun;
+		//
 
 		Egg::Importer::ImportModel(L"ybot.eggasset", ybotModel);
-		//Egg::Importer::ImportModel(L"railgun.eggasset", railgun);
+		Egg::Importer::ImportModel(L"railgun.eggasset", railgun);
+		DirectX::XMVECTOR quat = DirectX::XMQuaternionRotationRollPitchYaw(0, DirectX::XM_PIDIV2,  0);
+		DirectX::XMFLOAT4 qqqq;
+		DirectX::XMStoreFloat4(&qqqq, quat);
+		auto * gunObject = scene->New();
+		gunObject->AddComponent<Egg::Transform>()->Rotation = qqqq;
+		auto * modelComp = gunObject->AddComponent<Egg::Model>();
+		modelComp->multiMesh = resourceManager->LoadAssets(&railgun);
+		auto * animComp = gunObject->AddComponent<AnimationComponent>();
+		animComp->blackBoard.CreateResources(&railgun, modelComp->multiMesh.boneDataCb, railgun.animationsLength, {
+												{ "Idle", 1, Egg::Animation::StateBehaviour::LOOP },
+											    { "Shoot", 0, Egg::Animation::StateBehaviour::ONCE }
+											 }, {
+												 { "Idle", "Shoot", &Egg::MovementController::IsFiring, nullptr, Egg::Animation::TransitionBehaviour::LERP },
+												 { "Shoot", "Idle", nullptr, &Egg::Animation::AnimationState::IsFinished, Egg::Animation::TransitionBehaviour::LERP }
+											 });
 
+
+		/*
 		auto * playerObject = scene->New();
 		playerObject->AddComponent<Egg::Transform>();
 		auto * modelComponent = playerObject->AddComponent<Egg::Model>();
@@ -373,17 +410,16 @@ public:
 					{ "JumpStart", "JumpLand",	&Egg::MovementController::IsOnGround, 		nullptr,										Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
 					{ "JumpLoop",  "JumpLand",	&Egg::MovementController::IsOnGround,		nullptr,										Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
 					{ "JumpLand",  "Idle",		nullptr,									&Egg::Animation::AnimationState::IsFinished,	Egg::Animation::TransitionBehaviour::LERP },
-			   });
+			   });*/
 
-		//resourceManager->LoadAssets(&railgun);
 
 
 
 		debugPhysx.reset(new Egg::DebugPhysx{});
-		debugPhysx->CreateResources(device.Get());
+		debugPhysx->CreateResources(device.Get(), resourceManager.get());
 
-		//debugPhysx->AddActor(pxSys.groundPlane)
-		//	.SetOffset(0, DirectX::XMMatrixScaling(2000.0f, 2000.0f, 2000.0f));
+		debugPhysx->AddActor(pxSys.groundPlane).SetOffset(0, DirectX::XMMatrixTranspose(DirectX::XMMatrixScaling(2000.0f, 2000.0f, 2000.0f)));
+
 
 
 		UploadResources();

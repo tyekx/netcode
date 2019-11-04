@@ -49,7 +49,6 @@
     <ClInclude Include="Allocation.h" />
     <ClInclude Include="AnimationBlender.h" />
     <ClInclude Include="AnimationComponent.h" />
-    <ClInclude Include="AnimationController.h" />
     <ClInclude Include="AnimationState.h" />
     <ClInclude Include="App.h" />
     <ClInclude Include="Asset\Animation.h" />
@@ -60,7 +59,6 @@
     <ClInclude Include="BasicGeometry.h" />
     <ClInclude Include="Blackboard.h" />
     <ClInclude Include="Camera\Camera.h" />
-    <ClInclude Include="CharacterController.h" />
     <ClInclude Include="CommittedIBuffer.h" />
     <ClInclude Include="CommittedTexture2D.h" />
     <ClInclude Include="CommittedVBuffer.h" />
@@ -72,6 +70,7 @@
     <ClInclude Include="DebugPhysx.h" />
     <ClInclude Include="DebugPhysxActor.h" />
     <ClInclude Include="DebugPhysxRaycast.h" />
+    <ClInclude Include="DX12Engine.h" />
     <ClInclude Include="EggMpl.hpp" />
     <ClInclude Include="Exporter.h" />
     <ClInclude Include="File.h" />
@@ -83,7 +82,7 @@
     <ClInclude Include="Input.h" />
     <ClInclude Include="InputLayout.h" />
     <ClInclude Include="Light.h" />
-    <ClInclude Include="LinearAllocator.h" />
+    <ClInclude Include="LinearClassifier.h" />
     <ClInclude Include="LuaApi.h" />
     <ClInclude Include="LuaManager.h" />
     <ClInclude Include="LuaScript.h" />
@@ -124,7 +123,6 @@
     <ClCompile Include="AnimationState.cpp" />
     <ClCompile Include="BasicGeometry.cpp" />
     <ClCompile Include="Blackboard.cpp" />
-    <ClCompile Include="CharacterController.cpp" />
     <ClCompile Include="CommittedIBuffer.cpp" />
     <ClCompile Include="CommittedTexture2D.cpp" />
     <ClCompile Include="CommittedVBuffer.cpp" />
@@ -136,7 +134,7 @@
     <ClCompile Include="Importer.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Internal.cpp" />
-    <ClCompile Include="LinearAllocator.cpp" />
+    <ClCompile Include="LinearClassifier.cpp" />
     <ClCompile Include="LuaApi.cpp" />
     <ClCompile Include="EggMath.cpp" />
     <ClCompile Include="Material.cpp" />

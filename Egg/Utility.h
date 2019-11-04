@@ -8,6 +8,11 @@ namespace Egg {
 	namespace Utility {
 
 		/*
+		Converts the feature level enum to its readable format
+		*/
+		const char * FeatureLevelToString(D3D_FEATURE_LEVEL ftlvl);
+
+		/*
 		Checkes for an unsigned int if its a power of 2. Wasteful approach but working for edge cases including 0.
 		*/
 		constexpr bool IsPowerOf2(unsigned int v) {

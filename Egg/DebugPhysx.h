@@ -3,6 +3,7 @@
 #include "DebugPhysxActor.h"
 #include "DebugPhysxRaycast.h"
 #include <algorithm>
+#include "ResourceManager.h"
 
 namespace Egg {
 
@@ -25,14 +26,33 @@ namespace Egg {
 			ReleaseResources();
 		}
 
-		void CreateResources(ID3D12Device * dev) {
+		void UploadResources(ID3D12GraphicsCommandList * gcl) {
+			for(auto & i : actors) {
+				i.UploadResources(gcl);
+			}
+		}
+
+		void ReleaseUploadResources() {
+			for(auto & i : actors) {
+				i.ReleaseUploadResources();
+			}
+		}
+
+		void CreateResources(ID3D12Device * dev, Egg::Graphics::ResourceManager* resMan) {
 			device = dev;
 			raycasts = (DebugPhysxRaycast *)std::malloc(sizeof(DebugPhysxRaycast) * MAX_RAY_COUNT);
 			ZeroMemory(raycasts, sizeof(DebugPhysxRaycast) * MAX_RAY_COUNT);
 			startRays = 0;
 			numRays = 0;
-			/*
+
+			debugRayGeometry = BasicGeometry::CreateLine(device, DirectX::XMFLOAT3{ 0.2f, 0.3f, 0.9f });
+
 			{
+				debugMaterial = resMan->FromFiles(L"DebugPhysxVS.cso", L"DebugPhysxPS.cso", debugRayGeometry);
+
+
+				/*
+
 				Egg::PipelineState::P dbpso = Egg::PipelineState::Create();
 				dbpso->SetRootSignature(debugPhysxRS);
 				dbpso->SetVertexShader(debugPhysxVS);
@@ -44,10 +64,10 @@ namespace Egg {
 				debugMaterial = Egg::Material::Create(psoMan, layout, dbpso);
 				debugMaterial->ConstantBufferSlot(DebugPhysxShapeCb::id, 0);
 				debugMaterial->ConstantBufferSlot(PerObjectCb::id, 1);
-				debugMaterial->ConstantBufferSlot(PerFrameCb::id, 2);
+				debugMaterial->ConstantBufferSlot(PerFrameCb::id, 2);*/
 			}
 
-			{
+			{/*
 				Egg::PipelineState::P dbrpso = Egg::PipelineState::Create();
 				dbrpso->SetRootSignature(debugPhysxRayRS);
 				dbrpso->SetVertexShader(debugPhysxRayVS);
@@ -60,8 +80,8 @@ namespace Egg {
 
 				debugRayMaterial = Egg::Material::Create(psoMan, layout, dbrpso);
 				debugRayMaterial->ConstantBufferSlot(PerRayCb::id, 0);
-				debugRayMaterial->ConstantBufferSlot(PerFrameCb::id, 1);
-			}*/
+				debugRayMaterial->ConstantBufferSlot(PerFrameCb::id, 1);*/
+			}
 
 			actors.reserve(32);
 		}
@@ -83,8 +103,8 @@ namespace Egg {
 		}
 
 		Egg::DebugPhysxActor& AddActor(physx::PxRigidActor * actor) {
-			//actors.emplace_back(device, debugMaterial, actor);
-			return actors[actors.size() - 1];
+			actors.emplace_back(device, debugMaterial, actor);
+			return actors.back();
 		}
 
 		void RemoveActor(physx::PxActor * actor) {
@@ -121,23 +141,21 @@ namespace Egg {
 
 		}
 
-		void Draw(ID3D12GraphicsCommandList * gcl, ConstantBuffer<PerFrameCb> & perFrame) {
-		//	debugMaterial->ApplyPipelineState(gcl);
-		//	debugMaterial->BindConstantBuffer(gcl, perFrame);
+		void Draw(ID3D12GraphicsCommandList * gcl, D3D12_GPU_VIRTUAL_ADDRESS perFrameCb) {
+			debugMaterial.SetPipelineState(gcl);
+			debugMaterial.BindConstantBuffer(gcl, PerFrameCb::id, perFrameCb);
 
 			for(auto & i : actors) {
 				i.Draw(gcl);
 			}
 
-		//	debugRayMaterial->ApplyPipelineState(gcl);
-		//	debugRayMaterial->BindConstantBuffer(gcl, perFrame);
+			//debugRayMaterial.SetPipelineState(gcl);
+			//debugRayMaterial.BindConstantBuffer(gcl, PerFrameCb::id, perFrameCb);
 
-			for(int i = 0; i < numRays; ++i) {
-				raycasts[(startRays + i) % MAX_RAY_COUNT].Draw(gcl);
-			}
+			//for(int i = 0; i < numRays; ++i) {
+			//	raycasts[(startRays + i) % MAX_RAY_COUNT].Draw(gcl);
+			//}
 		}
-
-
 
 	};
 

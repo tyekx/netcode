@@ -5,7 +5,7 @@
 #include "Asset/Model.h"
 #include <vector>
 #include "ConstantBufferTypes.h"
-#include "LinearAllocator.h"
+#include "LinearClassifier.h"
 #include "AnimationBlender.h"
 
 namespace Egg::Animation {
@@ -13,7 +13,7 @@ namespace Egg::Animation {
 
 
 	class Blackboard {
-		Memory::LinearAllocator allocator;
+		Memory::LinearClassifier classifier;
 
 		AnimationState * prevState;
 		AnimationState * currentState;

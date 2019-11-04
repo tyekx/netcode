@@ -10,7 +10,8 @@ static struct {
 	{ PerMeshCb::id, "PerMeshCb" },
 	{ PerFrameCb::id, "PerFrameCb"},
 	{ BoneDataCb::id, "BoneDataCb"},
-	{ PerObjectCb::id, "PerObjectCb" }
+	{ PerObjectCb::id, "PerObjectCb" },
+	{ DebugPhysxShapeCb::id, "PerShapeCb" }
 
 };
 

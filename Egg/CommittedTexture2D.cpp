@@ -1,11 +1,12 @@
 #include "CommittedTexture2D.h"
 #include <DirectXTex/DirectXTex.h>
+#include "Utility.h"
 
 namespace Egg::Graphics::Resource::Committed {
 
 
 
-	Texture2D::Texture2D() noexcept : resource{ nullptr }, uploadResource{ nullptr }, resourceDesc{} { }
+	Texture2D::Texture2D() noexcept : resource { nullptr }, uploadResource{ nullptr }, resourceDesc{} { }
 
 	Texture2D & Texture2D::operator=(Texture2D t) noexcept {
 		std::swap(resource, t.resource);
@@ -41,7 +42,7 @@ namespace Egg::Graphics::Resource::Committed {
 				IID_PPV_ARGS(resource.GetAddressOf()));
 
 		UINT64 copyableSize;
-		device->GetCopyableFootprints(&resourceDesc, 0, 1, 0, nullptr, nullptr, nullptr, &copyableSize);
+		device->GetCopyableFootprints(&resourceDesc, 0, resourceDesc.MipLevels, 0, nullptr, nullptr, nullptr, &copyableSize);
 
 		DX_API("failed to create committed resource for texture file (upload buffer)")
 			device->CreateCommittedResource(
@@ -67,16 +68,25 @@ namespace Egg::Graphics::Resource::Committed {
 		if(uploadResource == nullptr) {
 			return;
 		}
-		CD3DX12_TEXTURE_COPY_LOCATION dst{ resource.Get(), 0 };
-		D3D12_PLACED_SUBRESOURCE_FOOTPRINT psf;
-		psf.Offset = 0;
-		psf.Footprint.Depth = 1;
-		psf.Footprint.Height = (UINT32)resourceDesc.Height;
-		psf.Footprint.Width = (UINT32)resourceDesc.Width;
-		psf.Footprint.RowPitch = (UINT32)((DirectX::BitsPerPixel(resourceDesc.Format) / 8U) * resourceDesc.Width);
-		psf.Footprint.Format = resourceDesc.Format;
-		CD3DX12_TEXTURE_COPY_LOCATION src{ uploadResource.Get(), psf };
-		copyCommandList->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
+		UINT offset = 0;
+		UINT bytesPerPixel = (DirectX::BitsPerPixel(resourceDesc.Format) / 8U);
+		for(UINT i = 0; i < resourceDesc.MipLevels; ++i) {
+			CD3DX12_TEXTURE_COPY_LOCATION dst{ resource.Get(), i };
+
+			UINT width = ((UINT)resourceDesc.Width) >> i;
+			UINT height = ((UINT)resourceDesc.Height) >> i; 
+
+			D3D12_PLACED_SUBRESOURCE_FOOTPRINT psf;
+			psf.Offset = offset;
+			psf.Footprint.Depth = 1;
+			psf.Footprint.Height = height;
+			psf.Footprint.Width = width;
+			psf.Footprint.RowPitch = psf.Footprint.Width * bytesPerPixel;
+			psf.Footprint.Format = resourceDesc.Format;
+			offset += height * width * bytesPerPixel;
+			CD3DX12_TEXTURE_COPY_LOCATION src{ uploadResource.Get(), psf };
+			copyCommandList->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
+		}
 		copyCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
 	}
 
@@ -93,6 +103,8 @@ namespace Egg::Graphics::Resource::Committed {
 		ZeroMemory(&srvd, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
 		srvd.Format = resourceDesc.Format;
 		srvd.Texture2D.MipLevels = resourceDesc.MipLevels;
+		srvd.Texture2D.MostDetailedMip = 0;
+		srvd.Texture2D.ResourceMinLODClamp = 0.0f;
 		srvd.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 

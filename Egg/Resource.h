@@ -19,11 +19,12 @@ namespace Egg::Graphics::Resource {
 	Interface for swapchain resources
 	these resources need to be updated during a resize/maximize/minimize operation, or when a new swapchain is created
 	*/
-	class ISwapChainResource : public IResource {
+	class ISwapChainResource {
 	public:
 		virtual ~ISwapChainResource() = default;
 		virtual void CreateSwapChainResources(ID3D12Device * device) = 0;
 		virtual void ReleaseSwapChainResources() = 0;
+		virtual void Resize(UINT width, UINT height) = 0;
 	};
 
 

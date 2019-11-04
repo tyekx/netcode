@@ -3,10 +3,10 @@
 namespace Egg::Memory {
 
 	/*
-	Linear allocator class which helps filling pre-allocated memory. Calling the constructors / destructors is the task of the user
-	If not detached, the linear allocator will delete the memory at destruction
+	Linear classifier helps filling pre-allocated memory. Calling the constructors / destructors is the task of the user
+	If not detached, will delete the memory at destruction
 	*/
-	class LinearAllocator {
+	class LinearClassifier {
 		void * allocation;
 		unsigned char * ptr;
 		unsigned int nextByte;
@@ -14,11 +14,11 @@ namespace Egg::Memory {
 		void Clear() noexcept;
 
 	public:
-		LinearAllocator();
+		LinearClassifier();
 
-		LinearAllocator(unsigned int sizeInBytes);
+		LinearClassifier(unsigned int sizeInBytes);
 
-		~LinearAllocator();
+		~LinearClassifier();
 
 		void Initialize(unsigned int sizeInBytes);
 

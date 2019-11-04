@@ -10,6 +10,21 @@ Only allow 1024 character long mesasges, if your message get cropped consider in
 */
 #define OUTPUT_BUFFER_SIZE 1024
 
+const char * Egg::Utility::FeatureLevelToString(D3D_FEATURE_LEVEL ftlvl) {
+	switch(ftlvl) {
+	case D3D_FEATURE_LEVEL_9_1: return "Feature level 9.1";
+	case D3D_FEATURE_LEVEL_9_2: return "Feature level 9.2";
+	case D3D_FEATURE_LEVEL_9_3: return "Feature level 9.3";
+	case D3D_FEATURE_LEVEL_10_0: return "Feature level 10.0";
+	case D3D_FEATURE_LEVEL_10_1: return "Feature level 10.1";
+	case D3D_FEATURE_LEVEL_11_0: return "Feature level 11.0";
+	case D3D_FEATURE_LEVEL_11_1: return "Feature level 11.1";
+	case D3D_FEATURE_LEVEL_12_0: return "Feature level 12.0";
+	case D3D_FEATURE_LEVEL_12_1: return "Feature level 12.1";
+	default: return "Unknown feature level";
+	}
+}
+
 void Egg::Utility::DebugPrintBlob(com_ptr<ID3DBlob> blob) {
 	if(blob != nullptr) {
 		OutputDebugString(reinterpret_cast<const char*>(blob->GetBufferPointer()));

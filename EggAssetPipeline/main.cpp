@@ -10,6 +10,8 @@
 #include <Egg/Vertex.h>
 #include <Egg/Exporter.h>
 #include <Egg/Importer.h>
+#include <Egg/Asset/Animation.h>
+#include <Egg/LinearAllocator.h>
 
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
@@ -230,13 +232,21 @@ void ProcessBones(std::vector<ProcessedBone> & dst, const ImportedModel & model,
 	if(node->mName.data[0] != '\0') {
 		const ImportedBone * refBone = IsReferenced(node->mName.C_Str(), model);
 		if(refBone != nullptr) {
+			printf("parentName: %s\r\n", GetParentName(node->mParent));
 			ProcessedBone b;
 			b.name = node->mName.C_Str();
 			b.parentIndex = GetIndex(dst, GetParentName(node->mParent));
 			b.offsetMatrix = refBone->offsetMatrix;
+
+			if(node->mParent != nullptr && b.parentIndex == -1) {
+				//non animated bone parent, need to get the transformation
+				if(!node->mParent->mTransformation.IsIdentity()) {
+					b.offsetMatrix = refBone->offsetMatrix * node->mParent->mTransformation;
+				}
+			}
+
 			dst.push_back(b);
 		} else {
-
 			printf("Bone not referenced: %s\r\n", node->mName.C_Str());
 		}
 	}
@@ -936,8 +946,7 @@ void WriteBinary(const char * dest, ImportedModel & model, std::vector<Processed
 
 	unsigned int s = CalculateRequiredMemory(model, bones, anims);
 
-	Egg::Importer::LinearAllocator allocator{ s };
-	m.memoryAllocation = allocator.ptr;
+	Egg::Memory::LinearClassifier allocator{ s };
 
 	m.meshesLength = model.meshes.size();
 	m.meshes = reinterpret_cast<Egg::Asset::Mesh *>(allocator.Allocate(m.meshesLength * sizeof(Egg::Asset::Mesh)));
@@ -1045,4 +1054,5 @@ void WriteBinary(const char * dest, ImportedModel & model, std::vector<Processed
 	}
 
 	printf("Exported successfully into file: %s\r\n", dest);
+	m.memoryAllocation = allocator.Detach();
 }

@@ -36,20 +36,20 @@ namespace Egg::Animation {
 		}
 	}
 
-	Blackboard::Blackboard() : allocator{}, prevState{ nullptr }, currentState{ nullptr }, states{ nullptr }, statesLength{ 0 }, blender{ nullptr } { }
+	Blackboard::Blackboard() : classifier{}, prevState{ nullptr }, currentState{ nullptr }, states{ nullptr }, statesLength{ 0 }, blender{ nullptr } { }
 
 	void Blackboard::CreateResources(Asset::Model * model, BoneDataCb * writeDest, unsigned int animationsLength,
 						const std::initializer_list<AnimationState> & sts,
 						const std::initializer_list<TransitionInit> &transitions) {
 
 		UINT requiredSize = static_cast<UINT>(sts.size() * sizeof(AnimationState) + transitions.size() * sizeof(AnimationState::Transition) + sizeof(AnimationBlender));
-		allocator.Initialize(requiredSize);
+		classifier.Initialize(requiredSize);
 
-		blender = allocator.Allocate<AnimationBlender>();
+		blender = classifier.Allocate<AnimationBlender>();
 		new (blender) AnimationBlender{ model->bones, model->bonesLength, writeDest };
 
 		// step1: allocate and initialize states
-		states = static_cast<AnimationState *>(allocator.Allocate(static_cast<UINT>(sizeof(AnimationState) * sts.size())));
+		states = static_cast<AnimationState *>(classifier.Allocate(static_cast<UINT>(sizeof(AnimationState) * sts.size())));
 		statesLength = static_cast<UINT>(sts.size());
 
 		UINT idx = 0;
@@ -68,7 +68,7 @@ namespace Egg::Animation {
 		// step3: allocate memory for transitions and initialize it
 		for(UINT i = 0; i < statesLength; ++i) {
 			AnimationState * state = states + i;
-			state->transitions = static_cast<AnimationState::Transition *>(allocator.Allocate(sizeof(AnimationState::Transition) * state->transitionsLength));
+			state->transitions = static_cast<AnimationState::Transition *>(classifier.Allocate(sizeof(AnimationState::Transition) * state->transitionsLength));
 			for(UINT j = 0; j < state->transitionsLength; ++j) {
 				new (state->transitions + j) AnimationState::Transition{};
 			}

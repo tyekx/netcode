@@ -4,22 +4,44 @@
 #include "Resource.h"
 #include <map>
 #include <memory>
+#include "Importer.h"
 
 namespace Egg::Graphics::Internal {
 
 	class TextureLibrary {
 		ID3D12Device * device;
-		std::map<std::string, std::unique_ptr<Resource::ITexture>> textures;
+		std::map<std::string, Resource::Committed::Texture2D> textures;
 		com_ptr<ID3D12DescriptorHeap> descriptorHeap;
 		UINT increment;
 		UINT nextId;
 		UINT maxDesc;
 
 	public:
-		TextureLibrary() : textures{}, descriptorHeap{}, increment{}, nextId{ 0 }, maxDesc{ 2048 } {}
+		TextureLibrary() : device{ nullptr }, textures {}, descriptorHeap{}, increment{}, nextId{ 0 }, maxDesc{ 2048 } {}
+
+		void SetDescriptorHeap(ID3D12GraphicsCommandList * gcl) {
+			ID3D12DescriptorHeap * dHeaps[] = { descriptorHeap.Get() };
+			gcl->SetDescriptorHeaps(_countof(dHeaps), dHeaps);
+		}
 
 		void LoadTexture(const std::string & name) {
 			// @TODO: import and insert
+
+			auto tex = Importer::ImportCommittedTexture2D(device, Egg::Utility::ToWideString(name));
+			
+			textures[name] = tex;
+		}
+
+		void UploadResources(ID3D12GraphicsCommandList * gcl) {
+			for(auto & i : textures) {
+				i.second.UploadResources(gcl);
+			}
+		}
+
+		void ReleaseUploadResources() {
+			for(auto & i : textures) {
+				i.second.ReleaseUploadResources();
+			}
 		}
 
 		void CreateResources(ID3D12Device * dev) {
@@ -44,17 +66,17 @@ namespace Egg::Graphics::Internal {
 				it = textures.find(name);
 			}
 
-			CD3DX12_CPU_DESCRIPTOR_HANDLE dh{ descriptorHeap->GetCPUDescriptorHandleForHeapStart() };
-			dh.Offset(increment * nextId);
-			it->second->CreateShaderResourceView(device, dh);
+			D3D12_CPU_DESCRIPTOR_HANDLE cpuDh = descriptorHeap->GetCPUDescriptorHandleForHeapStart();
+			cpuDh.ptr += increment * nextId;
+			it->second.CreateShaderResourceView(device, cpuDh);
 
-			CD3DX12_GPU_DESCRIPTOR_HANDLE gdh{ descriptorHeap->GetGPUDescriptorHandleForHeapStart() };
-			gdh.Offset(increment * nextId);
+			D3D12_GPU_DESCRIPTOR_HANDLE gpuDh{ descriptorHeap->GetGPUDescriptorHandleForHeapStart() };
+			gpuDh.ptr += increment * nextId;
 
 			++nextId;
 
 			if(dst.ptr == 0) {
-				dst.ptr = gdh.ptr;
+				dst.ptr = gpuDh.ptr;
 			}
 		}
 

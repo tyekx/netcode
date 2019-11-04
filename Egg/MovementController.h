@@ -9,12 +9,14 @@ namespace Egg {
 		float dirX;
 		float dirY;
 		float dirZ;
+		float firing;
 
 	public:
 		void Update() {
 			dirX = Input::GetAxis("Horizontal");
 			dirY = Input::GetAxis("Vertical");
 			dirZ = Input::GetAxis("Jump");
+			firing = Input::GetAxis("Fire");
 		}
 
 		bool IsMovingForward() const {
@@ -54,7 +56,7 @@ namespace Egg {
 		}
 
 		bool IsFiring() const {
-			return false;
+			return firing > 0;
 		}
 
 		bool IsOnGround() const {

@@ -14,6 +14,14 @@ SHADER_TEX_NORMAL
 SHADER_TEX_DIFFUSE
 */
 
+#if !defined(SHADER_TEX_NORMAL)
+#define INTERNAL_USE_WORLD_SPACE
+#endif
+
+#if defined(IAO_HAS_TANGENT_SPACE) && defined(SHADER_TEX_NORMAL)
+#define INTERNAL_USE_TANGENT_SPACE
+#endif
+
 struct IAOutput {
 	float3 position : POSITION;
 
@@ -49,10 +57,17 @@ struct VSOutput {
 	float4 worldPos : POSITION;
 #endif
 
-#ifdef IAO_HAS_NORMAL
+#ifdef INTERNAL_USE_WORLD_SPACE
 	float3 normal : NORMAL;
 	float3 viewDir : VIEWDIR;
 #endif
+
+#ifdef INTERNAL_USE_TANGENT_SPACE
+	float3 normal : NORMAL;
+	float3 viewDirTS : VIEWDIR;
+	float3 lightDirTS : LIGHTDIR;
+#endif
+
 
 #ifdef IAO_HAS_TEXCOORD
 	float2 texCoord : TEXCOORD;
@@ -155,12 +170,11 @@ float3 BlinnPhong(float3 lightIntensity, float3 lightVec, float3 normalVec, floa
 	return (diffuseAlbedo + specAlbedo) * lightIntensity;
 }
 
-float3 ComputeDirectionalLight(Light L, Material mat, float3 normal, float3 toEye, float2 tex)
+float3 ComputeDirectionalLight(Material mat, float3 lightIntensity, float3 toLight, float3 normal, float3 toEye, float2 tex)
 {
-	float3 toLight = L.position.xyz;
 	float ndotl = max(dot(toLight, normal), 0.0f);
 
-	return BlinnPhong(L.intensity.xyz * ndotl, toLight, normal, toEye, mat, tex);
+	return BlinnPhong(lightIntensity * ndotl, toLight, normal, toEye, mat, tex);
 }
 /*
 float3 ComputePointLight(Light L, Material mat, float3 pos, float3 normal, float3 toEye, float2 tex)
@@ -219,7 +233,7 @@ VSOutput Vertex_Main(IAOutput iao) {
 
 	float3 animPos = float3(0, 0, 0);
 	float3 animNormal = float3(0, 0, 0);
-#ifdef IAO_HAS_TANGENT_SPACE
+#ifdef INTERNAL_USE_TANGENT_SPACE
 	float3 animTangent = float3(0, 0, 0);
 	float3 animBinormal = float3(0, 0, 0);
 #endif
@@ -227,15 +241,15 @@ VSOutput Vertex_Main(IAOutput iao) {
 	for(int i = 0; i < 4; ++i) {
 		animPos += weights[i] * (mul(float4(iao.position, 1), bindTransforms[iao.boneIds[i]]).xyz);
 		animNormal += weights[i] * (mul(iao.normal, (float3x3)bindTransforms[iao.boneIds[i]]));
-#ifdef IAO_HAS_TANGENT_SPACE
-		animTangent += weights[i] * (mul(iao.tangent, (float3x3)bindTransforms[iao.boneIds[i]])));
-		animBinormal += weights[i] * (mul(iao.binormal, (float3x3)bindTransforms[iao.boneIds[i]])));
+#ifdef INTERNAL_USE_TANGENT_SPACE
+		animTangent += weights[i] * (mul(iao.tangent, (float3x3)bindTransforms[iao.boneIds[i]]));
+		animBinormal += weights[i] * (mul(iao.binormal, (float3x3)bindTransforms[iao.boneIds[i]]));
 #endif
 	}
 
 	iao.position = animPos;
 	iao.normal = animNormal;
-#ifdef IAO_HAS_TANGENT_SPACE
+#ifdef INTERNAL_USE_TANGENT_SPACE
 	iao.tangent = animTangent;
 	iao.binormal = animBinormal;
 #endif
@@ -245,10 +259,28 @@ VSOutput Vertex_Main(IAOutput iao) {
 	float4 worldPos = mul(float4(iao.position, 1), model);
 	vso.position = mul(worldPos, viewProj);
 
-#ifdef IAO_HAS_NORMAL
+#ifdef INTERNAL_USE_WORLD_SPACE
 	vso.normal = mul(modelInv, float4(iao.normal, 0)).xyz;
 	float4 hViewDir = eyePosition - worldPos;
 	vso.viewDir = hViewDir.xyz / hViewDir.w;
+#endif
+
+#ifdef INTERNAL_USE_TANGENT_SPACE
+	
+	iao.tangent = normalize(mul(modelInv, float4(iao.tangent, 0)).xyz);
+	iao.binormal = normalize(mul(modelInv, float4(iao.binormal, 0)).xyz);
+	iao.normal = normalize(mul(modelInv, float4(iao.normal, 0)).xyz);
+
+	float3x3 tbn = { iao.tangent, iao.binormal, -iao.normal };
+
+	float4 hViewDir = eyePosition - worldPos;
+	float3 viewDir = hViewDir.xyz / hViewDir.w;
+
+	float3 lightDir = lights[0].position.xyz * eyePosition.w - eyePosition.xyz * lights[0].position.w;
+	lightDir = normalize(lightDir);
+	vso.normal = iao.normal;
+	vso.viewDirTS = mul(tbn, viewDir);
+	vso.lightDirTS = mul(tbn, lightDir);
 #endif
 
 #ifdef SHADER_NUM_LIGHTS
@@ -256,7 +288,7 @@ VSOutput Vertex_Main(IAOutput iao) {
 #endif
 
 #ifdef IAO_HAS_TEXCOORD
-	vso.texCoord = iao.texCoord;
+	vso.texCoord = float2(iao.texCoord.x, 1.0f - iao.texCoord.y);
 #endif
 
 #ifdef IAO_HAS_COLOR
@@ -269,17 +301,41 @@ VSOutput Vertex_Main(IAOutput iao) {
 float4 Pixel_Main(VSOutput vso) : SV_Target{
 
 #ifdef IAO_HAS_TEXCOORD
-	float2 texCoords = vso.texCoord;
+	float2 texCoords = vso.texCoord.xy;
 #else 
-	float2 texCorods = float2(0, 0);
+	float2 texCoords = float2(0, 0);
 #endif
 
-#ifdef SHADER_NUM_LIGHTS
+#if defined(INTERNAL_USE_WORLD_SPACE) && defined(SHADER_NUM_LIGHTS)
+
+	float3 toLight = normalize(lights[0].position.xyz);
+
 	float3 shade = ComputeDirectionalLight(
-		lights[0], // todo, make iteration from this
 		material,
+		lights[0].intensity.xyz,
+		toLight,
 		normalize(vso.normal),
 		normalize(vso.viewDir).xyz,
+		texCoords);
+
+	return float4(shade, 1.0f);
+#endif
+
+#if defined(INTERNAL_USE_TANGENT_SPACE) && defined(SHADER_NUM_LIGHTS)
+
+	float3 normalTS = normalize(vso.normal);
+#if defined(SHADER_TEX_NORMAL)
+	normalTS = normalize(normalTex.Sample(linearWrapSampler, vso.texCoord).xyz - 0.5f);
+	vso.viewDirTS = normalize(vso.viewDirTS);
+	vso.lightDirTS = normalize(vso.lightDirTS);
+#endif
+
+	float3 shade = ComputeDirectionalLight(
+		material,
+		lights[0].intensity.xyz,
+		vso.lightDirTS,
+		normalTS,
+		vso.viewDirTS,
 		texCoords);
 
 	return float4(shade, 1.0f);

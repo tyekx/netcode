@@ -61,11 +61,12 @@ namespace Egg::Graphics::Internal {
 			gpso.SampleDesc.Quality = 0;
 			gpso.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 			gpso.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+			gpso.RasterizerState.FillMode = geometry->mode;
 			gpso.InputLayout = geometry->GetInputLayout();
 			gpso.pRootSignature = rootSig;
 			gpso.VS = CD3DX12_SHADER_BYTECODE(scc.vertexShader);
 			gpso.PS = CD3DX12_SHADER_BYTECODE(scc.pixelShader);
-			gpso.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+			gpso.PrimitiveTopologyType = geometry->topologyType;
 
 			if(!Exist(gpso)) {
 				CreateGPSO(gpso);

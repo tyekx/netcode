@@ -38,29 +38,29 @@ namespace Egg {
 	}
 
 	void DebugPhysxActor::Draw(ID3D12GraphicsCommandList * cl) {
-	//	debugMaterial->BindConstantBuffer(cl, perObject);
+	    debugMaterial.BindConstantBuffer(cl, PerObjectCb::id, perObject.GetGPUVirtualAddress());
 
 		unsigned int geomId = 0;
-		for(auto i : geometry) {
-			debugMaterial->BindConstantBuffer(cl, DebugPhysxShapeCb::id, perShapeCb.AddressAt(geomId));
+		for(auto& i : meshes) {
+			debugMaterial.BindConstantBuffer(cl, DebugPhysxShapeCb::id, perShapeCb.AddressAt(geomId));
 			++geomId;
 			i.Draw(cl);
 		}
 	}
 
-	DebugPhysxActor::DebugPhysxActor(ID3D12Device * device, Egg::Material * mat, physx::PxRigidActor * actorRef) : actorReference{ actorRef }, debugMaterial{ mat } {
-
+	DebugPhysxActor::DebugPhysxActor(ID3D12Device * device, const Egg::Material & mat, physx::PxRigidActor * actorRef) : actorReference{ actorRef }, debugMaterial{ } {
+		debugMaterial = mat;
 		perObject.CreateResources(device);
 		perShapeCb.CreateResources(device);
 
 		physx::PxU32 numShapes = actorRef->getNbShapes();
 
 		actorRef->getShapes(shapes.data(), numShapes);
-		/*
+
 		for(unsigned int i = 0; i < numShapes; ++i) {
 			physx::PxGeometryType::Enum type = shapes[i]->getGeometryType();
 
-			Egg::Mesh::Geometry::P geom;
+			Egg::Graphics::Geometry geom;
 
 			physx::PxTransform transform = shapes[i]->getLocalPose();
 
@@ -79,7 +79,7 @@ namespace Egg {
 			if(type == physx::PxGeometryType::ePLANE) {
 				physx::PxPlaneGeometry plane;
 				shapes[i]->getPlaneGeometry(plane);
-				geom = BasicGeometry::CreatePlaneWireframe(device, 50, DirectX::XMFLOAT3{ 0.5f, 0.5f, 0.5f });
+				geom = BasicGeometry::CreatePlaneWireframe(device, 20, DirectX::XMFLOAT3{ 0.5f, 0.5f, 0.5f });
 			}
 
 			if(type == physx::PxGeometryType::eBOX) {
@@ -88,9 +88,10 @@ namespace Egg {
 				geom = BasicGeometry::CreateBoxWireframe(device, ToFloat3(box.halfExtents), DirectX::XMFLOAT3{ 0.6f, 0.8f, 0.2f });
 			}
 
-			geometry.push_back(geom);
+			meshes.push_back(geom.GetMesh());
+			geometries.push_back(std::move(geom));
 		}
-		*/
+
 		perShapeCb.Upload();
 	}
 

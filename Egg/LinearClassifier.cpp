@@ -1,28 +1,28 @@
-#include "LinearAllocator.h"
+#include "LinearClassifier.h"
 #include <cstdlib>
 
 namespace Egg::Memory {
 
-	LinearAllocator::LinearAllocator() {
+	LinearClassifier::LinearClassifier() {
 		Clear();
 	}
 
-	void LinearAllocator::Clear() noexcept {
+	void LinearClassifier::Clear() noexcept {
 		allocation = nullptr;
 		ptr = nullptr;
 		nextByte = 0;
 	}
 
-	LinearAllocator::LinearAllocator(unsigned int sizeInBytes) {
+	LinearClassifier::LinearClassifier(unsigned int sizeInBytes) {
 		Initialize(sizeInBytes);
 	}
 
-	LinearAllocator::~LinearAllocator() {
+	LinearClassifier::~LinearClassifier() {
 		std::free(allocation);
 		Clear();
 	}
 
-	void LinearAllocator::Initialize(unsigned int sizeInBytes) {
+	void LinearClassifier::Initialize(unsigned int sizeInBytes) {
 		if(allocation == nullptr) {
 			allocation = std::malloc(sizeInBytes);
 			ptr = (unsigned char *)allocation;
@@ -30,17 +30,17 @@ namespace Egg::Memory {
 		}
 	}
 
-	void * LinearAllocator::Detach() {
+	void * LinearClassifier::Detach() {
 		void * tmp = allocation;
 		Clear();
 		return tmp;
 	}
 
-	void * LinearAllocator::GetBasePointer() {
+	void * LinearClassifier::GetBasePointer() {
 		return allocation;
 	}
 
-	void * LinearAllocator::Allocate(unsigned int n) {
+	void * LinearClassifier::Allocate(unsigned int n) {
 		void * p = ptr + nextByte;
 		nextByte += n;
 		return p;

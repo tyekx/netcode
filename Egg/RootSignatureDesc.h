@@ -8,6 +8,7 @@ namespace Egg::Graphics::Internal {
 	class RootSignatureDesc {
 		std::vector<D3D12_ROOT_PARAMETER> rootParams;
 		std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
+		D3D12_DESCRIPTOR_RANGE descRange;
 		D3D12_ROOT_SIGNATURE_DESC rootSigDesc;
 
 		bool GenerateSamplerState(const ShaderBindpoint & bp, D3D12_STATIC_SAMPLER_DESC & dst) {
@@ -15,7 +16,9 @@ namespace Egg::Graphics::Internal {
 				ZeroMemory(&dst, sizeof(D3D12_STATIC_SAMPLER_DESC));
 				dst.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 				dst.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-				dst.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+				dst.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+				dst.MaxLOD = 4.0f;
+				dst.MinLOD = 0.0f;
 				dst.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
 				dst.RegisterSpace = bp.space;
 				dst.ShaderRegister = bp.uid;
@@ -115,18 +118,21 @@ namespace Egg::Graphics::Internal {
 				}
 			}
 
-			D3D12_DESCRIPTOR_RANGE dr;
-			dr.BaseShaderRegister = 0;
-			dr.NumDescriptors = numTextures;
-			dr.RegisterSpace = 0;
-			dr.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-			dr.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+			descRange.BaseShaderRegister = 0;
+			descRange.NumDescriptors = numTextures;
+			descRange.RegisterSpace = 0;
+			descRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+			descRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 			D3D12_ROOT_PARAMETER texturesParam;
 			texturesParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 			texturesParam.ShaderVisibility = visibilty;
 			texturesParam.DescriptorTable.NumDescriptorRanges = 1;
-			texturesParam.DescriptorTable.pDescriptorRanges = &dr;
+			texturesParam.DescriptorTable.pDescriptorRanges = &descRange;
+
+			if(numTextures > 0) {
+				rootParams.push_back(texturesParam);
+			}
 
 			/*
 			static samplers last

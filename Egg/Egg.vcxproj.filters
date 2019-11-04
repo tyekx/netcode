@@ -43,9 +43,6 @@
     <Filter Include="Model\Material">
       <UniqueIdentifier>{ccf9c152-33c0-40c2-8719-0d1808263e02}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Model\Animation">
-      <UniqueIdentifier>{4f83584f-fd50-4e2b-a924-2c48b44efe86}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Gameplay">
       <UniqueIdentifier>{bffaa71e-00d8-49ff-9929-3cb9b6726e3c}</UniqueIdentifier>
     </Filter>
@@ -61,8 +58,11 @@
     <Filter Include="Graphics\Internal">
       <UniqueIdentifier>{ea3e0ca0-758c-4346-b62a-50611b58db72}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Model\Legacy">
-      <UniqueIdentifier>{2d9e6581-8568-4776-ac07-a5085a215761}</UniqueIdentifier>
+    <Filter Include="Animation">
+      <UniqueIdentifier>{4f83584f-fd50-4e2b-a924-2c48b44efe86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Engine">
+      <UniqueIdentifier>{5d7e5609-0356-417e-b0eb-d06f408754a6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -169,7 +169,7 @@
       <Filter>Model\Material</Filter>
     </ClInclude>
     <ClInclude Include="Blackboard.h">
-      <Filter>Model\Animation</Filter>
+      <Filter>Animation</Filter>
     </ClInclude>
     <ClInclude Include="AnimationComponent.h">
       <Filter>Components</Filter>
@@ -257,25 +257,22 @@
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="AnimationState.h">
-      <Filter>Model\Animation</Filter>
+      <Filter>Animation</Filter>
     </ClInclude>
     <ClInclude Include="Transition.h">
-      <Filter>Model\Animation</Filter>
-    </ClInclude>
-    <ClInclude Include="AnimationController.h">
-      <Filter>Model\Legacy</Filter>
+      <Filter>Animation</Filter>
     </ClInclude>
     <ClInclude Include="MovementController.h">
       <Filter>Gameplay</Filter>
     </ClInclude>
-    <ClInclude Include="CharacterController.h">
-      <Filter>Model\Legacy</Filter>
-    </ClInclude>
-    <ClInclude Include="LinearAllocator.h">
-      <Filter>Memory</Filter>
-    </ClInclude>
     <ClInclude Include="AnimationBlender.h">
-      <Filter>Model\Animation</Filter>
+      <Filter>Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Engine.h">
+      <Filter>Graphics\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="LinearClassifier.h">
+      <Filter>Memory</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -316,7 +313,6 @@
     <ClCompile Include="Material.cpp">
       <Filter>Model\Material</Filter>
     </ClCompile>
-    <ClCompile Include="CharacterController.cpp" />
     <ClCompile Include="Input.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
@@ -341,20 +337,20 @@
     <ClCompile Include="CommittedIBuffer.cpp">
       <Filter>Graphics\Resource</Filter>
     </ClCompile>
-    <ClCompile Include="LinearAllocator.cpp">
-      <Filter>Memory</Filter>
-    </ClCompile>
     <ClCompile Include="Blackboard.cpp">
-      <Filter>Model\Animation</Filter>
+      <Filter>Animation</Filter>
     </ClCompile>
     <ClCompile Include="AnimationState.cpp">
-      <Filter>Model\Animation</Filter>
+      <Filter>Animation</Filter>
     </ClCompile>
     <ClCompile Include="Transition.cpp">
-      <Filter>Model\Animation</Filter>
+      <Filter>Animation</Filter>
     </ClCompile>
     <ClCompile Include="AnimationBlender.cpp">
-      <Filter>Model\Animation</Filter>
+      <Filter>Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="LinearClassifier.cpp">
+      <Filter>Memory</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
