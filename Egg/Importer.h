@@ -12,8 +12,7 @@ namespace Egg::Importer {
 
 	void ImportModel(const MediaPath & mediaFile, Asset::Model & model);
 
-	Graphics::Resource::Committed::Texture2D 
-		ImportCommittedTexture2D(ID3D12Device * device, const MediaPath & filePath);
+	std::unique_ptr<Graphics::Resource::ITexture> ImportCommittedTexture2D(ID3D12Device * device, const MediaPath & filePath);
 
 
 }

@@ -21,7 +21,7 @@ namespace Egg::Graphics::Resource::Committed {
 
 		virtual void ReleaseResources() override;
 
-		virtual void UploadResources(ID3D12GraphicsCommandList * copyCommandList)  override;
+		virtual void UploadResources(IResourceUploader * uploader)  override;
 
 		virtual void ReleaseUploadResources() override;
 	};

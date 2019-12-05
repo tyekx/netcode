@@ -25,7 +25,7 @@ namespace Egg {
 
 		void UploadResources(ID3D12GraphicsCommandList * gcl) {
 			for(auto & i : geometries) {
-				i.vertexBuffer->UploadResources(gcl);
+				//i.vertexBuffer->UploadResources(gcl);
 			}
 		}
 

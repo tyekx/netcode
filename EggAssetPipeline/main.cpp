@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <string>
+#include <sstream>
 #include <algorithm>
 #include <vector>
 
@@ -11,21 +12,32 @@
 #include <Egg/Exporter.h>
 #include <Egg/Importer.h>
 #include <Egg/Asset/Animation.h>
-#include <Egg/LinearAllocator.h>
+#include <Egg/LinearClassifier.h>
 
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
+
+#include <shellapi.h>
 
 void ToLower(std::wstring & str) {
 	std::transform(str.begin(), str.end(), str.begin(), std::tolower);
 }
 
 void PrintHelp() {
-	printf("Usage: $ EggAssetPipeline <media_file> [<media_file>...] [--generate_tangent_space]\r\n");
-	printf("\tThis utility does preprocessing on assets to make it faster to load in a real scenario\r\n");
-	printf("\t<media_file>                 : This can be a relative or absolute file path. Output will be <media_file>.eggasset in the current working directory. For now only FBX files are supported\r\n");
+	printf("Usage(1): $ EggAssetPipeline --name=<string> --lods=<file>[,<file>,...] --animations=[<file>,...] [--generate_tangent_space]\r\n");
+	printf("Usage(2): $ EggAssetPipeline --manifest=<file>\r\n");
+	printf("Usage(3): $ EggAssetPipeline\r\n\r\n");
+
+	printf("\t(2): will load the expected arguments from a file, the arguments follow the (1) pattern in the manifest file\r\n");
+	printf("\t(3): will try to load the default manifest.txt file in the working directory\r\n\r\n");
+	
+	printf("Parameters:\r\n");
+	printf("\t	  --name				   : Name of the output file\r\n");
+	printf("\t    --lods				   : Different level of details for the same model, in a descending LOD order");
+	printf("\t    --animations			   : List of animations to be used for the mesh");
 	printf("\t    --generate_tangent_space : Tangents and binormals will be calculated for each mesh\r\n");
+	printf("\t	  --manifest               : Loads the program arguments from a manifest file\r\n");
 }
 
 struct ImportedAnimationKey {
@@ -73,13 +85,20 @@ struct ImportedBone {
 	aiVertexWeight * vertexWeights;
 };
 
+struct ImportedLOD {
+	unsigned int vertexCount;
+	unsigned int indexCount;
+	std::vector<unsigned char> vertices;
+	std::vector<uint32_t> indices;
+	std::vector<ImportedBone> bones;
+};
+
 struct ImportedMesh {
 	uint32_t materialIndex;
 	unsigned int vertexType;
 	unsigned int vertexSize;
-	std::vector<unsigned char> vertices;
-	std::vector<uint32_t> indices;
-	std::vector<ImportedBone> bones;
+	DirectX::BoundingBox boundingBox;
+	std::vector<ImportedLOD> lods;
 };
 
 struct ImportedMaterial {
@@ -130,61 +149,98 @@ Egg::Asset::AnimationEdge ToAnimationState(aiAnimBehaviour behaviour) {
 	}
 }
 
+void Explode(std::vector<std::wstring> & dst, const std::wstring & src, wchar_t delim) {
+
+	std::wstringstream ss{ src };
+
+	while(ss.good()) {
+		std::wstring substr;
+		std::getline(ss, substr, delim);
+		dst.push_back(substr);
+	}
+
+}
+
 void Process(const wchar_t * file, std::vector<ProcessedBone> & bones, ImportedModel & model, bool generateTangentSpace);
 void ProcessAnimation(const wchar_t * file, std::vector<ProcessedBone> & bones, std::vector<Animation> & anims);
 void WriteBinary(const char * dest, ImportedModel & model, std::vector<ProcessedBone> & bones, std::vector<Animation> & anims);
+void CalculateBoundingBoxes(ImportedModel & model);
 
 int wmain(int argc, wchar_t ** argv) {
 	Egg::ProgramArgs pa{ (const wchar_t**) argv, argc };
 
-	if(pa.IsSet(L"help") || argc < 2) {
+	if(argc == 1) {
+		// try find manifest
+		if(!Egg::Path::FileExists(L"manifest.txt")) {
+			printf("Error: Manifest was not found\r\n");
+			PrintHelp();
+			return 1;
+		} else {
+			const wchar_t * defaultManifest = L"--manifest=manifest.txt";
+			pa = Egg::ProgramArgs{ &defaultManifest, 1 };
+		}
+	}
+
+	if(pa.IsSet(L"help")) {
 		PrintHelp();
 		return 0;
+	}
+
+	if(pa.IsSet(L"manifest")) {
+		std::wstring manif = pa.GetArg(L"manifest");
+		std::string buffer;
+		if(!Egg::Path::FileExists(manif.c_str())) {
+			printf("Error: manifest file was not found\r\n");
+			return 1;
+		}
+
+		Egg::Utility::SlurpFile(buffer, manif);
+		std::wstring wbuf = Egg::Utility::ToWideString(buffer);
+		std::replace(wbuf.begin(), wbuf.end(), L'\n', L' ');
+		std::replace(wbuf.begin(), wbuf.end(), L'\r', L' ');
+
+		LPWSTR* argValues = CommandLineToArgvW(wbuf.c_str(), &argc);
+
+		pa = Egg::ProgramArgs{ (const wchar_t**)argValues, argc };
+
+		LocalFree(argValues);
+	}
+
+	if(!pa.IsSet(L"name")) {
+		printf("--name argument is required\r\n");
+		PrintHelp();
+		return 1;
+	}
+
+	if(!pa.IsSet(L"lods")) {
+		printf("--lods argument is required to have at least 1 reference");
+		PrintHelp();
+		return 1;
 	}
 
 	ImportedModel model;
 	std::vector<ProcessedBone> bones;
 	std::vector<Animation> anims;
 
-	std::string binaryName;
+	std::vector<std::wstring> lodFiles;
+	std::vector<std::wstring> animationFiles;
+	std::wstring name = pa.GetArg(L"name");
 
-	for(int i = 1; i < argc; ++i) {
-		std::wstring mediaFile{ argv[i] };
+	Explode(lodFiles, pa.GetArg(L"lods"), L',');
+	Explode(animationFiles, pa.GetArg(L"animations"), L',');
 
-		if(mediaFile[0] == L'-' && mediaFile[1] == L'-') {
-			continue;
-		}
-
-		std::size_t indexOfDot = mediaFile.find_last_of('.');
-
-		if(indexOfDot == std::wstring::npos) {
-			printf("Error: input file must be a file with extension\r\n");
-			return 1;
-		}
-
-		std::wstring extension = mediaFile.substr(indexOfDot);
-		ToLower(extension);
-
-		if(extension != L".fbx") {
-			printf("Error: input file must be an FBX file\r\n");
-			return 1;
-		}
-
-		if(!Egg::Path::FileExists(mediaFile.c_str())) {
-			printf("Error: input file (%S) was not found\r\n", mediaFile.c_str());
-			continue;
-		}
-
-		if(i == 1) {
-			// first should be T pose
-			Process(mediaFile.c_str(), bones, model, pa.IsSet(L"generate_tangent_space"));
-			binaryName = ExtractFileName(Egg::Utility::ToNarrowString(mediaFile));
-		} else {
-			ProcessAnimation(mediaFile.c_str(), bones, anims);
-		}
+	for(const std::wstring & i : lodFiles) {
+		Process(i.c_str(), bones, model, pa.IsSet(L"generate_tangent_space"));
+		CalculateBoundingBoxes(model);
 	}
 
-	binaryName += ".eggasset";
+	for(const std::wstring & i : animationFiles) {
+		ProcessAnimation(i.c_str(), bones, anims);
+	}
+
+	name += L".eggasset";
+
+	std::string binaryName = Egg::Utility::ToNarrowString(name);
 
 	WriteBinary(binaryName.c_str(), model, bones, anims);
 
@@ -192,12 +248,68 @@ int wmain(int argc, wchar_t ** argv) {
 	return 0;
 }
 
+DirectX::XMFLOAT3 ComponentWiseMin(const DirectX::XMFLOAT3 & a, const DirectX::XMFLOAT3 & b) {
+	return DirectX::XMFLOAT3{ std::min(a.x,b.x), std::min(a.y,b.y), std::min(a.z,b.z) };
+}
+
+DirectX::XMFLOAT3 ComponentWiseMax(const DirectX::XMFLOAT3 & a, const DirectX::XMFLOAT3 & b) {
+	return DirectX::XMFLOAT3{ std::max(a.x,b.x), std::max(a.y,b.y), std::max(a.z,b.z) };
+}
+
+void CalculateBoundingBoxes(ImportedModel & model) {
+	for(auto & mesh : model.meshes) {
+
+		DirectX::XMFLOAT3 maxVec{ -FLT_MAX, -FLT_MAX, -FLT_MAX };
+		DirectX::XMFLOAT3 minVec{ FLT_MAX, FLT_MAX, FLT_MAX };
+
+		for(auto & lod : mesh.lods) {
+			uint8_t * meshPtr = &(lod.vertices.at(0));
+			// would probably be better to use the index buffer if there is one
+			for(unsigned int i = 0; i < lod.vertexCount; ++i) {
+				Egg::PNT_Vertex * vert = reinterpret_cast<Egg::PNT_Vertex *>(meshPtr);
+
+				maxVec = ComponentWiseMax(maxVec, vert->position);
+				minVec = ComponentWiseMin(minVec, vert->position);
+
+				meshPtr += mesh.vertexSize;
+			}
+		}
+
+		/*
+		Idea: once we have the 2 edge-case points, the 2 imaginary point (not neccesairly a vertex), furthest each other,
+		then we center it.
+		Let A,B vectors, M mesh. No m point from the mesh has a smaller component than point A(x,y,z). B is the same but
+		is the greatest of any vertices component.
+		If A,B satisfies this, then (A+B)/2 will be the center of the bounding box, and the extents are calculated in
+		a way that | B - A | / 2, where the | B - A | is componentwise absolute value and not length. This will ensure the
+		tightest bounding box possible
+		*/
+
+		DirectX::XMVECTOR maxV = DirectX::XMLoadFloat3(&maxVec);
+		DirectX::XMVECTOR minV = DirectX::XMLoadFloat3(&minVec);
+
+		DirectX::XMVECTOR diffVec = DirectX::XMVectorSubtract(maxV, minV);
+
+		DirectX::XMVECTOR len = DirectX::XMVector3Length(diffVec);
+
+		DirectX::XMVECTOR posVector = DirectX::XMVectorScale(DirectX::XMVectorAdd(minV, maxV), 0.5f);
+		DirectX::XMVECTOR extentsVector = DirectX::XMVectorScale(DirectX::XMVectorAbs(diffVec), 0.5f);
+
+		DirectX::BoundingBox boundingBox{ };
+		DirectX::XMStoreFloat3(&boundingBox.Center, posVector);
+		DirectX::XMStoreFloat3(&boundingBox.Extents, extentsVector);
+
+		mesh.boundingBox = boundingBox;
+
+	}
+}
+
 const ImportedBone* IsReferenced(const char* boneName, const ImportedModel & im) {
 	for(const ImportedMesh & m : im.meshes) {
 		int i = 0;
-		for(const ImportedBone & ib : m.bones) {
+		for(const ImportedBone & ib : m.lods[0].bones) {
 			if(ib.name == boneName) {
-				return &(m.bones.at(i));
+				return &(m.lods[0].bones.at(i));
 			}
 			i++;
 		}
@@ -256,21 +368,6 @@ void ProcessBones(std::vector<ProcessedBone> & dst, const ImportedModel & model,
 	}
 }
 
-bool CheckTransformConsistency(const std::vector<ProcessedBone> & bones, const ImportedModel & im) {
-	for(const ProcessedBone & b : bones) {
-		for(const ImportedMesh & m : im.meshes) {
-			for(const ImportedBone & ib : m.bones) {
-				if(ib.name == b.name) {
-					if(b.offsetMatrix != ib.offsetMatrix) {
-						return false;
-					}
-				}
-			}
-		}
-	}
-	return true;
-}
-
 int FirstUnusedSlot(const int * src) {
 	for(int i = 0; i < 4; ++i) {
 		if(src[i] == 0) {
@@ -312,22 +409,24 @@ float & IndexFloat3(DirectX::XMFLOAT3 & v, unsigned int i) {
 
 void FillVertexWeights(ImportedModel & im, std::vector<ProcessedBone> & bones) {
 	for(ImportedMesh & m : im.meshes) {
-		for(ImportedBone & ib : m.bones) {
-			for(uint32_t vi = 0; vi < ib.numVertexWeights; ++vi) {
-				void * vPtr = &(m.vertices.at(ib.vertexWeights[vi].mVertexId * m.vertexSize));
-				Egg::PNTWB_Vertex * vert = reinterpret_cast<Egg::PNTWB_Vertex *>(vPtr);
+		for(ImportedLOD & lod : m.lods) {
+			for(ImportedBone & ib : lod.bones) {
+				for(uint32_t vi = 0; vi < ib.numVertexWeights; ++vi) {
+					void * vPtr = &(lod.vertices.at(ib.vertexWeights[vi].mVertexId * m.vertexSize));
+					Egg::PNTWB_Vertex * vert = reinterpret_cast<Egg::PNTWB_Vertex *>(vPtr);
 
-				int k = FirstUnusedSlot(reinterpret_cast<int*>(&(vert->boneIds)));
-				int l = GetBoneIndex(bones, ib.name.c_str());
+					int k = FirstUnusedSlot(reinterpret_cast<int *>(&(vert->boneIds)));
+					int l = GetBoneIndex(bones, ib.name.c_str());
 
-				if(k == -1 || l == -1) {
-					continue;
-				}
+					if(k == -1 || l == -1) {
+						continue;
+					}
 
-				IndexInt4(vert->boneIds, k) = l;
-				
-				if(k < 3 && k >= 0) {
-					IndexFloat3(vert->weights, k) = ib.vertexWeights[vi].mWeight;
+					IndexInt4(vert->boneIds, k) = l;
+
+					if(k < 3 && k >= 0) {
+						IndexFloat3(vert->weights, k) = ib.vertexWeights[vi].mWeight;
+					}
 				}
 			}
 		}
@@ -444,8 +543,14 @@ void Process(const wchar_t * file, std::vector<ProcessedBone> & bones, ImportedM
 	uint32_t texCount = scene->mNumTextures;
 	uint32_t matCount = scene->mNumMaterials;
 
-	model.meshes.reserve(meshCount);
-	model.materials.reserve(matCount);
+	bool isLodLevel = true;
+	if(model.meshes.size() == 0) {
+		isLodLevel = false;
+		model.meshes.reserve(meshCount);
+		model.materials.reserve(matCount);
+	} else {
+		ASSERT(model.meshes.size() == meshCount, "A lod level must have the same amount of meshes");
+	}
 
 
 	for(uint32_t i = 0; i < meshCount; ++i) {
@@ -476,14 +581,24 @@ void Process(const wchar_t * file, std::vector<ProcessedBone> & bones, ImportedM
 
 		/* processing PNT mesh, just the usual stuff */
 		
-		ImportedMesh im;
-		im.vertexSize = vSize;
-		im.vertexType = vType;
-		im.vertices.resize(mesh->mNumVertices * im.vertexSize);
-		im.bones.resize(mesh->mNumBones);
+		ImportedMesh source;
+		source.vertexSize = vSize;
+		source.vertexType = vType;
+
+		ImportedMesh * im;
+		if(isLodLevel) {
+			im = &(model.meshes[i]);
+		} else {
+			im = &source;
+		}
+
+		ImportedLOD lod;
+		lod.vertices.resize(mesh->mNumVertices * im->vertexSize);
+		lod.bones.resize(mesh->mNumBones);
+		lod.vertexCount = mesh->mNumVertices;
 
 		for(int k = 0; k < mesh->mNumVertices; ++k) {
-			unsigned char * ptr = &(im.vertices.at(k * im.vertexSize));
+			unsigned char * ptr = &(lod.vertices.at(k * im->vertexSize));
 
 			Egg::PNT_Vertex * evt = reinterpret_cast<Egg::PNT_Vertex *>(ptr);
 			evt->position.x = mesh->mVertices[k].x;
@@ -524,16 +639,16 @@ void Process(const wchar_t * file, std::vector<ProcessedBone> & bones, ImportedM
 			}
 		}
 
-
 		unsigned int nIndices = 0;
 		for(int k = 0; k < mesh->mNumFaces; ++k) {
 			if(mesh->mFaces[k].mNumIndices == 3) {
 				nIndices += 3;
 			}
 		}
-		im.indices.resize(nIndices);
+		lod.indices.resize(nIndices);
+		lod.indexCount = nIndices;
 
-		unsigned int * ptr = &(im.indices.at(0));
+		unsigned int * ptr = &(lod.indices.at(0));
 		for(int k = 0; k < mesh->mNumFaces; ++k) {
 			
 			unsigned int n = mesh->mFaces[k].mNumIndices;
@@ -546,28 +661,26 @@ void Process(const wchar_t * file, std::vector<ProcessedBone> & bones, ImportedM
 			}
 		}
 
-		im.materialIndex = mesh->mMaterialIndex;
+		im->materialIndex = mesh->mMaterialIndex;
 
 		/* adding the bones, but will process it later on */
 		for(uint32_t j = 0; j < mesh->mNumBones; ++j) {
 			aiBone * b = mesh->mBones[j];
 			
-			im.bones[j].name = b->mName.C_Str();
-			im.bones[j].numVertexWeights = b->mNumWeights;
-			im.bones[j].vertexWeights = b->mWeights;
-			im.bones[j].offsetMatrix = b->mOffsetMatrix;
+			lod.bones[j].name = b->mName.C_Str();
+			lod.bones[j].numVertexWeights = b->mNumWeights;
+			lod.bones[j].vertexWeights = b->mWeights;
+			lod.bones[j].offsetMatrix = b->mOffsetMatrix;
 		}
 
-		model.meshes.emplace_back(std::move(im));
+		if(!isLodLevel) {
+			model.meshes.emplace_back(std::move(*im));
+		}
+		model.meshes[i].lods.push_back(std::move(lod));
 	}
 
 	ProcessBones(bones, model, scene->mRootNode);
 	FillVertexWeights(model, bones);
-
-	if(!CheckTransformConsistency(bones, model)) {
-		// error!
-		OutputDebugString("Error\r\n");
-	}
 
 	for(uint32_t i = 0; i < matCount; ++i) {
 		aiMaterial * mat = scene->mMaterials[i];
@@ -886,6 +999,18 @@ unsigned int CalculateRequiredMemory(ImportedModel & model, std::vector<Processe
 	acc += model.materials.size() * sizeof(Egg::Asset::Material);
 
 	acc += model.meshes.size() * sizeof(Egg::Asset::Mesh);
+	acc += model.meshes.size() * model.meshes[0].lods.size() * sizeof(Egg::Asset::LODLevel);
+
+	for(auto & mesh : model.meshes) {
+		unsigned int verticesSize = 0;
+		unsigned int indiciesSize = 0;
+		for(auto & lod : mesh.lods) {
+			verticesSize += lod.vertexCount * mesh.vertexSize;
+			indiciesSize += lod.indexCount * 4U;
+		}
+		acc += verticesSize;
+		acc += indiciesSize;
+	}
 
 	return acc;
 }
@@ -955,11 +1080,48 @@ void WriteBinary(const char * dest, ImportedModel & model, std::vector<Processed
 		m.meshes[i].vertexType = model.meshes[i].vertexType;
 		m.meshes[i].vertexSize = model.meshes[i].vertexSize;
 
-		m.meshes[i].indices = &(model.meshes[i].indices.at(0));
-		m.meshes[i].indicesLength = model.meshes[i].indices.size();
+		unsigned int vertexOffset = 0;
+		unsigned int indexOffset = 0;
 
-		m.meshes[i].vertices = &(model.meshes[i].vertices.at(0));
-		m.meshes[i].verticesLength = model.meshes[i].vertices.size();
+		unsigned int verticesSize = 0;
+		unsigned int indicesSize = 0;
+		
+		m.meshes[i].boundingBox = model.meshes[i].boundingBox;
+		m.meshes[i].lodLevelsLength = model.meshes[i].lods.size();
+		m.meshes[i].lodLevels = reinterpret_cast<Egg::Asset::LODLevel *>(allocator.Allocate(m.meshes[i].lodLevelsLength * sizeof(Egg::Asset::LODLevel)));
+
+		for(unsigned int j = 0; j < model.meshes[i].lods.size(); ++j) {
+			Egg::Asset::LODLevel lvl;
+			lvl.indexCount = model.meshes[i].lods[j].indexCount;
+			lvl.vertexCount = model.meshes[i].lods[j].vertexCount;
+			lvl.indexOffset = indexOffset;
+			lvl.vertexOffset = vertexOffset;
+			lvl.indicesLength = lvl.indexCount * 4U;
+			lvl.verticesLength = lvl.vertexCount * m.meshes[i].vertexSize;
+			indexOffset += lvl.indexCount;
+			vertexOffset += lvl.vertexCount;
+			verticesSize += lvl.verticesLength;
+			indicesSize += lvl.indicesLength;
+			m.meshes[i].lodLevels[j] = lvl;
+		}
+
+		m.meshes[i].vertices = allocator.Allocate(verticesSize);
+		m.meshes[i].indices = reinterpret_cast<unsigned int *>(allocator.Allocate(indicesSize));
+		m.meshes[i].indicesLength = indicesSize / 4U;
+		m.meshes[i].verticesLength = verticesSize;
+
+		for(unsigned int j = 0; j < m.meshes[i].lodLevelsLength; ++j) {
+			unsigned int verticesByteOffset = m.meshes[i].lodLevels[j].vertexOffset * m.meshes[i].vertexSize;
+			unsigned int indicesOffset = m.meshes[i].lodLevels[j].indexOffset;
+
+			uint8_t * vBuffer = reinterpret_cast<uint8_t *>(m.meshes[i].vertices);
+			vBuffer += verticesByteOffset;
+
+			unsigned int * iBuffer = m.meshes[i].indices + indicesOffset;
+
+			memcpy(vBuffer, &(model.meshes[i].lods[j].vertices.at(0)), m.meshes[i].lodLevels[j].verticesLength);
+			memcpy(iBuffer, &(model.meshes[i].lods[j].indices.at(0)), m.meshes[i].lodLevels[j].indicesLength);
+		}
 
 		m.meshes[i].materialId = model.meshes[i].materialIndex;
 	}
@@ -1054,5 +1216,5 @@ void WriteBinary(const char * dest, ImportedModel & model, std::vector<Processed
 	}
 
 	printf("Exported successfully into file: %s\r\n", dest);
-	m.memoryAllocation = allocator.Detach();
+	//m.memoryAllocation = allocator.Detach();
 }

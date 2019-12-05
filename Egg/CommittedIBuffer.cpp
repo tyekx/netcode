@@ -19,7 +19,7 @@ namespace Egg::Graphics::Resource::Committed {
 	}
 
 	void IBuffer::SetFormat(DXGI_FORMAT format) {
-		indexBufferView.Format = format;
+		//indexBufferView.Format = format;
 	}
 
 	void IBuffer::CreateResources(ID3D12Device * device, const D3D12_RESOURCE_DESC & resDesc, const void * srcData, UINT64 sizeInBytes, DXGI_FORMAT format) {
@@ -48,20 +48,20 @@ namespace Egg::Graphics::Resource::Committed {
 				nullptr,
 				IID_PPV_ARGS(resource.GetAddressOf()));
 
-		indexBufferView.BufferLocation = resource->GetGPUVirtualAddress();
-		indexBufferView.SizeInBytes = resourceDesc.Width;
+		//indexBufferView.BufferLocation = resource->GetGPUVirtualAddress();
+		//indexBufferView.SizeInBytes = resourceDesc.Width;
 	}
 
 	void IBuffer::ReleaseResources() {
 		resource.Reset();
 	}
 
-	void IBuffer::UploadResources(ID3D12GraphicsCommandList * copyCommandList) {
+	void IBuffer::UploadResources(IResourceUploader * uploader) {/*
 		if(uploadResource == nullptr) {
 			return;
 		}
 		copyCommandList->CopyBufferRegion(resource.Get(), 0, uploadResource.Get(), 0, resourceDesc.Width); 
-		copyCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER));
+		copyCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER));*/
 	}
 
 	void IBuffer::ReleaseUploadResources() {

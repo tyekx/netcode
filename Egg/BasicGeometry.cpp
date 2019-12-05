@@ -19,7 +19,7 @@ Egg::Graphics::Geometry Egg::BasicGeometry::CreateLine(ID3D12Device * device, co
 
 	std::unique_ptr<Egg::Graphics::Resource::Committed::VBuffer> vertexBuffer = std::make_unique<Egg::Graphics::Resource::Committed::VBuffer>();
 	UINT sizeInBytes = _countof(vertices) * sizeof(WireframeVertex);
-	vertexBuffer->CreateResources(device, CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes), vertices, sizeInBytes, sizeof(WireframeVertex));
+	vertexBuffer->AddLODLevel(device, CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes), vertices, sizeInBytes, sizeof(WireframeVertex));
 
 	geom.CreateResources(std::move(vertexBuffer), nullptr, std::move(layout), D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, D3D_PRIMITIVE_TOPOLOGY_LINELIST, D3D12_FILL_MODE_WIREFRAME);
 
@@ -85,7 +85,7 @@ Egg::Graphics::Geometry Egg::BasicGeometry::CreateBoxWireframe(ID3D12Device * de
 
 	std::unique_ptr<Egg::Graphics::Resource::Committed::VBuffer> vertexBuffer = std::make_unique<Egg::Graphics::Resource::Committed::VBuffer>();
 	UINT sizeInBytes = _countof(vertices) * sizeof(WireframeVertex);
-	vertexBuffer->CreateResources(device, CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes), vertices, sizeInBytes, sizeof(WireframeVertex));
+	vertexBuffer->AddLODLevel(device, CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes), vertices, sizeInBytes, sizeof(WireframeVertex));
 
 	geom.CreateResources(std::move(vertexBuffer), nullptr, std::move(layout), D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, D3D_PRIMITIVE_TOPOLOGY_LINELIST, D3D12_FILL_MODE_WIREFRAME);
 
@@ -119,7 +119,7 @@ Egg::Graphics::Geometry Egg::BasicGeometry::CreatePlaneWireframe(ID3D12Device * 
 
 	std::unique_ptr<Egg::Graphics::Resource::Committed::VBuffer> vertexBuffer = std::make_unique<Egg::Graphics::Resource::Committed::VBuffer>();
 	UINT sizeInBytes = verticesLength * sizeof(WireframeVertex);
-	vertexBuffer->CreateResources(device, CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes), vertices, sizeInBytes, sizeof(WireframeVertex));
+	vertexBuffer->AddLODLevel(device, CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes), vertices, sizeInBytes, sizeof(WireframeVertex));
 
 	geom.CreateResources(std::move(vertexBuffer), nullptr, std::move(layout), D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, D3D_PRIMITIVE_TOPOLOGY_LINELIST, D3D12_FILL_MODE_WIREFRAME);
 
@@ -257,7 +257,7 @@ Egg::Graphics::Geometry Egg::BasicGeometry::CreateCapsuleWireframe(ID3D12Device 
 
 	std::unique_ptr<Egg::Graphics::Resource::Committed::VBuffer> vertexBuffer = std::make_unique<Egg::Graphics::Resource::Committed::VBuffer>();
 	UINT sizeInBytes = _countof(vertices) * sizeof(WireframeVertex);
-	vertexBuffer->CreateResources(device, CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes), vertices, sizeInBytes, sizeof(WireframeVertex));
+	vertexBuffer->AddLODLevel(device, CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes), vertices, sizeInBytes, sizeof(WireframeVertex));
 
 	geom.CreateResources(std::move(vertexBuffer), nullptr, std::move(layout), D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, D3D_PRIMITIVE_TOPOLOGY_LINELIST, D3D12_FILL_MODE_WIREFRAME);
 
@@ -316,7 +316,7 @@ Egg::Graphics::Geometry Egg::BasicGeometry::CreateBox(ID3D12Device * device) {
 
 	std::unique_ptr<Egg::Graphics::Resource::Committed::VBuffer> vertexBuffer = std::make_unique<Egg::Graphics::Resource::Committed::VBuffer>();
 	UINT sizeInBytes = _countof(vertices) * sizeof(PNT_Vertex);
-	vertexBuffer->CreateResources(device, CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes), vertices, sizeInBytes, sizeof(PNT_Vertex));
+	vertexBuffer->AddLODLevel(device, CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes), vertices, sizeInBytes, sizeof(PNT_Vertex));
 
 	geom.CreateResources(std::move(vertexBuffer), nullptr, std::move(layout), D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE, D3D_PRIMITIVE_TOPOLOGY_LINELIST, D3D12_FILL_MODE_WIREFRAME);
 

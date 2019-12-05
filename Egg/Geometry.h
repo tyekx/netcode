@@ -3,6 +3,7 @@
 #include "Resource.h"
 #include "Mesh.h"
 #include "InputLayout.h"
+#include "DX12RenderItem.h"
 
 namespace Egg::Graphics {
 
@@ -30,27 +31,25 @@ namespace Egg::Graphics {
 			mode = fillMode;
 		}
 
-		inline const D3D12_INPUT_LAYOUT_DESC& GetInputLayout() {
-			return inputLayout.GetInputLayout();
+		void FillRenderItem(DX12::RenderItem * renderItem) {
+			renderItem->lodLevelsLength = vertexBuffer->GetLODCount();
+			for(UINT i = 0; i < renderItem->lodLevelsLength; ++i) {
+				const auto & lod = vertexBuffer->GetLOD(i);
+				renderItem->lodLevels[i].vertexBufferView = lod.vertexBufferView;
+				renderItem->lodLevels[i].vertexCount = lod.verticesCount;
+
+				if(indexBuffer) {
+					const auto & iLod = indexBuffer->GetLOD(i);
+					renderItem->lodLevels[i].indexBufferView = iLod.indexBufferView;
+					renderItem->lodLevels[i].indexCount = iLod.indexCount;
+				}
+			}
+
+			renderItem->primitiveTopology = topology;
 		}
 
-		Mesh GetMesh() {
-			Mesh m;
-
-			m.indexCount = 0;
-			if(indexBuffer) {
-				m.ibv = indexBuffer->GetView();
-				UINT stride = (m.ibv.Format == DXGI_FORMAT_R32_UINT) ? 4 : 2;
-				m.indexCount = m.ibv.SizeInBytes / stride;
-			}
-			m.vbv = vertexBuffer->GetView();
-
-			m.vertexCount = m.vbv.SizeInBytes / m.vbv.StrideInBytes;
-
-			m.topology = topology;
-			m.perMeshCb = nullptr;
-
-			return m;
+		inline const D3D12_INPUT_LAYOUT_DESC& GetInputLayout() {
+			return inputLayout.GetInputLayout();
 		}
 	};
 

@@ -3,7 +3,6 @@
 #include "DebugPhysxActor.h"
 #include "DebugPhysxRaycast.h"
 #include <algorithm>
-#include "ResourceManager.h"
 
 namespace Egg {
 
@@ -38,7 +37,7 @@ namespace Egg {
 			}
 		}
 
-		void CreateResources(ID3D12Device * dev, Egg::Graphics::ResourceManager* resMan) {
+		void CreateResources(ID3D12Device * dev) {
 			device = dev;
 			raycasts = (DebugPhysxRaycast *)std::malloc(sizeof(DebugPhysxRaycast) * MAX_RAY_COUNT);
 			ZeroMemory(raycasts, sizeof(DebugPhysxRaycast) * MAX_RAY_COUNT);
@@ -48,7 +47,7 @@ namespace Egg {
 			debugRayGeometry = BasicGeometry::CreateLine(device, DirectX::XMFLOAT3{ 0.2f, 0.3f, 0.9f });
 
 			{
-				debugMaterial = resMan->FromFiles(L"DebugPhysxVS.cso", L"DebugPhysxPS.cso", debugRayGeometry);
+				//debugMaterial = resMan->FromFiles(L"DebugPhysxVS.cso", L"DebugPhysxPS.cso", debugRayGeometry);
 
 
 				/*

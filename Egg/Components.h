@@ -3,7 +3,7 @@
 #include "AnimationComponent.h"
 #include "ScriptComponent.h"
 #include "TransformComponent.h"
-#include "ModelComponent.h"
+#include "Multi.h"
 #include "PhysxComponent.h"
 #include <tuple>
 

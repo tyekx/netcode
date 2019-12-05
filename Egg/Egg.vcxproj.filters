@@ -55,9 +55,6 @@
     <Filter Include="Graphics\Resource">
       <UniqueIdentifier>{558741a0-ed22-4b3c-aeed-1151cf341cb1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Graphics\Internal">
-      <UniqueIdentifier>{ea3e0ca0-758c-4346-b62a-50611b58db72}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Animation">
       <UniqueIdentifier>{4f83584f-fd50-4e2b-a924-2c48b44efe86}</UniqueIdentifier>
     </Filter>
@@ -66,6 +63,24 @@
     </Filter>
     <Filter Include="Graphics\Engine\DX12">
       <UniqueIdentifier>{8a77180a-e90e-470d-8ebc-6be0af8642aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Sync">
+      <UniqueIdentifier>{8d69928e-11c5-489e-8903-ea4279fa5412}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Sync\DX12">
+      <UniqueIdentifier>{bfbe4b0e-762e-4cef-93cd-591f6f59f0a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Font">
+      <UniqueIdentifier>{a441bedd-7f60-4bc5-a95a-e1669738a11a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Modules">
+      <UniqueIdentifier>{59179e73-a4f5-4f87-a328-302aca6b8489}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Modules\Factory">
+      <UniqueIdentifier>{d0354fd9-37ad-4b4a-b885-70a61b3a5dff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Modules\Window">
+      <UniqueIdentifier>{171c8312-e5b1-4ddb-b0d7-6bda52ce25bc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -109,9 +124,6 @@
       <Filter>Utility</Filter>
     </ClInclude>
     <ClInclude Include="App.h">
-      <Filter>App</Filter>
-    </ClInclude>
-    <ClInclude Include="SimpleApp.h">
       <Filter>App</Filter>
     </ClInclude>
     <ClInclude Include="ConstantBuffer.hpp">
@@ -214,44 +226,14 @@
     <ClInclude Include="CommittedIBuffer.h">
       <Filter>Graphics\Resource</Filter>
     </ClInclude>
-    <ClInclude Include="ResourceManager.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="ShaderCodeCollection.h">
-      <Filter>Graphics\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="RootSignatureLibrary.h">
-      <Filter>Graphics\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="RootSignatureDesc.h">
-      <Filter>Graphics\Internal</Filter>
-    </ClInclude>
     <ClInclude Include="Mesh.h">
       <Filter>Model\Mesh</Filter>
-    </ClInclude>
-    <ClInclude Include="PreprocessorDefinitions.h">
-      <Filter>Graphics\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="GeometryLibrary.h">
-      <Filter>Graphics\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="GPSOLibrary.h">
-      <Filter>Graphics\Internal</Filter>
     </ClInclude>
     <ClInclude Include="Multi.h">
       <Filter>Model\Mesh</Filter>
     </ClInclude>
     <ClInclude Include="Geometry.h">
       <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="ShaderCodeLibrary.h">
-      <Filter>Graphics\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="ResourceAllocator.h">
-      <Filter>Graphics\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="TextureLibrary.h">
-      <Filter>Graphics\Internal</Filter>
     </ClInclude>
     <ClInclude Include="InputLayout.h">
       <Filter>Graphics</Filter>
@@ -274,14 +256,80 @@
     <ClInclude Include="DX12RenderItem.h">
       <Filter>Graphics\Engine\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="DX12Engine.h">
-      <Filter>Graphics\Engine\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="IEngine.h">
-      <Filter>Graphics\Engine</Filter>
-    </ClInclude>
     <ClInclude Include="DX12RenderItemAllocator.h">
       <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Fence.h">
+      <Filter>Graphics\Sync\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="SpriteFont.h">
+      <Filter>Font</Filter>
+    </ClInclude>
+    <ClInclude Include="BinaryReader.h">
+      <Filter>Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceUploadBatch.h">
+      <Filter>Graphics\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="PlacedVBuffer.h">
+      <Filter>Graphics\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Interpreted.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="PlacedIBuffer.h">
+      <Filter>Graphics\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="DefaultModuleFactory.h">
+      <Filter>Modules\Factory</Filter>
+    </ClInclude>
+    <ClInclude Include="WinapiWindowModule.h">
+      <Filter>Modules\Window</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12GraphicsModule.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12ShaderLibrary.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="HandleTypes.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12ShaderCompiler.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12ShaderVariant.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12ShaderBytecode.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12ShaderManager.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12ShaderSourceLibrary.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12TextureLibrary.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12PipelineStateManager.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12GeometryManager.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12MaterialManager.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12RenderItemCollection.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12CbufferAllocator.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Modules.h">
+      <Filter>Modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -360,6 +408,21 @@
     </ClCompile>
     <ClCompile Include="LinearClassifier.cpp">
       <Filter>Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="SpriteFont.cpp">
+      <Filter>Font</Filter>
+    </ClCompile>
+    <ClCompile Include="BinaryReader.cpp">
+      <Filter>Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="DefaultModuleFactory.cpp">
+      <Filter>Modules\Factory</Filter>
+    </ClCompile>
+    <ClCompile Include="WinapiWindowModule.cpp">
+      <Filter>Modules\Window</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12GraphicsModule.cpp">
+      <Filter>Graphics\Engine\DX12</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

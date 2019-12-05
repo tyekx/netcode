@@ -5,73 +5,84 @@
 #include "Bone.h"
 #include "Material.h"
 #include <memory>
+#include "../Interpreted.h"
+#include "../Common.h"
 
 namespace Egg::Asset {
-	struct Model {
+	class Model {
+		using freed_unique_ptr_t = std::unique_ptr<void, void(*)(void *)>;
 
-		unsigned int meshesLength;
+		freed_unique_ptr_t meshesAlloc;
+		freed_unique_ptr_t materialsAlloc;
+		freed_unique_ptr_t animDataAlloc;
+	public:
+		UINT meshesLength;
 		Mesh * meshes;
 
-		unsigned int materialsLength;
+		UINT materialsLength;
 		Material * materials;
 
-		unsigned int animationsLength;
+		UINT animationsLength;
 		Animation * animations;
 
-		unsigned int bonesLength;
+		UINT bonesLength;
 		Bone * bones;
 
-		void * memoryAllocation;
+		Model() : meshesAlloc{ nullptr, std::free }, materialsAlloc{ nullptr, std::free }, animDataAlloc{ nullptr, std::free },
+			meshesLength{ 0 }, meshes{ nullptr }, 
+			materialsLength{ 0 }, materials{ nullptr },
+			animationsLength{ 0 }, animations{ nullptr },
+			bonesLength{ 0 }, bones{ nullptr } {}
 
-		Model() noexcept : meshesLength{ 0 }, meshes{ nullptr },
-					materialsLength{ 0 }, materials{ nullptr },
-					animationsLength{ 0 }, animations{ nullptr },
-					bonesLength{ 0 }, bones{ nullptr },
-					memoryAllocation{ nullptr } {
+		void SetMaterials(void * ptr) {
+			if(!ptr) {
+				return;
+			}
 
+			materialsAlloc.reset(ptr);
+
+			materialsLength = InterpretAs<UINT>(&ptr);
+			materials = InterpretAsArray<Material>(&ptr, materialsLength);
 		}
 
-		Model(const Model &) = delete;
+		void SetMeshes(void * ptr) {
+			if(!ptr) {
+				return;
+			}
 
-		Model(Model && m) noexcept : Model() {
-			std::swap(meshesLength, m.meshesLength);
-			std::swap(meshes, m.meshes);
+			meshesAlloc.reset(ptr);
 
-			std::swap(materialsLength, m.materialsLength);
-			std::swap(materials, m.materials);
-
-			std::swap(animationsLength, m.animationsLength);
-			std::swap(animations, m.animations);
-
-			std::swap(bonesLength, m.bonesLength);
-			std::swap(bones, m.bones);
-
-			std::swap(memoryAllocation, m.memoryAllocation);
-		}
-
-		Model & operator=(Model m) noexcept {
-			std::swap(meshesLength, m.meshesLength);
-			std::swap(meshes, m.meshes);
-
-			std::swap(materialsLength, m.materialsLength);
-			std::swap(materials, m.materials);
-
-			std::swap(animationsLength, m.animationsLength);
-			std::swap(animations, m.animations);
-
-			std::swap(bonesLength, m.bonesLength);
-			std::swap(bones, m.bones);
-
-			std::swap(memoryAllocation, m.memoryAllocation);
-
-			return *this;
-		}
-
-		~Model() noexcept {
-			if(memoryAllocation) {
-				std::free(memoryAllocation);
+			meshesLength = InterpretAs<UINT>(&ptr);
+			meshes = InterpretAsArray<Mesh>(&ptr, meshesLength);
+			
+			for(UINT i = 0; i < meshesLength; ++i) {
+				meshes[i].vertices = ptr;
+				InterpretSkip(&ptr, meshes[i].verticesLength);
+				meshes[i].indices = InterpretAsArray<UINT>(&ptr, meshes[i].indicesLength);
+				meshes[i].lodLevels = InterpretAsArray<Asset::LODLevel>(&ptr, meshes[i].lodLevelsLength);
 			}
 		}
 
+		// contains bones too
+		void SetAnimData(void * ptr) {
+			if(!ptr) {
+				return;
+			}
+
+			animDataAlloc.reset(ptr);
+
+			animationsLength = InterpretAs<UINT>(&ptr);
+			animations = InterpretAsArray<Animation>(&ptr, animationsLength);
+
+			for(unsigned int i = 0; i < animationsLength; ++i) {
+				animations[i].preStates = InterpretAsArray<AnimationEdge>(&ptr, animations[i].bonesLength);
+				animations[i].postStates = InterpretAsArray<AnimationEdge>(&ptr, animations[i].bonesLength);
+				animations[i].times = InterpretAsArray<double>(&ptr, animations[i].keysLength);
+				animations[i].keys = InterpretAsArray<AnimationKey>(&ptr, animations[i].keysLength * animations[i].bonesLength);
+			}
+
+			bonesLength = InterpretAs<UINT>(&ptr);
+			bones = InterpretAsArray<Bone>(&ptr, bonesLength);
+		}
 	};
 }

@@ -1,14 +1,13 @@
 #pragma once
 
+#include "HandleTypes.h"
 #include "DX12RenderItem.h"
 
 namespace Egg::Graphics::DX12 {
 
-
 	struct RenderItemAllocation {
-		UINT handleStart;
-		RenderItem * items;
-		UINT itemsLength;
+		HITEM handle;
+		RenderItem * item;
 	};
 
 	class RenderItemAllocator {
@@ -16,6 +15,7 @@ namespace Egg::Graphics::DX12 {
 		constexpr static UINT PAGE_SIZE = 512;
 
 		struct RenderItemPage {
+			constexpr static UINT USABLE_SIZE = PAGE_SIZE - 1U;
 			UINT maxContigousBlock;
 			UINT maxContigousBlockStartIndex;
 			UINT numDeallocItems;
@@ -24,11 +24,8 @@ namespace Egg::Graphics::DX12 {
 			RenderItem * allocatedMemory;
 			UINT allocatedMemoryLength;
 
-			RenderItemPage * nextPage;
-			RenderItemPage * prevPage;
-
 			bool HandleHostedBy(UINT globalHandle) {
-				return globalHandle >= (PAGE_SIZE * pageId) && (PAGE_SIZE * (pageId + 1)) > globalHandle;
+				return globalHandle >= (USABLE_SIZE * pageId) && (USABLE_SIZE * (pageId + 1)) > globalHandle;
 			}
 
 			void DecrementNumDeallocatedItems() {
@@ -44,12 +41,8 @@ namespace Egg::Graphics::DX12 {
 				UINT localHandle = globalHandle - PAGE_SIZE * pageId;
 					
 				UINT deallocatedCount = 0;
-				for(UINT i = localHandle; i < PAGE_SIZE; ++i) {
+				for(UINT i = localHandle; i < USABLE_SIZE; ++i) {
 					if(allocatedMemory[i].state != RenderItemState::IN_USE) {
-						break;
-					}
-
-					if(allocatedMemory[i].ownerHandle != localHandle) {
 						break;
 					}
 
@@ -61,10 +54,10 @@ namespace Egg::Graphics::DX12 {
 
 			void SearchMaxContigousBlock() {
 				// page is completely empty
-				if((maxContigousBlock + numDeallocItems) == PAGE_SIZE) {
+				if((maxContigousBlock + numDeallocItems) == USABLE_SIZE) {
 					memset(allocatedMemory, 0, allocatedMemoryLength);
 					numDeallocItems = 0;
-					maxContigousBlock = PAGE_SIZE;
+					maxContigousBlock = USABLE_SIZE;
 					maxContigousBlockStartIndex = 0;
 					return;
 				}
@@ -73,7 +66,7 @@ namespace Egg::Graphics::DX12 {
 				if(maxContigousBlock < numDeallocItems) {
 					UINT candidateIndex = 0;
 					UINT contigousSize = 0;
-					for(UINT i = 0; i < PAGE_SIZE; ++i) {
+					for(UINT i = 0; i < USABLE_SIZE; ++i) {
 						if(allocatedMemory[i].state == RenderItemState::IN_USE) {
 							if(maxContigousBlock < contigousSize) {
 								maxContigousBlock = contigousSize;
@@ -94,9 +87,9 @@ namespace Egg::Graphics::DX12 {
 					UINT h = maxContigousBlockStartIndex + maxContigousBlock;
 					UINT l = maxContigousBlockStartIndex;
 
-					for(; h < PAGE_SIZE || l > 0;) {
+					for(; h < USABLE_SIZE || l > 0;) {
 						RenderItemState riState = allocatedMemory[h].state;
-						if(h < PAGE_SIZE) {
+						if(h < USABLE_SIZE) {
 							if(riState != RenderItemState::IN_USE) {
 								if(riState == RenderItemState::RETURNED) {
 									DecrementNumDeallocatedItems();
@@ -126,44 +119,41 @@ namespace Egg::Graphics::DX12 {
 
 
 
-			RenderItemAllocation Allocate(UINT numberOfItemsToAllocate) {
-				ASSERT(numberOfItemsToAllocate <= maxContigousBlock, "Allocate expects the user to check if page can host");
-				for(UINT i = 0; i < numberOfItemsToAllocate; ++i) {
-					ASSERT(allocatedMemory[i + maxContigousBlockStartIndex].state != RenderItemState::IN_USE, "Overwriting in use memory");
-					allocatedMemory[i + maxContigousBlockStartIndex].state = RenderItemState::IN_USE;
-					allocatedMemory[i + maxContigousBlockStartIndex].ownerHandle = maxContigousBlockStartIndex;
-				}
+			RenderItemAllocation Allocate() {
+				ASSERT(allocatedMemory[maxContigousBlockStartIndex].state != RenderItemState::IN_USE, "Overwriting in use memory");
+
+				allocatedMemory[maxContigousBlockStartIndex].state = RenderItemState::IN_USE;
 				
 				RenderItemAllocation alloc;
-				alloc.handleStart = pageId * PAGE_SIZE + maxContigousBlockStartIndex;
-				alloc.items = allocatedMemory + maxContigousBlockStartIndex;
-				alloc.itemsLength = numberOfItemsToAllocate;
+				alloc.handle = pageId * PAGE_SIZE + maxContigousBlockStartIndex;
+				alloc.item = allocatedMemory + maxContigousBlockStartIndex;
 
-				maxContigousBlockStartIndex += numberOfItemsToAllocate;
-				INT64 underflowAvoidance = static_cast<INT64>(maxContigousBlock) - static_cast<INT64>(numberOfItemsToAllocate);
+				maxContigousBlockStartIndex += 1;
+
+				INT64 underflowAvoidance = static_cast<INT64>(maxContigousBlock) - static_cast<INT64>(1);
 				ASSERT(underflowAvoidance >= 0, "Allocation underflows page");
 				maxContigousBlock = static_cast<UINT>(underflowAvoidance);
 
 				return alloc;
 			}
 
-			bool CanHost(UINT numberOfItemsToAllocate) {
-				return maxContigousBlock >= numberOfItemsToAllocate;
+			bool CanHost() {
+				return maxContigousBlock >= 1;
 			}
 
 			RenderItemPage(UINT pageId) :
-				maxContigousBlock{ PAGE_SIZE },
+				maxContigousBlock{ USABLE_SIZE },
 				maxContigousBlockStartIndex{ 0U },
 				numDeallocItems{ 0U },
 				pageId{ pageId },
 				allocatedMemory{ static_cast<RenderItem*>(std::malloc(PAGE_SIZE * sizeof(RenderItem))) },
-				allocatedMemoryLength{ static_cast<UINT>(PAGE_SIZE * sizeof(RenderItem)) },
-				prevPage{ nullptr },
-				nextPage{ nullptr } {
+				allocatedMemoryLength{ static_cast<UINT>(PAGE_SIZE * sizeof(RenderItem)) } {
 
 				if(allocatedMemory != nullptr) {
 					memset(allocatedMemory, 0, allocatedMemoryLength);
 				}
+
+				allocatedMemory[USABLE_SIZE].state = RenderItemState::RETURNED;
 			}
 
 			~RenderItemPage() {
@@ -172,76 +162,47 @@ namespace Egg::Graphics::DX12 {
 			}
 		};
 
-		RenderItemPage * startPage;
-		RenderItemPage * endPage;
-
+		RenderItemPage* pages;
 		UINT nextPageId;
-		void InsertFirstPage() {
-			startPage = new (std::nothrow) RenderItemPage(nextPageId++);
-
-			if(startPage == nullptr) {
-				__debugbreak();
-			}
-
-			endPage = startPage;
-		}
+		UINT pagesLength;
 
 		void InsertPage() {
-			RenderItemPage * page = new (std::nothrow) RenderItemPage(nextPageId++);
-
-			if(page == nullptr) {
-				__debugbreak();
-			}
-
-			page->nextPage = nullptr;
-			page->prevPage = endPage;
-			endPage->nextPage = page;
-			endPage = page;
+			new (pages + nextPageId) RenderItemPage(nextPageId++);
 		}
 
 	public:
-		RenderItemAllocator() : startPage{ nullptr }, endPage{ nullptr }, nextPageId{ 0U } {
-			InsertFirstPage();
+		RenderItemAllocator() : pages{ nullptr }, nextPageId{ 0U } {
+			pagesLength = 128U;
+			pages = reinterpret_cast<RenderItemPage *>(std::malloc(sizeof(RenderItemPage) * pagesLength));
+			InsertPage();
 		}
 
 		RenderItemAllocator(const RenderItemAllocator &) = delete;
 
 		~RenderItemAllocator() {
-			RenderItemPage * page = startPage;
-			while(page != nullptr) {
-				RenderItemPage * nextPage = page->nextPage;
-				delete page;
-				page = nextPage;
+			for(UINT i = 0; i < nextPageId; ++i) {
+				(pages + i)->~RenderItemPage();
 			}
+			std::free(pages);
 		}
 
-		RenderItem * GetAllocationFromHandle(UINT handle) {
+		RenderItem * GetAllocationFromHandle(HITEM handle) {
 			UINT pageId = handle / (PAGE_SIZE);
+			UINT localId = handle % (PAGE_SIZE);
 
-			for(RenderItemPage * i = endPage; i != nullptr; i = i->prevPage) {
-				if(i->pageId == pageId) {
-					return i->allocatedMemory + (handle % PAGE_SIZE);
-				}
-			}
-			return nullptr;
+			return (pages + pageId)->allocatedMemory + localId;
 		}
 
-		RenderItemAllocation Allocate(UINT numberOfItemsToAllocate) {
-			ASSERT(numberOfItemsToAllocate < PAGE_SIZE, "Cant allocate more than page_size");
-
-			if(endPage->CanHost(numberOfItemsToAllocate)) {
-				return endPage->Allocate(numberOfItemsToAllocate);
-			}
-
-			for(RenderItemPage * i = endPage; i != nullptr; i = i->prevPage) {
-				if(i->CanHost(numberOfItemsToAllocate)) {
-					return i->Allocate(numberOfItemsToAllocate);
+		RenderItemAllocation Allocate() {
+			for(UINT i = 0; i < nextPageId; ++i) {
+				if(pages[i].CanHost()) {
+					return pages[i].Allocate();
 				}
 			}
 
 			InsertPage();
 			
-			return endPage->Allocate(numberOfItemsToAllocate);
+			return pages[nextPageId - 1].Allocate();
 		}
 	};
 

@@ -88,7 +88,7 @@ namespace Egg {
 				geom = BasicGeometry::CreateBoxWireframe(device, ToFloat3(box.halfExtents), DirectX::XMFLOAT3{ 0.6f, 0.8f, 0.2f });
 			}
 
-			meshes.push_back(geom.GetMesh());
+			//meshes.push_back(geom.GetMesh());
 			geometries.push_back(std::move(geom));
 		}
 

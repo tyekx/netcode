@@ -11,7 +11,7 @@
   <Type Name="TransformComponent">
     <DisplayString>{{ Position={Position}, Rotation={Rotation}, Scale={Scale} }}</DisplayString>
   </Type>
-  <Type Name="Egg::Math::Float4x4">
+  <Type Name="D">
     <DisplayString>{{ Float4x4, Trace = ({ _00 }, {_11}, {_22}, {_33}) }}</DisplayString>
     <!-- override default list so that the swizzle does not show -->
     <Expand>

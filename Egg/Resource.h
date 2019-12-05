@@ -27,6 +27,18 @@ namespace Egg::Graphics::Resource {
 		virtual void Resize(UINT width, UINT height) = 0;
 	};
 
+	class IResourceUploader : public IResource {
+	public:
+		virtual ~IResourceUploader() = default;
+		virtual void Upload(const D3D12_RESOURCE_DESC & resourceDesc, ID3D12Resource * destResource, void * cpuResource, UINT sizeInBytes) = 0;
+		virtual void Transition(ID3D12Resource * resource, D3D12_RESOURCE_STATES preState, D3D12_RESOURCE_STATES postState) = 0;
+	};
+
+	class IResourceUploadBatch : public IResourceUploader {
+	public:
+		virtual void Prepare() = 0;
+		virtual void Process(ID3D12CommandQueue * directQueue, ID3D12CommandQueue * copyQueue) = 0;
+	};
 
 	/*
 	Interface for upload resources
@@ -35,7 +47,7 @@ namespace Egg::Graphics::Resource {
 	class IUploadResource : public IResource {
 	public:
 		virtual ~IUploadResource() = default;
-		virtual void UploadResources(ID3D12GraphicsCommandList * copyCommandList) = 0;
+		virtual void UploadResources(IResourceUploader* copyCommandList) = 0;
 		virtual void ReleaseUploadResources() = 0;
 	};
 
@@ -46,7 +58,13 @@ namespace Egg::Graphics::Resource {
 	public:
 		virtual ~ITexture() = default;
 		virtual const D3D12_RESOURCE_DESC & GetDesc() const = 0;
-		virtual void CreateShaderResourceView(ID3D12Device * device, D3D12_CPU_DESCRIPTOR_HANDLE dHandle) = 0;
+		virtual D3D12_SHADER_RESOURCE_VIEW_DESC GetSRV() const = 0;
+		virtual ID3D12Resource * GetResource() const = 0;
+	};
+
+	struct VertexLODLevel {
+		D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
+		UINT verticesCount;
 	};
 
 	/*
@@ -54,13 +72,23 @@ namespace Egg::Graphics::Resource {
 	*/
 	class AVBuffer : public IUploadResource {
 	protected:
-		D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
+		VertexLODLevel lodLevels[8];
+		UINT lodLevelsLength;
 	public:
 		virtual ~AVBuffer() = default;
 
-		const D3D12_VERTEX_BUFFER_VIEW & GetView() const {
-			return vertexBufferView;
+		UINT GetLODCount() const {
+			return lodLevelsLength;
 		}
+
+		const VertexLODLevel & GetLOD(UINT idx) const {
+			return lodLevels[idx];
+		}
+	};
+
+	struct IndexLODLevel {
+		D3D12_INDEX_BUFFER_VIEW indexBufferView;
+		UINT indexCount;
 	};
 
 	/*
@@ -68,12 +96,17 @@ namespace Egg::Graphics::Resource {
 	*/
 	class AIBuffer : public IUploadResource {
 	protected:
-		D3D12_INDEX_BUFFER_VIEW indexBufferView;
+		IndexLODLevel lodLevels[8];
+		UINT lodLevelsLength;
 	public:
 		virtual ~AIBuffer() = default;
 
-		const D3D12_INDEX_BUFFER_VIEW & GetView() const {
-			return indexBufferView;
+		UINT GetLODCount() const {
+			return lodLevelsLength;
+		}
+
+		const IndexLODLevel & GetLOD(UINT idx) const {
+			return lodLevels[idx];
 		}
 	};
 

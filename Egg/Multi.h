@@ -13,6 +13,7 @@ namespace Egg {
 		BoneDataCb * boneDataCb;
 		MaterialCb ** materials;
 
+
 		void InitWithLength(UINT len) {
 			meshesLength = len;
 			materials = reinterpret_cast<MaterialCb **>(std::malloc(len * sizeof(MaterialCb *)));

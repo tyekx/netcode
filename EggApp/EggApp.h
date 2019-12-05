@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Egg/SimpleApp.h>
+#include <Egg/App.h>
 #include <Egg/Importer.h>
 #include <Egg/ConstantBuffer.hpp>
 #include <Egg/Camera/Camera.h>
@@ -10,7 +10,7 @@
 #include <Egg/BasicGeometry.h>
 #include <Egg/DebugPhysx.h>
 #include <Egg/EggMath.h>
-#include <Egg/ResourceManager.h>
+#include <Egg/Modules.h>
 
 class AnimationSystem {
 
@@ -35,14 +35,84 @@ public:
 
 };
 
-class EggApp : public Egg::SimpleApp {
+class GameApp : public Egg::Module::AApp {
+	Egg::Stopwatch stopwatch;
+
+	void Render() {
+		/*
+		foreach gameobject draw
+		*/
+	}
+
+	void Simulate(float dt) {
+		physics->Simulate(dt);
+
+		/*
+		foreach gameobject update
+		*/
+	}
+
+public:
+	/*
+	Initialize modules
+	*/
+	virtual void Setup(Egg::Module::IModuleFactory * factory) override {
+		window = factory->CreateWindowModule(this, 0);
+		graphics = factory->CreateGraphicsModule(this, 0);
+		audio = factory->CreateAudioModule(this, 0);
+		physics = factory->CreatePhysicsModule(this, 0);
+		network = nullptr;
+
+		window->Start(this);
+		graphics->Start(this);
+		audio->Start(this);
+		physics->Start(this);
+
+		stopwatch.Start();
+	}
+
+	/*
+	Advance simulation, update modules
+	*/
+	virtual void Run() override {
+		while(window->KeepRunning()) {
+			window->ProcessMessages();
+
+			float dt = stopwatch.Restart();
+			Simulate(dt);
+
+			Render();
+
+			window->CompleteFrame();
+		}
+	}
+
+	/*
+	Properly shutdown the application
+	*/
+	virtual void Exit() override {
+		if(network) {
+			network->Shutdown();
+		}
+		physics->Shutdown();
+		audio->Shutdown();
+		graphics->Shutdown();
+		window->Shutdown();
+	}
+};
+
+
+/*
+class EggApp : public Egg::App {
 protected:
+
+
 	Egg::Asset::Model ybotModel;
 	Egg::Asset::Model railgun;
 	std::unique_ptr<Egg::Scene> scene;
-	std::unique_ptr<Egg::Graphics::ResourceManager> resourceManager;
-	Egg::ConstantBuffer<PerFrameCb> perFrameCb;
-	std::unique_ptr<Egg::DebugPhysx> debugPhysx;
+	std::unique_ptr<Egg::Graphics::IVisualEngine> graphicsEngine;
+	PerFrameCb* perFrameCb;
+	//std::unique_ptr<Egg::DebugPhysx> debugPhysx;
 	Egg::Camera::BaseCamera baseCam;
 	Egg::MovementController movCtrl;
 	AnimationSystem animSys;
@@ -56,9 +126,45 @@ protected:
 	bool fireEnabled;
 public:
 
-	EggApp() : Egg::SimpleApp{}, perFrameCb{}, debugPhysx{}, baseCam{}, pxSys{}, speed{}, mouseSpeed{}, animT{ 0.0f }, fireEnabled{ true } {
+	EggApp() : perFrameCb{}, baseCam{}, pxSys{}, speed{}, mouseSpeed{}, animT{ 0.0f }, fireEnabled{ true } {
 		cameraPitch = 0.0f;
 		cameraYaw = 0.0f;
+	}
+
+	virtual void Render() override {
+		UINT64 signature;
+		Egg::GameObject * gameObj;
+
+		//@TODO: move this out
+		UINT64 graphicsSig = (0x1ULL << TupleIndexOf<Egg::Transform, COMPONENTS_T>::value) |
+							 (0x1ULL << TupleIndexOf<Egg::Model, COMPONENTS_T>::value);
+
+		// cleaning up and prepraring for recording
+		graphicsEngine->PreUpdate();
+
+		// recording commands
+		for(UINT i = 0; i < scene->GetObjectCount(); ++i) {
+			gameObj = scene->operator[](i);
+			signature = gameObj->GetSignature();
+
+			if((signature & graphicsSig) == graphicsSig) {
+
+				Egg::Model * model = gameObj->GetComponent<Egg::Model>();
+
+				graphicsEngine->Render(model->gpuResourcesHandle);
+			}
+		}
+
+		// actual render call
+		graphicsEngine->PostUpdate();
+	}
+
+
+	virtual void SetWindow(void * hwnd) override {
+		//@TODO: move this out
+		graphicsEngine = std::make_unique<Egg::Graphics::DX12::Engine>();
+		graphicsEngine->CreateResources(hwnd);
+		perFrameCb = graphicsEngine->GetPerFrameBuffer();
 	}
 
 	virtual void Update(float dt, float T) override {
@@ -102,9 +208,9 @@ public:
 		DirectX::XMStoreFloat3(&baseCam.Position, devCamPos);
 		baseCam.UpdateMatrices();
 
-		DirectX::XMVECTOR weaponQuat = DirectX::XMQuaternionRotationRollPitchYaw(-DirectX::XM_PIDIV2, 0, 0);
-
 		movCtrl.Update();
+
+		
 
 		for(UINT i = 0; i < scene->GetObjectCount(); ++i) {
 			auto * go = scene->operator[](i);
@@ -113,15 +219,15 @@ public:
 				Egg::Model * model = go->GetComponent<Egg::Model>();
 
 				DirectX::XMVECTOR translation = DirectX::XMLoadFloat4(&transform->Position);
-				DirectX::XMVECTOR rotation = weaponQuat; //DirectX::XMLoadFloat4(&weaponQuat);
+				DirectX::XMVECTOR rotation = DirectX::XMLoadFloat4(&transform->Rotation);
 				DirectX::XMVECTOR scaling = DirectX::XMLoadFloat3(&transform->Scale);
 
 				DirectX::XMMATRIX modelMat = DirectX::XMMatrixAffineTransformation(scaling, DirectX::XMQuaternionIdentity(), rotation, translation);
 
 				DirectX::XMVECTOR modelMatDet = DirectX::XMMatrixDeterminant(modelMat);
 
-				DirectX::XMStoreFloat4x4A(&model->multiMesh.perObjectCb->Model, DirectX::XMMatrixTranspose(modelMat));
-				DirectX::XMStoreFloat4x4A(&model->multiMesh.perObjectCb->InvModel, DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(&modelMatDet, modelMat)));
+				DirectX::XMStoreFloat4x4A(&model->perObjectCb->Model, DirectX::XMMatrixTranspose(modelMat));
+				DirectX::XMStoreFloat4x4A(&model->perObjectCb->InvModel, DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(&modelMatDet, modelMat)));
 			}
 		}
 
@@ -133,7 +239,7 @@ public:
 		//DirectX::XMVECTOR offsetedPos = DirectX::XMVectorAdd(devCamPos, LoadPxExtendedVec3(chPos) );
 
 		pxSys.Simulate(dt);
-		debugPhysx->AfterPhysxUpdate(dt);
+		//debugPhysx->AfterPhysxUpdate(dt);
 
 		DirectX::XMMATRIX view = DirectX::XMLoadFloat4x4A(&baseCam.GetViewMatrix());
 		DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4A(&baseCam.GetProjMatrix());
@@ -144,7 +250,6 @@ public:
 		perFrameCb->Light.position = DirectX::XMFLOAT4A{ 1.0f, 0.0f, 0.0f, 0.0f };
 		perFrameCb->Light.intensity = DirectX::XMFLOAT3A{ 1.0f, 1.0f, 1.0f };
 		DirectX::XMStoreFloat4x4A(&perFrameCb->ViewProj, DirectX::XMMatrixTranspose(vp));
-		perFrameCb.Upload();
 
 		Egg::Input::Reset();
 	}
@@ -165,80 +270,8 @@ public:
 		Egg::Input::Focused();
 	}
 
-	virtual void PopulateCommandList() override {
-
-		commandAllocator->Reset();
-		commandList->Reset(commandAllocator.Get(), nullptr);
-
-		commandList->RSSetViewports(1, &viewPort);
-		commandList->RSSetScissorRects(1, &scissorRect);
-
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(renderTargets[frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rHandle(rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), frameIndex, rtvDescriptorHandleIncrementSize);
-		CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(dsvHeap->GetCPUDescriptorHandleForHeapStart());
-		commandList->OMSetRenderTargets(1, &rHandle, FALSE, &dsvHandle);
-
-		const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
-		commandList->ClearRenderTargetView(rHandle, clearColor, 0, nullptr);
-		commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-
-		resourceManager->BeginRender(commandList.Get());
-
-		debugPhysx->Draw(commandList.Get(), perFrameCb.GetGPUVirtualAddress());
-		//chCtrl.Draw(commandList.Get(), perFrameCb);
-
-		for(UINT i = 0; i < scene->GetObjectCount(); ++i) {
-			auto * obj = scene->operator[](i);
-
-			if(obj->HasComponent<Egg::Transform>() && obj->HasComponent<Egg::Model>()) {
-
-				Egg::Transform * transform = obj->GetComponent<Egg::Transform>();
-				Egg::Model * model = obj->GetComponent<Egg::Model>();
-
-				model->multiMesh.Draw(commandList.Get(), perFrameCb.GetGPUVirtualAddress());
-
-			}
-		}
-
-
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(renderTargets[frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-
-		DX_API("Failed to close command list")
-			commandList->Close();
-	}
-
-	void CreateSwapChainResources() override {
-		Egg::SimpleApp::CreateSwapChainResources();
-		baseCam.Aspect = aspectRatio;
-	}
-
-	/*
-	Almost a render call
-	*/
-	void UploadResources() {
-		DX_API("Failed to reset command allocator (UploadResources)")
-			commandAllocator->Reset();
-		DX_API("Failed to reset command list (UploadResources)")
-			commandList->Reset(commandAllocator.Get(), nullptr);
-
-		resourceManager->UploadResources(commandList.Get());
-		debugPhysx->UploadResources(commandList.Get());
-
-		DX_API("Failed to close command list (UploadResources)")
-			commandList->Close();
-
-		ID3D12CommandList * commandLists[] = { commandList.Get() };
-		commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
-
-		WaitForPreviousFrame();
-
-		resourceManager->ReleaseUploadResources();
-		debugPhysx->ReleaseUploadResources();
-	}
-
 	virtual void CreateResources() override {
-		Egg::SimpleApp::CreateResources();
+		//Egg::SimpleApp::CreateResources();
 
 		Egg::Input::SetAxis("Vertical", 'W', 'S');
 		Egg::Input::SetAxis("Horizontal", 'A', 'D');
@@ -261,14 +294,11 @@ public:
 	}
 
 	virtual void ReleaseResources() override {
-		Egg::SimpleApp::ReleaseResources();
+		//Egg::SimpleApp::ReleaseResources();
 	}
 
 	virtual void LoadAssets() override {
-		perFrameCb.CreateResources(device.Get());
 		scene = std::make_unique<Egg::Scene>();
-		resourceManager = std::make_unique<Egg::Graphics::ResourceManager>();
-		resourceManager->CreateResources(device.Get());
 
 		DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationRollPitchYaw(-DirectX::XM_PIDIV2, 0.0f, 0.0f);
 
@@ -277,15 +307,16 @@ public:
 
 		Egg::Importer::ImportModel(L"ybot.eggasset", ybotModel);
 		Egg::Importer::ImportModel(L"railgun.eggasset", railgun);
-		DirectX::XMVECTOR quat = DirectX::XMQuaternionRotationRollPitchYaw(0, DirectX::XM_PIDIV2,  0);
-		DirectX::XMFLOAT4 qqqq;
-		DirectX::XMStoreFloat4(&qqqq, quat);
+		DirectX::XMVECTOR weaponQuatV = DirectX::XMQuaternionRotationRollPitchYaw(-DirectX::XM_PIDIV2, 0, 0);
+		DirectX::XMFLOAT4 weaponQuat;
+		DirectX::XMStoreFloat4(&weaponQuat, weaponQuatV);
 		auto * gunObject = scene->New();
-		gunObject->AddComponent<Egg::Transform>()->Rotation = qqqq;
+
+		gunObject->AddComponent<Egg::Transform>()->Rotation = weaponQuat;
 		auto * modelComp = gunObject->AddComponent<Egg::Model>();
-		modelComp->multiMesh = resourceManager->LoadAssets(&railgun);
+		graphicsEngine->LoadAssets(modelComp, &railgun);
 		auto * animComp = gunObject->AddComponent<AnimationComponent>();
-		animComp->blackBoard.CreateResources(&railgun, modelComp->multiMesh.boneDataCb, railgun.animationsLength, {
+		animComp->blackBoard.CreateResources(&railgun, modelComp->boneDataCb, railgun.animationsLength, {
 												{ "Idle", 1, Egg::Animation::StateBehaviour::LOOP },
 											    { "Shoot", 0, Egg::Animation::StateBehaviour::ONCE }
 											 }, {
@@ -293,15 +324,17 @@ public:
 												 { "Shoot", "Idle", nullptr, &Egg::Animation::AnimationState::IsFinished, Egg::Animation::TransitionBehaviour::LERP }
 											 });
 
-
-		/*
 		auto * playerObject = scene->New();
-		playerObject->AddComponent<Egg::Transform>();
+		auto *tcomp = playerObject->AddComponent<Egg::Transform>();
+		tcomp->Scale = DirectX::XMFLOAT3{ 1,1,1 };
+		
 		auto * modelComponent = playerObject->AddComponent<Egg::Model>();
-		modelComponent->multiMesh = resourceManager->LoadAssets(&ybotModel);
+		graphicsEngine->LoadAssets(modelComponent, &ybotModel);
 		auto * animComponent = playerObject->AddComponent<AnimationComponent>();
 
-		animComponent->blackBoard.CreateResources(&ybotModel, modelComponent->multiMesh.boneDataCb, ybotModel.animationsLength, {
+		baseCam.SetAspect(graphicsEngine->GetAspectRatio());
+
+		animComponent->blackBoard.CreateResources(&ybotModel, modelComponent->boneDataCb, ybotModel.animationsLength, {
 					{ "Idle",			4,		Egg::Animation::StateBehaviour::LOOP },
 					{ "Forward",		6,		Egg::Animation::StateBehaviour::LOOP },
 					{ "Backward",		7,		Egg::Animation::StateBehaviour::LOOP },
@@ -410,21 +443,18 @@ public:
 					{ "JumpStart", "JumpLand",	&Egg::MovementController::IsOnGround, 		nullptr,										Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
 					{ "JumpLoop",  "JumpLand",	&Egg::MovementController::IsOnGround,		nullptr,										Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
 					{ "JumpLand",  "Idle",		nullptr,									&Egg::Animation::AnimationState::IsFinished,	Egg::Animation::TransitionBehaviour::LERP },
-			   });*/
+			   });
 
 
 
 
-		debugPhysx.reset(new Egg::DebugPhysx{});
-		debugPhysx->CreateResources(device.Get(), resourceManager.get());
+		//debugPhysx.reset(new Egg::DebugPhysx{});
+		//debugPhysx->CreateResources(device.Get(), resourceManager.get());
 
-		debugPhysx->AddActor(pxSys.groundPlane).SetOffset(0, DirectX::XMMatrixTranspose(DirectX::XMMatrixScaling(2000.0f, 2000.0f, 2000.0f)));
-
-
-
-		UploadResources();
+		//debugPhysx->AddActor(pxSys.groundPlane).SetOffset(0, DirectX::XMMatrixTranspose(DirectX::XMMatrixScaling(2000.0f, 2000.0f, 2000.0f)));
 
 
 	}
 
 };
+*/

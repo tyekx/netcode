@@ -25,6 +25,14 @@ namespace Egg {
 			return bitCount == 1;
 		}
 
+
+		/*
+		Takes a number and returns its closest multiplicative of 65536. The returned number is always bigger or equal than the input number
+		*/
+		constexpr unsigned int Align64K(unsigned int v) {
+			return (v + 0xFFFF) & (~0xFFFF);
+		}
+
 		/*
 		Takes a number and returns its closest multiplicative of 256. The returned number is always bigger or equal than the input number
 		*/
