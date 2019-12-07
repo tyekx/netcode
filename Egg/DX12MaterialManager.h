@@ -51,26 +51,6 @@ namespace Egg::Graphics::DX12 {
 		}
 
 	public:
-
-		RootSignatureDesc() : rootParams{}, staticSamplers{}, descRange{}, rootSigDesc{} { }
-
-		RootSignatureDesc(const RootSignatureDesc & rs) : rootParams{ rs.rootParams }, staticSamplers{ rs.staticSamplers }, descRange{}, rootSigDesc{ rs.rootSigDesc } {
-
-		}
-
-		RootSignatureDesc(RootSignatureDesc && rs) noexcept : RootSignatureDesc{} {
-			std::swap(rootParams, rs.rootParams);
-			std::swap(staticSamplers, rs.staticSamplers);
-			rootSigDesc = rs.rootSigDesc;
-		}
-
-		RootSignatureDesc & operator=(RootSignatureDesc rs) noexcept {
-			std::swap(rootParams, rs.rootParams);
-			std::swap(staticSamplers, rs.staticSamplers);
-			rootSigDesc = rs.rootSigDesc;
-			return *this;
-		}
-
 		bool operator==(const RootSignatureDesc & rs) const {
 			if(rootSigDesc.NumParameters != rs.rootSigDesc.NumParameters ||
 			   rootSigDesc.NumStaticSamplers != rs.rootSigDesc.NumStaticSamplers ||
@@ -96,6 +76,10 @@ namespace Egg::Graphics::DX12 {
 		inline bool operator!=(const RootSignatureDesc & rs) const {
 			return !operator==(rs);
 		}
+
+		RootSignatureDesc() = default;
+		RootSignatureDesc(const RootSignatureDesc &) = default;
+		RootSignatureDesc & operator=(const RootSignatureDesc &) = default;
 
 		RootSignatureDesc(const std::vector<ShaderBindpoint> & bindPoints) {
 

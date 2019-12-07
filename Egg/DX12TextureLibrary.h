@@ -50,7 +50,8 @@ namespace Egg::Graphics::DX12 {
 	public:
 
 		void SetDescriptorHeap(ID3D12GraphicsCommandList * gcl) {
-			gcl->SetDescriptorHeaps(1, &texturesHeap);
+			ID3D12DescriptorHeap * dheaps[] = { texturesHeap.Get() };
+			gcl->SetDescriptorHeaps(ARRAYSIZE(dheaps), dheaps);
 		}
 
 		void CreateResources(ID3D12Device * dev) {

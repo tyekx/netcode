@@ -35,7 +35,7 @@ namespace Egg::Graphics::DX12 {
 		ID3D12GraphicsCommandList * gcl = fr.commandList.Get();
 
 		if(rt == 0) {
-			gcl->SetDescriptorHeaps(1, &dsvDescHeap);
+			//gcl->SetDescriptorHeaps(1, &dsvDescHeap);
 			gcl->OMSetRenderTargets(0, &fr.rtvHandle, FALSE, &fr.dsvHandle);
 			gcl->RSSetScissorRects(1, &fr.scissorRect);
 			gcl->RSSetViewports(1, &fr.viewPort);
@@ -60,6 +60,8 @@ namespace Egg::Graphics::DX12 {
 		textureLibrary.SetDescriptorHeap(gcl);
 
 		for(RenderItem * i : renderItemBuffer) {
+			i->Render(gcl);
+			/*
 			gcl->SetGraphicsRootSignature(i->rootSignature);
 			gcl->SetPipelineState(i->graphicsPso);
 			LODLevel * lod = i->lodLevels + i->selectedLod;
@@ -71,7 +73,7 @@ namespace Egg::Graphics::DX12 {
 				gcl->DrawIndexedInstanced(lod->indexCount, 1, 0, 0, 0);
 			} else {
 				gcl->DrawInstanced(lod->vertexCount, 1, 0, 0);
-			}
+			}*/
 		}
 
 		renderItemBuffer.clear();

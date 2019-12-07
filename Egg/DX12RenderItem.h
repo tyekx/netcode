@@ -49,13 +49,13 @@ namespace Egg::Graphics::DX12 {
 			if(addr == 0) {
 				return;
 			}
-			sizeof(RenderItem);
 			gcl->SetGraphicsRootConstantBufferView(rootSigIdx, addr);
 		}
 
 		inline void SetPipelineState(ID3D12GraphicsCommandList * gcl) {
 			gcl->SetGraphicsRootSignature(rootSignature);
 			gcl->SetPipelineState(graphicsPso);
+
 		}
 
 		inline void SelectLOD(UINT lodLevel) {
@@ -72,10 +72,8 @@ namespace Egg::Graphics::DX12 {
 			}
 		}
 
-		inline void Render(ID3D12GraphicsCommandList * gcl, D3D12_GPU_VIRTUAL_ADDRESS perFrameCbAddr) {
+		inline void Render(ID3D12GraphicsCommandList * gcl) {
 			SetPipelineState(gcl);
-			//@TODO: per frame cb
-			//SetConstantBuffer(gcl, PerFrameCb::id, perFrameCbAddr);
 			SetRenderItemResources(gcl);
 			DrawGeometry(gcl);
 		}

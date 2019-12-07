@@ -119,7 +119,7 @@ namespace Egg::Graphics::DX12 {
 			PackedHandle * ph = reinterpret_cast<PackedHandle *>(&handle);
 			for(iter = head; iter != nullptr && i < ph->pageIdx; iter = iter->next, ++i);
 
-			ASSERT(ph->byteOffset % 256 != 0, "sanity check failed: byte offset is not 256 aligned");
+			ASSERT(ph->byteOffset % 256 == 0, "sanity check failed: byte offset is not 256 aligned");
 			ASSERT(iter != nullptr, "Page not found");
 
 			return iter->addr + ph->byteOffset;

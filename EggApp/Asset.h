@@ -102,7 +102,7 @@ void LoadItem(Egg::Module::IGraphicsModule * g, Egg::Asset::Model * model, Model
 		
 			if(mesh->indices != nullptr) {
 				BYTE * const ibp = reinterpret_cast<BYTE *>(mesh->indices);
-				g->AddIndexBufferLOD(geometry, (ibp + mesh->lodLevels[i].indexCount * 4), mesh->lodLevels[i].indicesLength, DXGI_FORMAT_R32_UINT);
+				g->AddIndexBufferLOD(geometry, (ibp + 4U * mesh->lodLevels[i].indexOffset), mesh->lodLevels[i].indicesLength, DXGI_FORMAT_R32_UINT);
 			}
 		}
 
@@ -136,7 +136,10 @@ void LoadItem(Egg::Module::IGraphicsModule * g, Egg::Asset::Model * model, Model
 		matcbV->diffuseColor = DirectX::XMFLOAT4A{ mat->diffuseColor.x, mat->diffuseColor.y,mat->diffuseColor.z, 1.0f };
 		matcbV->fresnelR0 = DirectX::XMFLOAT3{ 0.05f, 0.05f, 0.05f };
 		matcbV->shininess = mat->shininess;
+
+		g->AddCbuffer(item, matcb, g->GetCbufferSlot(item, "MaterialCb"));
 		
 		modelComponent->AddShadedMesh(item, matcbV);
 	}
+
 }

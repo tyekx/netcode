@@ -15,6 +15,7 @@ namespace Egg::Graphics::DX12 {
 			auto allocation = allocator.Allocate();
 
 			new (allocation.item) RenderItem();
+			allocation.item->state = RenderItemState::IN_USE;
 
 			return allocation.handle;
 		}

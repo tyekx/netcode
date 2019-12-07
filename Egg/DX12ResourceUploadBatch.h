@@ -16,6 +16,12 @@ namespace Egg::Graphics::DX12::Resource {
 			UINT cpuResourceSizeInBytes;
 		};
 
+		struct TransitionItem {
+			ID3D12Resource * resource;
+			D3D12_RESOURCE_STATES preState;
+			D3D12_RESOURCE_STATES postState;
+		};
+
 		ID3D12Device * device;
 		com_ptr<ID3D12Resource> uploadResource;
 		com_ptr<ID3D12Fence> fence;
@@ -32,7 +38,7 @@ namespace Egg::Graphics::DX12::Resource {
 		void * mappedPtr;
 
 		std::queue<CopyItem> items;
-		bool hasTransitions;
+		std::queue<TransitionItem> transitions;
 
 		UINT CalcTex2DCopySize(const D3D12_RESOURCE_DESC & resourceDesc) {
 			UINT64 copyableSize;
@@ -144,7 +150,7 @@ namespace Egg::Graphics::DX12::Resource {
 		}
 
 		virtual void Prepare() override {
-			ResetDirectCommandList();
+
 		}
 
 		void ResetCopyCommandList() {
@@ -195,8 +201,18 @@ namespace Egg::Graphics::DX12::Resource {
 		}
 
 		void TransitionAll(ID3D12CommandQueue * directCommandQueue) {
-			if(!hasTransitions) {
+			if(transitions.empty()) {
 				return;
+			}
+
+			ResetDirectCommandList();
+
+			while(!transitions.empty()) {
+				const auto & transition = transitions.front();
+
+				directCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(transition.resource, transition.preState, transition.postState));
+
+				transitions.pop();
 			}
 
 			CloseDirectCommandList();
@@ -206,8 +222,6 @@ namespace Egg::Graphics::DX12::Resource {
 			directCommandQueue->ExecuteCommandLists(ARRAYSIZE(cls), cls);
 
 			directCommandQueue->Signal(fence.Get(), fenceValue);
-
-			hasTransitions = false;
 
 			WaitForUpload();
 		}
@@ -226,8 +240,7 @@ namespace Egg::Graphics::DX12::Resource {
 		}
 
 		virtual void Transition(ID3D12Resource * resource, D3D12_RESOURCE_STATES preState, D3D12_RESOURCE_STATES postState) override {
-			directCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(resource, preState, postState));
-			hasTransitions = true;
+			transitions.push({ resource, preState, postState });
 		}
 
 		virtual void CreateResources(ID3D12Device * dev) override {
