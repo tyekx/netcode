@@ -7,6 +7,7 @@
 
 namespace Egg::Module {
 
+	class AApp;
 	class IModule;
 	class IModuleFactory;
 	class IWindowModule;
@@ -20,6 +21,10 @@ namespace Egg::Module {
 	window, graphics, network, physics, audio
 	*/
 	class AApp {
+	protected:
+		void StartModule(IModule * m);
+		void ShutdownModule(IModule * m);
+
 	public:
 		std::unique_ptr<IWindowModule> window;
 		std::unique_ptr<IGraphicsModule> graphics;
@@ -108,6 +113,8 @@ namespace Egg::Module {
 		virtual void SetCbuffer(HITEM item, HCBUFFER cbuffer, unsigned int idx, unsigned int slot) = 0;
 		virtual unsigned int GetCbufferSlot(HITEM item, const std::string & cbufferName) = 0;
 
+		virtual void Prepare() = 0;
+		virtual void SetRenderTarget() = 0;
 		virtual void SetRenderTarget(HRENDERTARGET rt) = 0;
 		virtual void ClearRenderTarget() = 0;
 		virtual void Record(HITEM item) = 0;

@@ -2,7 +2,97 @@
 
 namespace Egg::Graphics::DX12 {
 
-	 void DX12GraphicsModule::Start(Module::AApp * app)  {
+	void DX12GraphicsModule::Prepare() {
+		FrameResource & fr = frameResources.at(backbufferIndex);
+
+		fr.WaitForCompletion();
+
+		DX_API("Failed to reset command allocator")
+			fr.commandAllocator->Reset();
+
+		DX_API("Failed to reset command list")
+			fr.commandList->Reset(fr.commandAllocator.Get(), nullptr);
+
+		fr.commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(fr.swapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+
+		/*
+		record upload commands first
+		@TODO: rethink this, this could kill performance
+		*/
+		fr.resourceUploader->Prepare();
+		textureLibrary.UploadResources(fr.resourceUploader.get());
+		geomManager.UploadResources(fr.resourceUploader.get());
+		fr.resourceUploader->Process(commandQueue.Get(), copyCommandQueue.Get());
+	}
+
+	void DX12GraphicsModule::SetRenderTarget() {
+		SetRenderTarget(0);
+	}
+
+	void DX12GraphicsModule::SetRenderTarget(HRENDERTARGET rt) {
+		FrameResource & fr = frameResources.at(backbufferIndex);
+		ID3D12GraphicsCommandList * gcl = fr.commandList.Get();
+
+		if(rt == 0) {
+			gcl->SetDescriptorHeaps(1, &dsvDescHeap);
+			gcl->OMSetRenderTargets(0, &fr.rtvHandle, FALSE, &fr.dsvHandle);
+			gcl->RSSetScissorRects(1, &fr.scissorRect);
+			gcl->RSSetViewports(1, &fr.viewPort);
+			gcl->ClearRenderTargetView(fr.rtvHandle, rtvClearValue.Color, 0, nullptr);
+			gcl->ClearDepthStencilView(fr.dsvHandle, D3D12_CLEAR_FLAG_DEPTH, dsvClearValue.DepthStencil.Depth, dsvClearValue.DepthStencil.Stencil, 0, nullptr);
+		}
+	}
+
+	void DX12GraphicsModule::ClearRenderTarget() {
+		// @TODO
+	}
+
+	void DX12GraphicsModule::Record(HITEM item) {
+		RenderItem * renderItem = renderItemColl.GetItem(item);
+		renderItemBuffer.push_back(renderItem);
+	}
+
+	void DX12GraphicsModule::Render() {
+		FrameResource & fr = frameResources.at(backbufferIndex);
+		ID3D12GraphicsCommandList * gcl = fr.commandList.Get();
+
+		textureLibrary.SetDescriptorHeap(gcl);
+
+		for(RenderItem * i : renderItemBuffer) {
+			gcl->SetGraphicsRootSignature(i->rootSignature);
+			gcl->SetPipelineState(i->graphicsPso);
+			LODLevel * lod = i->lodLevels + i->selectedLod;
+
+			gcl->IASetVertexBuffers(0, 1, &lod->vertexBufferView);
+			gcl->IASetPrimitiveTopology(i->primitiveTopology);
+			if(lod->indexCount > 0) {
+				gcl->IASetIndexBuffer(&lod->indexBufferView);
+				gcl->DrawIndexedInstanced(lod->indexCount, 1, 0, 0, 0);
+			} else {
+				gcl->DrawInstanced(lod->vertexCount, 1, 0, 0);
+			}
+		}
+
+		renderItemBuffer.clear();
+
+		fr.FinishRecording();
+
+		ID3D12CommandList * cls[] = { fr.commandList.Get() };
+
+		commandQueue->ExecuteCommandLists(ARRAYSIZE(cls), cls);
+
+		commandQueue->Signal(fr.fence.Get(), fr.fenceValue);
+	}
+
+	void DX12GraphicsModule::Present() {
+		DX_API("Failed to present swap chain")
+			swapChain->Present(0, 0);
+
+		NextBackBufferIndex();
+	}
+
+	void DX12GraphicsModule::Start(Module::AApp * app)  {
 		hwnd = reinterpret_cast<HWND>(app->window->GetUnderlyingPointer());
 		backbufferDepth = 2;
 		depthStencilFormat = DXGI_FORMAT_D32_FLOAT;
@@ -35,13 +125,13 @@ namespace Egg::Graphics::DX12 {
 
 		CreateSwapChainResources();
 
-		copyResources.CreateResources(device.Get());
-
 		textureLibrary.CreateResources(device.Get());
 
 		geomManager.CreateResources(device.Get());
 
 		matManager.CreateResources(device.Get());
+
+		cbufferAllocator.CreateResources(device.Get());
 
 		renderItemBuffer.reserve(1024);
 	}

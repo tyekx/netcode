@@ -11,6 +11,7 @@ namespace Egg::Module {
 
 	class WinapiWindowModule : public IWindowModule {
 		HWND windowHandle;
+		bool isRunning;
 
 	public:
 		virtual void Start(AApp * app) override;

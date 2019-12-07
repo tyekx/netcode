@@ -15,6 +15,7 @@ namespace Egg {
 		DirectX::XMFLOAT3 color;
 	};
 
+	/*
 
 	class DebugPhysxRaycast {
 		Egg::Material * debugMaterial;
@@ -62,7 +63,7 @@ namespace Egg {
 
 			rayGeometry->Draw(gcl);
 		}
-
 	};
+	*/
 
 }

@@ -5,8 +5,8 @@
 #include "Bone.h"
 #include "Material.h"
 #include <memory>
-#include "../Interpreted.h"
 #include "../Common.h"
+#include "../MemoryFunctions.h"
 
 namespace Egg::Asset {
 	class Model {

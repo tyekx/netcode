@@ -2,9 +2,9 @@
 
 #include "Common.h"
 #include "HandleTypes.h"
-#include "Resource.h"
 #include "Importer.h"
 
+#include "DX12Resource.h"
 #include "DX12RenderItem.h"
 
 namespace Egg::Graphics::DX12 {
@@ -18,6 +18,7 @@ namespace Egg::Graphics::DX12 {
 		};
 
 		std::vector<Item> items;
+		std::vector<Resource::IUploadResource *> uploadPile;
 
 		com_ptr<ID3D12DescriptorHeap> texturesHeap;
 		UINT texturesNumDescriptors;
@@ -47,6 +48,10 @@ namespace Egg::Graphics::DX12 {
 		ID3D12Device * device;
 
 	public:
+
+		void SetDescriptorHeap(ID3D12GraphicsCommandList * gcl) {
+			gcl->SetDescriptorHeaps(1, &texturesHeap);
+		}
 
 		void CreateResources(ID3D12Device * dev) {
 			device = dev;
@@ -83,6 +88,13 @@ namespace Egg::Graphics::DX12 {
 			nextDescriptor += numTextures;
 		}
 
+		void UploadResources(Resource::IResourceUploader * uploader) {
+			for(Resource::IUploadResource * r : uploadPile) {
+				r->UploadResources(uploader);
+			}
+			uploadPile.clear();
+		}
+
 		void SetTexture(RenderItem * renderItem, UINT localIdx, HTEXTURE texture) {
 			ASSERT(renderItem->texturesLength < localIdx, "Setting texture is out of bounds");
 			
@@ -106,6 +118,8 @@ namespace Egg::Graphics::DX12 {
 			}
 
 			std::unique_ptr<Resource::ITexture> texture = Importer::ImportCommittedTexture2D(device, textureMediaPath);
+
+			uploadPile.push_back(texture.get());
 
 			handle = nextTextureId++;
 

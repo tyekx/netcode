@@ -2,6 +2,8 @@
 
 #include "Geometry.h"
 
+// @TODO: refactor this out
+
 namespace Egg {
 
 	struct WireframeVertex {

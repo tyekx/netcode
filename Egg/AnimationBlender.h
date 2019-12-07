@@ -1,7 +1,6 @@
 #pragma once
 
 #include "AnimationState.h"
-#include "ConstantBufferTypes.h"
 #include "Asset/Bone.h"
 
 namespace Egg::Animation {
@@ -14,15 +13,15 @@ namespace Egg::Animation {
 
 		constexpr static int MAX_ACTIVE_STATE_COUNT = 8;
 
-		BoneSRT buffer[BoneDataCb::MAX_BONE_COUNT];
+		BoneSRT buffer[128];
 		AnimationState * activeStates[MAX_ACTIVE_STATE_COUNT];
 		UINT numActiveStates;
 		Asset::Bone * bones;
 		UINT bonesLength;
-		BoneDataCb * dest;
+		void * dest;
 	public:
 
-		AnimationBlender(Asset::Bone * skeleton, UINT skeletonLength, BoneDataCb * boneDataCb);
+		AnimationBlender(Asset::Bone * skeleton, UINT skeletonLength, void * boneDataCb);
 
 		void ActivateState(AnimationState * state);
 

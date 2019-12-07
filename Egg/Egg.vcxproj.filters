@@ -10,12 +10,6 @@
     <Filter Include="Lua">
       <UniqueIdentifier>{ddad10d9-5d97-4b51-ba70-2e1fb599016c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Scene">
-      <UniqueIdentifier>{fbf485cf-845a-4308-971b-5e59637c08dd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Components">
-      <UniqueIdentifier>{caa87bb9-a58f-41f2-bf06-0823412d769d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="App">
       <UniqueIdentifier>{34632bc3-ab27-44ff-9868-a746b6ec55eb}</UniqueIdentifier>
     </Filter>
@@ -25,35 +19,14 @@
     <Filter Include="Utility">
       <UniqueIdentifier>{68dabe5a-4e7b-4ed4-92c5-004bbb94bc43}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Components\Systems">
-      <UniqueIdentifier>{d338157d-799f-4c10-b1aa-f5f8e88c3926}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Asset">
       <UniqueIdentifier>{a15afac8-bda1-46db-8b99-9647baa28104}</UniqueIdentifier>
     </Filter>
     <Filter Include="Serialization">
       <UniqueIdentifier>{d6e6d7cf-b81c-4c14-bf1b-5d8deda83c36}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Model">
-      <UniqueIdentifier>{fd7146c2-f1cd-4dc9-b0af-3660c419d51f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Model\Mesh">
-      <UniqueIdentifier>{3975ca39-e5c6-4edb-ad6d-5072b939714f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Model\Material">
-      <UniqueIdentifier>{ccf9c152-33c0-40c2-8719-0d1808263e02}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Gameplay">
       <UniqueIdentifier>{bffaa71e-00d8-49ff-9929-3cb9b6726e3c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Memory">
-      <UniqueIdentifier>{e5730774-81ed-487c-90dc-7e0c274ba856}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Graphics\Debug">
-      <UniqueIdentifier>{6056ac49-bc8e-480d-a212-d3b0cd479a98}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Graphics\Resource">
-      <UniqueIdentifier>{558741a0-ed22-4b3c-aeed-1151cf341cb1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Animation">
       <UniqueIdentifier>{4f83584f-fd50-4e2b-a924-2c48b44efe86}</UniqueIdentifier>
@@ -63,12 +36,6 @@
     </Filter>
     <Filter Include="Graphics\Engine\DX12">
       <UniqueIdentifier>{8a77180a-e90e-470d-8ebc-6be0af8642aa}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Graphics\Sync">
-      <UniqueIdentifier>{8d69928e-11c5-489e-8903-ea4279fa5412}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Graphics\Sync\DX12">
-      <UniqueIdentifier>{bfbe4b0e-762e-4cef-93cd-591f6f59f0a1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Font">
       <UniqueIdentifier>{a441bedd-7f60-4bc5-a95a-e1669738a11a}</UniqueIdentifier>
@@ -82,6 +49,24 @@
     <Filter Include="Modules\Window">
       <UniqueIdentifier>{171c8312-e5b1-4ddb-b0d7-6bda52ce25bc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics\Engine\DX12\Resource">
+      <UniqueIdentifier>{558741a0-ed22-4b3c-aeed-1151cf341cb1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Engine\DX12\Sync">
+      <UniqueIdentifier>{8d69928e-11c5-489e-8903-ea4279fa5412}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Legacy">
+      <UniqueIdentifier>{900505d3-a104-4bb4-8051-40866877e62b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Legacy\Components">
+      <UniqueIdentifier>{caa87bb9-a58f-41f2-bf06-0823412d769d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Legacy\Components\Systems">
+      <UniqueIdentifier>{d338157d-799f-4c10-b1aa-f5f8e88c3926}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Legacy\Scene">
+      <UniqueIdentifier>{fbf485cf-845a-4308-971b-5e59637c08dd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera\Camera.h">
@@ -91,16 +76,16 @@
       <Filter>Lua</Filter>
     </ClInclude>
     <ClInclude Include="Scene.h">
-      <Filter>Scene</Filter>
+      <Filter>Legacy\Scene</Filter>
     </ClInclude>
     <ClInclude Include="LuaApi.h">
       <Filter>Lua</Filter>
     </ClInclude>
     <ClInclude Include="TransformComponent.h">
-      <Filter>Components</Filter>
+      <Filter>Legacy\Components</Filter>
     </ClInclude>
     <ClInclude Include="ScriptComponent.h">
-      <Filter>Components</Filter>
+      <Filter>Legacy\Components</Filter>
     </ClInclude>
     <ClInclude Include="LuaManager.h">
       <Filter>Lua</Filter>
@@ -112,10 +97,10 @@
       <Filter>Utility</Filter>
     </ClInclude>
     <ClInclude Include="GameObject.h">
-      <Filter>Scene</Filter>
+      <Filter>Legacy\Scene</Filter>
     </ClInclude>
     <ClInclude Include="Components.h">
-      <Filter>Components</Filter>
+      <Filter>Legacy\Components</Filter>
     </ClInclude>
     <ClInclude Include="LuaScriptFile.h">
       <Filter>Lua</Filter>
@@ -126,11 +111,8 @@
     <ClInclude Include="App.h">
       <Filter>App</Filter>
     </ClInclude>
-    <ClInclude Include="ConstantBuffer.hpp">
-      <Filter>Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="PhysxComponent.h">
-      <Filter>Components</Filter>
+      <Filter>Legacy\Components</Filter>
     </ClInclude>
     <ClInclude Include="Utility.h">
       <Filter>Utility</Filter>
@@ -145,13 +127,10 @@
       <Filter>App</Filter>
     </ClInclude>
     <ClInclude Include="PhysxSystem.h">
-      <Filter>Components\Systems</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderSystem.h">
-      <Filter>Components\Systems</Filter>
+      <Filter>Legacy\Components\Systems</Filter>
     </ClInclude>
     <ClInclude Include="Signature.h">
-      <Filter>Components</Filter>
+      <Filter>Legacy\Components</Filter>
     </ClInclude>
     <ClInclude Include="Vertex.h">
       <Filter>Asset</Filter>
@@ -171,87 +150,21 @@
     <ClInclude Include="Asset\Bone.h">
       <Filter>Asset</Filter>
     </ClInclude>
-    <ClInclude Include="Importer.h">
-      <Filter>Serialization</Filter>
-    </ClInclude>
     <ClInclude Include="Exporter.h">
       <Filter>Serialization</Filter>
     </ClInclude>
     <ClInclude Include="Asset\Material.h">
       <Filter>Asset</Filter>
     </ClInclude>
-    <ClInclude Include="Material.h">
-      <Filter>Model\Material</Filter>
-    </ClInclude>
-    <ClInclude Include="Blackboard.h">
-      <Filter>Animation</Filter>
-    </ClInclude>
     <ClInclude Include="AnimationComponent.h">
-      <Filter>Components</Filter>
-    </ClInclude>
-    <ClInclude Include="BasicGeometry.h">
-      <Filter>Model\Mesh</Filter>
+      <Filter>Legacy\Components</Filter>
     </ClInclude>
     <ClInclude Include="EggMath.h" />
     <ClInclude Include="Input.h">
       <Filter>Gameplay</Filter>
     </ClInclude>
-    <ClInclude Include="Allocation.h">
-      <Filter>Memory</Filter>
-    </ClInclude>
-    <ClInclude Include="ConstantBufferTypes.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Light.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="DebugPhysx.h">
-      <Filter>Graphics\Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="DebugPhysxActor.h">
-      <Filter>Graphics\Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="DebugPhysxRaycast.h">
-      <Filter>Graphics\Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource.h">
-      <Filter>Graphics\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="CommittedTexture2D.h">
-      <Filter>Graphics\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="CommittedVBuffer.h">
-      <Filter>Graphics\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="CommittedIBuffer.h">
-      <Filter>Graphics\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="Mesh.h">
-      <Filter>Model\Mesh</Filter>
-    </ClInclude>
-    <ClInclude Include="Multi.h">
-      <Filter>Model\Mesh</Filter>
-    </ClInclude>
-    <ClInclude Include="Geometry.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="InputLayout.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="AnimationState.h">
-      <Filter>Animation</Filter>
-    </ClInclude>
-    <ClInclude Include="Transition.h">
-      <Filter>Animation</Filter>
-    </ClInclude>
     <ClInclude Include="MovementController.h">
       <Filter>Gameplay</Filter>
-    </ClInclude>
-    <ClInclude Include="AnimationBlender.h">
-      <Filter>Animation</Filter>
-    </ClInclude>
-    <ClInclude Include="LinearClassifier.h">
-      <Filter>Memory</Filter>
     </ClInclude>
     <ClInclude Include="DX12RenderItem.h">
       <Filter>Graphics\Engine\DX12</Filter>
@@ -259,26 +172,11 @@
     <ClInclude Include="DX12RenderItemAllocator.h">
       <Filter>Graphics\Engine\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="DX12Fence.h">
-      <Filter>Graphics\Sync\DX12</Filter>
-    </ClInclude>
     <ClInclude Include="SpriteFont.h">
       <Filter>Font</Filter>
     </ClInclude>
     <ClInclude Include="BinaryReader.h">
       <Filter>Serialization</Filter>
-    </ClInclude>
-    <ClInclude Include="ResourceUploadBatch.h">
-      <Filter>Graphics\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="PlacedVBuffer.h">
-      <Filter>Graphics\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="Interpreted.h">
-      <Filter>App</Filter>
-    </ClInclude>
-    <ClInclude Include="PlacedIBuffer.h">
-      <Filter>Graphics\Resource</Filter>
     </ClInclude>
     <ClInclude Include="DefaultModuleFactory.h">
       <Filter>Modules\Factory</Filter>
@@ -331,6 +229,75 @@
     <ClInclude Include="Modules.h">
       <Filter>Modules</Filter>
     </ClInclude>
+    <ClInclude Include="DX12CommittedIBuffer.h">
+      <Filter>Graphics\Engine\DX12\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12CommittedTexture2D.h">
+      <Filter>Graphics\Engine\DX12\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12CommittedVBuffer.h">
+      <Filter>Graphics\Engine\DX12\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12PlacedIBuffer.h">
+      <Filter>Graphics\Engine\DX12\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12PlacedVBuffer.h">
+      <Filter>Graphics\Engine\DX12\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Resource.h">
+      <Filter>Graphics\Engine\DX12\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12ResourceUploadBatch.h">
+      <Filter>Graphics\Engine\DX12\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Fence.h">
+      <Filter>Graphics\Engine\DX12\Sync</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicGeometry.h">
+      <Filter>Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="Importer.h">
+      <Filter>Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="Allocation.h">
+      <Filter>Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="LinearClassifier.h">
+      <Filter>Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugPhysx.h">
+      <Filter>Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugPhysxActor.h">
+      <Filter>Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugPhysxRaycast.h">
+      <Filter>Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="InputLayout.h">
+      <Filter>Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="Geometry.h">
+      <Filter>Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="ConstantBuffer.hpp">
+      <Filter>Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryFunctions.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationBlender.h">
+      <Filter>Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationState.h">
+      <Filter>Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="Blackboard.h">
+      <Filter>Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="Transition.h">
+      <Filter>Legacy</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
@@ -343,10 +310,10 @@
       <Filter>Utility</Filter>
     </ClCompile>
     <ClCompile Include="GameObject.cpp">
-      <Filter>Scene</Filter>
+      <Filter>Legacy\Scene</Filter>
     </ClCompile>
     <ClCompile Include="Scene.cpp">
-      <Filter>Scene</Filter>
+      <Filter>Legacy\Scene</Filter>
     </ClCompile>
     <ClCompile Include="Utility.cpp">
       <Filter>Utility</Filter>
@@ -355,59 +322,14 @@
       <Filter>App</Filter>
     </ClCompile>
     <ClCompile Include="PhysxSystem.cpp">
-      <Filter>Components\Systems</Filter>
+      <Filter>Legacy\Components\Systems</Filter>
     </ClCompile>
     <ClCompile Include="Exporter.cpp">
       <Filter>Serialization</Filter>
     </ClCompile>
-    <ClCompile Include="Importer.cpp">
-      <Filter>Serialization</Filter>
-    </ClCompile>
     <ClCompile Include="EggMath.cpp" />
-    <ClCompile Include="BasicGeometry.cpp">
-      <Filter>Model\Mesh</Filter>
-    </ClCompile>
-    <ClCompile Include="Material.cpp">
-      <Filter>Model\Material</Filter>
-    </ClCompile>
     <ClCompile Include="Input.cpp">
       <Filter>Gameplay</Filter>
-    </ClCompile>
-    <ClCompile Include="Allocation.cpp">
-      <Filter>Memory</Filter>
-    </ClCompile>
-    <ClCompile Include="DebugPhysx.cpp">
-      <Filter>Graphics\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="DebugPhysxActor.cpp">
-      <Filter>Graphics\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="ConstantBufferTypes.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="CommittedTexture2D.cpp">
-      <Filter>Graphics\Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="CommittedVBuffer.cpp">
-      <Filter>Graphics\Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="CommittedIBuffer.cpp">
-      <Filter>Graphics\Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="Blackboard.cpp">
-      <Filter>Animation</Filter>
-    </ClCompile>
-    <ClCompile Include="AnimationState.cpp">
-      <Filter>Animation</Filter>
-    </ClCompile>
-    <ClCompile Include="Transition.cpp">
-      <Filter>Animation</Filter>
-    </ClCompile>
-    <ClCompile Include="AnimationBlender.cpp">
-      <Filter>Animation</Filter>
-    </ClCompile>
-    <ClCompile Include="LinearClassifier.cpp">
-      <Filter>Memory</Filter>
     </ClCompile>
     <ClCompile Include="SpriteFont.cpp">
       <Filter>Font</Filter>
@@ -423,6 +345,51 @@
     </ClCompile>
     <ClCompile Include="DX12GraphicsModule.cpp">
       <Filter>Graphics\Engine\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Modules.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12CommittedIBuffer.cpp">
+      <Filter>Graphics\Engine\DX12\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12CommittedTexture2D.cpp">
+      <Filter>Graphics\Engine\DX12\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12CommittedVBuffer.cpp">
+      <Filter>Graphics\Engine\DX12\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicGeometry.cpp">
+      <Filter>Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="Importer.cpp">
+      <Filter>Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="Allocation.cpp">
+      <Filter>Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="LinearClassifier.cpp">
+      <Filter>Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugPhysx.cpp">
+      <Filter>Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugPhysxActor.cpp">
+      <Filter>Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="MemoryFunctions.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationBlender.cpp">
+      <Filter>Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationState.cpp">
+      <Filter>Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="Blackboard.cpp">
+      <Filter>Legacy</Filter>
+    </ClCompile>
+    <ClCompile Include="Transition.cpp">
+      <Filter>Legacy</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

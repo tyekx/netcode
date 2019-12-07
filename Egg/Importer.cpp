@@ -15,7 +15,7 @@
 
 namespace Egg::Importer {
 
-	std::unique_ptr<Graphics::Resource::ITexture>  ImportCommittedTexture2D(ID3D12Device * device, const MediaPath & filePath) {
+	std::unique_ptr<Graphics::DX12::Resource::ITexture>  ImportCommittedTexture2D(ID3D12Device * device, const MediaPath & filePath) {
 		std::wstring wstr = filePath.GetAbsolutePath();
 
 		DirectX::TexMetadata metaData;
@@ -42,7 +42,7 @@ namespace Egg::Importer {
 		rdsc.Height = (unsigned int)metaData.height;
 		rdsc.Width = (unsigned int)metaData.width;
 		rdsc.Format = metaData.format;
-		rdsc.MipLevels = metaData.mipLevels;
+		rdsc.MipLevels = static_cast<UINT16>(metaData.mipLevels);
 		rdsc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 		rdsc.Alignment = 0;
 		rdsc.SampleDesc.Count = 1;
@@ -50,7 +50,7 @@ namespace Egg::Importer {
 		rdsc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 		rdsc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
-		std::unique_ptr<Graphics::Resource::Committed::Texture2D> texture = std::make_unique<Graphics::Resource::Committed::Texture2D>();
+		std::unique_ptr<Graphics::DX12::Resource::CommittedTexture2D> texture = std::make_unique<Graphics::DX12::Resource::CommittedTexture2D>();
 		texture->CreateResources(device, rdsc, std::move(outputIm));
 		return texture;
 	}

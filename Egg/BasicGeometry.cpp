@@ -1,5 +1,5 @@
 #include "BasicGeometry.h"
-#include "CommittedVBuffer.h"
+#include "DX12CommittedVBuffer.h"
 
 Egg::Graphics::Geometry Egg::BasicGeometry::CreateLine(ID3D12Device * device, const DirectX::XMFLOAT3 & color) {
 	WireframeVertex vertices[2];
@@ -17,7 +17,7 @@ Egg::Graphics::Geometry Egg::BasicGeometry::CreateLine(ID3D12Device * device, co
 							   { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 						   });
 
-	std::unique_ptr<Egg::Graphics::Resource::Committed::VBuffer> vertexBuffer = std::make_unique<Egg::Graphics::Resource::Committed::VBuffer>();
+	std::unique_ptr<Egg::Graphics::DX12::Resource::CommittedVBuffer> vertexBuffer = std::make_unique<Egg::Graphics::DX12::Resource::CommittedVBuffer>();
 	UINT sizeInBytes = _countof(vertices) * sizeof(WireframeVertex);
 	vertexBuffer->AddLODLevel(device, CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes), vertices, sizeInBytes, sizeof(WireframeVertex));
 
@@ -83,7 +83,7 @@ Egg::Graphics::Geometry Egg::BasicGeometry::CreateBoxWireframe(ID3D12Device * de
 							   { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 						   });
 
-	std::unique_ptr<Egg::Graphics::Resource::Committed::VBuffer> vertexBuffer = std::make_unique<Egg::Graphics::Resource::Committed::VBuffer>();
+	std::unique_ptr<Egg::Graphics::DX12::Resource::CommittedVBuffer> vertexBuffer = std::make_unique<Egg::Graphics::DX12::Resource::CommittedVBuffer>();
 	UINT sizeInBytes = _countof(vertices) * sizeof(WireframeVertex);
 	vertexBuffer->AddLODLevel(device, CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes), vertices, sizeInBytes, sizeof(WireframeVertex));
 
@@ -117,7 +117,7 @@ Egg::Graphics::Geometry Egg::BasicGeometry::CreatePlaneWireframe(ID3D12Device * 
 							   { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 						   });
 
-	std::unique_ptr<Egg::Graphics::Resource::Committed::VBuffer> vertexBuffer = std::make_unique<Egg::Graphics::Resource::Committed::VBuffer>();
+	std::unique_ptr<Egg::Graphics::DX12::Resource::CommittedVBuffer> vertexBuffer = std::make_unique<Egg::Graphics::DX12::Resource::CommittedVBuffer>();
 	UINT sizeInBytes = verticesLength * sizeof(WireframeVertex);
 	vertexBuffer->AddLODLevel(device, CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes), vertices, sizeInBytes, sizeof(WireframeVertex));
 
@@ -255,7 +255,7 @@ Egg::Graphics::Geometry Egg::BasicGeometry::CreateCapsuleWireframe(ID3D12Device 
 							   { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 						   });
 
-	std::unique_ptr<Egg::Graphics::Resource::Committed::VBuffer> vertexBuffer = std::make_unique<Egg::Graphics::Resource::Committed::VBuffer>();
+	std::unique_ptr<Egg::Graphics::DX12::Resource::CommittedVBuffer> vertexBuffer = std::make_unique<Egg::Graphics::DX12::Resource::CommittedVBuffer>();
 	UINT sizeInBytes = _countof(vertices) * sizeof(WireframeVertex);
 	vertexBuffer->AddLODLevel(device, CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes), vertices, sizeInBytes, sizeof(WireframeVertex));
 
@@ -314,7 +314,7 @@ Egg::Graphics::Geometry Egg::BasicGeometry::CreateBox(ID3D12Device * device) {
 	Egg::Graphics::InputLayout layout;
 	layout.SetVertexType(PNT_Vertex::type);
 
-	std::unique_ptr<Egg::Graphics::Resource::Committed::VBuffer> vertexBuffer = std::make_unique<Egg::Graphics::Resource::Committed::VBuffer>();
+	std::unique_ptr<Egg::Graphics::DX12::Resource::CommittedVBuffer> vertexBuffer = std::make_unique<Egg::Graphics::DX12::Resource::CommittedVBuffer>();
 	UINT sizeInBytes = _countof(vertices) * sizeof(PNT_Vertex);
 	vertexBuffer->AddLODLevel(device, CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes), vertices, sizeInBytes, sizeof(PNT_Vertex));
 

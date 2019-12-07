@@ -6,44 +6,6 @@
 #include <map>
 
 namespace Egg::Graphics::DX12 {
-	/*
-		Graphics::Internal::PreprocessorDefinitions GetDefinitions(Egg::Asset::Mesh * mesh, Egg::Asset::Material * material, Egg::Asset::Model * owner) {
-			Graphics::Internal::PreprocessorDefinitions s;
-
-			s.Define("SHADER_CB_USE_PERMESH");
-			s.Define("SHADER_CB_USE_PERFRAME");
-			s.Define("SHADER_CB_USE_PEROBJECT");
-			s.Define("SHADER_NUM_LIGHTS", 1);
-
-			if(mesh->vertexType == Egg::PNT_Vertex::type ||
-			   mesh->vertexType == Egg::PNTWB_Vertex::type ||
-			   mesh->vertexType == Egg::PNTTB_Vertex::type ||
-			   mesh->vertexType == Egg::PNTWBTB_Vertex::type) {
-				s.Define("IAO_HAS_NORMAL");
-				s.Define("IAO_HAS_TEXCOORD");
-			}
-
-			if(mesh->vertexType == Egg::PNTWBTB_Vertex::type ||
-			   mesh->vertexType == Egg::PNTWB_Vertex::type) {
-				s.Define("IAO_HAS_SKELETON");
-				s.Define("SHADER_CB_USE_BONEDATA");
-			}
-
-			if(mesh->vertexType == Egg::PNTTB_Vertex::type ||
-			   mesh->vertexType == Egg::PNTWBTB_Vertex::type) {
-				s.Define("IAO_HAS_TANGENT_SPACE");
-			}
-
-			if(material->HasDiffuseTexture()) {
-				s.Define("SHADER_TEX_DIFFUSE");
-			}
-
-			if(material->HasNormalTexture()) {
-				s.Define("SHADER_TEX_NORMAL");
-			}
-
-			return s;
-		}*/
 
 	enum class EShaderType : unsigned {
 		VERTEX = 0,

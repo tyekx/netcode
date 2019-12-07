@@ -2,7 +2,7 @@
 #include "EggMath.h"
 
 namespace Egg {
-
+	/*
 	void DebugPhysxActor::AfterPhysxUpdate() {
 		physx::PxTransform transform = actorReference->getGlobalPose();
 		DirectX::XMFLOAT4A quatSource{ transform.q.x, transform.q.y, transform.q.z, transform.q.w };
@@ -94,7 +94,7 @@ namespace Egg {
 
 		perShapeCb.Upload();
 	}
-
+	*/
 }
 
 

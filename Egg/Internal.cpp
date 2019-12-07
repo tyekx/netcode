@@ -4,12 +4,6 @@
 #include <cstdio>
 #include <cstdarg>
 
-#include "Interpreted.h"
-
-void Egg::InterpretSkip(void ** ptr, unsigned int nBytes) {
-	*ptr = reinterpret_cast<void *>(reinterpret_cast<unsigned char *>(*ptr) + nBytes);
-}
-
 void Egg::Internal::Assert(bool trueMeansOk, const char * msgOnFail, ...) {
 	va_list argList;
 	va_start(argList, msgOnFail);

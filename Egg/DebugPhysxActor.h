@@ -6,7 +6,7 @@
 
 
 namespace Egg {
-
+	/*
 	class DebugPhysxActor {
 		physx::PxRigidActor * actorReference;
 		std::vector<Egg::Graphics::Geometry> geometries;
@@ -40,5 +40,5 @@ namespace Egg {
 		void AfterPhysxUpdate();
 
 		void Draw(ID3D12GraphicsCommandList * cl);
-	};
+	};*/
 }

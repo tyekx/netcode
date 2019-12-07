@@ -43,7 +43,7 @@ namespace Egg::Graphics::DX12 {
 				Egg::Utility::DebugPrintBlob(errorMsg);
 			}
 
-			return ShaderBytecode{ variant.GetFileReference(), nullptr, variant.GetPreprocDefs(), variant.GetShaderType() };
+			return ShaderBytecode{ variant.GetFileReference(), std::move(vsByteCode), variant.GetPreprocDefs(), variant.GetShaderType() };
 		}
 
 

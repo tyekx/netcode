@@ -1,8 +1,0 @@
-namespace EggEditor2
-{
-    [default_interface]
-    runtimeclass UC_ProjectFolder : Windows.UI.Xaml.Controls.UserControl
-    {
-        UC_ProjectFolder();
-    }
-}

@@ -171,7 +171,7 @@ namespace Egg::Graphics::DX12 {
 
 			rootSigDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 			rootSigDesc.NumParameters = static_cast<UINT>(rootParams.size());
-			rootSigDesc.pParameters = &(rootParams.at(0));
+			rootSigDesc.pParameters = (rootParams.size() > 0) ? &(rootParams.at(0)) : nullptr;
 			rootSigDesc.NumStaticSamplers = static_cast<UINT>(staticSamplers.size());
 			rootSigDesc.pStaticSamplers = (staticSamplers.size() > 0) ? &(staticSamplers.at(0)) : nullptr;
 		}
@@ -371,7 +371,7 @@ namespace Egg::Graphics::DX12 {
 				si.gpsoDesc = gpsoDesc;
 
 				DX_API("Failed to create pipeline state")
-					device->CreateGraphicsPipelineState(&si.gpsoDesc, IID_PPV_ARGS(si.pipelineState.GetAddressOf()));
+					device->CreateGraphicsPipelineState(&copyDesc, IID_PPV_ARGS(si.pipelineState.GetAddressOf()));
 
 				si.rootSigRef = GetRootSigItem(rootSignature);
 

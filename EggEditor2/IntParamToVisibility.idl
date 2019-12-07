@@ -1,9 +1,0 @@
-
-namespace EggEditor2 {
-
-	[default_interface]
-	runtimeclass IntParamToVisibility : Windows.UI.Xaml.Data.IValueConverter {
-		IntParamToVisibility();
-	}
-
-}

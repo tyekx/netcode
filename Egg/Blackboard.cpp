@@ -38,7 +38,7 @@ namespace Egg::Animation {
 
 	Blackboard::Blackboard() : classifier{}, prevState{ nullptr }, currentState{ nullptr }, states{ nullptr }, statesLength{ 0 }, blender{ nullptr } { }
 
-	void Blackboard::CreateResources(Asset::Model * model, BoneDataCb * writeDest, unsigned int animationsLength,
+	void Blackboard::CreateResources(Asset::Model * model, void * writeDest, unsigned int animationsLength,
 						const std::initializer_list<AnimationState> & sts,
 						const std::initializer_list<TransitionInit> &transitions) {
 

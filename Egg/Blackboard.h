@@ -4,7 +4,6 @@
 #include "Transition.h"
 #include "Asset/Model.h"
 #include <vector>
-#include "ConstantBufferTypes.h"
 #include "LinearClassifier.h"
 #include "AnimationBlender.h"
 
@@ -32,7 +31,7 @@ namespace Egg::Animation {
 
 		Blackboard();
 
-		void CreateResources(Asset::Model * model, BoneDataCb * writeDest, unsigned int animationsLength,
+		void CreateResources(Asset::Model * model, void * writeDest, unsigned int animationsLength,
 							 const std::initializer_list<AnimationState> & states,
 							 const std::initializer_list<TransitionInit> & transitions);
 

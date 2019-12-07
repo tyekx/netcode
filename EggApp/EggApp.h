@@ -12,44 +12,45 @@
 #include <Egg/EggMath.h>
 #include <Egg/Modules.h>
 
-class AnimationSystem {
+#include "Asset.h"
 
-
-public:
-	constexpr static SignatureType Required() {
-		return (0x1ULL << TupleIndexOf<AnimationComponent, COMPONENTS_T>::value);
-	}
-
-	constexpr static SignatureType Incompatible() {
-		return (0x0ULL);
-	}
-
-	void Run(Egg::GameObject * go, float dt, Egg::MovementController * movCtrl) {
-
-		if((go->GetSignature() & Required()) != 0) {
-			AnimationComponent * animComponent = go->GetComponent<AnimationComponent>();
-			animComponent->blackBoard.Update(dt, movCtrl);
-		}
-
-	}
-
-};
 
 class GameApp : public Egg::Module::AApp {
 	Egg::Stopwatch stopwatch;
 
+	//@TODO: refactor this
+	Egg::Asset::Model ybotModel;
+	Model model;
+
 	void Render() {
+		graphics->Prepare();
+		graphics->SetRenderTarget();
+		graphics->ClearRenderTarget();
+
 		/*
 		foreach gameobject draw
 		*/
+		for(unsigned int i = 0; i < model.meshesLength; ++i) {
+			graphics->Record(model.meshes[i].mesh);
+		}
+
+		graphics->Render();
+		graphics->Present();
 	}
 
 	void Simulate(float dt) {
-		physics->Simulate(dt);
+		//physics->Simulate(dt);
 
 		/*
 		foreach gameobject update
 		*/
+	}
+
+	void LoadAssets() {
+
+		Egg::Importer::ImportModel(L"ybot.eggasset", ybotModel);
+		LoadItem(graphics.get(), &ybotModel, &model);
+
 	}
 
 public:
@@ -63,12 +64,14 @@ public:
 		physics = factory->CreatePhysicsModule(this, 0);
 		network = nullptr;
 
-		window->Start(this);
-		graphics->Start(this);
-		audio->Start(this);
-		physics->Start(this);
+		StartModule(window.get());
+		StartModule(graphics.get());
+		StartModule(physics.get());
+		StartModule(audio.get());
 
 		stopwatch.Start();
+
+		LoadAssets();
 	}
 
 	/*
@@ -91,13 +94,11 @@ public:
 	Properly shutdown the application
 	*/
 	virtual void Exit() override {
-		if(network) {
-			network->Shutdown();
-		}
-		physics->Shutdown();
-		audio->Shutdown();
-		graphics->Shutdown();
-		window->Shutdown();
+		ShutdownModule(network.get());
+		ShutdownModule(physics.get());
+		ShutdownModule(audio.get());
+		ShutdownModule(graphics.get());
+		ShutdownModule(window.get());
 	}
 };
 

@@ -2,8 +2,8 @@
 
 #include "Common.h"
 #include "HandleTypes.h"
-#include "PlacedVBuffer.h"
-#include "PlacedIBuffer.h"
+#include "DX12PlacedVBuffer.h"
+#include "DX12PlacedIBuffer.h"
 #include "DX12RenderItem.h"
 
 namespace Egg::Graphics::DX12 {
@@ -12,8 +12,8 @@ namespace Egg::Graphics::DX12 {
 
 		struct Item {
 			EGeometryType type;
-			std::unique_ptr<Resource::Placed::VBuffer> vbuffer;
-			std::unique_ptr<Resource::Placed::IBuffer> ibuffer;
+			std::unique_ptr<Resource::PlacedVBuffer> vbuffer;
+			std::unique_ptr<Resource::PlacedIBuffer> ibuffer;
 
 			std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
 			D3D12_INPUT_LAYOUT_DESC cachedLayoutDesc;
@@ -30,6 +30,12 @@ namespace Egg::Graphics::DX12 {
 		}
 
 	public:
+		void UploadResources(Resource::IResourceUploader * uploader) {
+			for(Resource::IUploadResource * r : uploadPile) {
+				r->UploadResources(uploader);
+			}
+			uploadPile.clear();
+		}
 
 		void CreateResources(ID3D12Device * dev) {
 			device = dev;
@@ -61,11 +67,11 @@ namespace Egg::Graphics::DX12 {
 
 			Item item;
 			item.type = type;
-			item.vbuffer = std::make_unique<Resource::Placed::VBuffer>();
+			item.vbuffer = std::make_unique<Resource::PlacedVBuffer>();
 			item.isFinalized = false;
 
 			if(item.type == EGeometryType::INDEXED) {
-				item.ibuffer = std::make_unique<Resource::Placed::IBuffer>();
+				item.ibuffer = std::make_unique<Resource::PlacedIBuffer>();
 			}
 
 			storage.emplace_back(std::move(item));

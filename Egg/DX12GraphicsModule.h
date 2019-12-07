@@ -2,14 +2,13 @@
 
 #include "Common.h"
 #include "Utility.h"
-#include "Resource.h"
-#include "DX12RenderItem.h"
-#include "DX12RenderItemAllocator.h"
 #include "Modules.h"
 #include <map>
-#include "Scene.h"
-#include "ResourceUploadBatch.h"
 
+#include "DX12ResourceUploadBatch.h"
+#include "DX12Resource.h"
+#include "DX12RenderItem.h"
+#include "DX12RenderItemAllocator.h"
 #include "DX12ShaderManager.h"
 #include "DX12TextureLibrary.h"
 #include "DX12PipelineStateManager.h"
@@ -74,7 +73,7 @@ namespace Egg::Graphics::DX12 {
 
 			++fenceValue;
 		}
-
+		/*
 		void StartRecording() {
 			DX_API("Failed to reset command allocator")
 				commandAllocator->Reset();
@@ -89,7 +88,7 @@ namespace Egg::Graphics::DX12 {
 			commandList->RSSetViewports(1, &viewPort);
 			commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, dsvClearValue.DepthStencil.Depth, dsvClearValue.DepthStencil.Stencil, 0, nullptr);
 			commandList->ClearRenderTargetView(rtvHandle, rtvClearValue.Color, 0, nullptr);
-		}
+		}*/
 
 		void FinishRecording() {
 			commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(swapChainBuffer.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -106,74 +105,6 @@ namespace Egg::Graphics::DX12 {
 		}
 	};
 
-	class CopyResources {
-	public:
-		com_ptr<ID3D12CommandAllocator> copyCommandAlloc;
-		com_ptr<ID3D12GraphicsCommandList2> copyCommandList;
-		com_ptr<ID3D12Fence1> fence;
-		UINT64 fenceValue;
-		HANDLE fenceEvent;
-
-		void CreateResources(ID3D12Device * device) {
-			DX_API("Failed to create command allocator")
-				device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY, IID_PPV_ARGS(copyCommandAlloc.GetAddressOf()));
-
-			DX_API("Failed to create copy command list")
-				device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_COPY, copyCommandAlloc.Get(), nullptr, IID_PPV_ARGS(copyCommandList.GetAddressOf()));
-
-			DX_API("Failed to intitially close copy command list")
-				copyCommandList->Close();
-
-			DX_API("Failed to create fence")
-				device->CreateFence(0, D3D12_FENCE_FLAG_SHARED, IID_PPV_ARGS(fence.GetAddressOf()));
-
-			fenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-			if(fenceEvent == NULL) {
-				DX_API("Failed to create windows event") HRESULT_FROM_WIN32(GetLastError());
-			}
-			
-			fenceValue = 0;
-		}
-
-		void StartRecording() {
-			DX_API("Failed to reset copy command alloc")
-				copyCommandAlloc->Reset();
-
-			DX_API("Failed to reset copy command list")
-				copyCommandList->Reset(copyCommandAlloc.Get(), nullptr);
-		}
-
-		void FinishRecording() {
-			DX_API("Failed to close copy command list")
-				copyCommandList->Close();
-		}
-
-		void WaitForCompletion() {
-			const UINT64 expectedFrameValue = fenceValue;
-
-			if(fence->GetCompletedValue() < expectedFrameValue) {
-				DX_API("Failed to set event on completion")
-					fence->SetEventOnCompletion(expectedFrameValue, fenceEvent);
-
-				WaitForSingleObject(fenceEvent, INFINITE);
-			}
-
-			fenceValue += 1;
-		}
-
-		void Execute(ID3D12CommandQueue * copyCommandQueue) {
-			ID3D12CommandList * cls[] = { copyCommandList.Get() };
-
-			copyCommandQueue->ExecuteCommandLists(ARRAYSIZE(cls), cls);
-
-			DX_API("Failed to signal fence")
-				copyCommandQueue->Signal(fence.Get(), fenceValue);
-		}
-	};
-
-	/*
-	comment
-	*/
 	class DX12GraphicsModule : public Egg::Module::IGraphicsModule {
 		HWND hwnd;
 
@@ -207,16 +138,8 @@ namespace Egg::Graphics::DX12 {
 		std::vector<FrameResource> frameResources;
 		UINT backbufferIndex;
 
-		CopyResources copyResources;
-
-		DX12::RenderItemAllocator renderItemAllocator;
-
 		std::vector<DX12::RenderItem*> renderItemBuffer;
-		UINT renderItemBufferLength;
 		float aspectRatio;
-
-		D3D12_GPU_VIRTUAL_ADDRESS perFrameCbAddr;
-		PerFrameCb * perFrameCb;
 
 		com_ptr<ID3D12Debug3> debugController;
 
@@ -362,6 +285,20 @@ namespace Egg::Graphics::DX12 {
 
 	public:
 
+		virtual void Prepare() override;
+
+		virtual void SetRenderTarget() override;
+
+		virtual void SetRenderTarget(HRENDERTARGET rt) override;
+
+		virtual void ClearRenderTarget() override;
+
+		virtual void Record(HITEM item) override;
+
+		virtual void Render() override;
+
+		virtual void Present() override;
+
 		virtual void Start(Module::AApp * app) override;
 
 		virtual void Shutdown() override {
@@ -505,26 +442,6 @@ namespace Egg::Graphics::DX12 {
 
 		virtual UINT GetCbufferSlot(HITEM item, const std::string & cbufferName) override {
 			return matManager.GetCbufferSlot(renderItemColl.GetItem(item), cbufferName);
-		}
-
-		virtual void SetRenderTarget(HRENDERTARGET rt) override {
-			// @TODO
-		}
-
-		virtual void ClearRenderTarget() override {
-			// @TODO
-		}
-
-		virtual void Record(HITEM item) override {
-			// @TODO
-		}
-
-		virtual void Render() override {
-			// @TODO
-		}
-
-		virtual void Present() override {
-			// @TODO
 		}
 
 		void ReleaseSwapChainResources() {

@@ -5,7 +5,7 @@
 #include <algorithm>
 
 namespace Egg {
-
+	/*
 	class DebugPhysx {
 		Egg::Material debugMaterial;
 		Egg::Material debugRayMaterial;
@@ -49,9 +49,6 @@ namespace Egg {
 			{
 				//debugMaterial = resMan->FromFiles(L"DebugPhysxVS.cso", L"DebugPhysxPS.cso", debugRayGeometry);
 
-
-				/*
-
 				Egg::PipelineState::P dbpso = Egg::PipelineState::Create();
 				dbpso->SetRootSignature(debugPhysxRS);
 				dbpso->SetVertexShader(debugPhysxVS);
@@ -63,10 +60,10 @@ namespace Egg {
 				debugMaterial = Egg::Material::Create(psoMan, layout, dbpso);
 				debugMaterial->ConstantBufferSlot(DebugPhysxShapeCb::id, 0);
 				debugMaterial->ConstantBufferSlot(PerObjectCb::id, 1);
-				debugMaterial->ConstantBufferSlot(PerFrameCb::id, 2);*/
+				debugMaterial->ConstantBufferSlot(PerFrameCb::id, 2);
 			}
 
-			{/*
+			{
 				Egg::PipelineState::P dbrpso = Egg::PipelineState::Create();
 				dbrpso->SetRootSignature(debugPhysxRayRS);
 				dbrpso->SetVertexShader(debugPhysxRayVS);
@@ -79,7 +76,7 @@ namespace Egg {
 
 				debugRayMaterial = Egg::Material::Create(psoMan, layout, dbrpso);
 				debugRayMaterial->ConstantBufferSlot(PerRayCb::id, 0);
-				debugRayMaterial->ConstantBufferSlot(PerFrameCb::id, 1);*/
+				debugRayMaterial->ConstantBufferSlot(PerFrameCb::id, 1);
 			}
 
 			actors.reserve(32);
@@ -132,9 +129,9 @@ namespace Egg {
 
 		void AddRaycast(const DirectX::XMFLOAT3 & rayDir, const DirectX::XMFLOAT3 & rayStart, float length, const DirectX::XMFLOAT3 & color = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f }) {
 
-			if(numRays < MAX_RAY_COUNT) {/*
+			if(numRays < MAX_RAY_COUNT) {
 				new (raycasts + ((startRays + numRays) % MAX_RAY_COUNT)) DebugPhysxRaycast(device, debugRayMaterial.get(), debugRayGeometry.get(),
-																		 10.0f, rayDir, rayStart, color, length);*/
+																		 10.0f, rayDir, rayStart, color, length);
 				++numRays;
 			}
 
@@ -157,5 +154,5 @@ namespace Egg {
 		}
 
 	};
-
+	*/
 }

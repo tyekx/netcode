@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Resource.h"
-#include "Mesh.h"
+#include "DX12Resource.h"
 #include "InputLayout.h"
 #include "DX12RenderItem.h"
 
@@ -10,8 +9,8 @@ namespace Egg::Graphics {
 
 	class Geometry {
 	public:
-		using vbuffer_type = std::unique_ptr<Resource::AVBuffer>;
-		using ibuffer_type = std::unique_ptr<Resource::AIBuffer>;
+		using vbuffer_type = std::unique_ptr<DX12::Resource::AVBuffer>;
+		using ibuffer_type = std::unique_ptr<DX12::Resource::AIBuffer>;
 
 		vbuffer_type vertexBuffer;
 		ibuffer_type indexBuffer;
