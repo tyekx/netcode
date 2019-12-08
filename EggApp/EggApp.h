@@ -72,22 +72,30 @@ class GameApp : public Egg::Module::AApp {
 		DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4A(&baseCam.GetProjMatrix());
 		DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(view, proj);
 
-		DirectX::XMStoreFloat4x4A(&perFrameCb->View, DirectX::XMMatrixTranspose(view));
-		DirectX::XMStoreFloat4x4A(&perFrameCb->Proj, DirectX::XMMatrixTranspose(proj));
-		DirectX::XMStoreFloat4x4A(&perFrameCb->ViewProj, DirectX::XMMatrixTranspose(vp));
+		perFrameCb->Lights[0] = Egg::DirectionalLight{ DirectX::XMFLOAT3A{ 1.0f, 1.0f, 1.0f}, DirectX::XMFLOAT4A{ 1.0f, 0.0f, 0.0f, 0.0f} };
 
 		DirectX::XMMATRIX identity = DirectX::XMMatrixIdentity();
 		DirectX::XMStoreFloat4x4A(&perObjectCb->InvModel, identity);
 		DirectX::XMStoreFloat4x4A(&perObjectCb->Model, identity);
 
 		Egg::Importer::ImportModel(L"ybot.eggasset", ybotModel);
-		LoadItem(graphics.get(), &ybotModel, &model);
 
 		Egg::HCBUFFER bdcb = UINT_MAX;
 		if(ybotModel.animationsLength > 0) {
 			bdcb = graphics->AllocateCbuffer(sizeof(BoneDataCb));
 			boneDataCb = reinterpret_cast<BoneDataCb *>(graphics->GetCbufferPointer(bdcb));
 		}
+
+		for(unsigned int i = 0; i < ybotModel.bonesLength; ++i) {
+			DirectX::XMStoreFloat4x4A(&boneDataCb->BindTransform[i], identity);
+			DirectX::XMStoreFloat4x4A(&boneDataCb->ToRootTransform[i], identity);
+		}
+
+		LoadItem(graphics.get(), &ybotModel, &model);
+
+		DirectX::XMStoreFloat4x4A(&perFrameCb->View, DirectX::XMMatrixTranspose(view));
+		DirectX::XMStoreFloat4x4A(&perFrameCb->Proj, DirectX::XMMatrixTranspose(proj));
+		DirectX::XMStoreFloat4x4A(&perFrameCb->ViewProj, DirectX::XMMatrixTranspose(vp));
 
 		for(unsigned int i = 0; i < model.meshesLength; ++i) {
 			Egg::HITEM item = model.meshes[i].mesh;
@@ -97,6 +105,7 @@ class GameApp : public Egg::Module::AApp {
 				graphics->AddCbuffer(item, bdcb, graphics->GetCbufferSlot(item, "BoneDataCb"));
 			}
 		}
+
 
 	}
 

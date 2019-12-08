@@ -36,7 +36,12 @@ namespace Egg::Graphics::DX12 {
 
 			com_ptr<ID3DBlob> errorMsg;
 
-			D3DCompile(variant.GetSource().c_str(), variant.GetSource().size(), nullptr, preprocDefinitions.get(), nullptr, entryPoint, "vs_5_0", 0, 0, vsByteCode.GetAddressOf(), errorMsg.GetAddressOf());
+			std::string shaderVersion = "vs_5_0";
+			if(variant.GetShaderType() == EShaderType::PIXEL) {
+				shaderVersion = "ps_5_0";
+			}
+
+			D3DCompile(variant.GetSource().c_str(), variant.GetSource().size(), nullptr, preprocDefinitions.get(), nullptr, entryPoint, shaderVersion.c_str(), 0, 0, vsByteCode.GetAddressOf(), errorMsg.GetAddressOf());
 
 			if(errorMsg != nullptr) {
 				Egg::Utility::Debugf("Error while compiling vertex shader (-Wall): \r\n");

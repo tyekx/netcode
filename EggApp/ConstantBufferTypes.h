@@ -5,16 +5,16 @@
 
 #define CB_TYPE __declspec(align(256))
 
-CB_TYPE struct PerFrameCb {
+CB_TYPE struct PerFrameCb  {
 	constexpr static int id = 0;
-
 	DirectX::XMFLOAT4X4A ViewProj;
 	DirectX::XMFLOAT4X4A ViewProjInv;
 	DirectX::XMFLOAT4X4A View;
 	DirectX::XMFLOAT4X4A Proj;
 	DirectX::XMFLOAT3A eyePos;
-	Egg::Light Light;
+	Egg::Light Lights[16];
 };
+
 
 CB_TYPE struct PerObjectCb {
 	constexpr static int id = 1;

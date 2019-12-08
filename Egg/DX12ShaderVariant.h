@@ -68,7 +68,7 @@ namespace Egg::Graphics::DX12 {
 		ShaderVariant() = default;
 
 		void SetShaderType(EShaderType type) {
-			//shaderType = type
+			shaderType = type;
 		}
 
 		void SetSourceReference(const std::wstring & shader) {

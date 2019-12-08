@@ -131,6 +131,7 @@
     <ClCompile Include="BasicGeometry.cpp" />
     <ClCompile Include="BinaryReader.cpp" />
     <ClCompile Include="Blackboard.cpp" />
+    <ClCompile Include="DX12CbufferAllocator.cpp" />
     <ClCompile Include="DX12CommittedIBuffer.cpp" />
     <ClCompile Include="DX12CommittedTexture2D.cpp" />
     <ClCompile Include="DX12CommittedVBuffer.cpp" />

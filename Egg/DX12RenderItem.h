@@ -3,6 +3,7 @@
 #include "Common.h"
 #include <algorithm>
 #include "HandleTypes.h"
+#include "Utility.h"
 
 namespace Egg::Graphics::DX12 {
 	
@@ -49,6 +50,7 @@ namespace Egg::Graphics::DX12 {
 			if(addr == 0) {
 				return;
 			}
+			//Egg::Utility::Debugf("Setting root parameter %d on addr: %llx\r\n", rootSigIdx, addr);
 			gcl->SetGraphicsRootConstantBufferView(rootSigIdx, addr);
 		}
 
@@ -73,6 +75,7 @@ namespace Egg::Graphics::DX12 {
 		}
 
 		inline void Render(ID3D12GraphicsCommandList * gcl) {
+			//Egg::Utility::Debugf("\r\n");
 			SetPipelineState(gcl);
 			SetRenderItemResources(gcl);
 			DrawGeometry(gcl);

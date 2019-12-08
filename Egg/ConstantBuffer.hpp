@@ -5,6 +5,8 @@
 #include <memory>
 #include <array>
 
+#include "Utility.h"
+
 namespace Egg {
 
 	/*

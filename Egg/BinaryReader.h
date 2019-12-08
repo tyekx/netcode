@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Common.h"
+#include <exception>
+#include <stdexcept>
 
 namespace Egg {
 	class BinaryReader

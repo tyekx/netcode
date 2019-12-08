@@ -73,22 +73,6 @@ namespace Egg::Graphics::DX12 {
 
 			++fenceValue;
 		}
-		/*
-		void StartRecording() {
-			DX_API("Failed to reset command allocator")
-				commandAllocator->Reset();
-
-			DX_API("Failed to reset command list")
-				commandList->Reset(commandAllocator.Get(), nullptr);
-
-			commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(swapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-			
-			commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
-			commandList->RSSetScissorRects(1, &scissorRect);
-			commandList->RSSetViewports(1, &viewPort);
-			commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, dsvClearValue.DepthStencil.Depth, dsvClearValue.DepthStencil.Stencil, 0, nullptr);
-			commandList->ClearRenderTargetView(rtvHandle, rtvClearValue.Color, 0, nullptr);
-		}*/
 
 		void FinishRecording() {
 			commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(swapChainBuffer.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -179,7 +163,7 @@ namespace Egg::Graphics::DX12 {
 			DX_API("Failed to upgrade device to %s", Egg::Utility::FeatureLevelToString(queryDataFeatureLevels.MaxSupportedFeatureLevel))
 				D3D12CreateDevice(nullptr, queryDataFeatureLevels.MaxSupportedFeatureLevel, IID_PPV_ARGS(tempDevice.GetAddressOf()));
 
-			Egg::Utility::Debugf("Created DX12 device with %s", Egg::Utility::FeatureLevelToString(queryDataFeatureLevels.MaxSupportedFeatureLevel));
+			Egg::Utility::Debugf("Created DX12 device with %s\r\n", Egg::Utility::FeatureLevelToString(queryDataFeatureLevels.MaxSupportedFeatureLevel));
 
 			device = std::move(tempDevice);
 		}
@@ -362,7 +346,7 @@ namespace Egg::Graphics::DX12 {
 		}
 
 		virtual void SetPixelShader(HPSO pso, HSHADER pixelShader) override {
-			psManager.SetVertexShader(pso, shaderManager.GetShader(pixelShader));
+			psManager.SetPixelShader(pso, shaderManager.GetShader(pixelShader));
 		}
 
 		virtual void SetGeometryShader(HPSO pso, HSHADER geometryShader) override {
@@ -501,9 +485,8 @@ namespace Egg::Graphics::DX12 {
 												&dsvClearValue,
 												IID_PPV_ARGS(dsvResource.GetAddressOf()));
 
-			D3D12_DEPTH_STENCIL_VIEW_DESC dsvd;
+			D3D12_DEPTH_STENCIL_VIEW_DESC dsvd = {};
 			dsvd.Format = depthStencilFormat;
-			dsvd.Texture2D.MipSlice = 0;
 			dsvd.Flags = D3D12_DSV_FLAG_NONE;
 			dsvd.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 

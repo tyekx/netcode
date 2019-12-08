@@ -39,7 +39,7 @@ namespace Egg::Graphics::DX12 {
 
 		void SetRenderTargetFormat(Item & i, unsigned int renderTargetIndex, DXGI_FORMAT format) {
 			ASSERT(renderTargetIndex >= 0 && renderTargetIndex < 8, "Out of range, only 8 render targets are available");
-			renderTargetIndex &= 0x00000008;
+			renderTargetIndex &= 0b111;
 			i.desc.RTVFormats[renderTargetIndex] = format;
 		}
 

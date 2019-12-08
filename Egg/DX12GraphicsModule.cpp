@@ -35,8 +35,7 @@ namespace Egg::Graphics::DX12 {
 		ID3D12GraphicsCommandList * gcl = fr.commandList.Get();
 
 		if(rt == 0) {
-			//gcl->SetDescriptorHeaps(1, &dsvDescHeap);
-			gcl->OMSetRenderTargets(0, &fr.rtvHandle, FALSE, &fr.dsvHandle);
+			gcl->OMSetRenderTargets(1, &fr.rtvHandle, FALSE, &fr.dsvHandle);
 			gcl->RSSetScissorRects(1, &fr.scissorRect);
 			gcl->RSSetViewports(1, &fr.viewPort);
 			gcl->ClearRenderTargetView(fr.rtvHandle, rtvClearValue.Color, 0, nullptr);
@@ -61,19 +60,6 @@ namespace Egg::Graphics::DX12 {
 
 		for(RenderItem * i : renderItemBuffer) {
 			i->Render(gcl);
-			/*
-			gcl->SetGraphicsRootSignature(i->rootSignature);
-			gcl->SetPipelineState(i->graphicsPso);
-			LODLevel * lod = i->lodLevels + i->selectedLod;
-
-			gcl->IASetVertexBuffers(0, 1, &lod->vertexBufferView);
-			gcl->IASetPrimitiveTopology(i->primitiveTopology);
-			if(lod->indexCount > 0) {
-				gcl->IASetIndexBuffer(&lod->indexBufferView);
-				gcl->DrawIndexedInstanced(lod->indexCount, 1, 0, 0, 0);
-			} else {
-				gcl->DrawInstanced(lod->vertexCount, 1, 0, 0);
-			}*/
 		}
 
 		renderItemBuffer.clear();
@@ -102,7 +88,9 @@ namespace Egg::Graphics::DX12 {
 		DX_API("Failed to create debug layer")
 			D3D12GetDebugInterface(IID_PPV_ARGS(debugController.GetAddressOf()));
 
-		debugController->EnableDebugLayer();
+		if(IsDebuggerPresent()) {
+			debugController->EnableDebugLayer();
+		}
 
 		// triple buffering is the max allowed
 		frameResources.reserve(3);

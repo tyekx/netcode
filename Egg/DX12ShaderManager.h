@@ -59,9 +59,8 @@ namespace Egg::Graphics::DX12 {
 		}
 
 		HINCOMPLETESHADER CreateGeometryShader() {
-			unsigned int id = GetNextVariantId();
-			variants[id].SetShaderType(EShaderType::UNDEFINED);
-			return HINCOMPLETESHADER{ id };
+			ASSERT(false, "Feature not supported");
+			return HINCOMPLETESHADER{ 0xFFFFFFFF };
 		}
 
 		HINCOMPLETESHADER CreateDomainShader() {

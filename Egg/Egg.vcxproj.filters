@@ -391,6 +391,9 @@
     <ClCompile Include="Transition.cpp">
       <Filter>Legacy</Filter>
     </ClCompile>
+    <ClCompile Include="DX12CbufferAllocator.cpp">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DefaultPS.hlsl">

@@ -11,15 +11,8 @@ namespace Egg::Graphics::DX12 {
 		// relatively big allocation for smaller allocation cost
 		constexpr static UINT PAGE_SIZE = (1 << 16) * 64;
 
-		struct PackedHandle {
-			UINT16 pageIdx;
-			UINT16 sizeDiv256;
-			UINT32 byteOffset;
-		};
-
 		// making sure before using byte magic @TODO: does this support endianness?
 		static_assert(sizeof(HCBUFFER) == 8, "Your compiler does not seem to be agreeing on the size of ull");
-		static_assert(sizeof(PackedHandle) == 8, "Your compiler does not seem to pack the struct properly");
 
 		struct CbufferPage {
 			/*
@@ -50,6 +43,11 @@ namespace Egg::Graphics::DX12 {
 													nullptr,
 													IID_PPV_ARGS(resource.GetAddressOf()));
 
+				std::wstring resourceName = L"CBufferPage#" + std::to_wstring(1);
+
+				DX_API("Failed to set name")
+					resource->SetName(resourceName.c_str());
+
 				CD3DX12_RANGE range{ 0,0 };
 				
 				void * tempPtr;
@@ -78,34 +76,11 @@ namespace Egg::Graphics::DX12 {
 				return (allocatedSize + alignedSize) <= PAGE_SIZE;
 			}
 
-			void Deallocate(HCBUFFER handle) {
-				PackedHandle * ph = reinterpret_cast<PackedHandle *>(&handle);
-				void * offsettedPointer = mappedPtr + ph->byteOffset;
-				
-				FreedItem * freedItem = reinterpret_cast<FreedItem *>(offsettedPointer);
-				freedItem->byteoffset = ph->byteOffset;
-				freedItem->sizeInBytes = ph->sizeDiv256 << 8;
+			void Deallocate(HCBUFFER handle);
 
-				freedItem->nextItem = head;
-				head = freedItem;
-			}
-
-			HCBUFFER Allocate(unsigned int alignedSize) {
-				PackedHandle ph;
-				ph.byteOffset = allocatedSize;
-				ph.pageIdx = 0;
-				ph.sizeDiv256 = alignedSize >> 8;
-				allocatedSize += alignedSize;
-				return *(reinterpret_cast<HCBUFFER *>(&ph));
-			}
+			HCBUFFER Allocate(unsigned int alignedSize);
 
 		};
-
-		inline HCBUFFER SetPageIdx(HCBUFFER handle, UINT16 pageIdx) {
-			PackedHandle * ph = reinterpret_cast<PackedHandle *>(&handle);
-			ph->pageIdx = pageIdx;
-			return *(reinterpret_cast<HCBUFFER *>(ph));
-		}
 
 		CbufferPage * head;
 		CbufferPage * tail;
@@ -113,17 +88,7 @@ namespace Egg::Graphics::DX12 {
 
 		ID3D12Device * device;
 
-		D3D12_GPU_VIRTUAL_ADDRESS GetAddress(HCBUFFER handle) {
-			CbufferPage * iter = nullptr;
-			UINT16 i = 0;
-			PackedHandle * ph = reinterpret_cast<PackedHandle *>(&handle);
-			for(iter = head; iter != nullptr && i < ph->pageIdx; iter = iter->next, ++i);
-
-			ASSERT(ph->byteOffset % 256 == 0, "sanity check failed: byte offset is not 256 aligned");
-			ASSERT(iter != nullptr, "Page not found");
-
-			return iter->addr + ph->byteOffset;
-		}
+		D3D12_GPU_VIRTUAL_ADDRESS GetAddress(HCBUFFER handle);
 
 	public:
 
@@ -169,40 +134,9 @@ namespace Egg::Graphics::DX12 {
 			renderItem->cbuffers[idx].rootSigSlot = slot;
 		}
 
-		void * GetCbufferPointer(HCBUFFER handle) {
-			CbufferPage * iter = nullptr;
-			UINT16 i = 0;
-			PackedHandle * ph = reinterpret_cast<PackedHandle *>(&handle);
-			for(iter = head; iter != nullptr && i < ph->pageIdx; iter = iter->next, ++i);
+		void * GetCbufferPointer(HCBUFFER handle);
 
-			ASSERT(iter != nullptr, "Page not found");
-
-			return iter->mappedPtr + ph->byteOffset;
-		}
-
-		HCBUFFER AllocateCbuffer(unsigned int sizeInBytes) {
-			unsigned int aligned = Egg::Utility::Align256(sizeInBytes);
-
-			ASSERT(tail != nullptr && head != nullptr, "Pointers are unset, forgot to call CreateResources?");
-			ASSERT(aligned <= PAGE_SIZE, "Cant allocate this big of a cbuffer");
-			UINT16 idx = numPages;
-
-			for(CbufferPage * iter = tail; iter != nullptr; iter = iter->prev) {
-				--idx;
-				if(iter->CanHost(aligned)) {
-					return SetPageIdx(iter->Allocate(aligned), idx);
-				}
-			}
-
-			CbufferPage * page = new CbufferPage();
-			page->prev = tail;
-			page->next = nullptr;
-			tail->next = page;
-			tail = page;
-			++numPages;
-
-			return SetPageIdx(tail->Allocate(aligned), idx);
-		}
+		HCBUFFER AllocateCbuffer(unsigned int sizeInBytes);
 
 	};
 

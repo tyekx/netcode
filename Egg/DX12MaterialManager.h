@@ -193,7 +193,7 @@ namespace Egg::Graphics::DX12 {
 
 		struct PSOItem {
 			D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsoDesc;
-			RootSigItem * rootSigRef;
+			UINT rootSigRef;
 			com_ptr<ID3D12PipelineState> pipelineState;
 		};
 
@@ -214,13 +214,13 @@ namespace Egg::Graphics::DX12 {
 			return items.at(mat);
 		}
 
-		RootSigItem * GetRootSigItem(ID3D12RootSignature * ptr) {
+		UINT GetRootSigItem(ID3D12RootSignature * ptr) {
 			for(size_t i = 0; i < rootSigItems.size(); ++i) {
 				if(rootSigItems[i].rootSig.Get() == ptr) {
-					return &(rootSigItems.at(i));
+					return static_cast<UINT>(i);
 				}
 			}
-			return nullptr;
+			return UINT_MAX;
 		}
 
 		void ExtractBindpoints(std::vector<ShaderBindpoint> & bindpoints, const void * shaderCode, size_t shaderCodeSize, D3D12_SHADER_VISIBILITY visibility) {
@@ -290,12 +290,12 @@ namespace Egg::Graphics::DX12 {
 			PSOItem & pso = GetItem(mat);
 			renderItem->material = mat;
 			renderItem->graphicsPso = pso.pipelineState.Get();
-			renderItem->rootSignature = pso.rootSigRef->GetRootSignature();
+			renderItem->rootSignature = rootSigItems[pso.rootSigRef].GetRootSignature();
 		}
 
 		UINT GetCbufferSlot(RenderItem * renderItem, const std::string & name) {
 			PSOItem & pso = GetItem(renderItem->material);
-			return pso.rootSigRef->rootSigDesc.GetCbufferBindpoint(name);
+			return rootSigItems[pso.rootSigRef].rootSigDesc.GetCbufferBindpoint(name);
 		}
 
 		/*
@@ -359,7 +359,7 @@ namespace Egg::Graphics::DX12 {
 
 				si.rootSigRef = GetRootSigItem(rootSignature);
 
-				ASSERT(si.rootSigRef != nullptr, "Root sig reference was not found");
+				ASSERT(si.rootSigRef != UINT_MAX, "Root sig reference was not found");
 
 				handle = static_cast<UINT>(items.size());
 				pso = si.pipelineState.Get();
