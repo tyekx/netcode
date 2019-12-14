@@ -26,6 +26,7 @@ namespace Egg::Module {
 		virtual void ProcessMessages() override;
 		virtual void CompleteFrame() override;
 		virtual bool KeepRunning() override;
+		virtual void ShowWindow() override;
 	};
 
 }

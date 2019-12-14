@@ -24,6 +24,11 @@ class GameApp : public Egg::Module::AApp {
 	PerFrameCb * perFrameCb;
 	PerObjectCb * perObjectCb;
 	BoneDataCb * boneDataCb;
+
+	float mouseSpeed;
+	float cameraPitch;
+	float cameraYaw;
+	float cameraSpeed;
 	
 
 	void Render() {
@@ -42,8 +47,58 @@ class GameApp : public Egg::Module::AApp {
 		graphics->Present();
 	}
 
+	void UpdateCamera(float dt) {
+		float devCamX = Egg::Input::GetAxis("DevCameraX");
+		float devCamZ = Egg::Input::GetAxis("DevCameraZ");
+		float devCamY = Egg::Input::GetAxis("DevCameraY");
+
+		DirectX::XMINT2 mouseDelta = Egg::Input::GetMouseDelta();
+
+		DirectX::XMFLOAT2A normalizedMouseDelta{ -(float)(mouseDelta.x), -(float)(mouseDelta.y) };
+		cameraPitch += mouseSpeed * normalizedMouseDelta.y * dt;
+		cameraPitch = std::clamp(cameraPitch, -(DirectX::XM_PIDIV2 - 0.00001f), (DirectX::XM_PIDIV2 - 0.00001f));
+		cameraYaw += mouseSpeed * normalizedMouseDelta.x * dt;
+
+		if(cameraYaw < (-DirectX::XM_PI)) {
+			cameraYaw += DirectX::XM_2PI;
+		}
+
+		if(cameraYaw > (DirectX::XM_PI)) {
+			cameraYaw -= DirectX::XM_2PI;
+		}
+
+		DirectX::XMVECTOR cameraYawQuat = DirectX::XMQuaternionRotationRollPitchYaw(0.0f, cameraYaw, 0.0f);
+
+		DirectX::XMFLOAT3A devCam = { devCamX, devCamY, devCamZ };
+		DirectX::XMVECTOR devCamVec = DirectX::XMLoadFloat3A(&devCam);
+
+		devCamVec = DirectX::XMVector3Rotate(devCamVec, cameraYawQuat);
+
+		DirectX::XMVECTOR devCamPos = DirectX::XMLoadFloat3(&baseCam.Position);
+		devCamVec = DirectX::XMVectorScale(devCamVec, cameraSpeed * dt);
+		devCamPos = DirectX::XMVectorAdd(devCamVec, devCamPos);
+
+		DirectX::XMFLOAT3 minusUnitZ{ 0.0f, 0.0f, -1.0f };
+		DirectX::XMVECTOR cameraQuat = DirectX::XMQuaternionRotationRollPitchYaw(cameraPitch, cameraYaw, 0.0f);
+		DirectX::XMVECTOR aheadStart = DirectX::XMLoadFloat3(&minusUnitZ);
+		DirectX::XMVECTOR camUp = DirectX::XMLoadFloat3(&baseCam.Up);
+		DirectX::XMStoreFloat3(&baseCam.Ahead, DirectX::XMVector3Normalize(DirectX::XMVector3Rotate(aheadStart, cameraQuat)));
+		DirectX::XMStoreFloat3(&baseCam.Position, devCamPos);
+
+		baseCam.UpdateMatrices();
+
+		DirectX::XMMATRIX view = DirectX::XMLoadFloat4x4A(&baseCam.GetViewMatrix());
+		DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4A(&baseCam.GetProjMatrix());
+		DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(view, proj);
+		DirectX::XMStoreFloat4x4A(&perFrameCb->View, DirectX::XMMatrixTranspose(view));
+		DirectX::XMStoreFloat4x4A(&perFrameCb->Proj, DirectX::XMMatrixTranspose(proj));
+		DirectX::XMStoreFloat4x4A(&perFrameCb->ViewProj, DirectX::XMMatrixTranspose(vp));
+	}
+
 	void Simulate(float dt) {
 		physics->Simulate(dt);
+
+		UpdateCamera(dt);
 
 		/*
 		foreach gameobject update
@@ -51,6 +106,17 @@ class GameApp : public Egg::Module::AApp {
 	}
 
 	void LoadAssets() {
+
+
+		mouseSpeed = 1.0f;
+		cameraPitch = 0.0f;
+		cameraYaw = 0.0f;
+		cameraSpeed = 250.0f;
+
+		Egg::Input::SetAxis("DevCameraX", VK_NUMPAD4, VK_NUMPAD6);
+		Egg::Input::SetAxis("DevCameraZ", VK_NUMPAD8, VK_NUMPAD5);
+		Egg::Input::SetAxis("DevCameraY", VK_NUMPAD7, VK_NUMPAD9);
+
 		{
 			auto mat = physics->CreateMaterial(0.5f, 0.5f, 0.5f);
 			auto planeActor = physics->CreatePlane(mat, DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f }, 0.0f);
@@ -135,9 +201,14 @@ public:
 		StartModule(physics.get());
 		StartModule(audio.get());
 
+		if(window) {
+			window->ShowWindow();
+		}
+
 		stopwatch.Start();
 
 		LoadAssets();
+
 	}
 
 	/*

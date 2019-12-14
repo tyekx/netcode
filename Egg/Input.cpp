@@ -45,8 +45,11 @@ namespace Egg {
 				case 2:
 					Input::KeyReleased(VK_LBUTTON);
 					break;
-
 				}
+			}
+			auto v = DefRawInputProc(&raw, 1, sizeof(RAWINPUTHEADER));
+			if(v != S_OK) {
+				Egg::Utility::Debugf("Input Error\r\n");
 			}
 		}
 	}
@@ -77,8 +80,8 @@ namespace Egg {
 			if(devInfo.dwType == RIM_TYPEMOUSE) {
 				Egg::Utility::Debugf("\tId: %d | NumBtns: %d | Rate: %d Hz | \r\n", devInfo.mouse.dwId, devInfo.mouse.dwNumberOfButtons, devInfo.mouse.dwSampleRate);
 			}
-		}*/
-
+		}
+		*/
 
 
 		RAWINPUTDEVICE rawMouseDevice;

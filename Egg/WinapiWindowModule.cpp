@@ -6,33 +6,43 @@ namespace Egg::Module {
 	LRESULT CALLBACK WindowProcess(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam) {
 		switch(message) {
 		case WM_DESTROY:
-			// @TODO
 			PostQuitMessage(0);
 			return 0;
 
 		case WM_SYSKEYDOWN:
-			// Handle ALT+ENTER:
 			if((wParam == VK_RETURN) && (lParam & (1 << 29)))
 			{
 				return 0;
 			}
 			break;
 
-		case WM_NCLBUTTONDOWN:
-			//timerHandle = SetTimer(windowHandle, 0, 16, TimerProcess);
+		case WM_ACTIVATE:
+		case WM_SETFOCUS:
+			Egg::Input::Focused();
 			break;
 
-		case WM_NCLBUTTONUP:
-			//KillTimer(windowHandle, timerHandle);
+		case WM_KILLFOCUS:
+			Egg::Input::Blur();
+			break;
+
+		case WM_MOVE:
+			OutputDebugString("move?\r\n");
 			break;
 
 		case WM_INPUT:
 			Egg::Input::ReadRawMouse(wParam, lParam);
+			return 0;
+
+		case WM_KEYDOWN:
+			Egg::Input::KeyPressed(wParam);
 			break;
-			//return 0;
+
+		case WM_KEYUP:
+			Egg::Input::KeyReleased(wParam);
+			break;
 		}
 
-		return DefWindowProcW(windowHandle, message, wParam, lParam);
+		return DefWindowProc(windowHandle, message, wParam, lParam);
 	}
 
 	void WinapiWindowModule::CompleteFrame() {
@@ -44,23 +54,22 @@ namespace Egg::Module {
 	}
 
 	void WinapiWindowModule::Start(AApp * app) {
-		const wchar_t * windowClassName = L"EggClass";
+		const char * windowClassName = "EggClass";
 
-		WNDCLASSEXW windowClass;
-		ZeroMemory(&windowClass, sizeof(WNDCLASSEXW));
 
-		windowClass.cbSize = sizeof(WNDCLASSEXW);
+		WNDCLASSEX windowClass = { 0 };
+
+		windowClass.cbSize = sizeof(WNDCLASSEX);
 		windowClass.lpfnWndProc = WindowProcess;
 		windowClass.lpszClassName = windowClassName;
 		windowClass.hInstance = GetModuleHandle(NULL);
 		windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
 		windowClass.style = CS_HREDRAW | CS_VREDRAW;
 
-		RegisterClassExW(&windowClass);
+		RegisterClassEx(&windowClass);
 
-		HWND wnd = CreateWindowExW(0,
-								   windowClassName,
-								   L"Netcode3D",
+		HWND wnd = CreateWindow(windowClassName,
+								   "Netcode3D",
 								   WS_OVERLAPPEDWINDOW,
 								   CW_USEDEFAULT,
 								   CW_USEDEFAULT,
@@ -74,8 +83,6 @@ namespace Egg::Module {
 		ASSERT(wnd != NULL, "Failed to create window");
 
 		windowHandle = wnd;
-
-		ShowWindow(wnd, SW_SHOWDEFAULT);
 
 		isRunning = true;
 	}
@@ -99,6 +106,10 @@ namespace Egg::Module {
 				isRunning = false;
 			}
 		}
+	}
+	
+	void WinapiWindowModule::ShowWindow() {
+		::ShowWindow(windowHandle, SW_SHOWDEFAULT);
 	}
 
 }

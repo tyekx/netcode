@@ -75,7 +75,7 @@ namespace Egg::Graphics::DX12 {
 
 	void DX12GraphicsModule::Present() {
 		DX_API("Failed to present swap chain")
-			swapChain->Present(0, 0);
+			swapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING);
 
 		NextBackBufferIndex();
 	}

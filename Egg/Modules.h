@@ -66,6 +66,7 @@ namespace Egg::Module {
 		virtual void * GetUnderlyingPointer() = 0;
 		virtual void ProcessMessages() = 0;
 		virtual void CompleteFrame() = 0;
+		virtual void ShowWindow() = 0;
 		virtual bool KeepRunning() = 0;
 	};
 
