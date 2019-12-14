@@ -43,7 +43,7 @@ namespace Egg {
 
 
 		// Lower level helper reads directly from the filesystem into memory.
-		static HRESULT ReadEntireFile(_In_z_ wchar_t const * fileName, _Inout_ std::unique_ptr<uint8_t[]> & data, _Out_ size_t * dataSize);
+		static bool ReadEntireFile(_In_z_ wchar_t const * fileName, _Inout_ std::unique_ptr<uint8_t[]> & data, _Out_ size_t * dataSize);
 
 
 	private:

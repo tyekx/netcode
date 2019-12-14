@@ -265,7 +265,7 @@ namespace Egg::Graphics::DX12 {
 
 			if(FAILED(rsResult)) {
 				Egg::Utility::Debugf("Failed to serialize root signature\r\n");
-				Egg::Utility::DebugPrintBlob(errorMsg);
+				DebugPrintBlob(errorMsg);
 			}
 
 			com_ptr<ID3D12RootSignature> rootSignature;

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "BasicGeometry.h"
-#include "PhysxSystem.h"
 #include <array>
 
 

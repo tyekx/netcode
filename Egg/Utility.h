@@ -8,11 +8,6 @@ namespace Egg {
 	namespace Utility {
 
 		/*
-		Converts the feature level enum to its readable format
-		*/
-		const char * FeatureLevelToString(D3D_FEATURE_LEVEL ftlvl);
-
-		/*
 		Checkes for an unsigned int if its a power of 2. Wasteful approach but working for edge cases including 0.
 		*/
 		constexpr bool IsPowerOf2(unsigned int v) {
@@ -41,11 +36,6 @@ namespace Egg {
 		}
 
 		/*
-		Prints a Blob's content as string to the Visual Studio Output window, if the blob is null, a message will still appear
-		*/
-		void DebugPrintBlob(com_ptr<ID3DBlob> blob);
-
-		/*
 		formats a wide string into a std::wstring
 		*/
 		std::wstring WFormat(const wchar_t * format, ...);
@@ -59,11 +49,6 @@ namespace Egg {
 		Prints a printf-like message to the Visual Studio Output window
 		*/
 		void Debugf(const char * format, ...);
-
-		/*
-		Queries the available video adapters from the OS
-		*/
-		void GetAdapters(IDXGIFactory6 * dxgiFactory, std::vector<com_ptr<IDXGIAdapter1>> & adapters);
 
 		/*
 		Loads a file into a string

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Common.h"
 #include "HandleTypes.h"
+#include "DX12Common.h"
 #include "DX12PlacedVBuffer.h"
 #include "DX12PlacedIBuffer.h"
 #include "DX12RenderItem.h"

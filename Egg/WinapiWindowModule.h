@@ -3,6 +3,12 @@
 #include "Modules.h"
 #include "Common.h"
 
+#if defined(EGG_OS_WINDOWS)
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <Windows.h>
+#endif
+
 namespace Egg::Module {
 
 	class AApp;

@@ -1,5 +1,11 @@
 #include "Input.h"
 
+#if defined(EGG_OS_WINDOWS)
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <Windows.h>
+#endif
+
 namespace Egg {
 
 	BYTE Input::InputBuffer[2048] = { 0 };
@@ -14,7 +20,7 @@ namespace Egg {
 	Input::Axis::Axis(uint32_t posK, uint32_t negK) : PositiveKey{ posK }, NegativeKey{ negK }, CurrentValue{ 0.0f } { }
 
 
-	void Input::ReadRawMouse(WPARAM wParam, LPARAM lParam) {
+	void Input::ReadRawMouse(unsigned long long wParam, unsigned long long lParam) {
 		UINT dwSize = 0;
 
 		GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));

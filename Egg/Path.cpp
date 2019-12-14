@@ -2,6 +2,12 @@
 #include "Common.h"
 #include <algorithm>
 
+#if defined(EGG_OS_WINDOWS)
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <Windows.h>
+#endif
+
 namespace Egg {
 	std::wstring Path::MediaRoot{};
 	std::wstring Path::ShaderRoot{};

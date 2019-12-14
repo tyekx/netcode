@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common.h"
+#include "DX12Common.h"
 #include "DX12ShaderVariant.h"
 #include "DX12ShaderBytecode.h"
 
@@ -45,7 +45,7 @@ namespace Egg::Graphics::DX12 {
 
 			if(errorMsg != nullptr) {
 				Egg::Utility::Debugf("Error while compiling vertex shader (-Wall): \r\n");
-				Egg::Utility::DebugPrintBlob(errorMsg);
+				DebugPrintBlob(errorMsg);
 			}
 
 			return ShaderBytecode{ variant.GetFileReference(), std::move(vsByteCode), variant.GetPreprocDefs(), variant.GetShaderType() };

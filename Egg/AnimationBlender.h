@@ -15,13 +15,13 @@ namespace Egg::Animation {
 
 		BoneSRT buffer[128];
 		AnimationState * activeStates[MAX_ACTIVE_STATE_COUNT];
-		UINT numActiveStates;
+		unsigned int numActiveStates;
 		Asset::Bone * bones;
-		UINT bonesLength;
+		unsigned int bonesLength;
 		void * dest;
 	public:
 
-		AnimationBlender(Asset::Bone * skeleton, UINT skeletonLength, void * boneDataCb);
+		AnimationBlender(Asset::Bone * skeleton, unsigned int skeletonLength, void * boneDataCb);
 
 		void ActivateState(AnimationState * state);
 

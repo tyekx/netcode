@@ -16,16 +16,16 @@ namespace Egg::Asset {
 		freed_unique_ptr_t materialsAlloc;
 		freed_unique_ptr_t animDataAlloc;
 	public:
-		UINT meshesLength;
+		unsigned int meshesLength;
 		Mesh * meshes;
 
-		UINT materialsLength;
+		unsigned int materialsLength;
 		Material * materials;
 
-		UINT animationsLength;
+		unsigned int animationsLength;
 		Animation * animations;
 
-		UINT bonesLength;
+		unsigned int bonesLength;
 		Bone * bones;
 
 		Model() : meshesAlloc{ nullptr, std::free }, materialsAlloc{ nullptr, std::free }, animDataAlloc{ nullptr, std::free },
@@ -41,7 +41,7 @@ namespace Egg::Asset {
 
 			materialsAlloc.reset(ptr);
 
-			materialsLength = InterpretAs<UINT>(&ptr);
+			materialsLength = InterpretAs<unsigned int>(&ptr);
 			materials = InterpretAsArray<Material>(&ptr, materialsLength);
 		}
 
@@ -52,13 +52,13 @@ namespace Egg::Asset {
 
 			meshesAlloc.reset(ptr);
 
-			meshesLength = InterpretAs<UINT>(&ptr);
+			meshesLength = InterpretAs<unsigned int>(&ptr);
 			meshes = InterpretAsArray<Mesh>(&ptr, meshesLength);
 			
-			for(UINT i = 0; i < meshesLength; ++i) {
+			for(unsigned int i = 0; i < meshesLength; ++i) {
 				meshes[i].vertices = ptr;
 				InterpretSkip(&ptr, meshes[i].verticesLength);
-				meshes[i].indices = InterpretAsArray<UINT>(&ptr, meshes[i].indicesLength);
+				meshes[i].indices = InterpretAsArray<unsigned int>(&ptr, meshes[i].indicesLength);
 				meshes[i].lodLevels = InterpretAsArray<Asset::LODLevel>(&ptr, meshes[i].lodLevelsLength);
 			}
 		}
@@ -71,7 +71,7 @@ namespace Egg::Asset {
 
 			animDataAlloc.reset(ptr);
 
-			animationsLength = InterpretAs<UINT>(&ptr);
+			animationsLength = InterpretAs<unsigned int>(&ptr);
 			animations = InterpretAsArray<Animation>(&ptr, animationsLength);
 
 			for(unsigned int i = 0; i < animationsLength; ++i) {
@@ -81,7 +81,7 @@ namespace Egg::Asset {
 				animations[i].keys = InterpretAsArray<AnimationKey>(&ptr, animations[i].keysLength * animations[i].bonesLength);
 			}
 
-			bonesLength = InterpretAs<UINT>(&ptr);
+			bonesLength = InterpretAs<unsigned int>(&ptr);
 			bones = InterpretAsArray<Bone>(&ptr, bonesLength);
 		}
 	};

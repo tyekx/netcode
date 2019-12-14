@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Common.h"
 #include <queue>
 #include <DirectXTex/DirectXTex.h>
 #include "DX12Resource.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common.h"
+#include "DX12Common.h"
 #include <map>
 #include "DX12ShaderVariant.h"
 #include <string>

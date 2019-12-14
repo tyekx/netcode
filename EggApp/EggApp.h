@@ -2,9 +2,7 @@
 
 #include <Egg/App.h>
 #include <Egg/Importer.h>
-#include <Egg/ConstantBuffer.hpp>
 #include <Egg/Camera/Camera.h>
-#include <Egg/PhysxSystem.h>
 #include <Egg/Scene.h>
 #include <Egg/Input.h>
 #include <Egg/BasicGeometry.h>
@@ -45,7 +43,7 @@ class GameApp : public Egg::Module::AApp {
 	}
 
 	void Simulate(float dt) {
-		//physics->Simulate(dt);
+		physics->Simulate(dt);
 
 		/*
 		foreach gameobject update
@@ -53,6 +51,18 @@ class GameApp : public Egg::Module::AApp {
 	}
 
 	void LoadAssets() {
+		{
+			auto mat = physics->CreateMaterial(0.5f, 0.5f, 0.5f);
+			auto planeActor = physics->CreatePlane(mat, DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f }, 0.0f);
+			physics->AddToScene(planeActor);
+
+			auto boxShape = physics->CreateBox(mat, DirectX::XMFLOAT3{ 100.0f, 50.0f, 10.0f });
+			auto boxActor = physics->CreateDynamicActor(boxShape, 20.0f);
+			physics->SetActorPosition(boxActor, DirectX::XMFLOAT3{ 0.0f, 500.0f, 0.0f });
+			physics->SetActorRotation(boxActor, DirectX::XMFLOAT4{ sqrtf(2.0f) / 2.0f, 0.0f, -sqrtf(2.0f) / 2.0f, 0.0f });
+			physics->AddToScene(boxActor);
+		}
+
 		Egg::HCBUFFER pfcb = graphics->AllocateCbuffer(sizeof(PerFrameCb));
 		Egg::HCBUFFER pocb = graphics->AllocateCbuffer(sizeof(PerObjectCb));
 		perFrameCb = reinterpret_cast<PerFrameCb *>(graphics->GetCbufferPointer(pfcb));

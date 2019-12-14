@@ -18,7 +18,7 @@ namespace Egg::Animation {
 		AnimationState * currentState;
 
 		AnimationState * states;
-		UINT statesLength;
+		unsigned int statesLength;
 
 		AnimationBlender * blender;
 

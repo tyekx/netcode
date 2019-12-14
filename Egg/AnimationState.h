@@ -42,7 +42,7 @@ namespace Egg::Animation {
 		unsigned int id;
 		Asset::Animation * animationRef;
 		Transition * transitions;
-		UINT transitionsLength;
+		unsigned int transitionsLength;
 
 		float weight;
 		float weightVelocity;

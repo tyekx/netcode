@@ -5,6 +5,9 @@
 #include <string>
 #include <map>
 
+#include <DirectXMath.h>
+#include <DirectXCollision.h>
+
 namespace Egg::Module {
 
 	class AApp;
@@ -137,6 +140,24 @@ namespace Egg::Module {
 	public:
 		virtual ~IPhysicsModule() = default;
 		virtual void * GetUnderlyingPointer() = 0;
+
+		virtual void SetGravity(const DirectX::XMFLOAT3 & gravityVector) = 0;
+		virtual HPXMAT CreateMaterial(float staticFriction, float dynamicFriction, float restitution) = 0;
+		virtual HACTOR CreateStaticActor(HSHAPE firstShape) = 0;
+		virtual HACTOR CreateDynamicActor(HSHAPE firstShape, float density) = 0;
+		virtual HACTOR CreateKinematicActor(HSHAPE firstShape, float density) = 0;
+		virtual HACTOR CreatePlane(HPXMAT material, const DirectX::XMFLOAT3 & normalVector, float distanceFromOrigin) = 0;
+		virtual HSHAPE CreateBox(HPXMAT material, const DirectX::XMFLOAT3 & halfExtensions) = 0;
+		virtual void AddToScene(HACTOR actor) = 0;
+		virtual void RemoveFromScene(HACTOR actor) = 0;
+
+		virtual void SetShapeLocalPosition(HSHAPE shape, const DirectX::XMFLOAT3 & position) = 0;
+		virtual void SetShapeLocalQuaternion(HSHAPE shape, const DirectX::XMFLOAT4 & quaternion) = 0;
+		virtual void SetActorPosition(HACTOR actor, const DirectX::XMFLOAT3 & position) = 0;
+		virtual void SetActorRotation(HACTOR actor, const DirectX::XMFLOAT4 & quaternion) = 0;
+		virtual DirectX::XMFLOAT3 GetActorPosition(HACTOR actor) = 0;
+		virtual DirectX::XMFLOAT4 GetActorRotation(HACTOR actor) = 0;
+
 		virtual void Simulate(float dt) = 0;
 	};
 

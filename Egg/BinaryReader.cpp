@@ -10,8 +10,8 @@ namespace Egg {
 	{
 		size_t dataSize;
 
-		HRESULT hr = ReadEntireFile(fileName, mOwnedData, &dataSize);
-		ASSERT(SUCCEEDED(hr), "Failed to read file");
+		bool hr = ReadEntireFile(fileName, mOwnedData, &dataSize);
+		ASSERT(hr, "Failed to read file");
 
 		mPos = mOwnedData.get();
 		mEnd = mOwnedData.get() + dataSize;
@@ -27,12 +27,12 @@ namespace Egg {
 
 
 	// Reads from the filesystem into memory.
-	HRESULT BinaryReader::ReadEntireFile(_In_z_ wchar_t const * fileName, _Inout_ std::unique_ptr<uint8_t[]> & data, _Out_ size_t * dataSize)
+	bool BinaryReader::ReadEntireFile(_In_z_ wchar_t const * fileName, _Inout_ std::unique_ptr<uint8_t[]> & data, _Out_ size_t * dataSize)
 	{
 		std::ifstream ifs{ fileName };
 
 		if(!ifs.is_open()) {
-			return E_FAIL;
+			return false;
 		}
 
 		ifs.seekg(0, std::ios::end);
@@ -44,7 +44,7 @@ namespace Egg {
 
 		ifs.read(reinterpret_cast<char *>(data.get()), *dataSize);
 
-		return S_OK;
+		return true;
 	}
 
 

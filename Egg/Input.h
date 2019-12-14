@@ -25,10 +25,10 @@ namespace Egg {
 		static DirectX::XMINT2 MouseDelta;
 		static bool IsFocused;
 		static std::map<std::string, Axis> AxisMap;
-		static BYTE InputBuffer[2048];
+		static unsigned char InputBuffer[2048];
 	public:
 		static void CreateResources();
-		static void ReadRawMouse(WPARAM wParam, LPARAM lParam);
+		static void ReadRawMouse(unsigned long long wParam, unsigned long long lParam);
 
 		static void KeyPressed(uint32_t keyCode);
 		static void KeyReleased(uint32_t keyCode);

@@ -1,5 +1,9 @@
 #include "EggMath.h"
 
+physx::PxQuat ToPxQuat(const DirectX::XMFLOAT4 & q) {
+	return physx::PxQuat{ q.x, q.y, q.z, q.w };
+}
+
 physx::PxVec3 ToPxVec3(const DirectX::XMFLOAT3 & v) {
 	return physx::PxVec3{ v.x, v.y, v.z };
 }
@@ -32,7 +36,6 @@ DirectX::XMFLOAT4 ToFloat4(const physx::PxQuat & q) {
 DirectX::XMFLOAT4A ToFloat4A(const physx::PxQuat & q) {
 	return DirectX::XMFLOAT4A{ q.x, q.y, q.z, q.w };
 }
-
 
 DirectX::XMVECTOR LoadPxExtendedVec3(const physx::PxExtendedVec3 & ev) {
 	DirectX::XMFLOAT3A f3a{ (float)ev.x, (float)ev.y, (float)ev.z };

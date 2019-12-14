@@ -1,9 +1,10 @@
 #include "AnimationBlender.h"
+#include <memory>
 
 namespace Egg::Animation {
 
 
-	AnimationBlender::AnimationBlender(Asset::Bone * skeleton, UINT skeletonLength, void * boneDataCb) {
+	AnimationBlender::AnimationBlender(Asset::Bone * skeleton, unsigned int skeletonLength, void * boneDataCb) {
 		bones = skeleton;
 		bonesLength = skeletonLength;
 		dest = boneDataCb;
@@ -14,7 +15,7 @@ namespace Egg::Animation {
 
 	void AnimationBlender::ActivateState(AnimationState * state) {
 		if(numActiveStates < MAX_ACTIVE_STATE_COUNT) {
-			for(UINT i = 0; i < numActiveStates; ++i) {
+			for(unsigned int i = 0; i < numActiveStates; ++i) {
 				if(activeStates[i] == state) {
 					return;
 				}
@@ -44,16 +45,16 @@ namespace Egg::Animation {
 		int parentId;
 
 
-		for(UINT ai = 0; ai < numActiveStates; ++ai) {
+		for(unsigned int ai = 0; ai < numActiveStates; ++ai) {
 			weightSum += activeStates[ai]->weight;
 		}
 
-		for(UINT ai = 0; ai < numActiveStates; ++ai) {
+		for(unsigned int ai = 0; ai < numActiveStates; ++ai) {
 			float weight = activeStates[ai]->weight;
 
 			Egg::Asset::Animation * a = activeStates[ai]->animationRef;
 			float t = activeStates[ai]->animTime;
-			UINT idx;
+			unsigned int idx;
 			for(idx = 1; idx < a->keysLength; ++idx) {
 				if(a->times[idx - 1] <= t && a->times[idx] >= t) {
 					t = (t - a->times[idx - 1]) / (a->times[idx] - a->times[idx - 1]);
@@ -64,7 +65,7 @@ namespace Egg::Animation {
 			auto * startKey = (a->keys + (idx - 1) * a->bonesLength);
 			auto * endKey = (a->keys + idx * a->bonesLength);
 
-			for(UINT i = 0; i < a->bonesLength; ++i) {
+			for(unsigned int i = 0; i < a->bonesLength; ++i) {
 				stPos = DirectX::XMLoadFloat3(&startKey[i].position);
 				stQuat = DirectX::XMLoadFloat4(&startKey[i].rotation);
 				stScale = DirectX::XMLoadFloat3(&startKey[i].scale);
@@ -94,7 +95,7 @@ namespace Egg::Animation {
 			}
 		}
 
-		for(UINT i = 0; i < bonesLength; ++i) {
+		for(unsigned int i = 0; i < bonesLength; ++i) {
 			toRoot[i] = DirectX::XMMatrixAffineTransformation(buffer[i].scale, DirectX::XMQuaternionIdentity(), buffer[i].rotation, buffer[i].translation);
 
 			parentId = bones[i].parentId;
@@ -112,7 +113,7 @@ namespace Egg::Animation {
 	}
 
 	void AnimationBlender::UpdateStates(float dt) {
-		for(UINT i = 0; i < numActiveStates;) {
+		for(unsigned int i = 0; i < numActiveStates;) {
 			if(activeStates[i] == nullptr) {
 				break;
 			}

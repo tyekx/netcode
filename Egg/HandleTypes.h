@@ -11,10 +11,9 @@ namespace Egg {
 	using HRENDERTARGET = unsigned int;
 	using HPSO = unsigned int;
 
-	class HINCOMPLETEPSO {
-	public:
-		unsigned int handle;
-	};
+	using HACTOR = void *;
+	using HSHAPE = void *;
+	using HPXMAT = void *;
 
 	class HINCOMPLETESHADER {
 	public:

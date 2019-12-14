@@ -5,7 +5,7 @@ namespace Egg::Animation {
 
 	AnimationState * Blackboard::FindReferenceByName(const std::string & name) {
 
-		for(UINT i = 0; i < statesLength; ++i) {
+		for(unsigned int i = 0; i < statesLength; ++i) {
 			if(strcmp((states + i)->name, name.c_str()) == 0) {
 				return states + i;
 			}
@@ -16,7 +16,7 @@ namespace Egg::Animation {
 
 	void Blackboard::CheckCurrentTransitions(MovementController * movCtrl) {
 
-		for(UINT i = 0; i < currentState->transitionsLength; ++i) {
+		for(unsigned int i = 0; i < currentState->transitionsLength; ++i) {
 			AnimationState::Transition * t = currentState->transitions + i;
 
 			if((*t)(movCtrl, currentState)) {
@@ -42,17 +42,17 @@ namespace Egg::Animation {
 						const std::initializer_list<AnimationState> & sts,
 						const std::initializer_list<TransitionInit> &transitions) {
 
-		UINT requiredSize = static_cast<UINT>(sts.size() * sizeof(AnimationState) + transitions.size() * sizeof(AnimationState::Transition) + sizeof(AnimationBlender));
+		unsigned int requiredSize = static_cast<unsigned int>(sts.size() * sizeof(AnimationState) + transitions.size() * sizeof(AnimationState::Transition) + sizeof(AnimationBlender));
 		classifier.Initialize(requiredSize);
 
 		blender = classifier.Allocate<AnimationBlender>();
 		new (blender) AnimationBlender{ model->bones, model->bonesLength, writeDest };
 
 		// step1: allocate and initialize states
-		states = static_cast<AnimationState *>(classifier.Allocate(static_cast<UINT>(sizeof(AnimationState) * sts.size())));
-		statesLength = static_cast<UINT>(sts.size());
+		states = static_cast<AnimationState *>(classifier.Allocate(static_cast<unsigned int>(sizeof(AnimationState) * sts.size())));
+		statesLength = static_cast<unsigned int>(sts.size());
 
-		UINT idx = 0;
+		unsigned int idx = 0;
 		for(auto & i : sts) {
 			new (states + idx) AnimationState{ i };
 			(states + idx)->SetAnimationRef(model->animations + i.id);
@@ -66,18 +66,18 @@ namespace Egg::Animation {
 		}
 
 		// step3: allocate memory for transitions and initialize it
-		for(UINT i = 0; i < statesLength; ++i) {
+		for(unsigned int i = 0; i < statesLength; ++i) {
 			AnimationState * state = states + i;
 			state->transitions = static_cast<AnimationState::Transition *>(classifier.Allocate(sizeof(AnimationState::Transition) * state->transitionsLength));
-			for(UINT j = 0; j < state->transitionsLength; ++j) {
+			for(unsigned int j = 0; j < state->transitionsLength; ++j) {
 				new (state->transitions + j) AnimationState::Transition{};
 			}
 		}
 
 		// step4: fill transitions with meaningful data, bit wasteful but gets the job done
-		for(UINT i = 0; i < statesLength; ++i) {
+		for(unsigned int i = 0; i < statesLength; ++i) {
 			AnimationState * state = states + i;
-			UINT j = 0;
+			unsigned int j = 0;
 			for(const auto & t : transitions) {
 				AnimationState* tOwner = FindReferenceByName(t.ownerState);
 

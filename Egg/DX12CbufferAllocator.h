@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Common.h"
 #include "HandleTypes.h"
 #include "Utility.h"
+#include "DX12Common.h"
 #include "DX12RenderItem.h"
 
 namespace Egg::Graphics::DX12 {

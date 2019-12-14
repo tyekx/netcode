@@ -20,24 +20,10 @@
 
 #include <shellapi.h>
 
+#include "PipelineFunctions.h"
+
 void ToLower(std::wstring & str) {
 	std::transform(str.begin(), str.end(), str.begin(), std::tolower);
-}
-
-void PrintHelp() {
-	printf("Usage(1): $ EggAssetPipeline --name=<string> --lods=<file>[,<file>,...] --animations=[<file>,...] [--generate_tangent_space]\r\n");
-	printf("Usage(2): $ EggAssetPipeline --manifest=<file>\r\n");
-	printf("Usage(3): $ EggAssetPipeline\r\n\r\n");
-
-	printf("\t(2): will load the expected arguments from a file, the arguments follow the (1) pattern in the manifest file\r\n");
-	printf("\t(3): will try to load the default manifest.txt file in the working directory\r\n\r\n");
-	
-	printf("Parameters:\r\n");
-	printf("\t	  --name				   : Name of the output file\r\n");
-	printf("\t    --lods				   : Different level of details for the same model, in a descending LOD order");
-	printf("\t    --animations			   : List of animations to be used for the mesh");
-	printf("\t    --generate_tangent_space : Tangents and binormals will be calculated for each mesh\r\n");
-	printf("\t	  --manifest               : Loads the program arguments from a manifest file\r\n");
 }
 
 struct ImportedAnimationKey {
@@ -166,6 +152,54 @@ void ProcessAnimation(const wchar_t * file, std::vector<ProcessedBone> & bones, 
 void WriteBinary(const char * dest, ImportedModel & model, std::vector<ProcessedBone> & bones, std::vector<Animation> & anims);
 void CalculateBoundingBoxes(ImportedModel & model);
 
+
+
+void ProcessMap(Egg::ProgramArgs & pa) {
+
+	std::string path = Egg::Utility::ToNarrowString(pa.GetArg(L"map"));
+
+	Assimp::Importer importer;
+
+	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate);
+
+	for(unsigned int i = 0; i < scene->mNumMeshes; ++i) {
+
+		const aiMesh * mesh = scene->mMeshes[i];
+		
+		printf("name: %s\r\n", mesh->mName);
+
+	}
+
+}
+
+void ProcessAsset(Egg::ProgramArgs & pa) {
+	ImportedModel model;
+	std::vector<ProcessedBone> bones;
+	std::vector<Animation> anims;
+
+	std::vector<std::wstring> lodFiles;
+	std::vector<std::wstring> animationFiles;
+	std::wstring name = pa.GetArg(L"name");
+
+	Explode(lodFiles, pa.GetArg(L"lods"), L',');
+	Explode(animationFiles, pa.GetArg(L"animations"), L',');
+
+	for(const std::wstring & i : lodFiles) {
+		Process(i.c_str(), bones, model, pa.IsSet(L"generate_tangent_space"));
+		CalculateBoundingBoxes(model);
+	}
+
+	for(const std::wstring & i : animationFiles) {
+		ProcessAnimation(i.c_str(), bones, anims);
+	}
+
+	name += L".eggasset";
+
+	std::string binaryName = Egg::Utility::ToNarrowString(name);
+
+	WriteBinary(binaryName.c_str(), model, bones, anims);
+}
+
 int wmain(int argc, wchar_t ** argv) {
 	Egg::ProgramArgs pa{ (const wchar_t**) argv, argc };
 
@@ -212,37 +246,17 @@ int wmain(int argc, wchar_t ** argv) {
 		return 1;
 	}
 
-	if(!pa.IsSet(L"lods")) {
-		printf("--lods argument is required to have at least 1 reference");
-		PrintHelp();
-		return 1;
+	if(pa.IsSet(L"map")) {
+		ProcessMap(pa);
+	} else {
+		if(!pa.IsSet(L"lods")) {
+			printf("--lods argument is required to have at least 1 reference");
+			PrintHelp();
+			return 1;
+		}
+
+		ProcessAsset(pa);
 	}
-
-	ImportedModel model;
-	std::vector<ProcessedBone> bones;
-	std::vector<Animation> anims;
-
-	std::vector<std::wstring> lodFiles;
-	std::vector<std::wstring> animationFiles;
-	std::wstring name = pa.GetArg(L"name");
-
-	Explode(lodFiles, pa.GetArg(L"lods"), L',');
-	Explode(animationFiles, pa.GetArg(L"animations"), L',');
-
-	for(const std::wstring & i : lodFiles) {
-		Process(i.c_str(), bones, model, pa.IsSet(L"generate_tangent_space"));
-		CalculateBoundingBoxes(model);
-	}
-
-	for(const std::wstring & i : animationFiles) {
-		ProcessAnimation(i.c_str(), bones, anims);
-	}
-
-	name += L".eggasset";
-
-	std::string binaryName = Egg::Utility::ToNarrowString(name);
-
-	WriteBinary(binaryName.c_str(), model, bones, anims);
 
 
 	return 0;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "ConstantBuffer.hpp"
 #include <DirectXMath.h>
 #include "Blackboard.h"
 

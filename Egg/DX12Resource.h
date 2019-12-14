@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common.h"
+#include "DX12Common.h"
 
 namespace Egg::Graphics::DX12::Resource {
 

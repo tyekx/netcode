@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Common.h"
 #include "Utility.h"
 #include "Modules.h"
 #include <map>
 
+#include "DX12Common.h"
 #include "DX12ResourceUploadBatch.h"
 #include "DX12Resource.h"
 #include "DX12RenderItem.h"
@@ -152,7 +152,7 @@ namespace Egg::Graphics::DX12 {
 			queryDataFeatureLevels.NumFeatureLevels = _countof(featureLevels);
 			queryDataFeatureLevels.pFeatureLevelsRequested = featureLevels;
 
-			DX_API("Failed to create device with %s", Egg::Utility::FeatureLevelToString(queryDataFeatureLevels.MaxSupportedFeatureLevel))
+			DX_API("Failed to create device with %s", FeatureLevelToString(queryDataFeatureLevels.MaxSupportedFeatureLevel))
 				D3D12CreateDevice(nullptr, queryDataFeatureLevels.MaxSupportedFeatureLevel, IID_PPV_ARGS(tempDevice.GetAddressOf()));
 
 			DX_API("Failed to query supported feature levels")
@@ -160,10 +160,10 @@ namespace Egg::Graphics::DX12 {
 
 			tempDevice.Reset();
 
-			DX_API("Failed to upgrade device to %s", Egg::Utility::FeatureLevelToString(queryDataFeatureLevels.MaxSupportedFeatureLevel))
+			DX_API("Failed to upgrade device to %s", FeatureLevelToString(queryDataFeatureLevels.MaxSupportedFeatureLevel))
 				D3D12CreateDevice(nullptr, queryDataFeatureLevels.MaxSupportedFeatureLevel, IID_PPV_ARGS(tempDevice.GetAddressOf()));
 
-			Egg::Utility::Debugf("Created DX12 device with %s\r\n", Egg::Utility::FeatureLevelToString(queryDataFeatureLevels.MaxSupportedFeatureLevel));
+			Egg::Utility::Debugf("Created DX12 device with %s\r\n", FeatureLevelToString(queryDataFeatureLevels.MaxSupportedFeatureLevel));
 
 			device = std::move(tempDevice);
 		}

@@ -4,34 +4,18 @@
 #include <fstream>
 #include <map>
 #include <locale>
+#include <cstdarg>
+
+#if defined(EGG_OS_WINDOWS)
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <Windows.h>
+#endif
 
 /*
 Only allow 1024 character long mesasges, if your message get cropped consider increasing this number
 */
 #define OUTPUT_BUFFER_SIZE 1024
-
-const char * Egg::Utility::FeatureLevelToString(D3D_FEATURE_LEVEL ftlvl) {
-	switch(ftlvl) {
-	case D3D_FEATURE_LEVEL_9_1: return "Feature level 9.1";
-	case D3D_FEATURE_LEVEL_9_2: return "Feature level 9.2";
-	case D3D_FEATURE_LEVEL_9_3: return "Feature level 9.3";
-	case D3D_FEATURE_LEVEL_10_0: return "Feature level 10.0";
-	case D3D_FEATURE_LEVEL_10_1: return "Feature level 10.1";
-	case D3D_FEATURE_LEVEL_11_0: return "Feature level 11.0";
-	case D3D_FEATURE_LEVEL_11_1: return "Feature level 11.1";
-	case D3D_FEATURE_LEVEL_12_0: return "Feature level 12.0";
-	case D3D_FEATURE_LEVEL_12_1: return "Feature level 12.1";
-	default: return "Unknown feature level";
-	}
-}
-
-void Egg::Utility::DebugPrintBlob(com_ptr<ID3DBlob> blob) {
-	if(blob != nullptr) {
-		OutputDebugString(reinterpret_cast<const char*>(blob->GetBufferPointer()));
-	} else {
-		OutputDebugString("Blob was NULL");
-	}
-}
 
 std::wstring Egg::Utility::WFormat(const wchar_t * format, ...) {
 	va_list va;
@@ -72,30 +56,6 @@ void Egg::Utility::Debugf(const char * format, ...) {
 	OutputDebugString(str.c_str());
 
 	va_end(va);
-}
-
-void Egg::Utility::GetAdapters(IDXGIFactory6 * dxgiFactory, std::vector<com_ptr<IDXGIAdapter1>> & adapters) {
-	com_ptr<IDXGIAdapter1> tempAdapter{ nullptr };
-	OutputDebugStringW(L"Detected Video Adapters:\n");
-	unsigned int adapterId = 0;
-
-	for(HRESULT query = dxgiFactory->EnumAdapters1(adapterId, tempAdapter.GetAddressOf());
-		query != DXGI_ERROR_NOT_FOUND;
-		query = dxgiFactory->EnumAdapters1(++adapterId, tempAdapter.GetAddressOf())) {
-
-		// check if not S_OK
-		DX_API("Failed to query DXGI adapter") query;
-
-		if(tempAdapter != nullptr) {
-			DXGI_ADAPTER_DESC desc;
-			tempAdapter->GetDesc(&desc);
-
-			WDebugf(L"    %s\n", desc.Description);
-
-			adapters.push_back(std::move(tempAdapter));
-			tempAdapter.Reset();
-		}
-	}
 }
 
 std::string Egg::Utility::ToNarrowString(const std::wstring & wideString) {

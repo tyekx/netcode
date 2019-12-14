@@ -1,6 +1,7 @@
 #include "DefaultModuleFactory.h"
 #include "WinapiWindowModule.h"
 #include "DX12GraphicsModule.h"
+#include "PhysxModule.h"
 
 namespace Egg::Module {
 
@@ -21,7 +22,7 @@ namespace Egg::Module {
 	}
 
 	std::unique_ptr<IPhysicsModule> DefaultModuleFactory::CreatePhysicsModule(AApp * app, int physicsType) {
-		return nullptr;
+		return std::make_unique<Egg::Physics::PhysXModule>();
 	}
 
 }
