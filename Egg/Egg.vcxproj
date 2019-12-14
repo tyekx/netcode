@@ -26,8 +26,7 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\Default.props" />
-    <Import Project="..\EggLib.props" />
+    <Import Project="..\SDK.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
@@ -41,9 +40,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Lib />
-    <Lib>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-    </Lib>
+    <Lib />
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Allocation.h" />
@@ -65,13 +62,13 @@
     <ClInclude Include="DX12CommittedVBuffer.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Components.h" />
-    <ClInclude Include="ConstantBuffer.hpp" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DebugPhysx.h" />
     <ClInclude Include="DebugPhysxActor.h" />
     <ClInclude Include="DebugPhysxRaycast.h" />
     <ClInclude Include="DefaultModuleFactory.h" />
     <ClInclude Include="DX12CbufferAllocator.h" />
+    <ClInclude Include="DX12Common.h" />
     <ClInclude Include="DX12GeometryManager.h" />
     <ClInclude Include="DX12GraphicsModule.h" />
     <ClInclude Include="DX12MaterialManager.h" />
@@ -96,6 +93,7 @@
     <ClInclude Include="Input.h" />
     <ClInclude Include="InputLayout.h" />
     <ClInclude Include="LinearClassifier.h" />
+    <ClInclude Include="LinuxSal.h" />
     <ClInclude Include="LuaApi.h" />
     <ClInclude Include="LuaManager.h" />
     <ClInclude Include="LuaScript.h" />
@@ -103,10 +101,10 @@
     <ClInclude Include="EggMath.h" />
     <ClInclude Include="MemoryFunctions.h" />
     <ClInclude Include="Modules.h" />
+    <ClInclude Include="ModulesConfig.h" />
     <ClInclude Include="MovementController.h" />
     <ClInclude Include="Path.h" />
-    <ClInclude Include="PhysxComponent.h" />
-    <ClInclude Include="PhysxSystem.h" />
+    <ClInclude Include="PhysxModule.h" />
     <ClInclude Include="DX12PlacedIBuffer.h" />
     <ClInclude Include="DX12PlacedVBuffer.h" />
     <ClInclude Include="ProgramArgs.h" />
@@ -138,19 +136,20 @@
     <ClCompile Include="DebugPhysx.cpp" />
     <ClCompile Include="DebugPhysxActor.cpp" />
     <ClCompile Include="DefaultModuleFactory.cpp" />
+    <ClCompile Include="DX12Common.cpp" />
     <ClCompile Include="DX12GraphicsModule.cpp" />
     <ClCompile Include="Exporter.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Importer.cpp" />
     <ClCompile Include="Input.cpp" />
-    <ClCompile Include="Internal.cpp" />
+    <ClCompile Include="Common.cpp" />
     <ClCompile Include="LinearClassifier.cpp" />
     <ClCompile Include="LuaApi.cpp" />
     <ClCompile Include="EggMath.cpp" />
     <ClCompile Include="MemoryFunctions.cpp" />
     <ClCompile Include="Modules.cpp" />
     <ClCompile Include="Path.cpp" />
-    <ClCompile Include="PhysxSystem.cpp" />
+    <ClCompile Include="PhysxModule.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SpriteFont.cpp" />
     <ClCompile Include="Stopwatch.cpp" />

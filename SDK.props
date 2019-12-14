@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <EggSDK>C:\sdk2</EggSDK>
+    <EggOS>Win</EggOS>
+    <EggRuntimeLibrary>mdd</EggRuntimeLibrary>
+    <EggPlatform>$(PlatformTarget)</EggPlatform>
+    <EggToolset>$(PlatformToolset)</EggToolset>
+    <EggBuildType>$(Configuration)</EggBuildType>
+    <EggBuildSelect>$(EggOS)\$(EggPlatform)\$(EggBuildType)\$(EggToolSet).$(EggRuntimeLibrary)</EggBuildSelect>
+    <EggD3DLibs>d3d12.lib;d3dcompiler.lib;dxgi.lib</EggD3DLibs>
+    <EggPhysXVersion>4.1</EggPhysXVersion>
+    <EggPhysXBin>$(EggSDK)\PhysX\$(EggPhysXVersion)\$(EggBuildSelect)\</EggPhysXBin>
+    <EggPhysXInclude>$(EggSDK)\PhysX\$(EggPhysXVersion)\include\</EggPhysXInclude>
+    <EggPhysXLibs>PhysX_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib</EggPhysXLibs>
+    <EggAssimpVersion>5.0.0</EggAssimpVersion>
+    <EggAssimpInclude>$(EggSDK)\assimp\$(EggAssimpVersion)\include\</EggAssimpInclude>
+    <EggAssimpBin>$(EggSDK)\assimp\$(EggAssimpVersion)\$(EggBuildSelect)\</EggAssimpBin>
+    <EggAssimpLibs>assimp.lib</EggAssimpLibs>
+    <EggLuaVersion>5.3.5</EggLuaVersion>
+    <EggLuaInclude>$(EggSDK)\lua\$(EggLuaVersion)\include\</EggLuaInclude>
+    <EggLuaBin>$(EggSDK)\lua\$(EggLuaVersion)\$(EggBuildSelect)\</EggLuaBin>
+    <EggLuaLibs>lua.lib</EggLuaLibs>
+    <EggDXTexVersion>oct2019</EggDXTexVersion>
+    <EggDXTexInclude>$(EggSDK)\DirectXTex\$(EggDXTexVersion)\include</EggDXTexInclude>
+    <EggDXTexBin>$(EggSDK)\DirectXTex\$(EggDXTexVersion)\$(EggBuildSelect)\</EggDXTexBin>
+    <EggDXTexLibs>DirectXTex.lib</EggDXTexLibs>
+    <EggBinaries>$(EggPhysXBin);$(EggAssimpBin);$(EggLuaBin);$(EggDXTexBin)</EggBinaries>
+    <EggLibraries>$(EggD3DLibs);$(EggPhysXLibs);$(EggLuaLibs);$(EggAssimpLibs);$(EggDXTexLibs)</EggLibraries>
+    <EggIncludes>$(EggPhysXInclude);$(EggAssimpInclude);$(EggLuaInclude);$(EggDXTexInclude)</EggIncludes>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutDir>$(SolutionDir)Bin\</OutDir>
+    <IntDir>$(SolutionDir)Build\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(EggIncludes);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(EggBinaries);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(EggLibraries);%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <FxCompile>
+      <ShaderModel>5.0</ShaderModel>
+    </FxCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="EggSDK">
+      <Value>$(EggSDK)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggOS">
+      <Value>$(EggOS)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggRuntimeLibrary">
+      <Value>$(EggRuntimeLibrary)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggPlatform">
+      <Value>$(EggPlatform)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggToolset">
+      <Value>$(EggToolset)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggBuildType">
+      <Value>$(EggBuildType)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggBuildSelect">
+      <Value>$(EggBuildSelect)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggD3DLibs">
+      <Value>$(EggD3DLibs)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggPhysXVersion">
+      <Value>$(EggPhysXVersion)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggPhysXBin">
+      <Value>$(EggPhysXBin)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggPhysXInclude">
+      <Value>$(EggPhysXInclude)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggPhysXLibs">
+      <Value>$(EggPhysXLibs)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggAssimpVersion">
+      <Value>$(EggAssimpVersion)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggAssimpInclude">
+      <Value>$(EggAssimpInclude)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggAssimpBin">
+      <Value>$(EggAssimpBin)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggAssimpLibs">
+      <Value>$(EggAssimpLibs)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggLuaVersion">
+      <Value>$(EggLuaVersion)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggLuaInclude">
+      <Value>$(EggLuaInclude)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggLuaBin">
+      <Value>$(EggLuaBin)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggLuaLibs">
+      <Value>$(EggLuaLibs)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggDXTexVersion">
+      <Value>$(EggDXTexVersion)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggDXTexInclude">
+      <Value>$(EggDXTexInclude)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggDXTexBin">
+      <Value>$(EggDXTexBin)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggDXTexLibs">
+      <Value>$(EggDXTexLibs)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggBinaries">
+      <Value>$(EggBinaries)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggLibraries">
+      <Value>$(EggLibraries)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggIncludes">
+      <Value>$(EggIncludes)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

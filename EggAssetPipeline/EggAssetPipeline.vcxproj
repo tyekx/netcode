@@ -26,7 +26,7 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\Default.props" />
+    <Import Project="..\SDK.props" />
     <Import Project="..\EggApp.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -49,6 +49,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PipelineFunctions.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PipelineFunctions.h" />

@@ -61,11 +61,11 @@
     <Filter Include="Legacy\Components">
       <UniqueIdentifier>{caa87bb9-a58f-41f2-bf06-0823412d769d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Legacy\Components\Systems">
-      <UniqueIdentifier>{d338157d-799f-4c10-b1aa-f5f8e88c3926}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Legacy\Scene">
       <UniqueIdentifier>{fbf485cf-845a-4308-971b-5e59637c08dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Physics">
+      <UniqueIdentifier>{732f7154-1187-46a0-abeb-894bb40d8b35}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -111,9 +111,6 @@
     <ClInclude Include="App.h">
       <Filter>App</Filter>
     </ClInclude>
-    <ClInclude Include="PhysxComponent.h">
-      <Filter>Legacy\Components</Filter>
-    </ClInclude>
     <ClInclude Include="Utility.h">
       <Filter>Utility</Filter>
     </ClInclude>
@@ -125,9 +122,6 @@
     </ClInclude>
     <ClInclude Include="EggMpl.hpp">
       <Filter>App</Filter>
-    </ClInclude>
-    <ClInclude Include="PhysxSystem.h">
-      <Filter>Legacy\Components\Systems</Filter>
     </ClInclude>
     <ClInclude Include="Signature.h">
       <Filter>Legacy\Components</Filter>
@@ -280,9 +274,6 @@
     <ClInclude Include="Geometry.h">
       <Filter>Legacy</Filter>
     </ClInclude>
-    <ClInclude Include="ConstantBuffer.hpp">
-      <Filter>Legacy</Filter>
-    </ClInclude>
     <ClInclude Include="MemoryFunctions.h">
       <Filter>Utility</Filter>
     </ClInclude>
@@ -297,6 +288,18 @@
     </ClInclude>
     <ClInclude Include="Transition.h">
       <Filter>Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysxModule.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Common.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="LinuxSal.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="ModulesConfig.h">
+      <Filter>Modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -317,12 +320,6 @@
     </ClCompile>
     <ClCompile Include="Utility.cpp">
       <Filter>Utility</Filter>
-    </ClCompile>
-    <ClCompile Include="Internal.cpp">
-      <Filter>App</Filter>
-    </ClCompile>
-    <ClCompile Include="PhysxSystem.cpp">
-      <Filter>Legacy\Components\Systems</Filter>
     </ClCompile>
     <ClCompile Include="Exporter.cpp">
       <Filter>Serialization</Filter>
@@ -393,6 +390,15 @@
     </ClCompile>
     <ClCompile Include="DX12CbufferAllocator.cpp">
       <Filter>Graphics\Engine\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysxModule.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12Common.cpp">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Common.cpp">
+      <Filter>App</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

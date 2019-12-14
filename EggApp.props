@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
-  <PropertyGroup Label="UserMacros">
-    <EggPath>PATH=C:\sdk\assimp5\bin;C:\sdk\physx\PhysX\bin\win.x86_64.vc142.mt\debug</EggPath>
-  </PropertyGroup>
+  <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <LocalDebuggerEnvironment>PATH={bin_dirs};%PATH%;</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
@@ -11,11 +9,11 @@
   <ItemDefinitionGroup>
     <Link>
       <AdditionalDependencies>Egg.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <BuildMacro Include="EggPath">
-      <Value>$(EggPath)</Value>
-    </BuildMacro>
-  </ItemGroup>
+  <ItemGroup />
 </Project>
