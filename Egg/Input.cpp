@@ -87,7 +87,7 @@ namespace Egg {
 		RAWINPUTDEVICE rawMouseDevice;
 		rawMouseDevice.usUsagePage = 0x1;
 		rawMouseDevice.usUsage = 0x2;
-		rawMouseDevice.dwFlags = RIDEV_NOLEGACY;
+		rawMouseDevice.dwFlags = 0;
 		rawMouseDevice.hwndTarget = 0;
 
 		if(RegisterRawInputDevices(&rawMouseDevice, 1, sizeof(RAWINPUTDEVICE)) == FALSE) {

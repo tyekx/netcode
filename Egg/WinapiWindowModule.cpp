@@ -25,20 +25,16 @@ namespace Egg::Module {
 			Egg::Input::Blur();
 			break;
 
-		case WM_MOVE:
-			OutputDebugString("move?\r\n");
-			break;
-
 		case WM_INPUT:
 			Egg::Input::ReadRawMouse(wParam, lParam);
 			return 0;
 
 		case WM_KEYDOWN:
-			Egg::Input::KeyPressed(wParam);
+			Egg::Input::KeyPressed(static_cast<UINT>(wParam));
 			break;
 
 		case WM_KEYUP:
-			Egg::Input::KeyReleased(wParam);
+			Egg::Input::KeyReleased(static_cast<UINT>(wParam));
 			break;
 		}
 

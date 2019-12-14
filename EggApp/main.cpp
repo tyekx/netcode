@@ -116,12 +116,35 @@ HWND InitWindow(HINSTANCE hInstance) {
 }*/
 
 #include <Egg/DefaultModuleFactory.h>
+#include <io.h>
+#include <fcntl.h>
+
+void SetupConsole() {
+	AllocConsole();
+
+	SetConsoleTitle("Netcode3D - Console");
+
+	HANDLE handle_out = GetStdHandle(STD_OUTPUT_HANDLE);
+	int hCrt = _open_osfhandle((long)handle_out, _O_TEXT);
+	FILE * hf_out = _fdopen(hCrt, "w");
+	setvbuf(hf_out, NULL, _IONBF, 1);
+	*stdout = *hf_out;
+
+	HANDLE handle_in = GetStdHandle(STD_INPUT_HANDLE);
+	hCrt = _open_osfhandle((long)handle_in, _O_TEXT);
+	FILE * hf_in = _fdopen(hCrt, "r");
+	setvbuf(hf_in, NULL, _IONBF, 128);
+	*stdin = *hf_in;
+}
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR command, _In_ INT nShowCmd) {
+#if defined(_DEBUG)
+	SetupConsole();
+#endif
+
+	Log::Setup(true);
 
 	CoInitialize(nullptr);
-
-	//windowHandle = InitWindow(hInstance);
 	 
 	int argc;
 	wchar_t ** args = CommandLineToArgvW(command, &argc);
@@ -131,7 +154,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	LocalFree(args);
 
 	if(!pa.IsSet(L"shaderPath") || !pa.IsSet(L"mediaPath")) {
-		OutputDebugString("Invalid program arguments!\r\n");
+		Log::Error("Missing command arguments");
 		return 1;
 	}
 
@@ -143,30 +166,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	Egg::Module::DefaultModuleFactory defModuleFactory;
 	std::unique_ptr<Egg::Module::AApp> app = std::make_unique<GameApp>();
 	app->Setup(&defModuleFactory);
+
+	Log::Info("Initialization successful");
+
 	app->Run();
 	app->Exit();
 
-
-	//app = std::make_unique<EggApp>();
-	//app->SetWindow(reinterpret_cast<void *>(windowHandle));
-	//app->CreateResources();
-	//app->LoadAssets();
-
-	//ShowWindow(windowHandle, nShowCmd);
-
-	/*
-	MSG winMessage = { 0 };
-
-	while(winMessage.message != WM_QUIT) {
-		if(PeekMessage(&winMessage, NULL, 0, 0, PM_REMOVE)) {
-			TranslateMessage(&winMessage);
-			DispatchMessage(&winMessage);
-		} else {
-			app->Run();
-		}
-	}*/
-
 	CoUninitialize();
+
+	Log::Info("Gracefully shutting down");
 
 	return 0;
 }

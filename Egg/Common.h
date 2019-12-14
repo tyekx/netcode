@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include "Logger.h"
 
 #ifdef _WIN32
 #define EGG_OS_WINDOWS

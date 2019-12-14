@@ -94,6 +94,7 @@
     <ClInclude Include="InputLayout.h" />
     <ClInclude Include="LinearClassifier.h" />
     <ClInclude Include="LinuxSal.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="LuaApi.h" />
     <ClInclude Include="LuaManager.h" />
     <ClInclude Include="LuaScript.h" />
@@ -144,6 +145,7 @@
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="LinearClassifier.cpp" />
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="LuaApi.cpp" />
     <ClCompile Include="EggMath.cpp" />
     <ClCompile Include="MemoryFunctions.cpp" />

@@ -26,9 +26,14 @@
     <EggDXTexInclude>$(EggSDK)\DirectXTex\$(EggDXTexVersion)\include</EggDXTexInclude>
     <EggDXTexBin>$(EggSDK)\DirectXTex\$(EggDXTexVersion)\$(EggBuildSelect)\</EggDXTexBin>
     <EggDXTexLibs>DirectXTex.lib</EggDXTexLibs>
-    <EggBinaries>$(EggPhysXBin);$(EggAssimpBin);$(EggLuaBin);$(EggDXTexBin)</EggBinaries>
-    <EggLibraries>$(EggD3DLibs);$(EggPhysXLibs);$(EggLuaLibs);$(EggAssimpLibs);$(EggDXTexLibs)</EggLibraries>
-    <EggIncludes>$(EggPhysXInclude);$(EggAssimpInclude);$(EggLuaInclude);$(EggDXTexInclude)</EggIncludes>
+    <EggSpdLogVersion>1.4.2</EggSpdLogVersion>
+    <EggSpdLogInclude>$(EggSDK)\spdlog\$(EggSpdLogVersion)\include</EggSpdLogInclude>
+    <EggSpdLogBin>$(EggSDK)\spdlog\$(EggSpdLogVersion)\$(EggBuildSelect)\</EggSpdLogBin>
+    <EggSpdLogLibs>spdlog.lib</EggSpdLogLibs>
+    <EggIncludes>$(EggPhysXInclude);$(EggAssimpInclude);$(EggLuaInclude);$(EggDXTexInclude);$(EggSpdLogInclude)</EggIncludes>
+    <EggBinaries>$(EggPhysXBin);$(EggAssimpBin);$(EggLuaBin);$(EggDXTexBin);$(EggSpdLogBin)</EggBinaries>
+    <EggDlls>$(EggPhysXBin);$(EggAssimpBin);$(EggLuaBin)</EggDlls>
+    <EggLibraries>$(EggD3DLibs);$(EggPhysXLibs);$(EggLuaLibs);$(EggAssimpLibs);$(EggDXTexLibs);$(EggSpdLogLibs)</EggLibraries>
   </PropertyGroup>
   <PropertyGroup>
     <OutDir>$(SolutionDir)Bin\</OutDir>
@@ -119,14 +124,29 @@
     <BuildMacro Include="EggDXTexLibs">
       <Value>$(EggDXTexLibs)</Value>
     </BuildMacro>
-    <BuildMacro Include="EggBinaries">
-      <Value>$(EggBinaries)</Value>
+    <BuildMacro Include="EggSpdLogVersion">
+      <Value>$(EggSpdLogVersion)</Value>
     </BuildMacro>
-    <BuildMacro Include="EggLibraries">
-      <Value>$(EggLibraries)</Value>
+    <BuildMacro Include="EggSpdLogInclude">
+      <Value>$(EggSpdLogInclude)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggSpdLogBin">
+      <Value>$(EggSpdLogBin)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggSpdLogLibs">
+      <Value>$(EggSpdLogLibs)</Value>
     </BuildMacro>
     <BuildMacro Include="EggIncludes">
       <Value>$(EggIncludes)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggBinaries">
+      <Value>$(EggBinaries)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggDlls">
+      <Value>$(EggDlls)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggLibraries">
+      <Value>$(EggLibraries)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>
