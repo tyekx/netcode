@@ -121,6 +121,7 @@ namespace Egg::Graphics::DX12 {
 
 		std::vector<FrameResource> frameResources;
 		UINT backbufferIndex;
+		UINT presentedBackbufferIndex;
 
 		std::vector<DX12::RenderItem*> renderItemBuffer;
 		float aspectRatio;
@@ -245,18 +246,22 @@ namespace Egg::Graphics::DX12 {
 
 			com_ptr<IDXGISwapChain1> tempSwapChain;
 
-			
-			HRESULT hr = dxgiFactory->CreateSwapChainForHwnd(commandQueue.Get(), hwnd, &swapChainDesc, nullptr, nullptr, &tempSwapChain);
-
-			if(FAILED(hr)) {
-				__debugbreak();
-			}
+			DX_API("Failed to create swap chain for hwnd")
+				dxgiFactory->CreateSwapChainForHwnd(commandQueue.Get(), hwnd, &swapChainDesc, nullptr, nullptr, &tempSwapChain);
 
 			DX_API("Failed to cast swap chain")
 				tempSwapChain.As(&swapChain);
 			
 			DX_API("Failed to make window association")
 				dxgiFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
+
+			DXGI_SWAP_CHAIN_DESC1 scDesc;
+
+			DX_API("failed to get swap chain desc")
+				swapChain->GetDesc1(&scDesc);
+
+			width = scDesc.Width;
+			height = scDesc.Height;
 		}
 
 		ShaderManager shaderManager;
@@ -285,9 +290,11 @@ namespace Egg::Graphics::DX12 {
 
 		virtual void Start(Module::AApp * app) override;
 
-		virtual void Shutdown() override {
+		virtual void Shutdown() override { }
 
-		}
+		virtual void Resized(int width, int height) override;
+
+		virtual float GetAspectRatio() const override;
 
 		virtual HITEM CreateItem() override {
 			return renderItemColl.CreateItem();
@@ -429,6 +436,15 @@ namespace Egg::Graphics::DX12 {
 		}
 
 		void ReleaseSwapChainResources() {
+			Log::Debug("Releasing Swap Chain resources");
+
+			if(presentedBackbufferIndex < frameResources.size()) {
+				Log::Debug("Waiting for completion");
+				frameResources[presentedBackbufferIndex].WaitForCompletion();
+				DX_API("Failed to signal from command queue")
+					commandQueue->Signal(frameResources[presentedBackbufferIndex].fence.Get(), frameResources[presentedBackbufferIndex].fenceValue);
+			}
+
 			for(UINT i = 0; i < frameResources.size(); ++i) {
 				frameResources[i].swapChainBuffer.Reset();
 				frameResources[i].dsvHandle.ptr = 0;
@@ -438,6 +454,7 @@ namespace Egg::Graphics::DX12 {
 			dsvResource.Reset();
 			rtvDescHeap.Reset();
 			dsvDescHeap.Reset();
+			presentedBackbufferIndex = UINT_MAX;
 		}
 
 		void CreateSwapChainResources() {
@@ -446,8 +463,6 @@ namespace Egg::Graphics::DX12 {
 			DX_API("failed to get swap chain desc")
 				swapChain->GetDesc1(&scDesc);
 
-			width = scDesc.Width;
-			height = scDesc.Height;
 			backbufferDepth = scDesc.BufferCount;
 
 			D3D12_DESCRIPTOR_HEAP_DESC rtvDescHeapDesc;
@@ -527,6 +542,8 @@ namespace Egg::Graphics::DX12 {
 				frameResources[i].dsvClearValue = dsvClearValue;
 				frameResources[i].rtvClearValue = rtvClearValue;
 			}
+
+			backbufferIndex = swapChain->GetCurrentBackBufferIndex();
 		}
 
 

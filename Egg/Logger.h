@@ -10,6 +10,7 @@ namespace Log {
 	void Setup(bool isVerbose);
 
 	void Debug(const char * message);
+	void Debug(const char * message, int value);
 
 	void Info(const char * message);
 

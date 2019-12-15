@@ -13,7 +13,7 @@
 #include "Asset.h"
 
 
-class GameApp : public Egg::Module::AApp {
+class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	Egg::Stopwatch stopwatch;
 
 	//@TODO: refactor this
@@ -82,7 +82,7 @@ class GameApp : public Egg::Module::AApp {
 		DirectX::XMVECTOR cameraQuat = DirectX::XMQuaternionRotationRollPitchYaw(cameraPitch, cameraYaw, 0.0f);
 		DirectX::XMVECTOR aheadStart = DirectX::XMLoadFloat3(&minusUnitZ);
 		DirectX::XMVECTOR camUp = DirectX::XMLoadFloat3(&baseCam.Up);
-		DirectX::XMStoreFloat3(&baseCam.Ahead, DirectX::XMVector3Normalize(DirectX::XMVector3Rotate(aheadStart, cameraQuat)));
+		//DirectX::XMStoreFloat3(&baseCam.Ahead, DirectX::XMVector3Normalize(DirectX::XMVector3Rotate(aheadStart, cameraQuat)));
 		DirectX::XMStoreFloat3(&baseCam.Position, devCamPos);
 
 		baseCam.UpdateMatrices();
@@ -186,6 +186,18 @@ class GameApp : public Egg::Module::AApp {
 	}
 
 public:
+
+	virtual void Resized(int w, int h) override {
+		float asp = graphics->GetAspectRatio();
+		baseCam.SetAspect(asp);
+	}
+
+	virtual void EventSystemChanged(Egg::Module::AAppEventSystem * eventSystem) override {
+		Egg::Module::AApp::EventSystemChanged(eventSystem);
+
+		eventSystem->RegisterHandler(this);
+	}
+
 	/*
 	Initialize modules
 	*/
@@ -203,6 +215,9 @@ public:
 
 		if(window) {
 			window->ShowWindow();
+			// @TODO: rethink this
+			eventSystem = window->GetEventSystem();
+			EventSystemChanged(eventSystem);
 		}
 
 		stopwatch.Start();
@@ -217,6 +232,8 @@ public:
 	virtual void Run() override {
 		while(window->KeepRunning()) {
 			window->ProcessMessages();
+			
+			eventSystem->Dispatch();
 
 			float dt = stopwatch.Restart();
 			Simulate(dt);

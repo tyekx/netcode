@@ -4,11 +4,23 @@
 #include "HandleTypes.h"
 #include <string>
 #include <map>
+#include <vector>
 
 #include <DirectXMath.h>
 #include <DirectXCollision.h>
 
 namespace Egg::Module {
+
+	/*
+	The OO part of this project uses I,A,T prefixes.
+
+	I: interface: only pure virtual functions
+	A: abstract: has implementations and data members
+	T: trait: only virtual functions with default implementations, no data members
+
+	An I and A forces the consumer to implement functions while T gives the freedom not to,
+	a T prefixed class must not force implementations
+	*/
 
 	class AApp;
 	class IModule;
@@ -19,6 +31,29 @@ namespace Egg::Module {
 	class IPhysicsModule;
 	class IAudioModule;
 
+	class TAppEventHandler {
+	public:
+		virtual ~TAppEventHandler() = default;
+		virtual void Focused();
+		virtual void Blurred();
+		virtual void DeviceLost();
+		virtual void Resized(int width, int height);
+	};
+
+	/*
+	The event system is part of the Window Module, it helps dispatch messages
+	*/
+	class AAppEventSystem {
+	protected:
+		std::vector<TAppEventHandler *> handlers;
+	public:
+		virtual void DeregisterHandler(TAppEventHandler * evtHandler);
+
+		virtual void RegisterHandler(TAppEventHandler * evtHandler);
+
+		virtual void Dispatch() = 0;
+	};
+	 
 	/*
 	Abstract App, provides the user convenient way to use certain subsystems, currently supplied:
 	window, graphics, network, physics, audio
@@ -29,6 +64,7 @@ namespace Egg::Module {
 		void ShutdownModule(IModule * m);
 
 	public:
+		AAppEventSystem* eventSystem;
 		std::unique_ptr<IWindowModule> window;
 		std::unique_ptr<IGraphicsModule> graphics;
 		std::unique_ptr<INetworkModule> network;
@@ -36,6 +72,11 @@ namespace Egg::Module {
 		std::unique_ptr<IAudioModule> audio;
 
 		virtual ~AApp() = default;
+
+		/*
+		This is a Base dependent function, meaning you have to invoke the base classes implementation in a cascading fashion
+		*/
+		virtual void EventSystemChanged(AAppEventSystem * eventSystem);
 
 		/*
 		Initialize modules
@@ -53,7 +94,7 @@ namespace Egg::Module {
 		virtual void Exit() = 0;
 	};
 
-	class IModule {
+	class IModule : public TAppEventHandler {
 	public:
 		virtual ~IModule() = default;
 		virtual void Start(AApp * app) = 0;
@@ -68,11 +109,16 @@ namespace Egg::Module {
 		virtual void CompleteFrame() = 0;
 		virtual void ShowWindow() = 0;
 		virtual bool KeepRunning() = 0;
+		virtual void ShowDebugWindow() = 0;
+		virtual AAppEventSystem * GetEventSystem() = 0;
 	};
 
 	class IGraphicsModule : public IModule {
 	public:
 		virtual ~IGraphicsModule() = default;
+
+		virtual float GetAspectRatio() const = 0;
+
 		virtual HITEM CreateItem() = 0;
 
 		virtual HTEXTURE LoadTexture(const std::wstring & textureMediaPath) = 0;
@@ -135,6 +181,7 @@ namespace Egg::Module {
 	class INetworkModule : public IModule {
 	public:
 		virtual ~INetworkModule() = default;
+
 	};
 
 	class IPhysicsModule : public IModule {

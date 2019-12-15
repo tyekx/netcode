@@ -15,7 +15,6 @@ namespace Egg::Graphics::DX12 {
 
 		fr.commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(fr.swapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-
 		/*
 		record upload commands first
 		@TODO: rethink this, this could kill performance
@@ -70,13 +69,17 @@ namespace Egg::Graphics::DX12 {
 
 		commandQueue->ExecuteCommandLists(ARRAYSIZE(cls), cls);
 
-		commandQueue->Signal(fr.fence.Get(), fr.fenceValue);
 	}
 
 	void DX12GraphicsModule::Present() {
+		FrameResource & fr = frameResources.at(backbufferIndex);
+
 		DX_API("Failed to present swap chain")
 			swapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING);
 
+		commandQueue->Signal(fr.fence.Get(), fr.fenceValue);
+
+		presentedBackbufferIndex = backbufferIndex;
 		NextBackBufferIndex();
 	}
 
@@ -124,6 +127,27 @@ namespace Egg::Graphics::DX12 {
 		cbufferAllocator.CreateResources(device.Get());
 
 		renderItemBuffer.reserve(1024);
+	}
+
+	void DX12GraphicsModule::Resized(int newWidth, int newHeight) {
+		UINT w = static_cast<UINT>(newWidth);
+		UINT h = static_cast<UINT>(newHeight);
+
+		if(width != w || height != h) {
+			width = w;
+			height = h;
+			ReleaseSwapChainResources();
+
+			DX_API("Failed to resize buffers")
+				swapChain->ResizeBuffers(backbufferDepth, width, height, DXGI_FORMAT_UNKNOWN, swapChainFlags);
+
+			CreateSwapChainResources();
+		}
+	}
+
+	float DX12GraphicsModule::GetAspectRatio() const
+	{
+		return static_cast<float>(width) / static_cast<float>(height);
 	}
 
 }
