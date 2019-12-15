@@ -103,6 +103,14 @@ namespace Egg::Module {
 		return isRunning;
 	}
 
+	void WinapiWindowModule::Focused() {
+		Egg::Input::Focused();
+	}
+
+	void WinapiWindowModule::Blurred() {
+		Egg::Input::Blur();
+	}
+
 	void WinapiWindowModule::Post(const Message & m) {
 		eventSystem.Post(m);
 	}

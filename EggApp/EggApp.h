@@ -82,7 +82,8 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		DirectX::XMVECTOR cameraQuat = DirectX::XMQuaternionRotationRollPitchYaw(cameraPitch, cameraYaw, 0.0f);
 		DirectX::XMVECTOR aheadStart = DirectX::XMLoadFloat3(&minusUnitZ);
 		DirectX::XMVECTOR camUp = DirectX::XMLoadFloat3(&baseCam.Up);
-		//DirectX::XMStoreFloat3(&baseCam.Ahead, DirectX::XMVector3Normalize(DirectX::XMVector3Rotate(aheadStart, cameraQuat)));
+		
+		DirectX::XMStoreFloat3(&baseCam.Ahead, DirectX::XMVector3Normalize(DirectX::XMVector3Rotate(aheadStart, cameraQuat)));
 		DirectX::XMStoreFloat3(&baseCam.Position, devCamPos);
 
 		baseCam.UpdateMatrices();
@@ -113,9 +114,9 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		cameraYaw = 0.0f;
 		cameraSpeed = 250.0f;
 
-		Egg::Input::SetAxis("DevCameraX", VK_NUMPAD4, VK_NUMPAD6);
-		Egg::Input::SetAxis("DevCameraZ", VK_NUMPAD8, VK_NUMPAD5);
-		Egg::Input::SetAxis("DevCameraY", VK_NUMPAD7, VK_NUMPAD9);
+		Egg::Input::SetAxis("DevCameraX", VK_NUMPAD6, VK_NUMPAD4);
+		Egg::Input::SetAxis("DevCameraZ", VK_NUMPAD5, VK_NUMPAD8);
+		Egg::Input::SetAxis("DevCameraY", VK_NUMPAD9, VK_NUMPAD7);
 
 		{
 			auto mat = physics->CreateMaterial(0.5f, 0.5f, 0.5f);

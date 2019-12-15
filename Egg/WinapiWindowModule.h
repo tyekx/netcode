@@ -45,6 +45,9 @@ namespace Egg::Module {
 		bool isRunning;
 
 	public:
+		virtual void Focused() override;
+		virtual void Blurred() override;
+
 		void Post(const Message & m);
 		virtual void Start(AApp * app) override;
 		virtual void Shutdown() override;
