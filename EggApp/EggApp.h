@@ -1,16 +1,18 @@
 #pragma once
 
-#include <Egg/App.h>
 #include <Egg/Importer.h>
-#include <Egg/Camera/Camera.h>
-#include <Egg/Scene.h>
 #include <Egg/Input.h>
 #include <Egg/BasicGeometry.h>
 #include <Egg/DebugPhysx.h>
 #include <Egg/EggMath.h>
 #include <Egg/Modules.h>
+#include <Egg/Stopwatch.h>
 
 #include "Asset.h"
+#include "GameObject.h"
+#include "Systems.h"
+#include "Scene.h"
+#include "DevCameraScript.h"
 
 
 class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
@@ -18,17 +20,18 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 	//@TODO: refactor this
 	Egg::Asset::Model ybotModel;
-	Model model;
 
-	Egg::Camera::BaseCamera baseCam;
+	//GameObject avatar;
+
+	Camera* baseCam;
 	PerFrameCb * perFrameCb;
-	PerObjectCb * perObjectCb;
-	BoneDataCb * boneDataCb;
 
-	float mouseSpeed;
-	float cameraPitch;
-	float cameraYaw;
-	float cameraSpeed;
+	TransformSystem transformSystem;
+	ScriptSystem scriptSystem;
+	RenderSystem renderSystem;
+
+	Scene scene;
+	
 	
 
 	void Render() {
@@ -36,87 +39,50 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		graphics->SetRenderTarget();
 		graphics->ClearRenderTarget();
 
+		scene.UpdatePerFrameCb(perFrameCb);
+
 		/*
 		foreach gameobject draw
 		*/
-		for(unsigned int i = 0; i < model.meshesLength; ++i) {
-			graphics->Record(model.meshes[i].mesh);
+		for(std::size_t i = 0; i < scene.count; ++i) {
+			transformSystem.Run(scene.objects.data() + i);
+			renderSystem.Run(scene.objects.data() + i);
 		}
 
 		graphics->Render();
 		graphics->Present();
 	}
 
-	void UpdateCamera(float dt) {
-		float devCamX = Egg::Input::GetAxis("DevCameraX");
-		float devCamZ = Egg::Input::GetAxis("DevCameraZ");
-		float devCamY = Egg::Input::GetAxis("DevCameraY");
-
-		DirectX::XMINT2 mouseDelta = Egg::Input::GetMouseDelta();
-
-		DirectX::XMFLOAT2A normalizedMouseDelta{ -(float)(mouseDelta.x), -(float)(mouseDelta.y) };
-		cameraPitch += mouseSpeed * normalizedMouseDelta.y * dt;
-		cameraPitch = std::clamp(cameraPitch, -(DirectX::XM_PIDIV2 - 0.00001f), (DirectX::XM_PIDIV2 - 0.00001f));
-		cameraYaw += mouseSpeed * normalizedMouseDelta.x * dt;
-
-		if(cameraYaw < (-DirectX::XM_PI)) {
-			cameraYaw += DirectX::XM_2PI;
-		}
-
-		if(cameraYaw > (DirectX::XM_PI)) {
-			cameraYaw -= DirectX::XM_2PI;
-		}
-
-		DirectX::XMVECTOR cameraYawQuat = DirectX::XMQuaternionRotationRollPitchYaw(0.0f, cameraYaw, 0.0f);
-
-		DirectX::XMFLOAT3A devCam = { devCamX, devCamY, devCamZ };
-		DirectX::XMVECTOR devCamVec = DirectX::XMLoadFloat3A(&devCam);
-
-		devCamVec = DirectX::XMVector3Rotate(devCamVec, cameraYawQuat);
-
-		DirectX::XMVECTOR devCamPos = DirectX::XMLoadFloat3(&baseCam.Position);
-		devCamVec = DirectX::XMVectorScale(devCamVec, cameraSpeed * dt);
-		devCamPos = DirectX::XMVectorAdd(devCamVec, devCamPos);
-
-		DirectX::XMFLOAT3 minusUnitZ{ 0.0f, 0.0f, -1.0f };
-		DirectX::XMVECTOR cameraQuat = DirectX::XMQuaternionRotationRollPitchYaw(cameraPitch, cameraYaw, 0.0f);
-		DirectX::XMVECTOR aheadStart = DirectX::XMLoadFloat3(&minusUnitZ);
-		DirectX::XMVECTOR camUp = DirectX::XMLoadFloat3(&baseCam.Up);
-		
-		DirectX::XMStoreFloat3(&baseCam.Ahead, DirectX::XMVector3Normalize(DirectX::XMVector3Rotate(aheadStart, cameraQuat)));
-		DirectX::XMStoreFloat3(&baseCam.Position, devCamPos);
-
-		baseCam.UpdateMatrices();
-
-		DirectX::XMMATRIX view = DirectX::XMLoadFloat4x4A(&baseCam.GetViewMatrix());
-		DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4A(&baseCam.GetProjMatrix());
-		DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(view, proj);
-		DirectX::XMStoreFloat4x4A(&perFrameCb->View, DirectX::XMMatrixTranspose(view));
-		DirectX::XMStoreFloat4x4A(&perFrameCb->Proj, DirectX::XMMatrixTranspose(proj));
-		DirectX::XMStoreFloat4x4A(&perFrameCb->ViewProj, DirectX::XMMatrixTranspose(vp));
-	}
-
 	void Simulate(float dt) {
 		physics->Simulate(dt);
 
-		UpdateCamera(dt);
-
-		/*
-		foreach gameobject update
-		*/
+		for(std::size_t i = 0; i < scene.count; ++i) {
+			scriptSystem.Run(scene.objects.data() + i, dt);
+		}
 	}
 
 	void LoadAssets() {
+		Egg::Input::SetAxis("Vertical", 'W', 'S');
+
+		{
+			GameObject * camObj = scene.Insert();
+			Transform *camT = camObj->AddComponent<Transform>();
+			camT->position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 100.0f };
+			Camera * camComponent = camObj->AddComponent<Camera>();
+			camComponent->ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
+			camComponent->nearPlane = 1.0f;
+			camComponent->farPlane = 10000.0f;
+			camComponent->up = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
+			Script * scriptComponent = camObj->AddComponent<Script>();
+			scriptComponent->SetBehavior(std::make_unique<DevCameraScript>());
+			scriptComponent->Setup(camObj);
+			scene.SetCamera(camObj);
+		}
 
 
-		mouseSpeed = 1.0f;
-		cameraPitch = 0.0f;
-		cameraYaw = 0.0f;
-		cameraSpeed = 250.0f;
-
-		Egg::Input::SetAxis("DevCameraX", VK_NUMPAD6, VK_NUMPAD4);
-		Egg::Input::SetAxis("DevCameraZ", VK_NUMPAD5, VK_NUMPAD8);
-		Egg::Input::SetAxis("DevCameraY", VK_NUMPAD9, VK_NUMPAD7);
+		GameObject * avatar = scene.Insert();
+		avatar->AddComponent<Transform>();
+		Model * model = avatar->AddComponent<Model>();
 
 		{
 			auto mat = physics->CreateMaterial(0.5f, 0.5f, 0.5f);
@@ -133,49 +99,31 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		Egg::HCBUFFER pfcb = graphics->AllocateCbuffer(sizeof(PerFrameCb));
 		Egg::HCBUFFER pocb = graphics->AllocateCbuffer(sizeof(PerObjectCb));
 		perFrameCb = reinterpret_cast<PerFrameCb *>(graphics->GetCbufferPointer(pfcb));
-		perObjectCb = reinterpret_cast<PerObjectCb *>(graphics->GetCbufferPointer(pocb));
-
-		baseCam.Up = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
-		baseCam.NearPlane = 1.0f;
-		baseCam.FarPlane = 10000.0f;
-		baseCam.Ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
-		baseCam.Position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 180.0f };
-
-		baseCam.UpdateMatrices();
-
-		perFrameCb->eyePos = DirectX::XMFLOAT3A{ baseCam.Position.x, baseCam.Position.y, baseCam.Position.z };
-
-		DirectX::XMMATRIX view = DirectX::XMLoadFloat4x4A(&baseCam.GetViewMatrix());
-		DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4A(&baseCam.GetProjMatrix());
-		DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(view, proj);
+		model->perObjectCb = reinterpret_cast<PerObjectCb *>(graphics->GetCbufferPointer(pocb));
 
 		perFrameCb->Lights[0] = Egg::DirectionalLight{ DirectX::XMFLOAT3A{ 1.0f, 1.0f, 1.0f}, DirectX::XMFLOAT4A{ 1.0f, 0.0f, 0.0f, 0.0f} };
 
 		DirectX::XMMATRIX identity = DirectX::XMMatrixIdentity();
-		DirectX::XMStoreFloat4x4A(&perObjectCb->InvModel, identity);
-		DirectX::XMStoreFloat4x4A(&perObjectCb->Model, identity);
+		DirectX::XMStoreFloat4x4A(&model->perObjectCb->InvModel, identity);
+		DirectX::XMStoreFloat4x4A(&model->perObjectCb->Model, identity);
 
 		Egg::Importer::ImportModel(L"ybot.eggasset", ybotModel);
 
 		Egg::HCBUFFER bdcb = UINT_MAX;
 		if(ybotModel.animationsLength > 0) {
 			bdcb = graphics->AllocateCbuffer(sizeof(BoneDataCb));
-			boneDataCb = reinterpret_cast<BoneDataCb *>(graphics->GetCbufferPointer(bdcb));
+			model->boneDataCb = reinterpret_cast<BoneDataCb *>(graphics->GetCbufferPointer(bdcb));
 		}
 
 		for(unsigned int i = 0; i < ybotModel.bonesLength; ++i) {
-			DirectX::XMStoreFloat4x4A(&boneDataCb->BindTransform[i], identity);
-			DirectX::XMStoreFloat4x4A(&boneDataCb->ToRootTransform[i], identity);
+			DirectX::XMStoreFloat4x4A(&model->boneDataCb->BindTransform[i], identity);
+			DirectX::XMStoreFloat4x4A(&model->boneDataCb->ToRootTransform[i], identity);
 		}
 
-		LoadItem(graphics.get(), &ybotModel, &model);
+		LoadItem(graphics.get(), &ybotModel, model);
 
-		DirectX::XMStoreFloat4x4A(&perFrameCb->View, DirectX::XMMatrixTranspose(view));
-		DirectX::XMStoreFloat4x4A(&perFrameCb->Proj, DirectX::XMMatrixTranspose(proj));
-		DirectX::XMStoreFloat4x4A(&perFrameCb->ViewProj, DirectX::XMMatrixTranspose(vp));
-
-		for(unsigned int i = 0; i < model.meshesLength; ++i) {
-			Egg::HITEM item = model.meshes[i].mesh;
+		for(auto & i : model->meshes) {
+			Egg::HITEM item = i.mesh;
 			graphics->AddCbuffer(item, pfcb, graphics->GetCbufferSlot(item, "PerFrameCb"));
 			graphics->AddCbuffer(item, pocb, graphics->GetCbufferSlot(item, "PerObjectCb"));
 			if(ybotModel.animationsLength > 0) {
@@ -183,26 +131,30 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			}
 		}
 
-
+		Script* s = avatar->AddComponent<Script>();
+		s->SetBehavior(std::make_unique<PlayerBehavior>());
+		s->Setup(avatar);
 	}
 
 public:
 
-	virtual void Resized(int w, int h) override {
+	virtual void OnResized(int w, int h) override {
 		float asp = graphics->GetAspectRatio();
-		baseCam.SetAspect(asp);
+		scene.camera->GetComponent<Camera>()->aspect = asp;
 	}
 
-	virtual void EventSystemChanged(Egg::Module::AAppEventSystem * eventSystem) override {
-		Egg::Module::AApp::EventSystemChanged(eventSystem);
+	virtual void AddAppEventHandlers(Egg::Module::AppEventSystem * eventSystem) override {
+		Egg::Module::AApp::AddAppEventHandlers(eventSystem);
 
-		eventSystem->RegisterHandler(this);
+		eventSystem->AddHandler(this);
 	}
 
 	/*
 	Initialize modules
 	*/
 	virtual void Setup(Egg::Module::IModuleFactory * factory) override {
+		events = std::make_unique<Egg::Module::AppEventSystem>();
+
 		window = factory->CreateWindowModule(this, 0);
 		graphics = factory->CreateGraphicsModule(this, 0);
 		audio = factory->CreateAudioModule(this, 0);
@@ -216,13 +168,13 @@ public:
 
 		if(window) {
 			window->ShowWindow();
-			// @TODO: rethink this
-			eventSystem = window->GetEventSystem();
-			EventSystemChanged(eventSystem);
 		}
+
+		AddAppEventHandlers(events.get());
 
 		stopwatch.Start();
 
+		renderSystem.SetGraphics(graphics.get());
 		LoadAssets();
 
 	}
@@ -234,7 +186,7 @@ public:
 		while(window->KeepRunning()) {
 			window->ProcessMessages();
 			
-			eventSystem->Dispatch();
+			events->Dispatch();
 
 			float dt = stopwatch.Restart();
 			Simulate(dt);

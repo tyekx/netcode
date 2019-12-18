@@ -1,5 +1,4 @@
 #include <Egg/Common.h>
-#include <Egg/App.h>
 #include <Egg/Utility.h>
 #include <chrono>
 #include "EggApp.h"

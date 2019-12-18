@@ -15,45 +15,29 @@ namespace Egg::Module {
 		}
 	}
 
-	void AApp::EventSystemChanged(AAppEventSystem * evtSys) {
+	void AApp::AddAppEventHandlers(AppEventSystem * evtSys) {
 		if(window) {
-			evtSys->RegisterHandler(window.get());
+			evtSys->AddHandler(window.get());
 		}
 
 		if(graphics) {
-			evtSys->RegisterHandler(graphics.get());
+			evtSys->AddHandler(graphics.get());
 		}
 
 		if(network) {
-			evtSys->RegisterHandler(network.get());
+			evtSys->AddHandler(network.get());
 		}
 
 		if(physics) {
-			evtSys->RegisterHandler(physics.get());
+			evtSys->AddHandler(physics.get());
 		}
 
 		if(audio) {
-			evtSys->RegisterHandler(audio.get());
+			evtSys->AddHandler(audio.get());
 		}
 	}
 
-	void TAppEventHandler::Focused() {
-	
-	}
-
-	void TAppEventHandler::Blurred() {
-	
-	}
-
-	void TAppEventHandler::DeviceLost() {
-
-	}
-
-	void TAppEventHandler::Resized(int width, int height) {
-	
-	}
-
-	void AAppEventSystem::DeregisterHandler(TAppEventHandler * evtHandler) {
+	void AppEventSystem::RemoveHandler(IAppEventHandler * evtHandler) {
 		size_t idx = 0;
 		size_t size = handlers.size();
 
@@ -61,7 +45,7 @@ namespace Egg::Module {
 			return;
 		}
 
-		for(TAppEventHandler * handler : handlers) {
+		for(IAppEventHandler * handler : handlers) {
 			if(handler == evtHandler) {
 				break;
 			}
@@ -73,8 +57,65 @@ namespace Egg::Module {
 		}
 	}
 
-	void AAppEventSystem::RegisterHandler(TAppEventHandler * evtHandler) {
+	void AppEventSystem::AddHandler(IAppEventHandler * evtHandler) {
 		handlers.push_back(evtHandler);
+	}
+
+	void AppEventSystem::Dispatch() {
+		for(const AppEvent & e : events) {
+			Broadcast(e);
+		}
+		events.clear();
+	}
+
+	void AppEventSystem::PostEvent(const AppEvent & evt) {
+		events.push_back(evt);
+	}
+
+	void AppEventSystem::Broadcast(const AppEvent & evt) {
+		for(IAppEventHandler * handler : handlers) {
+			handler->HandleEvent(evt);
+		}
+	}
+
+	void TAppEventHandler::HandleEvent(const AppEvent & evt) {
+		switch(evt.type) {
+		case EAppEventType::RESIZED:
+			OnResized(evt.resizeArgs.x, evt.resizeArgs.y);
+			return;
+		case EAppEventType::BLURRED:
+			OnBlur();
+			return;
+		case EAppEventType::CLOSED:
+			OnClosed();
+			return;
+		case EAppEventType::FOCUSED:
+			OnFocus();
+			return;
+		case EAppEventType::DEVICE_LOST:
+			OnDeviceLost();
+			return;
+		}
+	}
+
+	void TAppEventHandler::OnDeviceLost() {
+
+	}
+
+	void TAppEventHandler::OnBlur() {
+
+	}
+
+	void TAppEventHandler::OnFocus() {
+
+	}
+
+	void TAppEventHandler::OnResized(int x, int y) {
+
+	}
+
+	void TAppEventHandler::OnClosed() {
+
 	}
 }
 

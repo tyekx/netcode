@@ -31,27 +31,58 @@ namespace Egg::Module {
 	class IPhysicsModule;
 	class IAudioModule;
 
-	class TAppEventHandler {
-	public:
-		virtual ~TAppEventHandler() = default;
-		virtual void Focused();
-		virtual void Blurred();
-		virtual void DeviceLost();
-		virtual void Resized(int width, int height);
+	enum class EAppEventType : unsigned {
+		DEVICE_LOST, RESIZED, FOCUSED, BLURRED, CLOSED
 	};
 
 	/*
-	The event system is part of the Window Module, it helps dispatch messages
+	An AppEvent should be a relatively rare event with special semantics
 	*/
-	class AAppEventSystem {
-	protected:
-		std::vector<TAppEventHandler *> handlers;
+	struct AppEvent {
+		EAppEventType type;
+		union {
+			DirectX::XMINT2 resizeArgs;
+		};
+	};
+
+	class IAppEventHandler {
 	public:
-		virtual void DeregisterHandler(TAppEventHandler * evtHandler);
+		virtual ~IAppEventHandler() = default;
+		virtual void HandleEvent(const AppEvent & evt) = 0;
+	};
 
-		virtual void RegisterHandler(TAppEventHandler * evtHandler);
+	class TAppEventHandler : public IAppEventHandler {
+	protected:
+		virtual void HandleEvent(const AppEvent & evt) override;
+	public:
+		virtual ~TAppEventHandler() = default;
+		virtual void OnDeviceLost();
+		virtual void OnBlur();
+		virtual void OnFocus();
+		virtual void OnResized(int x, int y);
+		virtual void OnClosed();
+	};
 
-		virtual void Dispatch() = 0;
+	class AppEventSystem {
+	protected:
+		std::vector<IAppEventHandler *> handlers;
+		std::vector<AppEvent> events;
+	public:
+		void RemoveHandler(IAppEventHandler * evtHandler);
+
+		void AddHandler(IAppEventHandler * evtHandler);
+
+		void Dispatch();
+
+		/*
+		Posts an event to be processed later
+		*/
+		void PostEvent(const AppEvent & evt);
+
+		/*
+		Broadcast calls every handle immediately
+		*/
+		void Broadcast(const AppEvent & evt);
 	};
 	 
 	/*
@@ -64,7 +95,7 @@ namespace Egg::Module {
 		void ShutdownModule(IModule * m);
 
 	public:
-		AAppEventSystem* eventSystem;
+		std::unique_ptr<AppEventSystem> events;
 		std::unique_ptr<IWindowModule> window;
 		std::unique_ptr<IGraphicsModule> graphics;
 		std::unique_ptr<INetworkModule> network;
@@ -76,7 +107,7 @@ namespace Egg::Module {
 		/*
 		This is a Base dependent function, meaning you have to invoke the base classes implementation in a cascading fashion
 		*/
-		virtual void EventSystemChanged(AAppEventSystem * eventSystem);
+		virtual void AddAppEventHandlers(AppEventSystem * eventSystem);
 
 		/*
 		Initialize modules
@@ -110,7 +141,6 @@ namespace Egg::Module {
 		virtual void ShowWindow() = 0;
 		virtual bool KeepRunning() = 0;
 		virtual void ShowDebugWindow() = 0;
-		virtual AAppEventSystem * GetEventSystem() = 0;
 	};
 
 	class IGraphicsModule : public IModule {

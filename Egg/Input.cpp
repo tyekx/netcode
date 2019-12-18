@@ -11,7 +11,6 @@ namespace Egg {
 	BYTE Input::InputBuffer[2048] = { 0 };
 
 	bool Input::IsFocused{ false };
-	DirectX::XMINT2 Input::LastMousePos{ -1, -1 };
 	DirectX::XMINT2 Input::MouseDelta{};
 	std::map<std::string, Input::Axis> Input::AxisMap{ };
 
@@ -159,12 +158,12 @@ namespace Egg {
 	}
 
 	void Input::Blur() {
-		LastMousePos = DirectX::XMINT2{ -1, -1 };
 		IsFocused = false;
 		SetCursor(LoadCursor(NULL, IDC_ARROW));
 	}
 
 	void Input::Focused() {
+		MouseDelta = { 0, 0 };
 		IsFocused = true;
 		SetCursor(NULL);
 	}

@@ -39,8 +39,15 @@ namespace Egg::Module {
 
 	}
 
+	void SizingTimerProc(_In_ HWND hwnd, _In_ UINT wmTimer, _In_ UINT_PTR timerPtr, _In_ DWORD timeSinceEpochMs) {
+		Log::Debug("SizingTimerProc()");
+		PostMessage(hwnd, UM_RENDER, 0, 0);
+	}
+
 	LRESULT CALLBACK WindowProcess(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam) {
 		WinapiWindowModule * pThis = reinterpret_cast<WinapiWindowModule *>(GetWindowLongPtr(windowHandle, GWLP_USERDATA));
+
+		Egg::Utility::DebugEvent(message, { WM_NCHITTEST, WM_MOUSEFIRST, WM_SETCURSOR, WM_MOUSEMOVE, WM_INPUT });
 
 		switch(message) {
 		case WM_DESTROY:
@@ -54,16 +61,42 @@ namespace Egg::Module {
 			}
 			break;
 
+		case WM_ENTERSIZEMOVE: 
+			Log::Debug("WM_ENTERSIZEMOVE");
+			pThis->EnterSizeMove();
+			break;
+
+		case WM_EXITSIZEMOVE:
+			Log::Debug("WM_EXITSIZEMOVE");
+			pThis->ExitSizeMove();
+			break;
+
+		case UM_RENDER:
+			Log::Debug("UM_RENDER");
+			break;
+
+		case WM_SIZE:
+			if(pThis) {
+				int width = LOWORD(lParam);
+				int height = HIWORD(lParam);
+				AppEvent evt;
+				evt.type = EAppEventType::RESIZED;
+				evt.resizeArgs.x = width;
+				evt.resizeArgs.y = height;
+				pThis->eventSystem->PostEvent(evt);
+			}
+			break;
+
 		case WM_ACTIVATE:
 		case WM_SETFOCUS:
 			if(pThis) {
-				pThis->Post(Message{ MessageType::FOCUSED });
+				pThis->eventSystem->PostEvent(AppEvent{ EAppEventType::FOCUSED });
 			}
 			break;
 
 		case WM_KILLFOCUS:
 			if(pThis) {
-				pThis->Post(Message{ MessageType::BLURRED });
+				pThis->eventSystem->PostEvent(AppEvent{ EAppEventType::BLURRED });
 			}
 			break;
 
@@ -78,20 +111,9 @@ namespace Egg::Module {
 		case WM_KEYUP:
 			Egg::Input::KeyReleased(static_cast<UINT>(wParam));
 			break;
-
-		case WM_SIZE:
-			if(pThis) {
-				int width = LOWORD(lParam);
-				int height = HIWORD(lParam);
-				Message m;
-				m.type = MessageType::RESIZED;
-				m.resizeDimensions.x = width;
-				m.resizeDimensions.y = height;
-				pThis->Post(m);
-			}
-			break;
 		}
 
+		
 		return DefWindowProc(windowHandle, message, wParam, lParam);
 	}
 
@@ -103,25 +125,33 @@ namespace Egg::Module {
 		return isRunning;
 	}
 
-	void WinapiWindowModule::Focused() {
+	void WinapiWindowModule::OnFocus() {
 		Egg::Input::Focused();
 	}
 
-	void WinapiWindowModule::Blurred() {
+	void WinapiWindowModule::OnBlur() {
 		Egg::Input::Blur();
 	}
 
-	void WinapiWindowModule::Post(const Message & m) {
-		eventSystem.Post(m);
+	void WinapiWindowModule::EnterSizeMove()
+	{
+		timerHandle = SetTimer(windowHandle, 1, 500, SizingTimerProc);
+	}
+
+	void WinapiWindowModule::ExitSizeMove()
+	{
+		KillTimer(windowHandle, 1);
 	}
 
 	void WinapiWindowModule::Start(AApp * app) {
 		const char * windowClassName = "EggClass";
 
 
-		#if defined(_DEBUG)
-				ShowDebugWindow();
-		#endif
+#if defined(_DEBUG)
+		ShowDebugWindow();
+#endif
+
+		eventSystem = app->events.get();
 
 		WNDCLASSEX windowClass = { 0 };
 
@@ -131,7 +161,6 @@ namespace Egg::Module {
 		windowClass.hInstance = GetModuleHandle(NULL);
 		windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
 		windowClass.style = CS_HREDRAW | CS_VREDRAW;
-		windowClass.cbClsExtra = sizeof(void *);
 
 		RegisterClassEx(&windowClass);
 
@@ -185,54 +214,7 @@ namespace Egg::Module {
 		SetupConsole();
 	}
 
-	AAppEventSystem * WinapiWindowModule::GetEventSystem()
-	{
-		return &eventSystem;
-	}
 
-	void WinApiAppEventSystem::DispatchMsg(const Message & m, TAppEventHandler * handler) {
-		switch(m.type) {
-		case MessageType::BLURRED:
-			handler->Blurred();
-			break;
-		case MessageType::DEVICE_LOST:
-			handler->DeviceLost();
-			break;
-		case MessageType::FOCUSED:
-			handler->Focused();
-			break;
-		case MessageType::RESIZED:
-			handler->Resized(m.resizeDimensions.x, m.resizeDimensions.y);
-			break;
-		}
-	}
-
-	void WinApiAppEventSystem::Dispatch() {
-		for(const auto & m : messages) {
-			for(auto * handler : handlers) {
-				DispatchMsg(m, handler);
-			}
-		}
-		messages.clear();
-	}
-
-	bool WinApiAppEventSystem::DeviceLost()
-	{
-		return isDeviceLost;
-	}
-
-	void WinApiAppEventSystem::Post(const Message & m) {
-		if(isDeviceLost) {
-			return;
-		}
-
-		if(m.type == MessageType::DEVICE_LOST) {
-			isDeviceLost = true;
-			messages.clear();
-		}
-
-		messages.push_back(m);
-	}
 
 }
 

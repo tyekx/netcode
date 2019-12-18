@@ -21,7 +21,6 @@ namespace Egg {
 			Axis(uint32_t posK, uint32_t negK);
 		};
 
-		static DirectX::XMINT2 LastMousePos;
 		static DirectX::XMINT2 MouseDelta;
 		static bool IsFocused;
 		static std::map<std::string, Axis> AxisMap;

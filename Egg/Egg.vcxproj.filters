@@ -4,9 +4,6 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{f3cf27d1-9fc3-4b06-aa81-70867789ae4a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Camera">
-      <UniqueIdentifier>{97d8db53-4b3d-44de-a700-44f93e245cf1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Lua">
       <UniqueIdentifier>{ddad10d9-5d97-4b51-ba70-2e1fb599016c}</UniqueIdentifier>
     </Filter>
@@ -55,34 +52,16 @@
     <Filter Include="Legacy">
       <UniqueIdentifier>{900505d3-a104-4bb4-8051-40866877e62b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Legacy\Components">
-      <UniqueIdentifier>{caa87bb9-a58f-41f2-bf06-0823412d769d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Legacy\Scene">
-      <UniqueIdentifier>{fbf485cf-845a-4308-971b-5e59637c08dd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Physics">
       <UniqueIdentifier>{732f7154-1187-46a0-abeb-894bb40d8b35}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Camera\Camera.h">
-      <Filter>Camera</Filter>
-    </ClInclude>
     <ClInclude Include="LuaScript.h">
       <Filter>Lua</Filter>
     </ClInclude>
-    <ClInclude Include="Scene.h">
-      <Filter>Legacy\Scene</Filter>
-    </ClInclude>
     <ClInclude Include="LuaApi.h">
       <Filter>Lua</Filter>
-    </ClInclude>
-    <ClInclude Include="TransformComponent.h">
-      <Filter>Legacy\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="ScriptComponent.h">
-      <Filter>Legacy\Components</Filter>
     </ClInclude>
     <ClInclude Include="LuaManager.h">
       <Filter>Lua</Filter>
@@ -93,20 +72,11 @@
     <ClInclude Include="ProgramArgs.h">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="GameObject.h">
-      <Filter>Legacy\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="Components.h">
-      <Filter>Legacy\Components</Filter>
-    </ClInclude>
     <ClInclude Include="LuaScriptFile.h">
       <Filter>Lua</Filter>
     </ClInclude>
     <ClInclude Include="Stopwatch.h">
       <Filter>Utility</Filter>
-    </ClInclude>
-    <ClInclude Include="App.h">
-      <Filter>App</Filter>
     </ClInclude>
     <ClInclude Include="Utility.h">
       <Filter>Utility</Filter>
@@ -119,9 +89,6 @@
     </ClInclude>
     <ClInclude Include="EggMpl.hpp">
       <Filter>App</Filter>
-    </ClInclude>
-    <ClInclude Include="Signature.h">
-      <Filter>Legacy\Components</Filter>
     </ClInclude>
     <ClInclude Include="Vertex.h">
       <Filter>Asset</Filter>
@@ -146,9 +113,6 @@
     </ClInclude>
     <ClInclude Include="Asset\Material.h">
       <Filter>Asset</Filter>
-    </ClInclude>
-    <ClInclude Include="AnimationComponent.h">
-      <Filter>Legacy\Components</Filter>
     </ClInclude>
     <ClInclude Include="EggMath.h" />
     <ClInclude Include="Input.h">
@@ -311,12 +275,6 @@
     </ClCompile>
     <ClCompile Include="Stopwatch.cpp">
       <Filter>Utility</Filter>
-    </ClCompile>
-    <ClCompile Include="GameObject.cpp">
-      <Filter>Legacy\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="Scene.cpp">
-      <Filter>Legacy\Scene</Filter>
     </ClCompile>
     <ClCompile Include="Utility.cpp">
       <Filter>Utility</Filter>

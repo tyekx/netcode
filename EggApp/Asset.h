@@ -7,6 +7,7 @@
 #include <string>
 #include <Egg/Vertex.h>
 #include <Egg/Utility.h>
+#include "GameObject.h"
 
 std::map<std::string, std::string> GetPreprocDefs(Egg::Asset::Mesh * mesh, Egg::Asset::Material * material, Egg::Asset::Model * owner) {
 

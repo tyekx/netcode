@@ -1,5 +1,7 @@
 #pragma once
 
+
+
 #include "Modules.h"
 #include "Common.h"
 
@@ -15,40 +17,22 @@ namespace Egg::Module {
 	class IModule;
 	class IWindowModule;
 
-	enum class MessageType : unsigned {
-		DEVICE_LOST, RESIZED, FOCUSED, BLURRED
-	};
-
-	struct Message {
-		MessageType type;
-		union {
-			DirectX::XMINT2 resizeDimensions;
-		};
-	};
-
-	class WinApiAppEventSystem final : public AAppEventSystem {
-		std::vector<Message> messages;
-		bool isDeviceLost;
-
-		void DispatchMsg(const Message & m, TAppEventHandler* handler);
-
-	public:
-		virtual void Dispatch() override;
-
-		bool DeviceLost();
-		void Post(const Message & m);
-	};
+#define UM_RENDER (WM_USER + 0)
 
 	class WinapiWindowModule final : public IWindowModule {
-		WinApiAppEventSystem eventSystem;
+		UINT_PTR timerHandle;
 		HWND windowHandle;
 		bool isRunning;
-
 	public:
-		virtual void Focused() override;
-		virtual void Blurred() override;
+		AppEventSystem * eventSystem;
 
-		void Post(const Message & m);
+		void EnterSizeMove();
+		void ExitSizeMove();
+
+
+		virtual void OnFocus() override;
+		virtual void OnBlur() override;
+
 		virtual void Start(AApp * app) override;
 		virtual void Shutdown() override;
 		virtual void * GetUnderlyingPointer() override;
@@ -57,7 +41,6 @@ namespace Egg::Module {
 		virtual bool KeepRunning() override;
 		virtual void ShowWindow() override;
 		virtual void ShowDebugWindow() override;
-		virtual AAppEventSystem * GetEventSystem() override;
 	};
 
 }

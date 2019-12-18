@@ -45,9 +45,7 @@
   <ItemGroup>
     <ClInclude Include="Allocation.h" />
     <ClInclude Include="AnimationBlender.h" />
-    <ClInclude Include="AnimationComponent.h" />
     <ClInclude Include="AnimationState.h" />
-    <ClInclude Include="App.h" />
     <ClInclude Include="Asset\Animation.h" />
     <ClInclude Include="Asset\Bone.h" />
     <ClInclude Include="Asset\Material.h" />
@@ -56,12 +54,10 @@
     <ClInclude Include="BasicGeometry.h" />
     <ClInclude Include="BinaryReader.h" />
     <ClInclude Include="Blackboard.h" />
-    <ClInclude Include="Camera\Camera.h" />
     <ClInclude Include="DX12CommittedIBuffer.h" />
     <ClInclude Include="DX12CommittedTexture2D.h" />
     <ClInclude Include="DX12CommittedVBuffer.h" />
     <ClInclude Include="Common.h" />
-    <ClInclude Include="Components.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DebugPhysx.h" />
     <ClInclude Include="DebugPhysxActor.h" />
@@ -86,7 +82,6 @@
     <ClInclude Include="Exporter.h" />
     <ClInclude Include="DX12Fence.h" />
     <ClInclude Include="File.h" />
-    <ClInclude Include="GameObject.h" />
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="HandleTypes.h" />
     <ClInclude Include="Importer.h" />
@@ -111,13 +106,9 @@
     <ClInclude Include="ProgramArgs.h" />
     <ClInclude Include="DX12Resource.h" />
     <ClInclude Include="DX12ResourceUploadBatch.h" />
-    <ClInclude Include="Scene.h" />
-    <ClInclude Include="ScriptComponent.h" />
     <ClInclude Include="DX12ShaderBytecode.h" />
-    <ClInclude Include="Signature.h" />
     <ClInclude Include="SpriteFont.h" />
     <ClInclude Include="Stopwatch.h" />
-    <ClInclude Include="TransformComponent.h" />
     <ClInclude Include="Transition.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="Vertex.h" />
@@ -140,7 +131,6 @@
     <ClCompile Include="DX12Common.cpp" />
     <ClCompile Include="DX12GraphicsModule.cpp" />
     <ClCompile Include="Exporter.cpp" />
-    <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Importer.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Common.cpp" />
@@ -152,7 +142,6 @@
     <ClCompile Include="Modules.cpp" />
     <ClCompile Include="Path.cpp" />
     <ClCompile Include="PhysxModule.cpp" />
-    <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SpriteFont.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
     <ClCompile Include="Transition.cpp" />

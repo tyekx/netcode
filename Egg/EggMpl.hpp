@@ -147,7 +147,6 @@ struct TupleCreateMask<TUPLE, std::tuple<HEAD, TAIL...> > {
 };
 
 
-
 template<typename NEEDLE, typename ... T>
 struct TupleOffsetOf;
 
@@ -182,6 +181,25 @@ template<typename HEAD, typename ... TAIL>
 struct TupleSizeofSum< std::tuple<HEAD, TAIL...> > {
 	constexpr static uint32_t value = sizeof(HEAD) + TupleSizeofSum< std::tuple<TAIL...> >::value;
 };
+
+
+
+
+
+template<typename ... T>
+struct TupleCountOf;
+
+template<>
+struct TupleCountOf< std::tuple<> > {
+	constexpr static uint32_t value = 0;
+};
+
+template<typename HEAD, typename ... TAIL>
+struct TupleCountOf< std::tuple<HEAD, TAIL...> > {
+	constexpr static uint32_t value = 1U + sizeof...(TAIL);
+};
+
+
 
 
 
@@ -351,12 +369,12 @@ struct CompositeObjectDestructor< std::tuple<HEAD, TAIL...> > {
 template<typename ... T>
 struct InjectComponents;
 
-template<typename SYSTEM_T, typename OBJECT_T, typename ... COMPONENT_TYPES>
-struct InjectComponents< SYSTEM_T, OBJECT_T, std::tuple<COMPONENT_TYPES...> > {
-	//always a void(obj&, comp&...) member function signature (for now)
-	using FUNCTION_T = void (SYSTEM_T::*)(OBJECT_T &, COMPONENT_TYPES & ...);
+template<typename SYSTEM_T, typename OBJECT_T, typename ... COMPONENT_TYPES, typename ... ADDITIONAL_ARGS>
+struct InjectComponents< SYSTEM_T, OBJECT_T, std::tuple<COMPONENT_TYPES...>, ADDITIONAL_ARGS... > {
 
-	static void Invoke(SYSTEM_T & ref, FUNCTION_T func, OBJECT_T & obj) {
-		((ref).*(func))(obj, obj.template GetComponent<COMPONENT_TYPES>()...);
+	using FUNCTION_T = void (SYSTEM_T::*)(OBJECT_T *, COMPONENT_TYPES *..., ADDITIONAL_ARGS...);
+
+	static void Invoke(SYSTEM_T & ref, FUNCTION_T func, OBJECT_T * obj, ADDITIONAL_ARGS ... args) {
+		((ref).*(func))(obj, obj->template GetComponent<COMPONENT_TYPES>()..., args...);
 	}
 };

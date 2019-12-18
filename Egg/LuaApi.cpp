@@ -1,5 +1,4 @@
 #include "LuaApi.h"
-#include "GameObject.h"
 #include "Utility.h"
 /*
 int LuaApi::LUA_API_GetRotation(lua_State * state) {
