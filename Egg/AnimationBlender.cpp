@@ -4,13 +4,11 @@
 namespace Egg::Animation {
 
 
-	AnimationBlender::AnimationBlender(Asset::Bone * skeleton, unsigned int skeletonLength, void * boneDataCb) {
+	AnimationBlender::AnimationBlender(Asset::Bone * skeleton, unsigned int skeletonLength) {
 		bones = skeleton;
 		bonesLength = skeletonLength;
-		dest = boneDataCb;
 		numActiveStates = 0;
 		memset(activeStates, 0, sizeof(AnimationState *) * MAX_ACTIVE_STATE_COUNT);
-		//memset(buffer, 0, sizeof(BoneSRT) * BoneDataCb::MAX_BONE_COUNT);
 	}
 
 	void AnimationBlender::ActivateState(AnimationState * state) {
@@ -89,7 +87,7 @@ namespace Egg::Animation {
 					buffer[i].scale = stScale;
 				} else {
 					buffer[i].translation = DirectX::XMVectorAdd(buffer[i].translation, stPos);
-					buffer[i].rotation = DirectX::XMQuaternionMultiply(buffer[i].rotation, stQuat); //DirectX::XMVectorAdd(buffer[i].rotation, stQuat);
+					buffer[i].rotation = DirectX::XMQuaternionMultiply(buffer[i].rotation, stQuat);
 					buffer[i].scale = DirectX::XMVectorAdd(buffer[i].scale, stScale);
 				}
 			}
@@ -108,7 +106,7 @@ namespace Egg::Animation {
 			bindTrans = DirectX::XMLoadFloat4x4(&bones[i].transform);
 			bindTrans = DirectX::XMMatrixMultiply(bindTrans, toRoot[i]);
 
-			//DirectX::XMStoreFloat4x4A(dest->BindTransform + i, DirectX::XMMatrixTranspose(bindTrans));
+			DirectX::XMStoreFloat4x4A(bindTransform + i, DirectX::XMMatrixTranspose(bindTrans));
 		}
 	}
 
@@ -126,6 +124,11 @@ namespace Egg::Animation {
 			}
 			++i;
 		}
+	}
+
+	void AnimationBlender::CopyBoneDataInto(void * dest)
+	{
+		memcpy(dest, bindTransform, sizeof(DirectX::XMFLOAT4X4A) * bonesLength);
 	}
 
 }

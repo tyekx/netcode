@@ -13,22 +13,22 @@
 #include "Systems.h"
 #include "Scene.h"
 #include "DevCameraScript.h"
+#include "Snippets.h"
 
 
 class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	Egg::Stopwatch stopwatch;
 
-	//@TODO: refactor this
+	//@TODO: refactor these
 	Egg::Asset::Model ybotModel;
+	Egg::MovementController movCtrl;
 
-	//GameObject avatar;
-
-	Camera* baseCam;
 	PerFrameCb * perFrameCb;
 
 	TransformSystem transformSystem;
 	ScriptSystem scriptSystem;
 	RenderSystem renderSystem;
+	AnimationSystem animSystem;
 
 	Scene scene;
 	
@@ -38,6 +38,8 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		graphics->Prepare();
 		graphics->SetRenderTarget();
 		graphics->ClearRenderTarget();
+
+		
 
 		scene.UpdatePerFrameCb(perFrameCb);
 
@@ -58,22 +60,26 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 		for(std::size_t i = 0; i < scene.count; ++i) {
 			scriptSystem.Run(scene.objects.data() + i, dt);
+			animSystem.Run(scene.objects.data() + 1, dt);
 		}
 	}
 
 	void LoadAssets() {
 		Egg::Input::SetAxis("Vertical", 'W', 'S');
+		Egg::Input::SetAxis("Horizontal", 'A', 'D');
+		Egg::Input::SetAxis("Jump", VK_SPACE, 0);
+		Egg::Input::SetAxis("Fire", VK_LBUTTON, 0);
 
 		{
 			GameObject * camObj = scene.Insert();
 			Transform *camT = camObj->AddComponent<Transform>();
-			camT->position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 100.0f };
+			Script * scriptComponent = camObj->AddComponent<Script>();
 			Camera * camComponent = camObj->AddComponent<Camera>();
+			camT->position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 100.0f };
 			camComponent->ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
 			camComponent->nearPlane = 1.0f;
 			camComponent->farPlane = 10000.0f;
 			camComponent->up = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
-			Script * scriptComponent = camObj->AddComponent<Script>();
 			scriptComponent->SetBehavior(std::make_unique<DevCameraScript>());
 			scriptComponent->Setup(camObj);
 			scene.SetCamera(camObj);
@@ -83,6 +89,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		GameObject * avatar = scene.Insert();
 		avatar->AddComponent<Transform>();
 		Model * model = avatar->AddComponent<Model>();
+		Animation * anim = avatar->AddComponent<Animation>();
 
 		{
 			auto mat = physics->CreateMaterial(0.5f, 0.5f, 0.5f);
@@ -115,6 +122,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			model->boneDataCb = reinterpret_cast<BoneDataCb *>(graphics->GetCbufferPointer(bdcb));
 		}
 
+
 		for(unsigned int i = 0; i < ybotModel.bonesLength; ++i) {
 			DirectX::XMStoreFloat4x4A(&model->boneDataCb->BindTransform[i], identity);
 			DirectX::XMStoreFloat4x4A(&model->boneDataCb->ToRootTransform[i], identity);
@@ -130,6 +138,9 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 				graphics->AddCbuffer(item, bdcb, graphics->GetCbufferSlot(item, "BoneDataCb"));
 			}
 		}
+
+		CreateYbotAnimationComponent(&ybotModel, anim);
+		animSystem.SetMovementController(&movCtrl);
 
 		Script* s = avatar->AddComponent<Script>();
 		s->SetBehavior(std::make_unique<PlayerBehavior>());
@@ -277,36 +288,7 @@ public:
 
 	virtual void Update(float dt, float T) override {
 
-		float devCamX = Egg::Input::GetAxis("DevCameraX");
-		float devCamZ = Egg::Input::GetAxis("DevCameraZ");
-		float devCamY = Egg::Input::GetAxis("DevCameraY");
-
-		DirectX::XMINT2 mouseDelta = Egg::Input::GetMouseDelta();
-
-		DirectX::XMFLOAT2A normalizedMouseDelta{ -(float)(mouseDelta.x), -(float)(mouseDelta.y) };
-
-		cameraPitch += mouseSpeed * normalizedMouseDelta.y * dt;
-		cameraPitch = std::clamp(cameraPitch, -(DirectX::XM_PIDIV2 - 0.00001f), (DirectX::XM_PIDIV2 - 0.00001f));
-		cameraYaw += mouseSpeed * normalizedMouseDelta.x * dt;
-
-		if(cameraYaw < (-DirectX::XM_PI)) {
-			cameraYaw += DirectX::XM_2PI;
-		}
-
-		if(cameraYaw > (DirectX::XM_PI)) {
-			cameraYaw -= DirectX::XM_2PI;
-		}
-
-		DirectX::XMVECTOR cameraYawQuat = DirectX::XMQuaternionRotationRollPitchYaw(0.0f, cameraYaw, 0.0f);
-
-		DirectX::XMFLOAT3A devCam = { devCamX, devCamY, devCamZ };
-		DirectX::XMVECTOR devCamVec = DirectX::XMLoadFloat3A(&devCam);
-
-		devCamVec = DirectX::XMVector3Rotate(devCamVec, cameraYawQuat);
-
-		DirectX::XMVECTOR devCamPos = DirectX::XMLoadFloat3(&baseCam.Position);
-		devCamVec = DirectX::XMVectorScale(devCamVec, speed * dt);
-		devCamPos = DirectX::XMVectorAdd(devCamVec, devCamPos);
+	
 
 		DirectX::XMFLOAT3 minusUnitZ{ 0.0f, 0.0f, -1.0f };
 		DirectX::XMVECTOR cameraQuat = DirectX::XMQuaternionRotationRollPitchYaw(cameraPitch, cameraYaw, 0.0f);
@@ -441,117 +423,6 @@ public:
 		auto * animComponent = playerObject->AddComponent<AnimationComponent>();
 
 		baseCam.SetAspect(graphicsEngine->GetAspectRatio());
-
-		animComponent->blackBoard.CreateResources(&ybotModel, modelComponent->boneDataCb, ybotModel.animationsLength, {
-					{ "Idle",			4,		Egg::Animation::StateBehaviour::LOOP },
-					{ "Forward",		6,		Egg::Animation::StateBehaviour::LOOP },
-					{ "Backward",		7,		Egg::Animation::StateBehaviour::LOOP },
-					{ "Left",			12,		Egg::Animation::StateBehaviour::LOOP },
-					{ "Right",			13,		Egg::Animation::StateBehaviour::LOOP },
-					{ "ForwardLeft",	10,		Egg::Animation::StateBehaviour::LOOP },
-					{ "ForwardRight",	11,		Egg::Animation::StateBehaviour::LOOP },
-					{ "BackwardLeft",	8,		Egg::Animation::StateBehaviour::LOOP },
-					{ "BackwardRight",	9,		Egg::Animation::StateBehaviour::LOOP },
-					{ "JumpStart",		5,		Egg::Animation::StateBehaviour::ONCE },
-					{ "JumpLoop",		3,		Egg::Animation::StateBehaviour::LOOP },
-					{ "JumpLand",		2,		Egg::Animation::StateBehaviour::ONCE }
-				},
-			   {
-					{ "Forward",   "Idle",			&Egg::MovementController::IsIdle,					nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Forward",   "Backward",		&Egg::MovementController::IsMovingBackward,			nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Forward",   "Left",			&Egg::MovementController::IsMovingLeft,				nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Forward",   "Right",			&Egg::MovementController::IsMovingRight,			nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Forward",   "ForwardLeft",	&Egg::MovementController::IsMovingForwardLeft,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Forward",   "ForwardRight",	&Egg::MovementController::IsMovingForwardRight,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Forward",   "BackwardLeft",	&Egg::MovementController::IsMovingBackwardLeft,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Forward",   "BackwardRight",	&Egg::MovementController::IsMovingBackwardRight,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Forward",   "JumpStart",		&Egg::MovementController::IsJumping,				nullptr,							Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
-
-					{ "Backward",   "Idle",			&Egg::MovementController::IsIdle,					nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Backward",   "Forward",		&Egg::MovementController::IsMovingForward,			nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Backward",   "Left",			&Egg::MovementController::IsMovingLeft,				nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Backward",   "Right",		&Egg::MovementController::IsMovingRight,			nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Backward",   "ForwardLeft",	&Egg::MovementController::IsMovingForwardLeft,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Backward",   "ForwardRight",	&Egg::MovementController::IsMovingForwardRight,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Backward",   "BackwardLeft",	&Egg::MovementController::IsMovingBackwardLeft,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Backward",   "BackwardRight",&Egg::MovementController::IsMovingBackwardRight,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Backward",   "JumpStart",	&Egg::MovementController::IsJumping,				nullptr,							Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
-
-					{ "Left",   "Idle",				&Egg::MovementController::IsIdle,					nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Left",   "Forward",			&Egg::MovementController::IsMovingForward,			nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Left",   "Backward",			&Egg::MovementController::IsMovingBackward,			nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Left",   "Right",			&Egg::MovementController::IsMovingRight,			nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Left",   "ForwardLeft",		&Egg::MovementController::IsMovingForwardLeft,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Left",   "ForwardRight",		&Egg::MovementController::IsMovingForwardRight,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Left",   "BackwardLeft",		&Egg::MovementController::IsMovingBackwardLeft,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Left",   "BackwardRight",	&Egg::MovementController::IsMovingBackwardRight,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Left",   "JumpStart",		&Egg::MovementController::IsJumping,				nullptr,							Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
-
-					{ "Right",   "Idle",			&Egg::MovementController::IsIdle,					nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Right",   "Forward",			&Egg::MovementController::IsMovingForward,			nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Right",   "Backward",		&Egg::MovementController::IsMovingBackward,			nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Right",   "Left",			&Egg::MovementController::IsMovingLeft,				nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Right",   "ForwardLeft",		&Egg::MovementController::IsMovingForwardLeft,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Right",   "ForwardRight",	&Egg::MovementController::IsMovingForwardRight,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Right",   "BackwardLeft",	&Egg::MovementController::IsMovingBackwardLeft,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Right",   "BackwardRight",	&Egg::MovementController::IsMovingBackwardRight,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Right",   "JumpStart",		&Egg::MovementController::IsJumping,				nullptr,							Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
-
-					{ "ForwardLeft",   "Idle",			&Egg::MovementController::IsIdle,				nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "ForwardLeft",   "Forward",		&Egg::MovementController::IsMovingForward,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "ForwardLeft",   "Backward",		&Egg::MovementController::IsMovingBackward,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "ForwardLeft",   "Left",			&Egg::MovementController::IsMovingLeft,			nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "ForwardLeft",   "Right",			&Egg::MovementController::IsMovingRight,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "ForwardLeft",   "ForwardRight",	&Egg::MovementController::IsMovingForwardRight,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "ForwardLeft",   "BackwardLeft",	&Egg::MovementController::IsMovingBackwardLeft,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "ForwardLeft",   "BackwardRight",	&Egg::MovementController::IsMovingBackwardRight,nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "ForwardLeft",   "JumpStart",		&Egg::MovementController::IsJumping,			nullptr,							Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
-
-					{ "ForwardRight",   "Idle",			&Egg::MovementController::IsIdle,				nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "ForwardRight",   "Forward",		&Egg::MovementController::IsMovingForward,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "ForwardRight",   "Backward",		&Egg::MovementController::IsMovingBackward,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "ForwardRight",   "Left",			&Egg::MovementController::IsMovingLeft,			nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "ForwardRight",   "Right",		&Egg::MovementController::IsMovingRight,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "ForwardRight",   "ForwardLeft",	&Egg::MovementController::IsMovingForwardLeft,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "ForwardRight",   "BackwardLeft",	&Egg::MovementController::IsMovingBackwardLeft,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "ForwardRight",   "BackwardRight",&Egg::MovementController::IsMovingBackwardRight,nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "ForwardRight",   "JumpStart",	&Egg::MovementController::IsJumping,			nullptr,							Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
-
-					{ "BackwardLeft",   "Idle",			&Egg::MovementController::IsIdle,				nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "BackwardLeft",   "Forward",		&Egg::MovementController::IsMovingForward,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "BackwardLeft",   "Backward",		&Egg::MovementController::IsMovingBackward,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "BackwardLeft",   "Left",			&Egg::MovementController::IsMovingLeft,			nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "BackwardLeft",   "Right",		&Egg::MovementController::IsMovingRight,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "BackwardLeft",   "ForwardLeft",	&Egg::MovementController::IsMovingForwardLeft,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "BackwardLeft",   "ForwardRight",	&Egg::MovementController::IsMovingForwardRight,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "BackwardLeft",   "BackwardRight",&Egg::MovementController::IsMovingBackwardRight,nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "BackwardLeft",   "JumpStart",	&Egg::MovementController::IsJumping,			nullptr,							Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
-
-					{ "BackwardRight",   "Idle",		&Egg::MovementController::IsIdle,				nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "BackwardRight",   "Forward",		&Egg::MovementController::IsMovingForward,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "BackwardRight",   "Backward",	&Egg::MovementController::IsMovingBackward,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "BackwardRight",   "Left",		&Egg::MovementController::IsMovingLeft,			nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "BackwardRight",   "Right",		&Egg::MovementController::IsMovingRight,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "BackwardRight",   "ForwardLeft",	&Egg::MovementController::IsMovingForwardLeft,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "BackwardRight",   "ForwardRight",&Egg::MovementController::IsMovingForwardRight,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "BackwardRight",   "BackwardLeft",&Egg::MovementController::IsMovingBackwardLeft,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "BackwardRight",   "JumpStart",	&Egg::MovementController::IsJumping,			nullptr,							Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
-
-					{ "Idle",	   "Forward",			&Egg::MovementController::IsMovingForward,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Idle",	   "Backward",			&Egg::MovementController::IsMovingBackward,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Idle",	   "Left",				&Egg::MovementController::IsMovingLeft,			nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Idle",	   "Right",				&Egg::MovementController::IsMovingRight,		nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Idle",	   "ForwardLeft",		&Egg::MovementController::IsMovingForwardLeft,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Idle",	   "ForwardRight",		&Egg::MovementController::IsMovingForwardRight,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Idle",	   "BackwardLeft",		&Egg::MovementController::IsMovingBackwardLeft,	nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Idle",	   "BackwardRight",		&Egg::MovementController::IsMovingBackwardRight,nullptr,							Egg::Animation::TransitionBehaviour::LERP },
-					{ "Idle",	   "JumpStart",			&Egg::MovementController::IsJumping,			nullptr,							Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
-					 
-					{ "JumpStart", "JumpLoop",	&Egg::MovementController::IsJumping,		&Egg::Animation::AnimationState::IsFinished,	Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
-					{ "JumpStart", "JumpLand",	&Egg::MovementController::IsOnGround, 		nullptr,										Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
-					{ "JumpLoop",  "JumpLand",	&Egg::MovementController::IsOnGround,		nullptr,										Egg::Animation::TransitionBehaviour::STOP_AND_LERP },
-					{ "JumpLand",  "Idle",		nullptr,									&Egg::Animation::AnimationState::IsFinished,	Egg::Animation::TransitionBehaviour::LERP },
-			   });
 
 
 

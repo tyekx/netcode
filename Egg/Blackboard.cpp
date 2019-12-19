@@ -38,15 +38,16 @@ namespace Egg::Animation {
 
 	Blackboard::Blackboard() : classifier{}, prevState{ nullptr }, currentState{ nullptr }, states{ nullptr }, statesLength{ 0 }, blender{ nullptr } { }
 
-	void Blackboard::CreateResources(Asset::Model * model, void * writeDest, unsigned int animationsLength,
+	void Blackboard::CreateResources(Asset::Model * model,
 						const std::initializer_list<AnimationState> & sts,
 						const std::initializer_list<TransitionInit> &transitions) {
-
+		
 		unsigned int requiredSize = static_cast<unsigned int>(sts.size() * sizeof(AnimationState) + transitions.size() * sizeof(AnimationState::Transition) + sizeof(AnimationBlender));
+		
 		classifier.Initialize(requiredSize);
 
 		blender = classifier.Allocate<AnimationBlender>();
-		new (blender) AnimationBlender{ model->bones, model->bonesLength, writeDest };
+		new (blender) AnimationBlender{ model->bones, model->bonesLength };
 
 		// step1: allocate and initialize states
 		states = static_cast<AnimationState *>(classifier.Allocate(static_cast<unsigned int>(sizeof(AnimationState) * sts.size())));
@@ -68,13 +69,13 @@ namespace Egg::Animation {
 		// step3: allocate memory for transitions and initialize it
 		for(unsigned int i = 0; i < statesLength; ++i) {
 			AnimationState * state = states + i;
-			state->transitions = static_cast<AnimationState::Transition *>(classifier.Allocate(sizeof(AnimationState::Transition) * state->transitionsLength));
+			state->transitions = reinterpret_cast<AnimationState::Transition *>(classifier.Allocate(sizeof(AnimationState::Transition) * state->transitionsLength));
 			for(unsigned int j = 0; j < state->transitionsLength; ++j) {
 				new (state->transitions + j) AnimationState::Transition{};
 			}
 		}
 
-		// step4: fill transitions with meaningful data, bit wasteful but gets the job done
+		// step4: connect object references as pointers instead of strings, for faster access
 		for(unsigned int i = 0; i < statesLength; ++i) {
 			AnimationState * state = states + i;
 			unsigned int j = 0;
@@ -105,6 +106,11 @@ namespace Egg::Animation {
 
 		blender->UpdateStates(dt);
 		blender->Blend();
+	}
+
+	void Blackboard::CopyBoneDataInto(void * dest)
+	{
+		blender->CopyBoneDataInto(dest);
 	}
 
 }

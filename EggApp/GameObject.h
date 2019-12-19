@@ -7,6 +7,7 @@
 #include <tuple>
 #include <Egg/Logger.h>
 #include <Egg/Input.h>
+#include <Egg/Blackboard.h>
 
 class GameObject;
 
@@ -83,8 +84,13 @@ public:
 	}
 };
 
+COMPONENT_ALIGN class Animation {
+public:
+	Egg::Animation::Blackboard blackboard;
+};
+
 using Components_T = std::tuple<Transform, Model, Script>;
-using ExtensionComponents_T = std::tuple<Camera>;
+using ExtensionComponents_T = std::tuple<Camera, Animation>;
 
 class ComponentStorage {
 	uint8_t storage[TupleSizeofSum<Components_T>::value];
@@ -207,12 +213,14 @@ class PlayerBehavior : public IBehavior {
 public:
 	virtual void Setup(GameObject * owner) override {
 		transform = owner->GetComponent<Transform>();
+		
+
 	}
 
 	virtual void Update(float dt) override {
-		float vertical = Egg::Input::GetAxis("Vertical");
+		//float vertical = Egg::Input::GetAxis("Vertical");
 
-		transform->position.z += vertical * 250.0f * dt;
+		//transform->position.z += vertical * 250.0f * dt;
 	}
 
 };

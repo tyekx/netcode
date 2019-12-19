@@ -31,11 +31,13 @@ namespace Egg::Animation {
 
 		Blackboard();
 
-		void CreateResources(Asset::Model * model, void * writeDest, unsigned int animationsLength,
+		void CreateResources(Asset::Model * model,
 							 const std::initializer_list<AnimationState> & states,
 							 const std::initializer_list<TransitionInit> & transitions);
 
 		void Update(float dt, MovementController * movCtrl);
+
+		void CopyBoneDataInto(void * dest);
 	};
 
 }

@@ -3,6 +3,8 @@
 #include "GameObject.h"
 #include <Egg/Modules.h>
 
+using AllComponents_T = TupleMerge<Components_T, ExtensionComponents_T>::type;
+
 class TransformSystem {
 	static inline DirectX::XMMATRIX GetModelMatrix(Transform* transform) {
 		DirectX::XMVECTOR posVector = DirectX::XMLoadFloat3(&transform->position);
@@ -52,6 +54,7 @@ public:
 	using RequiredComponents_T = std::tuple<Script>;
 
 	static constexpr SignatureType Required() {
+
 		return TupleCreateMask<Components_T, RequiredComponents_T>::value;
 	}
 
@@ -100,4 +103,36 @@ public:
 };
 
 
+
+class AnimationSystem {
+	Egg::MovementController * movementController;
+public:
+	using RequiredComponents_T = std::tuple<Model, Animation>;
+
+	static constexpr SignatureType Required() {
+		return TupleCreateMask<AllComponents_T, RequiredComponents_T>::value;
+	}
+
+	bool SignatureMatch(GameObject * gameObject) {
+		return (Required() & gameObject->GetSignature()) == Required();
+	}
+
+	void Run(GameObject * gameObject, float dt) {
+		if(SignatureMatch(gameObject)) {
+			InjectComponents<AnimationSystem, GameObject, RequiredComponents_T, float>::Invoke(*this, &AnimationSystem::RunImpl, gameObject, dt);
+		}
+	}
+
+	void SetMovementController(Egg::MovementController * movCtrl) {
+		movementController = movCtrl;
+	}
+
+	void RunImpl(GameObject * gameObject, Model * model, Animation* anim, float dt) {
+		if(model->boneDataCb != nullptr && movementController != nullptr) {
+			movementController->Update();
+			anim->blackboard.Update(dt, movementController);
+			anim->blackboard.CopyBoneDataInto(model->boneDataCb->BindTransform);
+		}
+	}
+};
 

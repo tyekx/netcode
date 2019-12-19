@@ -122,6 +122,15 @@ struct TupleIndexOf<NEEDLE, std::tuple<NEEDLE, TAIL...> > {
 
 
 
+template<typename TUPLE_1, typename TUPLE_2>
+struct TupleMerge;
+
+template<typename ... T, typename ... U>
+struct TupleMerge<std::tuple<T...>, std::tuple<U...>> {
+	using type = std::tuple<T..., U...>;
+};
+
+
 
 template<typename TUPLE, typename ... T>
 struct TupleCreateMask;
