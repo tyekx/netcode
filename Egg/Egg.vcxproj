@@ -77,6 +77,7 @@
     <ClInclude Include="DX12ShaderManager.h" />
     <ClInclude Include="DX12ShaderSourceLibrary.h" />
     <ClInclude Include="DX12ShaderVariant.h" />
+    <ClInclude Include="DX12SpriteBatch.h" />
     <ClInclude Include="DX12TextureLibrary.h" />
     <ClInclude Include="EggMpl.hpp" />
     <ClInclude Include="Exporter.h" />
@@ -107,7 +108,7 @@
     <ClInclude Include="DX12Resource.h" />
     <ClInclude Include="DX12ResourceUploadBatch.h" />
     <ClInclude Include="DX12ShaderBytecode.h" />
-    <ClInclude Include="SpriteFont.h" />
+    <ClInclude Include="DX12SpriteFont.h" />
     <ClInclude Include="Stopwatch.h" />
     <ClInclude Include="Transition.h" />
     <ClInclude Include="Utility.h" />
@@ -130,6 +131,7 @@
     <ClCompile Include="DefaultModuleFactory.cpp" />
     <ClCompile Include="DX12Common.cpp" />
     <ClCompile Include="DX12GraphicsModule.cpp" />
+    <ClCompile Include="DX12SpriteBatch.cpp" />
     <ClCompile Include="Exporter.cpp" />
     <ClCompile Include="Importer.cpp" />
     <ClCompile Include="Input.cpp" />
@@ -142,7 +144,7 @@
     <ClCompile Include="Modules.cpp" />
     <ClCompile Include="Path.cpp" />
     <ClCompile Include="PhysxModule.cpp" />
-    <ClCompile Include="SpriteFont.cpp" />
+    <ClCompile Include="DX12SpriteFont.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
     <ClCompile Include="Transition.cpp" />
     <ClCompile Include="Utility.cpp" />
@@ -172,6 +174,13 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
     </FxCompile>
+    <CustomBuild Include="Shaders\SpriteFont.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileShaders.cmd</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </Outputs>
+    </CustomBuild>
     <Text Include="Shaders\RootSignatures.hlsli">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">RootSignature</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rootsig_1.0</ShaderModel>

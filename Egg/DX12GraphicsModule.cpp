@@ -1,4 +1,5 @@
 #include "DX12GraphicsModule.h"
+#include "DX12SpriteFont.h"
 
 namespace Egg::Graphics::DX12 {
 	void DX12GraphicsModule::NextBackBufferIndex() {
@@ -194,11 +195,14 @@ namespace Egg::Graphics::DX12 {
 
 		textureLibrary.SetDescriptorHeap(gcl);
 
+
 		for(RenderItem * i : renderItemBuffer) {
 			i->Render(gcl);
 		}
 
 		renderItemBuffer.clear();
+
+		TestFont();
 
 		fr.FinishRecording();
 
@@ -399,6 +403,33 @@ namespace Egg::Graphics::DX12 {
 		}
 
 		backbufferIndex = swapChain->GetCurrentBackBufferIndex();
+	}
+
+	std::unique_ptr<SpriteFont> sp;
+	std::unique_ptr<SpriteBatch> sb;
+
+	void DX12GraphicsModule::LoadFont(const std::wstring & fontPath) {
+		
+		FrameResource & fr = frameResources.at(backbufferIndex);
+
+		D3D12_CPU_DESCRIPTOR_HANDLE dchd;
+		D3D12_GPU_DESCRIPTOR_HANDLE dghd;
+
+		textureLibrary.AllocateTextures(dghd, dchd, 1);
+
+		Egg::MediaPath mp{ fontPath };
+
+		sp = std::make_unique<SpriteFont>(device.Get(), fr.resourceUploader.get(), mp.GetAbsolutePath().c_str(), dchd, dghd);
+		sb = std::make_unique<SpriteBatch>(device.Get(), fr.resourceUploader.get(), SpriteBatchPipelineStateDescription(), &fr.viewPort);
+	}
+
+	void DX12GraphicsModule::TestFont() {
+		FrameResource & fr = frameResources.at(backbufferIndex);
+		sb->Begin(fr.commandList.Get());
+
+		sp->DrawString(sb.get(), "Hello World", DirectX::g_XMZero);
+
+		sb->End();
 	}
 
 }

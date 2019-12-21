@@ -56,4 +56,12 @@ namespace Egg {
 		DirectX::XMFLOAT3 binormal;
 	};
 
+	struct PCT_Vertex {
+		constexpr static int type = 4;
+
+		DirectX::XMFLOAT3 position;
+		DirectX::XMFLOAT4 color;
+		DirectX::XMFLOAT2 textureCoordinate;
+	};
+
 }

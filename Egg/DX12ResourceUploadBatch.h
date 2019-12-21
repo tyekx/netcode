@@ -3,6 +3,7 @@
 #include <queue>
 #include <DirectXTex/DirectXTex.h>
 #include "DX12Resource.h"
+#include "Common.h"
 
 namespace Egg::Graphics::DX12::Resource {
 
@@ -67,31 +68,20 @@ namespace Egg::Graphics::DX12::Resource {
 
 				WaitForSingleObject(fenceEvent, INFINITE);
 			}
-			
+
 			fenceValue += 1;
 		}
 
 
 		void CopyTex2D(CopyItem & item) {
-			UINT offset = 0;
-			UINT bytesPerPixel = static_cast<UINT>((DirectX::BitsPerPixel(item.resourceDesc.Format) / 8U));
-			for(UINT i = 0; i < item.resourceDesc.MipLevels; ++i) {
-				CD3DX12_TEXTURE_COPY_LOCATION dst{ item.destResource, i };
+			//UINT bytesPerPixel = static_cast<UINT>((DirectX::BitsPerPixel(item.resourceDesc.Format) / 8U));
 
-				UINT width = ((UINT)item.resourceDesc.Width) >> i;
-				UINT height = ((UINT)item.resourceDesc.Height) >> i;
+			D3D12_SUBRESOURCE_DATA subData;
+			subData.pData = item.cpuResource;
+			subData.RowPitch = 2048;
+			subData.SlicePitch = 851968;
 
-				D3D12_PLACED_SUBRESOURCE_FOOTPRINT psf;
-				psf.Offset = offset;
-				psf.Footprint.Depth = 1;
-				psf.Footprint.Height = height;
-				psf.Footprint.Width = width;
-				psf.Footprint.RowPitch = psf.Footprint.Width * bytesPerPixel;
-				psf.Footprint.Format = item.resourceDesc.Format;
-				offset += height * width * bytesPerPixel;
-				CD3DX12_TEXTURE_COPY_LOCATION src{ uploadResource.Get(), psf };
-				copyCommandList->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
-			}
+			UpdateSubresources(copyCommandList.Get(), item.destResource, uploadResource.Get(), 0, 0, 1, &subData);
 		}
 
 		void CopyBuffer(CopyItem & item) {

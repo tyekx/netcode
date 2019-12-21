@@ -318,7 +318,8 @@ namespace Egg::Graphics::DX12 {
 
 		void CreateSwapChainResources();
 
-
+		virtual void LoadFont(const std::wstring & fontPath) override;
+		virtual void TestFont() override;
 	};
 
 

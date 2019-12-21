@@ -9,24 +9,24 @@ namespace Egg {
 	{
 	public:
 		explicit BinaryReader(_In_z_ wchar_t const * fileName);
-		BinaryReader(_In_reads_bytes_(dataSize) uint8_t const * dataBlob, size_t dataSize);
+		BinaryReader(_In_reads_bytes_(dataSize) uint8_t * dataBlob, size_t dataSize);
 
 		BinaryReader(BinaryReader const &) = delete;
 		BinaryReader & operator= (BinaryReader const &) = delete;
 
 		// Reads a single value.
-		template<typename T> T const & Read()
+		template<typename T> const T & Read()
 		{
 			return *ReadArray<T>(1);
 		}
 
 
 		// Reads an array of values.
-		template<typename T> T const * ReadArray(size_t elementCount)
+		template<typename T> T * ReadArray(size_t elementCount)
 		{
 			static_assert(std::is_pod<T>::value, "Can only read plain-old-data types");
 
-			uint8_t const * newPos = mPos + sizeof(T) * elementCount;
+			uint8_t * newPos = mPos + sizeof(T) * elementCount;
 
 			if(newPos < mPos)
 				throw std::overflow_error("ReadArray");
@@ -34,7 +34,7 @@ namespace Egg {
 			if(newPos > mEnd)
 				throw std::exception("End of file");
 
-			auto result = reinterpret_cast<T const *>(mPos);
+			auto result = reinterpret_cast<T *>(mPos);
 
 			mPos = newPos;
 
@@ -48,8 +48,8 @@ namespace Egg {
 
 	private:
 		// The data currently being read.
-		uint8_t const * mPos;
-		uint8_t const * mEnd;
+		uint8_t * mPos;
+		uint8_t * mEnd;
 
 		std::unique_ptr<uint8_t[]> mOwnedData;
 	};

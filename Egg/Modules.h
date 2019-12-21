@@ -160,10 +160,15 @@ namespace Egg::Module {
 		virtual HINCOMPLETESHADER CreateDomainShader() = 0;
 		virtual HINCOMPLETESHADER CreateHullShader() = 0;
 
+		virtual void TestFont() { }
+
 		virtual void SetShaderEntry(HINCOMPLETESHADER shader, const std::string & entryFunction) = 0;
 		virtual void SetShaderSource(HINCOMPLETESHADER shader, const std::wstring & shaderPath) = 0;
 		virtual void SetShaderMacros(HINCOMPLETESHADER shader, const std::map<std::string, std::string> & defines) = 0;
 		virtual HSHADER CompileShader(HINCOMPLETESHADER shader) = 0;
+
+
+		virtual void LoadFont(const std::wstring & fontPath) = 0;
 
 		virtual HPSO CreatePipelineState() = 0;
 		virtual void SetVertexShader(HPSO pso, HSHADER vertexShader) = 0;

@@ -60,7 +60,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 		for(std::size_t i = 0; i < scene.count; ++i) {
 			scriptSystem.Run(scene.objects.data() + i, dt);
-			animSystem.Run(scene.objects.data() + 1, dt);
+			animSystem.Run(scene.objects.data() + 1, dt * 0.5f);
 		}
 	}
 
@@ -69,6 +69,8 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		Egg::Input::SetAxis("Horizontal", 'A', 'D');
 		Egg::Input::SetAxis("Jump", VK_SPACE, 0);
 		Egg::Input::SetAxis("Fire", VK_LBUTTON, 0);
+
+		graphics->LoadFont(L"titillium20.spritefont");
 
 		{
 			GameObject * camObj = scene.Insert();

@@ -72,6 +72,25 @@ namespace Egg::Graphics::DX12 {
 			nextDescriptor = 0;
 		}
 
+		void AllocateTextures(D3D12_GPU_DESCRIPTOR_HANDLE & startHandle, D3D12_CPU_DESCRIPTOR_HANDLE & startCpuHandle, UINT numTextures) {
+			if(numTextures == 0) {
+				return;
+			}
+
+			ASSERT((nextDescriptor + numTextures) < texturesNumDescriptors, "Descriptor overflow");
+
+			D3D12_GPU_DESCRIPTOR_HANDLE gdh = texturesHeap->GetGPUDescriptorHandleForHeapStart();
+			gdh.ptr = gdh.ptr + nextDescriptor * incrementSize;
+
+			D3D12_CPU_DESCRIPTOR_HANDLE cdh = texturesHeap->GetCPUDescriptorHandleForHeapStart();
+			cdh.ptr = cdh.ptr + nextDescriptor * incrementSize;
+
+			startHandle = gdh;
+			startCpuHandle = cdh;
+
+			nextDescriptor += numTextures;
+		}
+
 		void AllocateTextures(RenderItem* renderItem, UINT numTextures) {
 			if(numTextures == 0) {
 				return;

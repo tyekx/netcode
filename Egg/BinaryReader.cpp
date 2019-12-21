@@ -19,7 +19,7 @@ namespace Egg {
 
 
 	// Constructor reads from an existing memory buffer.
-	BinaryReader::BinaryReader(_In_reads_bytes_(dataSize) uint8_t const * dataBlob, size_t dataSize) :
+	BinaryReader::BinaryReader(_In_reads_bytes_(dataSize) uint8_t * dataBlob, size_t dataSize) :
 		mPos(dataBlob),
 		mEnd(dataBlob + dataSize)
 	{
@@ -29,7 +29,7 @@ namespace Egg {
 	// Reads from the filesystem into memory.
 	bool BinaryReader::ReadEntireFile(_In_z_ wchar_t const * fileName, _Inout_ std::unique_ptr<uint8_t[]> & data, _Out_ size_t * dataSize)
 	{
-		std::ifstream ifs{ fileName };
+		std::ifstream ifs{ fileName, std::ios::binary };
 
 		if(!ifs.is_open()) {
 			return false;

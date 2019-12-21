@@ -127,9 +127,6 @@
     <ClInclude Include="DX12RenderItemAllocator.h">
       <Filter>Graphics\Engine\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="SpriteFont.h">
-      <Filter>Font</Filter>
-    </ClInclude>
     <ClInclude Include="BinaryReader.h">
       <Filter>Serialization</Filter>
     </ClInclude>
@@ -265,6 +262,12 @@
     <ClInclude Include="Logger.h">
       <Filter>App</Filter>
     </ClInclude>
+    <ClInclude Include="DX12SpriteFont.h">
+      <Filter>Font</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12SpriteBatch.h">
+      <Filter>Font</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
@@ -285,9 +288,6 @@
     <ClCompile Include="EggMath.cpp" />
     <ClCompile Include="Input.cpp">
       <Filter>Gameplay</Filter>
-    </ClCompile>
-    <ClCompile Include="SpriteFont.cpp">
-      <Filter>Font</Filter>
     </ClCompile>
     <ClCompile Include="BinaryReader.cpp">
       <Filter>Serialization</Filter>
@@ -361,6 +361,12 @@
     <ClCompile Include="Logger.cpp">
       <Filter>App</Filter>
     </ClCompile>
+    <ClCompile Include="DX12SpriteFont.cpp">
+      <Filter>Font</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12SpriteBatch.cpp">
+      <Filter>Font</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DefaultPS.hlsl">
@@ -404,5 +410,10 @@
     <None Include="EggShaderLib.hlsli">
       <Filter>Shaders</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="Shaders\SpriteFont.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>
