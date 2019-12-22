@@ -87,6 +87,7 @@
     <ClInclude Include="Importer.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="LinearClassifier.h" />
+    <ClInclude Include="LinuxFormats.h" />
     <ClInclude Include="LinuxSal.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="LuaApi.h" />
@@ -195,7 +196,11 @@ popd</Command>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
-    <None Include="EggShaderLib.hlsli" />
+    <CustomBuild Include="Shaders\EggShaderLib.hlsli">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">xcopy %(FullPath) $(OutDir)Shaders /Y /F</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)Shaders\%(Filename)%(Extension)</Outputs>
+    </CustomBuild>
     <None Include="Shaders\Lighting.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

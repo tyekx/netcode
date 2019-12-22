@@ -32,7 +32,7 @@ namespace Egg::Module {
 	class IAudioModule;
 
 	enum class EAppEventType : unsigned {
-		DEVICE_LOST, RESIZED, FOCUSED, BLURRED, CLOSED
+		NOOP, DEVICE_LOST, RESIZED, FOCUSED, BLURRED, CLOSED
 	};
 
 	/*
@@ -67,6 +67,7 @@ namespace Egg::Module {
 	protected:
 		std::vector<IAppEventHandler *> handlers;
 		std::vector<AppEvent> events;
+		AppEvent resizeEvent;
 	public:
 		void RemoveHandler(IAppEventHandler * evtHandler);
 
@@ -160,7 +161,7 @@ namespace Egg::Module {
 		virtual HINCOMPLETESHADER CreateDomainShader() = 0;
 		virtual HINCOMPLETESHADER CreateHullShader() = 0;
 
-		virtual void TestFont() { }
+		virtual void TestFont(HFONT font) = 0;
 
 		virtual void SetShaderEntry(HINCOMPLETESHADER shader, const std::string & entryFunction) = 0;
 		virtual void SetShaderSource(HINCOMPLETESHADER shader, const std::wstring & shaderPath) = 0;
@@ -168,7 +169,7 @@ namespace Egg::Module {
 		virtual HSHADER CompileShader(HINCOMPLETESHADER shader) = 0;
 
 
-		virtual void LoadFont(const std::wstring & fontPath) = 0;
+		virtual HFONT LoadFont(const std::wstring & fontName) = 0;
 
 		virtual HPSO CreatePipelineState() = 0;
 		virtual void SetVertexShader(HPSO pso, HSHADER vertexShader) = 0;

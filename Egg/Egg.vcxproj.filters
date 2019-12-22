@@ -37,9 +37,6 @@
     <Filter Include="Modules\Factory">
       <UniqueIdentifier>{d0354fd9-37ad-4b4a-b885-70a61b3a5dff}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Modules\Window">
-      <UniqueIdentifier>{171c8312-e5b1-4ddb-b0d7-6bda52ce25bc}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Graphics\Engine\DX12\Resource">
       <UniqueIdentifier>{558741a0-ed22-4b3c-aeed-1151cf341cb1}</UniqueIdentifier>
     </Filter>
@@ -51,6 +48,9 @@
     </Filter>
     <Filter Include="Animation">
       <UniqueIdentifier>{178c3ddd-4157-47b1-aab2-cf7dd2837100}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Window">
+      <UniqueIdentifier>{171c8312-e5b1-4ddb-b0d7-6bda52ce25bc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -131,7 +131,7 @@
       <Filter>Modules\Factory</Filter>
     </ClInclude>
     <ClInclude Include="WinapiWindowModule.h">
-      <Filter>Modules\Window</Filter>
+      <Filter>Window</Filter>
     </ClInclude>
     <ClInclude Include="DX12GraphicsModule.h">
       <Filter>Graphics\Engine\DX12</Filter>
@@ -259,6 +259,9 @@
     <ClInclude Include="BasicGeometry.h">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="LinuxFormats.h">
+      <Filter>App</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
@@ -287,7 +290,7 @@
       <Filter>Modules\Factory</Filter>
     </ClCompile>
     <ClCompile Include="WinapiWindowModule.cpp">
-      <Filter>Modules\Window</Filter>
+      <Filter>Window</Filter>
     </ClCompile>
     <ClCompile Include="DX12GraphicsModule.cpp">
       <Filter>Graphics\Engine\DX12</Filter>
@@ -398,12 +401,12 @@
     <None Include="Shaders\Lighting.hlsli">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="EggShaderLib.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Shaders\SpriteFont.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Shaders\EggShaderLib.hlsli">
       <Filter>Shaders</Filter>
     </CustomBuild>
   </ItemGroup>

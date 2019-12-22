@@ -16,6 +16,7 @@
 #include "DX12MaterialManager.h"
 #include "DX12RenderItemCollection.h"
 #include "DX12CbufferAllocator.h"
+#include "DX12SpriteFontLibrary.h"
 
 namespace Egg::Graphics::DX12 {
 
@@ -124,6 +125,7 @@ namespace Egg::Graphics::DX12 {
 		UINT backbufferIndex;
 		UINT presentedBackbufferIndex;
 
+		std::unique_ptr<SpriteBatch> spriteBatch;
 		std::vector<DX12::RenderItem*> renderItemBuffer;
 		float aspectRatio;
 
@@ -150,6 +152,7 @@ namespace Egg::Graphics::DX12 {
 		MaterialManager matManager;
 		RenderItemCollection renderItemColl;
 		CbufferAllocator cbufferAllocator;
+		SpriteFontLibrary fontLibrary;
 
 	public:
 
@@ -318,8 +321,8 @@ namespace Egg::Graphics::DX12 {
 
 		void CreateSwapChainResources();
 
-		virtual void LoadFont(const std::wstring & fontPath) override;
-		virtual void TestFont() override;
+		virtual HFONT LoadFont(const std::wstring & fontName) override;
+		virtual void TestFont(HFONT font) override;
 	};
 
 

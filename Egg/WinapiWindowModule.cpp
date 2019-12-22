@@ -54,6 +54,14 @@ namespace Egg::Module {
 			PostQuitMessage(0);
 			return 0;
 
+		case WM_MOUSEMOVE:
+			{
+				int x = LOWORD(lParam);
+				int y = HIWORD(lParam);
+				Egg::Input::SetMousePos(DirectX::XMINT2{ x, y });
+			}
+			break;
+
 		case WM_SYSKEYDOWN:
 			if((wParam == VK_RETURN) && (lParam & (1 << 29)))
 			{

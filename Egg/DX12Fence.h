@@ -12,6 +12,7 @@ namespace Egg::Graphics::DX12 {
 	public:
 		void CreateResources(ID3D12Device * device) {
 			DX_API("Failed to create fence")
+
 				device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.GetAddressOf()));
 			fenceValue = 0;
 

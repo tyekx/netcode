@@ -6,32 +6,48 @@
 "DescriptorTable ( SRV(t0), visibility = SHADER_VISIBILITY_PIXEL ),"\
 "CBV(b0), "\
 "StaticSampler(s0,"\
-"           filter = FILTER_MIN_MAG_MIP_LINEAR,"\
+"           filter = FILTER_ANISOTROPIC,"\
 "           addressU = TEXTURE_ADDRESS_CLAMP,"\
 "           addressV = TEXTURE_ADDRESS_CLAMP,"\
 "           addressW = TEXTURE_ADDRESS_CLAMP,"\
 "           visibility = SHADER_VISIBILITY_PIXEL )"
 
-Texture2D<float4> Texture : register(t0);
-sampler TextureSampler : register(s0);
+Texture2D spriteTexture : register(t0);
+SamplerState samplerState : register(s0);
 
+
+struct IAOutput
+{
+    float3 position : POSITION;
+    float4 color : COLOR;
+    float2 texCoord : TEXCOORD;
+};
+
+struct VSOutput {
+    float4 position : SV_Position;
+    float4 color : COLOR;
+    float2 texCoord : TEXCOORD0;
+};
 
 cbuffer Parameters : register(b0)
 {
-    row_major float4x4 MatrixTransform;
+    float4x4 matrixTransform;
 };
 
 [RootSignature(SpriteStaticRS)]
-void SpriteVertexShader(inout float4 color    : COLOR0,
-                        inout float2 texCoord : TEXCOORD0,
-                        inout float4 position : SV_Position)
+VSOutput SpriteVertexShader(IAOutput iao)
 {
-    position = mul(position, MatrixTransform);
+    VSOutput vso;
+    vso.position = mul(float4(iao.position, 1.0f), matrixTransform);
+    vso.color = iao.color;
+    vso.texCoord = iao.texCoord;
+    return vso;
 }
 
 [RootSignature(SpriteStaticRS)]
-float4 SpritePixelShader(float4 color    : COLOR0,
-                         float2 texCoord : TEXCOORD0) : SV_Target0
+float4 SpritePixelShader(VSOutput vso) : SV_Target0
 {
-    return Texture.Sample(TextureSampler, texCoord * float2(512.0f, 416.0f)) * color;
+    //return spriteTexture.Sample(samplerState, vso.texCoord);
+    return spriteTexture.Sample(samplerState, float2(vso.texCoord.x, vso.texCoord.y));
+    //return float4(vso.texCoord, 0, 1);
 }

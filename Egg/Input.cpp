@@ -8,11 +8,12 @@
 
 namespace Egg {
 
-	BYTE Input::InputBuffer[2048] = { 0 };
+	BYTE Input::inputBuffer[2048] = { 0 };
 
-	bool Input::IsFocused{ false };
-	DirectX::XMINT2 Input::MouseDelta{};
-	std::map<std::string, Input::Axis> Input::AxisMap{ };
+	bool Input::isFocused{ false };
+	DirectX::XMINT2 Input::mousePos{};
+	DirectX::XMINT2 Input::mouseDelta{};
+	std::map<std::string, Input::Axis> Input::axisMap{ };
 
 	Input::Axis::Axis() : PositiveKey{ 0 }, NegativeKey{ 0 }, CurrentValue{ 0.0f } { }
 
@@ -24,13 +25,13 @@ namespace Egg {
 
 		GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
 
-		ASSERT(dwSize < sizeof(InputBuffer), "Raw input must fit into the input buffer");
+		ASSERT(dwSize < sizeof(inputBuffer), "Raw input must fit into the input buffer");
 
-		if(GetRawInputData((HRAWINPUT)lParam, RID_INPUT, InputBuffer, &dwSize, sizeof(RAWINPUTHEADER)) != dwSize) {
+		if(GetRawInputData((HRAWINPUT)lParam, RID_INPUT, inputBuffer, &dwSize, sizeof(RAWINPUTHEADER)) != dwSize) {
 			OutputDebugString("GetRawInputData does not return correct size !\n");
 		}
 
-		RAWINPUT * raw = (RAWINPUT *)InputBuffer;
+		RAWINPUT * raw = (RAWINPUT *)inputBuffer;
 
 		if(raw->header.dwType == RIM_TYPEMOUSE) {
 			Input::MouseMove(DirectX::XMINT2{ raw->data.mouse.lLastX, raw->data.mouse.lLastY });
@@ -51,6 +52,11 @@ namespace Egg {
 				Egg::Utility::Debugf("Input Error\r\n");
 			}
 		}
+	}
+
+	void Input::SetMousePos(const DirectX::XMINT2 & pos)
+	{
+		mousePos = pos;
 	}
 
 	void Input::CreateResources() {
@@ -102,10 +108,10 @@ namespace Egg {
 	}
 
 	void Input::KeyPressed(uint32_t keyCode) {
-		if(!IsFocused) {
+		if(!isFocused) {
 			return;
 		}
-		for(auto & i : AxisMap) {
+		for(auto & i : axisMap) {
 			if(i.second.PositiveKey == keyCode) {
 				i.second.CurrentValue = 1.0f;
 			} else if(i.second.NegativeKey == keyCode) {
@@ -115,10 +121,10 @@ namespace Egg {
 	}
 
 	void Input::KeyReleased(uint32_t keyCode) {
-		if(!IsFocused) {
+		if(!isFocused) {
 			return;
 		}
-		for(auto & i : AxisMap) {
+		for(auto & i : axisMap) {
 			if(i.second.PositiveKey == keyCode && i.second.CurrentValue > 0.0f) {
 				i.second.CurrentValue = 0.0f;
 			} else if(i.second.NegativeKey == keyCode && i.second.CurrentValue < 0.0f) {
@@ -128,9 +134,9 @@ namespace Egg {
 	}
 
 	float Input::GetAxis(const std::string & axis) {
-		decltype(AxisMap)::const_iterator ci = AxisMap.find(axis);
+		decltype(axisMap)::const_iterator ci = axisMap.find(axis);
 
-		if(ci != AxisMap.end()) {
+		if(ci != axisMap.end()) {
 			return ci->second.CurrentValue;
 		}
 
@@ -140,39 +146,44 @@ namespace Egg {
 	}
 
 	void Input::SetAxis(const std::string & name, uint32_t posKey, uint32_t negKey) {
-		decltype(AxisMap)::const_iterator ci = AxisMap.find(name);
+		decltype(axisMap)::const_iterator ci = axisMap.find(name);
 
-		if(ci != AxisMap.end()) {
+		if(ci != axisMap.end()) {
 			Egg::Utility::Debugf("Notice: Axis '%s' was already set. Overwriting it");
 		}
 
-		AxisMap[name] = Axis{ posKey, negKey };
+		axisMap[name] = Axis{ posKey, negKey };
 	}
 
 	void Input::MouseMove(const DirectX::XMINT2 & xy) {
-		MouseDelta = DirectX::XMINT2{ MouseDelta.x + xy.x, MouseDelta.y + xy.y };
+		mouseDelta = DirectX::XMINT2{ mouseDelta.x + xy.x, mouseDelta.y + xy.y };
 	}
 
 	DirectX::XMINT2 Input::GetMouseDelta() {
-		return MouseDelta;
+		return mouseDelta;
+	}
+
+	DirectX::XMINT2 Input::GetMousePos()
+	{
+		return mousePos;
 	}
 
 	void Input::Blur() {
-		IsFocused = false;
-		SetCursor(LoadCursor(NULL, IDC_ARROW));
+		isFocused = false;
+		//SetCursor(LoadCursor(NULL, IDC_ARROW));
 	}
 
 	void Input::Focused() {
-		MouseDelta = { 0, 0 };
-		IsFocused = true;
-		SetCursor(NULL);
+		mouseDelta = { 0, 0 };
+		isFocused = true;
+		//SetCursor(NULL);
 	}
 
 	void Input::Reset() {
-		if(IsFocused) {
-			SetCursorPos(960, 540);
-		}
-		MouseDelta = DirectX::XMINT2{ 0,0 };
+		//if(IsFocused) {
+			//SetCursorPos(960, 540);
+		//}
+		mouseDelta = DirectX::XMINT2{ 0,0 };
 	}
 
 }

@@ -130,7 +130,6 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		Egg::Input::SetAxis("Jump", VK_SPACE, 0);
 		Egg::Input::SetAxis("Fire", VK_LBUTTON, 0);
 
-
 		{
 			GameObject * camObj = scene.Insert();
 			Transform *camT = camObj->AddComponent<Transform>();
@@ -200,7 +199,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		LoadItem(graphics.get(), &ybotModel, model);
 
 
-		graphics->LoadFont(L"titillium20.spritefont");
+		graphics->LoadFont(L"titillium60.spritefont");
 
 		for(auto & i : model->meshes) {
 			Egg::HITEM item = i.mesh;

@@ -10,6 +10,7 @@ namespace Egg {
 	using HCBUFFER = unsigned long long;
 	using HRENDERTARGET = unsigned int;
 	using HPSO = unsigned int;
+	using HFONT = unsigned int;
 
 	using HACTOR = void *;
 	using HSHAPE = void *;

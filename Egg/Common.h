@@ -11,6 +11,7 @@
 #ifdef __linux__
 #define EGG_OS_LINUX
 #include "LinuxSal.h"
+#include "LinuxFormats.h"
 #endif
 
 

@@ -202,7 +202,7 @@ namespace Egg::Graphics::DX12 {
 
 		renderItemBuffer.clear();
 
-		TestFont();
+		TestFont(0);
 
 		fr.FinishRecording();
 
@@ -266,6 +266,10 @@ namespace Egg::Graphics::DX12 {
 		matManager.CreateResources(device.Get());
 
 		cbufferAllocator.CreateResources(device.Get());
+
+		spriteBatch = std::make_unique<SpriteBatch>(device.Get(), frameResources[backbufferIndex].resourceUploader.get(), SpriteBatchPipelineStateDescription(), &cbufferAllocator, &frameResources[backbufferIndex].viewPort);
+
+		fontLibrary.CreateResources(device.Get(), &textureLibrary);
 
 		renderItemBuffer.reserve(1024);
 	}
@@ -405,32 +409,34 @@ namespace Egg::Graphics::DX12 {
 		backbufferIndex = swapChain->GetCurrentBackBufferIndex();
 	}
 
-	std::unique_ptr<SpriteFont> sp;
-	std::unique_ptr<SpriteBatch> sb;
+	D3D12_GPU_DESCRIPTOR_HANDLE gd;
+	RenderItem * itm;
 
-	void DX12GraphicsModule::LoadFont(const std::wstring & fontPath) {
-		
+	HFONT DX12GraphicsModule::LoadFont(const std::wstring & fontName) {
 		FrameResource & fr = frameResources.at(backbufferIndex);
 
-		D3D12_CPU_DESCRIPTOR_HANDLE dchd;
-		D3D12_GPU_DESCRIPTOR_HANDLE dghd;
+		HTEXTURE tex = textureLibrary.LoadTexture2D(L"btn_background.png");
 
-		textureLibrary.AllocateTextures(dghd, dchd, 1);
+		itm = renderItemColl.GetItem(renderItemColl.CreateItem());
+		
+		textureLibrary.AllocateTextures(itm, 1);
 
-		Egg::MediaPath mp{ fontPath };
+		textureLibrary.SetTexture(itm, 0, tex);
+		
 
-		sp = std::make_unique<SpriteFont>(device.Get(), fr.resourceUploader.get(), mp.GetAbsolutePath().c_str(), dchd, dghd);
-		sb = std::make_unique<SpriteBatch>(device.Get(), fr.resourceUploader.get(), SpriteBatchPipelineStateDescription(), &fr.viewPort);
 
+		return fontLibrary.LoadFont(fontName, fr.resourceUploader.get());
 	}
 
-	void DX12GraphicsModule::TestFont() {
+	void DX12GraphicsModule::TestFont(HFONT font) {
 		FrameResource & fr = frameResources.at(backbufferIndex);
-		sb->Begin(fr.commandList.Get());
+		spriteBatch->Begin(fr.commandList.Get());
 
-		sp->DrawString(sb.get(), "Hello World", DirectX::g_XMZero);
+		fontLibrary.Get(font)->DrawString(spriteBatch.get(), "Hello World", DirectX::g_XMZero);
 
-		sb->End();
+		spriteBatch->Draw(itm->texturesHandle, DirectX::XMUINT2(512, 128), DirectX::XMFLOAT2{ 400.0f, 400.0f });
+
+		spriteBatch->End();
 	}
 
 }

@@ -130,6 +130,8 @@ namespace Egg::Graphics::DX12 {
 			device->CreateShaderResourceView(itexture->GetResource(), &srvd, cdh);
 		}
 
+
+
 		HTEXTURE LoadTexture2D(const std::wstring & textureMediaPath) {
 			HTEXTURE handle = Get(textureMediaPath);
 

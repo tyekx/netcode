@@ -12,9 +12,9 @@ namespace Egg::Graphics::DX12 {
 
 	static const D3D12_INPUT_ELEMENT_DESC PCT_InputElements[] =
 	{
-		{ "SV_Position",    0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR",       0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD",    0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "POSITION",    0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR",       0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD",    0, DXGI_FORMAT_R32G32_FLOAT,       0, 28, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
 	const DirectX::XMMATRIX SpriteBatch::MatrixIdentity = DirectX::XMMatrixIdentity();
@@ -23,7 +23,6 @@ namespace Egg::Graphics::DX12 {
 	const D3D12_SHADER_BYTECODE SpriteBatch::s_DefaultVertexShaderByteCodeStatic = { SpriteFont_SpriteVertexShader, sizeof(SpriteFont_SpriteVertexShader) };
 	const D3D12_SHADER_BYTECODE SpriteBatch::s_DefaultPixelShaderByteCodeStatic = { SpriteFont_SpritePixelShader, sizeof(SpriteFont_SpritePixelShader) };
 
-	// Matches CommonStates::AlphaBlend
 	const D3D12_BLEND_DESC SpriteBatchPipelineStateDescription::s_DefaultBlendDesc =
 	{
 		FALSE, // AlphaToCoverageEnable
@@ -31,7 +30,7 @@ namespace Egg::Graphics::DX12 {
 		{ {
 			TRUE, // BlendEnable
 			FALSE, // LogicOpEnable
-			D3D12_BLEND_ONE, // SrcBlend
+			D3D12_BLEND_SRC_ALPHA, // SrcBlend
 			D3D12_BLEND_INV_SRC_ALPHA, // DestBlend
 			D3D12_BLEND_OP_ADD, // BlendOp
 			D3D12_BLEND_ONE, // SrcBlendAlpha
@@ -43,8 +42,7 @@ namespace Egg::Graphics::DX12 {
 	};
 
 	// Same to CommonStates::CullCounterClockwise
-	const D3D12_RASTERIZER_DESC SpriteBatchPipelineStateDescription::s_DefaultRasterizerDesc =
-	{
+	const D3D12_RASTERIZER_DESC SpriteBatchPipelineStateDescription::s_DefaultRasterizerDesc = {
 		D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_BACK,
 		FALSE, // FrontCounterClockwise
@@ -220,7 +218,7 @@ namespace Egg::Graphics::DX12 {
 		return indices;
 	}
 
-	SpriteBatch::SpriteBatch(ID3D12Device * device, Resource::IResourceUploader * upload, const SpriteBatchPipelineStateDescription & psoDesc, const D3D12_VIEWPORT * viewport)
+	SpriteBatch::SpriteBatch(ID3D12Device * device, Resource::IResourceUploader * upload, const SpriteBatchPipelineStateDescription & psoDesc, CbufferAllocator * cbufferAlloc, const D3D12_VIEWPORT * viewport)
 		: mRotation(DXGI_MODE_ROTATION_IDENTITY),
 		mSetViewport(false),
 		mViewPort{},
@@ -251,22 +249,14 @@ namespace Egg::Graphics::DX12 {
 				IID_PPV_ARGS(vertexBuffer.GetAddressOf())
 			);
 
-		DX_API("Failed to create cbuffer")
-			device->CreateCommittedResource(
-				&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-				D3D12_HEAP_FLAG_NONE,
-				&CD3DX12_RESOURCE_DESC::Buffer(Egg::Utility::Align256(sizeof(mTransformMatrix))),
-				D3D12_RESOURCE_STATE_GENERIC_READ,
-				nullptr,
-				IID_PPV_ARGS(cbuffer.GetAddressOf()));
-
 		CD3DX12_RANGE readValue{ 0,0 };
 
 		DX_API("Failed to map vertex buffer")
 			vertexBuffer->Map(0, &readValue, &mappedVertexBuffer);
 
-		DX_API("Failed to map constant buffer")
-			cbuffer->Map(0, &readValue, &mappedCbuffer);
+		auto handle = cbufferAlloc->AllocateCbuffer(sizeof(SpriteCbuffer));
+		cbuffer = reinterpret_cast<SpriteCbuffer *>(cbufferAlloc->GetCbufferPointer(handle));
+		cbufferAddr = cbufferAlloc->GetAddress(handle);
 
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC d3dDesc = {};
 
@@ -385,8 +375,8 @@ namespace Egg::Graphics::DX12 {
 			? mTransformMatrix
 			: (mTransformMatrix * GetViewportTransform(mRotation));
 
-		memcpy(mappedCbuffer, &transformMatrix, sizeof(transformMatrix));
-		commandList->SetGraphicsRootConstantBufferView(RootParameterIndex::ConstantBuffer, cbuffer->GetGPUVirtualAddress());
+		DirectX::XMStoreFloat4x4A(&cbuffer->transform, DirectX::XMMatrixTranspose(transformMatrix));
+		commandList->SetGraphicsRootConstantBufferView(RootParameterIndex::ConstantBuffer, cbufferAddr);
 	}
 
 	// Sorts the array of queued sprites.

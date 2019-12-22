@@ -29,10 +29,10 @@ namespace Egg::Importer {
 
 		ASSERT(isPow2, "texture resolution must be power of 2");
 
-		ASSERT(metaData.width >= 512 && metaData.width == metaData.height, "Invalid texture parameters");
+		//ASSERT(metaData.width >= 512 && metaData.width == metaData.height, "Invalid texture parameters");
 
 		DX_API("Failed to generate mip levels")
-		DirectX::GenerateMipMaps(sImage.GetImages(), sImage.GetImageCount(), sImage.GetMetadata(), DirectX::TEX_FILTER_BOX, 8, outputIm);
+		DirectX::GenerateMipMaps(sImage.GetImages(), sImage.GetImageCount(), sImage.GetMetadata(), DirectX::TEX_FILTER_BOX, 4, outputIm);
 
 		metaData = outputIm.GetMetadata();
 

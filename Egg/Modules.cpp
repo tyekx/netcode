@@ -62,14 +62,27 @@ namespace Egg::Module {
 	}
 
 	void AppEventSystem::Dispatch() {
+		if(resizeEvent.type == EAppEventType::RESIZED) {
+			events.push_back(resizeEvent);
+		}
+
 		for(const AppEvent & e : events) {
 			Broadcast(e);
 		}
 		events.clear();
+		resizeEvent.type = EAppEventType::NOOP;
 	}
 
 	void AppEventSystem::PostEvent(const AppEvent & evt) {
-		events.push_back(evt);
+		if(evt.type == EAppEventType::NOOP) {
+			return;
+		}
+
+		if(evt.type == EAppEventType::RESIZED) {
+			resizeEvent = evt;
+		} else {
+			events.push_back(evt);
+		}
 	}
 
 	void AppEventSystem::Broadcast(const AppEvent & evt) {

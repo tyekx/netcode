@@ -8,6 +8,7 @@
 #include <functional>
 #include <memory>
 #include "Vertex.h"
+#include "DX12CbufferAllocator.h"
 
 //#include "RenderTargetState.h"
 
@@ -15,7 +16,9 @@
 
 namespace Egg::Graphics::DX12
 {
-    
+   __declspec(align(256)) struct SpriteCbuffer {
+       DirectX::XMFLOAT4X4A transform;
+    };
 
     enum SpriteSortMode
     {
@@ -126,8 +129,8 @@ namespace Egg::Graphics::DX12
         com_ptr<ID3D12Resource> vertexBuffer;
         void * mappedVertexBuffer;
 
-        com_ptr<ID3D12Resource> cbuffer;
-        void * mappedCbuffer;
+        D3D12_GPU_VIRTUAL_ADDRESS cbufferAddr;
+        SpriteCbuffer * cbuffer;
 
         size_t mVertexPageSize;
         size_t mSpriteCount;
@@ -170,7 +173,7 @@ namespace Egg::Graphics::DX12
 
         std::unique_ptr<DeviceResources> mDeviceResources;
 
-        SpriteBatch(_In_ ID3D12Device * device, Resource::IResourceUploader * upload, const SpriteBatchPipelineStateDescription & psoDesc, _In_opt_ const D3D12_VIEWPORT * viewport = nullptr);
+        SpriteBatch(_In_ ID3D12Device * device, Resource::IResourceUploader * upload, const SpriteBatchPipelineStateDescription & psoDesc, CbufferAllocator* cbufferAlloc, _In_opt_ const D3D12_VIEWPORT * viewport = nullptr);
         SpriteBatch(SpriteBatch && moveFrom) = default;
         SpriteBatch & operator= (SpriteBatch && moveFrom) = default;
 

@@ -54,9 +54,9 @@ namespace Egg::Graphics::DX12 {
 
 		ID3D12Device * device;
 
-		D3D12_GPU_VIRTUAL_ADDRESS GetAddress(HCBUFFER handle);
 
 	public:
+		D3D12_GPU_VIRTUAL_ADDRESS GetAddress(HCBUFFER handle);
 
 		void CreateResources(ID3D12Device * dev);
 

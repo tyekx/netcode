@@ -201,6 +201,8 @@ namespace Egg::Graphics::DX12 {
 				baseOffset);
 		}
 
+		
+
 		ForEachGlyph(text, [&](Glyph const * glyph, float x, float y, float advance)
 		{
 			UNREFERENCED_PARAMETER(advance);
