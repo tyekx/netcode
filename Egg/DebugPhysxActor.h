@@ -1,6 +1,5 @@
 #pragma once
 
-#include "BasicGeometry.h"
 #include <array>
 
 

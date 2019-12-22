@@ -33,5 +33,5 @@ void SpriteVertexShader(inout float4 color    : COLOR0,
 float4 SpritePixelShader(float4 color    : COLOR0,
                          float2 texCoord : TEXCOORD0) : SV_Target0
 {
-    return Texture.Sample(TextureSampler, texCoord) * color;
+    return Texture.Sample(TextureSampler, texCoord * float2(512.0f, 416.0f)) * color;
 }

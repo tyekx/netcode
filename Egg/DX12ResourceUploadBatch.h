@@ -3,7 +3,6 @@
 #include <queue>
 #include <DirectXTex/DirectXTex.h>
 #include "DX12Resource.h"
-#include "Common.h"
 
 namespace Egg::Graphics::DX12::Resource {
 
@@ -29,8 +28,8 @@ namespace Egg::Graphics::DX12::Resource {
 		com_ptr<ID3D12CommandAllocator> directCommandAlloc;
 		com_ptr<ID3D12GraphicsCommandList2> copyCommandList;
 		com_ptr<ID3D12GraphicsCommandList2> directCommandList;
-		UINT maxCopySize;
-		UINT currentCopyBufferSize;
+		UINT64 maxCopySize;
+		UINT64 currentCopyBufferSize;
 
 		UINT64 fenceValue;
 		HANDLE fenceEvent;
@@ -40,248 +39,47 @@ namespace Egg::Graphics::DX12::Resource {
 		std::queue<CopyItem> items;
 		std::queue<TransitionItem> transitions;
 
-		UINT CalcTex2DCopySize(const D3D12_RESOURCE_DESC & resourceDesc) {
-			UINT64 copyableSize;
-			device->GetCopyableFootprints(&resourceDesc, 0, resourceDesc.MipLevels, 0, nullptr, nullptr, nullptr, &copyableSize);
-			return static_cast<UINT>(copyableSize);
-		}
+		UINT64 CalcTex2DCopySize(const D3D12_RESOURCE_DESC & resourceDesc);
 
-		UINT CalcCopySize(const D3D12_RESOURCE_DESC & resourceDesc) {
-			switch(resourceDesc.Dimension) {
-			case D3D12_RESOURCE_DIMENSION_BUFFER:
-				return static_cast<UINT>(resourceDesc.Width);
-			case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
-				return CalcTex2DCopySize(resourceDesc);
-			default:
-				ASSERT(false, "error");
-				break;
-			}
-			return 0;
-		}
+		UINT64 CalcCopySize(const D3D12_RESOURCE_DESC & resourceDesc);
 
-		void WaitForUpload() {
-			const UINT64 fv = fenceValue;
-
-			if(fence->GetCompletedValue() < fv) {
-				DX_API("Failed to set event on completion")
-					fence->SetEventOnCompletion(fv, fenceEvent);
-
-				WaitForSingleObject(fenceEvent, INFINITE);
-			}
-
-			fenceValue += 1;
-		}
+		void WaitForUpload();
 
 
-		void CopyTex2D(CopyItem & item) {
-			//UINT bytesPerPixel = static_cast<UINT>((DirectX::BitsPerPixel(item.resourceDesc.Format) / 8U));
+		void CopyTex2D(CopyItem & item);
 
-			D3D12_SUBRESOURCE_DATA subData;
-			subData.pData = item.cpuResource;
-			subData.RowPitch = 2048;
-			subData.SlicePitch = 851968;
+		void CopyBuffer(CopyItem & item);
 
-			UpdateSubresources(copyCommandList.Get(), item.destResource, uploadResource.Get(), 0, 0, 1, &subData);
-		}
+		void RecordCopyCommand(CopyItem & item);
 
-		void CopyBuffer(CopyItem & item) {
-			copyCommandList->CopyBufferRegion(item.destResource, 0, uploadResource.Get(), 0, item.resourceDesc.Width);
-		}
+		void PrepareUpload();
 
-		void RecordCopyCommand(CopyItem & item) {
-			// Texture2D
-			switch(item.resourceDesc.Dimension)
-			{
-			case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
-				CopyTex2D(item);
-				return;
-			case D3D12_RESOURCE_DIMENSION_BUFFER:
-				CopyBuffer(item);
-				return;
-			}
+		void ResetDirectCommandList();
 
-			ASSERT(false, "Not supported dimension");
-		}
+		virtual void Prepare() override;
 
-		void PrepareUpload() {
-			if(currentCopyBufferSize < maxCopySize) {
-				if(uploadResource != nullptr) {
-					// free previous resource to create a bigger one
+		void ResetCopyCommandList();
 
-					CD3DX12_RANGE writtenRange{ 0,0 };
-					uploadResource->Unmap(0, &writtenRange);
-					mappedPtr = nullptr;
+		void CloseDirectCommandList();
 
-					uploadResource.Reset();
-				}
-			} else return; // no need to allocate another buffer if the current one is big enough
+		void CloseCopyCommandList();
 
 
-			DX_API("Failed to create upload resource")
-				device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-												D3D12_HEAP_FLAG_NONE,
-												&CD3DX12_RESOURCE_DESC::Buffer(maxCopySize),
-												D3D12_RESOURCE_STATE_GENERIC_READ,
-												nullptr,
-												IID_PPV_ARGS(uploadResource.GetAddressOf()));
+		bool UploadOne(ID3D12CommandQueue * copyCommandQueue);
 
-			CD3DX12_RANGE readRange{ 0,0 };
-			DX_API("Failed to map ptr")
-				uploadResource->Map(0, &readRange, &mappedPtr);
-		}
+		void TransitionAll(ID3D12CommandQueue * directCommandQueue);
 
-		void ResetDirectCommandList() {
-			DX_API("failed to reset command allocator")
-				directCommandAlloc->Reset();
-
-			DX_API("Failed to reset command list")
-				directCommandList->Reset(directCommandAlloc.Get(), nullptr);
-		}
-
-		virtual void Prepare() override {
-
-		}
-
-		void ResetCopyCommandList() {
-			DX_API("failed to reset command allocator")
-				copyCommandAlloc->Reset();
-
-			DX_API("Failed to reset command list")
-				copyCommandList->Reset(copyCommandAlloc.Get(), nullptr);
-		}
-
-		void CloseDirectCommandList() {
-			DX_API("Failed to close to direct command list")
-				directCommandList->Close();
-		}
-
-		void CloseCopyCommandList() {
-			DX_API("Failed to close copy command list")
-				copyCommandList->Close();
-		}
-
-
-		bool UploadOne(ID3D12CommandQueue * copyCommandQueue) {
-			if(items.empty()) {
-				return false;
-			}
-
-			ResetCopyCommandList();
-
-			CopyItem & ci = items.front();
-
-			memcpy(mappedPtr, ci.cpuResource, ci.cpuResourceSizeInBytes);
-
-			RecordCopyCommand(ci);
-
-			CloseCopyCommandList();
-
-			ID3D12CommandList * cls[] = { copyCommandList.Get() };
-
-			copyCommandQueue->ExecuteCommandLists(ARRAYSIZE(cls), cls);
-
-			copyCommandQueue->Signal(fence.Get(), fenceValue);
-
-			items.pop();
-
-			WaitForUpload();
-
-			return true;
-		}
-
-		void TransitionAll(ID3D12CommandQueue * directCommandQueue) {
-			if(transitions.empty()) {
-				return;
-			}
-
-			ResetDirectCommandList();
-
-			while(!transitions.empty()) {
-				const auto & transition = transitions.front();
-
-				directCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(transition.resource, transition.preState, transition.postState));
-
-				transitions.pop();
-			}
-
-			CloseDirectCommandList();
-
-			ID3D12CommandList * cls[] = { directCommandList.Get() };
-
-			directCommandQueue->ExecuteCommandLists(ARRAYSIZE(cls), cls);
-
-			directCommandQueue->Signal(fence.Get(), fenceValue);
-
-			WaitForUpload();
-		}
-
-		void UploadAll(ID3D12CommandQueue * copyCommandQueue) {
-			while(UploadOne(copyCommandQueue));
-		}
+		void UploadAll(ID3D12CommandQueue * copyCommandQueue);
 	public:
-		virtual void Upload(const D3D12_RESOURCE_DESC & resourceDesc, ID3D12Resource * destResource, void * cpuResource, UINT sizeInBytes) override {
-			items.push({ resourceDesc, destResource, cpuResource, sizeInBytes });
-			UINT copySize = CalcCopySize(resourceDesc);
+		virtual void Upload(const D3D12_RESOURCE_DESC & resourceDesc, ID3D12Resource * destResource, void * cpuResource, UINT sizeInBytes) override;
 
-			if(copySize > maxCopySize) {
-				maxCopySize = copySize;
-			}
-		}
+		virtual void Transition(ID3D12Resource * resource, D3D12_RESOURCE_STATES preState, D3D12_RESOURCE_STATES postState) override;
 
-		virtual void Transition(ID3D12Resource * resource, D3D12_RESOURCE_STATES preState, D3D12_RESOURCE_STATES postState) override {
-			transitions.push({ resource, preState, postState });
-		}
+		virtual void CreateResources(ID3D12Device * dev) override;
 
-		virtual void CreateResources(ID3D12Device * dev) override {
-			device = dev;
+		virtual void ReleaseResources() override;
 
-			DX_API("Failed to create copy command allocator")
-				device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY, IID_PPV_ARGS(copyCommandAlloc.GetAddressOf()));
-
-			DX_API("Failed to create copy command list")
-				device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_COPY, copyCommandAlloc.Get(), nullptr, IID_PPV_ARGS(copyCommandList.GetAddressOf()));
-
-			DX_API("Failed to create direct command allocator")
-				device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(directCommandAlloc.GetAddressOf()));
-
-			DX_API("Failed to create direct command list")
-				device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, directCommandAlloc.Get(), nullptr, IID_PPV_ARGS(directCommandList.GetAddressOf()));
-
-			DX_API("Failed to initially close command list")
-				copyCommandList->Close();
-
-			DX_API("Failed to initially close command list")
-				directCommandList->Close();
-
-			DX_API("Failed to create fence")
-				device->CreateFence(0, D3D12_FENCE_FLAG_SHARED, IID_PPV_ARGS(fence.GetAddressOf()));
-
-			fenceValue = 1; currentCopyBufferSize = 0;
-
-			fenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-
-			if(fenceEvent == NULL) {
-				DX_API("Failed to create windows event") HRESULT_FROM_WIN32(GetLastError());
-			}
-		}
-
-		virtual void ReleaseResources() override {
-			device = nullptr;
-			uploadResource.Reset();
-			fence.Reset();
-			copyCommandAlloc.Reset();
-			directCommandAlloc.Reset();
-			copyCommandList.Reset();
-			directCommandList.Reset();
-			currentCopyBufferSize = 0;
-		}
-
-		virtual void Process(ID3D12CommandQueue * directQueue, ID3D12CommandQueue * copyQueue) override {
-			PrepareUpload();
-			UploadAll(copyQueue);
-			TransitionAll(directQueue);
-			maxCopySize = 0;
-		}
+		virtual void Process(ID3D12CommandQueue * directQueue, ID3D12CommandQueue * copyQueue) override;
 	};
 
 }

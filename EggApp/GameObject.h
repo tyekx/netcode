@@ -178,6 +178,7 @@ public:
 class GameObject {
 	GameObject * parent;
 	ComponentStorage components;
+	bool disabled;
 public:
 	inline SignatureType GetSignature() const {
 		return components.signature;
@@ -204,6 +205,14 @@ public:
 
 	void Parent(GameObject * prt) {
 		parent = prt;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+	}
+
+	bool IsActive() const {
+		return !disabled;
+	}
+
+	void SetActive(bool value) {
+		disabled = !value;
 	}
 };
 

@@ -1,8 +1,8 @@
 #include "DX12CbufferAllocator.h"
 
-namespace Egg {
+namespace Egg::Graphics::DX12 {
 
-	HCBUFFER SetPageIndex(HCBUFFER handle, UINT16 pageIdx) {
+	inline HCBUFFER SetPageIndex(HCBUFFER handle, UINT16 pageIdx) {
 		UINT64 pageIdxValue = pageIdx;
 		pageIdxValue <<= 48;
 
@@ -10,7 +10,7 @@ namespace Egg {
 		 (pageIdxValue & 0xFFFF000000000000ULL);
 	}
 
-	HCBUFFER SetSizeDiv256(HCBUFFER handle, UINT16 sizeDiv256) {
+	inline HCBUFFER SetSizeDiv256(HCBUFFER handle, UINT16 sizeDiv256) {
 		UINT64 sizeDiv256Value = sizeDiv256;
 		sizeDiv256Value <<= 32;
 
@@ -18,28 +18,68 @@ namespace Egg {
 	  (sizeDiv256Value & 0x0000FFFF00000000ULL);
 	}
 
-	HCBUFFER SetByteOffset(HCBUFFER handle, UINT32 offset) {
+	inline HCBUFFER SetByteOffset(HCBUFFER handle, UINT32 offset) {
 		UINT64 offsetValue = offset;
 		
 		return (handle & 0xFFFFFFFF00000000ULL) |
 		  (offsetValue & 0x00000000FFFFFFFFULL);
 	}
 
-	UINT32 GetByteOffset(HCBUFFER handle) {
+	inline UINT32 GetByteOffset(HCBUFFER handle) {
 		return static_cast<UINT32>(handle & 0x00000000FFFFFFFFULL);
 	}
 
-	UINT16 GetSizeDiv256(HCBUFFER handle) {
+	inline UINT16 GetSizeDiv256(HCBUFFER handle) {
 		return static_cast<UINT16>((handle & 0x0000FFFF00000000ULL) >> 32);
 	}
 
-	UINT16 GetPageIndex(HCBUFFER handle) {
+	inline UINT16 GetPageIndex(HCBUFFER handle) {
 		return static_cast<UINT16>((handle & 0xFFFF000000000000ULL) >> 48);
 	}
 
+	void CbufferAllocator::CbufferPage::CreateResources(ID3D12Device * device) {
+		DX_API("Failed to create upload resource")
+			device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+											D3D12_HEAP_FLAG_NONE,
+											&CD3DX12_RESOURCE_DESC::Buffer(PAGE_SIZE),
+											D3D12_RESOURCE_STATE_GENERIC_READ,
+											nullptr,
+											IID_PPV_ARGS(resource.GetAddressOf()));
 
+		std::wstring resourceName = L"CBufferPage#" + std::to_wstring(1);
 
-	void Graphics::DX12::CbufferAllocator::CbufferPage::Deallocate(HCBUFFER handle) {
+		DX_API("Failed to set name")
+			resource->SetName(resourceName.c_str());
+
+		CD3DX12_RANGE range{ 0,0 };
+
+		void * tempPtr;
+
+		DX_API("Failed to map cbuffer")
+			resource->Map(0, &range, &tempPtr);
+
+		mappedPtr = reinterpret_cast<BYTE *>(tempPtr);
+
+		addr = resource->GetGPUVirtualAddress();
+	}
+
+	void CbufferAllocator::CbufferPage::ReleaseResources() {
+		if(resource != nullptr) {
+			CD3DX12_RANGE range{ 0,0 };
+			resource->Unmap(0, &range);
+			resource.Reset();
+		}
+	}
+
+	CbufferAllocator::CbufferPage::~CbufferPage() {
+		ReleaseResources();
+	}
+
+	bool CbufferAllocator::CbufferPage::CanHost(unsigned int alignedSize) {
+		return (allocatedSize + alignedSize) <= PAGE_SIZE;
+	}
+
+	void CbufferAllocator::CbufferPage::Deallocate(HCBUFFER handle) {
 		void * offsettedPointer = mappedPtr + GetByteOffset(handle);
 
 		FreedItem * freedItem = reinterpret_cast<FreedItem *>(offsettedPointer);
@@ -49,7 +89,7 @@ namespace Egg {
 		head = freedItem;
 	}
 
-	HCBUFFER Graphics::DX12::CbufferAllocator::CbufferPage::Allocate(unsigned int alignedSize) {
+	HCBUFFER CbufferAllocator::CbufferPage::Allocate(unsigned int alignedSize) {
 		HCBUFFER handle = 0;
 		handle = SetSizeDiv256(handle, alignedSize >> 8);
 		handle = SetByteOffset(handle, allocatedSize);
@@ -57,7 +97,7 @@ namespace Egg {
 		return handle;
 	}
 
-	D3D12_GPU_VIRTUAL_ADDRESS Graphics::DX12::CbufferAllocator::GetAddress(HCBUFFER handle) {
+	D3D12_GPU_VIRTUAL_ADDRESS CbufferAllocator::GetAddress(HCBUFFER handle) {
 		CbufferPage * iter = nullptr;
 		UINT16 i = 0;
 		UINT16 pageIdx = GetPageIndex(handle);
@@ -74,7 +114,49 @@ namespace Egg {
 		return iter->addr + byteOffset;
 	}
 
-	void * Graphics::DX12::CbufferAllocator::GetCbufferPointer(HCBUFFER handle) {
+	void CbufferAllocator::CreateResources(ID3D12Device * dev) {
+		device = dev;
+		head = tail = nullptr;
+
+		numPages = 1;
+		head = new CbufferPage();
+		tail = head;
+
+		head->CreateResources(device);
+	}
+
+	void CbufferAllocator::ReleaseResources() {
+		while(tail != nullptr) {
+			CbufferPage * tempPrev = tail->prev;
+			delete tail;
+			tail = tempPrev;
+		}
+		tail = nullptr;
+		head = nullptr;
+		device = nullptr;
+	}
+
+	CbufferAllocator::~CbufferAllocator() {
+		ReleaseResources();
+	}
+
+	void CbufferAllocator::AddRenderItemCbuffer(RenderItem * renderItem, HCBUFFER cbuffer, UINT slot) {
+		ASSERT(renderItem->numCbuffers <= 8, "Too many constant buffers are attached to this item");
+
+		renderItem->cbuffers[renderItem->numCbuffers].addr = GetAddress(cbuffer);
+		renderItem->cbuffers[renderItem->numCbuffers].rootSigSlot = slot;
+
+		renderItem->numCbuffers += 1;
+	}
+
+	void CbufferAllocator::SetRenderItemCbuffer(RenderItem * renderItem, HCBUFFER cbuffer, UINT idx, UINT slot) {
+		ASSERT(idx < renderItem->numCbuffers && renderItem->numCbuffers <= 8, "Too many constant buffers are attached to this item");
+
+		renderItem->cbuffers[idx].addr = GetAddress(cbuffer);
+		renderItem->cbuffers[idx].rootSigSlot = slot;
+	}
+
+	void * CbufferAllocator::GetCbufferPointer(HCBUFFER handle) {
 		CbufferPage * iter = nullptr;
 		UINT16 i = 0;
 		UINT16 pageIdx = GetPageIndex(handle);
@@ -87,7 +169,7 @@ namespace Egg {
 		return iter->mappedPtr + byteOffset;
 	}
 
-	HCBUFFER Graphics::DX12::CbufferAllocator::AllocateCbuffer(unsigned int sizeInBytes) {
+	HCBUFFER CbufferAllocator::AllocateCbuffer(unsigned int sizeInBytes) {
 		unsigned int aligned = Egg::Utility::Align256(sizeInBytes);
 
 		ASSERT(tail != nullptr && head != nullptr, "Pointers are unset, forgot to call CreateResources?");

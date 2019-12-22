@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef __linux__
+#include <specstrings.h>
+#endif
+
 /*
 A preprocessor replacement for the sal.h header, that would be missing on linux
 */
@@ -240,7 +244,9 @@ A preprocessor replacement for the sal.h header, that would be missing on linux
 #define _When_(expr1, expr2)
 #endif
 
+#if !defined(_Deref_pre_z_)
 #define _Deref_pre_z_
+#endif
 
 #if !defined(_Inout_updates_)
 #define _Inout_updates_(count)

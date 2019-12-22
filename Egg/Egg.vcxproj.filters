@@ -31,9 +31,6 @@
     <Filter Include="Graphics\Engine\DX12">
       <UniqueIdentifier>{8a77180a-e90e-470d-8ebc-6be0af8642aa}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Font">
-      <UniqueIdentifier>{a441bedd-7f60-4bc5-a95a-e1669738a11a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Modules">
       <UniqueIdentifier>{59179e73-a4f5-4f87-a328-302aca6b8489}</UniqueIdentifier>
     </Filter>
@@ -46,14 +43,14 @@
     <Filter Include="Graphics\Engine\DX12\Resource">
       <UniqueIdentifier>{558741a0-ed22-4b3c-aeed-1151cf341cb1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Graphics\Engine\DX12\Sync">
-      <UniqueIdentifier>{8d69928e-11c5-489e-8903-ea4279fa5412}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Legacy">
       <UniqueIdentifier>{900505d3-a104-4bb4-8051-40866877e62b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Physics">
       <UniqueIdentifier>{732f7154-1187-46a0-abeb-894bb40d8b35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Animation">
+      <UniqueIdentifier>{178c3ddd-4157-47b1-aab2-cf7dd2837100}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -202,16 +199,7 @@
     <ClInclude Include="DX12ResourceUploadBatch.h">
       <Filter>Graphics\Engine\DX12\Resource</Filter>
     </ClInclude>
-    <ClInclude Include="DX12Fence.h">
-      <Filter>Graphics\Engine\DX12\Sync</Filter>
-    </ClInclude>
-    <ClInclude Include="BasicGeometry.h">
-      <Filter>Legacy</Filter>
-    </ClInclude>
     <ClInclude Include="Importer.h">
-      <Filter>Legacy</Filter>
-    </ClInclude>
-    <ClInclude Include="Allocation.h">
       <Filter>Legacy</Filter>
     </ClInclude>
     <ClInclude Include="LinearClassifier.h">
@@ -226,26 +214,8 @@
     <ClInclude Include="DebugPhysxRaycast.h">
       <Filter>Legacy</Filter>
     </ClInclude>
-    <ClInclude Include="InputLayout.h">
-      <Filter>Legacy</Filter>
-    </ClInclude>
-    <ClInclude Include="Geometry.h">
-      <Filter>Legacy</Filter>
-    </ClInclude>
     <ClInclude Include="MemoryFunctions.h">
       <Filter>Utility</Filter>
-    </ClInclude>
-    <ClInclude Include="AnimationBlender.h">
-      <Filter>Legacy</Filter>
-    </ClInclude>
-    <ClInclude Include="AnimationState.h">
-      <Filter>Legacy</Filter>
-    </ClInclude>
-    <ClInclude Include="Blackboard.h">
-      <Filter>Legacy</Filter>
-    </ClInclude>
-    <ClInclude Include="Transition.h">
-      <Filter>Legacy</Filter>
     </ClInclude>
     <ClInclude Include="PhysxModule.h">
       <Filter>Physics</Filter>
@@ -262,11 +232,32 @@
     <ClInclude Include="Logger.h">
       <Filter>App</Filter>
     </ClInclude>
-    <ClInclude Include="DX12SpriteFont.h">
-      <Filter>Font</Filter>
+    <ClInclude Include="DX12SpriteFontLibrary.h">
+      <Filter>Graphics\Engine\DX12</Filter>
     </ClInclude>
     <ClInclude Include="DX12SpriteBatch.h">
-      <Filter>Font</Filter>
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12SpriteFont.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Fence.h">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Transition.h">
+      <Filter>Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Blackboard.h">
+      <Filter>Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationState.h">
+      <Filter>Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationBlender.h">
+      <Filter>Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicGeometry.h">
+      <Filter>Utility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -313,13 +304,7 @@
     <ClCompile Include="DX12CommittedVBuffer.cpp">
       <Filter>Graphics\Engine\DX12\Resource</Filter>
     </ClCompile>
-    <ClCompile Include="BasicGeometry.cpp">
-      <Filter>Legacy</Filter>
-    </ClCompile>
     <ClCompile Include="Importer.cpp">
-      <Filter>Legacy</Filter>
-    </ClCompile>
-    <ClCompile Include="Allocation.cpp">
       <Filter>Legacy</Filter>
     </ClCompile>
     <ClCompile Include="LinearClassifier.cpp">
@@ -333,18 +318,6 @@
     </ClCompile>
     <ClCompile Include="MemoryFunctions.cpp">
       <Filter>Utility</Filter>
-    </ClCompile>
-    <ClCompile Include="AnimationBlender.cpp">
-      <Filter>Legacy</Filter>
-    </ClCompile>
-    <ClCompile Include="AnimationState.cpp">
-      <Filter>Legacy</Filter>
-    </ClCompile>
-    <ClCompile Include="Blackboard.cpp">
-      <Filter>Legacy</Filter>
-    </ClCompile>
-    <ClCompile Include="Transition.cpp">
-      <Filter>Legacy</Filter>
     </ClCompile>
     <ClCompile Include="DX12CbufferAllocator.cpp">
       <Filter>Graphics\Engine\DX12</Filter>
@@ -361,11 +334,29 @@
     <ClCompile Include="Logger.cpp">
       <Filter>App</Filter>
     </ClCompile>
-    <ClCompile Include="DX12SpriteFont.cpp">
-      <Filter>Font</Filter>
+    <ClCompile Include="DX12ResourceUploadBatch.cpp">
+      <Filter>Graphics\Engine\DX12\Resource</Filter>
     </ClCompile>
     <ClCompile Include="DX12SpriteBatch.cpp">
-      <Filter>Font</Filter>
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12SpriteFont.cpp">
+      <Filter>Graphics\Engine\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Transition.cpp">
+      <Filter>Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Blackboard.cpp">
+      <Filter>Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationState.cpp">
+      <Filter>Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationBlender.cpp">
+      <Filter>Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicGeometry.cpp">
+      <Filter>Utility</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

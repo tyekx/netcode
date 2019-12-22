@@ -57,7 +57,6 @@ namespace Egg::Graphics::DX12 {
 		inline void SetPipelineState(ID3D12GraphicsCommandList * gcl) {
 			gcl->SetGraphicsRootSignature(rootSignature);
 			gcl->SetPipelineState(graphicsPso);
-
 		}
 
 		inline void SelectLOD(UINT lodLevel) {
@@ -75,7 +74,6 @@ namespace Egg::Graphics::DX12 {
 		}
 
 		inline void Render(ID3D12GraphicsCommandList * gcl) {
-			//Egg::Utility::Debugf("\r\n");
 			SetPipelineState(gcl);
 			SetRenderItemResources(gcl);
 			DrawGeometry(gcl);

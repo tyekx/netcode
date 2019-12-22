@@ -21,6 +21,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 	//@TODO: refactor these
 	Egg::Asset::Model ybotModel;
+	Egg::Asset::Model railgun;
 	Egg::MovementController movCtrl;
 
 	PerFrameCb * perFrameCb;
@@ -47,8 +48,11 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		foreach gameobject draw
 		*/
 		for(std::size_t i = 0; i < scene.count; ++i) {
-			transformSystem.Run(scene.objects.data() + i);
-			renderSystem.Run(scene.objects.data() + i);
+			GameObject * obj = scene.objects.data() + i;
+			if(obj->IsActive()) {
+				transformSystem.Run(obj);
+				renderSystem.Run(obj);
+			}
 		}
 
 		graphics->Render();
@@ -59,9 +63,65 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		physics->Simulate(dt);
 
 		for(std::size_t i = 0; i < scene.count; ++i) {
-			scriptSystem.Run(scene.objects.data() + i, dt);
-			animSystem.Run(scene.objects.data() + 1, dt * 0.5f);
+			GameObject * obj = scene.objects.data() + i;
+			if(obj->IsActive()) {
+				scriptSystem.Run(obj, dt);
+				animSystem.Run(obj, dt * 0.5f);
+			}
 		}
+	}
+
+	void TestCapsulePrimitive(Egg::HCBUFFER pfcb) {
+
+		struct WireframeVertex {
+			DirectX::XMFLOAT3 position;
+			DirectX::XMFLOAT3 color;
+		};
+
+		static WireframeVertex vertices[108];
+		Egg::Graphics::BasicGeometry::CreateCapsuleWireframe(vertices, sizeof(WireframeVertex), 180.0f, 40.0f);
+		for(unsigned int i = 0; i < 108; ++i) {
+			vertices[i].color = DirectX::XMFLOAT3{ 1.0f, 1.0f, 1.0f };
+		}
+
+		GameObject * gameObj = scene.Insert();
+		gameObj->AddComponent<Transform>();
+		Model * model = gameObj->AddComponent<Model>();
+
+		{
+			Egg::HITEM item = graphics->CreateItem();
+			Egg::HGEOMETRY geom = graphics->CreateGeometry(Egg::EGeometryType::VERTEX_STREAM);
+			Egg::HSHADER vs = graphics->LoadShader(L"DebugPhysxVS.cso");
+			Egg::HSHADER ps = graphics->LoadShader(L"DebugPhysxPS.cso");
+			Egg::HPSO pso = graphics->CreatePipelineState();
+			Egg::HCBUFFER perobj = graphics->AllocateCbuffer(sizeof(PerObjectCb));
+			Egg::HCBUFFER pershape = graphics->AllocateCbuffer(sizeof(DebugPhysxShapeCb));
+
+			PerObjectCb * perObjCb = reinterpret_cast<PerObjectCb *>(graphics->GetCbufferPointer(perobj));
+			DebugPhysxShapeCb * perShapeCb = reinterpret_cast<DebugPhysxShapeCb *>(graphics->GetCbufferPointer(pershape));
+			DirectX::XMStoreFloat4x4A(&perObjCb->Model, DirectX::XMMatrixIdentity());
+			DirectX::XMStoreFloat4x4A(&perObjCb->InvModel, DirectX::XMMatrixIdentity());
+			DirectX::XMStoreFloat4x4A(&perShapeCb->local, DirectX::XMMatrixIdentity());
+			DirectX::XMStoreFloat4x4A(&perShapeCb->offset, DirectX::XMMatrixIdentity());
+
+			model->perObjectCb = perObjCb;
+
+			graphics->AddVertexBufferLOD(geom, vertices, sizeof(vertices), sizeof(WireframeVertex));
+			graphics->AddInputElement(geom, "POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
+			graphics->AddInputElement(geom, "COLOR", DXGI_FORMAT_R32G32B32_FLOAT, 12);
+			graphics->SetPixelShader(pso, ps);
+			graphics->SetVertexShader(pso, vs);
+			graphics->SetMaterial(item, graphics->CreateMaterial(pso, geom));
+			graphics->SetGeometry(item, geom);
+
+			graphics->AddCbuffer(item, pfcb, graphics->GetCbufferSlot(item, "PerFrameCb"));
+			graphics->AddCbuffer(item, perobj, graphics->GetCbufferSlot(item, "PerObjectCb"));
+			graphics->AddCbuffer(item, pershape, graphics->GetCbufferSlot(item, "PerShapeCb"));
+
+			model->AddShadedMesh(item, nullptr);
+		}
+
+		
 	}
 
 	void LoadAssets() {
@@ -70,7 +130,6 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		Egg::Input::SetAxis("Jump", VK_SPACE, 0);
 		Egg::Input::SetAxis("Fire", VK_LBUTTON, 0);
 
-		graphics->LoadFont(L"titillium20.spritefont");
 
 		{
 			GameObject * camObj = scene.Insert();
@@ -130,7 +189,18 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			DirectX::XMStoreFloat4x4A(&model->boneDataCb->ToRootTransform[i], identity);
 		}
 
+		//GameObject * gun = scene.Insert();
+		//gun->AddComponent<Transform>();
+		//Model*gunModel = gun->AddComponent<Model>();
+		//gun->SetActive(false);
+
+		//Egg::Importer::ImportModel(L"railgun.eggasset", railgun);
+
+		//LoadItem(graphics.get(), &railgun, gunModel);
 		LoadItem(graphics.get(), &ybotModel, model);
+
+
+		graphics->LoadFont(L"titillium20.spritefont");
 
 		for(auto & i : model->meshes) {
 			Egg::HITEM item = i.mesh;
@@ -147,6 +217,8 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		Script* s = avatar->AddComponent<Script>();
 		s->SetBehavior(std::make_unique<PlayerBehavior>());
 		s->Setup(avatar);
+
+		TestCapsulePrimitive(pfcb);
 	}
 
 public:

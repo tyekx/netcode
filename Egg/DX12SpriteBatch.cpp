@@ -3,8 +3,8 @@
 
 namespace {
 
-#include "Shaders/Compiled/SpriteEffect_SpriteVertexShader.inc"
-#include "Shaders/Compiled/SpriteEffect_SpritePixelShader.inc"
+#include "Shaders/Compiled/SpriteFont_SpritePixelShader.inc"
+#include "Shaders/Compiled/SpriteFont_SpriteVertexShader.inc"
 
 }
 
@@ -20,8 +20,8 @@ namespace Egg::Graphics::DX12 {
 	const DirectX::XMMATRIX SpriteBatch::MatrixIdentity = DirectX::XMMatrixIdentity();
 	const DirectX::XMFLOAT2 SpriteBatch::Float2Zero(0, 0);
 
-	const D3D12_SHADER_BYTECODE SpriteBatch::s_DefaultVertexShaderByteCodeStatic = { SpriteEffect_SpriteVertexShader, sizeof(SpriteEffect_SpriteVertexShader) };
-	const D3D12_SHADER_BYTECODE SpriteBatch::s_DefaultPixelShaderByteCodeStatic = { SpriteEffect_SpritePixelShader, sizeof(SpriteEffect_SpritePixelShader) };
+	const D3D12_SHADER_BYTECODE SpriteBatch::s_DefaultVertexShaderByteCodeStatic = { SpriteFont_SpriteVertexShader, sizeof(SpriteFont_SpriteVertexShader) };
+	const D3D12_SHADER_BYTECODE SpriteBatch::s_DefaultPixelShaderByteCodeStatic = { SpriteFont_SpritePixelShader, sizeof(SpriteFont_SpritePixelShader) };
 
 	// Matches CommonStates::AlphaBlend
 	const D3D12_BLEND_DESC SpriteBatchPipelineStateDescription::s_DefaultBlendDesc =

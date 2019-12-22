@@ -43,7 +43,6 @@
     <Lib />
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Allocation.h" />
     <ClInclude Include="AnimationBlender.h" />
     <ClInclude Include="AnimationState.h" />
     <ClInclude Include="Asset\Animation.h" />
@@ -51,9 +50,9 @@
     <ClInclude Include="Asset\Material.h" />
     <ClInclude Include="Asset\Mesh.h" />
     <ClInclude Include="Asset\Model.h" />
-    <ClInclude Include="BasicGeometry.h" />
     <ClInclude Include="BinaryReader.h" />
     <ClInclude Include="Blackboard.h" />
+    <ClInclude Include="BasicGeometry.h" />
     <ClInclude Include="DX12CommittedIBuffer.h" />
     <ClInclude Include="DX12CommittedTexture2D.h" />
     <ClInclude Include="DX12CommittedVBuffer.h" />
@@ -78,16 +77,15 @@
     <ClInclude Include="DX12ShaderSourceLibrary.h" />
     <ClInclude Include="DX12ShaderVariant.h" />
     <ClInclude Include="DX12SpriteBatch.h" />
+    <ClInclude Include="DX12SpriteFontLibrary.h" />
     <ClInclude Include="DX12TextureLibrary.h" />
     <ClInclude Include="EggMpl.hpp" />
     <ClInclude Include="Exporter.h" />
     <ClInclude Include="DX12Fence.h" />
     <ClInclude Include="File.h" />
-    <ClInclude Include="Geometry.h" />
     <ClInclude Include="HandleTypes.h" />
     <ClInclude Include="Importer.h" />
     <ClInclude Include="Input.h" />
-    <ClInclude Include="InputLayout.h" />
     <ClInclude Include="LinearClassifier.h" />
     <ClInclude Include="LinuxSal.h" />
     <ClInclude Include="Logger.h" />
@@ -116,12 +114,11 @@
     <ClInclude Include="WinapiWindowModule.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Allocation.cpp" />
     <ClCompile Include="AnimationBlender.cpp" />
     <ClCompile Include="AnimationState.cpp" />
-    <ClCompile Include="BasicGeometry.cpp" />
     <ClCompile Include="BinaryReader.cpp" />
     <ClCompile Include="Blackboard.cpp" />
+    <ClCompile Include="BasicGeometry.cpp" />
     <ClCompile Include="DX12CbufferAllocator.cpp" />
     <ClCompile Include="DX12CommittedIBuffer.cpp" />
     <ClCompile Include="DX12CommittedTexture2D.cpp" />
@@ -131,6 +128,7 @@
     <ClCompile Include="DefaultModuleFactory.cpp" />
     <ClCompile Include="DX12Common.cpp" />
     <ClCompile Include="DX12GraphicsModule.cpp" />
+    <ClCompile Include="DX12ResourceUploadBatch.cpp" />
     <ClCompile Include="DX12SpriteBatch.cpp" />
     <ClCompile Include="Exporter.cpp" />
     <ClCompile Include="Importer.cpp" />
@@ -177,9 +175,10 @@
     <CustomBuild Include="Shaders\SpriteFont.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileShaders.cmd</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      </Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pushd $(ProjectDir)Shaders
+$(ProjectDir)Shaders\CompileShaders.cmd
+popd</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\Compiled\SpriteFont_SpritePixelShader.inc;$(ProjectDir)Shaders\Compiled\SpriteFont_SpriteVertexShader.inc;%(Outputs)</Outputs>
     </CustomBuild>
     <Text Include="Shaders\RootSignatures.hlsli">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">RootSignature</ShaderType>

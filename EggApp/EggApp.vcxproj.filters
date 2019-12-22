@@ -60,4 +60,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="EggApp.natvis" />
+  </ItemGroup>
 </Project>

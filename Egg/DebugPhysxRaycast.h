@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DebugPhysxActor.h"
-
+#include <DirectXMath.h>
 
 namespace Egg {
 

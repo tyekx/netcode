@@ -65,6 +65,9 @@
     <ClInclude Include="Snippets.h" />
     <ClInclude Include="Systems.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="EggApp.natvis" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

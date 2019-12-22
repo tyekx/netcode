@@ -56,6 +56,8 @@ void LoadItem(Egg::Module::IGraphicsModule * g, Egg::Asset::Model * model, Model
 		Egg::HITEM item = g->CreateItem();
 		Egg::HGEOMETRY geometry = g->CreateGeometry(Egg::EGeometryType::INDEXED);
 
+
+
 		switch(mesh->vertexType) {
 			case Egg::PNT_Vertex::type:
 			{
@@ -141,6 +143,18 @@ void LoadItem(Egg::Module::IGraphicsModule * g, Egg::Asset::Model * model, Model
 		matcbV->shininess = mat->shininess;
 
 		g->AddCbuffer(item, matcb, g->GetCbufferSlot(item, "MaterialCb"));
+		if(mat->HasTextures()) {
+			UINT numTextures = ((UINT)mat->HasDiffuseTexture() + (UINT)mat->HasNormalTexture());
+			g->AllocateTextures(item, numTextures);
+		}
+
+		if(mat->HasDiffuseTexture()) {
+			g->SetTexture(item, 0, Egg::Utility::ToWideString(mat->diffuseTexture));
+		} 
+
+		if(mat->HasNormalTexture()) {
+			g->SetTexture(item, 1, Egg::Utility::ToWideString(mat->normalTexture));
+		}
 		
 		modelComponent->AddShadedMesh(item, matcbV);
 	}

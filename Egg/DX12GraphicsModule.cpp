@@ -421,6 +421,7 @@ namespace Egg::Graphics::DX12 {
 
 		sp = std::make_unique<SpriteFont>(device.Get(), fr.resourceUploader.get(), mp.GetAbsolutePath().c_str(), dchd, dghd);
 		sb = std::make_unique<SpriteBatch>(device.Get(), fr.resourceUploader.get(), SpriteBatchPipelineStateDescription(), &fr.viewPort);
+
 	}
 
 	void DX12GraphicsModule::TestFont() {

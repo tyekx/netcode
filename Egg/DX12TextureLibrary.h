@@ -116,7 +116,7 @@ namespace Egg::Graphics::DX12 {
 		}
 
 		void SetTexture(RenderItem * renderItem, UINT localIdx, HTEXTURE texture) {
-			ASSERT(renderItem->texturesLength < localIdx, "Setting texture is out of bounds");
+			ASSERT(renderItem->texturesLength > localIdx, "Setting texture is out of bounds");
 			
 			const UINT absoluteIdx = renderItem->texturesId + localIdx;
 			const D3D12_CPU_DESCRIPTOR_HANDLE cdh = CD3DX12_CPU_DESCRIPTOR_HANDLE{ texturesHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(absoluteIdx), incrementSize };

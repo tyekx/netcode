@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <!-- So far only the core components are supported, extension components are subject to change -->
+  <Type Name="GameObject">
+    <DisplayString>{{ Owner={ parent }, Signature={ components.signature } }}</DisplayString>
+    <Expand>
+      <Item Name="[Transform]" Condition="(components.signature &amp; 1) == 1">((Transform*)components.storage)</Item>
+      <Item Name="[Model]" Condition="(components.signature &amp; 2) == 2">((Model*)(components.storage + sizeof(Transform)))</Item>
+      <Item Name="[Script]" Condition="(components.signature &amp; 4) == 4">((Script*)(components.storage + sizeof(Model) + sizeof(Transform)))</Item>
+    </Expand>
+  </Type>
+  <Type Name="Transform">
+    <DisplayString>{{ Position={position}, Rotation={rotation}, Scale={scale} }}</DisplayString>
+  </Type>
+</AutoVisualizer>

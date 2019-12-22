@@ -1,49 +1,41 @@
 #pragma once
 
-#include "Geometry.h"
+#include <DirectXMath.h>
+#include "Common.h"
 
-// @TODO: refactor this out
-
-namespace Egg {
-
-	struct WireframeVertex {
-		DirectX::XMFLOAT3 position;
-		DirectX::XMFLOAT3 color;
-	};
+namespace Egg::Graphics {
 
 	class BasicGeometry {
 		~BasicGeometry() = delete;
 		BasicGeometry() = delete;
 
 	public:
+		/*
+		Fills a vertices data buffer's position values. Creates a unit length line on the Z+ axis
+		Designed to work with linelist primitive topology
+		writes 2 vertices, 12 bytes (3 floats, x,y,z)
+		*/
+		static void CreateLine(_Out_writes_(2 * stride) void * dstData, unsigned int stride, unsigned int positionDataOffset = 0);
+
 
 		/*
-		* This function creates a UnitZ for raycast debugging purposed, meat to be used in conjunction with DebugPhysxRayVS.
+		Fills a vertices data buffer's position values. Creates a box around the origo with the given halfextents
+		Designed to work with linelist primitive topology
+		writes 24 vertices
 		*/
-		static Graphics::Geometry CreateLine(ID3D12Device * device, const DirectX::XMFLOAT3 & color);
+		static void CreateBoxWireframe(_Out_writes_(24 * stride) void * dstData, unsigned int stride, const DirectX::XMFLOAT3 & halfExtents, unsigned int positionDataOffset = 0);
 
 		/*
-		* Creates a unit box wireframe around the origo
+		Fills a vertices data buffer's position values. Creates a grid
+		Designed to work with linelist primitive topology
 		*/
-		static Graphics::Geometry CreateBoxWireframe(ID3D12Device * device, const DirectX::XMFLOAT3 & he, const DirectX::XMFLOAT3 & color);
+		static void CreatePlaneWireframe(_Out_writes_(4 * (gridSectionCount + 1) * stride) void * dstData, unsigned int stride, unsigned int gridSectionCount, unsigned int positionDataOffset = 0);
 
 		/*
-		* Creates a unit plane wireframe on the xz plane from the origin
+		Fills a vertices data buffer's position values. Creates a capsule with the given arguments
+		Designed to work with linelist primitive topology
 		*/
-		static Graphics::Geometry CreatePlaneWireframe(ID3D12Device * device, unsigned int gridSectionCount, const DirectX::XMFLOAT3 & color);
-
-		/*
-		* Creates a capsule silhouette suitable for physics debugging and bounding box drawing as its a linelist has only position and color attributes,
-		* use it with DebugPhysicsVS/PS
-		*/
-		static Graphics::Geometry CreateCapsuleWireframe(ID3D12Device * device, float height, float radius, const DirectX::XMFLOAT3 & color);
-
-		/*
-		* Create a Unit sized box instance, origin is (0,0,0),
-		* each vertex has position, normal, texture
-		*/
-		static Graphics::Geometry CreateBox(ID3D12Device * device);
-
+		static void CreateCapsuleWireframe(_Out_writes_(108 * stride) void * dstData, unsigned int stride, float height, float radius, unsigned int positionDataOffset = 0);
 
 	};
 
