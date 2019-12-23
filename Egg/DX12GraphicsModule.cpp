@@ -409,7 +409,6 @@ namespace Egg::Graphics::DX12 {
 		backbufferIndex = swapChain->GetCurrentBackBufferIndex();
 	}
 
-	D3D12_GPU_DESCRIPTOR_HANDLE gd;
 	RenderItem * itm;
 
 	HFONT DX12GraphicsModule::LoadFont(const std::wstring & fontName) {
@@ -417,13 +416,13 @@ namespace Egg::Graphics::DX12 {
 
 		HTEXTURE tex = textureLibrary.LoadTexture2D(L"btn_background.png");
 
+		HTEXTURE tex2 = textureLibrary.LoadTexture2D(L"debug.png");
+
 		itm = renderItemColl.GetItem(renderItemColl.CreateItem());
 		
 		textureLibrary.AllocateTextures(itm, 1);
 
 		textureLibrary.SetTexture(itm, 0, tex);
-		
-
 
 		return fontLibrary.LoadFont(fontName, fr.resourceUploader.get());
 	}
@@ -432,9 +431,13 @@ namespace Egg::Graphics::DX12 {
 		FrameResource & fr = frameResources.at(backbufferIndex);
 		spriteBatch->Begin(fr.commandList.Get());
 
-		fontLibrary.Get(font)->DrawString(spriteBatch.get(), "Hello World", DirectX::g_XMZero);
 
-		spriteBatch->Draw(itm->texturesHandle, DirectX::XMUINT2(512, 128), DirectX::XMFLOAT2{ 400.0f, 400.0f });
+		SpriteFont * f = fontLibrary.Get(font);
+		f->DrawString(spriteBatch.get(), "Hello World", DirectX::g_XMZero);
+
+		spriteBatch->Draw(itm->texturesHandle, DirectX::XMUINT2(512, 128), DirectX::XMFLOAT2{ 100.0f, 300.0f });
+
+		//spriteBatch->Draw(f->texture, f->textureSize, DirectX::XMFLOAT2{ 0, 100.0f });
 
 		spriteBatch->End();
 	}

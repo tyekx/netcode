@@ -10,7 +10,6 @@ namespace Egg::Graphics::DX12::Resource {
 
 		struct LODLevelResources {
 			com_ptr<ID3D12Resource> resource;
-			D3D12_RESOURCE_DESC resourceDesc;
 			void * cpuResource;
 			UINT sizeInBytes;
 		};
@@ -24,13 +23,12 @@ namespace Egg::Graphics::DX12::Resource {
 			lodLevels[lodLevelsLength].indexCount = sizeInBytes / 4U;
 			lodResources[lodLevelsLength].cpuResource = vertexData;
 			lodResources[lodLevelsLength].sizeInBytes = sizeInBytes;
-			lodResources[lodLevelsLength].resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes);
 			lodLevelsLength += 1;
 		}
 
 		virtual void UploadResources(IResourceUploader * uploader) override {
 			for(UINT i = 0; i < lodLevelsLength; ++i) {
-				uploader->Upload(lodResources[i].resourceDesc, lodResources[i].resource.Get(), lodResources[i].cpuResource, lodResources[i].sizeInBytes);
+				uploader->Upload(lodResources[i].resource.Get(), reinterpret_cast<const BYTE*>(lodResources[i].cpuResource), lodResources[i].sizeInBytes);
 				uploader->Transition(lodResources[i].resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 			}
 		}
@@ -57,13 +55,10 @@ namespace Egg::Graphics::DX12::Resource {
 
 			UINT offset = 0;
 			for(UINT i = 0; i < lodLevelsLength; ++i) {
-
-				lodResources[i].resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(lodLevels[i].indexBufferView.SizeInBytes);
-
 				DX_API("Failed to create placed resource")
 					device->CreatePlacedResource(resourceHeap.Get(),
 												 offset,
-												 &lodResources[i].resourceDesc,
+												 &CD3DX12_RESOURCE_DESC::Buffer(lodLevels[i].indexBufferView.SizeInBytes),
 												 D3D12_RESOURCE_STATE_COPY_DEST,
 												 nullptr,
 												 IID_PPV_ARGS(lodResources[i].resource.GetAddressOf()));

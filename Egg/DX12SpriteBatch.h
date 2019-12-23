@@ -160,8 +160,7 @@ namespace Egg::Graphics::DX12
 
             com_ptr<ID3D12Resource> indexBuffer;
             D3D12_INDEX_BUFFER_VIEW indexBufferView;
-            com_ptr<ID3D12RootSignature> rootSignatureStatic;
-            com_ptr<ID3D12RootSignature> rootSignatureHeap;
+            com_ptr<ID3D12RootSignature> rootSignature;
             ID3D12Device * mDevice;
 
         private:

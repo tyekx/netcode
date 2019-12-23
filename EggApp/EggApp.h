@@ -199,7 +199,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		LoadItem(graphics.get(), &ybotModel, model);
 
 
-		graphics->LoadFont(L"titillium60.spritefont");
+		Egg::HFONT f = graphics->LoadFont(L"titillium60.spritefont");
 
 		for(auto & i : model->meshes) {
 			Egg::HITEM item = i.mesh;

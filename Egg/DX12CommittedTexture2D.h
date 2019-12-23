@@ -22,9 +22,7 @@ namespace Egg::Graphics::DX12::Resource {
 
 		CommittedTexture2D & operator=(CommittedTexture2D t) noexcept;
 
-		void SetDesc(const D3D12_RESOURCE_DESC & resDesc) noexcept;
-
-		void CreateResources(ID3D12Device * device, const D3D12_RESOURCE_DESC & resDesc, DirectX::ScratchImage && sImage);
+		void CreateResources(ID3D12Device * device, DirectX::ScratchImage && sImage);
 
 		virtual void CreateResources(ID3D12Device * device) override;
 

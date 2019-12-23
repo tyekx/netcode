@@ -3,7 +3,7 @@
 "            DENY_DOMAIN_SHADER_ROOT_ACCESS |" \
 "            DENY_GEOMETRY_SHADER_ROOT_ACCESS |" \
 "            DENY_HULL_SHADER_ROOT_ACCESS )," \
-"DescriptorTable ( SRV(t0), visibility = SHADER_VISIBILITY_PIXEL ),"\
+"DescriptorTable ( SRV(t0) ),"\
 "CBV(b0), "\
 "StaticSampler(s0,"\
 "           filter = FILTER_ANISOTROPIC,"\
@@ -12,7 +12,7 @@
 "           addressW = TEXTURE_ADDRESS_CLAMP,"\
 "           visibility = SHADER_VISIBILITY_PIXEL )"
 
-Texture2D spriteTexture : register(t0);
+Texture2D<float4> spriteTexture : register(t0);
 SamplerState samplerState : register(s0);
 
 
@@ -47,7 +47,8 @@ VSOutput SpriteVertexShader(IAOutput iao)
 [RootSignature(SpriteStaticRS)]
 float4 SpritePixelShader(VSOutput vso) : SV_Target0
 {
-    //return spriteTexture.Sample(samplerState, vso.texCoord);
-    return spriteTexture.Sample(samplerState, float2(vso.texCoord.x, vso.texCoord.y));
+    return spriteTexture.Sample(samplerState, vso.texCoord);
+   // float4 v = spriteTexture.Sample(samplerState, vso.texCoord);
+   // return float4(v.xyz * v.a, 1.0f);
     //return float4(vso.texCoord, 0, 1);
 }

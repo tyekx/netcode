@@ -9,10 +9,31 @@ namespace Egg::Graphics::DX12::Resource {
 	class ResourceUploadBatch : public IResourceUploadBatch {
 
 		struct CopyItem {
-			D3D12_RESOURCE_DESC resourceDesc;
 			ID3D12Resource * destResource;
-			void * cpuResource;
-			UINT cpuResourceSizeInBytes;
+
+			union {
+				// buffer
+				struct {
+					const BYTE * buffer;
+					UINT sizeInBytes;
+				};
+				struct {
+					const DirectX::Image * images;
+					UINT numImages;
+				};
+			};
+
+			D3D12_RESOURCE_DIMENSION dimension;
+
+			CopyItem(ID3D12Resource * resource, const BYTE * srcBuffer, UINT sizeInBytes) : 
+				destResource{ resource }, buffer{ srcBuffer }, sizeInBytes{ sizeInBytes }, dimension{ D3D12_RESOURCE_DIMENSION_BUFFER } {
+
+			}
+
+			CopyItem(ID3D12Resource * resource, const DirectX::Image * images, UINT numImages = 1) :
+				destResource{ resource }, images{ images }, numImages{ numImages }, dimension{ D3D12_RESOURCE_DIMENSION_TEXTURE2D } {
+
+			}
 		};
 
 		struct TransitionItem {
@@ -39,9 +60,7 @@ namespace Egg::Graphics::DX12::Resource {
 		std::queue<CopyItem> items;
 		std::queue<TransitionItem> transitions;
 
-		UINT64 CalcTex2DCopySize(const D3D12_RESOURCE_DESC & resourceDesc);
-
-		UINT64 CalcCopySize(const D3D12_RESOURCE_DESC & resourceDesc);
+		UINT64 CalcCopySize(const DirectX::Image* images, UINT numImages);
 
 		void WaitForUpload();
 
@@ -70,8 +89,15 @@ namespace Egg::Graphics::DX12::Resource {
 		void TransitionAll(ID3D12CommandQueue * directCommandQueue);
 
 		void UploadAll(ID3D12CommandQueue * copyCommandQueue);
+
+		void UpdateCopySize(UINT64 requiredSize);
 	public:
-		virtual void Upload(const D3D12_RESOURCE_DESC & resourceDesc, ID3D12Resource * destResource, void * cpuResource, UINT sizeInBytes) override;
+
+		virtual void Upload(ID3D12Resource * destResource, const DirectX::Image * image) override;
+		virtual void Upload(ID3D12Resource * destResource, const DirectX::Image * images, UINT numImages) override;
+		virtual void Upload(ID3D12Resource * destResource, const BYTE * cpuResource, UINT64 sizeInBytes) override;
+
+		//virtual void Upload(const D3D12_RESOURCE_DESC & resourceDesc, ID3D12Resource * destResource, void * cpuResource, UINT sizeInBytes) override;
 
 		virtual void Transition(ID3D12Resource * resource, D3D12_RESOURCE_STATES preState, D3D12_RESOURCE_STATES postState) override;
 

@@ -115,7 +115,7 @@ namespace Egg::Graphics::DX12 {
 		indexDataDesc.SlicePitch = indexDataDesc.RowPitch;
 
 		// Upload the resource
-		upload->Upload(bufferDesc, indexBuffer.Get(), indexValues.data(), static_cast<UINT>(bufferDesc.Width));
+		upload->Upload(indexBuffer.Get(), reinterpret_cast<const BYTE*>(indexValues.data()), static_cast<UINT>(bufferDesc.Width));
 		upload->Transition(indexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
 		// Create the index buffer view
@@ -127,73 +127,8 @@ namespace Egg::Graphics::DX12 {
 
 	void SpriteBatch::DeviceResources::CreateRootSignatures(_In_ ID3D12Device * device)
 	{
-		D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
-			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
-
-		CD3DX12_DESCRIPTOR_RANGE textureSRV(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-
-		{
-			// Same as CommonStates::StaticLinearClamp
-			CD3DX12_STATIC_SAMPLER_DESC sampler(
-				0, // register
-				D3D12_FILTER_MIN_MAG_MIP_LINEAR,
-				D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-				D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-				D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-				0.f,
-				16,
-				D3D12_COMPARISON_FUNC_LESS_EQUAL,
-				D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE,
-				0.f,
-				D3D12_FLOAT32_MAX,
-				D3D12_SHADER_VISIBILITY_PIXEL);
-
-			CD3DX12_ROOT_PARAMETER rootParameters[RootParameterIndex::RootParameterCount - 1] = {};
-			rootParameters[RootParameterIndex::TextureSRV].InitAsDescriptorTable(1, &textureSRV, D3D12_SHADER_VISIBILITY_PIXEL);
-			rootParameters[RootParameterIndex::ConstantBuffer].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
-
-			CD3DX12_ROOT_SIGNATURE_DESC rsigDesc;
-			rsigDesc.Init(_countof(rootParameters), rootParameters, 1, &sampler, rootSignatureFlags);
-
-			Microsoft::WRL::ComPtr<ID3DBlob> pSignature;
-			Microsoft::WRL::ComPtr<ID3DBlob> pError;
-			HRESULT hr = D3D12SerializeRootSignature(&rsigDesc, D3D_ROOT_SIGNATURE_VERSION_1, pSignature.GetAddressOf(), pError.GetAddressOf());
-			if(SUCCEEDED(hr))
-			{
-				hr = device->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(),
-												 IID_PPV_ARGS(rootSignatureStatic.ReleaseAndGetAddressOf())
-				);
-			}
-
-			//rootSignatureHeap->SetName(L"RootSig SpriteBatch");
-		}
-
-		{
-			CD3DX12_DESCRIPTOR_RANGE textureSampler(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);
-
-			CD3DX12_ROOT_PARAMETER rootParameters[RootParameterIndex::RootParameterCount] = {};
-			rootParameters[RootParameterIndex::TextureSRV].InitAsDescriptorTable(1, &textureSRV, D3D12_SHADER_VISIBILITY_PIXEL);
-			rootParameters[RootParameterIndex::ConstantBuffer].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
-			rootParameters[RootParameterIndex::TextureSampler].InitAsDescriptorTable(1, &textureSampler, D3D12_SHADER_VISIBILITY_PIXEL);
-
-			CD3DX12_ROOT_SIGNATURE_DESC rsigDesc;
-			rsigDesc.Init(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlags);
-
-			Microsoft::WRL::ComPtr<ID3DBlob> pSignature;
-			Microsoft::WRL::ComPtr<ID3DBlob> pError;
-			HRESULT hr = D3D12SerializeRootSignature(&rsigDesc, D3D_ROOT_SIGNATURE_VERSION_1, pSignature.GetAddressOf(), pError.GetAddressOf());
-			if(SUCCEEDED(hr))
-			{
-				hr = device->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(),
-												 IID_PPV_ARGS(rootSignatureStatic.ReleaseAndGetAddressOf())
-				);
-			}
-
-			//rootSignatureHeap->SetName(L"RootSig SpriteBatch");
-		}
+		DX_API("Failed to create root signature")
+			device->CreateRootSignature(0, SpriteFont_SpritePixelShader, sizeof(SpriteFont_SpritePixelShader), IID_PPV_ARGS(rootSignature.GetAddressOf()));
 	}
 
 	std::vector<short> SpriteBatch::DeviceResources::CreateIndexValues()
@@ -228,7 +163,6 @@ namespace Egg::Graphics::DX12 {
 		mSortMode(SpriteSortMode_Deferred),
 		mSampler{},
 		mTransformMatrix(MatrixIdentity),
-		// mVertexSegment{},
 		mVertexPageSize(6 * 4 * MaxBatchSize * VerticesPerSprite),
 		mSpriteCount(0),
 		mDeviceResources(std::make_unique<DeviceResources>(device, upload))
@@ -283,7 +217,7 @@ namespace Egg::Graphics::DX12 {
 			mRootSignature = psoDesc.customRootSignature;
 		} else
 		{
-			mRootSignature = (psoDesc.samplerDescriptor.ptr) ? mDeviceResources->rootSignatureHeap.Get() : mDeviceResources->rootSignatureStatic.Get();
+			mRootSignature = mDeviceResources->rootSignature.Get();
 		}
 		d3dDesc.pRootSignature = mRootSignature.Get();
 

@@ -1,5 +1,6 @@
 #include "DX12CommittedIBuffer.h"
-
+// @TODO revise legacy code
+/*
 namespace Egg::Graphics::DX12::Resource {
 
 	void CommittedIBuffer::SetDesc(const D3D12_RESOURCE_DESC & resDesc) {
@@ -61,7 +62,7 @@ namespace Egg::Graphics::DX12::Resource {
 			return;
 		}
 		copyCommandList->CopyBufferRegion(resource.Get(), 0, uploadResource.Get(), 0, resourceDesc.Width); 
-		copyCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER));*/
+		copyCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER));
 	}
 
 	void CommittedIBuffer::ReleaseUploadResources() {
@@ -69,3 +70,4 @@ namespace Egg::Graphics::DX12::Resource {
 	}
 
 }
+*/

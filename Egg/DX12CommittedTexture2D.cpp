@@ -10,10 +10,6 @@ namespace Egg::Graphics::DX12::Resource {
 		resourceDesc = t.resourceDesc;
 		return *this;
 	}
-	
-	void CommittedTexture2D::SetDesc(const D3D12_RESOURCE_DESC & resDesc) noexcept {
-		resourceDesc = resDesc;
-	}
 
 	void CommittedTexture2D::CreateResources(ID3D12Device * device) {
 		DX_API("failed to create committed resource for texture file")
@@ -26,10 +22,24 @@ namespace Egg::Graphics::DX12::Resource {
 				IID_PPV_ARGS(resource.GetAddressOf()));
 	}
 
-	void CommittedTexture2D::CreateResources(ID3D12Device * device, const D3D12_RESOURCE_DESC & resDesc, DirectX::ScratchImage && sImage) {
-		SetDesc(resDesc);
-		CreateResources(device);
+	void CommittedTexture2D::CreateResources(ID3D12Device * device, DirectX::ScratchImage && sImage) {
 		scratchImage = std::move(sImage);
+		
+		DirectX::TexMetadata meta = scratchImage.GetMetadata();
+
+		resourceDesc.Alignment = 0;
+		resourceDesc.DepthOrArraySize = meta.arraySize;
+		resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		resourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+		resourceDesc.Format = meta.format;
+		resourceDesc.Height = meta.height;
+		resourceDesc.Width = meta.width;
+		resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+		resourceDesc.MipLevels = meta.mipLevels;
+		resourceDesc.SampleDesc.Count = 1;
+		resourceDesc.SampleDesc.Quality = 0;
+
+		CreateResources(device);
 	}
 
 	void CommittedTexture2D::ReleaseResources() {
@@ -37,7 +47,7 @@ namespace Egg::Graphics::DX12::Resource {
 	}
 
 	void CommittedTexture2D::UploadResources(IResourceUploader* uploader) {
-		uploader->Upload(resourceDesc, resource.Get(), scratchImage.GetPixels(), scratchImage.GetPixelsSize());
+		uploader->Upload(resource.Get(), scratchImage.GetImages(), scratchImage.GetImageCount());
 		uploader->Transition(resource.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_GENERIC_READ);
 	}
 
@@ -54,8 +64,7 @@ namespace Egg::Graphics::DX12::Resource {
 	}
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC CommittedTexture2D::GetSRV() const {
-		D3D12_SHADER_RESOURCE_VIEW_DESC srvd;
-		ZeroMemory(&srvd, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvd = {};
 		srvd.Format = resourceDesc.Format;
 		srvd.Texture2D.MipLevels = resourceDesc.MipLevels;
 		srvd.Texture2D.MostDetailedMip = 0;

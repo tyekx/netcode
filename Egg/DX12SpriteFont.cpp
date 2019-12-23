@@ -56,13 +56,14 @@ namespace Egg::Graphics::DX12 {
 
 		textureResource->SetName(L"SpriteFont:Texture");
 
-		D3D12_SUBRESOURCE_DATA subres = {};
-		subres.pData = data;
-		subres.RowPitch = ptrdiff_t(stride);
-		subres.SlicePitch = ptrdiff_t(stride) * ptrdiff_t(rows);
+		HRESULT hr = imageData.Initialize2D(format, desc.Width, desc.Height, 1, desc.MipLevels);
 
-		upload->Upload(desc, textureResource.Get(), data, stride * rows);
-		upload->Transition(textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		memcpy(imageData.GetImage(0, 0, 0)->pixels, data, imageData.GetImage(0, 0, 0)->slicePitch);
+
+		ASSERT(hr == S_OK, "Failed to initialize2D");
+
+		upload->Upload(textureResource.Get(), imageData.GetImages(), imageData.GetImageCount());
+		upload->Transition(textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
 	}
 
 	void SpriteFont::Construct(ID3D12Device * device, Resource::IResourceUploader * upload, BinaryReader * reader, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor) {
@@ -107,6 +108,9 @@ namespace Egg::Graphics::DX12 {
 		ASSERT(desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D, "Only texture2d is supported here");
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MipLevels = (!desc.MipLevels) ? UINT(-1) : desc.MipLevels;
+		srvDesc.Texture2D.MostDetailedMip = 0;
+		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+		srvDesc.Texture2D.PlaneSlice = 0;
 
 		device->CreateShaderResourceView(textureResource.Get(), &srvDesc, cpuDescriptorDest);
 
@@ -117,15 +121,16 @@ namespace Egg::Graphics::DX12 {
 
 	SpriteFont::SpriteFont(ID3D12Device * device, Resource::IResourceUploader * upload, _In_z_ wchar_t const * fileName, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor)
 	{
-		reader = std::make_unique<BinaryReader>(fileName);
+		BinaryReader reader(fileName);
 
-		Construct(device, upload, reader.get(), cpuDescriptorDest, gpuDescriptor);
+		Construct(device, upload, &reader, cpuDescriptorDest, gpuDescriptor);
 	}
 
 	SpriteFont::SpriteFont(ID3D12Device * device, Resource::IResourceUploader * upload, _In_reads_bytes_(dataSize) uint8_t * dataBlob, size_t dataSize, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor)
 	{
-		reader = std::make_unique<BinaryReader>(dataBlob, dataSize);
-		Construct(device, upload, reader.get(), cpuDescriptorDest, gpuDescriptor);
+		BinaryReader reader(dataBlob, dataSize);
+
+		Construct(device, upload, &reader, cpuDescriptorDest, gpuDescriptor);
 	}
 
 	void XM_CALLCONV SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ const char * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, float scale, SpriteEffects effects, float layerDepth) const

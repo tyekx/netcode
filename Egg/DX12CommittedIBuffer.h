@@ -3,7 +3,7 @@
 #include "DX12Resource.h"
 
 namespace Egg::Graphics::DX12::Resource {
-
+	/*
 	class CommittedIBuffer : public AIBuffer {
 		com_ptr<ID3D12Resource> resource;
 		com_ptr<ID3D12Resource> uploadResource;
@@ -24,6 +24,6 @@ namespace Egg::Graphics::DX12::Resource {
 		virtual void UploadResources(IResourceUploader * uploader)  override;
 
 		virtual void ReleaseUploadResources() override;
-	};
+	};*/
 
 }

@@ -98,8 +98,7 @@ namespace Egg::Graphics::DX12 {
 
 			ASSERT((nextDescriptor + numTextures) < texturesNumDescriptors, "Descriptor overflow");
 
-			D3D12_GPU_DESCRIPTOR_HANDLE gdh = texturesHeap->GetGPUDescriptorHandleForHeapStart();
-			gdh.ptr = gdh.ptr + nextDescriptor * incrementSize;
+			CD3DX12_GPU_DESCRIPTOR_HANDLE gdh{ texturesHeap->GetGPUDescriptorHandleForHeapStart(), static_cast<INT>(nextDescriptor), incrementSize };
 
 			renderItem->texturesId = nextDescriptor;
 			renderItem->texturesLength = numTextures;
@@ -115,11 +114,11 @@ namespace Egg::Graphics::DX12 {
 			uploadPile.clear();
 		}
 
-		void SetTexture(RenderItem * renderItem, UINT localIdx, HTEXTURE texture) {
+		void SetTexture(const RenderItem * renderItem, UINT localIdx, HTEXTURE texture) {
 			ASSERT(renderItem->texturesLength > localIdx, "Setting texture is out of bounds");
 			
 			const UINT absoluteIdx = renderItem->texturesId + localIdx;
-			const D3D12_CPU_DESCRIPTOR_HANDLE cdh = CD3DX12_CPU_DESCRIPTOR_HANDLE{ texturesHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(absoluteIdx), incrementSize };
+			const CD3DX12_CPU_DESCRIPTOR_HANDLE cdh{ texturesHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(absoluteIdx), incrementSize };
 
 			const auto * itexture = Get(texture);
 			if(itexture == nullptr) {

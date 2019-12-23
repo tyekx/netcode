@@ -8,7 +8,8 @@ namespace Egg::Graphics::DX12::Resource {
 
 		struct LODLevelResources {
 			com_ptr<ID3D12Resource> resource;
-			D3D12_RESOURCE_DESC resourceDesc;
+			const void * srcData;
+			UINT64 sizeInBytes;
 		};
 
 		std::vector<LODLevelResources> lodLevels;
@@ -17,7 +18,7 @@ namespace Egg::Graphics::DX12::Resource {
 	public:
 		void SetStride(UINT strideInBytes);
 
-		void AddLODLevel(ID3D12Device * device, const D3D12_RESOURCE_DESC & desc, const void * srcData, UINT64 sizeInBytes, UINT strideInBytes);
+		void AddLODLevel(ID3D12Device * device, const void * srcData, UINT64 sizeInBytes, UINT strideInBytes);
 
 		virtual void CreateResources(ID3D12Device * device)  override;
 

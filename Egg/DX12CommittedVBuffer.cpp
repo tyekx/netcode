@@ -6,16 +6,17 @@ namespace Egg::Graphics::DX12::Resource {
 		stride = strideInBytes;
 	}
 
-	void CommittedVBuffer::AddLODLevel(ID3D12Device * device, const D3D12_RESOURCE_DESC & desc, const void * srcData, UINT64 sizeInBytes, UINT strideInBytes) {
+	void CommittedVBuffer::AddLODLevel(ID3D12Device * device, const void * srcData, UINT64 sizeInBytes, UINT strideInBytes) {
 		SetStride(strideInBytes);
 
 		LODLevelResources lodRes;
-		lodRes.resourceDesc = desc;
+		lodRes.sizeInBytes = sizeInBytes;
+		lodRes.srcData = srcData;
 		DX_API("Failed to create dimension buffer in default heap for committed vertex buffer")
 			device->CreateCommittedResource(
 				&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 				D3D12_HEAP_FLAG_NONE,
-				&lodRes.resourceDesc,
+				&CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes),
 				D3D12_RESOURCE_STATE_COPY_DEST,
 				nullptr,
 				IID_PPV_ARGS(lodRes.resource.GetAddressOf()));
@@ -33,7 +34,7 @@ namespace Egg::Graphics::DX12::Resource {
 
 	void CommittedVBuffer::UploadResources(IResourceUploader * uploader) {
 		for(auto & i : lodLevels) {
-			uploader->Upload(i.resourceDesc, i.resource.Get(), nullptr, 0);
+			uploader->Upload(i.resource.Get(), reinterpret_cast<const BYTE*>(i.srcData), i.sizeInBytes);
 			uploader->Transition(i.resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 		}
 	}

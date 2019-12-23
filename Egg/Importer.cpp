@@ -20,38 +20,18 @@ namespace Egg::Importer {
 
 		DirectX::TexMetadata metaData;
 		DirectX::ScratchImage sImage;
-		DirectX::ScratchImage outputIm;
+		//DirectX::ScratchImage outputIm;
 
 		DX_API("Failed to load image: %S", wstr.c_str())
 			DirectX::LoadFromWICFile(wstr.c_str(), 0, &metaData, sImage);
 
-		bool isPow2 = Egg::Utility::IsPowerOf2((unsigned int)metaData.width);
-
-		ASSERT(isPow2, "texture resolution must be power of 2");
-
 		//ASSERT(metaData.width >= 512 && metaData.width == metaData.height, "Invalid texture parameters");
 
-		DX_API("Failed to generate mip levels")
-		DirectX::GenerateMipMaps(sImage.GetImages(), sImage.GetImageCount(), sImage.GetMetadata(), DirectX::TEX_FILTER_BOX, 4, outputIm);
-
-		metaData = outputIm.GetMetadata();
-
-		D3D12_RESOURCE_DESC rdsc;
-		ZeroMemory(&rdsc, sizeof(D3D12_RESOURCE_DESC));
-		rdsc.DepthOrArraySize = 1;
-		rdsc.Height = (unsigned int)metaData.height;
-		rdsc.Width = (unsigned int)metaData.width;
-		rdsc.Format = metaData.format;
-		rdsc.MipLevels = static_cast<UINT16>(metaData.mipLevels);
-		rdsc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-		rdsc.Alignment = 0;
-		rdsc.SampleDesc.Count = 1;
-		rdsc.SampleDesc.Quality = 0;
-		rdsc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-		rdsc.Flags = D3D12_RESOURCE_FLAG_NONE;
+		//DX_API("Failed to generate mip levels")
+		//DirectX::GenerateMipMaps(sImage.GetImages(), sImage.GetImageCount(), sImage.GetMetadata(), DirectX::TEX_FILTER_BOX, 4, outputIm);
 
 		std::unique_ptr<Graphics::DX12::Resource::CommittedTexture2D> texture = std::make_unique<Graphics::DX12::Resource::CommittedTexture2D>();
-		texture->CreateResources(device, rdsc, std::move(outputIm));
+		texture->CreateResources(device, std::move(sImage));
 		return texture;
 	}
 

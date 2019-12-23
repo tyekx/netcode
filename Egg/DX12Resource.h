@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DX12Common.h"
+#include <DirectXTex/DirectXTex.h>
 
 namespace Egg::Graphics::DX12::Resource {
 
@@ -30,7 +31,9 @@ namespace Egg::Graphics::DX12::Resource {
 	class IResourceUploader : public IResource {
 	public:
 		virtual ~IResourceUploader() = default;
-		virtual void Upload(const D3D12_RESOURCE_DESC & resourceDesc, ID3D12Resource * destResource, void * cpuResource, UINT sizeInBytes) = 0;
+		virtual void Upload(ID3D12Resource * destResource, const DirectX::Image * image) = 0;
+		virtual void Upload(ID3D12Resource * destResource, const DirectX::Image * images, UINT numImages) = 0;
+		virtual void Upload(ID3D12Resource * destResource, const BYTE * cpuResource, UINT64 sizeInBytes) = 0;
 		virtual void Transition(ID3D12Resource * resource, D3D12_RESOURCE_STATES preState, D3D12_RESOURCE_STATES postState) = 0;
 	};
 

@@ -4,23 +4,12 @@
 
 namespace Egg::Graphics::DX12::Resource {
 
-	UINT64 ResourceUploadBatch::CalcTex2DCopySize(const D3D12_RESOURCE_DESC & resourceDesc) {
-		UINT64 copyableSize;
-		device->GetCopyableFootprints(&resourceDesc, 0, resourceDesc.MipLevels, 0, nullptr, nullptr, nullptr, &copyableSize);
-		return copyableSize;
-	}
-
-	UINT64 ResourceUploadBatch::CalcCopySize(const D3D12_RESOURCE_DESC & resourceDesc) {
-		switch(resourceDesc.Dimension) {
-		case D3D12_RESOURCE_DIMENSION_BUFFER:
-			return resourceDesc.Width;
-		case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
-			return CalcTex2DCopySize(resourceDesc);
-		default:
-			ASSERT(false, "error");
-			break;
+	UINT64 ResourceUploadBatch::CalcCopySize(const DirectX::Image * images, UINT numImages) {
+		UINT64 sum = 0;
+		for(UINT i = 0; i < numImages; ++i) {
+			sum += images[i].slicePitch;
 		}
-		return 0;
+		return sum;
 	}
 
 	void ResourceUploadBatch::WaitForUpload() {
@@ -37,36 +26,27 @@ namespace Egg::Graphics::DX12::Resource {
 	}
 
 	void ResourceUploadBatch::CopyTex2D(CopyItem & item) {
-		UINT bytesPerPixel = static_cast<UINT>((DirectX::BitsPerPixel(item.resourceDesc.Format) / 8U));
 		static D3D12_SUBRESOURCE_DATA subData[16];
 
-		const bool isSupported = item.resourceDesc.MipLevels == 1 || (Egg::Utility::IsPowerOf2(static_cast<UINT>(item.resourceDesc.Width)) && Egg::Utility::IsPowerOf2(item.resourceDesc.Height));
-		ASSERT(item.resourceDesc.Width < (1 << 16), "???");
-		ASSERT(isSupported, "The current version only supports power of 2 dimensions for mip levels");
+		ASSERT(item.numImages <= 16, "A maximum of 16 mipmap levels are supported");
 
-		UINT64 total = 0;
-		UINT width = static_cast<UINT>(item.resourceDesc.Width);
-		UINT height = item.resourceDesc.Height;
-		for(UINT i = 0; i < item.resourceDesc.MipLevels; ++i) {
-			subData[i].pData = reinterpret_cast<BYTE *>(item.cpuResource) + total;
-			subData[i].RowPitch = width * bytesPerPixel;
-			subData[i].SlicePitch = width * height * bytesPerPixel;
-			total += subData[i].SlicePitch;
-			width >>= 1;
-			height >>= 1;
+		for(UINT i = 0; i < item.numImages; ++i) {
+			subData[i].pData = item.images[i].pixels;
+			subData[i].RowPitch = item.images[i].rowPitch;
+			subData[i].SlicePitch = item.images[i].slicePitch;
 		}
 
-		UpdateSubresources(copyCommandList.Get(), item.destResource, uploadResource.Get(), 0, 0, item.resourceDesc.MipLevels, subData);
+		_Analysis_assume_(item.numImages <= 16)
+		UpdateSubresources(copyCommandList.Get(), item.destResource, uploadResource.Get(), 0, 0, item.numImages, subData);
 	}
 
 	void ResourceUploadBatch::CopyBuffer(CopyItem & item) {
-		memcpy(mappedPtr, item.cpuResource, item.cpuResourceSizeInBytes);
-		copyCommandList->CopyBufferRegion(item.destResource, 0, uploadResource.Get(), 0, item.resourceDesc.Width);
+		memcpy(mappedPtr, item.buffer, item.sizeInBytes);
+		copyCommandList->CopyBufferRegion(item.destResource, 0, uploadResource.Get(), 0, item.sizeInBytes);
 	}
 
 	void ResourceUploadBatch::RecordCopyCommand(CopyItem & item) {
-		// Texture2D
-		switch(item.resourceDesc.Dimension)
+		switch(item.dimension)
 		{
 		case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
 			CopyTex2D(item);
@@ -193,13 +173,30 @@ namespace Egg::Graphics::DX12::Resource {
 		while(UploadOne(copyCommandQueue));
 	}
 
-	void ResourceUploadBatch::Upload(const D3D12_RESOURCE_DESC & resourceDesc, ID3D12Resource * destResource, void * cpuResource, UINT sizeInBytes) {
-		items.push({ resourceDesc, destResource, cpuResource, sizeInBytes });
-		UINT64 copySize = CalcCopySize(resourceDesc);
-
-		if(copySize > maxCopySize) {
-			maxCopySize = copySize;
+	void ResourceUploadBatch::UpdateCopySize(UINT64 requiredSize)
+	{
+		if(requiredSize > maxCopySize) {
+			maxCopySize = requiredSize;
 		}
+	}
+
+	void ResourceUploadBatch::Upload(ID3D12Resource * destResource, const DirectX::Image * image)
+	{
+		UpdateCopySize(CalcCopySize(image, 1));
+		items.emplace(destResource, image);
+	}
+
+	void ResourceUploadBatch::Upload(ID3D12Resource * destResource, const DirectX::Image * images, UINT numImages)
+	{
+		UpdateCopySize(CalcCopySize(images, numImages));
+		items.emplace(destResource, images, numImages);
+	}
+
+	void ResourceUploadBatch::Upload(ID3D12Resource * destResource, const BYTE * cpuResource, UINT64 sizeInBytes)
+	{
+		UpdateCopySize(sizeInBytes);
+
+		items.emplace(destResource, cpuResource, sizeInBytes);
 	}
 
 	void ResourceUploadBatch::Transition(ID3D12Resource * resource, D3D12_RESOURCE_STATES preState, D3D12_RESOURCE_STATES postState) {

@@ -8,6 +8,7 @@
 #include "DX12Resource.h"
 #include "DX12SpriteBatch.h"
 #include <DirectXColors.h>
+#include <DirectXTex/DirectXTex.h>
 
 namespace Egg::Graphics::DX12 {
 
@@ -87,10 +88,8 @@ namespace Egg::Graphics::DX12 {
 			float XAdvance;
 		};
 
-		std::unique_ptr<BinaryReader> reader;
+		DirectX::ScratchImage imageData;
 
-
-	private:
 		com_ptr<ID3D12Resource> textureResource;
 		D3D12_GPU_DESCRIPTOR_HANDLE texture;
 		DirectX::XMUINT2 textureSize;
@@ -100,7 +99,6 @@ namespace Egg::Graphics::DX12 {
 		// cache members
 		mutable size_t utfBufferSize;
 		mutable std::unique_ptr<wchar_t[]> utfBuffer;
-
 
 		template<typename TAction>
 		void ForEachGlyph(wchar_t const * text, TAction action) const
