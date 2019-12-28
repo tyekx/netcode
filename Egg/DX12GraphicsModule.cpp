@@ -1,5 +1,6 @@
 #include "DX12GraphicsModule.h"
 #include "DX12SpriteFont.h"
+#include "DX12ResourcePool.h"
 
 namespace Egg::Graphics::DX12 {
 	void DX12GraphicsModule::NextBackBufferIndex() {
@@ -12,6 +13,8 @@ namespace Egg::Graphics::DX12 {
 	}
 
 	void DX12GraphicsModule::CreateDevice() {
+		ResourcePool pool;
+
 		com_ptr<ID3D12Device5> tempDevice;
 
 		// always the 0th index will be tried first for creation, then we upgrade it as high as possible

@@ -66,6 +66,7 @@
     <ClInclude Include="DX12Common.h" />
     <ClInclude Include="DX12GeometryManager.h" />
     <ClInclude Include="DX12GraphicsModule.h" />
+    <ClInclude Include="DX12ResourcePool.h" />
     <ClInclude Include="DX12MaterialManager.h" />
     <ClInclude Include="DX12PipelineStateManager.h" />
     <ClInclude Include="DX12RenderItem.h" />
@@ -108,6 +109,7 @@
     <ClInclude Include="DX12ResourceUploadBatch.h" />
     <ClInclude Include="DX12ShaderBytecode.h" />
     <ClInclude Include="DX12SpriteFont.h" />
+    <ClInclude Include="RenderPass.h" />
     <ClInclude Include="Stopwatch.h" />
     <ClInclude Include="Transition.h" />
     <ClInclude Include="Utility.h" />

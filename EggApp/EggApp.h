@@ -15,7 +15,6 @@
 #include "DevCameraScript.h"
 #include "Snippets.h"
 
-
 class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	Egg::Stopwatch stopwatch;
 

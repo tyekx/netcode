@@ -61,6 +61,7 @@
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="RenderPassTest.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Snippets.h" />
     <ClInclude Include="Systems.h" />

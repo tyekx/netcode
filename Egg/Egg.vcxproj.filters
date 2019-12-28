@@ -259,6 +259,12 @@
     <ClInclude Include="LinuxFormats.h">
       <Filter>App</Filter>
     </ClInclude>
+    <ClInclude Include="RenderPass.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12ResourcePool.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
