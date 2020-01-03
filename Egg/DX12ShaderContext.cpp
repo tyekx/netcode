@@ -1,4 +1,5 @@
 #include "DX12ShaderContext.h"
+#include "DX12ShaderVariant.h"
 
 namespace Egg::Graphics::DX12 {
 	HSHADER ShaderContext::Insert(std::unique_ptr<Shader> shader) {
@@ -20,23 +21,43 @@ namespace Egg::Graphics::DX12 {
 	}
 
 	HSHADER ShaderContext::CreateVertexShader() {
-		return HSHADER();
+		UINT id = static_cast<UINT>(shaders.size());
+		std::unique_ptr<ShaderVariant> variant = std::make_unique<ShaderVariant>();
+		variant->SetShaderType(ShaderType::VERTEX_SHADER);
+		shaders.emplace_back(std::move(variant));
+		return id;
 	}
 
 	HSHADER ShaderContext::CreatePixelShader() {
-		return HSHADER();
+		UINT id = static_cast<UINT>(shaders.size());
+		std::unique_ptr<ShaderVariant> variant = std::make_unique<ShaderVariant>();
+		variant->SetShaderType(ShaderType::PIXEL_SHADER);
+		shaders.emplace_back(std::move(variant));
+		return id;
 	}
 
 	HSHADER ShaderContext::CreateGeometryShader() {
-		return HSHADER();
+		UINT id = static_cast<UINT>(shaders.size());
+		std::unique_ptr<ShaderVariant> variant = std::make_unique<ShaderVariant>();
+		variant->SetShaderType(ShaderType::GEOMETRY_SHADER);
+		shaders.emplace_back(std::move(variant));
+		return id;
 	}
 
 	HSHADER ShaderContext::CreateDomainShader() {
-		return HSHADER();
+		UINT id = static_cast<UINT>(shaders.size());
+		std::unique_ptr<ShaderVariant> variant = std::make_unique<ShaderVariant>();
+		variant->SetShaderType(ShaderType::DOMAIN_SHADER);
+		shaders.emplace_back(std::move(variant));
+		return id;
 	}
 
 	HSHADER ShaderContext::CreateHullShader() {
-		return HSHADER();
+		UINT id = static_cast<UINT>(shaders.size());
+		std::unique_ptr<ShaderVariant> variant = std::make_unique<ShaderVariant>();
+		variant->SetShaderType(ShaderType::HULL_SHADER);
+		shaders.emplace_back(std::move(variant));
+		return id;
 	}
 
 	void ShaderContext::SetEntrypoint(HSHADER shader, const std::string & entryFunction) {

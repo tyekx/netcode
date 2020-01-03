@@ -68,13 +68,11 @@ namespace Egg::Graphics::DX12 {
 
 		void SetSourceReference(const std::wstring & shader);
 
-		void SetShaderSource(const std::string & shaderSource);
+		virtual void SetShaderSource(const std::string & shaderSource) override;
 
-		void SetMacros(const ShaderPreprocDefs & preprocDefs);
+		virtual void SetDefinitions(const std::map<std::string, std::string> & macros)override;
 
-		void SetMacros(const std::map<std::string, std::string> & macros);
-
-		void SetEntryFunction(const std::string & fname);
+		virtual void SetEntryFunction(const std::string & fname) override;
 		
 		ShaderType GetShaderType() const;
 

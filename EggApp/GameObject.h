@@ -9,11 +9,9 @@
 #include <Egg/Input.h>
 #include <Egg/Blackboard.h>
 
-using Egg::Graphics::IRenderContext;
-
 class GameObject;
 
-#define COMPONENT_ALIGN __declspec(align(8))
+#define COMPONENT_ALIGN __declspec(align(16))
 
 class IBehavior {
 public:
@@ -39,14 +37,6 @@ public:
 
 	Transform() : position{ 0.0f, 0.0f, 0.0f }, rotation{ 0.0f, 0.0f, 0.0f, 1.0f }, scale{ 1.0f, 1.0f, 1.0f } {
 
-	}
-};
-
-class Material {
-public:
-	virtual ~Material() = default;
-	virtual void Apply(IRenderContext * ctx) {
-		ctx->SetConstants(0, )
 	}
 };
 
@@ -186,8 +176,8 @@ public:
 };
 
 class GameObject {
-	GameObject * parent;
 	ComponentStorage components;
+	GameObject * parent;
 	bool disabled;
 public:
 	inline SignatureType GetSignature() const {

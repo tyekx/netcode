@@ -13,6 +13,7 @@
 #include "DX12SpriteFontLibrary.h"
 #include "DX12ConstantBufferPool.h"
 #include "DX12ResourcePool.h"
+#include "DX12ResourceContext.h"
 
 #include "GraphicsContexts.h"
 
@@ -144,9 +145,11 @@ namespace Egg::Graphics::DX12 {
 
 		ConstantBufferPool cbufferPool;
 		ResourcePool resourcePool;
+
 		ShaderContext shaderContext;
 		PipelineContext psContext;
 		GeometryContext geometryContext;
+		ResourceContext resourceContext;
 
 	public:
 
@@ -177,6 +180,8 @@ namespace Egg::Graphics::DX12 {
 		virtual void SetDomainShader(HPSO pso, HSHADER domainShader) override;
 
 		virtual void SetGeometry(HPSO pso, HGEOMETRY geometry) override;
+
+		virtual void SyncUpload(const UploadBatch & upload) override;
 
 		void ReleaseSwapChainResources();
 

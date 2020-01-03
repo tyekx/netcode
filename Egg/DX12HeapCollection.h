@@ -48,7 +48,7 @@ namespace Egg::Graphics::DX12 {
 
 			D3D12_HEAP_DESC heapDesc = {};
 			heapDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
-			heapDesc.Flags = D3D12_HEAP_FLAG_NONE;
+			heapDesc.Flags = D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
 			heapDesc.Properties = CD3DX12_HEAP_PROPERTIES(type);
 			heapDesc.SizeInBytes = sizeInBytes;
 
@@ -101,14 +101,14 @@ namespace Egg::Graphics::DX12 {
 			DX_API("Failed to create placed resource")
 				device->CreatePlacedResource(heap.Get(), heapOffset, &desc, initState, clearValue, IID_PPV_ARGS(tempResource.GetAddressOf()));
 
+			ID3D12Resource * rawPtr = tempResource.Get();
+
 			used.emplace_back(allocationSize, heapOffset, std::move(tempResource));
 			if(reuseableResource != freed.end()) {
 				freed.erase(reuseableResource);
 			}
 
 			usedInBytes += allocationSize;
-
-			ID3D12Resource * rawPtr = tempResource.Get();
 
 			return rawPtr;
 		}
@@ -151,7 +151,7 @@ namespace Egg::Graphics::DX12 {
 		ID3D12Resource * CreateResource(ID3D12Device * device, const D3D12_RESOURCE_DESC & desc, D3D12_RESOURCE_STATES state, const D3D12_CLEAR_VALUE * clearValue) {
 			const D3D12_RESOURCE_ALLOCATION_INFO alloc = device->GetResourceAllocationInfo(0, 1, &desc);
 			
-			ASSERT(GRANULARITY < alloc.SizeInBytes, "Cant allocate %ull size while the granularity is just %ull", alloc.SizeInBytes, GRANULARITY);
+			ASSERT(GRANULARITY >= alloc.SizeInBytes, "Cant allocate %ull size while the granularity is just %ull", alloc.SizeInBytes, GRANULARITY);
 
 			for(auto & heap : heaps) {
 				if(heap.CanFit(alloc.SizeInBytes)) {

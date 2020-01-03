@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 namespace Egg::Graphics {
 #undef GENERIC_READ
 	enum class ResourceState : unsigned {

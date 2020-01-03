@@ -44,8 +44,8 @@ public:
 		DirectX::XMVECTOR determinant = DirectX::XMMatrixDeterminant(modelMat);
 		DirectX::XMMATRIX invModelMat = DirectX::XMMatrixInverse(&determinant, modelMat);
 
-		DirectX::XMStoreFloat4x4A(&model->perObjectCb->Model, DirectX::XMMatrixTranspose(modelMat));
-		DirectX::XMStoreFloat4x4A(&model->perObjectCb->InvModel, DirectX::XMMatrixTranspose(invModelMat));
+		DirectX::XMStoreFloat4x4A(&model->perObjectData.Model, DirectX::XMMatrixTranspose(modelMat));
+		DirectX::XMStoreFloat4x4A(&model->perObjectData.InvModel, DirectX::XMMatrixTranspose(invModelMat));
 	}
 };
 
@@ -97,7 +97,7 @@ public:
 
 	void RunImpl(GameObject * gameObject, Model * model) {
 		for(const auto & i : model->meshes) {
-			graphics->Record(i.mesh);
+		//	graphics->Record(i.mesh);
 		}
 	}
 };
@@ -128,10 +128,10 @@ public:
 	}
 
 	void RunImpl(GameObject * gameObject, Model * model, Animation* anim, float dt) {
-		if(model->boneDataCb != nullptr && movementController != nullptr) {
+		if(model->boneData != nullptr && movementController != nullptr) {
 			movementController->Update();
 			anim->blackboard.Update(dt, movementController);
-			anim->blackboard.CopyBoneDataInto(model->boneDataCb->BindTransform);
+			anim->blackboard.CopyBoneDataInto(model->boneData->BindTransform);
 		}
 	}
 };

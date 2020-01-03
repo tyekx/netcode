@@ -89,6 +89,7 @@
     <ClInclude Include="Importer.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="LinearClassifier.h" />
+    <ClInclude Include="DX12ResourceContext.h" />
     <ClInclude Include="Sal.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="LuaApi.h" />
@@ -136,6 +137,7 @@
     <ClCompile Include="DX12Common.cpp" />
     <ClCompile Include="DX12GraphicsModule.cpp" />
     <ClCompile Include="DX12ResourceDesc.cpp" />
+    <ClCompile Include="DX12ResourcePool.cpp" />
     <ClCompile Include="DX12ResourceUploadBatch.cpp" />
     <ClCompile Include="DX12ShaderCompiled.cpp" />
     <ClCompile Include="DX12ShaderCompiler.cpp" />
@@ -155,8 +157,10 @@
     <ClCompile Include="Path.cpp" />
     <ClCompile Include="PhysxModule.cpp" />
     <ClCompile Include="DX12SpriteFont.cpp" />
+    <ClCompile Include="DX12ResourceContext.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
     <ClCompile Include="Transition.cpp" />
+    <ClCompile Include="UploadBatch.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="WinapiWindowModule.cpp" />
     <ClCompile Include="WinImporterModule.cpp" />

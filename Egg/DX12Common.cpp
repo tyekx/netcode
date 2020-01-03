@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdarg>
 #include "Utility.h"
+#include <comdef.h>
 
 namespace Egg::Graphics::DX12 {
 	
@@ -15,27 +16,12 @@ namespace Egg::Graphics::DX12 {
 		}
 	}
 
-	void GetAdapters(IDXGIFactory6 * dxgiFactory, std::vector<com_ptr<IDXGIAdapter1>> & adapters) {
-		com_ptr<IDXGIAdapter1> tempAdapter{ nullptr };
-		OutputDebugStringW(L"Detected Video Adapters:\n");
-		unsigned int adapterId = 0;
-
-		for(HRESULT query = dxgiFactory->EnumAdapters1(adapterId, tempAdapter.GetAddressOf());
-			query != DXGI_ERROR_NOT_FOUND;
-			query = dxgiFactory->EnumAdapters1(++adapterId, tempAdapter.GetAddressOf())) {
-
-			// check if not S_OK
-			DX_API("Failed to query DXGI adapter") query;
-
-			if(tempAdapter != nullptr) {
-				DXGI_ADAPTER_DESC desc;
-				tempAdapter->GetDesc(&desc);
-
-				Egg::Utility::WDebugf(L"    %s\n", desc.Description);
-
-				adapters.push_back(std::move(tempAdapter));
-				tempAdapter.Reset();
-			}
+	const char * RootSignatureVersionToString(D3D_ROOT_SIGNATURE_VERSION version)
+	{
+		switch(version) {
+			case D3D_ROOT_SIGNATURE_VERSION_1_0: return "Root Signature Version 1.0";
+			case D3D_ROOT_SIGNATURE_VERSION_1_1: return "Root Signature Version 1.1";
+			default: return "Unknown Root Signature Version";
 		}
 	}
 
@@ -74,7 +60,6 @@ Egg::Internal::HResultTester::HResultTester(const char * msg, const char * file,
 	va_start(l, line);
 	va_copy(args, l);
 	va_end(l);
-
 }
 
 void Egg::Internal::HResultTester::operator<<(HRESULT hr) {
@@ -87,8 +72,11 @@ void Egg::Internal::HResultTester::operator<<(HRESULT hr) {
 		vsprintf_s(&(buffer.at(0)), 1024, oss.str().c_str(), args);
 		va_end(args);
 
-		OutputDebugString(buffer.c_str());
-		OutputDebugString("\r\n");
+		Log::Error(buffer.c_str());
+
+		_com_error err(hr);
+		Log::Info(err.ErrorMessage());
+
 		if(IsDebuggerPresent()) {
 			DebugBreak();
 		}

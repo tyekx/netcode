@@ -8,6 +8,10 @@
 #include <Egg/Vertex.h>
 #include <Egg/Utility.h>
 #include "GameObject.h"
+#include "Mesh.h"
+
+using Egg::Graphics::ResourceType;
+using Egg::Graphics::ResourceState;
 
 std::map<std::string, std::string> GetPreprocDefs(Egg::Asset::Mesh * mesh, Egg::Asset::Material * material, Egg::Asset::Model * owner) {
 
@@ -53,47 +57,45 @@ void LoadItem(Egg::Module::IGraphicsModule * g, Egg::Asset::Model * model, Model
 		Egg::Asset::Material * mat = model->materials + model->meshes[meshIdx].materialId;
 		Egg::Asset::Mesh * mesh = model->meshes + meshIdx;
 
-		Egg::HITEM item = g->CreateItem();
-		Egg::HGEOMETRY geometry = g->CreateGeometry(Egg::EGeometryType::INDEXED);
 
-
+		Egg::HGEOMETRY geometry = g->geometry->CreateGeometry();
 
 		switch(mesh->vertexType) {
 			case Egg::PNT_Vertex::type:
 			{
-				g->AddInputElement(geometry, "POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
-				g->AddInputElement(geometry, "NORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 12);
-				g->AddInputElement(geometry, "TEXCOORD", DXGI_FORMAT_R32G32_FLOAT, 24);
+				g->geometry->AddInputElement(geometry, "POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
+				g->geometry->AddInputElement(geometry, "NORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 12);
+				g->geometry->AddInputElement(geometry, "TEXCOORD", DXGI_FORMAT_R32G32_FLOAT, 24);
 			}
 			break;
 			case Egg::PNTWB_Vertex::type:
 			{
-				g->AddInputElement(geometry, "POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
-				g->AddInputElement(geometry, "NORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 12);
-				g->AddInputElement(geometry, "TEXCOORD", DXGI_FORMAT_R32G32_FLOAT, 24);
-				g->AddInputElement(geometry, "WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT, 32);
-				g->AddInputElement(geometry, "BONEIDS", DXGI_FORMAT_R32G32B32A32_SINT, 44);
+				g->geometry->AddInputElement(geometry, "POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
+				g->geometry->AddInputElement(geometry, "NORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 12);
+				g->geometry->AddInputElement(geometry, "TEXCOORD", DXGI_FORMAT_R32G32_FLOAT, 24);
+				g->geometry->AddInputElement(geometry, "WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT, 32);
+				g->geometry->AddInputElement(geometry, "BONEIDS", DXGI_FORMAT_R32G32B32A32_SINT, 44);
 			}
 			break;
 			case Egg::PNTTB_Vertex::type: 
 			{
-				g->AddInputElement(geometry, "POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
-				g->AddInputElement(geometry, "NORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 12);
-				g->AddInputElement(geometry, "TEXCOORD", DXGI_FORMAT_R32G32_FLOAT, 24);
-				g->AddInputElement(geometry, "TANGENT", DXGI_FORMAT_R32G32B32_FLOAT, 32);
-				g->AddInputElement(geometry, "BINORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 44);
+				g->geometry->AddInputElement(geometry, "POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
+				g->geometry->AddInputElement(geometry, "NORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 12);
+				g->geometry->AddInputElement(geometry, "TEXCOORD", DXGI_FORMAT_R32G32_FLOAT, 24);
+				g->geometry->AddInputElement(geometry, "TANGENT", DXGI_FORMAT_R32G32B32_FLOAT, 32);
+				g->geometry->AddInputElement(geometry, "BINORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 44);
 			}
 			break;
 			case Egg::PNTWBTB_Vertex::type:
 			{
 
-				g->AddInputElement(geometry, "POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
-				g->AddInputElement(geometry, "NORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 12);
-				g->AddInputElement(geometry, "TEXCOORD", DXGI_FORMAT_R32G32_FLOAT, 24);
-				g->AddInputElement(geometry, "WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT, 32);
-				g->AddInputElement(geometry, "BONEIDS", DXGI_FORMAT_R32G32B32A32_SINT, 44);
-				g->AddInputElement(geometry, "TANGENT", DXGI_FORMAT_R32G32B32_FLOAT, 60);
-				g->AddInputElement(geometry, "BINORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 72);
+				g->geometry->AddInputElement(geometry, "POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
+				g->geometry->AddInputElement(geometry, "NORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 12);
+				g->geometry->AddInputElement(geometry, "TEXCOORD", DXGI_FORMAT_R32G32_FLOAT, 24);
+				g->geometry->AddInputElement(geometry, "WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT, 32);
+				g->geometry->AddInputElement(geometry, "BONEIDS", DXGI_FORMAT_R32G32B32A32_SINT, 44);
+				g->geometry->AddInputElement(geometry, "TANGENT", DXGI_FORMAT_R32G32B32_FLOAT, 60);
+				g->geometry->AddInputElement(geometry, "BINORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 72);
 			}
 			break;
 			default:
@@ -101,46 +103,70 @@ void LoadItem(Egg::Module::IGraphicsModule * g, Egg::Asset::Model * model, Model
 				break;
 		}
 
+		Egg::Graphics::UploadBatch batch;
+
+		Mesh appMesh;
+
+		uint8_t * const vBasePtr = reinterpret_cast<uint8_t *>(mesh->vertices);
+		uint8_t * const iBasePtr = reinterpret_cast<uint8_t *>(mesh->indices);
+
 		for(unsigned int i = 0; i < mesh->lodLevelsLength; ++i) {
-			BYTE * const baseptr = reinterpret_cast<BYTE *>(mesh->vertices);
-			g->AddVertexBufferLOD(geometry, (baseptr + mesh->vertexSize * mesh->lodLevels[i].vertexOffset), mesh->lodLevels[i].verticesLength, mesh->vertexSize);
-		
+			uint8_t * vData = vBasePtr + mesh->lodLevels[i].vertexOffset * mesh->vertexSize;
+			uint8_t * iData = nullptr;
+			uint64_t vbuffer = g->resources->CreateVertexBuffer(mesh->lodLevels[i].verticesLength, mesh->vertexSize, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
+			uint64_t vCount = mesh->lodLevels[i].vertexCount;
+			uint64_t ibuffer = 0;
+			uint64_t iCount = 0;
+
+			batch.Upload(vbuffer, vData, mesh->lodLevels[i].verticesLength);
+			batch.ResourceBarrier(vbuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
+
 			if(mesh->indices != nullptr) {
-				BYTE * const ibp = reinterpret_cast<BYTE *>(mesh->indices);
-				g->AddIndexBufferLOD(geometry, (ibp + 4U * mesh->lodLevels[i].indexOffset), mesh->lodLevels[i].indicesLength, DXGI_FORMAT_R32_UINT);
+				ibuffer = g->resources->CreateIndexBuffer(mesh->lodLevels[i].indicesLength, DXGI_FORMAT_R32_UINT, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
+				iData = iBasePtr + 4U * mesh->lodLevels[i].indexOffset;
+				iCount = mesh->lodLevels[i].indexCount;
+
+				batch.Upload(ibuffer, iData, iCount * 4U);
+				batch.ResourceBarrier(ibuffer, ResourceState::COPY_DEST, ResourceState::INDEX_BUFFER);
 			}
+
+			Mesh::LOD lod;
+			lod.indexBuffer = ibuffer;
+			lod.vertexBuffer = vbuffer;
+			lod.indexCount = iCount;
+			lod.vertexCount = vCount;
+
+			appMesh.AddLOD(lod);
 		}
+
+		appMesh.boundingBox = mesh->boundingBox;
 
 		{
 			auto preproc = GetPreprocDefs(mesh, mat, model);
 
-			Egg::HINCOMPLETESHADER ivs = g->CreateVertexShader();
-			g->SetShaderSource(ivs, L"EggShaderLib.hlsli");
-			g->SetShaderEntry(ivs, "Vertex_Main");
-			g->SetShaderMacros(ivs, preproc);
-			Egg::HSHADER vs = g->CompileShader(ivs);
+			Egg::HSHADER ivs = g->shaders->CreateVertexShader();
+			g->shaders->SetSource(ivs, L"EggShaderLib.hlsli");
+			g->shaders->SetEntrypoint(ivs, "Vertex_Main");
+			g->shaders->SetDefinitions(ivs, preproc);
 
-			Egg::HINCOMPLETESHADER ips = g->CreatePixelShader();
-			g->SetShaderSource(ips, L"EggShaderLib.hlsli");
-			g->SetShaderEntry(ips, "Pixel_Main");
-			g->SetShaderMacros(ips, preproc);
-			Egg::HSHADER ps = g->CompileShader(ips);
+			Egg::HSHADER ips = g->shaders->CreatePixelShader();
+			g->shaders->SetSource(ips, L"EggShaderLib.hlsli");
+			g->shaders->SetEntrypoint(ips, "Pixel_Main");
+			g->shaders->SetDefinitions(ips, preproc);
 
-			Egg::HPSO pso = g->CreatePipelineState();
-			g->SetVertexShader(pso, vs);
-			g->SetPixelShader(pso, ps);
-
-			Egg::HMATERIAL gmat = g->CreateMaterial(pso, geometry);
-			g->SetGeometry(item, geometry);
-			g->SetMaterial(item, gmat);
+			Egg::HPSO pso = g->pipeline->CreatePipelineState();
+			g->pipeline->SetVertexShader(pso, ivs);
+			g->pipeline->SetPixelShader(pso, ips);
 		}
 
-		Egg::HCBUFFER matcb = g->AllocateCbuffer(sizeof(MaterialCb));
-		MaterialCb * matcbV = reinterpret_cast<MaterialCb *>(g->GetCbufferPointer(matcb));
+		g->frame->SyncUpload(batch);
 
+		// @TODO material, textures
+		/*
 		matcbV->diffuseColor = DirectX::XMFLOAT4A{ mat->diffuseColor.x, mat->diffuseColor.y,mat->diffuseColor.z, 1.0f };
 		matcbV->fresnelR0 = DirectX::XMFLOAT3{ 0.05f, 0.05f, 0.05f };
 		matcbV->shininess = mat->shininess;
+		
 
 		g->AddCbuffer(item, matcb, g->GetCbufferSlot(item, "MaterialCb"));
 		if(mat->HasTextures()) {
@@ -154,9 +180,10 @@ void LoadItem(Egg::Module::IGraphicsModule * g, Egg::Asset::Model * model, Model
 
 		if(mat->HasNormalTexture()) {
 			g->SetTexture(item, 1, Egg::Utility::ToWideString(mat->normalTexture));
-		}
+		}*/
 		
-		modelComponent->AddShadedMesh(item, matcbV);
+		// @TODO connect material with geometry
+		//modelComponent->AddShadedMesh(item, matcbV);
 	}
 
 }

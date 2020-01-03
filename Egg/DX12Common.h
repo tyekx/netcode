@@ -15,15 +15,7 @@ using com_ptr = Microsoft::WRL::ComPtr<T>;
 
 namespace Egg::Graphics::DX12 {
 
-	class GBuffer {
-	public:
-		D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
-		D3D12_INDEX_BUFFER_VIEW indexBufferView;
-		UINT vertexCount;
-		UINT indexCount;
-		
-		GBuffer() = default;
-	};
+	const char * RootSignatureVersionToString(D3D_ROOT_SIGNATURE_VERSION version);
 
 	/*
 	Converts the shader model enum to string
@@ -34,11 +26,6 @@ namespace Egg::Graphics::DX12 {
 	Converts the feature level enum to its readable format
 	*/
 	const char * FeatureLevelToString(D3D_FEATURE_LEVEL ftlvl);
-
-	/*
-	Queries the available video adapters from the OS
-	*/
-	void GetAdapters(IDXGIFactory6 * dxgiFactory, std::vector<com_ptr<IDXGIAdapter1>> & adapters);
 
 	/*
 	Prints a Blob's content as string to the Visual Studio Output window, if the blob is null, a message will still appear

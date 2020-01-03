@@ -31,24 +31,33 @@ namespace Egg::Graphics::DX12 {
 			D3D12CreateDevice(nullptr, queryDataFeatureLevels.MaxSupportedFeatureLevel, IID_PPV_ARGS(tempDevice.GetAddressOf()));
 
 		DX_API("Failed to query supported feature levels")
-			tempDevice->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &queryDataFeatureLevels, sizeof(D3D12_FEATURE_DATA_FEATURE_LEVELS));
+			tempDevice->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &queryDataFeatureLevels, sizeof(queryDataFeatureLevels));
 
 		tempDevice.Reset();
 
 		DX_API("Failed to upgrade device to %s", FeatureLevelToString(queryDataFeatureLevels.MaxSupportedFeatureLevel))
 			D3D12CreateDevice(nullptr, queryDataFeatureLevels.MaxSupportedFeatureLevel, IID_PPV_ARGS(tempDevice.GetAddressOf()));
 
-		Log::Info("Created DX12 device with %s\r\n", FeatureLevelToString(queryDataFeatureLevels.MaxSupportedFeatureLevel));
+		device = std::move(tempDevice);
 
-		D3D12_FEATURE_DATA_SHADER_MODEL queryDataShaderModel;
-		queryDataShaderModel.HighestShaderModel = D3D_SHADER_MODEL_5_1;
+		Log::Info("Created DX12 device with: {0}", FeatureLevelToString(queryDataFeatureLevels.MaxSupportedFeatureLevel));
+
+		D3D12_FEATURE_DATA_SHADER_MODEL queryDataShaderModel = {};
+		queryDataShaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_4;
 
 		DX_API("Failed to query shader model")
-			device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &queryDataFeatureLevels, sizeof(D3D12_FEATURE_DATA_SHADER_MODEL));
+			device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &queryDataShaderModel, sizeof(queryDataShaderModel));
 
 		Log::Info("Highest supported shader model: {0}", ShaderModelToString(queryDataShaderModel.HighestShaderModel));
 
-		device = std::move(tempDevice);
+		D3D12_FEATURE_DATA_ROOT_SIGNATURE queryRootSigVersion = {};
+		queryRootSigVersion.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+
+		DX_API("Failed to query highest supported root signature version")
+			device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &queryRootSigVersion, sizeof(queryRootSigVersion));
+
+		Log::Info("Highest supported root signature version: {0}", RootSignatureVersionToString(queryRootSigVersion.HighestVersion));
+
 	}
 
 	void DX12GraphicsModule::ClearAdapters() {
@@ -75,6 +84,10 @@ namespace Egg::Graphics::DX12 {
 				adapters[adaptersLength]->GetDesc2(&adapterDesc);
 
 			Log::Info("Graphics adapter: {0}", Egg::Utility::ToNarrowString(adapterDesc.Description));
+
+			Log::Info("    Adapter dedicated VRAM: {0}", adapterDesc.DedicatedVideoMemory);
+			Log::Info("        Adapter system RAM: {0}", adapterDesc.DedicatedSystemMemory);
+			Log::Info("        Adapter shared RAM: {0}", adapterDesc.SharedSystemMemory);
 
 			// not calling reset here results in memory leak
 			tempAdapter.Reset();
@@ -152,7 +165,7 @@ namespace Egg::Graphics::DX12 {
 	void DX12GraphicsModule::CreateContexts() {
 		//Egg::Module::IGraphicsModule::renderer = this;
 		Egg::Module::IGraphicsModule::pipeline = this;
-		//Egg::Module::IGraphicsModule::resources = this;
+		Egg::Module::IGraphicsModule::resources = &resourceContext;
 		Egg::Module::IGraphicsModule::shaders = &shaderContext;
 		Egg::Module::IGraphicsModule::frame = this;
 		Egg::Module::IGraphicsModule::geometry = &geometryContext;
@@ -239,6 +252,8 @@ namespace Egg::Graphics::DX12 {
 
 		resourcePool.SetDevice(device.Get());
 
+		resourceContext.SetResourcePool(&resourcePool);
+
 		CreateContexts();
 
 		//textureLibrary.CreateResources(device.Get());
@@ -296,6 +311,14 @@ namespace Egg::Graphics::DX12 {
 
 	void DX12GraphicsModule::SetDomainShader(HPSO pso, HSHADER domainShader) {
 		psContext.SetDomainShader(pso, shaderContext.GetShader(domainShader));
+	}
+
+	void DX12GraphicsModule::SetGeometry(HPSO pso, HGEOMETRY geometry)
+	{
+	}
+
+	void DX12GraphicsModule::SyncUpload(const UploadBatch & upload)
+	{
 	}
 
 	void DX12GraphicsModule::ReleaseSwapChainResources() {

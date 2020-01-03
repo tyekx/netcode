@@ -4,6 +4,7 @@
 #include "ResourceEnums.h"
 #include "HandleTypes.h"
 #include "Common.h"
+#include "UploadBatch.h"
 #include <string>
 #include <map>
 
@@ -72,11 +73,9 @@ namespace Egg::Graphics {
 		virtual uint64_t CreateConstantBuffer(size_t size) = 0;
 		virtual void CopyConstants(uint64_t cbufferHandle, const void * srcData, size_t srcDataSizeInBytes) = 0;
 
-		virtual uint64_t CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type) = 0;
 		virtual uint64_t CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState) = 0;
 		virtual uint64_t CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
 
-		virtual uint64_t CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type) = 0;
 		virtual uint64_t CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState) = 0;
 		virtual uint64_t CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
 	};
@@ -85,8 +84,12 @@ namespace Egg::Graphics {
 	public:
 		virtual ~IRenderContext() = default;
 
+		virtual void SetVertexBuffer(uint64_t handle) = 0;
+		virtual void SetIndexBuffer(uint64_t handle) = 0;
+		virtual void DrawIndexed(uint64_t indexCount) = 0;
+		virtual void Draw(uint64_t vertexCount) = 0;
+
 		virtual void SetPrimitiveTopology(PrimitiveTopology topology) = 0;
-		virtual void Draw(uint64_t handle) = 0;
 
 		virtual void ClearTypedUAV(uint64_t handle) = 0;
 		virtual void SetStreamOutput(uint64_t handle) = 0;
@@ -114,6 +117,8 @@ namespace Egg::Graphics {
 	class IFrameContext {
 	public:
 		virtual ~IFrameContext() = default;
+
+		virtual void SyncUpload(const UploadBatch & upload) = 0;
 
 		virtual void Prepare() = 0;
 		virtual void Render() = 0;

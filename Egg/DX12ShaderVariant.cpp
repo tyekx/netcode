@@ -16,11 +16,7 @@ namespace Egg::Graphics::DX12 {
 		sourceCode = shaderSource;
 	}
 	
-	void ShaderVariant::SetMacros(const ShaderPreprocDefs & preprocDefs) {
-		defs = preprocDefs;
-	}
-	
-	void ShaderVariant::SetMacros(const std::map<std::string, std::string> & macros) {
+	void ShaderVariant::SetDefinitions(const std::map<std::string, std::string> & macros) {
 		defs = ShaderPreprocDefs{ macros };
 	}
 	
@@ -50,8 +46,8 @@ namespace Egg::Graphics::DX12 {
 
 	uint8_t * ShaderVariant::GetBufferPointer()
 	{
-		if(shaderByteCode != nullptr) {
-			shaderByteCode = CompileShader(sourceCode, entryFunctionName, shaderType);
+		if(shaderByteCode == nullptr) {
+			shaderByteCode = CompileShader(sourceCode, entryFunctionName, shaderType, defs.defs);
 		}
 
 		return reinterpret_cast<uint8_t *>(shaderByteCode->GetBufferPointer());
@@ -59,8 +55,8 @@ namespace Egg::Graphics::DX12 {
 
 	size_t ShaderVariant::GetBufferSize()
 	{
-		if(shaderByteCode != nullptr) {
-			shaderByteCode = CompileShader(sourceCode, entryFunctionName, shaderType);
+		if(shaderByteCode == nullptr) {
+			shaderByteCode = CompileShader(sourceCode, entryFunctionName, shaderType, defs.defs);
 		}
 
 		return shaderByteCode->GetBufferSize();
