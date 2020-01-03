@@ -14,6 +14,22 @@ template<typename T>
 using com_ptr = Microsoft::WRL::ComPtr<T>;
 
 namespace Egg::Graphics::DX12 {
+
+	class GBuffer {
+	public:
+		D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
+		D3D12_INDEX_BUFFER_VIEW indexBufferView;
+		UINT vertexCount;
+		UINT indexCount;
+		
+		GBuffer() = default;
+	};
+
+	/*
+	Converts the shader model enum to string
+	*/
+	const char * ShaderModelToString(D3D_SHADER_MODEL shaderModel);
+	
 	/*
 	Converts the feature level enum to its readable format
 	*/

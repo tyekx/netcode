@@ -1,9 +1,6 @@
 #pragma once
 
-/*
-compile times became a joke after including spdlog, so the templates must be "specialized" in the Logger.cpp file. That way it does not leak into the other source files
-Spdlog does not follow the C-style formatStrings. Consult with the documentation online
-*/
+#include <string>
 
 namespace Log {
 
@@ -13,6 +10,7 @@ namespace Log {
 	void Debug(const char * message, int value);
 
 	void Info(const char * message);
+	void Info(const char * message, const std::string & value);
 
 	void Warn(const char * message);
 

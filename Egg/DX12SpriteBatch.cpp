@@ -153,7 +153,7 @@ namespace Egg::Graphics::DX12 {
 		return indices;
 	}
 
-	SpriteBatch::SpriteBatch(ID3D12Device * device, Resource::IResourceUploader * upload, const SpriteBatchPipelineStateDescription & psoDesc, CbufferAllocator * cbufferAlloc, const D3D12_VIEWPORT * viewport)
+	SpriteBatch::SpriteBatch(ID3D12Device * device, Resource::IResourceUploader * upload, const SpriteBatchPipelineStateDescription & psoDesc, const D3D12_VIEWPORT * viewport)
 		: mRotation(DXGI_MODE_ROTATION_IDENTITY),
 		mSetViewport(false),
 		mViewPort{},
@@ -188,9 +188,9 @@ namespace Egg::Graphics::DX12 {
 		DX_API("Failed to map vertex buffer")
 			vertexBuffer->Map(0, &readValue, &mappedVertexBuffer);
 
-		auto handle = cbufferAlloc->AllocateCbuffer(sizeof(SpriteCbuffer));
-		cbuffer = reinterpret_cast<SpriteCbuffer *>(cbufferAlloc->GetCbufferPointer(handle));
-		cbufferAddr = cbufferAlloc->GetAddress(handle);
+		//auto handle = cbufferAlloc->AllocateCbuffer(sizeof(SpriteCbuffer));
+		//cbuffer = reinterpret_cast<SpriteCbuffer *>(cbufferAlloc->GetCbufferPointer(handle));
+		//cbufferAddr = cbufferAlloc->GetAddress(handle);
 
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC d3dDesc = {};
 

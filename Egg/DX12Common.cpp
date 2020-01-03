@@ -39,6 +39,18 @@ namespace Egg::Graphics::DX12 {
 		}
 	}
 
+	const char * ShaderModelToString(D3D_SHADER_MODEL shaderModel) {
+		switch(shaderModel) {
+			case D3D_SHADER_MODEL_5_1: return "Shader Model 5.1";
+			case D3D_SHADER_MODEL_6_0: return "Shader Model 6.0";
+			case D3D_SHADER_MODEL_6_1: return "Shader Model 6.1";
+			case D3D_SHADER_MODEL_6_2: return "Shader Model 6.2";
+			case D3D_SHADER_MODEL_6_3: return "Shader Model 6.3";
+			case D3D_SHADER_MODEL_6_4: return "Shader Model 6.4";
+			default: return "Unknown shader model";
+		}
+	}
+
 	const char * FeatureLevelToString(D3D_FEATURE_LEVEL ftlvl) {
 		switch(ftlvl) {
 		case D3D_FEATURE_LEVEL_9_1: return "Feature level 9.1";

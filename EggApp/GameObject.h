@@ -9,6 +9,8 @@
 #include <Egg/Input.h>
 #include <Egg/Blackboard.h>
 
+using Egg::Graphics::IRenderContext;
+
 class GameObject;
 
 #define COMPONENT_ALIGN __declspec(align(8))
@@ -40,25 +42,33 @@ public:
 	}
 };
 
+class Material {
+public:
+	virtual ~Material() = default;
+	virtual void Apply(IRenderContext * ctx) {
+		ctx->SetConstants(0, )
+	}
+};
+
 COMPONENT_ALIGN class Model {
 public:
 	struct ShadedMesh {
-		Egg::HITEM mesh;
-		MaterialCb * materialData;
+		int vertexBuffer;
+		int indexBuffer;
+		MaterialData materialData;
 
-		ShadedMesh() = default;
-		ShadedMesh(Egg::HITEM item, MaterialCb * material) : mesh{ item }, materialData{ material } { }
+		ShadedMesh(int vbuffer, int ibuffer) : vertexBuffer{ vbuffer }, indexBuffer{ ibuffer }, materialData{ } { }
 	};
 
-	PerObjectCb * perObjectCb;
-	BoneDataCb * boneDataCb;
+	PerObjectData perObjectData;
+	std::unique_ptr<BoneData> boneData;
 	std::vector<ShadedMesh> meshes;
 
-	Model() : perObjectCb{ nullptr }, boneDataCb{ nullptr }, meshes{ } { }
+	Model() : perObjectData{ }, boneData{ nullptr }, meshes{ } { }
 	~Model() = default;
 
-	void AddShadedMesh(Egg::HITEM item, MaterialCb * matData) {
-		meshes.emplace_back(item, matData);
+	ShadedMesh & AddShadedMesh(int vertexBuffer, int indexBuffer = -1) {
+		return meshes.emplace_back(vertexBuffer, indexBuffer);
 	}
 
 };

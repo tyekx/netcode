@@ -49,6 +49,9 @@
     <Filter Include="Graphics\DX12\Resource">
       <UniqueIdentifier>{558741a0-ed22-4b3c-aeed-1151cf341cb1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Importer">
+      <UniqueIdentifier>{1c55db00-4ff5-4584-8ef7-34dc8b781fb8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LuaScript.h">
@@ -115,12 +118,6 @@
     <ClInclude Include="MovementController.h">
       <Filter>Gameplay</Filter>
     </ClInclude>
-    <ClInclude Include="DX12RenderItem.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12RenderItemAllocator.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
     <ClInclude Include="BinaryReader.h">
       <Filter>Serialization</Filter>
     </ClInclude>
@@ -133,9 +130,6 @@
     <ClInclude Include="DX12GraphicsModule.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="DX12ShaderLibrary.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
     <ClInclude Include="HandleTypes.h">
       <Filter>Modules</Filter>
     </ClInclude>
@@ -145,31 +139,7 @@
     <ClInclude Include="DX12ShaderVariant.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="DX12ShaderBytecode.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12ShaderManager.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
     <ClInclude Include="DX12ShaderSourceLibrary.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12TextureLibrary.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12PipelineStateManager.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12GeometryManager.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12MaterialManager.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12RenderItemCollection.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12CbufferAllocator.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
     <ClInclude Include="Modules.h">
@@ -220,9 +190,6 @@
     <ClInclude Include="DX12Common.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="LinuxSal.h">
-      <Filter>App</Filter>
-    </ClInclude>
     <ClInclude Include="ModulesConfig.h">
       <Filter>Modules</Filter>
     </ClInclude>
@@ -256,14 +223,65 @@
     <ClInclude Include="BasicGeometry.h">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="LinuxFormats.h">
-      <Filter>App</Filter>
+    <ClInclude Include="FrameGraph.h">
+      <Filter>Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPass.h">
+    <ClInclude Include="GraphicsContexts.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="UploadBatch.h">
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="DX12ResourcePool.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12ResourceDesc.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceEnums.h">
       <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12PipelineContext.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12GeometryContext.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="WinImporterModule.h">
+      <Filter>Importer</Filter>
+    </ClInclude>
+    <ClInclude Include="FancyIterators.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12RenderContext.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceDesc.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12HeapCollection.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12ConstantBufferPool.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12ShaderCompiled.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12ShaderContext.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Formats.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="Platform.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="Sal.h">
+      <Filter>App</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -325,9 +343,6 @@
     <ClCompile Include="MemoryFunctions.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CbufferAllocator.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
     <ClCompile Include="PhysxModule.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
@@ -364,6 +379,22 @@
     <ClCompile Include="BasicGeometry.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
+    <ClCompile Include="DX12ShaderCompiler.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="WinImporterModule.cpp">
+      <Filter>Importer</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12ShaderVariant.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12ShaderCompiled.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12ShaderContext.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12ResourceDesc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DefaultPS.hlsl">

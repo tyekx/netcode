@@ -7,16 +7,15 @@
 #include "DX12Common.h"
 #include "DX12ResourceUploadBatch.h"
 #include "DX12Resource.h"
-#include "DX12RenderItem.h"
-#include "DX12RenderItemAllocator.h"
-#include "DX12ShaderManager.h"
-#include "DX12TextureLibrary.h"
-#include "DX12PipelineStateManager.h"
-#include "DX12GeometryManager.h"
-#include "DX12MaterialManager.h"
-#include "DX12RenderItemCollection.h"
-#include "DX12CbufferAllocator.h"
+#include "DX12ShaderContext.h"
+#include "DX12PipelineContext.h"
+#include "DX12GeometryContext.h"
 #include "DX12SpriteFontLibrary.h"
+#include "DX12ConstantBufferPool.h"
+#include "DX12ResourcePool.h"
+
+#include "GraphicsContexts.h"
+
 
 namespace Egg::Graphics::DX12 {
 
@@ -34,7 +33,6 @@ namespace Egg::Graphics::DX12 {
 		D3D12_VIEWPORT viewPort;
 		D3D12_CLEAR_VALUE dsvClearValue;
 		D3D12_CLEAR_VALUE rtvClearValue;
-		std::unique_ptr<Resource::IResourceUploadBatch> resourceUploader;
 
 		ID3D12GraphicsCommandList2 * GetCommandList() const {
 			return commandList.Get();
@@ -58,9 +56,6 @@ namespace Egg::Graphics::DX12 {
 
 			DX_API("Failed to create fence")
 				device->CreateFence(fenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.GetAddressOf()));
-
-			resourceUploader = std::make_unique<Resource::ResourceUploadBatch>();
-			resourceUploader->CreateResources(device);
 		}
 		
 		void WaitForCompletion() {
@@ -90,7 +85,8 @@ namespace Egg::Graphics::DX12 {
 		}
 	};
 
-	class DX12GraphicsModule : public Egg::Module::IGraphicsModule {
+	class DX12GraphicsModule : public Egg::Module::IGraphicsModule, Egg::Graphics::IPipelineContext, Egg::Graphics::IFrameContext {
+
 		HWND hwnd;
 		com_ptr<ID3D12Debug3> debugController;
 
@@ -126,7 +122,6 @@ namespace Egg::Graphics::DX12 {
 		UINT presentedBackbufferIndex;
 
 		std::unique_ptr<SpriteBatch> spriteBatch;
-		std::vector<DX12::RenderItem*> renderItemBuffer;
 		float aspectRatio;
 
 		void NextBackBufferIndex();
@@ -145,26 +140,17 @@ namespace Egg::Graphics::DX12 {
 
 		void CreateSwapChain();
 
-		ShaderManager shaderManager;
-		TextureLibrary textureLibrary;
-		PipelineStateManager psManager;
-		GeometryManager geomManager;
-		MaterialManager matManager;
-		RenderItemCollection renderItemColl;
-		CbufferAllocator cbufferAllocator;
-		SpriteFontLibrary fontLibrary;
+		void CreateContexts();
+
+		ConstantBufferPool cbufferPool;
+		ResourcePool resourcePool;
+		ShaderContext shaderContext;
+		PipelineContext psContext;
+		GeometryContext geometryContext;
 
 	public:
 
 		virtual void Prepare() override;
-
-		virtual void SetRenderTarget() override;
-
-		virtual void SetRenderTarget(HRENDERTARGET rt) override;
-
-		virtual void ClearRenderTarget() override;
-
-		virtual void Record(HITEM item) override;
 
 		virtual void Render() override;
 
@@ -178,151 +164,24 @@ namespace Egg::Graphics::DX12 {
 
 		virtual float GetAspectRatio() const override;
 
-		virtual HITEM CreateItem() override {
-			return renderItemColl.CreateItem();
-		}
+		virtual HPSO CreatePipelineState() override;
 
-		virtual HSHADER LoadShader(const std::wstring & shaderPath) override {
-			return shaderManager.LoadShader(shaderPath);
-		}
+		virtual void SetVertexShader(HPSO pso, HSHADER vertexShader) override;
 
-		virtual HINCOMPLETESHADER CreateVertexShader() override {
-			return shaderManager.CreateVertexShader();
-		}
+		virtual void SetPixelShader(HPSO pso, HSHADER pixelShader) override;
 
-		virtual HINCOMPLETESHADER CreatePixelShader() override {
-			return shaderManager.CreatePixelShader();
-		}
+		virtual void SetGeometryShader(HPSO pso, HSHADER geometryShader) override;
 
-		virtual HINCOMPLETESHADER CreateGeometryShader() override {
-			return shaderManager.CreateGeometryShader();
-		}
+		virtual void SetHullShader(HPSO pso, HSHADER hullShader) override;
 
-		virtual HINCOMPLETESHADER CreateDomainShader() override {
-			return shaderManager.CreateDomainShader();
-		}
+		virtual void SetDomainShader(HPSO pso, HSHADER domainShader) override;
 
-		virtual HINCOMPLETESHADER CreateHullShader() override {
-			return shaderManager.CreateHullShader();
-		}
-
-		virtual void SetShaderEntry(HINCOMPLETESHADER shader, const std::string & entryFunction) override {
-			shaderManager.SetShaderEntry(shader, entryFunction);
-		}
-
-		virtual void SetShaderSource(HINCOMPLETESHADER shader, const std::wstring & shaderPath) override {
-			shaderManager.SetShaderSource(shader, shaderPath);
-		}
-
-		virtual void SetShaderMacros(HINCOMPLETESHADER shader, const std::map<std::string, std::string> & defines) override {
-			shaderManager.SetShaderMacros(shader, defines);
-		}
-
-		virtual HSHADER CompileShader(HINCOMPLETESHADER shader) override {
-			return shaderManager.CompileShader(shader);
-		}
-
-		virtual HTEXTURE LoadTexture(const std::wstring & textureMediaPath) override {
-			return textureLibrary.LoadTexture2D(textureMediaPath);
-		}
-
-		virtual HPSO CreatePipelineState() override {
-			return psManager.Create();
-		}
-
-		virtual void SetVertexShader(HPSO pso, HSHADER vertexShader) override {
-			psManager.SetVertexShader(pso, shaderManager.GetShader(vertexShader));
-		}
-
-		virtual void SetPixelShader(HPSO pso, HSHADER pixelShader) override {
-			psManager.SetPixelShader(pso, shaderManager.GetShader(pixelShader));
-		}
-
-		virtual void SetGeometryShader(HPSO pso, HSHADER geometryShader) override {
-			psManager.SetGeometryShader(pso, shaderManager.GetShader(geometryShader));
-		}
-
-		virtual void SetHullShader(HPSO pso, HSHADER hullShader) override {
-			psManager.SetHullShader(pso, shaderManager.GetShader(hullShader));
-		}
-
-		virtual void SetDomainShader(HPSO pso, HSHADER domainShader) override {
-			psManager.SetDomainShader(pso, shaderManager.GetShader(domainShader));
-		}
-
-		virtual HGEOMETRY CreateGeometry(EGeometryType type = EGeometryType::INDEXED) override {
-			return geomManager.CreateGeometry(type);
-		}
-
-		virtual void AddVertexBufferLOD(HGEOMETRY geometry, void * ptr, unsigned int sizeInBytes, unsigned int strideInBytes) override {
-			geomManager.AddVertexBufferLOD(geometry, ptr, sizeInBytes, strideInBytes);
-		}
-
-		virtual void AddIndexBufferLOD(HGEOMETRY geometry, void * ptr, unsigned int sizeInBytes, unsigned int  format) override {
-			geomManager.AddIndexBufferLOD(geometry, ptr, sizeInBytes, static_cast<DXGI_FORMAT>(format));
-		}
-
-		virtual void AddInputElement(HGEOMETRY geometry, const char * name, unsigned int semanticIndex, unsigned int  format, unsigned int byteOffset) override {
-			geomManager.AddInputElement(geometry, name, semanticIndex, static_cast<DXGI_FORMAT>(format), byteOffset);
-		}
-
-		virtual void AddInputElement(HGEOMETRY geometry, const char * name, unsigned int  format, unsigned int byteOffset) override {
-			AddInputElement(geometry, name, 0, format, byteOffset);
-		}
-
-		virtual HMATERIAL CreateMaterial(HPSO pso, HGEOMETRY geometry) override {
-			return matManager.CreateMaterial(psManager.GetGPSO(pso), geomManager.GetInputLayout(geometry));
-		}
-
-		virtual void SetMaterial(HITEM item, HMATERIAL material) override {
-			matManager.SetRenderItemMaterial(renderItemColl.GetItem(item), material);
-		}
-
-		virtual void SetGeometry(HITEM item, HGEOMETRY geometry) override {
-			geomManager.SetRenderItemGeometry(renderItemColl.GetItem(item), geometry);
-		}
-
-
-		virtual void AllocateTextures(HITEM item, unsigned int  numTextures) override {
-			textureLibrary.AllocateTextures(renderItemColl.GetItem(item), numTextures);
-		}
-
-		virtual void SetTexture(HITEM item, unsigned int  slot, HTEXTURE texture) override {
-			textureLibrary.SetTexture(renderItemColl.GetItem(item), slot, texture);
-		}
-
-		virtual HTEXTURE SetTexture(HITEM item, unsigned int  slot, const std::wstring & texturePath) override {
-			HTEXTURE t = textureLibrary.LoadTexture2D(texturePath);
-			SetTexture(item, slot, t);
-			return t;
-		}
-
-		virtual HCBUFFER AllocateCbuffer(unsigned int sizeInBytes) override {
-			return cbufferAllocator.AllocateCbuffer(sizeInBytes);
-		}
-
-		virtual void * GetCbufferPointer(HCBUFFER cbuffer) override {
-			return cbufferAllocator.GetCbufferPointer(cbuffer);
-		}
-		
-		virtual void AddCbuffer(HITEM item, HCBUFFER cbuffer, unsigned int slot) override {
-			cbufferAllocator.AddRenderItemCbuffer(renderItemColl.GetItem(item), cbuffer, slot);
-		}
-
-		virtual void SetCbuffer(HITEM item, HCBUFFER cbuffer, unsigned int idx, unsigned int slot) override {
-			cbufferAllocator.SetRenderItemCbuffer(renderItemColl.GetItem(item), cbuffer, idx, slot);
-		}
-
-		virtual UINT GetCbufferSlot(HITEM item, const std::string & cbufferName) override {
-			return matManager.GetCbufferSlot(renderItemColl.GetItem(item), cbufferName);
-		}
+		virtual void SetGeometry(HPSO pso, HGEOMETRY geometry) override;
 
 		void ReleaseSwapChainResources();
 
 		void CreateSwapChainResources();
 
-		virtual HFONT LoadFont(const std::wstring & fontName) override;
-		virtual void TestFont(HFONT font) override;
 	};
 
 

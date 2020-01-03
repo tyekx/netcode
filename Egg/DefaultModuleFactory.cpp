@@ -25,4 +25,8 @@ namespace Egg::Module {
 		return std::make_unique<Egg::Physics::PhysXModule>();
 	}
 
+	std::unique_ptr<IImporterModule> DefaultModuleFactory::CreateImporterModule(AApp * app, int importerType) {
+		return nullptr;
+	}
+
 }

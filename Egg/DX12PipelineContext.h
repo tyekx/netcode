@@ -5,14 +5,13 @@
 
 namespace Egg::Graphics::DX12 {
 
-	class PipelineStateManager {
+	class PipelineContext  {
 
 		struct Item {
 			D3D12_GRAPHICS_PIPELINE_STATE_DESC desc;
 		};
 
 		std::vector<Item> items;
-
 
 		Item & Get(HPSO handle) {
 			ASSERT(handle >= 0 && handle < items.size(), "Out of range");
@@ -56,30 +55,30 @@ namespace Egg::Graphics::DX12 {
 			i.desc.DSVFormat = format;
 		}
 
-		D3D12_SHADER_BYTECODE GetShaderBytecode(ID3DBlob * blob) {
+		D3D12_SHADER_BYTECODE GetShaderBytecode(Shader * blob) {
 			D3D12_SHADER_BYTECODE bytecode;
 			bytecode.pShaderBytecode = (blob != nullptr) ? blob->GetBufferPointer() : nullptr;
 			bytecode.BytecodeLength = (blob != nullptr) ? blob->GetBufferSize() : 0;
 			return bytecode;
 		}
 
-		void SetPixelShader(Item & i, ID3DBlob * blob) {
+		void SetPixelShader(Item & i, Shader * blob) {
 			i.desc.PS = GetShaderBytecode(blob);
 		}
 
-		void SetVertexShader(Item & i, ID3DBlob * blob) {
+		void SetVertexShader(Item & i, Shader * blob) {
 			i.desc.VS = GetShaderBytecode(blob);
 		}
 
-		void SetGeometryShader(Item & i, ID3DBlob * blob) {
+		void SetGeometryShader(Item & i, Shader * blob) {
 			i.desc.GS = GetShaderBytecode(blob);
 		}
 
-		void SetHullShader(Item & i, ID3DBlob * blob) {
+		void SetHullShader(Item & i, Shader * blob) {
 			i.desc.HS = GetShaderBytecode(blob);
 		}
 
-		void SetDomainShader(Item & i, ID3DBlob * blob) {
+		void SetDomainShader(Item & i, Shader * blob) {
 			i.desc.DS = GetShaderBytecode(blob);
 		}
 
@@ -109,26 +108,6 @@ namespace Egg::Graphics::DX12 {
 			SetDepthStencilFormat(Get(handle), format);
 		}
 
-		void SetPixelShader(HPSO handle, ID3DBlob* blob) {
-			SetPixelShader(Get(handle), blob);
-		}
-
-		void SetVertexShader(HPSO handle, ID3DBlob * blob) {
-			SetVertexShader(Get(handle), blob);
-		}
-
-		void SetGeometryShader(HPSO handle, ID3DBlob * blob) {
-			SetGeometryShader(Get(handle), blob);
-		}
-
-		void SetHullShader(HPSO handle, ID3DBlob * blob) {
-			SetHullShader(Get(handle), blob);
-		}
-
-		void SetDomainShader(HPSO handle, ID3DBlob * blob) {
-			SetDomainShader(Get(handle), blob);
-		}
-
 		void SetPrimitiveTopologyType(HPSO handle, D3D12_PRIMITIVE_TOPOLOGY_TYPE type) {
 			SetPrimitiveTopologyType(Get(handle), type);
 		}
@@ -141,13 +120,33 @@ namespace Egg::Graphics::DX12 {
 			SetInputLayout(Get(handle), inputLayout);
 		}
 
+		void SetPixelShader(HPSO handle, Shader * blob) {
+			SetPixelShader(Get(handle), blob);
+		}
+
+		void SetVertexShader(HPSO handle, Shader * blob) {
+			SetVertexShader(Get(handle), blob);
+		}
+
+		void SetGeometryShader(HPSO handle, Shader * blob){
+			SetGeometryShader(Get(handle), blob);
+		}
+
+		void SetHullShader(HPSO handle, Shader * blob) {
+			SetHullShader(Get(handle), blob);
+		}
+
+		 void SetDomainShader(HPSO handle, Shader * blob) {
+			SetDomainShader(Get(handle), blob);
+		}
+
 		const D3D12_GRAPHICS_PIPELINE_STATE_DESC & GetGPSO(HPSO pso) {
 			Item & i = Get(pso);
 
 			return i.desc;
 		}
 
-		HPSO Create() {
+		virtual HPSO CreatePipelineState() {
 			Item item;
 			Initialize(item);
 

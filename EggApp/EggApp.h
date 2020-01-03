@@ -23,8 +23,6 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	Egg::Asset::Model railgun;
 	Egg::MovementController movCtrl;
 
-	PerFrameCb * perFrameCb;
-
 	TransformSystem transformSystem;
 	ScriptSystem scriptSystem;
 	RenderSystem renderSystem;
@@ -35,13 +33,9 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	
 
 	void Render() {
-		graphics->Prepare();
-		graphics->SetRenderTarget();
-		graphics->ClearRenderTarget();
+		graphics->frame->Prepare();
 
-		
-
-		scene.UpdatePerFrameCb(perFrameCb);
+		scene.UpdatePerFrameCb();
 
 		/*
 		foreach gameobject draw
@@ -54,8 +48,8 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			}
 		}
 
-		graphics->Render();
-		graphics->Present();
+		graphics->frame->Render();
+		graphics->frame->Present();
 	}
 
 	void Simulate(float dt) {
@@ -70,7 +64,11 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		}
 	}
 
-	void TestCapsulePrimitive(Egg::HCBUFFER pfcb) {
+	void TestCapsulePrimitive() {
+
+		using Egg::Graphics::ResourceFlags;
+		using Egg::Graphics::ResourceState;
+		using Egg::Graphics::ResourceType;
 
 		struct WireframeVertex {
 			DirectX::XMFLOAT3 position;
@@ -87,37 +85,25 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		gameObj->AddComponent<Transform>();
 		Model * model = gameObj->AddComponent<Model>();
 
+		DirectX::XMStoreFloat4x4A(&model->perObjectData.Model, DirectX::XMMatrixIdentity());
+		DirectX::XMStoreFloat4x4A(&model->perObjectData.InvModel, DirectX::XMMatrixIdentity());
+
 		{
-			Egg::HITEM item = graphics->CreateItem();
-			Egg::HGEOMETRY geom = graphics->CreateGeometry(Egg::EGeometryType::VERTEX_STREAM);
-			Egg::HSHADER vs = graphics->LoadShader(L"DebugPhysxVS.cso");
-			Egg::HSHADER ps = graphics->LoadShader(L"DebugPhysxPS.cso");
-			Egg::HPSO pso = graphics->CreatePipelineState();
-			Egg::HCBUFFER perobj = graphics->AllocateCbuffer(sizeof(PerObjectCb));
-			Egg::HCBUFFER pershape = graphics->AllocateCbuffer(sizeof(DebugPhysxShapeCb));
+			Egg::HSHADER vs = graphics->shaders->Load(L"DebugPhysxVS.cso");
+			Egg::HSHADER ps = graphics->shaders->Load(L"DebugPhysxPS.cso");
 
-			PerObjectCb * perObjCb = reinterpret_cast<PerObjectCb *>(graphics->GetCbufferPointer(perobj));
-			DebugPhysxShapeCb * perShapeCb = reinterpret_cast<DebugPhysxShapeCb *>(graphics->GetCbufferPointer(pershape));
-			DirectX::XMStoreFloat4x4A(&perObjCb->Model, DirectX::XMMatrixIdentity());
-			DirectX::XMStoreFloat4x4A(&perObjCb->InvModel, DirectX::XMMatrixIdentity());
-			DirectX::XMStoreFloat4x4A(&perShapeCb->local, DirectX::XMMatrixIdentity());
-			DirectX::XMStoreFloat4x4A(&perShapeCb->offset, DirectX::XMMatrixIdentity());
+			Egg::HGEOMETRY geom = graphics->geometry->CreateGeometry();
+			graphics->geometry->AddInputElement(geom, "POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
+			graphics->geometry->AddInputElement(geom, "COLOR", DXGI_FORMAT_R32G32B32_FLOAT, 12);
 
-			model->perObjectCb = perObjCb;
+			Egg::HPSO pso = graphics->pipeline->CreatePipelineState();
+			graphics->pipeline->SetVertexShader(pso, vs);
+			graphics->pipeline->SetPixelShader(pso, ps);
+			graphics->pipeline->SetGeometry(pso, geom);
 
-			graphics->AddVertexBufferLOD(geom, vertices, sizeof(vertices), sizeof(WireframeVertex));
-			graphics->AddInputElement(geom, "POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
-			graphics->AddInputElement(geom, "COLOR", DXGI_FORMAT_R32G32B32_FLOAT, 12);
-			graphics->SetPixelShader(pso, ps);
-			graphics->SetVertexShader(pso, vs);
-			graphics->SetMaterial(item, graphics->CreateMaterial(pso, geom));
-			graphics->SetGeometry(item, geom);
+			int vertexBuffer = graphics->resources->CreateVertexBuffer(sizeof(vertices), sizeof(WireframeVertex), ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
 
-			graphics->AddCbuffer(item, pfcb, graphics->GetCbufferSlot(item, "PerFrameCb"));
-			graphics->AddCbuffer(item, perobj, graphics->GetCbufferSlot(item, "PerObjectCb"));
-			graphics->AddCbuffer(item, pershape, graphics->GetCbufferSlot(item, "PerShapeCb"));
-
-			model->AddShadedMesh(item, nullptr);
+			auto & mesh = model->AddShadedMesh(vertexBuffer);
 		}
 
 		
@@ -161,31 +147,31 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			physics->SetActorRotation(boxActor, DirectX::XMFLOAT4{ sqrtf(2.0f) / 2.0f, 0.0f, -sqrtf(2.0f) / 2.0f, 0.0f });
 			physics->AddToScene(boxActor);
 		}
-
-		Egg::HCBUFFER pfcb = graphics->AllocateCbuffer(sizeof(PerFrameCb));
-		Egg::HCBUFFER pocb = graphics->AllocateCbuffer(sizeof(PerObjectCb));
-		perFrameCb = reinterpret_cast<PerFrameCb *>(graphics->GetCbufferPointer(pfcb));
-		model->perObjectCb = reinterpret_cast<PerObjectCb *>(graphics->GetCbufferPointer(pocb));
+		/*
+		Egg::HCBUFFER pfcb = graphics->constants->AllocateCbuffer(sizeof(PerFrameCb));
+		Egg::HCBUFFER pocb = graphics->constants->AllocateCbuffer(sizeof(PerObjectCb));
+		perFrameCb = graphics->constants->As<PerFrameCb>(pfcb);
+		model->perObjectCb = graphics->constants->As<PerObjectCb>(pocb);
 
 		perFrameCb->Lights[0] = Egg::DirectionalLight{ DirectX::XMFLOAT3A{ 1.0f, 1.0f, 1.0f}, DirectX::XMFLOAT4A{ 1.0f, 0.0f, 0.0f, 0.0f} };
 
 		DirectX::XMMATRIX identity = DirectX::XMMatrixIdentity();
 		DirectX::XMStoreFloat4x4A(&model->perObjectCb->InvModel, identity);
-		DirectX::XMStoreFloat4x4A(&model->perObjectCb->Model, identity);
+		DirectX::XMStoreFloat4x4A(&model->perObjectCb->Model, identity);*/
 
 		Egg::Importer::ImportModel(L"ybot.eggasset", ybotModel);
-
+		/*
 		Egg::HCBUFFER bdcb = UINT_MAX;
 		if(ybotModel.animationsLength > 0) {
-			bdcb = graphics->AllocateCbuffer(sizeof(BoneDataCb));
-			model->boneDataCb = reinterpret_cast<BoneDataCb *>(graphics->GetCbufferPointer(bdcb));
+			bdcb = graphics->constants->AllocateCbuffer(sizeof(BoneDataCb));
+			model->boneDataCb = graphics->constants->As<BoneDataCb>(bdcb);
 		}
 
 
 		for(unsigned int i = 0; i < ybotModel.bonesLength; ++i) {
 			DirectX::XMStoreFloat4x4A(&model->boneDataCb->BindTransform[i], identity);
 			DirectX::XMStoreFloat4x4A(&model->boneDataCb->ToRootTransform[i], identity);
-		}
+		}*/
 
 		//GameObject * gun = scene.Insert();
 		//gun->AddComponent<Transform>();
@@ -198,16 +184,16 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		LoadItem(graphics.get(), &ybotModel, model);
 
 
-		Egg::HFONT f = graphics->LoadFont(L"titillium60.spritefont");
+		/*Egg::HFONT f = graphics->fonts->Load(L"titillium60.spritefont");
 
 		for(auto & i : model->meshes) {
 			Egg::HITEM item = i.mesh;
-			graphics->AddCbuffer(item, pfcb, graphics->GetCbufferSlot(item, "PerFrameCb"));
-			graphics->AddCbuffer(item, pocb, graphics->GetCbufferSlot(item, "PerObjectCb"));
+			graphics->constants->AddCbuffer(item, pfcb, "PerFrameCb");
+			graphics->constants->AddCbuffer(item, pocb, "PerObjectCb");
 			if(ybotModel.animationsLength > 0) {
-				graphics->AddCbuffer(item, bdcb, graphics->GetCbufferSlot(item, "BoneDataCb"));
+				graphics->constants->AddCbuffer(item, bdcb, "BoneDataCb");
 			}
-		}
+		}*/
 
 		CreateYbotAnimationComponent(&ybotModel, anim);
 		animSystem.SetMovementController(&movCtrl);
@@ -216,7 +202,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		s->SetBehavior(std::make_unique<PlayerBehavior>());
 		s->Setup(avatar);
 
-		TestCapsulePrimitive(pfcb);
+		TestCapsulePrimitive();
 	}
 
 public:
@@ -242,12 +228,15 @@ public:
 		graphics = factory->CreateGraphicsModule(this, 0);
 		audio = factory->CreateAudioModule(this, 0);
 		physics = factory->CreatePhysicsModule(this, 0);
-		network = nullptr;
+		importer = factory->CreateImporterModule(this, 0);
+		network = factory->CreateNetworkModule(this, 0);
 
 		StartModule(window.get());
 		StartModule(graphics.get());
 		StartModule(physics.get());
 		StartModule(audio.get());
+		StartModule(network.get());
+		StartModule(importer.get());
 
 		if(window) {
 			window->ShowWindow();
@@ -289,6 +278,7 @@ public:
 		ShutdownModule(audio.get());
 		ShutdownModule(graphics.get());
 		ShutdownModule(window.get());
+		ShutdownModule(importer.get());
 	}
 };
 

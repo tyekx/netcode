@@ -28,14 +28,14 @@ namespace Egg::Graphics::DX12::Resource {
 		DirectX::TexMetadata meta = scratchImage.GetMetadata();
 
 		resourceDesc.Alignment = 0;
-		resourceDesc.DepthOrArraySize = meta.arraySize;
+		resourceDesc.DepthOrArraySize = static_cast<UINT16>(meta.arraySize);
 		resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 		resourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 		resourceDesc.Format = meta.format;
 		resourceDesc.Height = meta.height;
 		resourceDesc.Width = meta.width;
 		resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-		resourceDesc.MipLevels = meta.mipLevels;
+		resourceDesc.MipLevels = static_cast<UINT16>(meta.mipLevels);
 		resourceDesc.SampleDesc.Count = 1;
 		resourceDesc.SampleDesc.Quality = 0;
 

@@ -9,6 +9,8 @@
 #include <DirectXMath.h>
 #include <DirectXCollision.h>
 
+#include "GraphicsContexts.h"
+
 namespace Egg::Module {
 
 	/*
@@ -30,6 +32,7 @@ namespace Egg::Module {
 	class INetworkModule;
 	class IPhysicsModule;
 	class IAudioModule;
+	class IImporterModule;
 
 	enum class EAppEventType : unsigned {
 		NOOP, DEVICE_LOST, RESIZED, FOCUSED, BLURRED, CLOSED
@@ -102,6 +105,7 @@ namespace Egg::Module {
 		std::unique_ptr<INetworkModule> network;
 		std::unique_ptr<IPhysicsModule> physics;
 		std::unique_ptr<IAudioModule> audio;
+		std::unique_ptr<IImporterModule> importer;
 
 		virtual ~AApp() = default;
 
@@ -144,68 +148,30 @@ namespace Egg::Module {
 		virtual void ShowDebugWindow() = 0;
 	};
 
+	class IImporterModule : public IModule {
+	public:
+		virtual ~IImporterModule() = default;
+
+		virtual Egg::HTEXTURE LoadTexture(const std::wstring & imagePath) = 0;
+		virtual void GenerateMipLevels(Egg::HTEXTURE texture, unsigned short levels) = 0;
+		virtual Egg::Image * GetImages(Egg::HTEXTURE texture) = 0;
+		virtual unsigned int GetImageCount(Egg::HTEXTURE texture) = 0;
+
+		virtual void * LoadFont(const std::wstring & fontPath) = 0;
+	};
+
 	class IGraphicsModule : public IModule {
 	public:
+		Egg::Graphics::IResourceContext * resources;
+		Egg::Graphics::IPipelineContext * pipeline;
+		Egg::Graphics::IRenderContext * renderer;
+		Egg::Graphics::IShaderContext * shaders;
+		Egg::Graphics::IFrameContext * frame;
+		Egg::Graphics::IGeometryContext * geometry;
+
 		virtual ~IGraphicsModule() = default;
 
 		virtual float GetAspectRatio() const = 0;
-
-		virtual HITEM CreateItem() = 0;
-
-		virtual HTEXTURE LoadTexture(const std::wstring & textureMediaPath) = 0;
-		virtual HSHADER LoadShader(const std::wstring & shaderPath) = 0;
-
-		virtual HINCOMPLETESHADER CreateVertexShader() = 0;
-		virtual HINCOMPLETESHADER CreatePixelShader() = 0;
-		virtual HINCOMPLETESHADER CreateGeometryShader() = 0;
-		virtual HINCOMPLETESHADER CreateDomainShader() = 0;
-		virtual HINCOMPLETESHADER CreateHullShader() = 0;
-
-		virtual void TestFont(HFONT font) = 0;
-
-		virtual void SetShaderEntry(HINCOMPLETESHADER shader, const std::string & entryFunction) = 0;
-		virtual void SetShaderSource(HINCOMPLETESHADER shader, const std::wstring & shaderPath) = 0;
-		virtual void SetShaderMacros(HINCOMPLETESHADER shader, const std::map<std::string, std::string> & defines) = 0;
-		virtual HSHADER CompileShader(HINCOMPLETESHADER shader) = 0;
-
-
-		virtual HFONT LoadFont(const std::wstring & fontName) = 0;
-
-		virtual HPSO CreatePipelineState() = 0;
-		virtual void SetVertexShader(HPSO pso, HSHADER vertexShader) = 0;
-		virtual void SetPixelShader(HPSO pso, HSHADER pixelShader) = 0;
-		virtual void SetGeometryShader(HPSO pso, HSHADER geometryShader) = 0;
-		virtual void SetHullShader(HPSO pso, HSHADER hullShader) = 0;
-		virtual void SetDomainShader(HPSO pso, HSHADER domainShader) = 0;
-
-		virtual HGEOMETRY CreateGeometry(EGeometryType type = EGeometryType::INDEXED) = 0;
-		virtual void AddVertexBufferLOD(HGEOMETRY geometry, void * ptr, unsigned int sizeInBytes, unsigned int strideInBytes) = 0;
-		virtual void AddIndexBufferLOD(HGEOMETRY geometry, void * ptr, unsigned int sizeInBytes, unsigned int format) = 0;
-		virtual void AddInputElement(HGEOMETRY geometry, const char * name, unsigned int semanticIndex, unsigned int format, unsigned int byteOffset) = 0;
-		virtual void AddInputElement(HGEOMETRY geometry, const char * name, unsigned int format, unsigned int byteOffset) = 0;
-
-		virtual HMATERIAL CreateMaterial(HPSO pso, HGEOMETRY geometry) = 0;
-		virtual void SetMaterial(HITEM item, HMATERIAL material) = 0;
-		virtual void SetGeometry(HITEM item, HGEOMETRY geometry) = 0;
-
-		virtual void AllocateTextures(HITEM item, unsigned int numTextures) = 0;
-		virtual void SetTexture(HITEM item, unsigned int slot, HTEXTURE texture) = 0;
-		virtual HTEXTURE SetTexture(HITEM item, unsigned int slot, const std::wstring & texturePath) = 0;
-
-		virtual HCBUFFER AllocateCbuffer(unsigned int sizeInBytes) = 0;
-		virtual void * GetCbufferPointer(HCBUFFER cbuffer) = 0;
-
-		virtual void AddCbuffer(HITEM item, HCBUFFER cbuffer, unsigned int slot) = 0;
-		virtual void SetCbuffer(HITEM item, HCBUFFER cbuffer, unsigned int idx, unsigned int slot) = 0;
-		virtual unsigned int GetCbufferSlot(HITEM item, const std::string & cbufferName) = 0;
-
-		virtual void Prepare() = 0;
-		virtual void SetRenderTarget() = 0;
-		virtual void SetRenderTarget(HRENDERTARGET rt) = 0;
-		virtual void ClearRenderTarget() = 0;
-		virtual void Record(HITEM item) = 0;
-		virtual void Render() = 0;
-		virtual void Present() = 0;
 	};
 
 	class IAudioModule : public IModule {
@@ -253,6 +219,7 @@ namespace Egg::Module {
 		virtual std::unique_ptr<INetworkModule> CreateNetworkModule(AApp * app, int networkType) = 0;
 		virtual std::unique_ptr<IAudioModule> CreateAudioModule(AApp * app, int audioType) = 0;
 		virtual std::unique_ptr<IPhysicsModule> CreatePhysicsModule(AApp * app, int physicsType) = 0;
+		virtual std::unique_ptr<IImporterModule> CreateImporterModule(AApp * app, int importerType) = 0;
 	};
 
 }

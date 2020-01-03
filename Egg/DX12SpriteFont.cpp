@@ -62,7 +62,7 @@ namespace Egg::Graphics::DX12 {
 
 		ASSERT(hr == S_OK, "Failed to initialize2D");
 
-		upload->Upload(textureResource.Get(), imageData.GetImages(), imageData.GetImageCount());
+		upload->Upload(textureResource.Get(), imageData.GetImages(), static_cast<UINT>(imageData.GetImageCount()));
 		upload->Transition(textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
 	}
 
@@ -258,7 +258,7 @@ namespace Egg::Graphics::DX12 {
 		}
 	}
 
-	SpriteFont::Glyph const * SpriteFont::FindGlyph(wchar_t character) const
+	const Glyph * SpriteFont::FindGlyph(wchar_t character) const
 	{
 		auto glyph = std::lower_bound(glyphs.begin(), glyphs.end(), character);
 

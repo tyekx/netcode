@@ -1,6 +1,5 @@
 #include "DX12GraphicsModule.h"
 #include "DX12SpriteFont.h"
-#include "DX12ResourcePool.h"
 
 namespace Egg::Graphics::DX12 {
 	void DX12GraphicsModule::NextBackBufferIndex() {
@@ -13,8 +12,6 @@ namespace Egg::Graphics::DX12 {
 	}
 
 	void DX12GraphicsModule::CreateDevice() {
-		ResourcePool pool;
-
 		com_ptr<ID3D12Device5> tempDevice;
 
 		// always the 0th index will be tried first for creation, then we upgrade it as high as possible
@@ -41,7 +38,15 @@ namespace Egg::Graphics::DX12 {
 		DX_API("Failed to upgrade device to %s", FeatureLevelToString(queryDataFeatureLevels.MaxSupportedFeatureLevel))
 			D3D12CreateDevice(nullptr, queryDataFeatureLevels.MaxSupportedFeatureLevel, IID_PPV_ARGS(tempDevice.GetAddressOf()));
 
-		Egg::Utility::Debugf("Created DX12 device with %s\r\n", FeatureLevelToString(queryDataFeatureLevels.MaxSupportedFeatureLevel));
+		Log::Info("Created DX12 device with %s\r\n", FeatureLevelToString(queryDataFeatureLevels.MaxSupportedFeatureLevel));
+
+		D3D12_FEATURE_DATA_SHADER_MODEL queryDataShaderModel;
+		queryDataShaderModel.HighestShaderModel = D3D_SHADER_MODEL_5_1;
+
+		DX_API("Failed to query shader model")
+			device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &queryDataFeatureLevels, sizeof(D3D12_FEATURE_DATA_SHADER_MODEL));
+
+		Log::Info("Highest supported shader model: {0}", ShaderModelToString(queryDataShaderModel.HighestShaderModel));
 
 		device = std::move(tempDevice);
 	}
@@ -69,7 +74,7 @@ namespace Egg::Graphics::DX12 {
 			DX_API("Failed to query adapter desc")
 				adapters[adaptersLength]->GetDesc2(&adapterDesc);
 
-			Egg::Utility::Debugf("Graphics adapter: %S\r\n", adapterDesc.Description);
+			Log::Info("Graphics adapter: {0}", Egg::Utility::ToNarrowString(adapterDesc.Description));
 
 			// not calling reset here results in memory leak
 			tempAdapter.Reset();
@@ -143,10 +148,18 @@ namespace Egg::Graphics::DX12 {
 		width = scDesc.Width;
 		height = scDesc.Height;
 	}
+
+	void DX12GraphicsModule::CreateContexts() {
+		//Egg::Module::IGraphicsModule::renderer = this;
+		Egg::Module::IGraphicsModule::pipeline = this;
+		//Egg::Module::IGraphicsModule::resources = this;
+		Egg::Module::IGraphicsModule::shaders = &shaderContext;
+		Egg::Module::IGraphicsModule::frame = this;
+		Egg::Module::IGraphicsModule::geometry = &geometryContext;
+	}
+
 	void DX12GraphicsModule::Prepare() {
 		FrameResource & fr = frameResources.at(backbufferIndex);
-
-		fr.WaitForCompletion();
 
 		DX_API("Failed to reset command allocator")
 			fr.commandAllocator->Reset();
@@ -155,57 +168,13 @@ namespace Egg::Graphics::DX12 {
 			fr.commandList->Reset(fr.commandAllocator.Get(), nullptr);
 
 		fr.commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(fr.swapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-		/*
-		record upload commands first
-		@TODO: rethink this, this could kill performance
-		*/
-		fr.resourceUploader->Prepare();
-		textureLibrary.UploadResources(fr.resourceUploader.get());
-		geomManager.UploadResources(fr.resourceUploader.get());
-		fr.resourceUploader->Process(commandQueue.Get(), copyCommandQueue.Get());
-	}
-
-	void DX12GraphicsModule::SetRenderTarget() {
-		SetRenderTarget(0);
-	}
-
-	void DX12GraphicsModule::SetRenderTarget(HRENDERTARGET rt) {
-		FrameResource & fr = frameResources.at(backbufferIndex);
-		ID3D12GraphicsCommandList * gcl = fr.commandList.Get();
-
-		if(rt == 0) {
-			gcl->OMSetRenderTargets(1, &fr.rtvHandle, FALSE, &fr.dsvHandle);
-			gcl->RSSetScissorRects(1, &fr.scissorRect);
-			gcl->RSSetViewports(1, &fr.viewPort);
-			gcl->ClearRenderTargetView(fr.rtvHandle, rtvClearValue.Color, 0, nullptr);
-			gcl->ClearDepthStencilView(fr.dsvHandle, D3D12_CLEAR_FLAG_DEPTH, dsvClearValue.DepthStencil.Depth, dsvClearValue.DepthStencil.Stencil, 0, nullptr);
-		}
-	}
-
-	void DX12GraphicsModule::ClearRenderTarget() {
-		// @TODO
-	}
-
-	void DX12GraphicsModule::Record(HITEM item) {
-		RenderItem * renderItem = renderItemColl.GetItem(item);
-		renderItemBuffer.push_back(renderItem);
 	}
 
 	void DX12GraphicsModule::Render() {
 		FrameResource & fr = frameResources.at(backbufferIndex);
 		ID3D12GraphicsCommandList * gcl = fr.commandList.Get();
 
-		textureLibrary.SetDescriptorHeap(gcl);
-
-
-		for(RenderItem * i : renderItemBuffer) {
-			i->Render(gcl);
-		}
-
-		renderItemBuffer.clear();
-
-		TestFont(0);
+		//textureLibrary.SetDescriptorHeap(gcl);
 
 		fr.FinishRecording();
 
@@ -224,7 +193,13 @@ namespace Egg::Graphics::DX12 {
 		commandQueue->Signal(fr.fence.Get(), fr.fenceValue);
 
 		presentedBackbufferIndex = backbufferIndex;
+
 		NextBackBufferIndex();
+
+		// @TODO: WaitForCompletion is wasteful here, could start recording the next frame if cbuffers are handled properly
+		fr.WaitForCompletion();
+
+		cbufferPool.Reset();
 	}
 
 	void DX12GraphicsModule::Start(Module::AApp * app)  {
@@ -262,19 +237,17 @@ namespace Egg::Graphics::DX12 {
 
 		CreateSwapChainResources();
 
-		textureLibrary.CreateResources(device.Get());
+		resourcePool.SetDevice(device.Get());
 
-		geomManager.CreateResources(device.Get());
+		CreateContexts();
 
-		matManager.CreateResources(device.Get());
+		//textureLibrary.CreateResources(device.Get());
 
-		cbufferAllocator.CreateResources(device.Get());
+		//spriteBatch = std::make_unique<SpriteBatch>(device.Get(), frameResources[backbufferIndex].resourceUploader.get(), SpriteBatchPipelineStateDescription(), &frameResources[backbufferIndex].viewPort);
 
-		spriteBatch = std::make_unique<SpriteBatch>(device.Get(), frameResources[backbufferIndex].resourceUploader.get(), SpriteBatchPipelineStateDescription(), &cbufferAllocator, &frameResources[backbufferIndex].viewPort);
+		//fontLibrary.CreateResources(device.Get(), &textureLibrary);
 
-		fontLibrary.CreateResources(device.Get(), &textureLibrary);
-
-		renderItemBuffer.reserve(1024);
+		//renderItemBuffer.reserve(1024);
 	}
 
 	void DX12GraphicsModule::Shutdown() {
@@ -297,11 +270,34 @@ namespace Egg::Graphics::DX12 {
 		}
 	}
 
-	float DX12GraphicsModule::GetAspectRatio() const
-	{
+	float DX12GraphicsModule::GetAspectRatio() const {
 		return static_cast<float>(width) / static_cast<float>(height);
 	}
-	
+
+	HPSO DX12GraphicsModule::CreatePipelineState() {
+		return psContext.CreatePipelineState();
+	}
+
+	void DX12GraphicsModule::SetGeometryShader(HPSO pso, HSHADER geometryShader) {
+		psContext.SetGeometryShader(pso, shaderContext.GetShader(geometryShader));
+	}
+
+	void DX12GraphicsModule::SetVertexShader(HPSO pso, HSHADER vertexShader) {
+		psContext.SetVertexShader(pso, shaderContext.GetShader(vertexShader));
+	}
+
+	void DX12GraphicsModule::SetPixelShader(HPSO pso, HSHADER pixelShader) {
+		psContext.SetPixelShader(pso, shaderContext.GetShader(pixelShader));
+	}
+
+	void DX12GraphicsModule::SetHullShader(HPSO pso, HSHADER hullShader) {
+		psContext.SetHullShader(pso, shaderContext.GetShader(hullShader));
+	}
+
+	void DX12GraphicsModule::SetDomainShader(HPSO pso, HSHADER domainShader) {
+		psContext.SetDomainShader(pso, shaderContext.GetShader(domainShader));
+	}
+
 	void DX12GraphicsModule::ReleaseSwapChainResources() {
 		Log::Debug("Releasing Swap Chain resources");
 
@@ -359,6 +355,7 @@ namespace Egg::Graphics::DX12 {
 		dsvClearValue.DepthStencil.Stencil = 0;
 		dsvClearValue.Format = depthStencilFormat;
 
+		// @TODO: move DSV creation out into resourcePool
 		DX_API("Failed to create dsv resource")
 			device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 											D3D12_HEAP_FLAG_NONE,
@@ -411,25 +408,7 @@ namespace Egg::Graphics::DX12 {
 
 		backbufferIndex = swapChain->GetCurrentBackBufferIndex();
 	}
-
-	RenderItem * itm;
-
-	HFONT DX12GraphicsModule::LoadFont(const std::wstring & fontName) {
-		FrameResource & fr = frameResources.at(backbufferIndex);
-
-		HTEXTURE tex = textureLibrary.LoadTexture2D(L"btn_background.png");
-
-		HTEXTURE tex2 = textureLibrary.LoadTexture2D(L"debug.png");
-
-		itm = renderItemColl.GetItem(renderItemColl.CreateItem());
-		
-		textureLibrary.AllocateTextures(itm, 1);
-
-		textureLibrary.SetTexture(itm, 0, tex);
-
-		return fontLibrary.LoadFont(fontName, fr.resourceUploader.get());
-	}
-
+	/*
 	void DX12GraphicsModule::TestFont(HFONT font) {
 		FrameResource & fr = frameResources.at(backbufferIndex);
 		spriteBatch->Begin(fr.commandList.Get());
@@ -443,6 +422,6 @@ namespace Egg::Graphics::DX12 {
 		//spriteBatch->Draw(f->texture, f->textureSize, DirectX::XMFLOAT2{ 0, 100.0f });
 
 		spriteBatch->End();
-	}
+	}*/
 
 }

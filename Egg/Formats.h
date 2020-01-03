@@ -1,6 +1,14 @@
 #pragma once
 
-#if !defined(DXGI_FORMAT_DEFINED) 
+#include "Platform.h"
+
+#if defined(EGG_OS_WINDOWS)
+
+#include <dxgiformat.h>
+
+#endif
+
+#if defined(EGG_OS_LINUX) && !defined(DXGI_FORMAT_DEFINED)
 
 typedef enum DXGI_FORMAT
 {

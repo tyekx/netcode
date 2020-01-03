@@ -24,11 +24,20 @@ namespace Egg::Graphics::DX12 {
 		return size;
 	}
 
+	struct Glyph
+	{
+		uint32_t Character;
+		RECT Subrect;
+		float XOffset;
+		float YOffset;
+		float XAdvance;
+	};
+
 	class SpriteFont
 	{
 		void Construct(ID3D12Device * device, Resource::IResourceUploader * upload, BinaryReader * reader, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor);
 	public:
-		struct Glyph;
+		// Describes a single character glyph.
 
 		SpriteFont(ID3D12Device * device, Resource::IResourceUploader * upload, _In_z_ wchar_t const * fileName, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor);
 		SpriteFont(ID3D12Device * device, Resource::IResourceUploader * upload, _In_reads_bytes_(dataSize) uint8_t * dataBlob, size_t dataSize, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor);
@@ -73,20 +82,10 @@ namespace Egg::Graphics::DX12 {
 
 		bool __cdecl ContainsCharacter(wchar_t character) const;
 
-		// Custom layout/rendering
-		Glyph const * __cdecl FindGlyph(wchar_t character) const;
+		const Glyph * __cdecl FindGlyph(wchar_t character) const;
 		D3D12_GPU_DESCRIPTOR_HANDLE __cdecl GetSpriteSheet() const;
 		DirectX::XMUINT2 __cdecl GetSpriteSheetSize() const;
 
-		// Describes a single character glyph.
-		struct Glyph
-		{
-			uint32_t Character;
-			RECT Subrect;
-			float XOffset;
-			float YOffset;
-			float XAdvance;
-		};
 
 		DirectX::ScratchImage imageData;
 
@@ -94,7 +93,7 @@ namespace Egg::Graphics::DX12 {
 		D3D12_GPU_DESCRIPTOR_HANDLE texture;
 		DirectX::XMUINT2 textureSize;
 		std::vector<Glyph> glyphs;
-		Glyph const * defaultGlyph;
+		const Glyph * defaultGlyph;
 		float lineSpacing;
 		// cache members
 		mutable size_t utfBufferSize;
@@ -154,19 +153,19 @@ namespace Egg::Graphics::DX12 {
 
 	};
 
-	static inline bool operator< (SpriteFont::Glyph const & left, SpriteFont::Glyph const & right)
+	static inline bool operator<(const Glyph & left, const Glyph & right)
 	{
 		return left.Character < right.Character;
 	}
 
-	static inline bool operator< (wchar_t left, SpriteFont::Glyph const & right)
+	static inline bool operator<(wchar_t left, const Glyph & right)
 	{
 		return left < right.Character;
 	}
 
-	static inline bool operator< (SpriteFont::Glyph const & left, wchar_t right)
+	static inline bool operator<(const Glyph & left, wchar_t right)
 	{
 		return left.Character < right;
 	}
 
-}
+};

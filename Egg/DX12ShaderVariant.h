@@ -5,13 +5,10 @@
 #include <string>
 #include <map>
 
-namespace Egg::Graphics::DX12 {
+#include "Shader.h"
+#include "DX12Common.h"
 
-	enum class EShaderType : unsigned {
-		VERTEX = 0,
-		PIXEL = 1,
-		UNDEFINED = 0xFFFFFFFF
-	};
+namespace Egg::Graphics::DX12 {
 
 	struct ShaderPreprocDefs {
 
@@ -57,59 +54,42 @@ namespace Egg::Graphics::DX12 {
 		}
 	};
 
-	class ShaderVariant {
+	class ShaderVariant : public Egg::Graphics::Shader {
 		ShaderPreprocDefs defs;
-		std::wstring sourceFile;
-		std::string source;
+		std::string sourceCode;
 		std::string entryFunctionName;
-		EShaderType shaderType;
+		ShaderType shaderType;
+		com_ptr<ID3DBlob> shaderByteCode;
 
 	public:
 		ShaderVariant() = default;
 
-		void SetShaderType(EShaderType type) {
-			shaderType = type;
-		}
+		void SetShaderType(ShaderType type);
 
-		void SetSourceReference(const std::wstring & shader) {
-			sourceFile = shader;
-		}
+		void SetSourceReference(const std::wstring & shader);
 
-		void SetShaderSource(const std::string & shaderSource) {
-			source = shaderSource;
-		}
+		void SetShaderSource(const std::string & shaderSource);
 
-		void SetMacros(const ShaderPreprocDefs & preprocDefs) {
-			defs = preprocDefs;
-		}
+		void SetMacros(const ShaderPreprocDefs & preprocDefs);
 
-		void SetMacros(const std::map<std::string, std::string> & macros) {
-			defs = ShaderPreprocDefs{ macros };
-		}
+		void SetMacros(const std::map<std::string, std::string> & macros);
 
-		void SetEntryFunction(const std::string & fname) {
-			entryFunctionName = fname;
-		}
+		void SetEntryFunction(const std::string & fname);
 		
-		EShaderType GetShaderType() const {
-			return shaderType;
-		}
+		ShaderType GetShaderType() const;
 
-		const std::wstring & GetFileReference() const {
-			return sourceFile;
-		}
+		const std::wstring & GetFileReference() const;
 
-		const std::string & GetEntryFunction() const {
-			return entryFunctionName;
-		}
+		const std::string & GetEntryFunction() const;
 
-		const std::string & GetSource() const {
-			return source;
-		}
+		const std::string & GetSource() const;
 
-		const ShaderPreprocDefs & GetPreprocDefs() const {
-			return defs;
-		}
+		const ShaderPreprocDefs & GetPreprocDefs() const;
+
+		// Inherited via Shader
+		virtual uint8_t * GetBufferPointer() override;
+
+		virtual size_t GetBufferSize() override;
 
 	};
 

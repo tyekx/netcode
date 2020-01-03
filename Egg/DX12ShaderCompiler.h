@@ -1,58 +1,12 @@
 #pragma once
 
 #include "DX12Common.h"
-#include "DX12ShaderVariant.h"
-#include "DX12ShaderBytecode.h"
+#include "Shader.h"
 
 namespace Egg::Graphics::DX12 {
+	
+	com_ptr<ID3DBlob> CompileShader(const std::string & shaderSource, const std::string & entryFunction, ShaderType type);
 
-	class ShaderCompiler {
-
-	public:
-
-		// @TODO: could be static
-		ShaderBytecode Compile(const ShaderVariant & variant) {
-
-			com_ptr<ID3DBlob> vsByteCode;
-			const auto & pd = variant.GetPreprocDefs();
-
-			std::unique_ptr<D3D_SHADER_MACRO[]> preprocDefinitions{ nullptr };
-
-			if(pd.defs.size() > 0) {
-				preprocDefinitions = std::make_unique<D3D_SHADER_MACRO[]>(pd.defs.size() + 1);
-
-				int preprocIt = 0;
-				for(const auto & kv : pd.defs) {
-					preprocDefinitions[preprocIt].Name = kv.first.c_str();
-					preprocDefinitions[preprocIt].Definition = (kv.second.size() > 0) ? kv.second.c_str() : nullptr;
-					++preprocIt;
-				}
-				// "NULL" termination, API requires this, dont delete
-				preprocDefinitions[preprocIt].Name = nullptr;
-				preprocDefinitions[preprocIt].Definition = nullptr;
-			}
-
-			const char * entryPoint = variant.GetEntryFunction().c_str();
-
-			com_ptr<ID3DBlob> errorMsg;
-
-			std::string shaderVersion = "vs_5_0";
-			if(variant.GetShaderType() == EShaderType::PIXEL) {
-				shaderVersion = "ps_5_0";
-			}
-
-			D3DCompile(variant.GetSource().c_str(), variant.GetSource().size(), nullptr, preprocDefinitions.get(), nullptr, entryPoint, shaderVersion.c_str(), 0, 0, vsByteCode.GetAddressOf(), errorMsg.GetAddressOf());
-
-			if(errorMsg != nullptr) {
-				Egg::Utility::Debugf("Error while compiling vertex shader (-Wall): \r\n");
-				DebugPrintBlob(errorMsg);
-			}
-
-			return ShaderBytecode{ variant.GetFileReference(), std::move(vsByteCode), variant.GetPreprocDefs(), variant.GetShaderType() };
-		}
-
-
-
-	};
+	com_ptr<ID3DBlob> CompileShader(const std::string & shaderSource, const std::string & entryFunction, ShaderType type, const std::map<std::string, std::string> & definitions);
 
 }

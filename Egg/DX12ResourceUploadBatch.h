@@ -15,7 +15,7 @@ namespace Egg::Graphics::DX12::Resource {
 				// buffer
 				struct {
 					const BYTE * buffer;
-					UINT sizeInBytes;
+					UINT64 sizeInBytes;
 				};
 				struct {
 					const DirectX::Image * images;
@@ -25,7 +25,7 @@ namespace Egg::Graphics::DX12::Resource {
 
 			D3D12_RESOURCE_DIMENSION dimension;
 
-			CopyItem(ID3D12Resource * resource, const BYTE * srcBuffer, UINT sizeInBytes) : 
+			CopyItem(ID3D12Resource * resource, const BYTE * srcBuffer, UINT64 sizeInBytes) : 
 				destResource{ resource }, buffer{ srcBuffer }, sizeInBytes{ sizeInBytes }, dimension{ D3D12_RESOURCE_DIMENSION_BUFFER } {
 
 			}

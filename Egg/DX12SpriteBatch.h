@@ -8,7 +8,6 @@
 #include <functional>
 #include <memory>
 #include "Vertex.h"
-#include "DX12CbufferAllocator.h"
 
 //#include "RenderTargetState.h"
 
@@ -172,7 +171,7 @@ namespace Egg::Graphics::DX12
 
         std::unique_ptr<DeviceResources> mDeviceResources;
 
-        SpriteBatch(_In_ ID3D12Device * device, Resource::IResourceUploader * upload, const SpriteBatchPipelineStateDescription & psoDesc, CbufferAllocator* cbufferAlloc, _In_opt_ const D3D12_VIEWPORT * viewport = nullptr);
+        SpriteBatch(_In_ ID3D12Device * device, Resource::IResourceUploader * upload, const SpriteBatchPipelineStateDescription & psoDesc, _In_opt_ const D3D12_VIEWPORT * viewport = nullptr);
         SpriteBatch(SpriteBatch && moveFrom) = default;
         SpriteBatch & operator= (SpriteBatch && moveFrom) = default;
 

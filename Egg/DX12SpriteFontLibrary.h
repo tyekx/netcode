@@ -4,7 +4,6 @@
 #include "DX12SpriteFont.h"
 #include "HandleTypes.h"
 #include "Path.h"
-#include "DX12TextureLibrary.h"
 
 namespace Egg::Graphics::DX12 {
 
@@ -21,20 +20,19 @@ namespace Egg::Graphics::DX12 {
 
 		std::vector<Item> storage;
 		ID3D12Device * device;
-		TextureLibrary * textureLibrary;
+		//TextureLibrary * textureLibrary;
 
 		std::unique_ptr<SpriteFont> Load(const std::wstring & fontPath, Resource::IResourceUploader * upload) {
 			D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest;
 			D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor;
-			textureLibrary->AllocateTextures(gpuDescriptor, cpuDescriptorDest, 1);
+			//textureLibrary->AllocateTextures(gpuDescriptor, cpuDescriptorDest, 1);
 			return std::make_unique<SpriteFont>(device, upload, fontPath.c_str(), cpuDescriptorDest, gpuDescriptor);
 		}
 
 	public:
 
-		void CreateResources(ID3D12Device * dev, TextureLibrary * texLib) {
+		void CreateResources(ID3D12Device * dev) {
 			device = dev;
-			textureLibrary = texLib;
 		}
 
 		SpriteFont * Get(HFONT font) {

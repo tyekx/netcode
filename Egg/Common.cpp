@@ -10,11 +10,13 @@
 #include <Windows.h>
 #endif
 
+#include "Logger.h"
+
 namespace Egg::Internal {
 
 	static void LogString(const char * str) {
 #if defined(EGG_OS_WINDOWS)
-		OutputDebugString(str);
+		Log::Error(str);
 #endif
 	}
 
@@ -26,30 +28,28 @@ namespace Egg::Internal {
 #endif
 	}
 
+	void Assert(bool trueMeansOk, const char * msgOnFail, ...) {
+		if(!trueMeansOk) {
+			va_list argList;
+			va_start(argList, msgOnFail);
 
-void Assert(bool trueMeansOk, const char * msgOnFail, ...) {
-	va_list argList;
-	va_start(argList, msgOnFail);
+			std::string buffer;
+			buffer.resize(1024);
+			/*
+			vsprintf_s:
+			v: takes a va_list (variadic arg list)
+			s: writes to string
+			printf
+			_s: secure, takes buffer size as argument
+			*/
+			vsprintf_s(&(buffer.at(0)), 1024, msgOnFail, argList);
 
-	if(!trueMeansOk) { 
-		std::string buffer;
-		buffer.resize(1024);
-		/*
-		vsprintf_s:
-		v: takes a va_list (variadic arg list)
-		s: writes to string
-		printf
-		_s: secure, takes buffer size as argument
-		*/
-		vsprintf_s(&(buffer.at(0)), 1024, msgOnFail, argList);
+			LogString(buffer.c_str());
+			DebugBreak();
+			exit(-1);
 
-		LogString("Assertion failed!\r\n");
-		LogString(buffer.c_str());
-		LogString("\r\n");
-		DebugBreak();
-		exit(-1);
-	}
+			va_end(argList);
+		}
 
-	va_end(argList);
 	}
 }

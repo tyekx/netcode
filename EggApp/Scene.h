@@ -8,6 +8,8 @@ public:
 	std::array<GameObject, 1024> objects;
 	std::size_t count;
 	GameObject * camera;
+
+	PerFrameData perFrameData;
 	
 	GameObject * Insert() {
 		if(count == objects.max_size()) {
@@ -17,8 +19,6 @@ public:
 		count += 1;
 		return obj;
 	}
-
-
 
 	DirectX::XMMATRIX GetView(Transform * transform, Camera * camera) {
 		DirectX::XMVECTOR eyePos = DirectX::XMLoadFloat3(&transform->position);
@@ -31,23 +31,22 @@ public:
 		return DirectX::XMMatrixPerspectiveFovRH(camera->fov, camera->aspect, camera->nearPlane, camera->farPlane);
 	}
 
-	void UpdatePerFrameCb(PerFrameCb * cb) {
+	void UpdatePerFrameCb() {
 		Transform * transform = camera->GetComponent<Transform>();
 		Camera * camComponent = camera->GetComponent<Camera>();
 
 		DirectX::XMMATRIX view = GetView(transform, camComponent);
 		DirectX::XMMATRIX proj = GetProj(camComponent);
 
-
-		DirectX::XMStoreFloat4x4A(&cb->View, DirectX::XMMatrixTranspose(view));
-		DirectX::XMStoreFloat4x4A(&cb->Proj, DirectX::XMMatrixTranspose(proj));
+		DirectX::XMStoreFloat4x4A(&perFrameData.View, DirectX::XMMatrixTranspose(view));
+		DirectX::XMStoreFloat4x4A(&perFrameData.Proj, DirectX::XMMatrixTranspose(proj));
 
 		DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(view, proj);
 		DirectX::XMVECTOR vpDet = DirectX::XMMatrixDeterminant(vp);
 		DirectX::XMMATRIX invVp = DirectX::XMMatrixInverse(&vpDet, vp);
 
-		DirectX::XMStoreFloat4x4A(&cb->ViewProj, DirectX::XMMatrixTranspose(vp));
-		DirectX::XMStoreFloat4x4A(&cb->ViewProjInv, DirectX::XMMatrixTranspose(invVp));
+		DirectX::XMStoreFloat4x4A(&perFrameData.ViewProj, DirectX::XMMatrixTranspose(vp));
+		DirectX::XMStoreFloat4x4A(&perFrameData.ViewProjInv, DirectX::XMMatrixTranspose(invVp));
 	}
 
 	void SetCamera(GameObject * camObject) {

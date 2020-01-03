@@ -11,6 +11,7 @@ namespace Egg::Module {
 		virtual std::unique_ptr<INetworkModule> CreateNetworkModule(AApp * app, int networkType) override;
 		virtual std::unique_ptr<IAudioModule> CreateAudioModule(AApp * app, int audioType) override;
 		virtual std::unique_ptr<IPhysicsModule> CreatePhysicsModule(AApp * app, int physicsType) override;
+		virtual std::unique_ptr<IImporterModule> CreateImporterModule(AApp * app, int importerType) override;
 	};
 
 }

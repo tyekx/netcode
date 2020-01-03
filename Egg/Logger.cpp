@@ -41,6 +41,10 @@ namespace Log {
 		spdlog::info(message);
 	}
 
+	void Info(const char * message, const std::string & value) {
+		spdlog::info(message, value);
+	}
+
 	void Warn(const char * message) {
 		spdlog::warn(message);
 	}

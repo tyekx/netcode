@@ -9,16 +9,9 @@
 //
 //*********************************************************
 
-#ifndef __D3DX12_H__
-#define __D3DX12_H__
+#pragma once
 
-#include "d3d12.h"
-
-#if _EGG_SDK_VERSION <= 14393
-#define LEGACY_VERSION
-#endif
-
-#if defined( __cplusplus )
+#include <d3d12.h>
 
 struct CD3DX12_DEFAULT {};
 extern const DECLSPEC_SELECTANY CD3DX12_DEFAULT D3D12_DEFAULT;
@@ -3445,7 +3438,3 @@ private:
 #endif
 
 #endif // #ifndef D3DX12_NO_STATE_OBJECT_HELPERS
-
-#endif // defined( __cplusplus )
-
-#endif //__D3DX12_H__
