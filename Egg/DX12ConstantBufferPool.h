@@ -13,6 +13,8 @@ namespace Egg::Graphics::DX12 {
 	*/
 	class ConstantBufferPool {
 
+		constexpr static size_t CBUFFER_PAGE_SIZE = 1 << 19;
+
 		// actual cbuffer page with GPU resource
 		struct CBufferPage {
 			ID3D12Resource * resource;
@@ -48,10 +50,6 @@ namespace Egg::Graphics::DX12 {
 			}
 		};
 
-		constexpr static UINT64 ALLOCATION_GRANULARITY = 1 << 24; // 16MB
-
-		HeapCollection<ALLOCATION_GRANULARITY> cbufferHeaps;
-
 		std::deque<CBufferAllocationPage> allocationPages;
 
 		std::vector<CBufferPage> pages;
@@ -62,17 +60,27 @@ namespace Egg::Graphics::DX12 {
 
 		ID3D12Device * device;
 
-		ID3D12Resource * CreatePageResource() {
-			D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(ALLOCATION_GRANULARITY, D3D12_RESOURCE_FLAG_NONE);
+		HeapManager * heapManager;
 
-			return cbufferHeaps.CreateResource(device, desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+		ID3D12Resource * CreatePageResource() {
+			ResourceDesc desc;
+			desc.depth = 1;
+			desc.dimension = ResourceDimension::BUFFER;
+			desc.state = ResourceState::GENERIC_READ;
+			desc.type = ResourceType::TRANSIENT_UPLOAD;
+			desc.flags = ResourceFlags::NONE;
+			desc.sizeInBytes = CBUFFER_PAGE_SIZE;
+			desc.format = DXGI_FORMAT_UNKNOWN;
+			desc.mipLevels = 1;
+			desc.height = 1;
+			desc.strideInBytes = 1;
+			desc.width = CBUFFER_PAGE_SIZE;
+			return heapManager->CreateResource(desc);
 		}
 
 		void ValidateCurrentPageFor(size_t size) {
-			ASSERT(size <= ALLOCATION_GRANULARITY, "Size is too big to allocate");
-
 			if(currentPage == nullptr ||
-			  ((ALLOCATION_GRANULARITY - currentPage->offset) < size)) {
+			  ((CBUFFER_PAGE_SIZE - currentPage->offset) < size)) {
 				currentPage = &pages.emplace_back(CreatePageResource());
 			}
 		}
@@ -86,13 +94,8 @@ namespace Egg::Graphics::DX12 {
 
 	public:
 
-		void SetDevice(ID3D12Device * device) {
-			this->device = device;
-		}
-
-		ConstantBufferPool() : cbufferHeaps{ D3D12_HEAP_TYPE_UPLOAD }, allocationPages{}, pages{},
-			currentPage{ nullptr }, currentAllocationPage{ nullptr }, device{ nullptr } {
-			
+		void SetHeapManager(HeapManager * heapMan) {
+			heapManager = heapMan;
 		}
 
 		~ConstantBufferPool() {
@@ -108,7 +111,7 @@ namespace Egg::Graphics::DX12 {
 			currentPage = nullptr;
 
 			for(auto & page : pages) {
-				cbufferHeaps.ReleaseResource(page.resource);
+				heapManager->ReleaseResource(page.resource);
 			}
 			pages.clear();
 		}

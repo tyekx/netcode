@@ -2,6 +2,7 @@
 
 #include "ResourceDesc.h"
 #include "DX12Common.h"
+#include <tuple>
 
 namespace Egg::Graphics::DX12 {
 

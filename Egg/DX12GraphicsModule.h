@@ -143,8 +143,9 @@ namespace Egg::Graphics::DX12 {
 
 		void CreateContexts();
 
-		ConstantBufferPool cbufferPool;
+		HeapManager heapManager;
 		ResourcePool resourcePool;
+		ConstantBufferPool cbufferPool;
 
 		ShaderContext shaderContext;
 		PipelineContext psContext;

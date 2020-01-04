@@ -2,51 +2,12 @@
 
 namespace Egg::Graphics::DX12 {
 
-	ResourcePool::ResourcePool() : defaultPermanentHeaps{ D3D12_HEAP_TYPE_DEFAULT },
-		uploadPermanentHeaps{ D3D12_HEAP_TYPE_UPLOAD },
-		readbackPermanentHeaps{ D3D12_HEAP_TYPE_READBACK },
-		defaultTransientHeaps{ D3D12_HEAP_TYPE_DEFAULT },
-		uploadTransientHeaps{ D3D12_HEAP_TYPE_UPLOAD },
-		readbackTransientHeaps{ D3D12_HEAP_TYPE_READBACK },
-		totalSizeInBytes{ },
-		freeSizeInBytes{},
-		device{ nullptr },
-		managedResources{} { }
-
-	ResourcePool::HeapCollectionType & ResourcePool::GetCollection(ResourceType resType) {
-
-		switch(resType) {
-			case ResourceType::PERMANENT_DEFAULT:
-				return defaultPermanentHeaps;
-			case ResourceType::PERMANENT_UPLOAD:
-				return uploadPermanentHeaps;
-			case ResourceType::PERMANENT_READBACK:
-				return readbackPermanentHeaps;
-			case ResourceType::TRANSIENT_DEFAULT:
-				return defaultTransientHeaps;
-			case ResourceType::TRANSIENT_UPLOAD:
-				return uploadTransientHeaps;
-			case ResourceType::TRANSIENT_READBACK:
-				return readbackTransientHeaps;
-		}
-
-		throw std::exception("Unexpected control flow");
-	}
-
-	void ResourcePool::SetDevice(ID3D12Device * device) {
-		this->device = device;
-	}
-
 	uint64_t ResourcePool::CreateResource(const ResourceDesc & resource) {
-		uint64_t idx = 0;
-
-		HeapCollectionType & heapCollection = GetCollection(resource.type);
-
 		D3D12_RESOURCE_DESC desc = GetNativeDesc(resource);
 
 		GResource res;
 		res.desc = resource;
-		res.resource = heapCollection.CreateResource(device, desc, GetNativeState(resource.state), nullptr);
+		res.resource = heapManager->CreateResource(resource);
 		res.address = res.resource->GetGPUVirtualAddress();
 
 		return reinterpret_cast<uint64_t>(&managedResources.emplace_back(res));
@@ -127,10 +88,7 @@ namespace Egg::Graphics::DX12 {
 	void ResourcePool::ReleaseResource(uint64_t handle) {
 		GResource * ptr = reinterpret_cast<GResource *>(handle);
 
-		HeapCollectionType & heapCollection = GetCollection(ptr->desc.type);
-
-		DX_API("Failed to release resource")
-			heapCollection.ReleaseResource(ptr->resource);
+		heapManager->ReleaseResource(ptr->resource);
 
 		for(decltype(managedResources)::iterator it = managedResources.begin(); it != managedResources.end(); ++it) {
 			if((&(*it)) == ptr) {

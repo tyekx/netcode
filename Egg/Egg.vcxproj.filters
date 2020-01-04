@@ -406,7 +406,9 @@
     <ClCompile Include="DX12ResourceContext.cpp">
       <Filter>Graphics\DX12</Filter>
     </ClCompile>
-    <ClCompile Include="DX12ResourcePool.cpp" />
+    <ClCompile Include="DX12ResourcePool.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DefaultPS.hlsl">

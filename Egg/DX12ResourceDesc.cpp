@@ -46,6 +46,5 @@ namespace Egg::Graphics::DX12 {
 		return desc;
 	}
 
-
 }
 

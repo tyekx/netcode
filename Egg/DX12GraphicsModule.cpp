@@ -250,9 +250,13 @@ namespace Egg::Graphics::DX12 {
 
 		CreateSwapChainResources();
 
-		resourcePool.SetDevice(device.Get());
+		heapManager.SetDevice(device.Get());
+
+		resourcePool.SetHeapManager(&heapManager);
 
 		resourceContext.SetResourcePool(&resourcePool);
+
+		cbufferPool.SetHeapManager(&heapManager);
 
 		CreateContexts();
 
@@ -319,6 +323,88 @@ namespace Egg::Graphics::DX12 {
 
 	void DX12GraphicsModule::SyncUpload(const UploadBatch & upload)
 	{
+		com_ptr<ID3D12CommandAllocator> allocator;
+		com_ptr<ID3D12GraphicsCommandList> gcl;
+		com_ptr<ID3D12Fence> fence;
+		com_ptr<ID3D12Resource> uploadResource;
+		HANDLE evt = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
+		DX_API("Failed to create command allocator")
+			device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(allocator.GetAddressOf()));
+
+		DX_API("Failed to create command list")
+			device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, allocator.Get(), nullptr, IID_PPV_ARGS(gcl.GetAddressOf()));
+
+		DX_API("Failed to create fence")
+			device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.GetAddressOf()));
+
+		std::vector<D3D12_RESOURCE_BARRIER> barriers;
+		barriers.reserve(upload.BarrierTasks().size());
+
+		for(const auto & barrier : upload.BarrierTasks()) {
+			ID3D12Resource* resouce = resourcePool.GetNativeResource(barrier.resourceHandle).resource;
+			barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::Transition(resouce, GetNativeState(barrier.before), GetNativeState(barrier.after)));
+		}
+
+		size_t totalSize = 0;
+
+		for(const auto & task : upload.UploadTasks()) {
+			totalSize += task.srcDataSizeInBytes;
+		}
+
+		if(totalSize > 0) {
+			DX_API("Failed to create resource")
+				device->CreateCommittedResource(
+					&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+					D3D12_HEAP_FLAG_NONE,
+					&CD3DX12_RESOURCE_DESC::Buffer(totalSize),
+					D3D12_RESOURCE_STATE_GENERIC_READ,
+					nullptr,
+					IID_PPV_ARGS(uploadResource.GetAddressOf()));
+
+			const D3D12_RANGE nullRange = CD3DX12_RANGE{ 0, 0 };
+
+			uint8_t * dstPtr;
+
+			DX_API("Failed to map upload resource")
+				uploadResource->Map(0, &nullRange, reinterpret_cast<void **>(&dstPtr));
+
+			size_t offset = 0;
+
+			for(const auto & task : upload.UploadTasks()) {
+				memcpy(dstPtr, task.srcData, task.srcDataSizeInBytes);
+				const auto & gres = resourcePool.GetNativeResource(task.resourceHandle);
+				gcl->CopyBufferRegion(gres.resource, 0, uploadResource.Get(), offset, task.srcDataSizeInBytes);
+				offset += task.srcDataSizeInBytes;
+			}
+
+			uploadResource->Unmap(0, nullptr);
+		}
+
+		if(!barriers.empty()) {
+			gcl->ResourceBarrier(barriers.size(), barriers.data());
+		}
+
+		DX_API("Failed to close command list")
+			gcl->Close();
+
+		ID3D12CommandList * cls[] = { gcl.Get() };
+
+		commandQueue->ExecuteCommandLists(ARRAYSIZE(cls), cls);
+		
+		DX_API("Failed to signal fence")
+			commandQueue->Signal(fence.Get(), 1);
+
+
+		if(fence->GetCompletedValue() != 1) {
+			DX_API("Failed to set event")
+				fence->SetEventOnCompletion(1, evt);
+
+			WaitForSingleObject(evt, INFINITE);
+		}
+
+		CloseHandle(evt);
+
 	}
 
 	void DX12GraphicsModule::ReleaseSwapChainResources() {

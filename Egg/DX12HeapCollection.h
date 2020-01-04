@@ -4,6 +4,7 @@
 #include <list>
 #include <set>
 #include <algorithm>
+#include <unordered_map>
 
 namespace Egg::Graphics::DX12 {
 
@@ -40,15 +41,25 @@ namespace Egg::Graphics::DX12 {
 		UINT64 sizeInBytes;
 		UINT64 usedInBytes;
 
+		bool operator<(const HeapAlloc & rhs) const {
+			return usedInBytes < rhs.usedInBytes;
+		}
+
+		HeapAlloc(HeapAlloc && o) = default;
+		HeapAlloc & operator=(HeapAlloc && o) = default;
+
+		HeapAlloc(const HeapAlloc & o) = delete;
+		HeapAlloc & operator=(const HeapAlloc & o) = delete;
+
 		HeapAlloc() : heap{}, used{ }, freed{ }, type{ }, sizeInBytes{ 0 }, usedInBytes{ 0 } { }
 
-		HeapAlloc(ID3D12Device * device, UINT64 sizeInBytes, D3D12_HEAP_TYPE type) : HeapAlloc() {
+		HeapAlloc(ID3D12Device * device, UINT64 sizeInBytes, D3D12_HEAP_TYPE type, D3D12_HEAP_FLAGS flags) : HeapAlloc() {
 			this->sizeInBytes = sizeInBytes;
 			this->type = type;
 
 			D3D12_HEAP_DESC heapDesc = {};
 			heapDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
-			heapDesc.Flags = D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
+			heapDesc.Flags = flags;
 			heapDesc.Properties = CD3DX12_HEAP_PROPERTIES(type);
 			heapDesc.SizeInBytes = sizeInBytes;
 
@@ -132,49 +143,238 @@ namespace Egg::Graphics::DX12 {
 		}
 	};
 
-	template<UINT64 GRANULARITY>
-	class HeapCollection {
-		using HeapsType = std::list<HeapAlloc>;
+	class HeapManager {
 
-		void SortHeaps() {
-			heaps.sort([](const HeapAlloc & lhs, const HeapAlloc & rhs) -> bool {
-				return lhs.sizeInBytes > rhs.sizeInBytes;
-			});
+		static uint32_t DeduceBucketIndex(size_t size) {
+			constexpr static size_t s512K = 1 << 19;
+			constexpr static size_t s4M = 1 << 22;
+			constexpr static size_t s32M = 1 << 25;
+
+			if(size <= s512K) {
+				return 0;
+			}
+
+			if(size <= s4M) {
+				return 1;
+			}
+
+			if(size <= s32M) {
+				return 2;
+			}
+
+			return 3;
+		}
+
+		static size_t GetBucketSize(size_t size) {
+			constexpr static size_t s512K = 1 << 19;
+			constexpr static size_t s4M = 1 << 22;
+			constexpr static size_t s32M = 1 << 25;
+
+			if(size <= s512K) {
+				return s512K;
+			}
+
+			if(size <= s4M) {
+				return s4M;
+			}
+
+			if(size <= s32M) {
+				return s32M;
+			}
+
+			return size;
+		}
+
+		struct ResourceHash {
+			uint32_t hash;
+
+			uint32_t GetHeapTypeBits() const {
+				return (hash >> 6) & 0x3;
+			}
+
+			uint32_t GetHeapFlagBits() const {
+				return (hash >> 4) & 0x3;
+			}
+
+			void SetHeapTypeBits(D3D12_HEAP_TYPE type) {
+				uint32_t bits;
+				switch(type) {
+					case D3D12_HEAP_TYPE_DEFAULT: bits = 0; break;
+					case D3D12_HEAP_TYPE_UPLOAD: bits = 1; break;
+					case D3D12_HEAP_TYPE_READBACK: bits = 2; break;
+					default: bits = 3; break;
+				}
+				hash |= (bits) << 6;
+			}
+
+			void SetHeapFlagBits(D3D12_RESOURCE_FLAGS flags, D3D12_RESOURCE_DIMENSION dim) {
+				uint32_t heapFlagBits = 0;
+				if((flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) ||
+					(flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)) {
+					heapFlagBits |= 1u;
+				}
+
+				if(dim == D3D12_RESOURCE_DIMENSION_BUFFER) {
+					heapFlagBits |= 2u;
+				}
+				hash |= (heapFlagBits & 0x3) << 4;
+			}
+
+			void SetBucketIndex(uint32_t bits) {
+				hash |= (bits & 0xF);
+			}
+
+			void SetTransientBit(bool isTransient) {
+				if(isTransient) {
+					hash |= (0x1 << 8);
+				}
+			}
+		public:
+			ResourceHash & operator=(const ResourceHash &) = default;
+			ResourceHash(const ResourceHash &) = default;
+
+			ResourceHash(const Egg::Graphics::ResourceDesc & rd) : hash{ 0 } {
+				SetHeapFlagBits(GetNativeFlags(rd.flags), GetNativeDimension(rd.dimension));
+				SetHeapTypeBits(GetNativeHeapType(rd.type));
+				SetBucketIndex(HeapManager::DeduceBucketIndex(rd.sizeInBytes));
+				bool isTransient = (rd.type == ResourceType::TRANSIENT_DEFAULT || rd.type == ResourceType::TRANSIENT_UPLOAD || rd.type == ResourceType::TRANSIENT_READBACK);
+				SetTransientBit(isTransient);
+			}
+
+			bool operator==(const ResourceHash & h) const {
+				return hash == h.hash;
+			}
+
+			bool operator<(const ResourceHash & h) const {
+				return hash < h.hash;
+			}
+
+			bool IsTransient() const {
+				return (hash & 256u) > 0;
+			}
+
+			bool IsPermanent() const {
+				return !IsTransient();
+			}
+
+			bool IsRenderTarget() const {
+				return (hash & 16u) > 0;
+			}
+
+			bool IsBuffer() const {
+				return (hash & 32u) > 0;
+			}
+
+			bool IsTexture() const {
+				return !IsBuffer();
+			}
+
+			uint32_t GetHash() const {
+				return hash;
+			}
+
+			uint32_t GetBucketIndex() const {
+				return hash & (0xF);
+			}
+
+			D3D12_HEAP_FLAGS GetHeapFlag() const {
+				switch(GetHeapFlagBits()) {
+					case 0: // not buffer and not render target
+						return D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES;
+					case 1: // not buffer but render target
+						return D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
+					case 2: // buffer
+						return D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
+					default: // unexpected case
+						return D3D12_HEAP_FLAG_NONE;
+				}
+			}
+
+			D3D12_HEAP_TYPE GetHeapType() const {
+				switch(GetHeapTypeBits()) {
+					case 0: return D3D12_HEAP_TYPE_DEFAULT;
+					case 1: return D3D12_HEAP_TYPE_UPLOAD;
+					case 2: return D3D12_HEAP_TYPE_READBACK;
+					default: return D3D12_HEAP_TYPE_CUSTOM;
+				}
+			}
+		};
+
+
+		template<typename T>
+		struct AlreadyHashed {
+			size_t operator()(const T & h) const {
+				return h.GetHash();
+			}
+		};
+
+		std::unordered_map<ResourceHash, std::list<HeapAlloc>, AlreadyHashed<ResourceHash>> collections;
+		std::unordered_map<ID3D12Resource *, ResourceHash> hashAssoc;
+
+
+
+		ID3D12Device * device;
+
+		inline ID3D12Resource * MarshalResource(ID3D12Resource * resource, const ResourceHash & hash) {
+			hashAssoc.emplace(resource, hash);
+			return resource;
 		}
 	public:
-		HeapsType heaps;
+		void SetDevice(ID3D12Device * device) {
+			this->device = device;
+		}
 
-		D3D12_HEAP_TYPE  heapType;
+		ID3D12Resource* CreateResource(const ResourceDesc & d) {
+			const D3D12_RESOURCE_DESC dxDesc = GetNativeDesc(d);
+			const D3D12_RESOURCE_STATES initState = GetNativeState(d.state);
+			const ResourceHash hash(d);
+			const D3D12_HEAP_TYPE heapType = hash.GetHeapType();
+			const D3D12_HEAP_FLAGS heapFlags = hash.GetHeapFlag();
+			const D3D12_RESOURCE_ALLOCATION_INFO dxAlloc = device->GetResourceAllocationInfo(0, 1, &dxDesc);
+			const size_t bucketSize = GetBucketSize(dxAlloc.SizeInBytes);
 
-		HeapCollection(D3D12_HEAP_TYPE heapType) : heapType{ heapType } { }
+			decltype(collections)::iterator collection = collections.find(hash);
 
-		ID3D12Resource * CreateResource(ID3D12Device * device, const D3D12_RESOURCE_DESC & desc, D3D12_RESOURCE_STATES state, const D3D12_CLEAR_VALUE * clearValue) {
-			const D3D12_RESOURCE_ALLOCATION_INFO alloc = device->GetResourceAllocationInfo(0, 1, &desc);
+			if(collection != collections.end()) {
+				
+				for(HeapAlloc & heap : collection->second) {
+					if(heap.CanFit(dxAlloc.SizeInBytes)) {
+						return MarshalResource(heap.CreateResource(device, dxDesc, initState, nullptr, dxAlloc), hash);
+					}
+				}
+
+			} else {
+				collections[hash];
+				collection = collections.find(hash);
+
+				ASSERT(collection != collections.end(), "oof");
+			}
 			
-			ASSERT(GRANULARITY >= alloc.SizeInBytes, "Cant allocate %ull size while the granularity is just %ull", alloc.SizeInBytes, GRANULARITY);
-
-			for(auto & heap : heaps) {
-				if(heap.CanFit(alloc.SizeInBytes)) {
-					return heap.CreateResource(device, desc, state, clearValue, alloc);
-				}
-			}
-
-			auto & heap = heaps.emplace_back(device, GRANULARITY, heapType);
-
-			ID3D12Resource * rawPtr = heap.CreateResource(device, desc, state, clearValue, alloc);
-
-			SortHeaps();
-
-			return rawPtr;
+			HeapAlloc & heapAlloc = collection->second.emplace_back(device, bucketSize, heapType, heapFlags);
+			return MarshalResource(heapAlloc.CreateResource(device, dxDesc, initState, nullptr, dxAlloc), hash);
 		}
 
-		HRESULT ReleaseResource(ID3D12Resource * resource) {
-			for(auto & heap : heaps) {
-				if(SUCCEEDED(heap.ReleaseResource(resource))) {
-					return S_OK;
+		void ReleaseResource(ID3D12Resource * resource) {
+			auto it = hashAssoc.find(resource);
+
+			if(it != hashAssoc.end()) {
+
+				auto & collection = collections[it->second];
+
+				for(HeapAlloc & heap : collection) {
+					if(SUCCEEDED(heap.ReleaseResource(resource))) {
+						break;
+					}
 				}
-			}
-			return E_FAIL;
+
+				Log::Warn("You broke it");
+
+				hashAssoc.erase(it);
+
+			} else Log::Info("Skipping resource deallocation");
 		}
+
 	};
+
+
 }

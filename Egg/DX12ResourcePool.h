@@ -10,33 +10,16 @@
 namespace Egg::Graphics::DX12 {
 
 	class ResourcePool {
-		constexpr static UINT64 ALLOCATION_GRANULARITY = 1 << 25; // 32M
-		
-		using HeapCollectionType = HeapCollection<ALLOCATION_GRANULARITY>;
 
-
-		HeapCollectionType defaultPermanentHeaps;
-		HeapCollectionType uploadPermanentHeaps;
-		HeapCollectionType readbackPermanentHeaps;
-
-		HeapCollectionType defaultTransientHeaps;
-		HeapCollectionType uploadTransientHeaps;
-		HeapCollectionType readbackTransientHeaps;
-
-		UINT64 totalSizeInBytes;
-		UINT64 freeSizeInBytes;
-
-		ID3D12Device * device;
+		HeapManager * heapManager;
 
 		std::list<GResource> managedResources;
 
-
-		HeapCollectionType & GetCollection(ResourceType resType);
-
 	public:
-		ResourcePool();
 
-		void SetDevice(ID3D12Device * device);
+		void SetHeapManager(HeapManager * heapMan) {
+			heapManager = heapMan;
+		}
 
 		uint64_t CreateResource(const ResourceDesc & resource);
 
@@ -52,7 +35,6 @@ namespace Egg::Graphics::DX12 {
 
 		void ReleaseResource(uint64_t handle);
 	};
-
 
 
 }
