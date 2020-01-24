@@ -15,26 +15,6 @@
 
 namespace Egg::Importer {
 
-	std::unique_ptr<Graphics::DX12::Resource::ITexture>  ImportCommittedTexture2D(ID3D12Device * device, const MediaPath & filePath) {
-		std::wstring wstr = filePath.GetAbsolutePath();
-
-		DirectX::TexMetadata metaData;
-		DirectX::ScratchImage sImage;
-		//DirectX::ScratchImage outputIm;
-
-		DX_API("Failed to load image: %S", wstr.c_str())
-			DirectX::LoadFromWICFile(wstr.c_str(), 0, &metaData, sImage);
-
-		//ASSERT(metaData.width >= 512 && metaData.width == metaData.height, "Invalid texture parameters");
-
-		//DX_API("Failed to generate mip levels")
-		//DirectX::GenerateMipMaps(sImage.GetImages(), sImage.GetImageCount(), sImage.GetMetadata(), DirectX::TEX_FILTER_BOX, 4, outputIm);
-
-		std::unique_ptr<Graphics::DX12::Resource::CommittedTexture2D> texture = std::make_unique<Graphics::DX12::Resource::CommittedTexture2D>();
-		texture->CreateResources(device, std::move(sImage));
-		return texture;
-	}
-
 	void ImportModel(const MediaPath & mediaFile, Asset::Model & model) {
 		std::string mediaFilePath = Egg::Utility::ToNarrowString(mediaFile.GetAbsolutePath());
 		ImportModel(mediaFilePath.c_str(), model);

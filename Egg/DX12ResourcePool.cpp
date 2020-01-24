@@ -3,13 +3,10 @@
 namespace Egg::Graphics::DX12 {
 
 	uint64_t ResourcePool::CreateResource(const ResourceDesc & resource) {
-		D3D12_RESOURCE_DESC desc = GetNativeDesc(resource);
-
 		GResource res;
 		res.desc = resource;
-		res.resource = heapManager->CreateResource(resource);
-		res.address = res.resource->GetGPUVirtualAddress();
-
+		res.resource = heapManager->CreateResource(res.desc);
+		res.address = (res.desc.dimension == ResourceDimension::BUFFER) ? res.resource->GetGPUVirtualAddress() : 0;
 		return reinterpret_cast<uint64_t>(&managedResources.emplace_back(res));
 	}
 
@@ -37,7 +34,7 @@ namespace Egg::Graphics::DX12 {
 		rDesc.mipLevels = 1;
 		rDesc.sizeInBytes = rDesc.width = sizeInBytes;
 		rDesc.strideInBytes = static_cast<UINT>(DirectX::BitsPerPixel(format)) / 8U;
-		rDesc.format = DXGI_FORMAT_UNKNOWN;
+		rDesc.format = format;
 		rDesc.depth = 1;
 		rDesc.flags = flags;
 		rDesc.state = initialState;
@@ -54,7 +51,7 @@ namespace Egg::Graphics::DX12 {
 		rDesc.depth = 1;
 		rDesc.mipLevels = 1;
 		rDesc.strideInBytes = static_cast<UINT>(DirectX::BitsPerPixel(format)) / 8U;
-		rDesc.sizeInBytes = rDesc.width * rDesc.height * rDesc.strideInBytes;
+		rDesc.sizeInBytes = 0;
 		rDesc.format = format;
 		rDesc.flags = optFlags;
 		rDesc.state = initialState;
@@ -97,5 +94,20 @@ namespace Egg::Graphics::DX12 {
 			}
 		}
 
+	}
+	void ResourcePool::ReleaseTransients()
+	{
+		for(const auto & i : managedResources) {
+			if(i.desc.type == ResourceType::TRANSIENT_DEFAULT ||
+				i.desc.type == ResourceType::TRANSIENT_UPLOAD ||
+				i.desc.type == ResourceType::TRANSIENT_READBACK) {
+				heapManager->ReleaseResource(i.resource);
+			}
+		}
+		managedResources.remove_if([](const GResource & gres) ->bool {
+			return gres.desc.type == ResourceType::TRANSIENT_DEFAULT ||
+				gres.desc.type == ResourceType::TRANSIENT_UPLOAD ||
+				gres.desc.type == ResourceType::TRANSIENT_READBACK;
+		});
 	}
 }

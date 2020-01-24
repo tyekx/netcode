@@ -17,7 +17,7 @@ public:
 		return *this;
 	}
 
-	std::tuple<typename T::value_type &, typename U::value_type &> operator*() const {
+	std::tuple<typename T::reference, typename U::reference> operator*() const {
 		return std::tie(*a, *b);
 	}
 
@@ -25,6 +25,7 @@ public:
 		return a != rhs.a && b != rhs.b;
 	}
 };
+
 
 template<typename T, typename U>
 class zip_iterator_wrapper {
@@ -45,8 +46,32 @@ public:
 	}
 };
 
+template<typename T, typename U>
+class zip_const_iterator_wrapper {
+	const T & a;
+	const U & b;
+public:
+
+	zip_const_iterator_wrapper(const T & a, const U & b) : a{ a }, b{ b } {
+
+	}
+
+	zip_iterator<typename T::const_iterator, typename U::const_iterator> begin() const {
+		return zip_iterator<typename T::const_iterator, typename U::const_iterator>{ a.cbegin(), b.cbegin() };
+	}
+
+	zip_iterator<typename T::const_iterator, typename U::const_iterator> end() const {
+		return zip_iterator<typename T::const_iterator, typename U::const_iterator>{ a.cend(), b.cend() };
+	}
+};
+
 // typename deduce helper
 template<typename T, typename U>
 zip_iterator_wrapper<T, U> Zip(T & a, U & b) {
 	return zip_iterator_wrapper<T, U>{ a, b };
+}
+
+template<typename T, typename U>
+zip_const_iterator_wrapper<T, U> ZipConst(const T & a, const U & b) {
+	return zip_const_iterator_wrapper<T, U>{ a, b };
 }

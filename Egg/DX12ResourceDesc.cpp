@@ -1,7 +1,9 @@
 #include "DX12ResourceDesc.h"
 
 namespace Egg::Graphics::DX12 {
-
+	D3D12_PRIMITIVE_TOPOLOGY GetNativePrimitiveTopology(PrimitiveTopology t) {
+		return static_cast<D3D12_PRIMITIVE_TOPOLOGY>(t);
+	}
 	D3D12_RESOURCE_FLAGS GetNativeFlags(ResourceFlags f) {
 		return static_cast<D3D12_RESOURCE_FLAGS>(f);
 	}
@@ -39,9 +41,9 @@ namespace Egg::Graphics::DX12 {
 		desc.Width = r.width;
 		desc.Height = r.height;
 		desc.Flags = GetNativeFlags(r.flags);
-		desc.Format = r.format;
-		desc.MipLevels = r.mipLevels;
 		desc.Dimension = GetNativeDimension(r.dimension);
+		desc.MipLevels = r.mipLevels;
+		desc.Format = (desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? DXGI_FORMAT_UNKNOWN : r.format;
 		desc.Layout = (desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? D3D12_TEXTURE_LAYOUT_ROW_MAJOR : D3D12_TEXTURE_LAYOUT_UNKNOWN;
 		return desc;
 	}

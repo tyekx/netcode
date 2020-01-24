@@ -2,8 +2,7 @@
 
 #include "GameObject.h"
 #include <Egg/Modules.h>
-
-using AllComponents_T = TupleMerge<Components_T, ExtensionComponents_T>::type;
+#include "RenderPassTest.h"
 
 class TransformSystem {
 	static inline DirectX::XMMATRIX GetModelMatrix(Transform* transform) {
@@ -16,23 +15,10 @@ class TransformSystem {
 		return DirectX::XMMatrixAffineTransformation(scaleVector, unitW, quatVector, posVector);
 	}
 public:
-	using RequiredComponents_T = std::tuple<Model, Transform>;
 
-	static constexpr SignatureType Required() {
-		return TupleCreateMask<Components_T, RequiredComponents_T>::value;
-	}
+	void Run(GameObject * gameObject);
 
-	bool SignatureMatch(GameObject * gameObject) {
-		return (Required() & gameObject->GetSignature()) == Required();
-	}
-
-	void Run(GameObject * gameObject) {
-		if(SignatureMatch(gameObject)) {
-			InjectComponents<TransformSystem, GameObject, RequiredComponents_T>::Invoke(*this, &TransformSystem::RunImpl, gameObject);
-		}
-	}
-
-	void RunImpl(GameObject * gameObject, Model * model, Transform * transform) {
+	void operator()(GameObject * gameObject, Model * model, Transform * transform) {
 		DirectX::XMMATRIX modelMat = GetModelMatrix(transform);
 
 		if(gameObject->Parent() != nullptr) {
@@ -51,53 +37,30 @@ public:
 
 class ScriptSystem {
 public:
-	using RequiredComponents_T = std::tuple<Script>;
+	void Run(GameObject * gameObject, float dt);
 
-	static constexpr SignatureType Required() {
-
-		return TupleCreateMask<Components_T, RequiredComponents_T>::value;
-	}
-
-	bool SignatureMatch(GameObject * gameObject) {
-		return (Required() & gameObject->GetSignature()) == Required();
-	}
-
-	void Run(GameObject * gameObject, float dt) {
-		if(SignatureMatch(gameObject)) {
-			InjectComponents<ScriptSystem, GameObject, RequiredComponents_T, float>::Invoke(*this, &ScriptSystem::RunImpl, gameObject, dt);
-		}
-	}
-
-	void RunImpl(GameObject * gameObject, Script * script, float dt) {
+	void operator()(GameObject * gameObject, Script * script, float dt) {
 		script->Update(dt);
 	}
 };
 
 class RenderSystem {
 public:
-	using RequiredComponents_T = std::tuple<Model>;
-	Egg::Module::IGraphicsModule * graphics;
-	static constexpr SignatureType Required() {
-		return TupleCreateMask<Components_T, RequiredComponents_T>::value;
+	AppDefinedRenderer renderer;
+
+	void CreatePermanentResources(Egg::Module::IGraphicsModule * graphics) {
+		renderer.CreatePermanentResources(graphics);
 	}
 
-	bool SignatureMatch(GameObject * gameObject) {
-		return (Required() & gameObject->GetSignature()) == Required();
-	}
+	void Run(GameObject * gameObject);
 
-	void SetGraphics(Egg::Module::IGraphicsModule * graphicsModule) {
-		graphics = graphicsModule;
-	}
-
-	void Run(GameObject * gameObject) {
-		if(SignatureMatch(gameObject)) {
-			InjectComponents<RenderSystem, GameObject, RequiredComponents_T >::Invoke(*this, &RenderSystem::RunImpl, gameObject);
-		}
-	}
-
-	void RunImpl(GameObject * gameObject, Model * model) {
+	void operator()(GameObject * gameObject, Model * model) {
 		for(const auto & i : model->meshes) {
-		//	graphics->Record(i.mesh);
+			if(model->boneData.get() != nullptr) {
+				renderer.skinningPass_Input.Produced(RenderItem(i, &model->perObjectData, model->boneData.get()));
+			} else {
+				renderer.gbufferPass_Input.Produced(RenderItem(i, &model->perObjectData, model->boneData.get()));
+			}
 		}
 	}
 };
@@ -107,27 +70,13 @@ public:
 class AnimationSystem {
 	Egg::MovementController * movementController;
 public:
-	using RequiredComponents_T = std::tuple<Model, Animation>;
-
-	static constexpr SignatureType Required() {
-		return TupleCreateMask<AllComponents_T, RequiredComponents_T>::value;
-	}
-
-	bool SignatureMatch(GameObject * gameObject) {
-		return (Required() & gameObject->GetSignature()) == Required();
-	}
-
-	void Run(GameObject * gameObject, float dt) {
-		if(SignatureMatch(gameObject)) {
-			InjectComponents<AnimationSystem, GameObject, RequiredComponents_T, float>::Invoke(*this, &AnimationSystem::RunImpl, gameObject, dt);
-		}
-	}
+	void Run(GameObject * gameObject, float dt);
 
 	void SetMovementController(Egg::MovementController * movCtrl) {
 		movementController = movCtrl;
 	}
 
-	void RunImpl(GameObject * gameObject, Model * model, Animation* anim, float dt) {
+	void operator()(GameObject * gameObject, Model * model, Animation* anim, float dt) {
 		if(model->boneData != nullptr && movementController != nullptr) {
 			movementController->Update();
 			anim->blackboard.Update(dt, movementController);

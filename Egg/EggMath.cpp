@@ -51,3 +51,13 @@ DirectX::XMVECTOR LoadPxQuat(const physx::PxQuat & q) {
 	auto f4a = ToFloat4A(q);
 	return DirectX::XMLoadFloat4A(&f4a);
 }
+
+float RandomFloat()
+{
+	return (float)(rand()) / (float)RAND_MAX;
+}
+
+float RandomFloat(float a, float b)
+{
+	return a + RandomFloat() * (b - a);
+}

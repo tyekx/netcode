@@ -1,5 +1,7 @@
 #include "DX12GraphicsModule.h"
 #include "DX12SpriteFont.h"
+#include "DX12Builders.h"
+#include "DX12Platform.h"
 
 namespace Egg::Graphics::DX12 {
 	void DX12GraphicsModule::NextBackBufferIndex() {
@@ -57,6 +59,13 @@ namespace Egg::Graphics::DX12 {
 			device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &queryRootSigVersion, sizeof(queryRootSigVersion));
 
 		Log::Info("Highest supported root signature version: {0}", RootSignatureVersionToString(queryRootSigVersion.HighestVersion));
+
+		Platform::MaxSupportedRootSignatureVersion = queryRootSigVersion.HighestVersion;
+		Platform::MaxSupportedShaderModel = queryDataShaderModel.HighestShaderModel;
+		Platform::RenderTargetViewIncrementSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		Platform::ShaderResourceViewIncrementSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		Platform::DepthStencilViewIncrementSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+		Platform::SamplerIncrementSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
 	}
 
@@ -162,13 +171,51 @@ namespace Egg::Graphics::DX12 {
 		height = scDesc.Height;
 	}
 
+	void DX12GraphicsModule::CreateLibraries()
+	{
+		shaderLibrary = std::make_shared<DX12ShaderLibrary>();
+
+		rootSigLibrary = std::make_shared<DX12RootSignatureLibrary>();
+		rootSigLibrary->SetDevice(device);
+
+		streamOutputLibrary = std::make_shared<DX12StreamOutputLibrary>();
+
+		inputLayoutLibrary = std::make_shared<DX12InputLayoutLibrary>();
+
+		gPipelineLibrary = std::make_shared<DX12GPipelineStateLibrary>();
+		gPipelineLibrary->SetDevice(device);
+	}
+
+	void DX12GraphicsModule::SetContextReferences()
+	{
+		heapManager.SetDevice(device.Get());
+
+		resourcePool.SetHeapManager(&heapManager);
+
+		resourceContext.descHeaps = &dheaps;
+		resourceContext.SetResourcePool(&resourcePool);
+		resourceContext.SetDevice(device);
+
+		D3D12_RECT rect;
+		rect.left = 0;
+		rect.right = width;
+		rect.top = 0;
+		rect.bottom = height;
+		resourceContext.backbufferExtents = rect;
+
+		cbufferPool.SetHeapManager(&heapManager);
+
+		dheaps.CreateResources(device);
+
+		renderContext.cbuffers = &cbufferPool;
+		renderContext.resources = &resourcePool;
+		renderContext.descHeaps = &dheaps;
+	}
+
 	void DX12GraphicsModule::CreateContexts() {
-		//Egg::Module::IGraphicsModule::renderer = this;
-		Egg::Module::IGraphicsModule::pipeline = this;
+		Egg::Module::IGraphicsModule::renderer = &renderContext;
 		Egg::Module::IGraphicsModule::resources = &resourceContext;
-		Egg::Module::IGraphicsModule::shaders = &shaderContext;
 		Egg::Module::IGraphicsModule::frame = this;
-		Egg::Module::IGraphicsModule::geometry = &geometryContext;
 	}
 
 	void DX12GraphicsModule::Prepare() {
@@ -181,13 +228,29 @@ namespace Egg::Graphics::DX12 {
 			fr.commandList->Reset(fr.commandAllocator.Get(), nullptr);
 
 		fr.commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(fr.swapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+		resourceContext.backbufferExtents = fr.scissorRect;
+
+		renderContext.gcl = fr.commandList.Get();
+		renderContext.backbuffer = fr.rtvHandle;
+		renderContext.backbufferDepth = fr.dsvHandle;
+		renderContext.defaultViewport = fr.viewPort;
+
+		dheaps.Prepare();
+
+		fr.commandList->OMSetRenderTargets(1, &fr.rtvHandle, FALSE, &fr.dsvHandle);
+
+		fr.commandList->ClearRenderTargetView(fr.rtvHandle, fr.rtvClearValue.Color, 0, nullptr);
+
+		fr.commandList->ClearDepthStencilView(fr.dsvHandle, D3D12_CLEAR_FLAG_DEPTH, fr.dsvClearValue.DepthStencil.Depth, fr.dsvClearValue.DepthStencil.Stencil, 0, nullptr);
+
+		fr.commandList->RSSetScissorRects(1, &fr.scissorRect);
+
+		fr.commandList->RSSetViewports(1, &fr.viewPort);
 	}
 
 	void DX12GraphicsModule::Render() {
 		FrameResource & fr = frameResources.at(backbufferIndex);
-		ID3D12GraphicsCommandList * gcl = fr.commandList.Get();
-
-		//textureLibrary.SetDescriptorHeap(gcl);
 
 		fr.FinishRecording();
 
@@ -209,10 +272,11 @@ namespace Egg::Graphics::DX12 {
 
 		NextBackBufferIndex();
 
-		// @TODO: WaitForCompletion is wasteful here, could start recording the next frame if cbuffers are handled properly
 		fr.WaitForCompletion();
 
-		cbufferPool.Reset();
+		cbufferPool.Clear();
+		dheaps.Reset();
+		resourcePool.ReleaseTransients();
 	}
 
 	void DX12GraphicsModule::Start(Module::AApp * app)  {
@@ -250,13 +314,9 @@ namespace Egg::Graphics::DX12 {
 
 		CreateSwapChainResources();
 
-		heapManager.SetDevice(device.Get());
+		CreateLibraries();
 
-		resourcePool.SetHeapManager(&heapManager);
-
-		resourceContext.SetResourcePool(&resourcePool);
-
-		cbufferPool.SetHeapManager(&heapManager);
+		SetContextReferences();
 
 		CreateContexts();
 
@@ -293,34 +353,6 @@ namespace Egg::Graphics::DX12 {
 		return static_cast<float>(width) / static_cast<float>(height);
 	}
 
-	HPSO DX12GraphicsModule::CreatePipelineState() {
-		return psContext.CreatePipelineState();
-	}
-
-	void DX12GraphicsModule::SetGeometryShader(HPSO pso, HSHADER geometryShader) {
-		psContext.SetGeometryShader(pso, shaderContext.GetShader(geometryShader));
-	}
-
-	void DX12GraphicsModule::SetVertexShader(HPSO pso, HSHADER vertexShader) {
-		psContext.SetVertexShader(pso, shaderContext.GetShader(vertexShader));
-	}
-
-	void DX12GraphicsModule::SetPixelShader(HPSO pso, HSHADER pixelShader) {
-		psContext.SetPixelShader(pso, shaderContext.GetShader(pixelShader));
-	}
-
-	void DX12GraphicsModule::SetHullShader(HPSO pso, HSHADER hullShader) {
-		psContext.SetHullShader(pso, shaderContext.GetShader(hullShader));
-	}
-
-	void DX12GraphicsModule::SetDomainShader(HPSO pso, HSHADER domainShader) {
-		psContext.SetDomainShader(pso, shaderContext.GetShader(domainShader));
-	}
-
-	void DX12GraphicsModule::SetGeometry(HPSO pso, HGEOMETRY geometry)
-	{
-	}
-
 	void DX12GraphicsModule::SyncUpload(const UploadBatch & upload)
 	{
 		com_ptr<ID3D12CommandAllocator> allocator;
@@ -348,6 +380,7 @@ namespace Egg::Graphics::DX12 {
 
 		size_t totalSize = 0;
 
+		
 		for(const auto & task : upload.UploadTasks()) {
 			totalSize += task.srcDataSizeInBytes;
 		}
@@ -371,10 +404,16 @@ namespace Egg::Graphics::DX12 {
 
 			size_t offset = 0;
 
+
 			for(const auto & task : upload.UploadTasks()) {
-				memcpy(dstPtr, task.srcData, task.srcDataSizeInBytes);
 				const auto & gres = resourcePool.GetNativeResource(task.resourceHandle);
-				gcl->CopyBufferRegion(gres.resource, 0, uploadResource.Get(), offset, task.srcDataSizeInBytes);
+
+				D3D12_SUBRESOURCE_DATA data;
+				data.RowPitch = (gres.desc.dimension == ResourceDimension::BUFFER) ? task.srcDataSizeInBytes : (gres.desc.strideInBytes * gres.desc.width);
+				data.SlicePitch = task.srcDataSizeInBytes;
+				data.pData = task.srcData;
+				UpdateSubresources(gcl.Get(), gres.resource, uploadResource.Get(), offset, 0u, 1u, &data);
+
 				offset += task.srcDataSizeInBytes;
 			}
 
@@ -382,7 +421,7 @@ namespace Egg::Graphics::DX12 {
 		}
 
 		if(!barriers.empty()) {
-			gcl->ResourceBarrier(barriers.size(), barriers.data());
+			gcl->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
 		}
 
 		DX_API("Failed to close command list")
@@ -405,6 +444,10 @@ namespace Egg::Graphics::DX12 {
 
 		CloseHandle(evt);
 
+	}
+
+	DirectX::XMUINT2 DX12GraphicsModule::GetBackbufferSize() const {
+		return DirectX::XMUINT2{ width, height };
 	}
 
 	void DX12GraphicsModule::ReleaseSwapChainResources() {
@@ -516,6 +559,22 @@ namespace Egg::Graphics::DX12 {
 		}
 
 		backbufferIndex = swapChain->GetCurrentBackBufferIndex();
+	}
+	
+	ShaderBuilderRef DX12GraphicsModule::CreateShaderBuilder() const {
+		return std::make_shared<DX12ShaderBuilder>(shaderLibrary);
+	}
+	GPipelineStateBuilderRef DX12GraphicsModule::CreateGPipelineStateBuilder() const {
+		return std::make_shared<DX12GPipelineStateBuilder>(gPipelineLibrary);
+	}
+	InputLayoutBuilderRef DX12GraphicsModule::CreateInputLayoutBuilder() const {
+		return std::make_shared<DX12InputLayoutBuilder>(inputLayoutLibrary);
+	}
+	StreamOutputBuilderRef DX12GraphicsModule::CreateStreamOutputBuilder() const {
+		return std::make_shared<DX12StreamOutputBuilder>(streamOutputLibrary);
+	}
+	RootSignatureBuilderRef DX12GraphicsModule::CreateRootSignatureBuilder() const {
+		return std::make_shared<DX12RootSignatureBuilder>(rootSigLibrary);
 	}
 	/*
 	void DX12GraphicsModule::TestFont(HFONT font) {

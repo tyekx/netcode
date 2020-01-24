@@ -7,9 +7,6 @@
     <Filter Include="Lua">
       <UniqueIdentifier>{ddad10d9-5d97-4b51-ba70-2e1fb599016c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="App">
-      <UniqueIdentifier>{34632bc3-ab27-44ff-9868-a746b6ec55eb}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Graphics">
       <UniqueIdentifier>{6c153833-f01b-4513-a021-dbcaf1d7a1d9}</UniqueIdentifier>
     </Filter>
@@ -46,11 +43,8 @@
     <Filter Include="Graphics\DX12">
       <UniqueIdentifier>{8a77180a-e90e-470d-8ebc-6be0af8642aa}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Graphics\DX12\Resource">
-      <UniqueIdentifier>{558741a0-ed22-4b3c-aeed-1151cf341cb1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Importer">
-      <UniqueIdentifier>{1c55db00-4ff5-4584-8ef7-34dc8b781fb8}</UniqueIdentifier>
+    <Filter Include="Common">
+      <UniqueIdentifier>{11ae1425-b474-4d87-82d0-bb06b424669f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -77,12 +71,6 @@
     </ClInclude>
     <ClInclude Include="Utility.h">
       <Filter>Utility</Filter>
-    </ClInclude>
-    <ClInclude Include="Common.h">
-      <Filter>App</Filter>
-    </ClInclude>
-    <ClInclude Include="EggMpl.hpp">
-      <Filter>App</Filter>
     </ClInclude>
     <ClInclude Include="Vertex.h">
       <Filter>Asset</Filter>
@@ -142,27 +130,6 @@
     <ClInclude Include="Modules.h">
       <Filter>Modules</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CommittedIBuffer.h">
-      <Filter>Graphics\DX12\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12CommittedTexture2D.h">
-      <Filter>Graphics\DX12\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12CommittedVBuffer.h">
-      <Filter>Graphics\DX12\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12PlacedIBuffer.h">
-      <Filter>Graphics\DX12\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12PlacedVBuffer.h">
-      <Filter>Graphics\DX12\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12Resource.h">
-      <Filter>Graphics\DX12\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12ResourceUploadBatch.h">
-      <Filter>Graphics\DX12\Resource</Filter>
-    </ClInclude>
     <ClInclude Include="Importer.h">
       <Filter>Legacy</Filter>
     </ClInclude>
@@ -189,9 +156,6 @@
     </ClInclude>
     <ClInclude Include="ModulesConfig.h">
       <Filter>Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="Logger.h">
-      <Filter>App</Filter>
     </ClInclude>
     <ClInclude Include="DX12SpriteFontLibrary.h">
       <Filter>Graphics\DX12</Filter>
@@ -238,15 +202,6 @@
     <ClInclude Include="ResourceEnums.h">
       <Filter>Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="DX12PipelineContext.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12GeometryContext.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="WinImporterModule.h">
-      <Filter>Importer</Filter>
-    </ClInclude>
     <ClInclude Include="FancyIterators.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
@@ -262,28 +217,100 @@
     <ClInclude Include="DX12ConstantBufferPool.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="DX12ShaderCompiled.h">
       <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12ShaderContext.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Formats.h">
-      <Filter>App</Filter>
-    </ClInclude>
-    <ClInclude Include="Platform.h">
-      <Filter>App</Filter>
-    </ClInclude>
-    <ClInclude Include="Sal.h">
-      <Filter>App</Filter>
     </ClInclude>
     <ClInclude Include="d3dx12.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
     <ClInclude Include="DX12ResourceContext.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="EggMpl.hpp">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Sal.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Formats.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Platform.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory.hpp">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12ShaderLibrary.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12ShaderBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12RootSignature.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12RootSignatureLibrary.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12InputLayout.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12InputLayoutBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12RootSignatureBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12StreamOutputBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12StreamOutputLibrary.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12StreamOutput.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12GPipelineStateBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12GPipelineState.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12GPipelineStateLibrary.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12CPipelineStatePrototype.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12InputLayoutLibrary.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Helpers.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Builders.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Texture.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12TextureBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12DynamicDescriptorHeap.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12ResourceViews.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Platform.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
   </ItemGroup>
@@ -322,15 +349,6 @@
     <ClCompile Include="Modules.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CommittedIBuffer.cpp">
-      <Filter>Graphics\DX12\Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="DX12CommittedTexture2D.cpp">
-      <Filter>Graphics\DX12\Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="DX12CommittedVBuffer.cpp">
-      <Filter>Graphics\DX12\Resource</Filter>
-    </ClCompile>
     <ClCompile Include="Importer.cpp">
       <Filter>Legacy</Filter>
     </ClCompile>
@@ -351,15 +369,6 @@
     </ClCompile>
     <ClCompile Include="DX12Common.cpp">
       <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Common.cpp">
-      <Filter>App</Filter>
-    </ClCompile>
-    <ClCompile Include="Logger.cpp">
-      <Filter>App</Filter>
-    </ClCompile>
-    <ClCompile Include="DX12ResourceUploadBatch.cpp">
-      <Filter>Graphics\DX12\Resource</Filter>
     </ClCompile>
     <ClCompile Include="DX12SpriteBatch.cpp">
       <Filter>Graphics\DX12</Filter>
@@ -385,16 +394,10 @@
     <ClCompile Include="DX12ShaderCompiler.cpp">
       <Filter>Graphics\DX12</Filter>
     </ClCompile>
-    <ClCompile Include="WinImporterModule.cpp">
-      <Filter>Importer</Filter>
-    </ClCompile>
     <ClCompile Include="DX12ShaderVariant.cpp">
       <Filter>Graphics\DX12</Filter>
     </ClCompile>
     <ClCompile Include="DX12ShaderCompiled.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="DX12ShaderContext.cpp">
       <Filter>Graphics\DX12</Filter>
     </ClCompile>
     <ClCompile Include="UploadBatch.cpp">
@@ -409,6 +412,73 @@
     <ClCompile Include="DX12ResourcePool.cpp">
       <Filter>Graphics\DX12</Filter>
     </ClCompile>
+    <ClCompile Include="DX12RenderContext.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Common.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12GPipelineState.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12GPipelineStateBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12GPipelineStateLibrary.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12InputLayout.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12InputLayoutBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12InputLayoutLibrary.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12RootSignature.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12RootSignatureBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12RootSignatureLibrary.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12ShaderBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12StreamOutput.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12StreamOutputBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12StreamOutputLibrary.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12Helpers.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12ConstantBufferPool.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12DynamicDescriptorHeap.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12Texture.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12TextureBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12Platform.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12ResourceViews.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DefaultPS.hlsl">
@@ -440,9 +510,6 @@
     <Text Include="Shaders\RootSignatures.hlsli">
       <Filter>Shaders</Filter>
     </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <Natvis Include="Egg.natvis" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

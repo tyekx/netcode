@@ -5,13 +5,12 @@
 #include "BinaryReader.h"
 #include <DirectXMath.h>
 #include "DX12Common.h"
-#include "DX12Resource.h"
 #include "DX12SpriteBatch.h"
 #include <DirectXColors.h>
 #include <DirectXTex/DirectXTex.h>
 
 namespace Egg::Graphics::DX12 {
-
+	
 	template<typename T>
 	inline T AlignUp(T size, size_t alignment)
 	{
@@ -35,12 +34,12 @@ namespace Egg::Graphics::DX12 {
 
 	class SpriteFont
 	{
-		void Construct(ID3D12Device * device, Resource::IResourceUploader * upload, BinaryReader * reader, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor);
+		void Construct(ID3D12Device * device, Egg::Graphics::UploadBatch* upload, BinaryReader * reader, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor);
 	public:
 		// Describes a single character glyph.
 
-		SpriteFont(ID3D12Device * device, Resource::IResourceUploader * upload, _In_z_ wchar_t const * fileName, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor);
-		SpriteFont(ID3D12Device * device, Resource::IResourceUploader * upload, _In_reads_bytes_(dataSize) uint8_t * dataBlob, size_t dataSize, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor);
+		SpriteFont(ID3D12Device * device, Egg::Graphics::UploadBatch * upload, _In_z_ wchar_t const * fileName, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor);
+		SpriteFont(ID3D12Device * device, Egg::Graphics::UploadBatch * upload, _In_reads_bytes_(dataSize) uint8_t * dataBlob, size_t dataSize, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor);
 
 		SpriteFont(SpriteFont && moveFrom) = default;
 		SpriteFont & operator= (SpriteFont && moveFrom) = default;
@@ -147,7 +146,7 @@ namespace Egg::Graphics::DX12 {
 
 		const wchar_t * ConvertUTF8(const char * text) const;
 
-		void CreateTextureResource(ID3D12Device * device, Resource::IResourceUploader * upload, uint32_t width, uint32_t height, DXGI_FORMAT format, uint32_t stride, uint32_t rows, uint8_t * data);
+		void CreateTextureResource(ID3D12Device * device, Egg::Graphics::UploadBatch * upload, uint32_t width, uint32_t height, DXGI_FORMAT format, uint32_t stride, uint32_t rows, uint8_t * data);
 
 		static const DirectX::XMFLOAT2 Float2Zero;
 
@@ -167,5 +166,5 @@ namespace Egg::Graphics::DX12 {
 	{
 		return left.Character < right;
 	}
-
+	
 };

@@ -2,6 +2,8 @@
 
 #include "Utility.h"
 #include <memory>
+#include <map>
+#include "HandleTypes.h"
 
 namespace Egg::Graphics::DX12 {
 

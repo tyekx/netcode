@@ -1,0 +1,110 @@
+#include "DX12GPipelineState.h"
+#include "DX12Helpers.h"
+#include "DX12StreamOutput.h"
+#include "DX12InputLayout.h"
+#include "DX12RootSignature.h"
+
+namespace Egg::Graphics::DX12 {
+
+	void GPipelineStateDesc::FillNativeDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC & psd) {
+		psd.CachedPSO.CachedBlobSizeInBytes = 0;
+		psd.CachedPSO.pCachedBlob = nullptr;
+		psd.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+		psd.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
+		psd.NodeMask = 0;
+		psd.SampleMask = UINT_MAX;
+		psd.SampleDesc.Count = 1;
+		psd.SampleDesc.Quality = 0;
+
+		psd.BlendState = GetNativeBlendDesc(blendState);
+		psd.DepthStencilState = GetNativeDepthStencilDesc(depthStencilState);
+		psd.RasterizerState = GetNativeRasterizerDesc(rasterizerState);
+
+		psd.NumRenderTargets = numRenderTargets;
+		psd.DSVFormat = dsvFormat;
+
+		for(uint32_t i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i) {
+			psd.RTVFormats[i] = rtvFormats[i];
+		}
+
+		psd.PrimitiveTopologyType = static_cast<D3D12_PRIMITIVE_TOPOLOGY_TYPE>(topologyType);
+		psd.InputLayout = static_cast<Egg::Graphics::DX12::InputLayout *>(inputLayout.get())->GetNativeInputLayout();
+		psd.pRootSignature = static_cast<Egg::Graphics::DX12::RootSignature *>(rootSignature.get())->GetNativeRootSignature();
+
+		if(streamOutput != nullptr) {
+			psd.StreamOutput = static_cast<Egg::Graphics::DX12::StreamOutput *>(streamOutput.get())->GetNativeStreamOutput();
+		} else {
+			psd.StreamOutput.NumEntries = 0;
+			psd.StreamOutput.pBufferStrides = nullptr;
+			psd.StreamOutput.pSODeclaration = nullptr;
+			psd.StreamOutput.NumStrides = 0;
+			psd.StreamOutput.RasterizedStream = 0;
+		}
+
+		psd.VS = GetNativeBytecode(VS);
+		psd.PS = GetNativeBytecode(PS);
+		psd.GS = GetNativeBytecode(GS);
+		psd.HS = GetNativeBytecode(HS);
+		psd.DS = GetNativeBytecode(DS);
+	}
+
+	/*
+		Design decision: every Ref is checked for uniqueness to the best of our abilities, so now a simple pointer check should be
+		adequate for them
+		*/
+	bool GPipelineStateDesc::operator==(const GPipelineStateDesc & rhs) const {
+		if(memcmp(&blendState, &rhs.blendState, sizeof(BlendDesc)) != 0) {
+			return false;
+		}
+
+		if(memcmp(&rasterizerState, &rhs.rasterizerState, sizeof(RasterizerDesc)) != 0) {
+			return false;
+		}
+
+		if(memcmp(&depthStencilState, &rhs.depthStencilState, sizeof(DepthStencilDesc)) != 0) {
+			return false;
+		}
+
+		if(numRenderTargets != rhs.numRenderTargets) {
+			return false;
+		}
+
+		for(uint32_t i = 0; i < numRenderTargets && i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i) {
+			if(rtvFormats[i] != rhs.rtvFormats[i]) {
+				return false;
+			}
+		}
+
+		return rootSignature == rhs.rootSignature &&
+			streamOutput == rhs.streamOutput &&
+			inputLayout == rhs.inputLayout &&
+			VS == rhs.VS &&
+			PS == rhs.PS &&
+			GS == rhs.GS &&
+			HS == rhs.HS &&
+			DS == rhs.DS &&
+			dsvFormat == rhs.dsvFormat &&
+			topologyType == rhs.topologyType;
+	}
+
+	GPipelineState::GPipelineState(ID3D12Device * device, GPipelineStateDesc && gpsoDesc) : pso{ nullptr }, psoDesc{ std::move(gpsoDesc) } {
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC desc;
+		psoDesc.FillNativeDesc(desc);
+
+		DX_API("Failed to create gpso")
+			device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(pso.GetAddressOf()));
+	}
+
+	ID3D12PipelineState * GPipelineState::GetNativePipelineState() const {
+		return pso.Get();
+	}
+
+	const GPipelineStateDesc & GPipelineState::GetDesc() const {
+		return psoDesc;
+	}
+
+	void * GPipelineState::GetImplDetail() const {
+		return GetNativePipelineState();
+	}
+
+}

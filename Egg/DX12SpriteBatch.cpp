@@ -1,5 +1,6 @@
 #include "DX12SpriteBatch.h"
 #include "Utility.h"
+#include <algorithm>
 
 namespace {
 
@@ -79,7 +80,7 @@ namespace Egg::Graphics::DX12 {
 		} // BackFace
 	};
 
-	SpriteBatch::DeviceResources::DeviceResources(_In_ ID3D12Device * device, Resource::IResourceUploader * upload) :
+	SpriteBatch::DeviceResources::DeviceResources(_In_ ID3D12Device * device, Egg::Graphics::UploadBatch * upload) :
 		indexBufferView{},
 		mDevice(device)
 	{
@@ -89,7 +90,7 @@ namespace Egg::Graphics::DX12 {
 
 
 	// Creates the SpriteBatch index buffer.
-	void SpriteBatch::DeviceResources::CreateIndexBuffer(_In_ ID3D12Device * device, Resource::IResourceUploader * upload)
+	void SpriteBatch::DeviceResources::CreateIndexBuffer(_In_ ID3D12Device * device, Egg::Graphics::UploadBatch * upload)
 	{
 		static_assert((MaxBatchSize * VerticesPerSprite) < USHRT_MAX, "MaxBatchSize too large for 16-bit indices");
 
@@ -115,8 +116,8 @@ namespace Egg::Graphics::DX12 {
 		indexDataDesc.SlicePitch = indexDataDesc.RowPitch;
 
 		// Upload the resource
-		upload->Upload(indexBuffer.Get(), reinterpret_cast<const BYTE*>(indexValues.data()), static_cast<UINT>(bufferDesc.Width));
-		upload->Transition(indexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+		upload->Upload(-1, reinterpret_cast<const BYTE*>(indexValues.data()), static_cast<UINT>(bufferDesc.Width));
+		upload->ResourceBarrier(-1, ResourceState::COPY_DEST, ResourceState::INDEX_BUFFER);
 
 		// Create the index buffer view
 		indexBufferView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
@@ -153,7 +154,7 @@ namespace Egg::Graphics::DX12 {
 		return indices;
 	}
 
-	SpriteBatch::SpriteBatch(ID3D12Device * device, Resource::IResourceUploader * upload, const SpriteBatchPipelineStateDescription & psoDesc, const D3D12_VIEWPORT * viewport)
+	SpriteBatch::SpriteBatch(ID3D12Device * device, Egg::Graphics::UploadBatch * upload, const SpriteBatchPipelineStateDescription & psoDesc, const D3D12_VIEWPORT * viewport)
 		: mRotation(DXGI_MODE_ROTATION_IDENTITY),
 		mSetViewport(false),
 		mViewPort{},

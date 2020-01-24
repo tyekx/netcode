@@ -8,7 +8,6 @@ namespace Log {
 	
 
 	void Setup(bool isVerbose) {
-		
 		auto console = spdlog::stdout_color_mt("console");
 
 		if(isVerbose) {
@@ -24,7 +23,7 @@ namespace Log {
 		%l: log level
 		%v: message
 		*/
-		spdlog::set_pattern("[%T][%P][%t][%l] %v");
+		//spdlog::set_pattern("[%T][%P][%t][%l] %v");
 		spdlog::set_default_logger(console);
 	}
 

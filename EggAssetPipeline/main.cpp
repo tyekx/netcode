@@ -18,6 +18,8 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 
+#define NOMINMAX
+#include <Windows.h>
 #include <shellapi.h>
 
 #include "PipelineFunctions.h"
@@ -107,6 +109,122 @@ struct ProcessedBone {
 	std::string name;
 };
 
+ImportedMaterial ImportMaterial(const aiMaterial * mat) {
+	ImportedMaterial imat;
+	aiString str;
+
+	if(AI_SUCCESS == mat->Get(AI_MATKEY_NAME, str)) {
+		Egg::Utility::Debugf("Prop: name | value '%s'\r\n", str.C_Str());
+	}
+
+
+	unsigned int diffuseCount = mat->GetTextureCount(aiTextureType_DIFFUSE);
+	unsigned int normalCount = mat->GetTextureCount(aiTextureType_NORMALS);
+	unsigned int emissiveColorCount = mat->GetTextureCount(aiTextureType_EMISSION_COLOR);
+	unsigned int emissiveCount = mat->GetTextureCount(aiTextureType_EMISSIVE);
+	unsigned int displacementCount = mat->GetTextureCount(aiTextureType_DISPLACEMENT);
+	unsigned int ambientCount = mat->GetTextureCount(aiTextureType_AMBIENT);
+	unsigned int ambientOccCount = mat->GetTextureCount(aiTextureType_AMBIENT_OCCLUSION);
+	unsigned int specularCount = mat->GetTextureCount(aiTextureType_SPECULAR);
+	unsigned int lightmapCount = mat->GetTextureCount(aiTextureType_LIGHTMAP);
+	unsigned int heightCount = mat->GetTextureCount(aiTextureType_HEIGHT);
+	unsigned int reflectionCount = mat->GetTextureCount(aiTextureType_REFLECTION);
+	unsigned int kd = mat->GetTextureCount(aiTextureType_BASE_COLOR);
+	unsigned int metalnessCount = mat->GetTextureCount(aiTextureType_METALNESS);
+	unsigned int unknownTexCount = mat->GetTextureCount(aiTextureType_UNKNOWN);
+	unsigned int shininessCount = mat->GetTextureCount(aiTextureType_SHININESS);
+	unsigned int opacity = mat->GetTextureCount(aiTextureType_OPACITY);
+	unsigned int outOfIdeas = mat->GetTextureCount(_aiTextureType_Force32Bit);
+
+	for(unsigned int i = 0; i < mat->mNumProperties; ++i) {
+		const aiMaterialProperty * prop = mat->mProperties[i];
+		printf("key: %s | idx: %d idx2: %d\r\n", prop->mKey.C_Str(), prop->mIndex, prop->mType);
+		//$raw.ShininessExponent|file
+		//$raw.DiffuseColor|file
+		switch(prop->mType) {
+			case aiPropertyTypeInfo::aiPTI_String:
+			{
+				aiString & str2 = *reinterpret_cast<aiString *>(prop->mData);
+				printf("\t (string[%d]): %s\r\n", prop->mDataLength , str2.C_Str());
+			}
+			break;
+			case aiPropertyTypeInfo::aiPTI_Integer:
+			{
+				int & v = *reinterpret_cast<int *>(prop->mData);
+				printf("\t    (int[%d]): %d\r\n", prop->mDataLength/4,  v);
+			}
+			break;
+			case aiPropertyTypeInfo::aiPTI_Float:
+			{
+				float* f = reinterpret_cast<float *>(prop->mData);
+				
+				switch(prop->mDataLength) {
+					case 4:
+						printf("\t  (float[%d]): %f\r\n", 1, *f);
+						break;
+					case 8:
+						printf("\t  (float[%d]): %f %f\r\n", 2, f[0], f[1]);
+						break;
+					case 12:
+						printf("\t  (float[%d]): %f %f %f\r\n", 3, f[0], f[1], f[2]);
+						break;
+					case 16:
+						printf("\t  (float[%d]): %f %f %f %f\r\n", 4, f[0], f[1], f[2], f[3]);
+						break;
+				}
+				//printf("\t  (float[%d]): %f\r\n", prop->mDataLength / 4, f);
+			}
+			break;
+		}
+	}
+
+	if(diffuseCount > 0) {
+		if(diffuseCount > 1) {
+			printf("Warning: only 1 diffuse map is supported as of now\r\n\tMultiple found on material: '%s'\r\n", str.C_Str());
+		}
+
+		aiString texPath;
+
+		if(AI_SUCCESS == mat->GetTexture(aiTextureType_DIFFUSE, 0, &texPath)) {
+			imat.diffuseTexPath = texPath.C_Str();
+		} else {
+			printf("Warning: failed to get diffuse texture path\r\n");
+		}
+
+	}
+
+	if(normalCount > 0) {
+		if(normalCount > 1) {
+			printf("Warning: only 1 normal map is supported as of now\r\n\tMultiple found on material: '%s'\r\n", str.C_Str());
+		}
+
+		aiString texPath;
+		if(AI_SUCCESS == mat->GetTexture(aiTextureType_NORMALS, 0, &texPath)) {
+			imat.normalTexPath = texPath.C_Str();
+		} else {
+			printf("Warning: failed to get diffuse texture path\r\n");
+		}
+	}
+
+	if(AI_SUCCESS != mat->Get(AI_MATKEY_COLOR_DIFFUSE, imat.diffuseColor)) {
+		Egg::Utility::Debugf("Failed to get diffuse color\r\n");
+	}
+
+	if(AI_SUCCESS != mat->Get(AI_MATKEY_COLOR_AMBIENT, imat.ambientColor)) {
+		Egg::Utility::Debugf("Failed to get ambient color\r\n");
+	}
+
+	if(AI_SUCCESS != mat->Get(AI_MATKEY_COLOR_SPECULAR, imat.specularColor)) {
+		Egg::Utility::Debugf("Failed to get specular color\r\n");
+	}
+
+	if(AI_SUCCESS != mat->Get(AI_MATKEY_SHININESS, imat.shininess)) {
+		Egg::Utility::Debugf("Failed to get shininess\r\n");
+	}
+
+	return imat;
+}
+
 std::string ExtractFileName(const std::string & src) {
 	std::size_t indexOfDot = src.find_last_of('.');
 
@@ -160,13 +278,22 @@ void ProcessMap(Egg::ProgramArgs & pa) {
 
 	Assimp::Importer importer;
 
-	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate);
+	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipWindingOrder);
+
+
+	for(unsigned int i = 0; i < scene->mNumMaterials; ++i) {
+		const aiMaterial * material = scene->mMaterials[i];
+
+		ImportedMaterial mat = ImportMaterial(material);
+
+		printf("\r\n");
+	}
 
 	for(unsigned int i = 0; i < scene->mNumMeshes; ++i) {
 
 		const aiMesh * mesh = scene->mMeshes[i];
 		
-		printf("name: %s\r\n", mesh->mName);
+		printf("name: %s\r\n", mesh->mName.C_Str());
 
 	}
 
@@ -382,9 +509,9 @@ void ProcessBones(std::vector<ProcessedBone> & dst, const ImportedModel & model,
 	}
 }
 
-int FirstUnusedSlot(const int * src) {
+int FirstUnusedSlot(uint32_t v) {
 	for(int i = 0; i < 4; ++i) {
-		if(src[i] == 0) {
+		if(((v >> (i * 8)) & 0xFF) == 0xFF) {
 			return i;
 		}
 	}
@@ -402,14 +529,9 @@ int GetBoneIndex(const std::vector<ProcessedBone> & bones, const char * name) {
 	return -1;
 }
 
-int & IndexInt4(DirectX::XMINT4 & v, unsigned int i) {
-	switch(i) {
-		case 0: return v.x;
-		case 1: return v.y;
-		case 2: return v.z;
-		case 3: return v.w;
-		default: throw 1;
-	}
+void SetNthByte(uint32_t & v, unsigned int i, uint8_t k) {
+	uint32_t mask = ~(0xFF << (i * 8));
+	v &= (mask | (static_cast<uint32_t>(k) << (i * 8)));
 }
 
 float & IndexFloat3(DirectX::XMFLOAT3 & v, unsigned int i) {
@@ -429,14 +551,15 @@ void FillVertexWeights(ImportedModel & im, std::vector<ProcessedBone> & bones) {
 					void * vPtr = &(lod.vertices.at(ib.vertexWeights[vi].mVertexId * m.vertexSize));
 					Egg::PNTWB_Vertex * vert = reinterpret_cast<Egg::PNTWB_Vertex *>(vPtr);
 
-					int k = FirstUnusedSlot(reinterpret_cast<int *>(&(vert->boneIds)));
+					int k = FirstUnusedSlot(vert->boneIds);
 					int l = GetBoneIndex(bones, ib.name.c_str());
 
 					if(k == -1 || l == -1) {
+						printf("vertex weight overflow\r\n");
 						continue;
 					}
 
-					IndexInt4(vert->boneIds, k) = l;
+					SetNthByte(vert->boneIds, k, static_cast<uint8_t>(l));
 
 					if(k < 3 && k >= 0) {
 						IndexFloat3(vert->weights, k) = ib.vertexWeights[vi].mWeight;
@@ -484,7 +607,7 @@ void Process(const wchar_t * file, std::vector<ProcessedBone> & bones, ImportedM
 	Assimp::Importer importer;
 
 	unsigned int flags = (generateTangentSpace) ? aiProcess_CalcTangentSpace : 0;
-	flags |= aiProcess_JoinIdenticalVertices | aiProcess_LimitBoneWeights | aiProcess_FlipWindingOrder | aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph | aiProcess_ImproveCacheLocality;
+	flags |= aiProcess_JoinIdenticalVertices | aiProcess_FlipWindingOrder | aiProcess_Triangulate | aiProcess_OptimizeGraph | aiProcess_OptimizeMeshes;
 
 	const aiScene * scene = importer.ReadFile(path.c_str(), flags);
 
@@ -631,7 +754,7 @@ void Process(const wchar_t * file, std::vector<ProcessedBone> & bones, ImportedM
 				{
 					Egg::PNTWB_Vertex * wbVertex = reinterpret_cast<Egg::PNTWB_Vertex *>(ptr);
 					wbVertex->weights = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
-					wbVertex->boneIds = DirectX::XMINT4{ 0, 0, 0, 0 };
+					wbVertex->boneIds = 0xFFFFFFFF;
 				}
 				break;
 			case 0b10111:
@@ -645,7 +768,7 @@ void Process(const wchar_t * file, std::vector<ProcessedBone> & bones, ImportedM
 				{
 					Egg::PNTWBTB_Vertex * wbtbVertex = reinterpret_cast<Egg::PNTWBTB_Vertex *>(ptr);
 					wbtbVertex->weights = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
-					wbtbVertex->boneIds = DirectX::XMINT4{ 0, 0, 0, 0 };
+					wbtbVertex->boneIds = 0xFFFFFFFF;
 					wbtbVertex->tangent = reinterpret_cast<DirectX::XMFLOAT3 &>(mesh->mTangents[k]);
 					wbtbVertex->binormal = reinterpret_cast<DirectX::XMFLOAT3 &>(mesh->mBitangents[k]);
 				}
@@ -699,71 +822,9 @@ void Process(const wchar_t * file, std::vector<ProcessedBone> & bones, ImportedM
 	for(uint32_t i = 0; i < matCount; ++i) {
 		aiMaterial * mat = scene->mMaterials[i];
 
-		ImportedMaterial imat;
-		aiString str;
-
-		if(AI_SUCCESS == mat->Get(AI_MATKEY_NAME, str)) {
-			Egg::Utility::Debugf("Prop: name | value '%s'\r\n", str.C_Str());
-		}
-
-
-		unsigned int diffuseCount = mat->GetTextureCount(aiTextureType_DIFFUSE);
-		unsigned int normalCount = mat->GetTextureCount(aiTextureType_NORMALS);
-
-
-		if(diffuseCount > 0) {
-			if(diffuseCount > 1) {
-				printf("Warning: only 1 diffuse map is supported as of now\r\n\tMultiple found on material: '%s'\r\n", str.C_Str());
-			}
-
-			aiString texPath;
-
-			if(AI_SUCCESS == mat->GetTexture(aiTextureType_DIFFUSE, 0, &texPath)) {
-				imat.diffuseTexPath = texPath.C_Str();
-			} else {
-				printf("Warning: failed to get diffuse texture path\r\n");
-			}
-
-		}
-
-		if(normalCount > 0) {
-			if(normalCount > 1) {
-				printf("Warning: only 1 normal map is supported as of now\r\n\tMultiple found on material: '%s'\r\n", str.C_Str());
-			}
-
-			aiString texPath;
-			if(AI_SUCCESS == mat->GetTexture(aiTextureType_NORMALS, 0, &texPath)) {
-				imat.normalTexPath = texPath.C_Str();
-			} else {
-				printf("Warning: failed to get diffuse texture path\r\n");
-			}
-		}
-
-		
-
-		if(AI_SUCCESS != mat->Get(AI_MATKEY_COLOR_DIFFUSE, imat.diffuseColor)) {
-			Egg::Utility::Debugf("Failed to get diffuse color\r\n");
-			continue;
-		}
-
-		if(AI_SUCCESS != mat->Get(AI_MATKEY_COLOR_AMBIENT, imat.ambientColor)) {
-			Egg::Utility::Debugf("Failed to get ambient color\r\n");
-			continue;
-		}
-
-		if(AI_SUCCESS != mat->Get(AI_MATKEY_COLOR_SPECULAR, imat.specularColor)) {
-			Egg::Utility::Debugf("Failed to get specular color\r\n");
-			continue;
-		}
-
-		if(AI_SUCCESS != mat->Get(AI_MATKEY_SHININESS, imat.shininess)) {
-			Egg::Utility::Debugf("Failed to get shininess\r\n");
-			continue;
-		}
+		ImportedMaterial imat = ImportMaterial(mat);
 
 		model.materials.push_back(imat);
-
-
 	}
 
 	return;
@@ -913,6 +974,7 @@ ImportedAnimationKey GenerateKey(double tl, aiNodeAnim * anim) {
 	}
 	
 	ASSERT(false, "timeline issues\r\n");
+	return ak;
 }
 
 void ProcessAnimation(const wchar_t* file, std::vector<ProcessedBone> & bones, std::vector<Animation> & anims) {
@@ -942,7 +1004,6 @@ void ProcessAnimation(const wchar_t* file, std::vector<ProcessedBone> & bones, s
 		a.BoneData.resize(bones.size());
 
 		bool isValid = true;
-
 
 		double tl = 0.0;
 

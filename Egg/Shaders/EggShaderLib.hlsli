@@ -221,6 +221,18 @@ float3 ComputeSpotLight(Light L, Material mat, float3 pos, float3 normal, float3
 }
 */
 
+#define ShaderVariantRootSig "RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT )," \
+		" CBV(b0)," \
+		" CBV(b1)," \
+		" CBV(b2)," \
+		" CBV(b3)"// \ " DescriptorTable(SRV(t0, numDescriptors=2)), StaticSampler(s0)" 
+
+const float4x4 identity = float4x4(1.0f, 0.0f, 0.0f, 0.0f,
+	0.0f, 1.0f, 0.0f, 0.0f,
+	0.0f, 0.0f, 1.0f, 0.0f,
+	0.0f, 0.0f, 0.0f, 1.0f);
+
+[RootSignature(ShaderVariantRootSig)]
 VSOutput Vertex_Main(IAOutput iao) {
 	VSOutput vso;
 	

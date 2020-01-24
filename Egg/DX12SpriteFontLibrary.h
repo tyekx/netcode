@@ -22,7 +22,7 @@ namespace Egg::Graphics::DX12 {
 		ID3D12Device * device;
 		//TextureLibrary * textureLibrary;
 
-		std::unique_ptr<SpriteFont> Load(const std::wstring & fontPath, Resource::IResourceUploader * upload) {
+		std::unique_ptr<SpriteFont> Load(const std::wstring & fontPath, Egg::Graphics::UploadBatch * upload) {
 			D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest;
 			D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor;
 			//textureLibrary->AllocateTextures(gpuDescriptor, cpuDescriptorDest, 1);
@@ -39,7 +39,7 @@ namespace Egg::Graphics::DX12 {
 			return storage[font].font.get();
 		}
 
-		HFONT LoadFont(const std::wstring & fontName, Resource::IResourceUploader * upload) {
+		HFONT LoadFont(const std::wstring & fontName, Egg::Graphics::UploadBatch * upload) {
 
 			Egg::MediaPath mediaPath{ fontName };
 			std::wstring fontPath = mediaPath.GetAbsolutePath();

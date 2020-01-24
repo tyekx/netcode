@@ -34,6 +34,8 @@ namespace Egg::Graphics::DX12 {
 		const GResource & GetNativeResource(uint64_t handle);
 
 		void ReleaseResource(uint64_t handle);
+
+		void ReleaseTransients();
 	};
 
 

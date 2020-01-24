@@ -2,18 +2,22 @@
 
 #include "Utility.h"
 #include "Modules.h"
+#include "GraphicsContexts.h"
 #include <map>
 
 #include "DX12Common.h"
-#include "DX12ResourceUploadBatch.h"
-#include "DX12Resource.h"
-#include "DX12ShaderContext.h"
-#include "DX12PipelineContext.h"
-#include "DX12GeometryContext.h"
 #include "DX12SpriteFontLibrary.h"
 #include "DX12ConstantBufferPool.h"
 #include "DX12ResourcePool.h"
 #include "DX12ResourceContext.h"
+#include "DX12RenderContext.h"
+#include "DX12DynamicDescriptorHeap.h"
+
+#include "DX12ShaderLibrary.h"
+#include "DX12InputLayoutLibrary.h"
+#include "DX12RootSignatureLibrary.h"
+#include "DX12StreamOutputLibrary.h"
+#include "DX12GPipelineStateLibrary.h"
 
 #include "GraphicsContexts.h"
 
@@ -53,10 +57,10 @@ namespace Egg::Graphics::DX12 {
 			if(fenceEvent == NULL) {
 				DX_API("Failed to create windows event") HRESULT_FROM_WIN32(GetLastError());
 			}
-			fenceValue = 0;
+			fenceValue = 1;
 
 			DX_API("Failed to create fence")
-				device->CreateFence(fenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.GetAddressOf()));
+				device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.GetAddressOf()));
 		}
 		
 		void WaitForCompletion() {
@@ -86,7 +90,7 @@ namespace Egg::Graphics::DX12 {
 		}
 	};
 
-	class DX12GraphicsModule : public Egg::Module::IGraphicsModule, Egg::Graphics::IPipelineContext, Egg::Graphics::IFrameContext {
+	class DX12GraphicsModule : public Egg::Module::IGraphicsModule, Egg::Graphics::IFrameContext {
 
 		HWND hwnd;
 		com_ptr<ID3D12Debug3> debugController;
@@ -141,15 +145,24 @@ namespace Egg::Graphics::DX12 {
 
 		void CreateSwapChain();
 
+		void CreateLibraries();
+
+		void SetContextReferences();
+
 		void CreateContexts();
+
+		DX12ShaderLibraryRef shaderLibrary;
+		DX12RootSignatureLibraryRef rootSigLibrary;
+		DX12StreamOutputLibraryRef streamOutputLibrary;
+		DX12InputLayoutLibraryRef inputLayoutLibrary;
+		DX12GPipelineStateLibraryRef gPipelineLibrary;
 
 		HeapManager heapManager;
 		ResourcePool resourcePool;
 		ConstantBufferPool cbufferPool;
+		DynamicDescriptorHeap dheaps;
 
-		ShaderContext shaderContext;
-		PipelineContext psContext;
-		GeometryContext geometryContext;
+		RenderContext renderContext;
 		ResourceContext resourceContext;
 
 	public:
@@ -168,26 +181,23 @@ namespace Egg::Graphics::DX12 {
 
 		virtual float GetAspectRatio() const override;
 
-		virtual HPSO CreatePipelineState() override;
-
-		virtual void SetVertexShader(HPSO pso, HSHADER vertexShader) override;
-
-		virtual void SetPixelShader(HPSO pso, HSHADER pixelShader) override;
-
-		virtual void SetGeometryShader(HPSO pso, HSHADER geometryShader) override;
-
-		virtual void SetHullShader(HPSO pso, HSHADER hullShader) override;
-
-		virtual void SetDomainShader(HPSO pso, HSHADER domainShader) override;
-
-		virtual void SetGeometry(HPSO pso, HGEOMETRY geometry) override;
-
 		virtual void SyncUpload(const UploadBatch & upload) override;
+
+		virtual DirectX::XMUINT2 GetBackbufferSize() const override;
 
 		void ReleaseSwapChainResources();
 
 		void CreateSwapChainResources();
 
+		virtual ShaderBuilderRef CreateShaderBuilder() const override;
+
+		virtual GPipelineStateBuilderRef CreateGPipelineStateBuilder() const override;
+
+		virtual InputLayoutBuilderRef CreateInputLayoutBuilder() const override;
+
+		virtual StreamOutputBuilderRef CreateStreamOutputBuilder() const override;
+
+		virtual RootSignatureBuilderRef CreateRootSignatureBuilder() const override;
 	};
 
 

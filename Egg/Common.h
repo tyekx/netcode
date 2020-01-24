@@ -1,11 +1,11 @@
 #pragma once
 
-#include <memory>
 #include <vector>
 #include "Logger.h"
 #include "Formats.h"
 #include "Sal.h"
 #include "Platform.h"
+#include "Memory.hpp"
 
 namespace Egg::Internal {
 

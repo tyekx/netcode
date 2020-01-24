@@ -9,7 +9,7 @@ namespace Egg::Module {
 
 		CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 		int consoleHandleR, consoleHandleW;
-		long stdioHandle;
+		HANDLE stdioHandle;
 		FILE * fptr;
 
 		AllocConsole();
@@ -21,19 +21,19 @@ namespace Egg::Module {
 
 		GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo);
 
-		stdioHandle = (long)GetStdHandle(STD_INPUT_HANDLE);
-		consoleHandleR = _open_osfhandle(stdioHandle, _O_TEXT);
+		stdioHandle = GetStdHandle(STD_INPUT_HANDLE);
+		consoleHandleR = _open_osfhandle(reinterpret_cast<intptr_t>(stdioHandle), _O_TEXT);
 		fptr = _fdopen(consoleHandleR, "r");
 		*stdin = *fptr;
 		setvbuf(stdin, NULL, _IONBF, 0);
 
-		stdioHandle = (long)GetStdHandle(STD_OUTPUT_HANDLE);
-		consoleHandleW = _open_osfhandle(stdioHandle, _O_TEXT);
+		stdioHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+		consoleHandleW = _open_osfhandle(reinterpret_cast<intptr_t>(stdioHandle), _O_TEXT);
 		fptr = _fdopen(consoleHandleW, "w");
 		*stdout = *fptr;
 		setvbuf(stdout, NULL, _IONBF, 0);
 
-		stdioHandle = (long)GetStdHandle(STD_ERROR_HANDLE);
+		stdioHandle = GetStdHandle(STD_ERROR_HANDLE);
 		*stderr = *fptr;
 		setvbuf(stderr, NULL, _IONBF, 0);
 
@@ -157,6 +157,9 @@ namespace Egg::Module {
 
 #if defined(_DEBUG)
 		ShowDebugWindow();
+		Log::Setup(true);
+#else 
+		Log::Setup(false);
 #endif
 
 		eventSystem = app->events.get();

@@ -36,6 +36,11 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		graphics->frame->Prepare();
 
 		scene.UpdatePerFrameCb();
+		
+		renderSystem.renderer.perFrameData = &scene.perFrameData;
+		renderSystem.renderer.ssaoData = &scene.ssaoData;
+
+		FrameGraphBuilder builder;
 
 		/*
 		foreach gameobject draw
@@ -48,8 +53,15 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			}
 		}
 
+		renderSystem.renderer.CreateFrameGraph(builder);
+
+		FrameGraph graph = builder.Build(graphics->resources);
+		graph.Render(graphics->renderer);
+
 		graphics->frame->Render();
 		graphics->frame->Present();
+		
+		renderSystem.renderer.Reset();
 	}
 
 	void Simulate(float dt) {
@@ -64,66 +76,25 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		}
 	}
 
-	void TestCapsulePrimitive() {
-
-		using Egg::Graphics::ResourceFlags;
-		using Egg::Graphics::ResourceState;
-		using Egg::Graphics::ResourceType;
-
-		struct WireframeVertex {
-			DirectX::XMFLOAT3 position;
-			DirectX::XMFLOAT3 color;
-		};
-
-		static WireframeVertex vertices[108];
-		Egg::Graphics::BasicGeometry::CreateCapsuleWireframe(vertices, sizeof(WireframeVertex), 180.0f, 40.0f);
-		for(unsigned int i = 0; i < 108; ++i) {
-			vertices[i].color = DirectX::XMFLOAT3{ 1.0f, 1.0f, 1.0f };
-		}
-
-		GameObject * gameObj = scene.Insert();
-		gameObj->AddComponent<Transform>();
-		Model * model = gameObj->AddComponent<Model>();
-
-		DirectX::XMStoreFloat4x4A(&model->perObjectData.Model, DirectX::XMMatrixIdentity());
-		DirectX::XMStoreFloat4x4A(&model->perObjectData.InvModel, DirectX::XMMatrixIdentity());
-
-		{
-			Egg::HSHADER vs = graphics->shaders->Load(L"DebugPhysxVS.cso");
-			Egg::HSHADER ps = graphics->shaders->Load(L"DebugPhysxPS.cso");
-
-			Egg::HGEOMETRY geom = graphics->geometry->CreateGeometry();
-			graphics->geometry->AddInputElement(geom, "POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
-			graphics->geometry->AddInputElement(geom, "COLOR", DXGI_FORMAT_R32G32B32_FLOAT, 12);
-
-			Egg::HPSO pso = graphics->pipeline->CreatePipelineState();
-			graphics->pipeline->SetVertexShader(pso, vs);
-			graphics->pipeline->SetPixelShader(pso, ps);
-			graphics->pipeline->SetGeometry(pso, geom);
-
-			int vertexBuffer = graphics->resources->CreateVertexBuffer(sizeof(vertices), sizeof(WireframeVertex), ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
-
-			auto & mesh = model->AddShadedMesh(vertexBuffer);
-		}
-
-		
-	}
-
 	void LoadAssets() {
+		scene.Setup();
+
 		Egg::Input::SetAxis("Vertical", 'W', 'S');
 		Egg::Input::SetAxis("Horizontal", 'A', 'D');
 		Egg::Input::SetAxis("Jump", VK_SPACE, 0);
 		Egg::Input::SetAxis("Fire", VK_LBUTTON, 0);
+
+		renderSystem.CreatePermanentResources(graphics.get());
 
 		{
 			GameObject * camObj = scene.Insert();
 			Transform *camT = camObj->AddComponent<Transform>();
 			Script * scriptComponent = camObj->AddComponent<Script>();
 			Camera * camComponent = camObj->AddComponent<Camera>();
-			camT->position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 100.0f };
+			camT->position = DirectX::XMFLOAT3{ 0.0f, 90.0f, 180.0f };
 			camComponent->ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
 			camComponent->nearPlane = 1.0f;
-			camComponent->farPlane = 10000.0f;
+			camComponent->farPlane = 500.0f;
 			camComponent->up = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
 			scriptComponent->SetBehavior(std::make_unique<DevCameraScript>());
 			scriptComponent->Setup(camObj);
@@ -155,7 +126,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 		perFrameCb->Lights[0] = Egg::DirectionalLight{ DirectX::XMFLOAT3A{ 1.0f, 1.0f, 1.0f}, DirectX::XMFLOAT4A{ 1.0f, 0.0f, 0.0f, 0.0f} };
 
-		DirectX::XMMATRIX identity = DirectX::XMMatrixIdentity();
+		
 		DirectX::XMStoreFloat4x4A(&model->perObjectCb->InvModel, identity);
 		DirectX::XMStoreFloat4x4A(&model->perObjectCb->Model, identity);*/
 
@@ -168,10 +139,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		}
 
 
-		for(unsigned int i = 0; i < ybotModel.bonesLength; ++i) {
-			DirectX::XMStoreFloat4x4A(&model->boneDataCb->BindTransform[i], identity);
-			DirectX::XMStoreFloat4x4A(&model->boneDataCb->ToRootTransform[i], identity);
-		}*/
+		*/
 
 		//GameObject * gun = scene.Insert();
 		//gun->AddComponent<Transform>();
@@ -181,19 +149,19 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		//Egg::Importer::ImportModel(L"railgun.eggasset", railgun);
 
 		//LoadItem(graphics.get(), &railgun, gunModel);
+
+
+		const DirectX::XMMATRIX identity = DirectX::XMMatrixIdentity();
+		model->boneData = std::make_unique<BoneData>();
+		for(unsigned int i = 0; i < BoneData::MAX_BONE_COUNT; ++i) {
+			DirectX::XMStoreFloat4x4A(&model->boneData->BindTransform[i], identity);
+			DirectX::XMStoreFloat4x4A(&model->boneData->ToRootTransform[i], identity);
+		}
+
 		LoadItem(graphics.get(), &ybotModel, model);
 
 
-		/*Egg::HFONT f = graphics->fonts->Load(L"titillium60.spritefont");
-
-		for(auto & i : model->meshes) {
-			Egg::HITEM item = i.mesh;
-			graphics->constants->AddCbuffer(item, pfcb, "PerFrameCb");
-			graphics->constants->AddCbuffer(item, pocb, "PerObjectCb");
-			if(ybotModel.animationsLength > 0) {
-				graphics->constants->AddCbuffer(item, bdcb, "BoneDataCb");
-			}
-		}*/
+		/*Egg::HFONT f = graphics->fonts->Load(L"titillium60.spritefont");*/
 
 		CreateYbotAnimationComponent(&ybotModel, anim);
 		animSystem.SetMovementController(&movCtrl);
@@ -202,7 +170,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		s->SetBehavior(std::make_unique<PlayerBehavior>());
 		s->Setup(avatar);
 
-		TestCapsulePrimitive();
+		//TestCapsulePrimitive();
 	}
 
 public:
@@ -210,6 +178,7 @@ public:
 	virtual void OnResized(int w, int h) override {
 		float asp = graphics->GetAspectRatio();
 		scene.camera->GetComponent<Camera>()->aspect = asp;
+		renderSystem.renderer.OnResize(w, h);
 	}
 
 	virtual void AddAppEventHandlers(Egg::Module::AppEventSystem * eventSystem) override {
@@ -228,7 +197,6 @@ public:
 		graphics = factory->CreateGraphicsModule(this, 0);
 		audio = factory->CreateAudioModule(this, 0);
 		physics = factory->CreatePhysicsModule(this, 0);
-		importer = factory->CreateImporterModule(this, 0);
 		network = factory->CreateNetworkModule(this, 0);
 
 		StartModule(window.get());
@@ -236,7 +204,6 @@ public:
 		StartModule(physics.get());
 		StartModule(audio.get());
 		StartModule(network.get());
-		StartModule(importer.get());
 
 		if(window) {
 			window->ShowWindow();
@@ -246,7 +213,6 @@ public:
 
 		stopwatch.Start();
 
-		renderSystem.SetGraphics(graphics.get());
 		LoadAssets();
 
 	}
@@ -278,7 +244,6 @@ public:
 		ShutdownModule(audio.get());
 		ShutdownModule(graphics.get());
 		ShutdownModule(window.get());
-		ShutdownModule(importer.get());
 	}
 };
 

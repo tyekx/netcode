@@ -31,7 +31,7 @@ namespace Egg::Graphics::DX12 {
 		return utfBuffer.get();
 	}
 
-	void SpriteFont::CreateTextureResource(ID3D12Device * device, Resource::IResourceUploader * upload, uint32_t width, uint32_t height, DXGI_FORMAT format, uint32_t stride, uint32_t rows, uint8_t * data) {
+	void SpriteFont::CreateTextureResource(ID3D12Device * device, Egg::Graphics::UploadBatch * upload, uint32_t width, uint32_t height, DXGI_FORMAT format, uint32_t stride, uint32_t rows, uint8_t * data) {
 		D3D12_RESOURCE_DESC desc = {};
 		desc.Width = static_cast<UINT>(width);
 		desc.Height = static_cast<UINT>(height);
@@ -62,11 +62,11 @@ namespace Egg::Graphics::DX12 {
 
 		ASSERT(hr == S_OK, "Failed to initialize2D");
 
-		upload->Upload(textureResource.Get(), imageData.GetImages(), static_cast<UINT>(imageData.GetImageCount()));
-		upload->Transition(textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+		upload->Upload(-1, imageData.GetImages(), static_cast<UINT>(imageData.GetImageCount()));
+		upload->ResourceBarrier(-1, ResourceState::COPY_DEST, ResourceState::ANY_READ);
 	}
 
-	void SpriteFont::Construct(ID3D12Device * device, Resource::IResourceUploader * upload, BinaryReader * reader, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor) {
+	void SpriteFont::Construct(ID3D12Device * device, Egg::Graphics::UploadBatch * upload, BinaryReader * reader, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor) {
 		for(char const * magic = spriteFontMagic; *magic; magic++)
 		{
 			ASSERT(reader->Read<uint8_t>() == *magic, "ERROR: SpriteFont provided with an invalid .spritefont file\r\n");
@@ -119,14 +119,14 @@ namespace Egg::Graphics::DX12 {
 		textureSize = DirectX::XMUINT2(textureWidth, textureHeight);
 	}
 
-	SpriteFont::SpriteFont(ID3D12Device * device, Resource::IResourceUploader * upload, _In_z_ wchar_t const * fileName, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor)
+	SpriteFont::SpriteFont(ID3D12Device * device, Egg::Graphics::UploadBatch * upload, _In_z_ wchar_t const * fileName, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor)
 	{
 		BinaryReader reader(fileName);
 
 		Construct(device, upload, &reader, cpuDescriptorDest, gpuDescriptor);
 	}
 
-	SpriteFont::SpriteFont(ID3D12Device * device, Resource::IResourceUploader * upload, _In_reads_bytes_(dataSize) uint8_t * dataBlob, size_t dataSize, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor)
+	SpriteFont::SpriteFont(ID3D12Device * device, Egg::Graphics::UploadBatch * upload, _In_reads_bytes_(dataSize) uint8_t * dataBlob, size_t dataSize, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor)
 	{
 		BinaryReader reader(dataBlob, dataSize);
 

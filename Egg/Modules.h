@@ -32,7 +32,6 @@ namespace Egg::Module {
 	class INetworkModule;
 	class IPhysicsModule;
 	class IAudioModule;
-	class IImporterModule;
 
 	enum class EAppEventType : unsigned {
 		NOOP, DEVICE_LOST, RESIZED, FOCUSED, BLURRED, CLOSED
@@ -105,7 +104,6 @@ namespace Egg::Module {
 		std::unique_ptr<INetworkModule> network;
 		std::unique_ptr<IPhysicsModule> physics;
 		std::unique_ptr<IAudioModule> audio;
-		std::unique_ptr<IImporterModule> importer;
 
 		virtual ~AApp() = default;
 
@@ -148,30 +146,22 @@ namespace Egg::Module {
 		virtual void ShowDebugWindow() = 0;
 	};
 
-	class IImporterModule : public IModule {
-	public:
-		virtual ~IImporterModule() = default;
-
-		virtual Egg::HTEXTURE LoadTexture(const std::wstring & imagePath) = 0;
-		virtual void GenerateMipLevels(Egg::HTEXTURE texture, unsigned short levels) = 0;
-		virtual Egg::Image * GetImages(Egg::HTEXTURE texture) = 0;
-		virtual unsigned int GetImageCount(Egg::HTEXTURE texture) = 0;
-
-		virtual void * LoadFont(const std::wstring & fontPath) = 0;
-	};
-
 	class IGraphicsModule : public IModule {
 	public:
 		Egg::Graphics::IResourceContext * resources;
-		Egg::Graphics::IPipelineContext * pipeline;
 		Egg::Graphics::IRenderContext * renderer;
-		Egg::Graphics::IShaderContext * shaders;
 		Egg::Graphics::IFrameContext * frame;
-		Egg::Graphics::IGeometryContext * geometry;
 
 		virtual ~IGraphicsModule() = default;
 
 		virtual float GetAspectRatio() const = 0;
+		virtual DirectX::XMUINT2 GetBackbufferSize() const = 0;
+
+		virtual ShaderBuilderRef CreateShaderBuilder() const = 0;
+		virtual GPipelineStateBuilderRef CreateGPipelineStateBuilder() const = 0;
+		virtual InputLayoutBuilderRef CreateInputLayoutBuilder() const = 0;
+		virtual StreamOutputBuilderRef CreateStreamOutputBuilder() const = 0;
+		virtual RootSignatureBuilderRef CreateRootSignatureBuilder() const = 0;
 	};
 
 	class IAudioModule : public IModule {
@@ -219,7 +209,6 @@ namespace Egg::Module {
 		virtual std::unique_ptr<INetworkModule> CreateNetworkModule(AApp * app, int networkType) = 0;
 		virtual std::unique_ptr<IAudioModule> CreateAudioModule(AApp * app, int audioType) = 0;
 		virtual std::unique_ptr<IPhysicsModule> CreatePhysicsModule(AApp * app, int physicsType) = 0;
-		virtual std::unique_ptr<IImporterModule> CreateImporterModule(AApp * app, int importerType) = 0;
 	};
 
 }

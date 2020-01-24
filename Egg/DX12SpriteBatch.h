@@ -1,13 +1,13 @@
 #pragma once
 
 #include "DX12Common.h"
-#include "DX12ResourceUploadBatch.h"
 #include <d3d12.h>
 #include <DirectXMath.h>
 #include <DirectXColors.h>
 #include <functional>
 #include <memory>
 #include "Vertex.h"
+#include "UploadBatch.h"
 
 //#include "RenderTargetState.h"
 
@@ -155,7 +155,7 @@ namespace Egg::Graphics::DX12
         // Only one of these helpers is allocated per D3D device, even if there are multiple SpriteBatch instances.
         struct DeviceResources
         {
-            DeviceResources(_In_ ID3D12Device * device, Resource::IResourceUploader * upload);
+            DeviceResources(_In_ ID3D12Device * device, Egg::Graphics::UploadBatch* upload);
 
             com_ptr<ID3D12Resource> indexBuffer;
             D3D12_INDEX_BUFFER_VIEW indexBufferView;
@@ -163,7 +163,7 @@ namespace Egg::Graphics::DX12
             ID3D12Device * mDevice;
 
         private:
-            void CreateIndexBuffer(_In_ ID3D12Device * device, Resource::IResourceUploader * upload);
+            void CreateIndexBuffer(_In_ ID3D12Device * device, Egg::Graphics::UploadBatch * upload);
             void CreateRootSignatures(_In_ ID3D12Device * device);
 
             static std::vector<short> CreateIndexValues();
@@ -171,7 +171,7 @@ namespace Egg::Graphics::DX12
 
         std::unique_ptr<DeviceResources> mDeviceResources;
 
-        SpriteBatch(_In_ ID3D12Device * device, Resource::IResourceUploader * upload, const SpriteBatchPipelineStateDescription & psoDesc, _In_opt_ const D3D12_VIEWPORT * viewport = nullptr);
+        SpriteBatch(_In_ ID3D12Device * device, Egg::Graphics::UploadBatch * upload, const SpriteBatchPipelineStateDescription & psoDesc, _In_opt_ const D3D12_VIEWPORT * viewport = nullptr);
         SpriteBatch(SpriteBatch && moveFrom) = default;
         SpriteBatch & operator= (SpriteBatch && moveFrom) = default;
 

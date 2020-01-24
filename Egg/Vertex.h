@@ -37,7 +37,7 @@ namespace Egg {
 		DirectX::XMFLOAT3 normal;
 		DirectX::XMFLOAT2 tex;
 		DirectX::XMFLOAT3 weights;
-		DirectX::XMINT4 boneIds;
+		uint32_t boneIds; // 4 bytes, each byte is an id, 0xFF means no bone was referred
 	};
 
 	/*
@@ -51,7 +51,7 @@ namespace Egg {
 		DirectX::XMFLOAT3 normal;
 		DirectX::XMFLOAT2 tex;
 		DirectX::XMFLOAT3 weights;
-		DirectX::XMINT4 boneIds;
+		uint32_t boneIds; // 4 bytes, each byte is an id, 0xFF means no bone was referred
 		DirectX::XMFLOAT3 tangent;
 		DirectX::XMFLOAT3 binormal;
 	};

@@ -62,101 +62,38 @@ namespace Egg::Graphics::DX12 {
 
 		HeapManager * heapManager;
 
-		ID3D12Resource * CreatePageResource() {
-			ResourceDesc desc;
-			desc.depth = 1;
-			desc.dimension = ResourceDimension::BUFFER;
-			desc.state = ResourceState::GENERIC_READ;
-			desc.type = ResourceType::TRANSIENT_UPLOAD;
-			desc.flags = ResourceFlags::NONE;
-			desc.sizeInBytes = CBUFFER_PAGE_SIZE;
-			desc.format = DXGI_FORMAT_UNKNOWN;
-			desc.mipLevels = 1;
-			desc.height = 1;
-			desc.strideInBytes = 1;
-			desc.width = CBUFFER_PAGE_SIZE;
-			return heapManager->CreateResource(desc);
-		}
+		uint8_t * mappedPtr;
 
-		void ValidateCurrentPageFor(size_t size) {
-			if(currentPage == nullptr ||
-			  ((CBUFFER_PAGE_SIZE - currentPage->offset) < size)) {
-				currentPage = &pages.emplace_back(CreatePageResource());
-			}
-		}
+		ID3D12Resource * CreatePageResource();
 
-		void ValidateCurrentAllocationPage() {
-			if(currentAllocationPage == nullptr ||
-				currentAllocationPage->IsFull()) {
-				currentAllocationPage = &allocationPages.emplace_back();
-			}
-		}
+		void ValidateCurrentPageFor(size_t size);
+
+		void ValidateCurrentAllocationPage();
 
 	public:
 
-		void SetHeapManager(HeapManager * heapMan) {
-			heapManager = heapMan;
-		}
+		void SetHeapManager(HeapManager * heapMan);
 
-		~ConstantBufferPool() {
-			Reset();
-		}
+		~ConstantBufferPool();
 
 		/*
 		Clears all allocations, resets the ownership
 		*/
-		void Reset() {
-			allocationPages.clear();
-			currentAllocationPage = nullptr;
-			currentPage = nullptr;
+		void Reset();
 
-			for(auto & page : pages) {
-				heapManager->ReleaseResource(page.resource);
-			}
-			pages.clear();
-		}
+		/*
+		Clears only allocations
+		*/
+		void Clear();
 
 		/*
 		Allocates the desired amount of bytes
 		*/
-		uint64_t CreateConstantBuffer(size_t size) {
-			ASSERT(size != 0, "Cant allocate 0 bytes");
-			
-			ValidateCurrentPageFor(size);
-			ValidateCurrentAllocationPage();
+		uint64_t CreateConstantBuffer(size_t size);
 
-			constexpr UINT64 alignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1;
-			
-			size_t alignedSize = (size + alignment) & (~alignment);
+		D3D12_GPU_VIRTUAL_ADDRESS GetNativeHandle(uint64_t handle) const;
 
-			CBufferAllocation * allocation = currentAllocationPage->Insert();
-			allocation->resource = currentPage->resource;
-			allocation->locationOffset = currentPage->offset;
-			allocation->address = currentPage->baseAddr + currentPage->offset;
-			allocation->sizeInBytes = alignedSize;
-
-			currentPage->offset += alignedSize;
-
-			return reinterpret_cast<uint64_t>( allocation );
-		}
-
-		D3D12_GPU_VIRTUAL_ADDRESS GetNativeHandle(uint64_t handle) const {
-			return reinterpret_cast<CBufferAllocation *>(handle)->address;
-		}
-
-		void CopyData(uint64_t handle, const void * srcData, size_t srcDataSizeInBytes) {
-			CBufferAllocation * alloc = reinterpret_cast<CBufferAllocation *>(handle);
-			uint8_t * destPtr = nullptr;
-			const D3D12_RANGE readRange = CD3DX12_RANGE{ 0, 0 };
-			const D3D12_RANGE writtenRange = CD3DX12_RANGE{ alloc->locationOffset, alloc->locationOffset + alloc->sizeInBytes };
-
-			DX_API("Failed to map ptr")
-				alloc->resource->Map(0, &readRange, reinterpret_cast<void **>(&destPtr));
-
-			memcpy((destPtr + alloc->locationOffset), srcData, srcDataSizeInBytes);
-
-			alloc->resource->Unmap(0, &writtenRange);
-		}
+		void CopyData(uint64_t handle, const void * srcData, size_t srcDataSizeInBytes);
 
 	};
 

@@ -26,3 +26,7 @@ DirectX::XMVECTOR LoadPxExtendedVec3(const physx::PxExtendedVec3 & ev);
 DirectX::XMVECTOR LoadPxVector4(const physx::PxVec4 & v);
 
 DirectX::XMVECTOR LoadPxQuat(const physx::PxQuat & q);
+
+float RandomFloat();
+
+float RandomFloat(float a, float b);

@@ -1,4 +1,5 @@
 #include "DX12ResourceContext.h"
+#include <memory>
 
 namespace Egg::Graphics::DX12 {
 
@@ -9,7 +10,7 @@ namespace Egg::Graphics::DX12 {
 
 	uint64_t ResourceContext::CreateTypedBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags)
 	{
-		return uint64_t();
+		return resources->CreateTypedBuffer(size, format, type, initState, flags);
 	}
 
 	uint64_t ResourceContext::CreateStructuredBuffer(size_t size, uint32_t stride, ResourceType type, ResourceState initState, ResourceFlags flags)
@@ -17,33 +18,167 @@ namespace Egg::Graphics::DX12 {
 		return uint64_t();
 	}
 
-	uint64_t ResourceContext::CreateTexture2D()
+	uint64_t ResourceContext::CreateTexture2D(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags)
 	{
-		return uint64_t();
+		ASSERT(resourceType == ResourceType::PERMANENT_DEFAULT || resourceType == ResourceType::TRANSIENT_DEFAULT, "Texture2D must be in default heap");
+		ResourceDesc desc;
+		desc.depth = 1;
+		desc.dimension = ResourceDimension::TEXTURE2D;
+		desc.width = width;
+		desc.mipLevels = 1;
+		desc.format = format;
+		desc.flags = flags;
+		desc.type = resourceType;
+		desc.sizeInBytes = 0;
+		desc.strideInBytes = DirectX::BitsPerPixel(format) / 8U;
+		desc.height = height;
+		desc.state = initialState;
+		ZeroMemory(&desc.clearValue, sizeof(ClearValue));
+		return resources->CreateResource(desc);
 	}
 
-	uint64_t ResourceContext::CreateRenderTarget()
+	ResourceViewsRef ResourceContext::CreateShaderResourceViews(uint32_t numDescriptors)
 	{
-		return uint64_t();
+		return descHeaps->CreatePermanentSRV(numDescriptors);
 	}
 
-	uint64_t ResourceContext::CreateDepthStencil()
+	ResourceViewsRef ResourceContext::CreateRenderTargetViews(uint32_t numDescriptors)
 	{
-		return uint64_t();
+		return descHeaps->CreatePermanentRTV(numDescriptors);
 	}
+
+	ResourceViewsRef ResourceContext::CreateDepthStencilView()
+	{
+		return descHeaps->CreatePermanentDSV();
+	}
+
+	uint64_t ResourceContext::CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, const DirectX::XMFLOAT4 & clearColor)
+	{
+		ASSERT(resourceType == ResourceType::PERMANENT_DEFAULT || resourceType == ResourceType::TRANSIENT_DEFAULT, "Texture2D must be in default heap");
+		ResourceDesc desc;
+		desc.depth = 1;
+		desc.dimension = ResourceDimension::TEXTURE2D;
+		desc.width = width;
+		desc.mipLevels = 1;
+		desc.format = format;
+		desc.flags = ResourceFlags::ALLOW_RENDER_TARGET;
+		desc.type = resourceType;
+		desc.sizeInBytes = 0;
+		desc.strideInBytes = DirectX::BitsPerPixel(format) / 8U;
+		desc.height = height;
+		desc.state = initState;
+		desc.clearValue.Color[0] = clearColor.x;
+		desc.clearValue.Color[1] = clearColor.y;
+		desc.clearValue.Color[2] = clearColor.z;
+		desc.clearValue.Color[3] = clearColor.w;
+		return resources->CreateResource(desc);
+	}
+
+	uint64_t ResourceContext::CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, const DirectX::XMFLOAT4 & clearColor)
+	{
+		return CreateRenderTarget(width, height, format, resourceType, ResourceState::RENDER_TARGET, clearColor);
+	}
+
+	uint64_t ResourceContext::CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState)
+	{
+		return CreateRenderTarget(width, height, format, resourceType, initState, DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 0.0f });
+	}
+
+	uint64_t ResourceContext::CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType)
+	{
+		return CreateRenderTarget(width, height, format, resourceType, ResourceState::RENDER_TARGET);
+	}
+
+	uint64_t ResourceContext::CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, const DirectX::XMFLOAT4 & clearColor)
+	{
+		return CreateRenderTarget(backbufferExtents.right, backbufferExtents.bottom, format, resourceType, initState, clearColor);
+	}
+
+	uint64_t ResourceContext::CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, const DirectX::XMFLOAT4 & clearColor)
+	{
+		return CreateRenderTarget(backbufferExtents.right, backbufferExtents.bottom, format, resourceType, ResourceState::RENDER_TARGET, clearColor);
+	}
+
+	uint64_t ResourceContext::CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState)
+	{
+		return CreateRenderTarget(backbufferExtents.right, backbufferExtents.bottom, format, resourceType, initState, DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 0.0f });
+	}
+
+	uint64_t ResourceContext::CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType)
+	{
+		return CreateRenderTarget(backbufferExtents.right, backbufferExtents.bottom, format, resourceType, ResourceState::RENDER_TARGET, DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 0.0f });
+	}
+
+
+
+	uint64_t ResourceContext::CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, float clearDepth, uint8_t clearStencil)
+	{
+		ASSERT(resourceType == ResourceType::PERMANENT_DEFAULT || resourceType == ResourceType::TRANSIENT_DEFAULT, "Texture2D must be in default heap");
+		ResourceDesc desc;
+		desc.depth = 1;
+		desc.dimension = ResourceDimension::TEXTURE2D;
+		desc.width = width;
+		desc.mipLevels = 1;
+		desc.format = format;
+		desc.flags = ResourceFlags::ALLOW_DEPTH_STENCIL;
+		desc.type = resourceType;
+		desc.sizeInBytes = 0;
+		desc.strideInBytes = DirectX::BitsPerPixel(format) / 8U;
+		desc.height = height;
+		desc.state = initState;
+		desc.clearValue.DepthStencil.Depth = clearDepth;
+		desc.clearValue.DepthStencil.Stencil = clearStencil;
+		return resources->CreateResource(desc);
+	}
+
+	uint64_t ResourceContext::CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, float clearDepth, uint8_t clearStencil)
+	{
+		return CreateDepthStencil(width, height, format, resourceType, ResourceState::DEPTH_WRITE, clearDepth, clearStencil);
+	}
+
+	uint64_t ResourceContext::CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState)
+	{
+		return CreateDepthStencil(width, height, format, resourceType, initState, 1.0f, 0);
+	}
+
+	uint64_t ResourceContext::CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType)
+	{
+		return CreateDepthStencil(width, height, format, resourceType, ResourceState::DEPTH_WRITE, 1.0f, 0);
+	}
+
+	uint64_t ResourceContext::CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, float clearDepth, uint8_t clearStencil)
+	{
+		return CreateDepthStencil(backbufferExtents.right, backbufferExtents.bottom, format, resourceType, initState, clearDepth, clearStencil);
+	}
+
+	uint64_t ResourceContext::CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, float clearDepth, uint8_t clearStencil)
+	{
+		return CreateDepthStencil(backbufferExtents.right, backbufferExtents.bottom, format, resourceType, ResourceState::DEPTH_WRITE, clearDepth, clearStencil);
+	}
+
+	uint64_t ResourceContext::CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState)
+	{
+		return CreateDepthStencil(backbufferExtents.right, backbufferExtents.bottom, format, resourceType, initState, 1.0f, 0);
+	}
+
+	uint64_t ResourceContext::CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType)
+	{
+		return CreateDepthStencil(backbufferExtents.right, backbufferExtents.bottom, format, resourceType, ResourceState::DEPTH_WRITE, 1.0f, 0);
+	}
+
 
 	const ResourceDesc & ResourceContext::QueryDesc(uint64_t handle)
 	{
 		return reinterpret_cast<GResource *>(handle)->desc;
 	}
 
-	void ResourceContext::CpuOnlyRenderPass()
+	void ResourceContext::ReleaseResource(uint64_t handle)
 	{
+		resources->ReleaseResource(handle);
 	}
 
 	uint64_t ResourceContext::CreateConstantBuffer(size_t size)
 	{
-#undef GENERIC_READ
 		ResourceDesc desc;
 		desc.depth = 1;
 		desc.dimension = ResourceDimension::BUFFER;
@@ -54,7 +189,7 @@ namespace Egg::Graphics::DX12 {
 		desc.type = ResourceType::PERMANENT_UPLOAD;
 		desc.sizeInBytes = desc.width;
 		desc.height = 1;
-		desc.state = ResourceState::GENERIC_READ;
+		desc.state = ResourceState::ANY_READ;
 		return resources->CreateResource(desc);
 	}
 

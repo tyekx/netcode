@@ -80,6 +80,12 @@ namespace Egg::Graphics::DX12 {
 			freed.insert(*it);
 			used.erase(it);
 
+			//@TODO: do a better job with this
+			if(used.empty()) {
+				usedInBytes = 0;
+				freed.clear();
+			}
+
 			return S_OK;
 		}
 
@@ -139,7 +145,7 @@ namespace Egg::Graphics::DX12 {
 				}
 			}
 
-			return totalFreeSpace < sizeInBytes;
+			return sizeInBytes <= totalFreeSpace;
 		}
 	};
 
@@ -324,22 +330,44 @@ namespace Egg::Graphics::DX12 {
 			this->device = device;
 		}
 
-		ID3D12Resource* CreateResource(const ResourceDesc & d) {
+		ID3D12Resource* CreateResource(ResourceDesc & d) {
 			const D3D12_RESOURCE_DESC dxDesc = GetNativeDesc(d);
+			const D3D12_RESOURCE_ALLOCATION_INFO dxAlloc = device->GetResourceAllocationInfo(0, 1, &dxDesc);
+
+			if(d.sizeInBytes == 0) {
+				d.sizeInBytes = dxAlloc.SizeInBytes;
+			}
+
+			const size_t bucketSize = GetBucketSize(dxAlloc.SizeInBytes);
 			const D3D12_RESOURCE_STATES initState = GetNativeState(d.state);
 			const ResourceHash hash(d);
 			const D3D12_HEAP_TYPE heapType = hash.GetHeapType();
 			const D3D12_HEAP_FLAGS heapFlags = hash.GetHeapFlag();
-			const D3D12_RESOURCE_ALLOCATION_INFO dxAlloc = device->GetResourceAllocationInfo(0, 1, &dxDesc);
-			const size_t bucketSize = GetBucketSize(dxAlloc.SizeInBytes);
 
 			decltype(collections)::iterator collection = collections.find(hash);
+
+			D3D12_CLEAR_VALUE cv;
+			D3D12_CLEAR_VALUE * optCv = nullptr;
+
+			if((dxDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) > 0) {
+				cv.Color[0] = 0.0f;
+				cv.Color[1] = 0.0f;
+				cv.Color[2] = 0.0f;
+				cv.Color[3] = 0.0f;
+				cv.Format = dxDesc.Format;
+				optCv = &cv;
+			} else if((dxDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) > 0) {
+				cv.DepthStencil.Depth = 1.0f;
+				cv.DepthStencil.Stencil = 0;
+				cv.Format = dxDesc.Format;
+				optCv = &cv;
+			}
 
 			if(collection != collections.end()) {
 				
 				for(HeapAlloc & heap : collection->second) {
 					if(heap.CanFit(dxAlloc.SizeInBytes)) {
-						return MarshalResource(heap.CreateResource(device, dxDesc, initState, nullptr, dxAlloc), hash);
+						return MarshalResource(heap.CreateResource(device, dxDesc, initState, optCv, dxAlloc), hash);
 					}
 				}
 
@@ -351,7 +379,7 @@ namespace Egg::Graphics::DX12 {
 			}
 			
 			HeapAlloc & heapAlloc = collection->second.emplace_back(device, bucketSize, heapType, heapFlags);
-			return MarshalResource(heapAlloc.CreateResource(device, dxDesc, initState, nullptr, dxAlloc), hash);
+			return MarshalResource(heapAlloc.CreateResource(device, dxDesc, initState, optCv, dxAlloc), hash);
 		}
 
 		void ReleaseResource(ID3D12Resource * resource) {
@@ -366,8 +394,6 @@ namespace Egg::Graphics::DX12 {
 						break;
 					}
 				}
-
-				Log::Warn("You broke it");
 
 				hashAssoc.erase(it);
 

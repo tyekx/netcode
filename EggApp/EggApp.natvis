@@ -7,9 +7,25 @@
       <Item Name="[Transform]" Condition="(components.signature &amp; 1) == 1">((Transform*)components.storage)</Item>
       <Item Name="[Model]" Condition="(components.signature &amp; 2) == 2">((Model*)(components.storage + sizeof(Transform)))</Item>
       <Item Name="[Script]" Condition="(components.signature &amp; 4) == 4">((Script*)(components.storage + sizeof(Model) + sizeof(Transform)))</Item>
+      <Item Name="[Camera]" Condition="(components.signature &amp; 8) == 8">((Camera*)(components.extendedStorage))</Item>
+      <Item Name="[Animation]" Condition="(components.signature &amp; 16) == 16">((Animation*)(components.extendedStorage + sizeof(Camera)))</Item>
     </Expand>
   </Type>
   <Type Name="Transform">
     <DisplayString>{{ Position={position}, Rotation={rotation}, Scale={scale} }}</DisplayString>
+  </Type>
+  <Type Name="Egg::Graphics::DX12::HeapManager::ResourceHash">
+    <DisplayString Condition="(hash >> 6) == 0">{{ Type = { D3D12_HEAP_TYPE_DEFAULT } }}</DisplayString>
+    <DisplayString Condition="(hash >> 6) == 1">{{ Type = { D3D12_HEAP_TYPE_UPLOAD }  }}</DisplayString>
+    <DisplayString Condition="(hash >> 6) == 2">{{ Type = { D3D12_HEAP_TYPE_READBACK}  }}</DisplayString>
+    <Expand>
+      <Item Name="[IsBuffer]">(hash &amp; 32) &gt; 0</Item>
+      <Item Name="[IsTexture]">(hash &amp; 32) == 0</Item>
+      <Item Name="[IsRenderTarget]">(hash &amp; 16) != 0</Item>
+      <Item Name="[IsTransient]">(hash &amp; 256) != 0</Item>
+      <Item Name="[BucketSize]" Condition="(hash &amp; 15) == 0">"512K"</Item>
+      <Item Name="[BucketSize]" Condition="(hash &amp; 15) == 1">"4M"</Item>
+      <Item Name="[BucketSize]" Condition="(hash &amp; 15) == 2">"32M"</Item>
+    </Expand>
   </Type>
 </AutoVisualizer>

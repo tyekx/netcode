@@ -5,84 +5,62 @@
 #include <string>
 #include <map>
 
-#include "Shader.h"
+#include "HandleTypes.h"
 #include "DX12Common.h"
 
 namespace Egg::Graphics::DX12 {
 
-	struct ShaderPreprocDefs {
+	struct ShaderVariantDesc {
+		std::map<std::string, std::string> defines;
+		std::string entryFunctionName;
+		std::wstring sourceFile;
+		ShaderType shaderType;
 
-		std::map<std::string, std::string> defs;
-
-		bool operator==(const ShaderPreprocDefs & o) const {
-			if(defs.size() != o.defs.size()) {
+		bool operator==(const ShaderVariantDesc & rhs) const {
+			if(entryFunctionName != rhs.entryFunctionName) {
 				return false;
 			}
 
-			for(const auto & i : defs) {
-				const auto & oi = o.defs.find(i.first);
+			if(sourceFile != rhs.sourceFile) {
+				return false;
+			}
 
-				if(oi == o.defs.end()) {
+			if(shaderType != rhs.shaderType) {
+				return false;
+			}
+
+			if(defines.size() != rhs.defines.size()) {
+				return false;
+			}
+
+			for(auto kv : defines) {
+				auto rhsKv = rhs.defines.find(kv.first);
+
+				if(rhsKv == rhs.defines.end()) {
 					return false;
 				}
 
-				if(oi->second != i.second) {
+				if(kv.second != rhsKv->second) {
 					return false;
 				}
 			}
+
 			return true;
-		}
-
-		inline bool operator!=(const ShaderPreprocDefs & o) const {
-			return !operator==(o);
-		}
-
-		void Define(const std::string & key, float value) {
-			Define(key, std::to_string(value));
-		}
-
-		void Define(const std::string & key, int value) {
-			Define(key, std::to_string(value));
-		}
-
-		void Define(const std::string & key, const std::string & value) {
-			defs[key] = value;
-		}
-
-		void Define(const std::string & key) {
-			defs[key];
 		}
 	};
 
-	class ShaderVariant : public Egg::Graphics::Shader {
-		ShaderPreprocDefs defs;
-		std::string sourceCode;
-		std::string entryFunctionName;
-		ShaderType shaderType;
+	class ShaderVariant : public Egg::ShaderBytecode {
+		ShaderVariantDesc desc;
 		com_ptr<ID3DBlob> shaderByteCode;
 
 	public:
-		ShaderVariant() = default;
+		ShaderVariant(ShaderVariantDesc desc, com_ptr<ID3DBlob> shaderBytecode) : desc{ std::move(desc) }, shaderByteCode{ std::move(shaderByteCode) } {
 
-		void SetShaderType(ShaderType type);
+		}
 
-		void SetSourceReference(const std::wstring & shader);
-
-		virtual void SetShaderSource(const std::string & shaderSource) override;
-
-		virtual void SetDefinitions(const std::map<std::string, std::string> & macros)override;
-
-		virtual void SetEntryFunction(const std::string & fname) override;
-		
-		ShaderType GetShaderType() const;
-
-		const std::wstring & GetFileReference() const;
-
-		const std::string & GetEntryFunction() const;
-
-		const std::string & GetSource() const;
-
-		const ShaderPreprocDefs & GetPreprocDefs() const;
+		const ShaderVariantDesc & GetDesc() const {
+			return desc;
+		}
 
 		// Inherited via Shader
 		virtual uint8_t * GetBufferPointer() override;
@@ -90,5 +68,7 @@ namespace Egg::Graphics::DX12 {
 		virtual size_t GetBufferSize() override;
 
 	};
+
+	using ShaderVariantRef = std::shared_ptr<ShaderVariant>;
 
 }

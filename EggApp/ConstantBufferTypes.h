@@ -8,8 +8,24 @@ struct PerFrameData {
 	DirectX::XMFLOAT4X4A ViewProjInv;
 	DirectX::XMFLOAT4X4A View;
 	DirectX::XMFLOAT4X4A Proj;
-	DirectX::XMFLOAT3A eyePos;
-	Egg::Light Lights[16];
+	DirectX::XMFLOAT4X4A ViewInv;
+	DirectX::XMFLOAT4X4A ProjInv;
+	DirectX::XMFLOAT4X4A ProjTex;
+	DirectX::XMFLOAT4A eyePos;
+	float nearZ;
+	float farZ;
+	float aspectRatio;
+	float fov;
+};
+
+struct SsaoData {
+	constexpr static int SAMPLE_COUNT = 14;
+
+	DirectX::XMFLOAT4A Offsets[SAMPLE_COUNT];
+	float occlusionRadius;
+	float occlusionFadeStart;
+	float occlusionFadeEnd;
+	float surfaceEpsilon;
 };
 
 

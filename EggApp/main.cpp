@@ -31,7 +31,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	Egg::Module::DefaultModuleFactory defModuleFactory;
 	std::unique_ptr<Egg::Module::AApp> app = std::make_unique<GameApp>();
 	app->Setup(&defModuleFactory);
-	Log::Setup(true);
 
 	Log::Info("Initialization successful");
 

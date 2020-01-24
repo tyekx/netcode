@@ -1,7 +1,9 @@
 #pragma once
 
 #include "DX12Common.h"
-#include "Shader.h"
+#include "HandleTypes.h"
+#include <map>
+#include <string>
 
 namespace Egg::Graphics::DX12 {
 	

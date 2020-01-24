@@ -8,6 +8,8 @@
 #include <Egg/Logger.h>
 #include <Egg/Input.h>
 #include <Egg/Blackboard.h>
+#include "Material.h"
+#include "Mesh.h"
 
 class GameObject;
 
@@ -40,15 +42,17 @@ public:
 	}
 };
 
+struct ShadedMesh {
+	std::shared_ptr<Mesh> mesh;
+	std::shared_ptr<Material> material;
+
+	ShadedMesh(std::shared_ptr<Mesh> m, std::shared_ptr<Material> mat) : mesh{ std::move(m) }, material{ std::move(mat) } {
+
+	}
+};
+
 COMPONENT_ALIGN class Model {
 public:
-	struct ShadedMesh {
-		int vertexBuffer;
-		int indexBuffer;
-		MaterialData materialData;
-
-		ShadedMesh(int vbuffer, int ibuffer) : vertexBuffer{ vbuffer }, indexBuffer{ ibuffer }, materialData{ } { }
-	};
 
 	PerObjectData perObjectData;
 	std::unique_ptr<BoneData> boneData;
@@ -57,10 +61,9 @@ public:
 	Model() : perObjectData{ }, boneData{ nullptr }, meshes{ } { }
 	~Model() = default;
 
-	ShadedMesh & AddShadedMesh(int vertexBuffer, int indexBuffer = -1) {
-		return meshes.emplace_back(vertexBuffer, indexBuffer);
+	ShadedMesh & AddShadedMesh(std::shared_ptr<Mesh> m, std::shared_ptr<Material> mat) {
+		return meshes.emplace_back(std::move(m), std::move(mat));
 	}
-
 };
 
 

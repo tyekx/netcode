@@ -5,22 +5,26 @@
 
 #include <DirectXCollision.h>
 
+struct GBuffer {
+	uint64_t vertexBuffer;
+	uint64_t indexBuffer;
+	uint64_t vertexCount;
+	uint64_t indexCount;
+};
+
 class Mesh {
 public:
-	struct LOD {
-		uint64_t vertexBuffer;
-		uint64_t indexBuffer;
-		uint64_t vertexCount;
-		uint64_t indexCount;
-	};
 
 	DirectX::BoundingBox boundingBox;
 
-	uint32_t lodCount;
+	GBuffer lods[4];
 	uint32_t selectedLod;
-	LOD lods[4];
+	uint32_t lodCount;
 
-	void AddLOD(const LOD & lod) {
+	uint32_t vertexType;
+	uint32_t vertexSize;
+
+	void AddLOD(const GBuffer & lod) {
 		if(lodCount > 3) {
 			return;
 		}
@@ -28,21 +32,8 @@ public:
 		lodCount += 1;
 	}
 
-	void Draw(Egg::Graphics::IRenderContext * ctx) {
-		if(lodCount == 0) {
-			return;
-		}
-
-		LOD selected = lods[selectedLod];
-
-		if(selected.indexCount > 0) {
-			ctx->SetIndexBuffer(selected.indexBuffer);
-			ctx->SetVertexBuffer(selected.vertexBuffer);
-			ctx->DrawIndexed(selected.indexCount);
-		} else {
-			ctx->SetVertexBuffer(selected.vertexBuffer);
-			ctx->Draw(selected.vertexCount);
-		}
+	const GBuffer & GetGBuffer() const {
+		return lods[selectedLod];
 	}
 
 };

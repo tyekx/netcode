@@ -4,101 +4,78 @@
 #include "GraphicsContexts.h"
 #include "DX12ResourcePool.h"
 #include "DX12ConstantBufferPool.h"
+#include "DX12DynamicDescriptorHeap.h"
 
 namespace Egg::Graphics::DX12 {
 
-	class GBufferCollection {
-	public:
-		GBuffer & GetGBuffer(int handle) { }
-	};
-
 	class RenderContext : public Egg::Graphics::IRenderContext {
+		D3D12_CPU_DESCRIPTOR_HANDLE currentlyBoundDepth;
+		D3D12_CPU_DESCRIPTOR_HANDLE currentlyBoundRenderTargets[D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT];
+	public:
+		D3D12_CPU_DESCRIPTOR_HANDLE backbuffer;
+		D3D12_CPU_DESCRIPTOR_HANDLE backbufferDepth;
+		D3D12_VIEWPORT defaultViewport;
 		ID3D12GraphicsCommandList * gcl;
 		ResourcePool * resources;
 		ConstantBufferPool * cbuffers;
 		std::vector<D3D12_RESOURCE_BARRIER> barriers;
 		D3D12_GPU_VIRTUAL_ADDRESS streamOutput_FilledSizeLocation;
-	public:
+		DynamicDescriptorHeap * descHeaps;
 
-		void BeginPass() {
-			ASSERT(barriers.empty(), "Barriers is not empty");
-		}
+		virtual void SetStencilReference(uint8_t stencilValue) override;
 
-		void EndPass() {
-			FlushResourceBarriers();
-			ResetStreamOutput();
-		}
+		virtual void SetVertexBuffer(uint64_t handle) override;
 
-		virtual void ResourceBarrier(uint64_t handle, ResourceState before, ResourceState after) override {
-			const GResource & desc = resources->GetNativeResource(handle);
+		virtual void SetIndexBuffer(uint64_t handle) override;
 
-			D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(desc.resource, static_cast<D3D12_RESOURCE_STATES>(before), static_cast<D3D12_RESOURCE_STATES>(after));
-			barriers.emplace_back(barrier);
-		}
+		virtual void DrawIndexed(uint64_t indexCount) override;
 
-		virtual void FlushResourceBarriers() override {
-			if(!barriers.empty()) {
-				gcl->ResourceBarrier(barriers.size(), barriers.data());
-			}
+		virtual void Draw(uint64_t vertexCount) override;
 
-			barriers.clear();
-		}
+		virtual void SetRootSignature(RootSignatureRef rs) override;
 
-		virtual void SetConstantBuffer(int slot, uint64_t cbufferHandle) override {
-			gcl->SetGraphicsRootConstantBufferView(static_cast<UINT>(slot), cbuffers->GetNativeHandle(cbufferHandle));
-		}
+		virtual void SetPipelineState(PipelineStateRef pso) override;
 
-		virtual void SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes)  override {
-			// not making the handle public protects the user to overwrite data before actual rendering
-			uint64_t cbufferHandle = cbuffers->CreateConstantBuffer(srcDataSizeInBytes);
+		virtual void SetPrimitiveTopology(PrimitiveTopology topology) override;
 
-			cbuffers->CopyData(cbufferHandle, srcData, srcDataSizeInBytes);
+		virtual void ClearUnorderedAccessViewUint(uint64_t handle, const DirectX::XMUINT4 & values) override;
 
-			gcl->SetGraphicsRootConstantBufferView(static_cast<UINT>(slot), cbuffers->GetNativeHandle(cbufferHandle));
-		}
 
-		virtual void SetPrimitiveTopology(PrimitiveTopology topology) override {
-			gcl->IASetPrimitiveTopology(static_cast<D3D12_PRIMITIVE_TOPOLOGY>(topology));
-		}
+		virtual void ClearDepthOnly() override;
+		virtual void ClearStencilOnly() override;
+		virtual void ClearDepthStencil() override;
 
-		virtual void SetStreamOutputFilledSize(uint64_t handle) override {
-			const GResource & gResource = resources->GetNativeResource(handle);
+		virtual void ClearRenderTarget(uint8_t idx) override;
 
-			streamOutput_FilledSizeLocation = gResource.address;
-		}
+		virtual void SetStreamOutput(uint64_t handle) override;
 
-		virtual void SetStreamOutput(uint64_t handle) override {
-			ASSERT(streamOutput_FilledSizeLocation > 0, "Must call SeetStreamOutputFilledSize first");
+		virtual void SetStreamOutputFilledSize(uint64_t handle, uint64_t byteOffset) override;
 
-			const GResource & gResource = resources->GetNativeResource(handle);
+		virtual void ResetStreamOutput() override;
 
-			D3D12_STREAM_OUTPUT_BUFFER_VIEW sobv;
-			sobv.BufferFilledSizeLocation = streamOutput_FilledSizeLocation;
-			sobv.BufferLocation = gResource.address;
-			sobv.SizeInBytes = gResource.desc.sizeInBytes;
+		virtual void SetViewport(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) override;
 
-			gcl->SOSetTargets(0, 1, &sobv);
-		}
+		virtual void SetViewport(uint32_t width, uint32_t height) override;
 
-		virtual void ResetStreamOutput() override {
-			if(streamOutput_FilledSizeLocation > 0) {
-				gcl->SOSetTargets(0, 0, nullptr);
-				streamOutput_FilledSizeLocation = 0;
-			}
-		}
+		virtual void SetViewport() override;
 
-		virtual void Draw(uint64_t handle) override {
-			GBuffer g;
+		virtual void SetRenderTargets(std::initializer_list<uint64_t> handles, uint64_t depthStencil) override;
 
-			if(g.indexCount > 0) {
-				gcl->IASetVertexBuffers(0, 1, &g.vertexBufferView);
-				gcl->IASetIndexBuffer(&g.indexBufferView);
-				gcl->DrawIndexedInstanced(g.indexCount, 1, 0, 0, 0);
-			} else {
-				gcl->IASetVertexBuffers(0, 1, &g.vertexBufferView);
-				gcl->DrawInstanced(g.vertexCount, 1, 0, 0);
-			}
-		}
+		virtual void SetRenderTargets(uint64_t renderTarget, uint64_t depthStencil) override;
+
+		virtual void SetShaderResources(int slot, std::initializer_list<uint64_t> shaderResourceHandles) override;
+
+		virtual void SetConstantBuffer(int slot, uint64_t cbufferHandle) override;
+
+		virtual void SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) override;
+
+		virtual void ResourceBarrier(uint64_t handle, ResourceState before, ResourceState after) override;
+
+		virtual void FlushResourceBarriers() override;
+
+		virtual void BeginPass() override;
+
+		virtual void EndPass() override;
 
 	};
 

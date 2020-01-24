@@ -295,8 +295,30 @@ struct TupleRename< CANDIDATE, std::tuple<T...> > {
 #endif
 };
 
+template<size_t N, typename ... T>
+struct TupleSkipNImpl;
 
+template<size_t N>
+struct TupleSkipNImpl<N, std::tuple<> > {
+	using type = void;
+};
 
+template< typename HEAD, typename ... TAIL>
+struct TupleSkipNImpl<0, std::tuple< HEAD, TAIL ...> > {
+	using type = std::tuple<HEAD, TAIL...>;
+};
+template< size_t N, typename HEAD, typename ... TAIL>
+struct TupleSkipNImpl<N, std::tuple< HEAD, TAIL ...> > {
+	using type = typename TupleSkipNImpl<N - 1, std::tuple<TAIL...>>::type;
+};
+
+template<size_t N, typename ... T>
+struct TupleSkipN;
+
+template< size_t N, typename HEAD, typename ... TAIL>
+struct TupleSkipN<N, std::tuple< HEAD, TAIL ...> > {
+	using type = typename TupleSkipNImpl<N, std::tuple<HEAD, TAIL...>>::type;
+};
 
 
 template<SignatureType C, SignatureType R, typename ... T>
@@ -375,15 +397,40 @@ struct CompositeObjectDestructor< std::tuple<HEAD, TAIL...> > {
 };
 
 
-template<typename ... T>
-struct InjectComponents;
 
-template<typename SYSTEM_T, typename OBJECT_T, typename ... COMPONENT_TYPES, typename ... ADDITIONAL_ARGS>
-struct InjectComponents< SYSTEM_T, OBJECT_T, std::tuple<COMPONENT_TYPES...>, ADDITIONAL_ARGS... > {
+template<typename T>
+struct FunctionReflection;
 
-	using FUNCTION_T = void (SYSTEM_T::*)(OBJECT_T *, COMPONENT_TYPES *..., ADDITIONAL_ARGS...);
-
-	static void Invoke(SYSTEM_T & ref, FUNCTION_T func, OBJECT_T * obj, ADDITIONAL_ARGS ... args) {
-		((ref).*(func))(obj, obj->template GetComponent<COMPONENT_TYPES>()..., args...);
-	}
+template<typename RV, typename ...ARGS>
+struct FunctionReflection<RV(*)(ARGS...)> {
+	using MemberOf = void;
+	using ReturnType = RV;
+	using ArgTuple = std::tuple<ARGS...>;
 };
+
+template<typename RV, typename MEMBEROF, typename ... ARGS>
+struct FunctionReflection<RV(MEMBEROF:: *)(ARGS...)> {
+	using MemberOf = MEMBEROF;
+	using ReturnType = RV;
+	using ArgsTuple = std::tuple<ARGS...>;
+};
+
+
+
+
+
+
+
+template<template<typename U> typename CANDIDATE, typename ... T>
+struct TupleForEach;
+
+template<template<typename U> typename CANDIDATE, typename ... T>
+struct TupleForEach< CANDIDATE, std::tuple<T...> > {
+#ifdef _MSC_VER
+	using type = typename std::tuple<CANDIDATE<T>...>;
+#else
+	using type = CANDIDATE<T...>;
+#endif
+};
+
+

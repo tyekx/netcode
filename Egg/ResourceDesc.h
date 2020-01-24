@@ -11,6 +11,18 @@
 
 namespace Egg::Graphics {
 
+	struct ClearValue {
+		DXGI_FORMAT Format;
+		union
+		{
+			float Color[4];
+			struct {
+				float Depth;
+				uint8_t Stencil;
+			} DepthStencil;
+		};
+	};
+
 	struct ResourceDesc {
 		uint64_t sizeInBytes;
 		uint64_t width;
@@ -23,6 +35,7 @@ namespace Egg::Graphics {
 		ResourceState state;
 		ResourceDimension dimension;
 		DXGI_FORMAT format;
+		ClearValue clearValue;
 	};
 
 }

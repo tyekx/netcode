@@ -14,8 +14,13 @@ using RenderCallback = std::function<void(IRenderContext *)>;
 
 class RenderPass {
 public:
+	std::string name;
 	SetupCallback setup;
 	RenderCallback render;
+
+	RenderPass(const std::string & name, SetupCallback && setupFunc, RenderCallback && renderFunc) : name{ name }, setup{ std::move(setupFunc) }, render{ std::move(renderFunc) } {
+
+	}
 };
 
 
@@ -41,6 +46,9 @@ class ScratchBuffer {
 	std::vector<T> storage;
 public:
 
+	using iterator = typename std::vector<T>::iterator;
+	using const_iterator = typename std::vector<T>::const_iterator;
+
 	size_t Size() const {
 		return storage.size();
 	}
@@ -56,6 +64,10 @@ public:
 		storage.reserve(newSize);
 	}
 
+	void Clear() {
+		storage.clear();
+	}
+
 	void Produced(const T & v) {
 		storage.push_back(v);
 	}
@@ -64,19 +76,19 @@ public:
 		storage.insert(storage.end(), rhs.begin(), rhs.end());
 	}
 
-	std::vector<T>::iterator begin() noexcept {
+	iterator begin() noexcept {
 		return storage.begin();
 	}
 
-	std::vector<T>::iterator end() noexcept {
+	iterator end() noexcept {
 		return storage.end();
 	}
 
-	std::vector<T>::const_iterator begin() const noexcept {
+	const_iterator begin() const noexcept {
 		return storage.begin();
 	}
 
-	std::vector<T>::const_iterator end() const noexcept {
+	const_iterator end() const noexcept {
 		return storage.end();
 	}
 
@@ -88,7 +100,7 @@ public:
 	RenderPass * CreateRenderPass(const std::string & name,
 								   std::function<void(IResourceContext*)> setupFunction,
 								   std::function<void(IRenderContext*)> renderFunction) {
-		return &renderPasses.emplace_back(std::move(setupFunction), std::move(renderFunction));
+		return &renderPasses.emplace_back(name, std::move(setupFunction), std::move(renderFunction));
 	}
 
 	FrameGraph Build(IResourceContext* ctx) {

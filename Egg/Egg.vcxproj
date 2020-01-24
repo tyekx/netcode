@@ -53,31 +53,47 @@
     <ClInclude Include="BinaryReader.h" />
     <ClInclude Include="Blackboard.h" />
     <ClInclude Include="BasicGeometry.h" />
-    <ClInclude Include="DX12CommittedIBuffer.h" />
-    <ClInclude Include="DX12CommittedTexture2D.h" />
-    <ClInclude Include="DX12CommittedVBuffer.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DebugPhysx.h" />
     <ClInclude Include="DebugPhysxActor.h" />
     <ClInclude Include="DebugPhysxRaycast.h" />
     <ClInclude Include="DefaultModuleFactory.h" />
+    <ClInclude Include="DX12Builders.h" />
     <ClInclude Include="DX12Common.h" />
     <ClInclude Include="DX12ConstantBufferPool.h" />
-    <ClInclude Include="DX12GeometryContext.h" />
+    <ClInclude Include="DX12CPipelineStatePrototype.h" />
+    <ClInclude Include="DX12DynamicDescriptorHeap.h" />
+    <ClInclude Include="DX12GPipelineState.h" />
+    <ClInclude Include="DX12GPipelineStateBuilder.h" />
+    <ClInclude Include="DX12GPipelineStateLibrary.h" />
     <ClInclude Include="DX12GraphicsModule.h" />
     <ClInclude Include="DX12HeapCollection.h" />
+    <ClInclude Include="DX12Helpers.h" />
+    <ClInclude Include="DX12InputLayout.h" />
+    <ClInclude Include="DX12InputLayoutBuilder.h" />
+    <ClInclude Include="DX12InputLayoutLibrary.h" />
+    <ClInclude Include="DX12Platform.h" />
     <ClInclude Include="DX12RenderContext.h" />
     <ClInclude Include="DX12ResourceDesc.h" />
     <ClInclude Include="DX12ResourcePool.h" />
-    <ClInclude Include="DX12PipelineContext.h" />
+    <ClInclude Include="DX12ResourceViews.h" />
+    <ClInclude Include="DX12RootSignature.h" />
+    <ClInclude Include="DX12RootSignatureBuilder.h" />
+    <ClInclude Include="DX12RootSignatureLibrary.h" />
+    <ClInclude Include="DX12ShaderBuilder.h" />
     <ClInclude Include="DX12ShaderCompiled.h" />
     <ClInclude Include="DX12ShaderCompiler.h" />
-    <ClInclude Include="DX12ShaderContext.h" />
+    <ClInclude Include="DX12ShaderLibrary.h" />
     <ClInclude Include="DX12ShaderSourceLibrary.h" />
     <ClInclude Include="DX12ShaderVariant.h" />
     <ClInclude Include="DX12SpriteBatch.h" />
     <ClInclude Include="DX12SpriteFontLibrary.h" />
+    <ClInclude Include="DX12StreamOutput.h" />
+    <ClInclude Include="DX12StreamOutputBuilder.h" />
+    <ClInclude Include="DX12StreamOutputLibrary.h" />
+    <ClInclude Include="DX12Texture.h" />
+    <ClInclude Include="DX12TextureBuilder.h" />
     <ClInclude Include="EggMpl.hpp" />
     <ClInclude Include="Exporter.h" />
     <ClInclude Include="DX12Fence.h" />
@@ -90,6 +106,7 @@
     <ClInclude Include="Input.h" />
     <ClInclude Include="LinearClassifier.h" />
     <ClInclude Include="DX12ResourceContext.h" />
+    <ClInclude Include="Memory.hpp" />
     <ClInclude Include="Sal.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="LuaApi.h" />
@@ -103,24 +120,18 @@
     <ClInclude Include="MovementController.h" />
     <ClInclude Include="Path.h" />
     <ClInclude Include="PhysxModule.h" />
-    <ClInclude Include="DX12PlacedIBuffer.h" />
-    <ClInclude Include="DX12PlacedVBuffer.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="ProgramArgs.h" />
-    <ClInclude Include="DX12Resource.h" />
-    <ClInclude Include="DX12ResourceUploadBatch.h" />
     <ClInclude Include="DX12SpriteFont.h" />
     <ClInclude Include="FrameGraph.h" />
     <ClInclude Include="ResourceDesc.h" />
     <ClInclude Include="ResourceEnums.h" />
-    <ClInclude Include="Shader.h" />
     <ClInclude Include="Stopwatch.h" />
     <ClInclude Include="Transition.h" />
     <ClInclude Include="UploadBatch.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="WinapiWindowModule.h" />
-    <ClInclude Include="WinImporterModule.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AnimationBlender.cpp" />
@@ -128,22 +139,38 @@
     <ClCompile Include="BinaryReader.cpp" />
     <ClCompile Include="Blackboard.cpp" />
     <ClCompile Include="BasicGeometry.cpp" />
-    <ClCompile Include="DX12CommittedIBuffer.cpp" />
-    <ClCompile Include="DX12CommittedTexture2D.cpp" />
-    <ClCompile Include="DX12CommittedVBuffer.cpp" />
     <ClCompile Include="DebugPhysx.cpp" />
     <ClCompile Include="DebugPhysxActor.cpp" />
     <ClCompile Include="DefaultModuleFactory.cpp" />
     <ClCompile Include="DX12Common.cpp" />
+    <ClCompile Include="DX12ConstantBufferPool.cpp" />
+    <ClCompile Include="DX12DynamicDescriptorHeap.cpp" />
+    <ClCompile Include="DX12GPipelineState.cpp" />
+    <ClCompile Include="DX12GPipelineStateBuilder.cpp" />
+    <ClCompile Include="DX12GPipelineStateLibrary.cpp" />
     <ClCompile Include="DX12GraphicsModule.cpp" />
+    <ClCompile Include="DX12Helpers.cpp" />
+    <ClCompile Include="DX12InputLayout.cpp" />
+    <ClCompile Include="DX12InputLayoutBuilder.cpp" />
+    <ClCompile Include="DX12InputLayoutLibrary.cpp" />
+    <ClCompile Include="DX12Platform.cpp" />
+    <ClCompile Include="DX12RenderContext.cpp" />
     <ClCompile Include="DX12ResourceDesc.cpp" />
     <ClCompile Include="DX12ResourcePool.cpp" />
-    <ClCompile Include="DX12ResourceUploadBatch.cpp" />
+    <ClCompile Include="DX12ResourceViews.cpp" />
+    <ClCompile Include="DX12RootSignature.cpp" />
+    <ClCompile Include="DX12RootSignatureBuilder.cpp" />
+    <ClCompile Include="DX12RootSignatureLibrary.cpp" />
+    <ClCompile Include="DX12ShaderBuilder.cpp" />
     <ClCompile Include="DX12ShaderCompiled.cpp" />
     <ClCompile Include="DX12ShaderCompiler.cpp" />
-    <ClCompile Include="DX12ShaderContext.cpp" />
     <ClCompile Include="DX12ShaderVariant.cpp" />
     <ClCompile Include="DX12SpriteBatch.cpp" />
+    <ClCompile Include="DX12StreamOutput.cpp" />
+    <ClCompile Include="DX12StreamOutputBuilder.cpp" />
+    <ClCompile Include="DX12StreamOutputLibrary.cpp" />
+    <ClCompile Include="DX12Texture.cpp" />
+    <ClCompile Include="DX12TextureBuilder.cpp" />
     <ClCompile Include="Exporter.cpp" />
     <ClCompile Include="Importer.cpp" />
     <ClCompile Include="Input.cpp" />
@@ -163,7 +190,6 @@
     <ClCompile Include="UploadBatch.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="WinapiWindowModule.cpp" />
-    <ClCompile Include="WinImporterModule.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\AvatarVS.hlsl">
@@ -206,9 +232,6 @@ popd</Command>
     <FxCompile Include="Shaders\DefaultVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
     </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Natvis Include="Egg.natvis" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

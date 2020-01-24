@@ -1,7 +1,10 @@
 #pragma once
 
+#include "Formats.h"
+#include <cstdint>
+
 namespace Egg::Graphics {
-#undef GENERIC_READ
+
 	enum class ResourceState : unsigned {
 		COMMON = 0,
 		VERTEX_AND_CONSTANT_BUFFER = 0x1,
@@ -20,7 +23,7 @@ namespace Egg::Graphics {
 		RESOLVE_SOURCE = 0x2000,
 		RAYTRACING_ACCELERATION_STRUCTURE = 0x400000,
 		SHADING_RATE_SOURCE = 0x1000000,
-		GENERIC_READ = (((((0x1 | 0x2) | 0x40) | 0x80) | 0x200) | 0x800),
+		ANY_READ = (((((0x1 | 0x2) | 0x40) | 0x80) | 0x200) | 0x800),
 		PRESENT = 0,
 		PREDICATION = 0x200
 	};
@@ -48,6 +51,15 @@ namespace Egg::Graphics {
 		TEXTURE1D = 2,
 		TEXTURE2D = 3,
 		TEXTURE3D = 4
+	};
+
+	enum class PrimitiveTopologyType : unsigned
+	{
+		UNDEFINED = 0,
+		POINT = 1,
+		LINE = 2,
+		TRIANGLE = 3,
+		PATCH = 4
 	};
 
 	enum class PrimitiveTopology : unsigned {
@@ -93,17 +105,5 @@ namespace Egg::Graphics {
 		CONTROL_POINT_PATCHLIST_30 = 62,
 		CONTROL_POINT_PATCHLIST_31 = 63,
 		CONTROL_POINT_PATCHLIST_32 = 64,
-	};
-
-	struct ClearValue {
-		DXGI_FORMAT Format;
-		union
-		{
-			float Color[4];
-			struct {
-				float Depth;
-				uint8_t Stencil;
-			} DepthStencil;
-		};
 	};
 }

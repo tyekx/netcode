@@ -57,59 +57,43 @@ void LoadItem(Egg::Module::IGraphicsModule * g, Egg::Asset::Model * model, Model
 		Egg::Asset::Material * mat = model->materials + model->meshes[meshIdx].materialId;
 		Egg::Asset::Mesh * mesh = model->meshes + meshIdx;
 
-
-		Egg::HGEOMETRY geometry = g->geometry->CreateGeometry();
+		Egg::InputLayoutBuilderRef inputLayoutBuilder = g->CreateInputLayoutBuilder();
+		inputLayoutBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
+		inputLayoutBuilder->AddInputElement("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 12);
+		inputLayoutBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT, 24);
 
 		switch(mesh->vertexType) {
-			case Egg::PNT_Vertex::type:
-			{
-				g->geometry->AddInputElement(geometry, "POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
-				g->geometry->AddInputElement(geometry, "NORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 12);
-				g->geometry->AddInputElement(geometry, "TEXCOORD", DXGI_FORMAT_R32G32_FLOAT, 24);
-			}
-			break;
 			case Egg::PNTWB_Vertex::type:
 			{
-				g->geometry->AddInputElement(geometry, "POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
-				g->geometry->AddInputElement(geometry, "NORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 12);
-				g->geometry->AddInputElement(geometry, "TEXCOORD", DXGI_FORMAT_R32G32_FLOAT, 24);
-				g->geometry->AddInputElement(geometry, "WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT, 32);
-				g->geometry->AddInputElement(geometry, "BONEIDS", DXGI_FORMAT_R32G32B32A32_SINT, 44);
+				inputLayoutBuilder->AddInputElement("WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT, 32);
+				inputLayoutBuilder->AddInputElement("BONEIDS", DXGI_FORMAT_R32_UINT, 44);
 			}
 			break;
 			case Egg::PNTTB_Vertex::type: 
 			{
-				g->geometry->AddInputElement(geometry, "POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
-				g->geometry->AddInputElement(geometry, "NORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 12);
-				g->geometry->AddInputElement(geometry, "TEXCOORD", DXGI_FORMAT_R32G32_FLOAT, 24);
-				g->geometry->AddInputElement(geometry, "TANGENT", DXGI_FORMAT_R32G32B32_FLOAT, 32);
-				g->geometry->AddInputElement(geometry, "BINORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 44);
+				inputLayoutBuilder->AddInputElement("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT, 32);
+				inputLayoutBuilder->AddInputElement("BINORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 44);
 			}
 			break;
 			case Egg::PNTWBTB_Vertex::type:
 			{
-
-				g->geometry->AddInputElement(geometry, "POSITION", DXGI_FORMAT_R32G32B32_FLOAT, 0);
-				g->geometry->AddInputElement(geometry, "NORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 12);
-				g->geometry->AddInputElement(geometry, "TEXCOORD", DXGI_FORMAT_R32G32_FLOAT, 24);
-				g->geometry->AddInputElement(geometry, "WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT, 32);
-				g->geometry->AddInputElement(geometry, "BONEIDS", DXGI_FORMAT_R32G32B32A32_SINT, 44);
-				g->geometry->AddInputElement(geometry, "TANGENT", DXGI_FORMAT_R32G32B32_FLOAT, 60);
-				g->geometry->AddInputElement(geometry, "BINORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 72);
+				inputLayoutBuilder->AddInputElement("WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT, 32);
+				inputLayoutBuilder->AddInputElement("BONEIDS", DXGI_FORMAT_R32_UINT, 44);
+				inputLayoutBuilder->AddInputElement("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT, 48);
+				inputLayoutBuilder->AddInputElement("BINORMAL", DXGI_FORMAT_R32G32B32_FLOAT, 60);
 			}
 			break;
-			default:
-				ASSERT(false, "Vertex type not found");
-				break;
 		}
+
+		Egg::InputLayoutRef inputLayout = inputLayoutBuilder->Build();
 
 		Egg::Graphics::UploadBatch batch;
 
-		Mesh appMesh;
-
+		auto appMesh = std::make_shared<Mesh>();
+		
 		uint8_t * const vBasePtr = reinterpret_cast<uint8_t *>(mesh->vertices);
 		uint8_t * const iBasePtr = reinterpret_cast<uint8_t *>(mesh->indices);
-
+		
 		for(unsigned int i = 0; i < mesh->lodLevelsLength; ++i) {
 			uint8_t * vData = vBasePtr + mesh->lodLevels[i].vertexOffset * mesh->vertexSize;
 			uint8_t * iData = nullptr;
@@ -130,41 +114,75 @@ void LoadItem(Egg::Module::IGraphicsModule * g, Egg::Asset::Model * model, Model
 				batch.ResourceBarrier(ibuffer, ResourceState::COPY_DEST, ResourceState::INDEX_BUFFER);
 			}
 
-			Mesh::LOD lod;
+			GBuffer lod;
 			lod.indexBuffer = ibuffer;
 			lod.vertexBuffer = vbuffer;
 			lod.indexCount = iCount;
 			lod.vertexCount = vCount;
 
-			appMesh.AddLOD(lod);
+			appMesh->AddLOD(lod);
+			appMesh->vertexSize = mesh->vertexSize;
+			appMesh->vertexType = mesh->vertexType;
 		}
+		/*
+		Egg::PNT_Vertex vdata[3] = {
+			{ { 0.0f, 0.87f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },
+			{ { -0.87f, -0.87f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
+			{ { 0.87f, -0.87f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f } }
+		};
 
-		appMesh.boundingBox = mesh->boundingBox;
+		GBuffer lod;
+		uint64_t vbuffer = g->resources->CreateVertexBuffer(sizeof(vdata), sizeof(Egg::PNT_Vertex), ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
+		lod.vertexBuffer = vbuffer;
+		lod.vertexCount = 3;
+		lod.indexBuffer = 0;
+		lod.indexCount = 0;
+		
+		batch.Upload(vbuffer, vdata, sizeof(vdata));
+		batch.ResourceBarrier(vbuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
+
+		appMesh->AddLOD(lod);
+		appMesh->vertexSize = sizeof(Egg::PNT_Vertex);
+		appMesh->vertexType = Egg::PNT_Vertex::type;*/
+		appMesh->selectedLod = 0;
+		appMesh->boundingBox = mesh->boundingBox;
+
+		auto material = std::make_shared<TestMaterial>();
+
+		material->data.diffuseColor = DirectX::XMFLOAT4A{ mat->diffuseColor.x, mat->diffuseColor.y,mat->diffuseColor.z, 1.0f };
+		material->data.fresnelR0 = DirectX::XMFLOAT3{ 0.05f, 0.05f, 0.05f };
+		material->data.shininess = mat->shininess;
 
 		{
-			auto preproc = GetPreprocDefs(mesh, mat, model);
+			Egg::ShaderBuilderRef shaderBuilder = g->CreateShaderBuilder();
+			Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"lightningPass_Vertex.cso");
+			Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"lightningPass_Pixel.cso");
 
-			Egg::HSHADER ivs = g->shaders->CreateVertexShader();
-			g->shaders->SetSource(ivs, L"EggShaderLib.hlsli");
-			g->shaders->SetEntrypoint(ivs, "Vertex_Main");
-			g->shaders->SetDefinitions(ivs, preproc);
+			Egg::RootSignatureBuilderRef rsBuilder = g->CreateRootSignatureBuilder();
+			Egg::RootSignatureRef rootSig = rsBuilder->BuildFromShader(vs);
 
-			Egg::HSHADER ips = g->shaders->CreatePixelShader();
-			g->shaders->SetSource(ips, L"EggShaderLib.hlsli");
-			g->shaders->SetEntrypoint(ips, "Pixel_Main");
-			g->shaders->SetDefinitions(ips, preproc);
+			Egg::GPipelineStateBuilderRef gpBuilder = g->CreateGPipelineStateBuilder();
+			gpBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
+			gpBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
+			gpBuilder->SetDepthStencilFormat(DXGI_FORMAT_D32_FLOAT);
+			gpBuilder->SetVertexShader(vs);
+			gpBuilder->SetPixelShader(ps);
+			gpBuilder->SetRootSignature(rootSig);
+			gpBuilder->SetInputLayout(inputLayout);
+			Egg::PipelineStateRef pipelineState = gpBuilder->Build();
 
-			Egg::HPSO pso = g->pipeline->CreatePipelineState();
-			g->pipeline->SetVertexShader(pso, ivs);
-			g->pipeline->SetPixelShader(pso, ips);
+			material->pipelineState = pipelineState;
+			material->rootSignature = rootSig;
 		}
 
 		g->frame->SyncUpload(batch);
 
+		modelComponent->AddShadedMesh(appMesh, material);
+
 		// @TODO material, textures
 		/*
-		matcbV->diffuseColor = DirectX::XMFLOAT4A{ mat->diffuseColor.x, mat->diffuseColor.y,mat->diffuseColor.z, 1.0f };
-		matcbV->fresnelR0 = DirectX::XMFLOAT3{ 0.05f, 0.05f, 0.05f };
+		matcbV->diffuseColor = 
+		matcbV->fresnelR0 = 
 		matcbV->shininess = mat->shininess;
 		
 

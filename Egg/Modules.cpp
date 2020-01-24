@@ -35,10 +35,6 @@ namespace Egg::Module {
 		if(audio) {
 			evtSys->AddHandler(audio.get());
 		}
-
-		if(importer) {
-			evtSys->AddHandler(importer.get());
-		}
 	}
 
 	void AppEventSystem::RemoveHandler(IAppEventHandler * evtHandler) {

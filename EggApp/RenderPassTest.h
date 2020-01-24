@@ -3,8 +3,10 @@
 #include <Egg/FrameGraph.h>
 #include <Egg/FancyIterators.hpp>
 #include <Egg/ResourceDesc.h>
-
 #include <Egg/Vertex.h>
+#include <DirectXPackedVector.h>
+#include <Egg/EggMath.h>
+#include "GameObject.h"
 
 using Egg::Graphics::ResourceDesc;
 using Egg::Graphics::ResourceType;
@@ -12,51 +14,353 @@ using Egg::Graphics::ResourceState;
 using Egg::Graphics::ResourceFlags;
 using Egg::Graphics::PrimitiveTopology;
 
-struct GBuffer {
-	uint64_t vbuffer;
-	uint64_t ibuffer;
+struct RenderItem {
+	GBuffer gbuffer;
+	Material * material;
+	PerObjectData * objectData;
+	BoneData * boneData;
+
+	RenderItem(const ShadedMesh & shadedMesh, PerObjectData * objectData, BoneData* boneData) :
+		gbuffer{ shadedMesh.mesh->GetGBuffer() }, material{ shadedMesh.material.get() }, objectData{ objectData }, boneData{ boneData } {
+
+	}
 };
 
-class AppDefinedGraphicsEngine {
+class AppDefinedRenderer {
 	// handles
-	int skinningPass_FilledSize;
+	uint64_t skinningPass_FilledSize;
 
+	uint64_t gbufferPass_DepthBuffer;
+	uint64_t gbufferPass_ColorRenderTarget;
+	uint64_t gbufferPass_NormalsRenderTarget;
+
+	uint64_t ssaoPass_BlurRenderTarget;
+	uint64_t ssaoPass_OcclusionRenderTarget;
+	uint64_t ssaoPass_RandomVectorTexture;
+
+	GBuffer fsQuad;
+
+	DXGI_FORMAT gbufferPass_DepthStencilFormat;
+
+	DirectX::XMUINT2 backbufferSize;
+	DirectX::XMUINT2 ssaoRenderTargetSize;
 
 	RenderPass * skinningPass;
 	RenderPass * depthPrePass;
 	RenderPass * lightningPass;
 	RenderPass * postProcessPass;
 
+	Egg::Module::IGraphicsModule * graphics;
+
+	Egg::RootSignatureRef skinningPass_RootSignature;
+	Egg::PipelineStateRef skinningPass_PipelineState;
+
+	Egg::RootSignatureRef gbufferPass_RootSignature;
+	Egg::PipelineStateRef gbufferPass_PipelineState;
+
+	Egg::RootSignatureRef lightingPass_RootSignature;
+	Egg::PipelineStateRef lightingPass_PipelineState;
+
+	Egg::RootSignatureRef ssaoOcclusionPass_RootSignature;
+	Egg::PipelineStateRef ssaoOcclusionPass_PipelineState;
+
+	Egg::RootSignatureRef ssaoBlurPass_RootSignature;
+	Egg::PipelineStateRef ssaoBlurPass_PipelineState;
+
+
 public:
 
-	ScratchBuffer<GBuffer> skinningPass_Input;
-	ScratchBuffer<GBuffer> lightningPass_Input;
+	PerFrameData * perFrameData;
+	SsaoData * ssaoData;
+
+	ScratchBuffer<RenderItem> skinningPass_Input;
+	ScratchBuffer<RenderItem> gbufferPass_Input;
+
 
 private:
 
-	ScratchBuffer<GBuffer> skinningPass_Output;
-	ScratchBuffer<GBuffer> gbufferPass_Output;
+	ScratchBuffer<RenderItem> skinningPass_Output;
 
-	void CreatePermanentResources(IResourceContext * context) {
-		skinningPass_FilledSize = context->CreateTypedBuffer(4, DXGI_FORMAT_R32_UINT, ResourceType::PERMANENT_DEFAULT, ResourceState::STREAM_OUT, ResourceFlags::ALLOW_UNORDERED_ACCESS);
+	void CreateFSQuad(Egg::Module::IGraphicsModule * g) {
+		struct PT_Vert {
+			DirectX::XMFLOAT3 position;
+			DirectX::XMFLOAT2 texCoord;
+		};
+
+		PT_Vert vData[6] = {
+			{ { 1.0f, 1.0f, 0.0f }, { 1.0f, 0.0f } },
+			{ { -1.0f, -1.0f, 0.0f }, { 0.0f, 1.0f } },
+			{ { -1.0f, 1.0f, 0.0f }, { 0.0f, 0.0f } },
+			{ { 1.0f, 1.0f, 0.0f }, { 1.0f, 0.0f } },
+			{ { 1.0f, -1.0f, 0.0f }, { 1.0f, 1.0f } },
+			{ { -1.0f, -1.0f, 0.0f }, { 0.0f, 1.0f } }
+		};
+
+		fsQuad.vertexBuffer = g->resources->CreateVertexBuffer(sizeof(vData), sizeof(PT_Vert), ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
+		fsQuad.vertexCount = 6;
+		fsQuad.indexBuffer = 0;
+		fsQuad.indexCount = 0;
+
+		Egg::Graphics::UploadBatch uploadBatch;
+		uploadBatch.Upload(fsQuad.vertexBuffer, vData, sizeof(vData));
+		uploadBatch.ResourceBarrier(fsQuad.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
+
+		g->frame->SyncUpload(uploadBatch);
+	}
+
+	void CreateSkinningPassPermanentResources(Egg::Module::IGraphicsModule * g) {
+		auto ilBuilder = g->CreateInputLayoutBuilder();
+		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
+		ilBuilder->AddInputElement("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
+		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
+		ilBuilder->AddInputElement("WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT);
+		ilBuilder->AddInputElement("BONEIDS", DXGI_FORMAT_R32_UINT);
+		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+
+		auto soBuilder = g->CreateStreamOutputBuilder();
+		soBuilder->AddStreamOutputEntry("POSITION", 3, 0, 0, 0);
+		soBuilder->AddStreamOutputEntry("NORMAL", 3, 0, 0, 0);
+		soBuilder->AddStreamOutputEntry("TEXCOORD", 2, 0, 0, 0);
+		soBuilder->AddStride(32);
+		Egg::StreamOutputRef streamOutput = soBuilder->Build();
+
+		auto shaderBuilder = g->CreateShaderBuilder();
+		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"skinningPass_Vertex.cso");
+
+		auto rootSigBuilder = g->CreateRootSignatureBuilder();
+		skinningPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
+
+		auto psoBuilder = g->CreateGPipelineStateBuilder();
+		psoBuilder->SetRootSignature(skinningPass_RootSignature);
+		psoBuilder->SetInputLayout(inputLayout);
+		psoBuilder->SetVertexShader(vs);
+		psoBuilder->SetStreamOutput(streamOutput);
+		psoBuilder->SetNumRenderTargets(0);
+		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::POINT);
+		skinningPass_PipelineState = psoBuilder->Build();
+
+		skinningPass_FilledSize = g->resources->CreateTypedBuffer(65536, DXGI_FORMAT_R32_UINT, ResourceType::PERMANENT_DEFAULT, ResourceState::STREAM_OUT, ResourceFlags::ALLOW_UNORDERED_ACCESS);
+	}
+
+	void CreateGbufferPassPermanentResources(Egg::Module::IGraphicsModule * g) {
+		gbufferPass_DepthStencilFormat = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+
+		auto shaderBuilder = g->CreateShaderBuilder();
+		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"gbufferPass_Vertex.cso");
+		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"gbufferPass_Pixel.cso");
+
+		auto rootSigBuilder = g->CreateRootSignatureBuilder();
+		gbufferPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
+
+		auto ilBuilder = g->CreateInputLayoutBuilder();
+		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
+		ilBuilder->AddInputElement("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
+		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
+		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+
+		Egg::DepthStencilDesc depthStencilDesc;
+		depthStencilDesc.backFace.stencilDepthFailOp = Egg::StencilOp::KEEP;
+		depthStencilDesc.backFace.stencilFailOp = Egg::StencilOp::KEEP;
+		depthStencilDesc.backFace.stencilPassOp = Egg::StencilOp::KEEP;
+		depthStencilDesc.backFace.stencilFunc = Egg::ComparisonFunc::NEVER;
+
+		depthStencilDesc.frontFace.stencilDepthFailOp = Egg::StencilOp::KEEP;
+		depthStencilDesc.frontFace.stencilFailOp = Egg::StencilOp::KEEP;
+		depthStencilDesc.frontFace.stencilPassOp = Egg::StencilOp::REPLACE;
+		depthStencilDesc.frontFace.stencilFunc = Egg::ComparisonFunc::ALWAYS;
+
+		depthStencilDesc.depthEnable = true;
+		depthStencilDesc.stencilEnable = true;
+		depthStencilDesc.stencilWriteMask = 0xFF;
+		depthStencilDesc.stencilReadMask = 0xFF;
+
+		auto psoBuilder = g->CreateGPipelineStateBuilder();
+		psoBuilder->SetRootSignature(gbufferPass_RootSignature);
+		psoBuilder->SetInputLayout(inputLayout);
+		psoBuilder->SetVertexShader(vs);
+		psoBuilder->SetPixelShader(ps);
+		psoBuilder->SetDepthStencilState(depthStencilDesc);
+		psoBuilder->SetDepthStencilFormat(gbufferPass_DepthStencilFormat);
+		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R32G32B32A32_FLOAT });
+		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
+		gbufferPass_PipelineState = psoBuilder->Build();
+
+		CreateGbufferPassSizeDependentResources();
+	}
+
+	void CreateGbufferPassSizeDependentResources() {
+		if(gbufferPass_ColorRenderTarget != 0) {
+			graphics->resources->ReleaseResource(gbufferPass_ColorRenderTarget);
+			gbufferPass_ColorRenderTarget = 0;
+		} 
+
+		if(gbufferPass_DepthBuffer != 0) {
+			graphics->resources->ReleaseResource(gbufferPass_DepthBuffer);
+			gbufferPass_DepthBuffer = 0;
+		}
+
+		if(gbufferPass_NormalsRenderTarget != 0) {
+			graphics->resources->ReleaseResource(gbufferPass_NormalsRenderTarget);
+			gbufferPass_NormalsRenderTarget = 0;
+		}
+
+		gbufferPass_ColorRenderTarget = graphics->resources->CreateRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
+		gbufferPass_NormalsRenderTarget = graphics->resources->CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
+		gbufferPass_DepthBuffer = graphics->resources->CreateDepthStencil(gbufferPass_DepthStencilFormat, ResourceType::PERMANENT_DEFAULT, static_cast<ResourceState>(static_cast<uint32_t>(ResourceState::PIXEL_SHADER_RESOURCE) | static_cast<uint32_t>(ResourceState::DEPTH_READ)));
+	}
+
+	void CreateSSAOBlurPassPermanentResources(Egg::Module::IGraphicsModule * g) {
+		auto shaderBuilder = g->CreateShaderBuilder();
+		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"ssaoPass_Vertex.cso");
+		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"ssaoBlurPass_Pixel.cso");
+
+		auto rootSigBuilder = g->CreateRootSignatureBuilder();
+		ssaoBlurPass_RootSignature = rootSigBuilder->BuildFromShader(ps);
+
+		auto ilBuilder = g->CreateInputLayoutBuilder();
+		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
+		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
+
+		Egg::DepthStencilDesc depthDesc;
+		depthDesc.depthEnable = false;
+		depthDesc.stencilEnable = false;
+
+		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+		auto psoBuilder = g->CreateGPipelineStateBuilder();
+		psoBuilder->SetRootSignature(ssaoBlurPass_RootSignature);
+		psoBuilder->SetInputLayout(inputLayout);
+		psoBuilder->SetVertexShader(vs);
+		psoBuilder->SetPixelShader(ps);
+		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R32_FLOAT });
+		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
+		psoBuilder->SetDepthStencilState(depthDesc);
+		ssaoBlurPass_PipelineState = psoBuilder->Build();
+	}
+
+	void CreateSSAOOcclusionPassPermanentResources(Egg::Module::IGraphicsModule * g) {
+		auto shaderBuilder = g->CreateShaderBuilder();
+		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"ssaoPass_Vertex.cso");
+		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"ssaoOcclusionPass_Pixel.cso");
+
+		auto rootSigBuilder = g->CreateRootSignatureBuilder();
+		ssaoOcclusionPass_RootSignature = rootSigBuilder->BuildFromShader(ps);
+
+		auto ilBuilder = g->CreateInputLayoutBuilder();
+		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
+		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
+
+		Egg::DepthStencilDesc depthDesc;
+		depthDesc.depthEnable = false;
+		depthDesc.stencilEnable = false;
+
+		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+		auto psoBuilder = g->CreateGPipelineStateBuilder();
+		psoBuilder->SetRootSignature(ssaoOcclusionPass_RootSignature);
+		psoBuilder->SetInputLayout(inputLayout);
+		psoBuilder->SetVertexShader(vs);
+		psoBuilder->SetPixelShader(ps);
+		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R32_FLOAT });
+		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
+		psoBuilder->SetDepthStencilState(depthDesc);
+		ssaoOcclusionPass_PipelineState = psoBuilder->Build();
+
+		ssaoPass_RandomVectorTexture = g->resources->CreateTexture2D(256, 256, DXGI_FORMAT_R8G8B8A8_UNORM, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST, ResourceFlags::NONE);
+
+		DirectX::PackedVector::XMCOLOR colors[256*256];
+		for(int i = 0; i < 256; ++i)
+		{
+			for(int j = 0; j < 256; ++j)
+			{
+				// Random vector in [0,1].  We will decompress in shader to [-1,1].
+				DirectX::XMFLOAT3 v(RandomFloat(), RandomFloat(), RandomFloat());
+
+				colors[i * 256 + j] = DirectX::PackedVector::XMCOLOR(v.x, v.y, v.z, 0.0f);
+			}
+		}
+
+		Egg::Graphics::UploadBatch upload;
+		upload.Upload(ssaoPass_RandomVectorTexture, colors, sizeof(colors));
+		upload.ResourceBarrier(ssaoPass_RandomVectorTexture, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
+		g->frame->SyncUpload(upload);
+
+		CreateSSAOOcclusionPassSizeDependentResources();
+	}
+
+	void CreateSSAOOcclusionPassSizeDependentResources() {
+		if(ssaoPass_OcclusionRenderTarget != 0) {
+			graphics->resources->ReleaseResource(ssaoPass_OcclusionRenderTarget);
+			ssaoPass_OcclusionRenderTarget = 0;
+		}
+
+		if(ssaoPass_BlurRenderTarget != 0) {
+			graphics->resources->ReleaseResource(ssaoPass_BlurRenderTarget);
+			ssaoPass_BlurRenderTarget = 0;
+		}
+
+		ssaoRenderTargetSize = DirectX::XMUINT2 { backbufferSize.x / 2, backbufferSize.y / 2 };
+
+		ssaoRenderTargetSize.x = (ssaoRenderTargetSize.x == 0) ? 1 : ssaoRenderTargetSize.x;
+		ssaoRenderTargetSize.y = (ssaoRenderTargetSize.y == 0) ? 1 : ssaoRenderTargetSize.y;
+
+		ssaoPass_OcclusionRenderTarget = graphics->resources->CreateRenderTarget(ssaoRenderTargetSize.x, ssaoRenderTargetSize.y, DXGI_FORMAT_R32_FLOAT, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
+		ssaoPass_BlurRenderTarget = graphics->resources->CreateRenderTarget(ssaoRenderTargetSize.x, ssaoRenderTargetSize.y, DXGI_FORMAT_R32_FLOAT, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
+	}
+
+	void CreateLightingPassPermanentResources(Egg::Module::IGraphicsModule * g) {
+		auto shaderBuilder = g->CreateShaderBuilder();
+		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"lightingPass_Vertex.cso");
+		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"lightingPass_Pixel.cso");
+
+		auto rootSigBuilder = g->CreateRootSignatureBuilder();
+		lightingPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
+
+		auto ilBuilder = g->CreateInputLayoutBuilder();
+		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
+		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
+
+		Egg::DepthStencilDesc depthDesc;
+		depthDesc.depthEnable = false;
+		depthDesc.stencilEnable = true;
+		depthDesc.frontFace.stencilDepthFailOp = Egg::StencilOp::KEEP;
+		depthDesc.frontFace.stencilFailOp = Egg::StencilOp::KEEP;
+		depthDesc.frontFace.stencilPassOp = Egg::StencilOp::KEEP;
+		depthDesc.frontFace.stencilFunc = Egg::ComparisonFunc::EQUAL;
+		depthDesc.stencilReadMask = 0xFF;
+		depthDesc.stencilWriteMask = 0x00;
+		depthDesc.depthWriteMaskZero = true;
+		depthDesc.backFace = depthDesc.frontFace;
+		depthDesc.backFace.stencilFunc = Egg::ComparisonFunc::NEVER;
+
+		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+		auto psoBuilder = g->CreateGPipelineStateBuilder();
+		psoBuilder->SetRootSignature(lightingPass_RootSignature);
+		psoBuilder->SetInputLayout(inputLayout);
+		psoBuilder->SetVertexShader(vs);
+		psoBuilder->SetPixelShader(ps);
+		psoBuilder->SetDepthStencilState(depthDesc);
+		psoBuilder->SetDepthStencilFormat(gbufferPass_DepthStencilFormat);
+		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
+		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
+		psoBuilder->SetDepthStencilState(depthDesc);
+		lightingPass_PipelineState = psoBuilder->Build();
 	}
 
 	void CreateSkinningPass(FrameGraphBuilder & frameGraphBuilder) {
-		skinningPass = frameGraphBuilder.CreateRenderPass("SkinningPass",
+		skinningPass = frameGraphBuilder.CreateRenderPass("Skinning",
 			[&](IResourceContext * context) -> void {
 				
 				skinningPass_Output.Expect(skinningPass_Input.Size());
 
-				for(const GBuffer & buffer : skinningPass_Input) {
-					GBuffer createdBuffer = buffer;
+				for(const RenderItem & item: skinningPass_Input) {
+					RenderItem createdItem = item;
 
-					ResourceDesc vbufferDesc = context->QueryDesc(buffer.vbuffer);
+					ResourceDesc vbufferDesc = context->QueryDesc(item.gbuffer.vertexBuffer);
 					const uint64_t elementCount = vbufferDesc.width / vbufferDesc.strideInBytes;
 					const uint32_t stride = sizeof(Egg::PNT_Vertex);
 					const size_t newSize = elementCount * stride;
 
-					createdBuffer.vbuffer = context->CreateVertexBuffer(newSize, stride, ResourceType::TRANSIENT_DEFAULT, ResourceState::STREAM_OUT);
-					skinningPass_Output.Produced(createdBuffer);
+					createdItem.gbuffer.vertexBuffer = context->CreateVertexBuffer(newSize, stride, ResourceType::TRANSIENT_DEFAULT, ResourceState::STREAM_OUT);
+					skinningPass_Output.Produced(createdItem);
 				}
 
 			},
@@ -67,50 +371,172 @@ private:
 
 				auto zipped = Zip(skinningPass_Input, skinningPass_Output);
 
-				// set primitive topology to linelist
+				context->SetRootSignature(skinningPass_RootSignature);
+				context->SetPipelineState(skinningPass_PipelineState);
 				context->SetPrimitiveTopology(PrimitiveTopology::POINTLIST);
-				context->SetStreamOutputFilledSize(skinningPass_FilledSize);
+
+				context->ResourceBarrier(skinningPass_FilledSize, ResourceState::STREAM_OUT, ResourceState::UNORDERED_ACCESS);
+				context->FlushResourceBarriers();
+
+				context->ClearUnorderedAccessViewUint(skinningPass_FilledSize, DirectX::XMUINT4{ 0, 0, 0, 0 });
+
+				context->ResourceBarrier(skinningPass_FilledSize, ResourceState::UNORDERED_ACCESS, ResourceState::STREAM_OUT);
+				context->FlushResourceBarriers();
+
+				uint64_t offset = 0;
+
+				void * associatedPtr = nullptr;
 
 				for(auto [input, output] : zipped) {
-					context->ClearTypedUAV(skinningPass_FilledSize);
-					context->SetConstantBuffer(0, 0);
-					context->SetStreamOutput(output.vbuffer);
-					context->Draw(input.vbuffer);
-					context->ResourceBarrier(output.vbuffer, ResourceState::STREAM_OUT, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
+					if(offset > 65532) {
+						Log::Warn("StreamOutputFilledSize overflow");
+					}
+					context->SetStreamOutputFilledSize(skinningPass_FilledSize, offset);
+					offset += 4;
+					if(associatedPtr != input.boneData) {
+						context->SetConstants(0, *input.boneData);
+						associatedPtr = input.boneData;
+					}
+					context->SetStreamOutput(output.gbuffer.vertexBuffer);
+					context->SetVertexBuffer(input.gbuffer.vertexBuffer);
+					context->Draw(input.gbuffer.vertexCount);
+					context->ResourceBarrier(output.gbuffer.vertexBuffer, ResourceState::STREAM_OUT, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
 				}
-
-				context->ResetStreamOutput();
-
 			}
 		);
 	}
 
 	void CreateGbufferPass(FrameGraphBuilder & frameGraphBuilder) {
-		frameGraphBuilder.CreateRenderPass("gbufferPass", [&](IResourceContext * context) -> void {
+		frameGraphBuilder.CreateRenderPass("Gbuffer", [&](IResourceContext * context) -> void {
 
-			// does not allow the render pass to be culled
-			context->CpuOnlyRenderPass();
 
 		},
 		[&](IRenderContext * context) -> void {
-			
-			gbufferPass_Output.Expect(skinningPass_Output.Size() + lightningPass_Input.Size());
-			gbufferPass_Output.Merge(skinningPass_Output);
-			gbufferPass_Output.Merge(lightningPass_Input);
+
+			gbufferPass_Input.Expect(skinningPass_Output.Size() + gbufferPass_Input.Size());
+			gbufferPass_Input.Merge(skinningPass_Output);
+
+			bool isBound = false;
+			void * objectData = nullptr;
+
+			context->SetRootSignature(gbufferPass_RootSignature);
+			context->SetPipelineState(gbufferPass_PipelineState);
+
+			context->ResourceBarrier(gbufferPass_NormalsRenderTarget, ResourceState::PIXEL_SHADER_RESOURCE, ResourceState::RENDER_TARGET);
+			context->ResourceBarrier(gbufferPass_ColorRenderTarget, ResourceState::PIXEL_SHADER_RESOURCE, ResourceState::RENDER_TARGET);
+			context->ResourceBarrier(gbufferPass_DepthBuffer, static_cast<ResourceState>(static_cast<uint32_t>(ResourceState::PIXEL_SHADER_RESOURCE) | static_cast<uint32_t>(ResourceState::DEPTH_READ)), ResourceState::DEPTH_WRITE);
+			context->FlushResourceBarriers();
+
+			context->SetRenderTargets({ gbufferPass_ColorRenderTarget, gbufferPass_NormalsRenderTarget }, gbufferPass_DepthBuffer);
+			context->ClearRenderTarget(0);
+			context->ClearRenderTarget(1);
+			context->ClearDepthStencil();
+			context->SetStencilReference(0xFF);
+			context->SetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
+
+			for(RenderItem & item : gbufferPass_Input) {
+				item.material->Apply(context);
+
+				if(objectData != item.objectData) {
+					context->SetConstants(1, *item.objectData);
+					objectData = item.objectData;
+				}
+
+				if(!isBound) {
+					context->SetConstants(2, *perFrameData);
+					isBound = true;
+				}
+
+				context->SetVertexBuffer(item.gbuffer.vertexBuffer);
+				context->SetIndexBuffer(item.gbuffer.indexBuffer);
+				context->DrawIndexed(item.gbuffer.indexCount);
+			}
+
+			context->ResourceBarrier(gbufferPass_NormalsRenderTarget, ResourceState::RENDER_TARGET, ResourceState::PIXEL_SHADER_RESOURCE);
+			context->ResourceBarrier(gbufferPass_ColorRenderTarget, ResourceState::RENDER_TARGET, ResourceState::PIXEL_SHADER_RESOURCE);
+			context->ResourceBarrier(gbufferPass_DepthBuffer, ResourceState::DEPTH_WRITE,
+				static_cast<ResourceState>(static_cast<uint32_t>( ResourceState::PIXEL_SHADER_RESOURCE) | static_cast<uint32_t>(ResourceState::DEPTH_READ) ));
 
 		});
 	}
 
-	void CreateLightningPass(FrameGraphBuilder & frameGraphBuilder) {
-		frameGraphBuilder.CreateRenderPass("lightningPass", [&](IResourceContext * context) -> void {
+	void CreateSSAOOcclusionPass(FrameGraphBuilder & frameGraphBuilder) {
+		frameGraphBuilder.CreateRenderPass("SSAO Occlusion", [&](IResourceContext * context) -> void {
+
+
+
+		},
+		[&](IRenderContext * context) -> void {
+			context->SetRootSignature(ssaoOcclusionPass_RootSignature);
+			context->SetPipelineState(ssaoOcclusionPass_PipelineState);
+
+			context->SetViewport(ssaoRenderTargetSize.x, ssaoRenderTargetSize.y);
+			context->ResourceBarrier(ssaoPass_OcclusionRenderTarget, ResourceState::PIXEL_SHADER_RESOURCE, ResourceState::RENDER_TARGET);
+			context->FlushResourceBarriers();
+			context->SetRenderTargets(ssaoPass_OcclusionRenderTarget, 0);
+			context->ClearRenderTarget(0);
+
+			context->SetConstants(0, *perFrameData);
+			context->SetConstants(1, *ssaoData);
+			context->SetShaderResources(2, { gbufferPass_NormalsRenderTarget, gbufferPass_DepthBuffer, ssaoPass_RandomVectorTexture });
+
+			context->SetVertexBuffer(fsQuad.vertexBuffer);
+			context->Draw(fsQuad.vertexCount);
+
+			context->SetRenderTargets(0, 0);
+			context->ResourceBarrier(ssaoPass_OcclusionRenderTarget, ResourceState::RENDER_TARGET, ResourceState::PIXEL_SHADER_RESOURCE);
+			context->FlushResourceBarriers();
+		});
+	}
+
+	void CreateSSAOBlurPass(FrameGraphBuilder & frameGraphBuilder) {
+		frameGraphBuilder.CreateRenderPass("SSAO Blur", [&](IResourceContext * context) -> void {
 
 
 
 		},
 		[&](IRenderContext * context) -> void {
 
+			context->ResourceBarrier(ssaoPass_BlurRenderTarget, ResourceState::PIXEL_SHADER_RESOURCE, ResourceState::RENDER_TARGET);
+			context->FlushResourceBarriers();
+			context->SetRootSignature(ssaoBlurPass_RootSignature);
+			context->SetPipelineState(ssaoBlurPass_PipelineState);
+			context->SetViewport(ssaoRenderTargetSize.x, ssaoRenderTargetSize.y);
+
+			context->SetRenderTargets(ssaoPass_BlurRenderTarget, 0);
+			context->ClearRenderTarget(0);
+
+			//context->SetConstants();
+
+			context->SetShaderResources(0, { ssaoPass_OcclusionRenderTarget, gbufferPass_DepthBuffer });
+			context->SetVertexBuffer(fsQuad.vertexBuffer);
+			context->Draw(fsQuad.vertexCount);
+
+			context->ResourceBarrier(ssaoPass_BlurRenderTarget, ResourceState::RENDER_TARGET, ResourceState::PIXEL_SHADER_RESOURCE);
+			context->FlushResourceBarriers();
+		});
+	}
+
+	void CreateLightningPass(FrameGraphBuilder & frameGraphBuilder) {
+		frameGraphBuilder.CreateRenderPass("Lighting", [&](IResourceContext * context) -> void {
 
 
+
+		},
+			[&](IRenderContext * context) -> void {
+			context->SetRootSignature(lightingPass_RootSignature);
+			context->SetPipelineState(lightingPass_PipelineState);
+			context->SetViewport();
+			context->SetRenderTargets(0, gbufferPass_DepthBuffer);
+			context->SetStencilReference(255);
+			context->SetConstants(0, *perFrameData);
+			context->SetShaderResources(1, { gbufferPass_ColorRenderTarget, gbufferPass_NormalsRenderTarget, gbufferPass_DepthBuffer });
+
+			// @TODO: set light data
+
+
+			context->SetVertexBuffer(fsQuad.vertexBuffer);
+			context->Draw(fsQuad.vertexCount);
 		});
 	}
 
@@ -122,19 +548,49 @@ private:
 		},
 		[&](IRenderContext * context) -> void {
 
-
+			//context->SetRenderTargets(0, 0);
 
 		});
 	}
 
 public:
 
+	void Reset() {
+		skinningPass_Input.Clear();
+		gbufferPass_Input.Clear();
+		skinningPass_Output.Clear();
+	}
+
+	void OnResize(int x, int y) {
+		DirectX::XMUINT2 newSize{ static_cast<uint32_t>(x), static_cast<uint32_t>(y) };
+
+		if(newSize.x != backbufferSize.x || newSize.y != backbufferSize.y) {
+			backbufferSize = newSize;
+			if(backbufferSize.x != 0 && backbufferSize.y != 0) {
+				CreateGbufferPassSizeDependentResources();
+				//CreateSSAOOcclusionPassSizeDependentResources();
+			}
+		}
+	}
+
+	void CreatePermanentResources(Egg::Module::IGraphicsModule * g) {
+		graphics = g;
+		backbufferSize = g->GetBackbufferSize();
+		CreateSkinningPassPermanentResources(g);
+		CreateGbufferPassPermanentResources(g);
+		CreateLightingPassPermanentResources(g);
+		//CreateSSAOBlurPassPermanentResources(g);
+	  	//CreateSSAOOcclusionPassPermanentResources(g);
+		CreateFSQuad(g);
+	}
 
 	void CreateFrameGraph(FrameGraphBuilder & builder) {
 		CreateSkinningPass(builder);
 		CreateGbufferPass(builder);
+		//CreateSSAOOcclusionPass(builder);
+		//CreateSSAOBlurPass(builder);
 		CreateLightningPass(builder);
-		CreatePostProcessPass(builder);
+		//CreatePostProcessPass(builder);
 	}
 
 };

@@ -6,6 +6,14 @@
 
 #include <dxgiformat.h>
 
+#if defined(GENERIC_READ)
+#undef GENERIC_READ
+#endif
+
+#if defined(DOMAIN)
+#undef DOMAIN
+#endif
+
 #endif
 
 #if defined(EGG_OS_LINUX) && !defined(DXGI_FORMAT_DEFINED)

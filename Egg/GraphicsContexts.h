@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ResourceDesc.h"
 #include "ResourceEnums.h"
+#include "ResourceDesc.h"
 #include "HandleTypes.h"
 #include "Common.h"
 #include "UploadBatch.h"
@@ -10,48 +10,6 @@
 
 namespace Egg::Graphics {
 
-	class IGeometryContext {
-	public:
-		virtual ~IGeometryContext() = default;
-
-		virtual HGEOMETRY CreateGeometry() = 0;
-		virtual void AddInputElement(HGEOMETRY geometry, const char * name, unsigned int semanticIndex, DXGI_FORMAT format, unsigned int byteOffset) = 0;
-		virtual void AddInputElement(HGEOMETRY geometry, const char * name, unsigned int semanticIndex, DXGI_FORMAT format) = 0;
-		virtual void AddInputElement(HGEOMETRY geometry, const char * name, DXGI_FORMAT format, unsigned int byteOffset) = 0;
-		virtual void AddInputElement(HGEOMETRY geometry, const char * name, DXGI_FORMAT format) = 0;
-	};
-
-	class IShaderContext {
-	public:
-		virtual ~IShaderContext() = default;
-
-		virtual HSHADER Load(const std::wstring & shaderPath) = 0;
-
-		virtual HSHADER CreateVertexShader() = 0;
-		virtual HSHADER CreatePixelShader() = 0;
-		virtual HSHADER CreateGeometryShader() = 0;
-		virtual HSHADER CreateDomainShader() = 0;
-		virtual HSHADER CreateHullShader() = 0;
-
-		virtual void SetEntrypoint(HSHADER shader, const std::string & entryFunction) = 0;
-		virtual void SetSource(HSHADER shader, const std::wstring & shaderPath) = 0;
-		virtual void SetDefinitions(HSHADER shader, const std::map<std::string, std::string> & defines) = 0;
-	};
-
-	class IPipelineContext {
-	public:
-		virtual ~IPipelineContext() = default;
-
-		virtual HPSO CreatePipelineState() = 0;
-
-		virtual void SetVertexShader(HPSO pso, HSHADER vertexShader) = 0;
-		virtual void SetPixelShader(HPSO pso, HSHADER pixelShader) = 0;
-		virtual void SetGeometryShader(HPSO pso, HSHADER geometryShader) = 0;
-		virtual void SetHullShader(HPSO pso, HSHADER hullShader) = 0;
-		virtual void SetDomainShader(HPSO pso, HSHADER domainShader) = 0;
-		virtual void SetGeometry(HPSO pso, HGEOMETRY geometry) = 0;
-	};
-
 	class IResourceContext {
 	public:
 		virtual ~IResourceContext() = default;
@@ -59,15 +17,47 @@ namespace Egg::Graphics {
 		virtual uint64_t CreateResource(const ResourceDesc & resource) = 0;
 		virtual uint64_t CreateTypedBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
 		virtual uint64_t CreateStructuredBuffer(size_t size, uint32_t stride, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
+		virtual uint64_t CreateTexture2D(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) = 0;
 
-		virtual uint64_t CreateTexture2D() = 0;
+		virtual ResourceViewsRef CreateShaderResourceViews(uint32_t numDescriptors) = 0;
+		virtual ResourceViewsRef CreateRenderTargetViews(uint32_t numDescriptors) = 0;
+		virtual ResourceViewsRef CreateDepthStencilView() = 0;
+		//virtual ResourceViewsRef CreateSamplers(uint32_t numDescriptors) = 0;
 
-		virtual uint64_t CreateRenderTarget() = 0;
-		virtual uint64_t CreateDepthStencil() = 0;
+		/*
+		Creates a Texture2D render target, every version invokes the one with the most arguments. Any argument not specified will fall back to its default:
+		- width, height: backbuffer width, height
+		- ResourceState: ResourceState::RENDER_TARGET
+		- clearColor: (0,0,0,0)
+		*/
+		virtual uint64_t CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, const DirectX::XMFLOAT4 & clearColor) = 0;
+		virtual uint64_t CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState) = 0;
+		virtual uint64_t CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, const DirectX::XMFLOAT4 & clearColor) = 0;
+		virtual uint64_t CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType) = 0;
+		virtual uint64_t CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, const DirectX::XMFLOAT4 & clearColor) = 0;
+		virtual uint64_t CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState) = 0;
+		virtual uint64_t CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, const DirectX::XMFLOAT4 & clearColor) = 0;
+		virtual uint64_t CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType) = 0;
+
+		/*
+		Creates a Texture2D Depth stencil, every version invokes the one the most arguments. Any argument not specified will fall back to its default:
+		- width, height: backbuffer width, height
+		- ResourceState: ResourceState::DEPTH_WRITE
+		- clearDepth: 1.0f
+		- clearStencil: 0
+		*/
+		virtual uint64_t CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, float clearDepth, uint8_t clearStencil) = 0;
+		virtual uint64_t CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState) = 0;
+		virtual uint64_t CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, float clearDepth, uint8_t clearStencil) = 0;
+		virtual uint64_t CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType) = 0;
+		virtual uint64_t CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, float clearDepth, uint8_t clearStencil) = 0;
+		virtual uint64_t CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState) = 0;
+		virtual uint64_t CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, float clearDepth, uint8_t clearStencil) = 0;
+		virtual uint64_t CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType) = 0;
 
 		virtual const ResourceDesc & QueryDesc(uint64_t handle) = 0;
 
-		virtual void CpuOnlyRenderPass() = 0;
+		virtual void ReleaseResource(uint64_t handle) = 0;
 
 		// for constant buffers that are frame-constants
 		virtual uint64_t CreateConstantBuffer(size_t size) = 0;
@@ -84,6 +74,8 @@ namespace Egg::Graphics {
 	public:
 		virtual ~IRenderContext() = default;
 
+		virtual void SetRootSignature(RootSignatureRef rs) = 0;
+		virtual void SetPipelineState(PipelineStateRef pso) = 0;
 		virtual void SetVertexBuffer(uint64_t handle) = 0;
 		virtual void SetIndexBuffer(uint64_t handle) = 0;
 		virtual void DrawIndexed(uint64_t indexCount) = 0;
@@ -91,15 +83,34 @@ namespace Egg::Graphics {
 
 		virtual void SetPrimitiveTopology(PrimitiveTopology topology) = 0;
 
-		virtual void ClearTypedUAV(uint64_t handle) = 0;
+		virtual void ClearUnorderedAccessViewUint(uint64_t handle, const DirectX::XMUINT4 & values) = 0;
+		virtual void ClearRenderTarget(uint8_t idx) = 0;
+		virtual void ClearDepthOnly() = 0;
+		virtual void ClearStencilOnly() = 0;
+		virtual void ClearDepthStencil() = 0;
+
 		virtual void SetStreamOutput(uint64_t handle) = 0;
 
-		virtual void SetStreamOutputFilledSize(uint64_t handle) = 0;
+		virtual void SetStreamOutputFilledSize(uint64_t handle, uint64_t byteOffset) = 0;
 		virtual void ResetStreamOutput() = 0;
+
+		virtual void SetRenderTargets(std::initializer_list<uint64_t> handles, uint64_t depthStencil) = 0;
+		
+		virtual void SetStencilReference(uint8_t stencilValue) = 0;
+		
+		virtual void SetViewport(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) = 0;
+		// identical to SetViewport(0, width, 0, height);
+		virtual void SetViewport(uint32_t width, uint32_t height) = 0;
+		// resets to default viewport size = backbuffer viewport
+		virtual void SetViewport() = 0;
+
+		// 0 means backbuffer RT/Depth
+		virtual void SetRenderTargets(uint64_t renderTarget, uint64_t depthStencil) = 0;
 
 		// for frame-constant constant buffers only that are allocated with CreateConstantBuffer
 		virtual void SetConstantBuffer(int slot, uint64_t cbufferHandle) = 0;
 		virtual void SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) = 0;
+		virtual void SetShaderResources(int slot, std::initializer_list<uint64_t> shaderResourceHandles) = 0;
 
 		virtual void ResourceBarrier(uint64_t handle, ResourceState before, ResourceState after) = 0;
 
