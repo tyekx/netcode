@@ -130,6 +130,24 @@ namespace Egg::Graphics::DX12 {
 		gcl->RSSetViewports(1, &defaultViewport);
 	}
 
+	void RenderContext::SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil)
+	{
+		DX12ResourceViewsRef rtvs = std::dynamic_pointer_cast<DX12ResourceViews>(renderTargets);
+		DX12ResourceViewsRef dsv = std::dynamic_pointer_cast<DX12ResourceViews>(depthStencil);
+
+		uint32_t numDescriptors = rtvs->GetNumDescriptors();
+
+		for(uint32_t i = 0; i < rtvs->GetNumDescriptors(); ++i) {
+			currentlyBoundRenderTargets[i] = rtvs->GetCpuVisibleCpuHandle(i);
+		}
+
+		currentlyBoundDepth = dsv->GetCpuVisibleCpuHandle(0);
+
+		if(numDescriptors > 0) {
+			gcl->OMSetRenderTargets(numDescriptors, currentlyBoundRenderTargets, FALSE, &currentlyBoundDepth);
+		}
+	}
+
 	void RenderContext::SetRenderTargets(std::initializer_list<uint64_t> handles, uint64_t depthStencil)
 	{
 		uint8_t k = 0;

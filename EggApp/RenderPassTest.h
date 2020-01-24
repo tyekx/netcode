@@ -52,6 +52,9 @@ class AppDefinedRenderer {
 
 	Egg::Module::IGraphicsModule * graphics;
 
+	Egg::ResourceViewsRef gbufferPass_RenderTargetViews;
+	Egg::ResourceViewsRef gbufferPass_DepthStencilView;
+
 	Egg::RootSignatureRef skinningPass_RootSignature;
 	Egg::PipelineStateRef skinningPass_PipelineState;
 
@@ -185,6 +188,9 @@ private:
 		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
 		gbufferPass_PipelineState = psoBuilder->Build();
 
+		gbufferPass_RenderTargetViews = graphics->resources->CreateRenderTargetViews(2);
+		gbufferPass_DepthStencilView = graphics->resources->CreateDepthStencilView();
+
 		CreateGbufferPassSizeDependentResources();
 	}
 
@@ -207,6 +213,10 @@ private:
 		gbufferPass_ColorRenderTarget = graphics->resources->CreateRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
 		gbufferPass_NormalsRenderTarget = graphics->resources->CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
 		gbufferPass_DepthBuffer = graphics->resources->CreateDepthStencil(gbufferPass_DepthStencilFormat, ResourceType::PERMANENT_DEFAULT, static_cast<ResourceState>(static_cast<uint32_t>(ResourceState::PIXEL_SHADER_RESOURCE) | static_cast<uint32_t>(ResourceState::DEPTH_READ)));
+	
+		gbufferPass_RenderTargetViews->CreateRTV(0, gbufferPass_ColorRenderTarget);
+		gbufferPass_RenderTargetViews->CreateRTV(1, gbufferPass_NormalsRenderTarget);
+		gbufferPass_DepthStencilView->CreateDSV(gbufferPass_DepthBuffer);
 	}
 
 	void CreateSSAOBlurPassPermanentResources(Egg::Module::IGraphicsModule * g) {
@@ -427,7 +437,7 @@ private:
 			context->ResourceBarrier(gbufferPass_DepthBuffer, static_cast<ResourceState>(static_cast<uint32_t>(ResourceState::PIXEL_SHADER_RESOURCE) | static_cast<uint32_t>(ResourceState::DEPTH_READ)), ResourceState::DEPTH_WRITE);
 			context->FlushResourceBarriers();
 
-			context->SetRenderTargets({ gbufferPass_ColorRenderTarget, gbufferPass_NormalsRenderTarget }, gbufferPass_DepthBuffer);
+			context->SetRenderTargets(gbufferPass_RenderTargetViews, gbufferPass_DepthStencilView);
 			context->ClearRenderTarget(0);
 			context->ClearRenderTarget(1);
 			context->ClearDepthStencil();

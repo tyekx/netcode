@@ -107,6 +107,8 @@ namespace Egg::Graphics {
 		// 0 means backbuffer RT/Depth
 		virtual void SetRenderTargets(uint64_t renderTarget, uint64_t depthStencil) = 0;
 
+		virtual void SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil) = 0;
+
 		// for frame-constant constant buffers only that are allocated with CreateConstantBuffer
 		virtual void SetConstantBuffer(int slot, uint64_t cbufferHandle) = 0;
 		virtual void SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) = 0;

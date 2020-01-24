@@ -340,6 +340,7 @@ namespace Egg::Graphics::DX12 {
 		if(width != w || height != h) {
 			width = w;
 			height = h;
+
 			ReleaseSwapChainResources();
 
 			DX_API("Failed to resize buffers")
@@ -453,13 +454,6 @@ namespace Egg::Graphics::DX12 {
 	void DX12GraphicsModule::ReleaseSwapChainResources() {
 		Log::Debug("Releasing Swap Chain resources");
 
-		if(presentedBackbufferIndex < frameResources.size()) {
-			Log::Debug("Waiting for completion");
-			frameResources[presentedBackbufferIndex].WaitForCompletion();
-			DX_API("Failed to signal from command queue")
-				commandQueue->Signal(frameResources[presentedBackbufferIndex].fence.Get(), frameResources[presentedBackbufferIndex].fenceValue);
-		}
-
 		for(UINT i = 0; i < frameResources.size(); ++i) {
 			frameResources[i].swapChainBuffer.Reset();
 			frameResources[i].dsvHandle.ptr = 0;
@@ -559,6 +553,8 @@ namespace Egg::Graphics::DX12 {
 		}
 
 		backbufferIndex = swapChain->GetCurrentBackBufferIndex();
+
+		resourceContext.backbufferExtents = scissorRect;
 	}
 	
 	ShaderBuilderRef DX12GraphicsModule::CreateShaderBuilder() const {

@@ -136,7 +136,7 @@ namespace Egg::Graphics::DX12 {
 		rtvOffset_CpuVisible += 1;
 		rtvNumStatic += 1;
 
-		return std::make_shared<DX12ResourceViews>(1,
+		return std::make_shared<DX12ResourceViews>(numDescriptors,
 			D3D12_GPU_DESCRIPTOR_HANDLE{},
 			D3D12_CPU_DESCRIPTOR_HANDLE{},
 			dHandle,

@@ -59,6 +59,8 @@ namespace Egg::Graphics::DX12 {
 
 		virtual void SetViewport() override;
 
+		virtual void SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil) override;
+
 		virtual void SetRenderTargets(std::initializer_list<uint64_t> handles, uint64_t depthStencil) override;
 
 		virtual void SetRenderTargets(uint64_t renderTarget, uint64_t depthStencil) override;

@@ -5,8 +5,18 @@
 
 namespace Egg::Graphics::DX12 {
 
-	ResourceViews::ResourceViews(uint32_t allocationSize, D3D12_GPU_DESCRIPTOR_HANDLE baseGpuHandle, D3D12_CPU_DESCRIPTOR_HANDLE cpu_ShaderVisible, D3D12_CPU_DESCRIPTOR_HANDLE cpu_CpuVisible, D3D12_DESCRIPTOR_HEAP_TYPE heapType, com_ptr<ID3D12Device> device) :
-		allocationSize{ allocationSize },
+	uint32_t ResourceViews::GetIncrementSize() const {
+		switch(heapType) {
+			case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV: return Platform::ShaderResourceViewIncrementSize;
+			case D3D12_DESCRIPTOR_HEAP_TYPE_DSV: return Platform::DepthStencilViewIncrementSize;
+			case D3D12_DESCRIPTOR_HEAP_TYPE_RTV: return Platform::RenderTargetViewIncrementSize;
+			case D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER: return Platform::SamplerIncrementSize;
+			default: return -1;
+		}
+	}
+
+	ResourceViews::ResourceViews(uint32_t numDescriptors, D3D12_GPU_DESCRIPTOR_HANDLE baseGpuHandle, D3D12_CPU_DESCRIPTOR_HANDLE cpu_ShaderVisible, D3D12_CPU_DESCRIPTOR_HANDLE cpu_CpuVisible, D3D12_DESCRIPTOR_HEAP_TYPE heapType, com_ptr<ID3D12Device> device) :
+		numDescriptors{ numDescriptors },
 		baseGpuHandle_ShaderVisible{ baseGpuHandle },
 		baseCpuHandle_ShaderVisible{ cpu_ShaderVisible },
 		baseCpuHandle_CpuVisible{ cpu_CpuVisible },
@@ -27,10 +37,32 @@ namespace Egg::Graphics::DX12 {
 		}
 	}
 
+	uint32_t ResourceViews::GetNumDescriptors() const {
+		return numDescriptors;
+	}
+
+	D3D12_CPU_DESCRIPTOR_HANDLE ResourceViews::GetShaderVisibleCpuHandle(uint32_t idx) const {
+		ASSERT(idx < numDescriptors, "Out of range");
+
+		return CD3DX12_CPU_DESCRIPTOR_HANDLE{ baseCpuHandle_ShaderVisible, static_cast<INT>(idx), GetIncrementSize() };
+	}
+
+	D3D12_CPU_DESCRIPTOR_HANDLE ResourceViews::GetCpuVisibleCpuHandle(uint32_t idx) const {
+		ASSERT(idx < numDescriptors, "Out of range");
+
+		return CD3DX12_CPU_DESCRIPTOR_HANDLE{ baseCpuHandle_CpuVisible, static_cast<INT>(idx), GetIncrementSize() };
+	}
+
+	D3D12_GPU_DESCRIPTOR_HANDLE ResourceViews::GetGpuHandle(uint32_t idx) const {
+		ASSERT(idx < numDescriptors, "Out of range");
+
+		return CD3DX12_GPU_DESCRIPTOR_HANDLE{ baseGpuHandle_ShaderVisible, static_cast<INT>(idx), GetIncrementSize() };
+	}
+
 	void ResourceViews::CreateSRV(uint32_t idx, uint64_t resourceHandle) {
 		INT offset = static_cast<INT>(idx);
 
-		ASSERT(offset < allocationSize && offset > 0, "ResourceViews: idx is out of range");
+		ASSERT(offset < numDescriptors && offset >= 0, "ResourceViews: idx is out of range");
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "ResourceViews: invalid heap type");
 
 		const GResource & resource = (*reinterpret_cast<const GResource *>(resourceHandle));
@@ -43,7 +75,7 @@ namespace Egg::Graphics::DX12 {
 	void ResourceViews::CreateRTV(uint32_t idx, uint64_t resourceHandle) {
 		INT offset = static_cast<INT>(idx);
 
-		ASSERT(offset < allocationSize && offset > 0, "ResourceViews: idx is out of range");
+		ASSERT(offset < numDescriptors && offset >= 0, "ResourceViews: idx is out of range");
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_RTV, "ResourceViews: invalid heap type");
 
 		const GResource & resource = (*reinterpret_cast<const GResource *>(resourceHandle));
@@ -55,7 +87,7 @@ namespace Egg::Graphics::DX12 {
 
 	void ResourceViews::CreateDSV(uint64_t resourceHandle) {
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_DSV, "ResourceViews: invalid heap type");
-		ASSERT(allocationSize == 1, "Array of depth stencil views is not valid");
+		ASSERT(numDescriptors == 1, "Array of depth stencil views is not valid");
 
 		const GResource & resource = (*reinterpret_cast<const GResource *>(resourceHandle));
 
@@ -65,7 +97,7 @@ namespace Egg::Graphics::DX12 {
 	}
 
 	void ResourceViews::CreateUAV(uint32_t idx, uint64_t resourceHandle) {
-		ASSERT(idx < allocationSize, "ResourceViews: idx is out of range");
+		ASSERT(idx < numDescriptors, "ResourceViews: idx is out of range");
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "ResourceViews: invalid heap type");
 
 		const GResource & resource = (*reinterpret_cast<const GResource *>(resourceHandle));
@@ -77,7 +109,7 @@ namespace Egg::Graphics::DX12 {
 	}
 
 	void ResourceViews::CreateSampler(uint32_t idx, uint64_t resourceHandle) {
-		ASSERT(idx < allocationSize, "ResourceViews: idx is out of range");
+		ASSERT(idx < numDescriptors, "ResourceViews: idx is out of range");
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, "ResourceViews: invalid heap type");
 		ASSERT(false, "Not implemented");
 	}
