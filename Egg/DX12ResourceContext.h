@@ -56,7 +56,8 @@ namespace Egg::Graphics::DX12 {
 		virtual const ResourceDesc & QueryDesc(uint64_t handle) override;
 		virtual void ReleaseResource(uint64_t handle) override;
 		virtual uint64_t CreateConstantBuffer(size_t size) override;
-		virtual void CopyConstants(uint64_t cbufferHandle, const void * srcData, size_t srcDataSizeInBytes) override;
+		virtual void CopyConstants(uint64_t uploadResource, const void * srcData, size_t srcDataSizeInBytes) override;
+		virtual void CopyConstants(uint64_t uploadResource, const void * srcData, size_t srcDataSizeInBytes, size_t dstOffsetInBytes) override;
 		virtual uint64_t CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState) override;
 		virtual uint64_t CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState, ResourceFlags flags) override;
 		virtual uint64_t CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState) override;

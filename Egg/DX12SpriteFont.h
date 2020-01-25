@@ -8,6 +8,9 @@
 #include "DX12SpriteBatch.h"
 #include <DirectXColors.h>
 #include <DirectXTex/DirectXTex.h>
+#include "GraphicsContexts.h"
+#include "DX12ResourceViews.h"
+#include "DX12Texture.h"
 
 namespace Egg::Graphics::DX12 {
 	
@@ -32,22 +35,33 @@ namespace Egg::Graphics::DX12 {
 		float XAdvance;
 	};
 
-	class SpriteFont
+	class SpriteFont : public Egg::SpriteFont
 	{
-		void Construct(ID3D12Device * device, Egg::Graphics::UploadBatch* upload, BinaryReader * reader, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor);
+		uint64_t eggTexture;
+		DX12ResourceViewsRef shaderResourceView;
+
+		DirectX::ScratchImage imageData;
+		DirectX::XMUINT2 textureSize;
+		std::vector<Glyph> glyphs;
+		const Glyph * defaultGlyph;
+		float lineSpacing;
+
+		// cache members
+		mutable size_t utfBufferSize;
+		mutable std::unique_ptr<wchar_t[]> utfBuffer;
+
+		void Construct(BinaryReader * reader, IResourceContext * resourceContext, IFrameContext * frameContext);
+
 	public:
-		// Describes a single character glyph.
-
-		SpriteFont(ID3D12Device * device, Egg::Graphics::UploadBatch * upload, _In_z_ wchar_t const * fileName, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor);
-		SpriteFont(ID3D12Device * device, Egg::Graphics::UploadBatch * upload, _In_reads_bytes_(dataSize) uint8_t * dataBlob, size_t dataSize, D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor);
-
 		SpriteFont(SpriteFont && moveFrom) = default;
 		SpriteFont & operator= (SpriteFont && moveFrom) = default;
 
 		SpriteFont(SpriteFont const &) = delete;
 		SpriteFont & operator= (SpriteFont const &) = delete;
 
-		virtual ~SpriteFont() = default;
+		SpriteFont(IResourceContext * resourceContext, IFrameContext * frameContext, _In_z_ wchar_t const * fileName);
+
+		virtual ResourceViewsRef GetResourceView() const override;
 
 		// Wide-character / UTF-16LE
 		void XM_CALLCONV DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::XMFLOAT2 const & origin = Float2Zero, float scale = 1, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0) const;
@@ -82,21 +96,7 @@ namespace Egg::Graphics::DX12 {
 		bool __cdecl ContainsCharacter(wchar_t character) const;
 
 		const Glyph * __cdecl FindGlyph(wchar_t character) const;
-		D3D12_GPU_DESCRIPTOR_HANDLE __cdecl GetSpriteSheet() const;
 		DirectX::XMUINT2 __cdecl GetSpriteSheetSize() const;
-
-
-		DirectX::ScratchImage imageData;
-
-		com_ptr<ID3D12Resource> textureResource;
-		D3D12_GPU_DESCRIPTOR_HANDLE texture;
-		DirectX::XMUINT2 textureSize;
-		std::vector<Glyph> glyphs;
-		const Glyph * defaultGlyph;
-		float lineSpacing;
-		// cache members
-		mutable size_t utfBufferSize;
-		mutable std::unique_ptr<wchar_t[]> utfBuffer;
 
 		template<typename TAction>
 		void ForEachGlyph(wchar_t const * text, TAction action) const
@@ -146,11 +146,11 @@ namespace Egg::Graphics::DX12 {
 
 		const wchar_t * ConvertUTF8(const char * text) const;
 
-		void CreateTextureResource(ID3D12Device * device, Egg::Graphics::UploadBatch * upload, uint32_t width, uint32_t height, DXGI_FORMAT format, uint32_t stride, uint32_t rows, uint8_t * data);
-
 		static const DirectX::XMFLOAT2 Float2Zero;
-
 	};
+
+	using DX12SpriteFont = Egg::Graphics::DX12::SpriteFont;
+	using DX12SpriteFontRef = std::shared_ptr<DX12SpriteFont>;
 
 	static inline bool operator<(const Glyph & left, const Glyph & right)
 	{

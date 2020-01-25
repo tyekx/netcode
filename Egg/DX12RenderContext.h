@@ -27,6 +27,8 @@ namespace Egg::Graphics::DX12 {
 
 		virtual void SetVertexBuffer(uint64_t handle) override;
 
+		virtual void SetVertexBuffer(uint64_t handle, uint32_t vertexOffset) override;
+
 		virtual void SetIndexBuffer(uint64_t handle) override;
 
 		virtual void DrawIndexed(uint64_t indexCount) override;

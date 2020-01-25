@@ -17,6 +17,18 @@ namespace Egg::Graphics::DX12 {
 		gcl->IASetVertexBuffers(0, 1, &vbv);
 	}
 
+	void RenderContext::SetVertexBuffer(uint64_t handle, uint32_t vertexOffset)
+	{
+		const GResource & res = resources->GetNativeResource(handle);
+
+		D3D12_VERTEX_BUFFER_VIEW vbv;
+		vbv.StrideInBytes = res.desc.strideInBytes;
+		vbv.BufferLocation = res.address + vertexOffset * vbv.StrideInBytes;
+		vbv.SizeInBytes = static_cast<UINT>(res.desc.sizeInBytes);
+
+		gcl->IASetVertexBuffers(0, 1, &vbv);
+	}
+
 	void RenderContext::SetIndexBuffer(uint64_t handle)
 	{
 		const GResource & res = resources->GetNativeResource(handle);

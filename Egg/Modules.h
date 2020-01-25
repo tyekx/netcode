@@ -165,6 +165,7 @@ namespace Egg::Module {
 		virtual InputLayoutBuilderRef CreateInputLayoutBuilder() const = 0;
 		virtual StreamOutputBuilderRef CreateStreamOutputBuilder() const = 0;
 		virtual RootSignatureBuilderRef CreateRootSignatureBuilder() const = 0;
+		virtual SpriteFontBuilderRef CreateSpriteFontBuilder() const = 0;
 	};
 
 	class IAudioModule : public IModule {

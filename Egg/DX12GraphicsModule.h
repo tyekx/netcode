@@ -124,6 +124,7 @@ namespace Egg::Graphics::DX12 {
 		UINT backbufferIndex;
 		UINT presentedBackbufferIndex;
 
+
 		std::unique_ptr<SpriteBatch> spriteBatch;
 		float aspectRatio;
 		DXGI_RGBA clearColor;
@@ -154,6 +155,7 @@ namespace Egg::Graphics::DX12 {
 
 		void UpdateViewport();
 
+		DX12SpriteFontLibraryRef spriteFontLibrary;
 		DX12ShaderLibraryRef shaderLibrary;
 		DX12RootSignatureLibraryRef rootSigLibrary;
 		DX12StreamOutputLibraryRef streamOutputLibrary;
@@ -205,6 +207,8 @@ namespace Egg::Graphics::DX12 {
 		virtual StreamOutputBuilderRef CreateStreamOutputBuilder() const override;
 
 		virtual RootSignatureBuilderRef CreateRootSignatureBuilder() const override;
+
+		virtual SpriteFontBuilderRef CreateSpriteFontBuilder() const override;
 	};
 
 

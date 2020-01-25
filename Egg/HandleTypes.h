@@ -24,8 +24,6 @@ This also heavily favors the DirectX ecosystem, but thats an issue for possible 
 
 namespace Egg {
 
-	using HFONT = unsigned int;
-
 	using HACTOR = void *;
 	using HSHAPE = void *;
 	using HPXMAT = void *;
@@ -424,7 +422,25 @@ namespace Egg {
 	using ResourceViewsRef = std::shared_ptr<ResourceViews>;
 
 	class SpriteFont {
-
+	public:
+		virtual ~SpriteFont() = default;
+		virtual ResourceViewsRef GetResourceView() const = 0;
 	};
+
+	using SpriteFontRef = std::shared_ptr<SpriteFont>;
+
+	class SpriteFontBuilder {
+	public:
+		virtual ~SpriteFontBuilder() = default;
+		/* maybe later:
+		virtual void PremultiplyAlpha() = 0;
+		*/
+		virtual void LoadFont(const std::wstring & mediaPath) = 0;
+		virtual SpriteFontRef Build() = 0;
+	};
+
+	using SpriteFontBuilderRef = std::shared_ptr<SpriteFontBuilder>;
+
+
 
 }

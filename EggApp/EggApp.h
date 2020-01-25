@@ -84,6 +84,11 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		Egg::Input::SetAxis("Jump", VK_SPACE, 0);
 		Egg::Input::SetAxis("Fire", VK_LBUTTON, 0);
 
+		auto spriteFontBuilder = graphics->CreateSpriteFontBuilder();
+		spriteFontBuilder->LoadFont(L"titillium60.spritefont");
+		Egg::SpriteFontRef spriteFont = spriteFontBuilder->Build();
+
+
 		renderSystem.CreatePermanentResources(graphics.get());
 
 		{

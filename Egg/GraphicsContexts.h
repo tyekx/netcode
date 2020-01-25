@@ -67,7 +67,8 @@ namespace Egg::Graphics {
 
 		// for constant buffers that are frame-constants
 		virtual uint64_t CreateConstantBuffer(size_t size) = 0;
-		virtual void CopyConstants(uint64_t cbufferHandle, const void * srcData, size_t srcDataSizeInBytes) = 0;
+		virtual void CopyConstants(uint64_t uploadResource, const void * srcData, size_t srcDataSizeInBytes) = 0;
+		virtual void CopyConstants(uint64_t uploadResource, const void * srcData, size_t srcDataSizeInBytes, size_t dstOffsetInBytes) = 0;
 
 		virtual uint64_t CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState) = 0;
 		virtual uint64_t CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
@@ -83,6 +84,7 @@ namespace Egg::Graphics {
 		virtual void SetRootSignature(RootSignatureRef rs) = 0;
 		virtual void SetPipelineState(PipelineStateRef pso) = 0;
 		virtual void SetVertexBuffer(uint64_t handle) = 0;
+		virtual void SetVertexBuffer(uint64_t handle, uint32_t vertexOffset) = 0;
 		virtual void SetIndexBuffer(uint64_t handle) = 0;
 		virtual void DrawIndexed(uint64_t indexCount) = 0;
 		virtual void Draw(uint64_t vertexCount) = 0;

@@ -189,6 +189,10 @@ namespace Egg::Graphics::DX12 {
 
 		gPipelineLibrary = std::make_shared<DX12GPipelineStateLibrary>();
 		gPipelineLibrary->SetDevice(device);
+
+		spriteFontLibrary = std::make_shared<DX12SpriteFontLibrary>();
+		spriteFontLibrary->frameCtx = frame;
+		spriteFontLibrary->resourceCtx = resources;
 	}
 
 	void DX12GraphicsModule::SetContextReferences()
@@ -612,6 +616,11 @@ namespace Egg::Graphics::DX12 {
 	RootSignatureBuilderRef DX12GraphicsModule::CreateRootSignatureBuilder() const {
 		return std::make_shared<DX12RootSignatureBuilder>(rootSigLibrary);
 	}
+	SpriteFontBuilderRef DX12GraphicsModule::CreateSpriteFontBuilder() const
+	{
+		return std::make_shared<DX12SpriteFontBuilder>(spriteFontLibrary);
+	}
+
 	/*
 	void DX12GraphicsModule::TestFont(HFONT font) {
 		FrameResource & fr = frameResources.at(backbufferIndex);

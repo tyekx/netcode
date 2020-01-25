@@ -313,6 +313,9 @@
     <ClInclude Include="DX12Platform.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
+    <ClInclude Include="DX12SpriteFontBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
@@ -484,6 +487,9 @@
     <ClCompile Include="UploadBatch.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="DX12SpriteFontBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DefaultPS.hlsl">
@@ -510,6 +516,12 @@
     <FxCompile Include="Shaders\DebugPhysxRayVS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="SpriteFont_Pixel.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\SpriteFont_Vertex.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Shaders\RootSignatures.hlsli">
@@ -523,9 +535,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="Shaders\SpriteFont.hlsl">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
     <CustomBuild Include="Shaders\EggShaderLib.hlsli">
       <Filter>Shaders</Filter>
     </CustomBuild>

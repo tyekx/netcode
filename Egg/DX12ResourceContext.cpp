@@ -198,8 +198,23 @@ namespace Egg::Graphics::DX12 {
 		return resources->CreateResource(desc);
 	}
 
-	void ResourceContext::CopyConstants(uint64_t cbufferHandle, const void * srcData, size_t srcDataSizeInBytes)
+	void ResourceContext::CopyConstants(uint64_t uploadResource, const void * srcData, size_t srcDataSizeInBytes, size_t dstOffsetInBytes) {
+		GResource * gres = reinterpret_cast<GResource *>(uploadResource);
+		uint8_t * mappedPtr;
+		const CD3DX12_RANGE readRange{ 0,0 };
+		const CD3DX12_RANGE writtenRange{ dstOffsetInBytes, srcDataSizeInBytes };
+
+		DX_API("Failed to map ptr")
+			gres->resource->Map(0, &readRange, reinterpret_cast<void **>(&mappedPtr));
+
+		memcpy(mappedPtr + dstOffsetInBytes, srcData, srcDataSizeInBytes);
+
+		gres->resource->Unmap(0, &writtenRange);
+	}
+
+	void ResourceContext::CopyConstants(uint64_t uploadResource, const void * srcData, size_t srcDataSizeInBytes)
 	{
+		CopyConstants(uploadResource, srcData, srcDataSizeInBytes, 0);
 	}
 
 	uint64_t ResourceContext::CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState)

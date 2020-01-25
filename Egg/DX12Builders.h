@@ -5,3 +5,5 @@
 #include "DX12StreamOutputBuilder.h"
 #include "DX12RootSignatureBuilder.h"
 #include "DX12GPipelineStateBuilder.h"
+#include "DX12SpriteFontBuilder.h"
+#include "DX12TextureBuilder.h"

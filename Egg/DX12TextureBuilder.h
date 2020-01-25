@@ -8,6 +8,7 @@ namespace Egg::Graphics::DX12 {
 		DirectX::ScratchImage scratchImage;
 		DirectX::TexMetadata metaData;
 	public:
+
 		virtual void LoadTexture2D(const std::wstring & mediaPath) override;
 
 		virtual void LoadTexture3D(const std::wstring & mediaPath) override;

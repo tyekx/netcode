@@ -3,52 +3,40 @@
 "            DENY_DOMAIN_SHADER_ROOT_ACCESS |" \
 "            DENY_GEOMETRY_SHADER_ROOT_ACCESS |" \
 "            DENY_HULL_SHADER_ROOT_ACCESS )," \
-"DescriptorTable ( SRV(t0) ),"\
+"DescriptorTable ( SRV(t0, NumDescriptors = 1 ), Visibility = SHADER_VISIBILITY_PIXEL ),"\
 "CBV(b0), "\
 "StaticSampler(s0,"\
 "           filter = FILTER_ANISOTROPIC,"\
 "           addressU = TEXTURE_ADDRESS_CLAMP,"\
 "           addressV = TEXTURE_ADDRESS_CLAMP,"\
 "           addressW = TEXTURE_ADDRESS_CLAMP,"\
-"           visibility = SHADER_VISIBILITY_PIXEL )"
-
-Texture2D<float4> spriteTexture : register(t0);
-SamplerState samplerState : register(s0);
+"           Visibility = SHADER_VISIBILITY_PIXEL )"
 
 
-struct IAOutput
+struct SpriteFont_VertexInput
 {
     float3 position : POSITION;
     float4 color : COLOR;
     float2 texCoord : TEXCOORD;
 };
 
-struct VSOutput {
+struct SpriteFont_VertexOutput {
     float4 position : SV_Position;
     float4 color : COLOR;
     float2 texCoord : TEXCOORD0;
 };
 
-cbuffer Parameters : register(b0)
-{
+cbuffer SpriteData : register(b0) {
     float4x4 matrixTransform;
-};
+}
 
 [RootSignature(SpriteStaticRS)]
-VSOutput SpriteVertexShader(IAOutput iao)
+SpriteFont_VertexOutput main(SpriteFont_VertexInput iao)
 {
-    VSOutput vso;
+    SpriteFont_VertexOutput vso;
     vso.position = mul(float4(iao.position, 1.0f), matrixTransform);
     vso.color = iao.color;
     vso.texCoord = iao.texCoord;
     return vso;
 }
 
-[RootSignature(SpriteStaticRS)]
-float4 SpritePixelShader(VSOutput vso) : SV_Target0
-{
-    return spriteTexture.Sample(samplerState, vso.texCoord);
-   // float4 v = spriteTexture.Sample(samplerState, vso.texCoord);
-   // return float4(v.xyz * v.a, 1.0f);
-    //return float4(vso.texCoord, 0, 1);
-}

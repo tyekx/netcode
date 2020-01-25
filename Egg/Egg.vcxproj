@@ -88,6 +88,7 @@
     <ClInclude Include="DX12ShaderSourceLibrary.h" />
     <ClInclude Include="DX12ShaderVariant.h" />
     <ClInclude Include="DX12SpriteBatch.h" />
+    <ClInclude Include="DX12SpriteFontBuilder.h" />
     <ClInclude Include="DX12SpriteFontLibrary.h" />
     <ClInclude Include="DX12StreamOutput.h" />
     <ClInclude Include="DX12StreamOutputBuilder.h" />
@@ -166,6 +167,7 @@
     <ClCompile Include="DX12ShaderCompiler.cpp" />
     <ClCompile Include="DX12ShaderVariant.cpp" />
     <ClCompile Include="DX12SpriteBatch.cpp" />
+    <ClCompile Include="DX12SpriteFontBuilder.cpp" />
     <ClCompile Include="DX12StreamOutput.cpp" />
     <ClCompile Include="DX12StreamOutputBuilder.cpp" />
     <ClCompile Include="DX12StreamOutputLibrary.cpp" />
@@ -216,14 +218,17 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
     </FxCompile>
-    <CustomBuild Include="Shaders\SpriteFont.hlsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    <FxCompile Include="Shaders\SpriteFont_Vertex.hlsl">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pushd $(ProjectDir)Shaders
 $(ProjectDir)Shaders\CompileShaders.cmd
 popd</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\Compiled\SpriteFont_SpritePixelShader.inc;$(ProjectDir)Shaders\Compiled\SpriteFont_SpriteVertexShader.inc;%(Outputs)</Outputs>
-    </CustomBuild>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="SpriteFont_Pixel.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
     <Text Include="Shaders\RootSignatures.hlsli">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">RootSignature</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rootsig_1.0</ShaderModel>

@@ -8,6 +8,7 @@
 #include <memory>
 #include "Vertex.h"
 #include "UploadBatch.h"
+#include "Modules.h"
 
 //#include "RenderTargetState.h"
 
@@ -36,6 +37,7 @@ namespace Egg::Graphics::DX12
         SpriteEffects_FlipBoth = SpriteEffects_FlipHorizontally | SpriteEffects_FlipVertically,
     };
 
+    /*
     class SpriteBatchPipelineStateDescription
     {
     public:
@@ -72,7 +74,8 @@ namespace Egg::Graphics::DX12
         static const D3D12_BLEND_DESC           s_DefaultBlendDesc;
         static const D3D12_RASTERIZER_DESC      s_DefaultRasterizerDesc;
         static const D3D12_DEPTH_STENCIL_DESC   s_DefaultDepthStencilDesc;
-    };
+       
+    }; */
 
     class SpriteBatch
     {
@@ -85,7 +88,7 @@ namespace Egg::Graphics::DX12
             DirectX::XMFLOAT4A destination;
             DirectX::XMFLOAT4A color;
             DirectX::XMFLOAT4A originRotationDepth;
-            D3D12_GPU_DESCRIPTOR_HANDLE texture;
+            ResourceViewsRef texture;
             DirectX::XMVECTOR textureSize;
             unsigned int flags;
 
@@ -95,21 +98,21 @@ namespace Egg::Graphics::DX12
 
             static_assert((SpriteEffects_FlipBoth & (SourceInTexels | DestSizeInPixels)) == 0, "Flag bits must not overlap");
         };
+        static uint64_t indexBuffer;
+        uint64_t vertexBuffer;
 
-        DXGI_MODE_ROTATION mRotation;
+        IResourceContext * resourceContext;
+        IRenderContext * renderContext;
 
-        bool mSetViewport;
-        D3D12_VIEWPORT mViewPort;
+        RootSignatureRef rootSignature;
+        PipelineStateRef pipelineState;
 
+        std::unique_ptr<PCT_Vertex[]> vertexData;
         std::unique_ptr<SpriteInfo[]> mSpriteQueue;
 
         size_t mSpriteQueueCount;
         size_t mSpriteQueueArraySize;
 
-        // To avoid needlessly copying around bulky SpriteInfo structures, we leave that
-    // actual data alone and just sort this array of pointers instead. But we want contiguous
-    // memory for cache efficiency, so these pointers are just shortcuts into the single
-    // mSpriteQueue array, and we take care to keep them in order when sorting is disabled.
         std::vector<SpriteInfo const *> mSortedSprites;
 
 
@@ -117,32 +120,20 @@ namespace Egg::Graphics::DX12
         bool mInBeginEndPair;
 
         SpriteSortMode mSortMode;
-        com_ptr<ID3D12PipelineState> mPSO;
-        com_ptr<ID3D12RootSignature> mRootSignature;
-        D3D12_GPU_DESCRIPTOR_HANDLE mSampler;
         DirectX::XMMATRIX mTransformMatrix;
-        com_ptr<ID3D12GraphicsCommandList> mCommandList;
-
-        // Batched data
         
-        com_ptr<ID3D12Resource> vertexBuffer;
-        void * mappedVertexBuffer;
 
         D3D12_GPU_VIRTUAL_ADDRESS cbufferAddr;
-        SpriteCbuffer * cbuffer;
+        SpriteCbuffer cbuffer;
 
         size_t mVertexPageSize;
         size_t mSpriteCount;
-
 
         static const size_t MaxBatchSize = 2048;
         static const size_t MinBatchSize = 128;
         static const size_t InitialQueueSize = 64;
         static const size_t VerticesPerSprite = 4;
         static const size_t IndicesPerSprite = 6;
-
-        static const D3D12_SHADER_BYTECODE s_DefaultVertexShaderByteCodeStatic;
-        static const D3D12_SHADER_BYTECODE s_DefaultPixelShaderByteCodeStatic;
 
         enum RootParameterIndex
         {
@@ -152,26 +143,10 @@ namespace Egg::Graphics::DX12
             RootParameterCount
         };
 
-        // Only one of these helpers is allocated per D3D device, even if there are multiple SpriteBatch instances.
-        struct DeviceResources
-        {
-            DeviceResources(_In_ ID3D12Device * device, Egg::Graphics::UploadBatch* upload);
+        void CreateIndexBuffer(Egg::Module::IGraphicsModule * graphics);
 
-            com_ptr<ID3D12Resource> indexBuffer;
-            D3D12_INDEX_BUFFER_VIEW indexBufferView;
-            com_ptr<ID3D12RootSignature> rootSignature;
-            ID3D12Device * mDevice;
+        SpriteBatch(Egg::Module::IGraphicsModule * graphics);
 
-        private:
-            void CreateIndexBuffer(_In_ ID3D12Device * device, Egg::Graphics::UploadBatch * upload);
-            void CreateRootSignatures(_In_ ID3D12Device * device);
-
-            static std::vector<short> CreateIndexValues();
-        };
-
-        std::unique_ptr<DeviceResources> mDeviceResources;
-
-        SpriteBatch(_In_ ID3D12Device * device, Egg::Graphics::UploadBatch * upload, const SpriteBatchPipelineStateDescription & psoDesc, _In_opt_ const D3D12_VIEWPORT * viewport = nullptr);
         SpriteBatch(SpriteBatch && moveFrom) = default;
         SpriteBatch & operator= (SpriteBatch && moveFrom) = default;
 
@@ -181,33 +156,22 @@ namespace Egg::Graphics::DX12
         virtual ~SpriteBatch() = default;
 
         // Begin/End a batch of sprite drawing operations.
-        void XM_CALLCONV Begin(
-            _In_ ID3D12GraphicsCommandList * commandList,
-            SpriteSortMode sortMode = SpriteSortMode_Deferred,
-            DirectX::FXMMATRIX transformMatrix = MatrixIdentity);
+        void XM_CALLCONV Begin(SpriteSortMode sortMode = SpriteSortMode_Deferred, DirectX::FXMMATRIX transformMatrix = MatrixIdentity);
         void __cdecl End();
 
-
         // Draw overloads specifying position, origin and scale as XMFLOAT2.
-        void XM_CALLCONV Draw(D3D12_GPU_DESCRIPTOR_HANDLE textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color = DirectX::Colors::White);
-        void XM_CALLCONV Draw(D3D12_GPU_DESCRIPTOR_HANDLE textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::XMFLOAT2 const & origin = Float2Zero, float scale = 1, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
-        void XM_CALLCONV Draw(D3D12_GPU_DESCRIPTOR_HANDLE textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, DirectX::XMFLOAT2 const & scale, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
+        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color = DirectX::Colors::White);
+        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::XMFLOAT2 const & origin = Float2Zero, float scale = 1, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
+        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, DirectX::XMFLOAT2 const & scale, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
 
         // Draw overloads specifying position, origin and scale via the first two components of an XMVECTOR.
-        void XM_CALLCONV Draw(D3D12_GPU_DESCRIPTOR_HANDLE textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color = DirectX::Colors::White);
-        void XM_CALLCONV Draw(D3D12_GPU_DESCRIPTOR_HANDLE textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::FXMVECTOR origin = DirectX::g_XMZero, float scale = 1, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
-        void XM_CALLCONV Draw(D3D12_GPU_DESCRIPTOR_HANDLE textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, DirectX::GXMVECTOR scale, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
+        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color = DirectX::Colors::White);
+        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::FXMVECTOR origin = DirectX::g_XMZero, float scale = 1, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
+        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, DirectX::GXMVECTOR scale, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
 
         // Draw overloads specifying position as a RECT.
-        void XM_CALLCONV Draw(D3D12_GPU_DESCRIPTOR_HANDLE textureSRV, DirectX::XMUINT2 const & textureSize, RECT const & destinationRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White);
-        void XM_CALLCONV Draw(D3D12_GPU_DESCRIPTOR_HANDLE textureSRV, DirectX::XMUINT2 const & textureSize, RECT const & destinationRectangle, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::XMFLOAT2 const & origin = Float2Zero, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
-
-        // Rotation mode to be applied to the sprite transformation
-        void __cdecl SetRotation(DXGI_MODE_ROTATION mode);
-        DXGI_MODE_ROTATION __cdecl GetRotation() const;
-
-        // Set viewport for sprite transformation
-        void __cdecl SetViewport(const D3D12_VIEWPORT & viewPort);
+        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, RECT const & destinationRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White);
+        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, RECT const & destinationRectangle, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::XMFLOAT2 const & origin = Float2Zero, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
 
     private:
         // Implementation helper methods.
@@ -217,16 +181,14 @@ namespace Egg::Graphics::DX12
         void SortSprites();
         void GrowSortedSprites();
 
-        void RenderBatch(D3D12_GPU_DESCRIPTOR_HANDLE texture, DirectX::XMVECTOR textureSize, _In_reads_(count) SpriteInfo const * const * sprites, size_t count);
+        void RenderBatch(ResourceViewsRef texture, DirectX::XMVECTOR textureSize, _In_reads_(count) SpriteInfo const * const * sprites, size_t count);
 
         static void XM_CALLCONV RenderSprite(_In_ SpriteInfo const * sprite,
                                              _Out_writes_(VerticesPerSprite) PCT_Vertex * vertices,
                                              DirectX::FXMVECTOR textureSize,
                                              DirectX::FXMVECTOR inverseTextureSize);
 
-        DirectX::XMMATRIX GetViewportTransform(_In_ DXGI_MODE_ROTATION rotation);
-
-        void XM_CALLCONV Draw(D3D12_GPU_DESCRIPTOR_HANDLE textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR destination, RECT const * sourceRectangle, DirectX::FXMVECTOR color, DirectX::FXMVECTOR originRotationDepth, unsigned int flags);
+        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR destination, RECT const * sourceRectangle, DirectX::FXMVECTOR color, DirectX::FXMVECTOR originRotationDepth, unsigned int flags);
 
         static const DirectX::XMMATRIX MatrixIdentity;
         static const DirectX::XMFLOAT2 Float2Zero;

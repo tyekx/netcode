@@ -4,62 +4,47 @@
 #include "DX12SpriteFont.h"
 #include "HandleTypes.h"
 #include "Path.h"
+#include <algorithm>
 
 namespace Egg::Graphics::DX12 {
 
 	class SpriteFontLibrary {
 
 		struct Item {
-			std::unique_ptr<SpriteFont> font;
-			std::wstring name;
+			DX12SpriteFontRef font;
+			std::wstring path;
 
-			Item() = default;
-			Item(std::unique_ptr<SpriteFont> && f,const std::wstring & n) : font{ std::move(f) }, name{ n } { }
-
+			Item(DX12SpriteFontRef font, const std::wstring & p) : font{ std::move(font) }, path{ p } { }
 		};
 
-		std::vector<Item> storage;
-		ID3D12Device * device;
-		//TextureLibrary * textureLibrary;
-
-		std::unique_ptr<SpriteFont> Load(const std::wstring & fontPath, Egg::Graphics::UploadBatch * upload) {
-			D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorDest;
-			D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor;
-			//textureLibrary->AllocateTextures(gpuDescriptor, cpuDescriptorDest, 1);
-			return std::make_unique<SpriteFont>(device, upload, fontPath.c_str(), cpuDescriptorDest, gpuDescriptor);
-		}
+		std::vector<Item> items;
 
 	public:
+		IResourceContext * resourceCtx;
+		IFrameContext * frameCtx;
 
-		void CreateResources(ID3D12Device * dev) {
-			device = dev;
-		}
 
-		SpriteFont * Get(HFONT font) {
-			return storage[font].font.get();
-		}
+		DX12SpriteFontRef Get(const std::wstring & mediaPath) {
+			Egg::MediaPath fontPath{ mediaPath };
 
-		HFONT LoadFont(const std::wstring & fontName, Egg::Graphics::UploadBatch * upload) {
+			auto it = std::find_if(std::begin(items), std::end(items), [&mediaPath](const Item & item) -> bool {
+				return item.path == mediaPath;
+			});
 
-			Egg::MediaPath mediaPath{ fontName };
-			std::wstring fontPath = mediaPath.GetAbsolutePath();
+			if(it == std::end(items)) {
+				auto spriteFont = std::make_shared<DX12SpriteFont>(resourceCtx, frameCtx, fontPath.GetAbsolutePath().c_str());
 
-			HFONT idx = 0;
-			for(const Item & i : storage) {
-				if(i.name == fontName) {
-					return idx;
-				}
-				idx += 1;
+				items.emplace_back(Item{ spriteFont, fontPath.GetAbsolutePath() });
+
+				return spriteFont;
 			}
 
-			std::unique_ptr<SpriteFont> font = Load(fontPath, upload);
-
-			storage.emplace_back(std::move(font), fontName);
-
-			return idx;
+			return it->font;
 		}
 
-
 	};
+
+	using DX12SpriteFontLibrary = Egg::Graphics::DX12::SpriteFontLibrary;
+	using DX12SpriteFontLibraryRef = std::shared_ptr<DX12SpriteFontLibrary>;
 
 }
