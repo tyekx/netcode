@@ -30,6 +30,8 @@ namespace Egg::Graphics::DX12 {
 
 		D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandle(uint32_t idx) const;
 
+		void CreateRTV(uint32_t idx, ID3D12Resource * resource, DXGI_FORMAT format);
+
 		virtual ~ResourceViews() = default;
 
 		virtual void CreateSRV(uint32_t idx, uint64_t resourceHandle) override;

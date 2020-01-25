@@ -133,8 +133,8 @@ namespace Egg::Graphics::DX12 {
 		const uint32_t rtvId_CpuVisible = rtvOffset_CpuVisible;
 		const CD3DX12_CPU_DESCRIPTOR_HANDLE dHandle{ rtvDheap_CpuVisible->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(rtvId_CpuVisible), Platform::RenderTargetViewIncrementSize };
 
-		rtvOffset_CpuVisible += 1;
-		rtvNumStatic += 1;
+		rtvOffset_CpuVisible += numDescriptors;
+		rtvNumStatic += numDescriptors;
 
 		return std::make_shared<DX12ResourceViews>(numDescriptors,
 			D3D12_GPU_DESCRIPTOR_HANDLE{},

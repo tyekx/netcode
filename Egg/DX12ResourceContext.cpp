@@ -52,6 +52,11 @@ namespace Egg::Graphics::DX12 {
 		return descHeaps->CreatePermanentDSV();
 	}
 
+	void ResourceContext::SetDebugName(uint64_t resourceHandle, const wchar_t * name)
+	{
+		reinterpret_cast<GResource *>(resourceHandle)->resource->SetName(name);
+	}
+
 	uint64_t ResourceContext::CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, const DirectX::XMFLOAT4 & clearColor)
 	{
 		ASSERT(resourceType == ResourceType::PERMANENT_DEFAULT || resourceType == ResourceType::TRANSIENT_DEFAULT, "Texture2D must be in default heap");

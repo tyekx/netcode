@@ -423,4 +423,8 @@ namespace Egg {
 
 	using ResourceViewsRef = std::shared_ptr<ResourceViews>;
 
+	class SpriteFont {
+
+	};
+
 }

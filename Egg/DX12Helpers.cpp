@@ -122,9 +122,9 @@ namespace Egg::Graphics::DX12 {
 		uavd.Buffer.FirstElement = 0;
 
 		if(uavd.Buffer.StructureByteStride > 0) {
-			uavd.Buffer.NumElements = resource.sizeInBytes / uavd.Buffer.StructureByteStride;
+			uavd.Buffer.NumElements = static_cast<UINT>(resource.sizeInBytes) / uavd.Buffer.StructureByteStride;
 		} else {
-			uavd.Buffer.NumElements = (resource.sizeInBytes / (DirectX::BitsPerPixel(uavd.Format) / 8));
+			uavd.Buffer.NumElements = (static_cast<UINT>(resource.sizeInBytes) / static_cast<UINT>(DirectX::BitsPerPixel(uavd.Format) / 8));
 		}
 
 		return uavd;

@@ -3,6 +3,8 @@
 #include <io.h>
 #include <fcntl.h>
 
+using Egg::Graphics::DisplayMode;
+
 namespace Egg::Module {
 
 	void SetupConsole() {
@@ -63,9 +65,18 @@ namespace Egg::Module {
 			break;
 
 		case WM_SYSKEYDOWN:
-			if((wParam == VK_RETURN) && (lParam & (1 << 29)))
-			{
-				return 0;
+			if((wParam == VK_RETURN) && (lParam & (1 << 29))) {
+				if(pThis->displayMode == DisplayMode::BORDERLESS) {
+					AppEvent evt;
+					evt.type = EAppEventType::MODE_CHANGED;
+					evt.displayMode = DisplayMode::WINDOWED;
+					pThis->eventSystem->PostEvent(evt);
+				} else if(pThis->displayMode == DisplayMode::WINDOWED) {
+					AppEvent evt;
+					evt.type = EAppEventType::MODE_CHANGED;
+					evt.displayMode = DisplayMode::BORDERLESS;
+					pThis->eventSystem->PostEvent(evt);
+				}
 			}
 			break;
 
@@ -141,6 +152,49 @@ namespace Egg::Module {
 		Egg::Input::Blur();
 	}
 
+	void WinapiWindowModule::OnModeChanged(DisplayMode mode)
+	{
+		if(mode == displayMode) {
+			return;
+		}
+
+		if(mode == DisplayMode::BORDERLESS) {
+			RECT clientRect;
+			RECT windowRect;
+			GetClientRect(windowHandle, &clientRect);
+			GetWindowRect(windowHandle, &windowRect);
+			lastWindowedPos = windowRect;
+			lastWindowedClientRect = clientRect;
+
+			SetWindowLongW(windowHandle, GWL_STYLE, windowedStyle & (~(WS_CAPTION | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU | WS_THICKFRAME)));
+
+			RECT displayRect = graphics->GetDisplayRect();
+
+			SetWindowPos(windowHandle, HWND_TOP,
+				displayRect.left,
+				displayRect.top,
+				displayRect.right - displayRect.left,
+				displayRect.bottom - displayRect.top,
+				SWP_FRAMECHANGED | SWP_NOACTIVATE);
+
+			::ShowWindow(windowHandle, SW_MAXIMIZE);
+
+		} else if(mode == DisplayMode::WINDOWED) {
+			SetWindowLongW(windowHandle, GWL_STYLE, windowedStyle);
+
+			SetWindowPos(windowHandle, HWND_TOP,
+				lastWindowedPos.left,
+				lastWindowedPos.top, 
+				lastWindowedClientRect.right - lastWindowedClientRect.left,
+				lastWindowedClientRect.bottom - lastWindowedClientRect.top,
+				SWP_FRAMECHANGED | SWP_NOACTIVATE);
+
+			::ShowWindow(windowHandle, SW_NORMAL);
+		}
+
+		displayMode = mode;
+	}
+
 	void WinapiWindowModule::EnterSizeMove()
 	{
 		timerHandle = SetTimer(windowHandle, 1, 500, SizingTimerProc);
@@ -152,8 +206,11 @@ namespace Egg::Module {
 	}
 
 	void WinapiWindowModule::Start(AApp * app) {
+		displayMode = DisplayMode::WINDOWED;
 		const char * windowClassName = "EggClass";
+		windowedStyle = WS_OVERLAPPEDWINDOW;
 
+		graphics = app->graphics.get();
 
 #if defined(_DEBUG)
 		ShowDebugWindow();
@@ -177,7 +234,7 @@ namespace Egg::Module {
 
 		HWND wnd = CreateWindow(windowClassName,
 								"Netcode3D",
-								WS_OVERLAPPEDWINDOW,
+								windowedStyle,
 								CW_USEDEFAULT,
 								CW_USEDEFAULT,
 								CW_USEDEFAULT,
@@ -188,6 +245,7 @@ namespace Egg::Module {
 								0);
 
 		SetWindowLongPtr(wnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+
 
 		ASSERT(wnd != NULL, "Failed to create window");
 

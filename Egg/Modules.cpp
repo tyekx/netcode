@@ -108,6 +108,9 @@ namespace Egg::Module {
 		case EAppEventType::DEVICE_LOST:
 			OnDeviceLost();
 			return;
+		case EAppEventType::MODE_CHANGED:
+			OnModeChanged(evt.displayMode);
+			return;
 		}
 	}
 
@@ -129,6 +132,10 @@ namespace Egg::Module {
 
 	void TAppEventHandler::OnClosed() {
 
+	}
+
+	void TAppEventHandler::OnModeChanged(Egg::Graphics::DisplayMode newMode)
+	{
 	}
 }
 

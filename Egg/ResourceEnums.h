@@ -28,6 +28,8 @@ namespace Egg::Graphics {
 		PREDICATION = 0x200
 	};
 
+	ResourceState operator|(ResourceState lhs, ResourceState rhs);
+
 	enum class ResourceType : unsigned {
 		TRANSIENT_DEFAULT,
 		TRANSIENT_UPLOAD,

@@ -185,6 +185,7 @@
     <ClCompile Include="PhysxModule.cpp" />
     <ClCompile Include="DX12SpriteFont.cpp" />
     <ClCompile Include="DX12ResourceContext.cpp" />
+    <ClCompile Include="ResourceEnums.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
     <ClCompile Include="Transition.cpp" />
     <ClCompile Include="UploadBatch.cpp" />

@@ -47,13 +47,14 @@ class AppDefinedRenderer {
 
 	RenderPass * skinningPass;
 	RenderPass * depthPrePass;
-	RenderPass * lightningPass;
+	RenderPass * lightingPass;
 	RenderPass * postProcessPass;
 
 	Egg::Module::IGraphicsModule * graphics;
 
 	Egg::ResourceViewsRef gbufferPass_RenderTargetViews;
 	Egg::ResourceViewsRef gbufferPass_DepthStencilView;
+	Egg::ResourceViewsRef lightingPass_ShaderResourceViews;
 
 	Egg::RootSignatureRef skinningPass_RootSignature;
 	Egg::PipelineStateRef skinningPass_PipelineState;
@@ -212,8 +213,12 @@ private:
 
 		gbufferPass_ColorRenderTarget = graphics->resources->CreateRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
 		gbufferPass_NormalsRenderTarget = graphics->resources->CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
-		gbufferPass_DepthBuffer = graphics->resources->CreateDepthStencil(gbufferPass_DepthStencilFormat, ResourceType::PERMANENT_DEFAULT, static_cast<ResourceState>(static_cast<uint32_t>(ResourceState::PIXEL_SHADER_RESOURCE) | static_cast<uint32_t>(ResourceState::DEPTH_READ)));
+		gbufferPass_DepthBuffer = graphics->resources->CreateDepthStencil(gbufferPass_DepthStencilFormat, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE | ResourceState::DEPTH_READ);
 	
+		graphics->resources->SetDebugName(gbufferPass_ColorRenderTarget, L"GBuffer:Color");
+		graphics->resources->SetDebugName(gbufferPass_NormalsRenderTarget, L"GBuffer:Normals");
+		graphics->resources->SetDebugName(gbufferPass_DepthBuffer, L"GBuffer:Depth");
+
 		gbufferPass_RenderTargetViews->CreateRTV(0, gbufferPass_ColorRenderTarget);
 		gbufferPass_RenderTargetViews->CreateRTV(1, gbufferPass_NormalsRenderTarget);
 		gbufferPass_DepthStencilView->CreateDSV(gbufferPass_DepthBuffer);
@@ -276,7 +281,7 @@ private:
 
 		ssaoPass_RandomVectorTexture = g->resources->CreateTexture2D(256, 256, DXGI_FORMAT_R8G8B8A8_UNORM, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST, ResourceFlags::NONE);
 
-		DirectX::PackedVector::XMCOLOR colors[256*256];
+		std::unique_ptr<DirectX::PackedVector::XMCOLOR[]> colors = std::make_unique<DirectX::PackedVector::XMCOLOR[]>(256 * 256);
 		for(int i = 0; i < 256; ++i)
 		{
 			for(int j = 0; j < 256; ++j)
@@ -289,7 +294,7 @@ private:
 		}
 
 		Egg::Graphics::UploadBatch upload;
-		upload.Upload(ssaoPass_RandomVectorTexture, colors, sizeof(colors));
+		upload.Upload(ssaoPass_RandomVectorTexture, colors.get(), sizeof(colors));
 		upload.ResourceBarrier(ssaoPass_RandomVectorTexture, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
 		g->frame->SyncUpload(upload);
 
@@ -353,6 +358,15 @@ private:
 		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
 		psoBuilder->SetDepthStencilState(depthDesc);
 		lightingPass_PipelineState = psoBuilder->Build();
+
+		lightingPass_ShaderResourceViews = graphics->resources->CreateShaderResourceViews(3);
+		CreateLightingPassResourceViews();
+	}
+
+	void CreateLightingPassResourceViews() {
+		lightingPass_ShaderResourceViews->CreateSRV(0, gbufferPass_ColorRenderTarget);
+		lightingPass_ShaderResourceViews->CreateSRV(1, gbufferPass_NormalsRenderTarget);
+		lightingPass_ShaderResourceViews->CreateSRV(2, gbufferPass_DepthBuffer);
 	}
 
 	void CreateSkinningPass(FrameGraphBuilder & frameGraphBuilder) {
@@ -432,12 +446,14 @@ private:
 			context->SetRootSignature(gbufferPass_RootSignature);
 			context->SetPipelineState(gbufferPass_PipelineState);
 
-			context->ResourceBarrier(gbufferPass_NormalsRenderTarget, ResourceState::PIXEL_SHADER_RESOURCE, ResourceState::RENDER_TARGET);
 			context->ResourceBarrier(gbufferPass_ColorRenderTarget, ResourceState::PIXEL_SHADER_RESOURCE, ResourceState::RENDER_TARGET);
-			context->ResourceBarrier(gbufferPass_DepthBuffer, static_cast<ResourceState>(static_cast<uint32_t>(ResourceState::PIXEL_SHADER_RESOURCE) | static_cast<uint32_t>(ResourceState::DEPTH_READ)), ResourceState::DEPTH_WRITE);
+			context->ResourceBarrier(gbufferPass_NormalsRenderTarget, ResourceState::PIXEL_SHADER_RESOURCE, ResourceState::RENDER_TARGET);
+			context->ResourceBarrier(gbufferPass_DepthBuffer, ResourceState::PIXEL_SHADER_RESOURCE | ResourceState::DEPTH_READ, ResourceState::DEPTH_WRITE);
 			context->FlushResourceBarriers();
 
 			context->SetRenderTargets(gbufferPass_RenderTargetViews, gbufferPass_DepthStencilView);
+			context->SetViewport();
+			context->SetScissorRect();
 			context->ClearRenderTarget(0);
 			context->ClearRenderTarget(1);
 			context->ClearDepthStencil();
@@ -462,11 +478,10 @@ private:
 				context->DrawIndexed(item.gbuffer.indexCount);
 			}
 
-			context->ResourceBarrier(gbufferPass_NormalsRenderTarget, ResourceState::RENDER_TARGET, ResourceState::PIXEL_SHADER_RESOURCE);
 			context->ResourceBarrier(gbufferPass_ColorRenderTarget, ResourceState::RENDER_TARGET, ResourceState::PIXEL_SHADER_RESOURCE);
-			context->ResourceBarrier(gbufferPass_DepthBuffer, ResourceState::DEPTH_WRITE,
-				static_cast<ResourceState>(static_cast<uint32_t>( ResourceState::PIXEL_SHADER_RESOURCE) | static_cast<uint32_t>(ResourceState::DEPTH_READ) ));
-
+			context->ResourceBarrier(gbufferPass_NormalsRenderTarget, ResourceState::RENDER_TARGET, ResourceState::PIXEL_SHADER_RESOURCE);
+			context->ResourceBarrier(gbufferPass_DepthBuffer, ResourceState::DEPTH_WRITE, ResourceState::PIXEL_SHADER_RESOURCE | ResourceState::DEPTH_READ );
+			context->FlushResourceBarriers();
 		});
 	}
 
@@ -527,26 +542,25 @@ private:
 		});
 	}
 
-	void CreateLightningPass(FrameGraphBuilder & frameGraphBuilder) {
+	void CreateLightingPass(FrameGraphBuilder & frameGraphBuilder) {
 		frameGraphBuilder.CreateRenderPass("Lighting", [&](IResourceContext * context) -> void {
 
 
 
-		},
-			[&](IRenderContext * context) -> void {
+		}, [&](IRenderContext * context) -> void {
 			context->SetRootSignature(lightingPass_RootSignature);
 			context->SetPipelineState(lightingPass_PipelineState);
 			context->SetViewport();
-			context->SetRenderTargets(0, gbufferPass_DepthBuffer);
+			context->SetRenderTargets(nullptr, gbufferPass_DepthStencilView);
 			context->SetStencilReference(255);
 			context->SetConstants(0, *perFrameData);
-			context->SetShaderResources(1, { gbufferPass_ColorRenderTarget, gbufferPass_NormalsRenderTarget, gbufferPass_DepthBuffer });
+			context->SetShaderResources(1, lightingPass_ShaderResourceViews);
 
 			// @TODO: set light data
 
-
 			context->SetVertexBuffer(fsQuad.vertexBuffer);
 			context->Draw(fsQuad.vertexCount);
+			
 		});
 	}
 
@@ -578,6 +592,7 @@ public:
 			backbufferSize = newSize;
 			if(backbufferSize.x != 0 && backbufferSize.y != 0) {
 				CreateGbufferPassSizeDependentResources();
+				CreateLightingPassResourceViews();
 				//CreateSSAOOcclusionPassSizeDependentResources();
 			}
 		}
@@ -599,7 +614,7 @@ public:
 		CreateGbufferPass(builder);
 		//CreateSSAOOcclusionPass(builder);
 		//CreateSSAOBlurPass(builder);
-		CreateLightningPass(builder);
+		CreateLightingPass(builder);
 		//CreatePostProcessPass(builder);
 	}
 

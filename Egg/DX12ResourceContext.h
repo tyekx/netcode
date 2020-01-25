@@ -33,6 +33,7 @@ namespace Egg::Graphics::DX12 {
 		virtual ResourceViewsRef CreateRenderTargetViews(uint32_t numDescriptors) override;
 		virtual ResourceViewsRef CreateDepthStencilView() override;
 
+		virtual void SetDebugName(uint64_t resourceHandle, const wchar_t * name) override;
 
 		virtual uint64_t CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, const DirectX::XMFLOAT4 & clearColor) override;
 		virtual uint64_t CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState) override;

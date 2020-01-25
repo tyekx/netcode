@@ -34,7 +34,7 @@ namespace Egg::Module {
 	class IAudioModule;
 
 	enum class EAppEventType : unsigned {
-		NOOP, DEVICE_LOST, RESIZED, FOCUSED, BLURRED, CLOSED
+		NOOP, DEVICE_LOST, RESIZED, MODE_CHANGED, FOCUSED, BLURRED, CLOSED
 	};
 
 	/*
@@ -44,6 +44,7 @@ namespace Egg::Module {
 		EAppEventType type;
 		union {
 			DirectX::XMINT2 resizeArgs;
+			Egg::Graphics::DisplayMode displayMode;
 		};
 	};
 
@@ -63,6 +64,7 @@ namespace Egg::Module {
 		virtual void OnFocus();
 		virtual void OnResized(int x, int y);
 		virtual void OnClosed();
+		virtual void OnModeChanged(Egg::Graphics::DisplayMode newMode);
 	};
 
 	class AppEventSystem {
@@ -156,6 +158,7 @@ namespace Egg::Module {
 
 		virtual float GetAspectRatio() const = 0;
 		virtual DirectX::XMUINT2 GetBackbufferSize() const = 0;
+		virtual RECT GetDisplayRect() const = 0;
 
 		virtual ShaderBuilderRef CreateShaderBuilder() const = 0;
 		virtual GPipelineStateBuilderRef CreateGPipelineStateBuilder() const = 0;

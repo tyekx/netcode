@@ -59,6 +59,21 @@ namespace Egg::Graphics::DX12 {
 		return CD3DX12_GPU_DESCRIPTOR_HANDLE{ baseGpuHandle_ShaderVisible, static_cast<INT>(idx), GetIncrementSize() };
 	}
 
+	void ResourceViews::CreateRTV(uint32_t idx, ID3D12Resource * resource, DXGI_FORMAT format) {
+		INT offset = static_cast<INT>(idx);
+
+		ASSERT(offset < numDescriptors && offset >= 0, "ResourceViews: idx is out of range");
+		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_RTV, "ResourceViews: invalid heap type");
+
+		D3D12_RENDER_TARGET_VIEW_DESC rtvd;
+		rtvd.Texture2D.MipSlice = 0;
+		rtvd.Texture2D.PlaneSlice = 0;
+		rtvd.Format = format;
+		rtvd.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+
+		device->CreateRenderTargetView(resource, &rtvd, CD3DX12_CPU_DESCRIPTOR_HANDLE{ baseCpuHandle_CpuVisible, offset, Platform::RenderTargetViewIncrementSize });
+	}
+
 	void ResourceViews::CreateSRV(uint32_t idx, uint64_t resourceHandle) {
 		INT offset = static_cast<INT>(idx);
 

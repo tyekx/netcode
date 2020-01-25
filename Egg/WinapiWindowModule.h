@@ -23,7 +23,12 @@ namespace Egg::Module {
 		UINT_PTR timerHandle;
 		HWND windowHandle;
 		bool isRunning;
+		RECT lastWindowedPos;
+		RECT lastWindowedClientRect;
+		UINT windowedStyle;
+		Egg::Module::IGraphicsModule * graphics;
 	public:
+		Egg::Graphics::DisplayMode displayMode;
 		AppEventSystem * eventSystem;
 
 		void EnterSizeMove();
@@ -32,6 +37,7 @@ namespace Egg::Module {
 
 		virtual void OnFocus() override;
 		virtual void OnBlur() override;
+		virtual void OnModeChanged(Egg::Graphics::DisplayMode mode) override;
 
 		virtual void Start(AApp * app) override;
 		virtual void Shutdown() override;

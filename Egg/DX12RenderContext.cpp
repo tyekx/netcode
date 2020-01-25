@@ -81,6 +81,11 @@ namespace Egg::Graphics::DX12 {
 		gcl->ClearRenderTargetView(currentlyBoundRenderTargets[idx], clearColor, 0, nullptr);
 	}
 
+	void RenderContext::ClearRenderTarget(uint8_t idx, const float * clearColor)
+	{
+		gcl->ClearRenderTargetView(currentlyBoundRenderTargets[idx], clearColor, 0, nullptr);
+	}
+
 	void RenderContext::SetStreamOutput(uint64_t handle)
 	{
 		const GResource & res = resources->GetNativeResource(handle);
@@ -130,22 +135,49 @@ namespace Egg::Graphics::DX12 {
 		gcl->RSSetViewports(1, &defaultViewport);
 	}
 
+	void RenderContext::SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
+	{
+		D3D12_RECT scissorRect;
+		scissorRect.left = left;
+		scissorRect.right = right;
+		scissorRect.top = top;
+		scissorRect.bottom = bottom;
+
+		gcl->RSSetScissorRects(1, &scissorRect);
+	}
+
+	void RenderContext::SetScissorRect(uint32_t width, uint32_t height)
+	{
+		SetScissorRect(0, width, 0, height);
+	}
+
+	void RenderContext::SetScissorRect()
+	{
+		gcl->RSSetScissorRects(1, &defaultScissorRect);
+	}
+
 	void RenderContext::SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil)
 	{
-		DX12ResourceViewsRef rtvs = std::dynamic_pointer_cast<DX12ResourceViews>(renderTargets);
-		DX12ResourceViewsRef dsv = std::dynamic_pointer_cast<DX12ResourceViews>(depthStencil);
-
-		uint32_t numDescriptors = rtvs->GetNumDescriptors();
-
-		for(uint32_t i = 0; i < rtvs->GetNumDescriptors(); ++i) {
-			currentlyBoundRenderTargets[i] = rtvs->GetCpuVisibleCpuHandle(i);
+		uint32_t numDescriptors;
+		if(renderTargets != nullptr) {
+			DX12ResourceViewsRef rtvs = std::dynamic_pointer_cast<DX12ResourceViews>(renderTargets);
+			numDescriptors = rtvs->GetNumDescriptors();
+			for(uint32_t i = 0; i < numDescriptors; ++i) {
+				currentlyBoundRenderTargets[i] = rtvs->GetCpuVisibleCpuHandle(i);
+			}
+		} else {
+			currentlyBoundRenderTargets[0] = backbuffer;
+			numDescriptors = 1;
 		}
 
-		currentlyBoundDepth = dsv->GetCpuVisibleCpuHandle(0);
-
-		if(numDescriptors > 0) {
-			gcl->OMSetRenderTargets(numDescriptors, currentlyBoundRenderTargets, FALSE, &currentlyBoundDepth);
+		if(depthStencil != nullptr) {
+			DX12ResourceViewsRef dsv = std::dynamic_pointer_cast<DX12ResourceViews>(depthStencil);
+			currentlyBoundDepth = dsv->GetCpuVisibleCpuHandle(0);
+		} else {
+			currentlyBoundDepth = backbufferDepth;
 		}
+
+		gcl->OMSetRenderTargets(numDescriptors, currentlyBoundRenderTargets, FALSE, &currentlyBoundDepth);
 	}
 
 	void RenderContext::SetRenderTargets(std::initializer_list<uint64_t> handles, uint64_t depthStencil)
@@ -187,6 +219,8 @@ namespace Egg::Graphics::DX12 {
 		gcl->OMSetRenderTargets(1, currentlyBoundRenderTargets, FALSE, &currentlyBoundDepth);
 	}
 
+
+
 	void RenderContext::SetShaderResources(int slot, std::initializer_list<uint64_t> shaderResourceHandles) {
 		
 
@@ -201,6 +235,13 @@ namespace Egg::Graphics::DX12 {
 		}
 
 		gcl->SetGraphicsRootDescriptorTable(slot, descriptor);
+	}
+
+	void RenderContext::SetShaderResources(int slot, ResourceViewsRef resourceView)
+	{
+		DX12ResourceViewsRef srv = std::dynamic_pointer_cast<DX12ResourceViews>(resourceView);
+		
+		gcl->SetGraphicsRootDescriptorTable(slot, srv->GetGpuHandle(0));
 	}
 
 	void RenderContext::SetConstantBuffer(int slot, uint64_t cbufferHandle)

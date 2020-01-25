@@ -400,9 +400,6 @@
     <ClCompile Include="DX12ShaderCompiled.cpp">
       <Filter>Graphics\DX12</Filter>
     </ClCompile>
-    <ClCompile Include="UploadBatch.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
     <ClCompile Include="DX12ResourceDesc.cpp">
       <Filter>Graphics\DX12</Filter>
     </ClCompile>
@@ -478,7 +475,15 @@
     <ClCompile Include="DX12Platform.cpp">
       <Filter>Graphics\DX12</Filter>
     </ClCompile>
-    <ClCompile Include="DX12ResourceViews.cpp" />
+    <ClCompile Include="DX12ResourceViews.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceEnums.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="UploadBatch.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DefaultPS.hlsl">

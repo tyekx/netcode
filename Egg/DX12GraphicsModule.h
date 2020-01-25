@@ -30,14 +30,8 @@ namespace Egg::Graphics::DX12 {
 		com_ptr<ID3D12GraphicsCommandList2> commandList;
 		com_ptr<ID3D12CommandAllocator> commandAllocator;
 		com_ptr<ID3D12Fence1> fence;
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle;
-		D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle;
 		UINT64 fenceValue;
 		HANDLE fenceEvent;
-		D3D12_RECT scissorRect;
-		D3D12_VIEWPORT viewPort;
-		D3D12_CLEAR_VALUE dsvClearValue;
-		D3D12_CLEAR_VALUE rtvClearValue;
 
 		ID3D12GraphicsCommandList2 * GetCommandList() const {
 			return commandList.Get();
@@ -91,7 +85,7 @@ namespace Egg::Graphics::DX12 {
 	};
 
 	class DX12GraphicsModule : public Egg::Module::IGraphicsModule, Egg::Graphics::IFrameContext {
-
+		Egg::Module::AppEventSystem * eventSystem;
 		HWND hwnd;
 		com_ptr<ID3D12Debug3> debugController;
 
@@ -110,17 +104,21 @@ namespace Egg::Graphics::DX12 {
 		com_ptr<IDXGIOutput1> outputs[8];
 		UINT outputsLength;
 
-		com_ptr<ID3D12DescriptorHeap> rtvDescHeap;
-		UINT rtvDescHeapIncrement;
+		DX12ResourceViewsRef renderTargetViews;
+		DX12ResourceViewsRef depthStencilView;
+
+		uint64_t depthStencil;
+
 		UINT backbufferDepth;
+		DirectX::XMUINT2 lastWindowedModeSize;
 		UINT width;
 		UINT height;
 
-		com_ptr<ID3D12DescriptorHeap> dsvDescHeap;
-		com_ptr<ID3D12Resource> dsvResource;
+		D3D12_VIEWPORT viewport;
+		D3D12_RECT scissorRect;
+
+		DXGI_FORMAT renderTargetFormat;
 		DXGI_FORMAT depthStencilFormat;
-		D3D12_CLEAR_VALUE dsvClearValue;
-		D3D12_CLEAR_VALUE rtvClearValue;
 
 		std::vector<FrameResource> frameResources;
 		UINT backbufferIndex;
@@ -128,6 +126,9 @@ namespace Egg::Graphics::DX12 {
 
 		std::unique_ptr<SpriteBatch> spriteBatch;
 		float aspectRatio;
+		DXGI_RGBA clearColor;
+
+		DisplayMode displayMode;
 
 		void NextBackBufferIndex();
 
@@ -150,6 +151,8 @@ namespace Egg::Graphics::DX12 {
 		void SetContextReferences();
 
 		void CreateContexts();
+
+		void UpdateViewport();
 
 		DX12ShaderLibraryRef shaderLibrary;
 		DX12RootSignatureLibraryRef rootSigLibrary;
@@ -178,6 +181,10 @@ namespace Egg::Graphics::DX12 {
 		virtual void Shutdown() override;
 
 		virtual void OnResized(int width, int height) override;
+
+		virtual void OnModeChanged(DisplayMode displayMode) override;
+
+		virtual RECT GetDisplayRect() const override;
 
 		virtual float GetAspectRatio() const override;
 

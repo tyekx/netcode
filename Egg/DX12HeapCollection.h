@@ -76,11 +76,12 @@ namespace Egg::Graphics::DX12 {
 				return E_FAIL;
 			}
 
+			usedInBytes -= it->sizeInBytes;
+
 			it->resource.Reset();
 			freed.insert(*it);
 			used.erase(it);
 
-			//@TODO: do a better job with this
 			if(used.empty()) {
 				usedInBytes = 0;
 				freed.clear();
@@ -152,15 +153,15 @@ namespace Egg::Graphics::DX12 {
 	class HeapManager {
 
 		static uint32_t DeduceBucketIndex(size_t size) {
-			constexpr static size_t s512K = 1 << 19;
-			constexpr static size_t s4M = 1 << 22;
+			constexpr static size_t s256K = 1 << 18;
+			constexpr static size_t s2M = 1 << 21;
 			constexpr static size_t s32M = 1 << 25;
 
-			if(size <= s512K) {
+			if(size <= s256K) {
 				return 0;
 			}
 
-			if(size <= s4M) {
+			if(size <= s2M) {
 				return 1;
 			}
 

@@ -15,6 +15,7 @@ namespace Egg::Graphics::DX12 {
 		D3D12_CPU_DESCRIPTOR_HANDLE backbuffer;
 		D3D12_CPU_DESCRIPTOR_HANDLE backbufferDepth;
 		D3D12_VIEWPORT defaultViewport;
+		D3D12_RECT defaultScissorRect;
 		ID3D12GraphicsCommandList * gcl;
 		ResourcePool * resources;
 		ConstantBufferPool * cbuffers;
@@ -46,6 +47,7 @@ namespace Egg::Graphics::DX12 {
 		virtual void ClearDepthStencil() override;
 
 		virtual void ClearRenderTarget(uint8_t idx) override;
+		virtual void ClearRenderTarget(uint8_t idx, const float * clearColor) override;
 
 		virtual void SetStreamOutput(uint64_t handle) override;
 
@@ -54,10 +56,12 @@ namespace Egg::Graphics::DX12 {
 		virtual void ResetStreamOutput() override;
 
 		virtual void SetViewport(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) override;
-
 		virtual void SetViewport(uint32_t width, uint32_t height) override;
-
 		virtual void SetViewport() override;
+
+		virtual void SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) override;
+		virtual void SetScissorRect(uint32_t width, uint32_t height) override;
+		virtual void SetScissorRect() override;
 
 		virtual void SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil) override;
 
@@ -66,6 +70,8 @@ namespace Egg::Graphics::DX12 {
 		virtual void SetRenderTargets(uint64_t renderTarget, uint64_t depthStencil) override;
 
 		virtual void SetShaderResources(int slot, std::initializer_list<uint64_t> shaderResourceHandles) override;
+
+		virtual void SetShaderResources(int slot, ResourceViewsRef resourceView) override;
 
 		virtual void SetConstantBuffer(int slot, uint64_t cbufferHandle) override;
 

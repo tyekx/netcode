@@ -10,6 +10,10 @@
 
 namespace Egg::Graphics {
 
+	enum class DisplayMode : unsigned {
+		WINDOWED, FULLSCREEN, BORDERLESS
+	};
+
 	class IResourceContext {
 	public:
 		virtual ~IResourceContext() = default;
@@ -23,6 +27,8 @@ namespace Egg::Graphics {
 		virtual ResourceViewsRef CreateRenderTargetViews(uint32_t numDescriptors) = 0;
 		virtual ResourceViewsRef CreateDepthStencilView() = 0;
 		//virtual ResourceViewsRef CreateSamplers(uint32_t numDescriptors) = 0;
+
+		virtual void SetDebugName(uint64_t resourceHandle, const wchar_t * name) = 0;
 
 		/*
 		Creates a Texture2D render target, every version invokes the one with the most arguments. Any argument not specified will fall back to its default:
@@ -85,6 +91,7 @@ namespace Egg::Graphics {
 
 		virtual void ClearUnorderedAccessViewUint(uint64_t handle, const DirectX::XMUINT4 & values) = 0;
 		virtual void ClearRenderTarget(uint8_t idx) = 0;
+		virtual void ClearRenderTarget(uint8_t idx, const float * clearColor) = 0;
 		virtual void ClearDepthOnly() = 0;
 		virtual void ClearStencilOnly() = 0;
 		virtual void ClearDepthStencil() = 0;
@@ -104,6 +111,10 @@ namespace Egg::Graphics {
 		// resets to default viewport size = backbuffer viewport
 		virtual void SetViewport() = 0;
 
+		virtual void SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) = 0;
+		virtual void SetScissorRect(uint32_t width, uint32_t height) = 0;
+		virtual void SetScissorRect() = 0;
+
 		// 0 means backbuffer RT/Depth
 		virtual void SetRenderTargets(uint64_t renderTarget, uint64_t depthStencil) = 0;
 
@@ -113,6 +124,7 @@ namespace Egg::Graphics {
 		virtual void SetConstantBuffer(int slot, uint64_t cbufferHandle) = 0;
 		virtual void SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) = 0;
 		virtual void SetShaderResources(int slot, std::initializer_list<uint64_t> shaderResourceHandles) = 0;
+		virtual void SetShaderResources(int slot, ResourceViewsRef resourceView) = 0;
 
 		virtual void ResourceBarrier(uint64_t handle, ResourceState before, ResourceState after) = 0;
 

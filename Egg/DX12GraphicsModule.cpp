@@ -140,7 +140,7 @@ namespace Egg::Graphics::DX12 {
 		// if you specify width/height as 0, the CreateSwapChainForHwnd will query it from the output window
 		swapChainDesc.Width = 0;
 		swapChainDesc.Height = 0;
-		swapChainDesc.Format = rtvClearValue.Format;
+		swapChainDesc.Format = renderTargetFormat;
 		swapChainDesc.Stereo = false;
 		swapChainDesc.SampleDesc.Count = 1;
 		swapChainDesc.SampleDesc.Quality = 0;
@@ -162,6 +162,9 @@ namespace Egg::Graphics::DX12 {
 		DX_API("Failed to make window association")
 			dxgiFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
 
+		DX_API("Failed to set background color")
+			swapChain->SetBackgroundColor(&clearColor);
+
 		DXGI_SWAP_CHAIN_DESC1 scDesc;
 
 		DX_API("failed to get swap chain desc")
@@ -169,6 +172,8 @@ namespace Egg::Graphics::DX12 {
 
 		width = scDesc.Width;
 		height = scDesc.Height;
+
+		UpdateViewport();
 	}
 
 	void DX12GraphicsModule::CreateLibraries()
@@ -195,13 +200,7 @@ namespace Egg::Graphics::DX12 {
 		resourceContext.descHeaps = &dheaps;
 		resourceContext.SetResourcePool(&resourcePool);
 		resourceContext.SetDevice(device);
-
-		D3D12_RECT rect;
-		rect.left = 0;
-		rect.right = width;
-		rect.top = 0;
-		rect.bottom = height;
-		resourceContext.backbufferExtents = rect;
+		resourceContext.backbufferExtents = scissorRect;
 
 		cbufferPool.SetHeapManager(&heapManager);
 
@@ -218,8 +217,26 @@ namespace Egg::Graphics::DX12 {
 		Egg::Module::IGraphicsModule::frame = this;
 	}
 
+	void DX12GraphicsModule::UpdateViewport()
+	{
+		viewport.Height = static_cast<float>(height);
+		viewport.Width = static_cast<float>(width);
+		viewport.TopLeftX = 0.0f;
+		viewport.TopLeftY = 0.0f;
+		viewport.MinDepth = 0.0f;
+		viewport.MaxDepth = 1.0f;
+
+		scissorRect.left = 0;
+		scissorRect.right = width;
+		scissorRect.top = 0;
+		scissorRect.bottom = height;
+	}
+
 	void DX12GraphicsModule::Prepare() {
+
 		FrameResource & fr = frameResources.at(backbufferIndex);
+
+		dheaps.Prepare();
 
 		DX_API("Failed to reset command allocator")
 			fr.commandAllocator->Reset();
@@ -229,24 +246,18 @@ namespace Egg::Graphics::DX12 {
 
 		fr.commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(fr.swapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-		resourceContext.backbufferExtents = fr.scissorRect;
-
+		resourceContext.backbufferExtents = scissorRect;
 		renderContext.gcl = fr.commandList.Get();
-		renderContext.backbuffer = fr.rtvHandle;
-		renderContext.backbufferDepth = fr.dsvHandle;
-		renderContext.defaultViewport = fr.viewPort;
+		renderContext.backbuffer = renderTargetViews->GetCpuVisibleCpuHandle(backbufferIndex);
+		renderContext.backbufferDepth = depthStencilView->GetCpuVisibleCpuHandle(0);
+		renderContext.defaultViewport = viewport;
+		renderContext.defaultScissorRect = scissorRect;
 
-		dheaps.Prepare();
-
-		fr.commandList->OMSetRenderTargets(1, &fr.rtvHandle, FALSE, &fr.dsvHandle);
-
-		fr.commandList->ClearRenderTargetView(fr.rtvHandle, fr.rtvClearValue.Color, 0, nullptr);
-
-		fr.commandList->ClearDepthStencilView(fr.dsvHandle, D3D12_CLEAR_FLAG_DEPTH, fr.dsvClearValue.DepthStencil.Depth, fr.dsvClearValue.DepthStencil.Stencil, 0, nullptr);
-
-		fr.commandList->RSSetScissorRects(1, &fr.scissorRect);
-
-		fr.commandList->RSSetViewports(1, &fr.viewPort);
+		renderer->SetRenderTargets(0, 0);
+		renderer->SetViewport();
+		renderer->SetScissorRect();
+		renderer->ClearRenderTarget(0, &(clearColor.r));
+		renderer->ClearDepthOnly();
 	}
 
 	void DX12GraphicsModule::Render() {
@@ -264,7 +275,7 @@ namespace Egg::Graphics::DX12 {
 		FrameResource & fr = frameResources.at(backbufferIndex);
 
 		DX_API("Failed to present swap chain")
-			swapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING);
+			swapChain->Present(0, (displayMode != DisplayMode::FULLSCREEN) ? DXGI_PRESENT_ALLOW_TEARING : 0);
 
 		commandQueue->Signal(fr.fence.Get(), fr.fenceValue);
 
@@ -280,9 +291,14 @@ namespace Egg::Graphics::DX12 {
 	}
 
 	void DX12GraphicsModule::Start(Module::AApp * app)  {
+		eventSystem = app->events.get();
 		hwnd = reinterpret_cast<HWND>(app->window->GetUnderlyingPointer());
 		backbufferDepth = 2;
 		depthStencilFormat = DXGI_FORMAT_D32_FLOAT;
+		clearColor.r = 0.1f;
+		clearColor.g = 0.2f;
+		clearColor.b = 0.7f;
+		clearColor.a = 1.0f;
 
 		DX_API("Failed to create debug layer")
 			D3D12GetDebugInterface(IID_PPV_ARGS(debugController.GetAddressOf()));
@@ -294,11 +310,7 @@ namespace Egg::Graphics::DX12 {
 		// triple buffering is the max allowed
 		frameResources.reserve(3);
 
-		rtvClearValue.Color[0] = 0.0f;
-		rtvClearValue.Color[1] = 0.2f;
-		rtvClearValue.Color[2] = 0.4f;
-		rtvClearValue.Color[3] = 1.0f;
-		rtvClearValue.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		renderTargetFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 		CreateFactory();
 
@@ -310,15 +322,18 @@ namespace Egg::Graphics::DX12 {
 
 		CreateCommandQueue();
 
+		CreateContexts();
+
 		CreateSwapChain();
-
-		CreateSwapChainResources();
-
-		CreateLibraries();
 
 		SetContextReferences();
 
-		CreateContexts();
+		renderTargetViews = std::dynamic_pointer_cast<DX12ResourceViews>(resources->CreateRenderTargetViews(3));
+		depthStencilView = std::dynamic_pointer_cast<DX12ResourceViews>(resources->CreateDepthStencilView());
+
+		CreateLibraries();
+
+		CreateSwapChainResources();
 
 		//textureLibrary.CreateResources(device.Get());
 
@@ -330,7 +345,10 @@ namespace Egg::Graphics::DX12 {
 	}
 
 	void DX12GraphicsModule::Shutdown() {
-
+		if(displayMode == DisplayMode::FULLSCREEN) {
+			DX_API("Failed to set windowed state")
+				swapChain->SetFullscreenState(FALSE, nullptr);
+		}
 	}
 
 	void DX12GraphicsModule::OnResized(int newWidth, int newHeight) {
@@ -348,6 +366,88 @@ namespace Egg::Graphics::DX12 {
 
 			CreateSwapChainResources();
 		}
+	}
+
+	void DX12GraphicsModule::OnModeChanged(DisplayMode newMode)
+	{
+		if(displayMode == newMode) {
+			return;
+		}
+
+		com_ptr<IDXGIOutput> tempOutput;
+
+		DX_API("Failed to get containing output")
+			swapChain->GetContainingOutput(tempOutput.GetAddressOf());
+
+		DXGI_OUTPUT_DESC outputDesc;
+
+		DX_API("failed to get output desc")
+			tempOutput->GetDesc(&outputDesc);
+
+		int w = 0;
+		int h = 0;
+
+		switch(newMode) {
+			case DisplayMode::FULLSCREEN:
+			case DisplayMode::BORDERLESS:
+			{
+				lastWindowedModeSize.x = width;
+				lastWindowedModeSize.y = height;
+				w = outputDesc.DesktopCoordinates.right - outputDesc.DesktopCoordinates.left;
+				h = outputDesc.DesktopCoordinates.bottom - outputDesc.DesktopCoordinates.top;
+			}
+			break;
+			case DisplayMode::WINDOWED:
+			{
+				w = lastWindowedModeSize.x;
+				h = lastWindowedModeSize.y;
+			}
+			break;
+		}
+
+		DXGI_MODE_DESC targetMode;
+		targetMode.Format = renderTargetFormat;
+		targetMode.Height = h;
+		targetMode.Width = w;
+		targetMode.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+		targetMode.RefreshRate.Denominator = 0;
+		targetMode.RefreshRate.Numerator = 0;
+		targetMode.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+
+		DXGI_MODE_DESC givenMode;
+
+		DX_API("Failed to query closest matching mode")
+			tempOutput->FindClosestMatchingMode(&targetMode, &givenMode, nullptr);
+
+		if(newMode == DisplayMode::WINDOWED) {
+			givenMode.Width = w;
+			givenMode.Height = h;
+		} 
+
+		DX_API("Failed to resize target")
+			swapChain->ResizeTarget(&givenMode);
+
+		Egg::Module::AppEvent evt;
+		evt.resizeArgs.x = w;
+		evt.resizeArgs.y = h;
+		evt.type = Egg::Module::EAppEventType::RESIZED;
+
+		eventSystem->Broadcast(evt);
+
+		displayMode = newMode;
+	}
+
+	RECT DX12GraphicsModule::GetDisplayRect() const
+	{
+		com_ptr<IDXGIOutput> tempOutput;
+
+		DX_API("Failed to get containing output")
+			swapChain->GetContainingOutput(tempOutput.GetAddressOf());
+
+		DXGI_OUTPUT_DESC desc;
+		tempOutput->GetDesc(&desc);
+
+		return desc.DesktopCoordinates;
 	}
 
 	float DX12GraphicsModule::GetAspectRatio() const {
@@ -456,13 +556,13 @@ namespace Egg::Graphics::DX12 {
 
 		for(UINT i = 0; i < frameResources.size(); ++i) {
 			frameResources[i].swapChainBuffer.Reset();
-			frameResources[i].dsvHandle.ptr = 0;
-			frameResources[i].rtvHandle.ptr = 0;
 		}
 
-		dsvResource.Reset();
-		rtvDescHeap.Reset();
-		dsvDescHeap.Reset();
+		if(depthStencil != 0) {
+			resources->ReleaseResource(depthStencil);
+			depthStencil = 0;
+		}
+
 		presentedBackbufferIndex = UINT_MAX;
 	}
 	
@@ -474,87 +574,27 @@ namespace Egg::Graphics::DX12 {
 
 		backbufferDepth = scDesc.BufferCount;
 
-		D3D12_DESCRIPTOR_HEAP_DESC rtvDescHeapDesc;
-		rtvDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		rtvDescHeapDesc.NodeMask = 0;
-		rtvDescHeapDesc.NumDescriptors = backbufferDepth;
-		rtvDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-
-		D3D12_DESCRIPTOR_HEAP_DESC dsvDescHeapDesc;
-		dsvDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		dsvDescHeapDesc.NodeMask = 0;
-		dsvDescHeapDesc.NumDescriptors = 1;
-		dsvDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-
-		DX_API("Failed to create srv descriptor heap")
-			device->CreateDescriptorHeap(&rtvDescHeapDesc, IID_PPV_ARGS(rtvDescHeap.GetAddressOf()));
-
-		DX_API("Failed to create dsv descriptor heap")
-			device->CreateDescriptorHeap(&dsvDescHeapDesc, IID_PPV_ARGS(dsvDescHeap.GetAddressOf()));
-
 		while(frameResources.size() < backbufferDepth) {
 			frameResources.emplace_back();
 			frameResources.back().CreateResources(device.Get());
 		}
 
-		dsvClearValue.DepthStencil.Depth = 1.0f;
-		dsvClearValue.DepthStencil.Stencil = 0;
-		dsvClearValue.Format = depthStencilFormat;
+		UpdateViewport();
+		resourceContext.backbufferExtents = scissorRect;
 
-		// @TODO: move DSV creation out into resourcePool
-		DX_API("Failed to create dsv resource")
-			device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-											D3D12_HEAP_FLAG_NONE,
-											&CD3DX12_RESOURCE_DESC::Tex2D(depthStencilFormat, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
-											D3D12_RESOURCE_STATE_DEPTH_WRITE,
-											&dsvClearValue,
-											IID_PPV_ARGS(dsvResource.GetAddressOf()));
+		depthStencil = resources->CreateDepthStencil(depthStencilFormat, ResourceType::PERMANENT_DEFAULT);
+		depthStencilView->CreateDSV(depthStencil);
 
-		D3D12_DEPTH_STENCIL_VIEW_DESC dsvd = { };
-		dsvd.Format = depthStencilFormat;
-		dsvd.Flags = D3D12_DSV_FLAG_NONE;
-		dsvd.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-
-		device->CreateDepthStencilView(dsvResource.Get(), &dsvd, dsvDescHeap->GetCPUDescriptorHandleForHeapStart());
-
-		D3D12_VIEWPORT viewPort;
-		viewPort.Height = static_cast<float>(height);
-		viewPort.Width = static_cast<float>(width);
-		viewPort.TopLeftX = 0.0f;
-		viewPort.TopLeftY = 0.0f;
-		viewPort.MinDepth = 0.0f;
-		viewPort.MaxDepth = 1.0f;
-
-		aspectRatio = viewPort.Width / viewPort.Height;
-
-		D3D12_RECT scissorRect;
-		scissorRect.top = 0;
-		scissorRect.left = 0;
-		scissorRect.bottom = height;
-		scissorRect.right = width;
-
-		rtvDescHeapIncrement = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		aspectRatio = viewport.Width / viewport.Height;
 
 		for(UINT i = 0; i < backbufferDepth; ++i) {
 			DX_API("Failed to get swap chain buffer")
 				swapChain->GetBuffer(i, IID_PPV_ARGS(frameResources[i].swapChainBuffer.GetAddressOf()));
 
-			D3D12_CPU_DESCRIPTOR_HANDLE cpuDescHandle = rtvDescHeap->GetCPUDescriptorHandleForHeapStart();
-			cpuDescHandle.ptr += i * rtvDescHeapIncrement;
-
-			device->CreateRenderTargetView(frameResources[i].swapChainBuffer.Get(), nullptr, cpuDescHandle);
-
-			frameResources[i].rtvHandle = cpuDescHandle;
-			frameResources[i].dsvHandle = dsvDescHeap->GetCPUDescriptorHandleForHeapStart();
-			frameResources[i].viewPort = viewPort;
-			frameResources[i].scissorRect = scissorRect;
-			frameResources[i].dsvClearValue = dsvClearValue;
-			frameResources[i].rtvClearValue = rtvClearValue;
+			renderTargetViews->CreateRTV(i, frameResources[i].swapChainBuffer.Get(), renderTargetFormat);
 		}
 
 		backbufferIndex = swapChain->GetCurrentBackBufferIndex();
-
-		resourceContext.backbufferExtents = scissorRect;
 	}
 	
 	ShaderBuilderRef DX12GraphicsModule::CreateShaderBuilder() const {
