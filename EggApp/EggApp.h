@@ -84,9 +84,6 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		Egg::Input::SetAxis("Jump", VK_SPACE, 0);
 		Egg::Input::SetAxis("Fire", VK_LBUTTON, 0);
 
-		auto spriteFontBuilder = graphics->CreateSpriteFontBuilder();
-		spriteFontBuilder->LoadFont(L"titillium60.spritefont");
-		Egg::SpriteFontRef spriteFont = spriteFontBuilder->Build();
 
 
 		renderSystem.CreatePermanentResources(graphics.get());
@@ -123,38 +120,8 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			physics->SetActorRotation(boxActor, DirectX::XMFLOAT4{ sqrtf(2.0f) / 2.0f, 0.0f, -sqrtf(2.0f) / 2.0f, 0.0f });
 			physics->AddToScene(boxActor);
 		}
-		/*
-		Egg::HCBUFFER pfcb = graphics->constants->AllocateCbuffer(sizeof(PerFrameCb));
-		Egg::HCBUFFER pocb = graphics->constants->AllocateCbuffer(sizeof(PerObjectCb));
-		perFrameCb = graphics->constants->As<PerFrameCb>(pfcb);
-		model->perObjectCb = graphics->constants->As<PerObjectCb>(pocb);
-
-		perFrameCb->Lights[0] = Egg::DirectionalLight{ DirectX::XMFLOAT3A{ 1.0f, 1.0f, 1.0f}, DirectX::XMFLOAT4A{ 1.0f, 0.0f, 0.0f, 0.0f} };
-
-		
-		DirectX::XMStoreFloat4x4A(&model->perObjectCb->InvModel, identity);
-		DirectX::XMStoreFloat4x4A(&model->perObjectCb->Model, identity);*/
 
 		Egg::Importer::ImportModel(L"ybot.eggasset", ybotModel);
-		/*
-		Egg::HCBUFFER bdcb = UINT_MAX;
-		if(ybotModel.animationsLength > 0) {
-			bdcb = graphics->constants->AllocateCbuffer(sizeof(BoneDataCb));
-			model->boneDataCb = graphics->constants->As<BoneDataCb>(bdcb);
-		}
-
-
-		*/
-
-		//GameObject * gun = scene.Insert();
-		//gun->AddComponent<Transform>();
-		//Model*gunModel = gun->AddComponent<Model>();
-		//gun->SetActive(false);
-
-		//Egg::Importer::ImportModel(L"railgun.eggasset", railgun);
-
-		//LoadItem(graphics.get(), &railgun, gunModel);
-
 
 		const DirectX::XMMATRIX identity = DirectX::XMMatrixIdentity();
 		model->boneData = std::make_unique<BoneData>();
@@ -165,8 +132,8 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 		LoadItem(graphics.get(), &ybotModel, model);
 
-
-		/*Egg::HFONT f = graphics->fonts->Load(L"titillium60.spritefont");*/
+		DirectX::XMStoreFloat4x4A(&model->perObjectData.Model, identity);
+		DirectX::XMStoreFloat4x4A(&model->perObjectData.InvModel, identity);
 
 		CreateYbotAnimationComponent(&ybotModel, anim);
 		animSystem.SetMovementController(&movCtrl);

@@ -2,16 +2,30 @@
 
 namespace Egg::Graphics {
 
-	UploadBatch::BarrierTask::BarrierTask(uint64_t handle, ResourceState before, ResourceState after) : resourceHandle{ handle }, before{ before }, after{ after } {
+	UploadBatch::BarrierTask::BarrierTask(uint64_t handle, ResourceState before, ResourceState after) : resourceHandle{ handle }, before{ before }, after{ after } { }
+
+	UploadBatch::BufferUploadTask::BufferUploadTask(uint64_t h, const void * srcData, size_t srcDataSizeInBytes) : resourceHandle{ h }, srcData{ srcData }, srcDataSizeInBytes{ srcDataSizeInBytes } {
 	
 	}
 
-	UploadBatch::UploadTask::UploadTask(uint64_t h, const void * srcData, size_t srcDataSizeInBytes) : resourceHandle{ h }, srcData{ srcData }, srcDataSizeInBytes{ srcDataSizeInBytes } {
+	UploadBatch::BufferUploadTask::BufferUploadTask() : resourceHandle{ 0 }, srcData{ nullptr }, srcDataSizeInBytes{ 0 } {
+	
+	} 
+
+	UploadBatch::TextureUploadTask::TextureUploadTask() : resourceHandle{ 0 }, texture{ nullptr } {
+	
+	}
+
+	UploadBatch::TextureUploadTask::TextureUploadTask(uint64_t h, Egg::TextureRef texture) : resourceHandle{ h }, texture{ std::move(texture )} {
 	
 	}
 
 	void UploadBatch::Upload(uint64_t resourceHandle, const void * srcData, size_t srcDataSizeInBytes) {
-		uploadTasks.emplace_back(resourceHandle, srcData, srcDataSizeInBytes);
+		uploadTasks.emplace_back(BufferUploadTask(resourceHandle, srcData, srcDataSizeInBytes));
+	}
+
+	void  UploadBatch::Upload(uint64_t resourceHandle, Egg::TextureRef texture) {
+		uploadTasks.emplace_back(TextureUploadTask(resourceHandle, std::move(texture)));
 	}
 
 	void UploadBatch::ResourceBarrier(uint64_t resourceHandle, ResourceState before, ResourceState after) {

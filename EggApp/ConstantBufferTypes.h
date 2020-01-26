@@ -11,6 +11,7 @@ struct PerFrameData {
 	DirectX::XMFLOAT4X4A ViewInv;
 	DirectX::XMFLOAT4X4A ProjInv;
 	DirectX::XMFLOAT4X4A ProjTex;
+	DirectX::XMFLOAT4X4A RayDir;
 	DirectX::XMFLOAT4A eyePos;
 	float nearZ;
 	float farZ;

@@ -2,25 +2,58 @@
 
 #include "Common.h"
 #include "ResourceEnums.h"
+#include "HandleTypes.h"
 #include <vector>
 
 namespace Egg::Graphics {
 
+	enum class UploadTaskType : unsigned {
+		TEXTURE, BUFFER
+	};
+
+
 	class UploadBatch {
+
 	public:
+		void Upload(uint64_t resourceHandle, Egg::TextureRef texture);
+
 		void Upload(uint64_t resourceHandle, const void * srcData, size_t srcDataSizeInBytes);
 
 		void ResourceBarrier(uint64_t resourceHandle, ResourceState before, ResourceState after);
 
-		struct UploadTask {
+		struct BufferUploadTask {
 			const uint64_t resourceHandle;
 			const void * srcData;
 			const size_t srcDataSizeInBytes;
 
-			UploadTask(const UploadTask &) = default;
-			UploadTask & operator=(const UploadTask &) = default;
+			BufferUploadTask();
 
-			UploadTask(uint64_t h, const void * srcData, size_t srcDataSizeInBytes);
+			BufferUploadTask(const BufferUploadTask &) = default;
+			BufferUploadTask & operator=(const BufferUploadTask &) = default;
+
+			BufferUploadTask(uint64_t h, const void * srcData, size_t srcDataSizeInBytes);
+		};
+
+		struct TextureUploadTask {
+			const uint64_t resourceHandle;
+			const Egg::TextureRef texture;
+
+			TextureUploadTask();
+
+			TextureUploadTask(const TextureUploadTask &) = default;
+			TextureUploadTask & operator=(const TextureUploadTask &) = default;
+
+
+			TextureUploadTask(uint64_t h, Egg::TextureRef texture);
+		};
+
+		struct UploadTask {
+			TextureUploadTask textureTask;
+			BufferUploadTask bufferTask;
+			UploadTaskType type;
+
+			UploadTask(const TextureUploadTask & textureTask) : textureTask{ textureTask }, bufferTask{}, type { UploadTaskType::TEXTURE } { }
+			UploadTask(const BufferUploadTask & bufferTask) : textureTask{  }, bufferTask{ bufferTask }, type { UploadTaskType::BUFFER } { }
 		};
 
 		struct BarrierTask {

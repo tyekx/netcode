@@ -22,6 +22,7 @@ namespace Egg::Graphics {
 		virtual uint64_t CreateTypedBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
 		virtual uint64_t CreateStructuredBuffer(size_t size, uint32_t stride, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
 		virtual uint64_t CreateTexture2D(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) = 0;
+		virtual uint64_t CreateTextureCube(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) = 0;
 
 		virtual ResourceViewsRef CreateShaderResourceViews(uint32_t numDescriptors) = 0;
 		virtual ResourceViewsRef CreateRenderTargetViews(uint32_t numDescriptors) = 0;
@@ -88,6 +89,11 @@ namespace Egg::Graphics {
 		virtual void SetIndexBuffer(uint64_t handle) = 0;
 		virtual void DrawIndexed(uint64_t indexCount) = 0;
 		virtual void Draw(uint64_t vertexCount) = 0;
+
+		virtual void BeginSpriteRendering() = 0;
+		virtual void EndSpriteRendering() = 0;
+
+		virtual void DrawString(SpriteFontRef spriteFont, const wchar_t * string, const DirectX::XMFLOAT2 & position) = 0;
 
 		virtual void SetPrimitiveTopology(PrimitiveTopology topology) = 0;
 

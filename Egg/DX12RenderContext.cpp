@@ -1,4 +1,5 @@
 #include "DX12RenderContext.h"
+#include "DX12SpriteFont.h"
 
 namespace Egg::Graphics::DX12 {
 	void RenderContext::SetStencilReference(uint8_t stencilValue) {
@@ -114,6 +115,22 @@ namespace Egg::Graphics::DX12 {
 		const GResource & res = resources->GetNativeResource(handle);
 
 		streamOutput_FilledSizeLocation = res.address + ((byteOffset + 3ull) & ~(3ull));
+	}
+
+	void RenderContext::BeginSpriteRendering()
+	{
+		spriteBatch->Begin();
+	}
+
+	void RenderContext::EndSpriteRendering()
+	{
+		spriteBatch->End();
+	}
+
+	void RenderContext::DrawString(SpriteFontRef spriteFont, const wchar_t * string, const DirectX::XMFLOAT2 & position)
+	{
+		DX12SpriteFontRef font = std::dynamic_pointer_cast<DX12SpriteFont>(spriteFont);
+		font->DrawString(spriteBatch, string, position);
 	}
 
 	void RenderContext::ResetStreamOutput()

@@ -18,6 +18,7 @@ cbuffer FrameData : register(b2) {
 	float4x4 viewInv;
 	float4x4 projInv;
 	float4x4 projTex;
+	float4x4 rayDir;
 	float4 eyePos;
 	float nearZ;
 	float farZ;

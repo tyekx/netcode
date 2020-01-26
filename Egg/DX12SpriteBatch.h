@@ -10,10 +10,6 @@
 #include "UploadBatch.h"
 #include "Modules.h"
 
-//#include "RenderTargetState.h"
-
-
-
 namespace Egg::Graphics::DX12
 {
    __declspec(align(256)) struct SpriteCbuffer {
@@ -36,46 +32,6 @@ namespace Egg::Graphics::DX12
         SpriteEffects_FlipVertically = 2,
         SpriteEffects_FlipBoth = SpriteEffects_FlipHorizontally | SpriteEffects_FlipVertically,
     };
-
-    /*
-    class SpriteBatchPipelineStateDescription
-    {
-    public:
-        explicit SpriteBatchPipelineStateDescription(
-          //  const RenderTargetState & renderTarget,
-            _In_opt_ const D3D12_BLEND_DESC * blend = nullptr,
-            _In_opt_ const D3D12_DEPTH_STENCIL_DESC * depthStencil = nullptr,
-            _In_opt_ const D3D12_RASTERIZER_DESC * rasterizer = nullptr,
-            _In_opt_ const D3D12_GPU_DESCRIPTOR_HANDLE * isamplerDescriptor = nullptr)
-            :
-            blendDesc(blend ? *blend : s_DefaultBlendDesc),
-            depthStencilDesc(depthStencil ? *depthStencil : s_DefaultDepthStencilDesc),
-            rasterizerDesc(rasterizer ? *rasterizer : s_DefaultRasterizerDesc),
-            //renderTargetState(renderTarget),
-            samplerDescriptor{},
-            customRootSignature(nullptr),
-            customVertexShader{},
-            customPixelShader{}
-        {
-            if(isamplerDescriptor)
-                this->samplerDescriptor = *isamplerDescriptor;
-        }
-
-        D3D12_BLEND_DESC            blendDesc;
-        D3D12_DEPTH_STENCIL_DESC    depthStencilDesc;
-        D3D12_RASTERIZER_DESC       rasterizerDesc;
-        //RenderTargetState           renderTargetState;
-        D3D12_GPU_DESCRIPTOR_HANDLE samplerDescriptor;
-        ID3D12RootSignature * customRootSignature;
-        D3D12_SHADER_BYTECODE       customVertexShader;
-        D3D12_SHADER_BYTECODE       customPixelShader;
-
-    private:
-        static const D3D12_BLEND_DESC           s_DefaultBlendDesc;
-        static const D3D12_RASTERIZER_DESC      s_DefaultRasterizerDesc;
-        static const D3D12_DEPTH_STENCIL_DESC   s_DefaultDepthStencilDesc;
-       
-    }; */
 
     class SpriteBatch
     {

@@ -178,6 +178,7 @@ namespace Egg::Graphics::DX12 {
 
 	void DX12GraphicsModule::CreateLibraries()
 	{
+
 		shaderLibrary = std::make_shared<DX12ShaderLibrary>();
 
 		rootSigLibrary = std::make_shared<DX12RootSignatureLibrary>();
@@ -301,7 +302,7 @@ namespace Egg::Graphics::DX12 {
 		depthStencilFormat = DXGI_FORMAT_D32_FLOAT;
 		clearColor.r = 0.1f;
 		clearColor.g = 0.2f;
-		clearColor.b = 0.7f;
+		clearColor.b = 0.4f;
 		clearColor.a = 1.0f;
 
 		DX_API("Failed to create debug layer")
@@ -339,13 +340,8 @@ namespace Egg::Graphics::DX12 {
 
 		CreateSwapChainResources();
 
-		//textureLibrary.CreateResources(device.Get());
-
-		//spriteBatch = std::make_unique<SpriteBatch>(device.Get(), frameResources[backbufferIndex].resourceUploader.get(), SpriteBatchPipelineStateDescription(), &frameResources[backbufferIndex].viewPort);
-
-		//fontLibrary.CreateResources(device.Get(), &textureLibrary);
-
-		//renderItemBuffer.reserve(1024);
+		spriteBatch = std::make_unique<SpriteBatch>(this);
+		renderContext.spriteBatch = spriteBatch.get();
 	}
 
 	void DX12GraphicsModule::Shutdown() {
@@ -487,7 +483,17 @@ namespace Egg::Graphics::DX12 {
 
 		
 		for(const auto & task : upload.UploadTasks()) {
-			totalSize += task.srcDataSizeInBytes;
+			if(task.type == UploadTaskType::BUFFER) {
+				totalSize += task.bufferTask.srcDataSizeInBytes;
+			} else if(task.type == UploadTaskType::TEXTURE) {
+				TextureRef tex = task.textureTask.texture;
+				uint16_t imgCount = tex->GetImageCount();
+
+				for(uint16_t imgI = 0; imgI < imgCount; ++imgI) {
+					const Image* imgR = tex->GetImage(0, imgI, 0);
+					totalSize += imgR->slicePitch;
+				}
+			}
 		}
 
 		if(totalSize > 0) {
@@ -502,27 +508,45 @@ namespace Egg::Graphics::DX12 {
 
 			const D3D12_RANGE nullRange = CD3DX12_RANGE{ 0, 0 };
 
-			uint8_t * dstPtr;
-
-			DX_API("Failed to map upload resource")
-				uploadResource->Map(0, &nullRange, reinterpret_cast<void **>(&dstPtr));
-
 			size_t offset = 0;
 
 
 			for(const auto & task : upload.UploadTasks()) {
-				const auto & gres = resourcePool.GetNativeResource(task.resourceHandle);
+				if(task.type == UploadTaskType::BUFFER) {
+					const auto & gres = resourcePool.GetNativeResource(task.bufferTask.resourceHandle);
 
-				D3D12_SUBRESOURCE_DATA data;
-				data.RowPitch = (gres.desc.dimension == ResourceDimension::BUFFER) ? task.srcDataSizeInBytes : (gres.desc.strideInBytes * gres.desc.width);
-				data.SlicePitch = task.srcDataSizeInBytes;
-				data.pData = task.srcData;
-				UpdateSubresources(gcl.Get(), gres.resource, uploadResource.Get(), offset, 0u, 1u, &data);
+					D3D12_SUBRESOURCE_DATA data;
+					data.RowPitch = (gres.desc.dimension == ResourceDimension::BUFFER) ? task.bufferTask.srcDataSizeInBytes : (gres.desc.strideInBytes * gres.desc.width);
+					data.SlicePitch = task.bufferTask.srcDataSizeInBytes;
+					data.pData = task.bufferTask.srcData;
+					UpdateSubresources(gcl.Get(), gres.resource, uploadResource.Get(), offset, 0u, 1u, &data);
 
-				offset += task.srcDataSizeInBytes;
+					offset += task.bufferTask.srcDataSizeInBytes;
+				}
+
+				if(task.type == UploadTaskType::TEXTURE) {
+					const auto & gres = resourcePool.GetNativeResource(task.textureTask.resourceHandle);
+
+					TextureRef tex = task.textureTask.texture;
+					uint16_t imgCount = tex->GetImageCount();
+
+					std::unique_ptr<D3D12_SUBRESOURCE_DATA[]> subResData = std::make_unique<D3D12_SUBRESOURCE_DATA[]>(imgCount);
+
+					size_t s = 0;
+
+					for(uint16_t imgI = 0; imgI < imgCount; ++imgI) {
+						const Image * imgR = tex->GetImage(0, imgI, 0);
+						s += imgR->slicePitch;
+						subResData[imgI].pData = imgR->pixels;
+						subResData[imgI].RowPitch = imgR->rowPitch;
+						subResData[imgI].SlicePitch = imgR->slicePitch;
+					}
+
+					UpdateSubresources(gcl.Get(), gres.resource, uploadResource.Get(), offset, 0u, imgCount, subResData.get());
+
+					offset += s;
+				}
 			}
-
-			uploadResource->Unmap(0, nullptr);
 		}
 
 		if(!barriers.empty()) {
@@ -604,37 +628,29 @@ namespace Egg::Graphics::DX12 {
 	ShaderBuilderRef DX12GraphicsModule::CreateShaderBuilder() const {
 		return std::make_shared<DX12ShaderBuilder>(shaderLibrary);
 	}
+
 	GPipelineStateBuilderRef DX12GraphicsModule::CreateGPipelineStateBuilder() const {
 		return std::make_shared<DX12GPipelineStateBuilder>(gPipelineLibrary);
 	}
+
 	InputLayoutBuilderRef DX12GraphicsModule::CreateInputLayoutBuilder() const {
 		return std::make_shared<DX12InputLayoutBuilder>(inputLayoutLibrary);
 	}
+
 	StreamOutputBuilderRef DX12GraphicsModule::CreateStreamOutputBuilder() const {
 		return std::make_shared<DX12StreamOutputBuilder>(streamOutputLibrary);
 	}
+
 	RootSignatureBuilderRef DX12GraphicsModule::CreateRootSignatureBuilder() const {
 		return std::make_shared<DX12RootSignatureBuilder>(rootSigLibrary);
 	}
-	SpriteFontBuilderRef DX12GraphicsModule::CreateSpriteFontBuilder() const
-	{
+
+	SpriteFontBuilderRef DX12GraphicsModule::CreateSpriteFontBuilder() const {
 		return std::make_shared<DX12SpriteFontBuilder>(spriteFontLibrary);
 	}
 
-	/*
-	void DX12GraphicsModule::TestFont(HFONT font) {
-		FrameResource & fr = frameResources.at(backbufferIndex);
-		spriteBatch->Begin(fr.commandList.Get());
-
-
-		SpriteFont * f = fontLibrary.Get(font);
-		f->DrawString(spriteBatch.get(), "Hello World", DirectX::g_XMZero);
-
-		spriteBatch->Draw(itm->texturesHandle, DirectX::XMUINT2(512, 128), DirectX::XMFLOAT2{ 100.0f, 300.0f });
-
-		//spriteBatch->Draw(f->texture, f->textureSize, DirectX::XMFLOAT2{ 0, 100.0f });
-
-		spriteBatch->End();
-	}*/
+	TextureBuilderRef DX12GraphicsModule::CreateTextureBuilder() const {
+		return std::make_shared<DX12TextureBuilder>();
+	}
 
 }

@@ -28,6 +28,7 @@ namespace Egg::Graphics::DX12 {
 		virtual uint64_t CreateTypedBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags) override;
 		virtual uint64_t CreateStructuredBuffer(size_t size, uint32_t stride, ResourceType type, ResourceState initState, ResourceFlags flags) override;
 		virtual uint64_t CreateTexture2D(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) override;
+		virtual uint64_t CreateTextureCube(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) override;
 
 		virtual ResourceViewsRef CreateShaderResourceViews(uint32_t numDescriptors) override;
 		virtual ResourceViewsRef CreateRenderTargetViews(uint32_t numDescriptors) override;

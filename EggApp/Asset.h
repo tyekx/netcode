@@ -124,26 +124,7 @@ void LoadItem(Egg::Module::IGraphicsModule * g, Egg::Asset::Model * model, Model
 			appMesh->vertexSize = mesh->vertexSize;
 			appMesh->vertexType = mesh->vertexType;
 		}
-		/*
-		Egg::PNT_Vertex vdata[3] = {
-			{ { 0.0f, 0.87f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },
-			{ { -0.87f, -0.87f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
-			{ { 0.87f, -0.87f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f } }
-		};
 
-		GBuffer lod;
-		uint64_t vbuffer = g->resources->CreateVertexBuffer(sizeof(vdata), sizeof(Egg::PNT_Vertex), ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
-		lod.vertexBuffer = vbuffer;
-		lod.vertexCount = 3;
-		lod.indexBuffer = 0;
-		lod.indexCount = 0;
-		
-		batch.Upload(vbuffer, vdata, sizeof(vdata));
-		batch.ResourceBarrier(vbuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
-
-		appMesh->AddLOD(lod);
-		appMesh->vertexSize = sizeof(Egg::PNT_Vertex);
-		appMesh->vertexType = Egg::PNT_Vertex::type;*/
 		appMesh->selectedLod = 0;
 		appMesh->boundingBox = mesh->boundingBox;
 
@@ -153,55 +134,9 @@ void LoadItem(Egg::Module::IGraphicsModule * g, Egg::Asset::Model * model, Model
 		material->data.fresnelR0 = DirectX::XMFLOAT3{ 0.05f, 0.05f, 0.05f };
 		material->data.shininess = mat->shininess;
 
-		{
-			Egg::ShaderBuilderRef shaderBuilder = g->CreateShaderBuilder();
-			Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"lightningPass_Vertex.cso");
-			Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"lightningPass_Pixel.cso");
-
-			Egg::RootSignatureBuilderRef rsBuilder = g->CreateRootSignatureBuilder();
-			Egg::RootSignatureRef rootSig = rsBuilder->BuildFromShader(vs);
-
-			Egg::GPipelineStateBuilderRef gpBuilder = g->CreateGPipelineStateBuilder();
-			gpBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
-			gpBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
-			gpBuilder->SetDepthStencilFormat(DXGI_FORMAT_D32_FLOAT);
-			gpBuilder->SetVertexShader(vs);
-			gpBuilder->SetPixelShader(ps);
-			gpBuilder->SetRootSignature(rootSig);
-			gpBuilder->SetInputLayout(inputLayout);
-			Egg::PipelineStateRef pipelineState = gpBuilder->Build();
-
-			material->pipelineState = pipelineState;
-			material->rootSignature = rootSig;
-		}
-
 		g->frame->SyncUpload(batch);
 
 		modelComponent->AddShadedMesh(appMesh, material);
-
-		// @TODO material, textures
-		/*
-		matcbV->diffuseColor = 
-		matcbV->fresnelR0 = 
-		matcbV->shininess = mat->shininess;
-		
-
-		g->AddCbuffer(item, matcb, g->GetCbufferSlot(item, "MaterialCb"));
-		if(mat->HasTextures()) {
-			UINT numTextures = ((UINT)mat->HasDiffuseTexture() + (UINT)mat->HasNormalTexture());
-			g->AllocateTextures(item, numTextures);
-		}
-
-		if(mat->HasDiffuseTexture()) {
-			g->SetTexture(item, 0, Egg::Utility::ToWideString(mat->diffuseTexture));
-		} 
-
-		if(mat->HasNormalTexture()) {
-			g->SetTexture(item, 1, Egg::Utility::ToWideString(mat->normalTexture));
-		}*/
-		
-		// @TODO connect material with geometry
-		//modelComponent->AddShadedMesh(item, matcbV);
 	}
 
 }

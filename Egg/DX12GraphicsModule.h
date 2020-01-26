@@ -124,12 +124,11 @@ namespace Egg::Graphics::DX12 {
 		UINT backbufferIndex;
 		UINT presentedBackbufferIndex;
 
-
-		std::unique_ptr<SpriteBatch> spriteBatch;
 		float aspectRatio;
 		DXGI_RGBA clearColor;
 
 		DisplayMode displayMode;
+		std::unique_ptr<SpriteBatch> spriteBatch;
 
 		void NextBackBufferIndex();
 
@@ -209,6 +208,8 @@ namespace Egg::Graphics::DX12 {
 		virtual RootSignatureBuilderRef CreateRootSignatureBuilder() const override;
 
 		virtual SpriteFontBuilderRef CreateSpriteFontBuilder() const override;
+
+		virtual TextureBuilderRef CreateTextureBuilder() const override;
 	};
 
 

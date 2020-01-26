@@ -86,6 +86,19 @@ namespace Egg::Graphics::DX12 {
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvd;
 		srvd.Format = resource.format;
 
+		if(resource.depth == 6) {
+			srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+			srvd.TextureCube.MipLevels = resource.mipLevels;
+			srvd.TextureCube.MostDetailedMip = 0;
+			srvd.TextureCube.ResourceMinLODClamp = 0.0f;
+		} else {
+			srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+			srvd.Texture2D.MipLevels = resource.mipLevels;
+			srvd.Texture2D.MostDetailedMip = 0;
+			srvd.Texture2D.PlaneSlice = 0;
+			srvd.Texture2D.ResourceMinLODClamp = 0.0f;
+		}
+
 		switch(srvd.Format) {
 			case DXGI_FORMAT_D32_FLOAT:
 				srvd.Format = DXGI_FORMAT_R32_FLOAT;
@@ -101,11 +114,6 @@ namespace Egg::Graphics::DX12 {
 				break;
 		}
 
-		srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		srvd.Texture2D.MipLevels = resource.mipLevels;
-		srvd.Texture2D.MostDetailedMip = 0;
-		srvd.Texture2D.PlaneSlice = 0;
-		srvd.Texture2D.ResourceMinLODClamp = 0.0f;
 		srvd.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 		return srvd;

@@ -16,7 +16,10 @@ namespace Egg::Graphics::DX12 {
 	}
 	
 	void TextureBuilder::LoadTextureCube(const std::wstring & mediaPath) {
-		ASSERT(false, "Loading TextureCube is not supported yet");
+		MediaPath media{ mediaPath };
+
+		DX_API("Failed to load image: %S", mediaPath.c_str())
+			DirectX::LoadFromDDSFile(media.GetAbsolutePath().c_str(), 0, &metaData, scratchImage);
 	}
 	
 	uint16_t TextureBuilder::GetCurrentMipLevelCount() {

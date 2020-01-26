@@ -37,6 +37,25 @@ namespace Egg::Graphics::DX12 {
 		return resources->CreateResource(desc);
 	}
 
+	uint64_t ResourceContext::CreateTextureCube(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags)
+	{
+		ASSERT(resourceType == ResourceType::PERMANENT_DEFAULT || resourceType == ResourceType::TRANSIENT_DEFAULT, "TextureCube must be in default heap");
+		ResourceDesc desc;
+		desc.depth = 6;
+		desc.dimension = ResourceDimension::TEXTURE2D;
+		desc.width = width;
+		desc.mipLevels = 1;
+		desc.format = format;
+		desc.flags = flags;
+		desc.type = resourceType;
+		desc.sizeInBytes = 0;
+		desc.strideInBytes = DirectX::BitsPerPixel(format) / 8U;
+		desc.height = height;
+		desc.state = initialState;
+		ZeroMemory(&desc.clearValue, sizeof(ClearValue));
+		return resources->CreateResource(desc);
+	}
+
 	ResourceViewsRef ResourceContext::CreateShaderResourceViews(uint32_t numDescriptors)
 	{
 		return descHeaps->CreatePermanentSRV(numDescriptors);

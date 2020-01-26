@@ -71,6 +71,7 @@ class AppDefinedRenderer {
 	Egg::RootSignatureRef ssaoBlurPass_RootSignature;
 	Egg::PipelineStateRef ssaoBlurPass_PipelineState;
 
+	Egg::SpriteFontRef testFont;
 
 public:
 
@@ -352,7 +353,6 @@ private:
 		psoBuilder->SetInputLayout(inputLayout);
 		psoBuilder->SetVertexShader(vs);
 		psoBuilder->SetPixelShader(ps);
-		psoBuilder->SetDepthStencilState(depthDesc);
 		psoBuilder->SetDepthStencilFormat(gbufferPass_DepthStencilFormat);
 		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
 		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
@@ -577,7 +577,101 @@ private:
 		});
 	}
 
+	uint64_t cloudynoonTexture;
+
+	Egg::ResourceViewsRef cloudynoonView;
+
 public:
+
+	void CreateDebugFontPassPermanentResources(Egg::Module::IGraphicsModule * g) {
+		auto spriteFontBuilder = g->CreateSpriteFontBuilder();
+		spriteFontBuilder->LoadFont(L"titillium60.spritefont");
+		testFont = spriteFontBuilder->Build();
+
+		Egg::TextureBuilderRef textureBuilder = graphics->CreateTextureBuilder();
+		textureBuilder->LoadTextureCube(L"cloudynoon.dds");
+		Egg::TextureRef cloudynoon = textureBuilder->Build();
+
+		ASSERT(cloudynoon->GetImageCount() == 6, "bad image count");
+
+		const Egg::Image* img = cloudynoon->GetImage(0, 0, 0);
+
+		cloudynoonTexture = g->resources->CreateTextureCube(img->width, img->height, img->format, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST, ResourceFlags::NONE);
+
+		g->resources->SetDebugName(cloudynoonTexture, L"Cloudynoon TextureCube");
+
+		Egg::Graphics::UploadBatch batch;
+		batch.Upload(cloudynoonTexture, cloudynoon);
+		batch.ResourceBarrier(cloudynoonTexture, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
+		g->frame->SyncUpload(batch);
+
+		cloudynoonView = g->resources->CreateShaderResourceViews(1);
+		cloudynoonView->CreateSRV(0, cloudynoonTexture);
+
+		Egg::ShaderBuilderRef shaderBuilder = g->CreateShaderBuilder();
+		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"envmapPass_Vertex.cso");
+		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"envmapPass_Pixel.cso");
+
+		Egg::RootSignatureBuilderRef rootSigBuilder = g->CreateRootSignatureBuilder();
+		envmapPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
+
+		auto ilBuilder = g->CreateInputLayoutBuilder();
+		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
+		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
+		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+
+
+		Egg::DepthStencilDesc depthDesc;
+		depthDesc.depthEnable = false;
+		depthDesc.stencilEnable = true;
+		depthDesc.frontFace.stencilDepthFailOp = Egg::StencilOp::KEEP;
+		depthDesc.frontFace.stencilFailOp = Egg::StencilOp::KEEP;
+		depthDesc.frontFace.stencilPassOp = Egg::StencilOp::KEEP;
+		depthDesc.frontFace.stencilFunc = Egg::ComparisonFunc::EQUAL;
+		depthDesc.stencilReadMask = 0xFF;
+		depthDesc.stencilWriteMask = 0x00;
+		depthDesc.depthWriteMaskZero = true;
+		depthDesc.backFace = depthDesc.frontFace;
+		depthDesc.backFace.stencilFunc = Egg::ComparisonFunc::NEVER;
+
+		Egg::GPipelineStateBuilderRef psoBuilder = g->CreateGPipelineStateBuilder();
+		psoBuilder->SetInputLayout(inputLayout);
+		psoBuilder->SetVertexShader(vs);
+		psoBuilder->SetPixelShader(ps);
+		psoBuilder->SetDepthStencilFormat(gbufferPass_DepthStencilFormat);
+		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
+		psoBuilder->SetRootSignature(envmapPass_RootSignature);
+		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
+		psoBuilder->SetDepthStencilState(depthDesc);
+
+		envmapPass_PipelineState = psoBuilder->Build();
+	}
+
+	Egg::RootSignatureRef envmapPass_RootSignature;
+	Egg::PipelineStateRef envmapPass_PipelineState;
+
+	void CreateDebugFontPass(FrameGraphBuilder & builder) {
+		builder.CreateRenderPass("Debug font pass", [](IResourceContext * ctx) ->void { },
+			[this](IRenderContext * ctx) -> void {
+
+			ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencilView);
+			ctx->SetStencilReference(0);
+			ctx->SetRootSignature(envmapPass_RootSignature);
+			ctx->SetPipelineState(envmapPass_PipelineState);
+
+			ctx->SetConstants(0, *perFrameData);
+			ctx->SetShaderResources(1, cloudynoonView);
+
+			ctx->SetVertexBuffer(fsQuad.vertexBuffer);
+			ctx->Draw(fsQuad.vertexCount);
+
+			ctx->BeginSpriteRendering();
+
+			ctx->DrawString(testFont, L"Hello World", DirectX::XMFLOAT2{ 0.0f, 0.0f });
+
+			ctx->EndSpriteRendering();
+		});
+	}
 
 	void Reset() {
 		skinningPass_Input.Clear();
@@ -604,6 +698,7 @@ public:
 		CreateSkinningPassPermanentResources(g);
 		CreateGbufferPassPermanentResources(g);
 		CreateLightingPassPermanentResources(g);
+		CreateDebugFontPassPermanentResources(g);
 		//CreateSSAOBlurPassPermanentResources(g);
 	  	//CreateSSAOOcclusionPassPermanentResources(g);
 		CreateFSQuad(g);
@@ -615,6 +710,7 @@ public:
 		//CreateSSAOOcclusionPass(builder);
 		//CreateSSAOBlurPass(builder);
 		CreateLightingPass(builder);
+		CreateDebugFontPass(builder);
 		//CreatePostProcessPass(builder);
 	}
 

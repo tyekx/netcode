@@ -5,6 +5,7 @@
 static const char spriteFontMagic[] = "DXTKfont";
 
 namespace Egg::Graphics::DX12 {
+	const DirectX::XMFLOAT2 SpriteFont::Float2Zero{ 0.0f, 0.0f };
 
 	const wchar_t * SpriteFont::ConvertUTF8(const char * text) const
 	{
@@ -57,6 +58,7 @@ namespace Egg::Graphics::DX12 {
 		auto textureStride = reader->Read<uint32_t>();
 		auto textureRows = reader->Read<uint32_t>();
 		auto textureData = reader->ReadArray<uint8_t>(size_t(textureStride) * size_t(textureRows));
+		textureSize = DirectX::XMUINT2(textureWidth, textureHeight);
 
 		DX_API("Failed to initialize texture2d")
 			imageData.Initialize2D(textureFormat, textureWidth, textureHeight, 1, 1);
@@ -114,7 +116,10 @@ namespace Egg::Graphics::DX12 {
 
 	void XM_CALLCONV SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, float scale, SpriteEffects effects, float layerDepth) const
 	{
-		DrawString(spriteBatch, text, DirectX::XMLoadFloat2(&position), color, rotation, DirectX::XMLoadFloat2(&origin), DirectX::XMVectorReplicate(scale), effects, layerDepth);
+		DirectX::XMVECTOR posV = DirectX::XMLoadFloat2(&position);
+		DirectX::XMVECTOR originV = DirectX::XMLoadFloat2(&origin);
+		DirectX::XMVECTOR scaleV = DirectX::XMVectorReplicate(scale);
+		DrawString(spriteBatch, text, posV, color, rotation, originV, scaleV, effects, layerDepth);
 	}
 
 

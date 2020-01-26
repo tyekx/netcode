@@ -87,6 +87,17 @@ public:
 									  0.0f,  0.0f, 1.0f, 0.0f,
 									  0.5f,  0.5f, 0.0f, 1.0f };
 
+		DirectX::XMVECTOR lookToV = DirectX::XMLoadFloat3(&camComponent->ahead);
+		DirectX::XMVECTOR upV = DirectX::XMLoadFloat3(&camComponent->up);
+
+		DirectX::XMMATRIX viewFromOrigo = DirectX::XMMatrixLookToRH(DirectX::g_XMZero, lookToV, upV);
+		DirectX::XMMATRIX rayDir = DirectX::XMMatrixMultiply(viewFromOrigo, proj);
+
+		DirectX::XMVECTOR rayDirDet = DirectX::XMMatrixDeterminant(rayDir);
+		rayDir = DirectX::XMMatrixInverse(&rayDirDet, rayDir);
+
+		DirectX::XMStoreFloat4x4A(&perFrameData.RayDir, DirectX::XMMatrixTranspose(rayDir));
+
 		perFrameData.farZ = camComponent->farPlane;
 		perFrameData.nearZ = camComponent->nearPlane;
 		perFrameData.fov = camComponent->fov;

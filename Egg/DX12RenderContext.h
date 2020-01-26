@@ -5,6 +5,7 @@
 #include "DX12ResourcePool.h"
 #include "DX12ConstantBufferPool.h"
 #include "DX12DynamicDescriptorHeap.h"
+#include "DX12SpriteBatch.h"
 
 namespace Egg::Graphics::DX12 {
 
@@ -22,6 +23,7 @@ namespace Egg::Graphics::DX12 {
 		std::vector<D3D12_RESOURCE_BARRIER> barriers;
 		D3D12_GPU_VIRTUAL_ADDRESS streamOutput_FilledSizeLocation;
 		DynamicDescriptorHeap * descHeaps;
+		SpriteBatch * spriteBatch;
 
 		virtual void SetStencilReference(uint8_t stencilValue) override;
 
@@ -54,6 +56,12 @@ namespace Egg::Graphics::DX12 {
 		virtual void SetStreamOutput(uint64_t handle) override;
 
 		virtual void SetStreamOutputFilledSize(uint64_t handle, uint64_t byteOffset) override;
+
+
+		virtual void BeginSpriteRendering() override;
+		virtual void EndSpriteRendering() override;
+
+		virtual void DrawString(SpriteFontRef spriteFont, const wchar_t * string, const DirectX::XMFLOAT2 & position) override;
 
 		virtual void ResetStreamOutput() override;
 
