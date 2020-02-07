@@ -85,6 +85,7 @@ namespace Egg::Graphics::DX12 {
 	};
 
 	class DX12GraphicsModule : public Egg::Module::IGraphicsModule, Egg::Graphics::IFrameContext {
+	protected:
 		Egg::Module::AppEventSystem * eventSystem;
 		HWND hwnd;
 		com_ptr<ID3D12Debug3> debugController;
@@ -144,9 +145,9 @@ namespace Egg::Graphics::DX12 {
 
 		void QuerySyncSupport();
 
-		void CreateSwapChain();
-
 		void CreateLibraries();
+
+		virtual void CreateSwapChain();
 
 		void SetContextReferences();
 
@@ -170,6 +171,8 @@ namespace Egg::Graphics::DX12 {
 		ResourceContext resourceContext;
 
 	public:
+
+		virtual void * GetSwapChain() const override;
 
 		virtual void Prepare() override;
 

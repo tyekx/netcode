@@ -578,7 +578,6 @@ private:
 	}
 
 	uint64_t cloudynoonTexture;
-
 	Egg::ResourceViewsRef cloudynoonView;
 
 public:

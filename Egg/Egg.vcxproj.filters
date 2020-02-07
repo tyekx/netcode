@@ -316,6 +316,9 @@
     <ClInclude Include="DX12SpriteFontBuilder.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
+    <ClInclude Include="DX12GraphicsModuleForWin32.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
@@ -488,6 +491,9 @@
       <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="DX12SpriteFontBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12GraphicsModuleForWin32.cpp">
       <Filter>Graphics\DX12</Filter>
     </ClCompile>
   </ItemGroup>

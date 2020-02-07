@@ -1,0 +1,254 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Midl Include="App.idl" />
+    <Midl Include="MainPage.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="App.cpp" />
+    <ClCompile Include="MainPage.cpp" />
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="Manifest.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="DC_Lod.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="DC_Mesh.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="FBXImporter.cpp">
+      <Filter>Import</Filter>
+    </ClCompile>
+    <ClCompile Include="DC_MainPage.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorModuleFactory.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12GraphicsModuleForXaml.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="XamlGlobal.cpp">
+      <Filter>XAML</Filter>
+    </ClCompile>
+    <ClCompile Include="DC_Bone.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="DC_Animation.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="EggAssetExporter.cpp">
+      <Filter>Export</Filter>
+    </ClCompile>
+    <ClCompile Include="XamlHelpers.cpp" />
+    <ClCompile Include="DC_Material.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="VectorConverter.cpp">
+      <Filter>XAML\Converters</Filter>
+    </ClCompile>
+    <ClCompile Include="DC_Collider.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="ColliderTypeVisibilityConverter.cpp">
+      <Filter>XAML\Converters</Filter>
+    </ClCompile>
+    <ClCompile Include="ColliderTypeConverter.cpp">
+      <Filter>XAML\Converters</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Manifest.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="DC_Lod.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="DC_Mesh.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="FBXImporter.h">
+      <Filter>Import</Filter>
+    </ClInclude>
+    <ClInclude Include="DC_MainPage.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12GraphicsModuleForXaml.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorModuleFactory.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorApp.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorFrameGraph.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="GBuffer.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="ConstantBufferTypes.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="BoundingBoxHelpers.h">
+      <Filter>Import</Filter>
+    </ClInclude>
+    <ClInclude Include="XamlGlobal.h">
+      <Filter>XAML</Filter>
+    </ClInclude>
+    <ClInclude Include="DC_Bone.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="DC_Animation.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="EggAssetExporter.h">
+      <Filter>Export</Filter>
+    </ClInclude>
+    <ClInclude Include="XamlHelpers.h" />
+    <ClInclude Include="DC_Material.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="VectorConverter.h">
+      <Filter>XAML\Converters</Filter>
+    </ClInclude>
+    <ClInclude Include="DC_Collider.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="ColliderTypeVisibilityConverter.h">
+      <Filter>XAML\Converters</Filter>
+    </ClInclude>
+    <ClInclude Include="ColliderTypeConverter.h">
+      <Filter>XAML\Converters</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\Wide310x150Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\StoreLogo.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square150x150Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SplashScreen.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\LockScreenLogo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\loading_icon.png">
+      <Filter>Assets</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Assets">
+      <UniqueIdentifier>{e48dc53e-40b1-40cb-970a-f89935452892}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="XAML">
+      <UniqueIdentifier>{0c0844e9-c90e-44f9-babe-b9e05ab8e6a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Data">
+      <UniqueIdentifier>{3048f285-e983-49b3-af72-9742ecb88554}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Import">
+      <UniqueIdentifier>{55a3c50c-0d05-44d5-b67a-8e67da4ae946}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics">
+      <UniqueIdentifier>{729e34ee-31d5-43cc-8c4e-dafd79f1816e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{e22365f1-9e14-42ce-9b43-f8e31d68af37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="XAML\Pages">
+      <UniqueIdentifier>{915fecdd-ee4d-421b-8377-af145dc75f47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Export">
+      <UniqueIdentifier>{d43a56ad-7db7-42a5-891c-ef759a389e46}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="XAML\Dialogs">
+      <UniqueIdentifier>{74b33de0-b25f-4b4c-a477-9a7fc7365870}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="XAML\UserControls">
+      <UniqueIdentifier>{c914a455-16c2-4b2d-8172-8ae0ce1cabc4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="XAML\Converters">
+      <UniqueIdentifier>{aebe35a6-9629-4e67-a229-1784b3bc02dd}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PropertySheet.props" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <Filter>XAML</Filter>
+    </ApplicationDefinition>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="MainPage.xaml">
+      <Filter>XAML</Filter>
+    </Page>
+    <Page Include="UC_Mesh.xaml">
+      <Filter>XAML</Filter>
+    </Page>
+    <Page Include="UC_Lod.xaml">
+      <Filter>XAML</Filter>
+    </Page>
+    <Page Include="GeometryPage.xaml">
+      <Filter>XAML\Pages</Filter>
+    </Page>
+    <Page Include="AnimationsPage.xaml">
+      <Filter>XAML\Pages</Filter>
+    </Page>
+    <Page Include="BonesPage.xaml">
+      <Filter>XAML\Pages</Filter>
+    </Page>
+    <Page Include="MaterialsPage.xaml">
+      <Filter>XAML\Pages</Filter>
+    </Page>
+    <Page Include="CollidersPage.xaml">
+      <Filter>XAML\Pages</Filter>
+    </Page>
+    <Page Include="UC_Bone.xaml">
+      <Filter>XAML</Filter>
+    </Page>
+    <Page Include="CreateColliderDialog.xaml">
+      <Filter>XAML\Dialogs</Filter>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Editor_GBufferPass_Pixel.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Editor_GBufferPass_Vertex.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Editor_BoneVisibilityPass_Vertex.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Editor_BoneVisibilityPass_Pixel.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+</Project>

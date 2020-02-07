@@ -1,6 +1,6 @@
 #include "DefaultModuleFactory.h"
 #include "WinapiWindowModule.h"
-#include "DX12GraphicsModule.h"
+#include "DX12GraphicsModuleForWin32.h"
 #include "PhysxModule.h"
 
 namespace Egg::Module {
@@ -10,7 +10,7 @@ namespace Egg::Module {
 	}
 
 	std::unique_ptr<IGraphicsModule> DefaultModuleFactory::CreateGraphicsModule(AApp * app, int graphicsType) {
-		return std::make_unique<Egg::Graphics::DX12::DX12GraphicsModule>();
+		return std::make_unique<Egg::Graphics::DX12::DX12GraphicsModuleForWin32>();
 	}
 
 	std::unique_ptr<INetworkModule> DefaultModuleFactory::CreateNetworkModule(AApp * app, int networkType)  {

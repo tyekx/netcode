@@ -1,0 +1,27 @@
+﻿<Page
+    x:Class="EggAssetEditor.GeometryPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EggAssetEditor"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d" NavigationCacheMode="Enabled">
+
+    <Page.DataContext>
+        <local:DC_MainPage />
+    </Page.DataContext>
+
+        <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="5*"/>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
+        <ListView x:Name="geometryListView" ItemsSource="{Binding Meshes}" Grid.Row="0" Grid.Column="0" SelectionMode="Multiple" CanReorderItems="False" SelectionChanged="ListView_SelectionChanged" ContainerContentChanging="geometryListView_ContainerContentChanging">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <local:UC_Mesh DataContext="{Binding}"></local:UC_Mesh>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</Page>

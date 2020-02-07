@@ -1,0 +1,8 @@
+namespace EggAssetEditor
+{
+    [default_interface]
+    runtimeclass BonesPage : Windows.UI.Xaml.Controls.Page
+    {
+        BonesPage();
+    }
+}

@@ -14,7 +14,7 @@
     <EggPhysXBin>$(EggSDK)\PhysX\$(EggPhysXVersion)\$(EggBuildSelect)\</EggPhysXBin>
     <EggPhysXInclude>$(EggSDK)\PhysX\$(EggPhysXVersion)\include\</EggPhysXInclude>
     <EggPhysXLibs>PhysX_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib</EggPhysXLibs>
-    <EggAssimpVersion>5.0.0-dev</EggAssimpVersion>
+    <EggAssimpVersion>5.0.0</EggAssimpVersion>
     <EggAssimpInclude>$(EggSDK)\assimp\$(EggAssimpVersion)\include\</EggAssimpInclude>
     <EggAssimpBin>$(EggSDK)\assimp\$(EggAssimpVersion)\$(EggBuildSelect)\</EggAssimpBin>
     <EggAssimpLibs>assimp.lib</EggAssimpLibs>
@@ -30,10 +30,14 @@
     <EggSpdLogInclude>$(EggSDK)\spdlog\$(EggSpdLogVersion)\include</EggSpdLogInclude>
     <EggSpdLogBin>$(EggSDK)\spdlog\$(EggSpdLogVersion)\$(EggBuildSelect)\</EggSpdLogBin>
     <EggSpdLogLibs>spdlog.lib</EggSpdLogLibs>
-    <EggIncludes>$(EggPhysXInclude);$(EggAssimpInclude);$(EggLuaInclude);$(EggDXTexInclude);$(EggSpdLogInclude)</EggIncludes>
-    <EggBinaries>$(EggPhysXBin);$(EggAssimpBin);$(EggLuaBin);$(EggDXTexBin);$(EggSpdLogBin)</EggBinaries>
+    <EggJson11Version>1.0.0</EggJson11Version>
+    <EggJson11Include>$(EggSDK)\json11\$(EggJson11Version)\include</EggJson11Include>
+    <EggJson11Bin>$(EggSDK)\json11\$(EggJson11Version)\$(EggBuildSelect).static\</EggJson11Bin>
+    <EggJson11Libs>json11.lib</EggJson11Libs>
+    <EggIncludes>$(EggPhysXInclude);$(EggAssimpInclude);$(EggLuaInclude);$(EggDXTexInclude);$(EggSpdLogInclude);$(EggJson11Include)</EggIncludes>
+    <EggBinaries>$(EggPhysXBin);$(EggAssimpBin);$(EggLuaBin);$(EggDXTexBin);$(EggSpdLogBin);$(EggJson11Bin)</EggBinaries>
     <EggDlls>$(EggPhysXBin);$(EggAssimpBin);$(EggLuaBin)</EggDlls>
-    <EggLibraries>$(EggD3DLibs);$(EggPhysXLibs);$(EggLuaLibs);$(EggAssimpLibs);$(EggDXTexLibs);$(EggSpdLogLibs)</EggLibraries>
+    <EggLibraries>$(EggD3DLibs);$(EggPhysXLibs);$(EggLuaLibs);$(EggAssimpLibs);$(EggDXTexLibs);$(EggSpdLogLibs);$(EggJson11Libs)</EggLibraries>
   </PropertyGroup>
   <PropertyGroup>
     <OutDir>$(SolutionDir)Bin\</OutDir>
@@ -136,6 +140,18 @@
     </BuildMacro>
     <BuildMacro Include="EggSpdLogLibs">
       <Value>$(EggSpdLogLibs)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggJson11Version">
+      <Value>$(EggJson11Version)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggJson11Include">
+      <Value>$(EggJson11Include)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggJson11Bin">
+      <Value>$(EggJson11Bin)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggJson11Libs">
+      <Value>$(EggJson11Libs)</Value>
     </BuildMacro>
     <BuildMacro Include="EggIncludes">
       <Value>$(EggIncludes)</Value>

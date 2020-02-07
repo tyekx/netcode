@@ -1,0 +1,8 @@
+namespace EggAssetEditor
+{
+    [default_interface]
+    runtimeclass UC_Bone : Windows.UI.Xaml.Controls.UserControl
+    {
+        UC_Bone();
+    }
+}

@@ -74,7 +74,12 @@ namespace Egg::Graphics::DX12 {
 			page.offset = 0;
 		}
 		currentAllocationPage = nullptr;
-		currentPage = &pages.front();
+
+		if(pages.empty()) {
+			currentPage = nullptr;
+		} else {
+			currentPage = &pages.front();
+		}
 	}
 
 	/*

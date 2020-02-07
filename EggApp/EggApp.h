@@ -135,6 +135,11 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		DirectX::XMStoreFloat4x4A(&model->perObjectData.Model, identity);
 		DirectX::XMStoreFloat4x4A(&model->perObjectData.InvModel, identity);
 
+		Egg::HPXMAT pxMat = physics->CreateMaterial(0.5f, 0.5f, 0.5f);
+		Egg::HSHAPE shape = physics->CreateBox(pxMat, DirectX::XMFLOAT3{ 50.0f, 50.0f, 50.0f });
+		Egg::HACTOR pxActor = physics->CreateKinematicActor(shape, 50.0f);
+		physics->AddToScene(pxActor);
+
 		CreateYbotAnimationComponent(&ybotModel, anim);
 		animSystem.SetMovementController(&movCtrl);
 

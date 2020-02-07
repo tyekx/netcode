@@ -1,0 +1,27 @@
+namespace EggAssetEditor
+{
+    [bindable]
+    [default_interface]
+    runtimeclass DC_Collider : Windows.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        DC_Collider();
+
+        UInt32 Type;
+        UInt32 BoneReference;
+        Single SphereArg;
+
+        Windows.Foundation.Numerics.Vector3 LocalPosition;
+        Windows.Foundation.Numerics.Vector4 LocalRotation;
+
+        Windows.Foundation.Numerics.Vector2 CapsuleArgs;
+        Windows.Foundation.Numerics.Vector3 BoxArgs;
+    }
+
+    [default_interface]
+    runtimeclass CollidersPage : Windows.UI.Xaml.Controls.Page
+    {
+        CollidersPage();
+
+        Windows.Foundation.Collections.IObservableVector<DC_Collider> Colliders{ get; };
+    }
+}

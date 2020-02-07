@@ -1,0 +1,149 @@
+namespace EggAssetEditor
+{
+    [bindable]
+    [default_interface]
+    runtimeclass DC_Lod : Windows.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        UInt32 VertexCount;
+        UInt32 IndexCount;
+        UInt32 VertexOffset;
+        UInt32 IndexOffset;
+        UInt64 VertexBufferSize;
+        UInt64 IndexBufferSize;
+
+        DC_Lod();
+        DC_Lod(UInt32 vertexCount, UInt32 indexCount, UInt32 vertexOffset, UInt32 indexOffset, UInt64 vertexBufferSize, UInt64 indexBufferSize);
+    }
+
+
+    [default_interface]
+    runtimeclass UC_Lod : Windows.UI.Xaml.Controls.UserControl
+    {
+        UC_Lod();
+        UC_Lod(DC_Lod myContent);
+
+        DC_Lod MyContent;
+    }
+
+    [bindable]
+    [default_interface]
+    runtimeclass DC_Mesh : Windows.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        DC_Mesh();
+
+        Windows.Foundation.Collections.IObservableVector<DC_Lod> LodLevels;
+
+        String Name;
+    }
+
+    [bindable]
+    [default_interface]
+    runtimeclass DC_Bone : Windows.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        DC_Bone();
+
+        UInt32 Depth;
+        String Name;
+    }
+
+    [bindable]
+    [default_interface]
+    runtimeclass DC_Material : Windows.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        DC_Material();
+
+        String Name;
+        Windows.Foundation.Numerics.Vector4 DiffuseColor;
+        Windows.Foundation.Numerics.Vector3 FresnelR0;
+        Single Shininess;
+        String DiffuseMapReference;
+        String NormalMapReference;
+        String SpecularMapReference;
+        String RoughnessMapReference;
+        String AmbientMapReference;
+        String HeightMapReference;
+    }
+
+    [default_interface]
+    runtimeclass MaterialsPage : Windows.UI.Xaml.Controls.Page
+    {
+        MaterialsPage();
+
+        Windows.Foundation.Collections.IObservableVector<DC_Material> Materials{ get; };
+    }
+
+    [default_interface]
+    runtimeclass VectorConverter : Windows.UI.Xaml.Data.IValueConverter {
+        VectorConverter();
+    }
+
+    [default_interface]
+    runtimeclass ColliderTypeVisibilityConverter : Windows.UI.Xaml.Data.IValueConverter {
+        ColliderTypeVisibilityConverter();
+    }
+
+    [default_interface]
+    runtimeclass ColliderTypeConverter : Windows.UI.Xaml.Data.IValueConverter {
+        ColliderTypeConverter();
+    }
+
+    [default_interface]
+    static runtimeclass XamlHelpers {
+        static Windows.Foundation.Collections.IObservableVector<DC_Bone> ConvertBones();
+    }
+
+    [default_interface]
+    runtimeclass CreateColliderDialog : Windows.UI.Xaml.Controls.ContentDialog
+    {
+        CreateColliderDialog();
+
+        Windows.Foundation.Collections.IObservableVector<DC_Bone> Bones{ get; };
+        Windows.Foundation.Collections.IObservableVector<DC_Bone> SelectedBones{ get; };
+    }
+
+    [bindable]
+    [default_interface]
+    runtimeclass DC_Animation : Windows.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        DC_Animation();
+
+        String Name;
+        Single Timescale;
+    }
+
+    [default_interface]
+    runtimeclass AnimationsPage : Windows.UI.Xaml.Controls.Page
+    {
+        AnimationsPage();
+
+        Single PlaybackTime;
+        Windows.Foundation.Collections.IObservableVector<DC_Animation> Animations;
+    }
+
+    [default_interface]
+    runtimeclass UC_Mesh : Windows.UI.Xaml.Controls.UserControl
+    {
+        UC_Mesh();
+    }
+
+    [bindable]
+    [default_interface]
+    runtimeclass DC_MainPage : Windows.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        DC_MainPage();
+
+        Windows.Foundation.Collections.IObservableVector<DC_Mesh> Meshes;
+    }
+
+    delegate void ManifestChangedHandler(UInt64 manifestPtr);
+    delegate void ModelChangedHandler(UInt64 modelChangedPtr);
+
+    [default_interface]
+    runtimeclass MainPage : Windows.UI.Xaml.Controls.Page
+    {
+        MainPage();
+
+        event ManifestChangedHandler ManifestChanged;
+        event ModelChangedHandler ModelChanged;
+    }
+}

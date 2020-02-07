@@ -159,6 +159,7 @@ namespace Egg::Module {
 		virtual float GetAspectRatio() const = 0;
 		virtual DirectX::XMUINT2 GetBackbufferSize() const = 0;
 		virtual RECT GetDisplayRect() const = 0;
+		virtual void * GetSwapChain() const = 0;
 
 		virtual ShaderBuilderRef CreateShaderBuilder() const = 0;
 		virtual GPipelineStateBuilderRef CreateGPipelineStateBuilder() const = 0;

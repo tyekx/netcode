@@ -441,6 +441,8 @@ namespace Egg {
 
 	using SpriteFontBuilderRef = std::shared_ptr<SpriteFontBuilder>;
 
+	
+
 
 
 }

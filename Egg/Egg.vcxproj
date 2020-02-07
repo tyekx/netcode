@@ -68,6 +68,7 @@
     <ClInclude Include="DX12GPipelineStateBuilder.h" />
     <ClInclude Include="DX12GPipelineStateLibrary.h" />
     <ClInclude Include="DX12GraphicsModule.h" />
+    <ClInclude Include="DX12GraphicsModuleForWin32.h" />
     <ClInclude Include="DX12HeapCollection.h" />
     <ClInclude Include="DX12Helpers.h" />
     <ClInclude Include="DX12InputLayout.h" />
@@ -150,6 +151,7 @@
     <ClCompile Include="DX12GPipelineStateBuilder.cpp" />
     <ClCompile Include="DX12GPipelineStateLibrary.cpp" />
     <ClCompile Include="DX12GraphicsModule.cpp" />
+    <ClCompile Include="DX12GraphicsModuleForWin32.cpp" />
     <ClCompile Include="DX12Helpers.cpp" />
     <ClCompile Include="DX12InputLayout.cpp" />
     <ClCompile Include="DX12InputLayoutBuilder.cpp" />

@@ -1,0 +1,24 @@
+﻿<UserControl x:Name="userControl"
+    x:Class="EggAssetEditor.UC_Mesh"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EggAssetEditor"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <UserControl.DataContext>
+        <local:DC_Mesh />
+    </UserControl.DataContext>
+
+    <StackPanel Orientation="Vertical" Background="Gray">
+        <TextBlock Text="{Binding Name}" FontSize="18" Padding="15,5,15,5"></TextBlock>
+        <ListView ItemsSource="{Binding LodLevels}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <local:UC_Lod DataContext="{Binding}"></local:UC_Lod>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </StackPanel>
+</UserControl>
