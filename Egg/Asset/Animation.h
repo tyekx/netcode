@@ -18,28 +18,20 @@ namespace Egg::Asset {
 		DirectX::XMFLOAT3 scale;
 	};
 
-
 	struct Animation {
 		char name[56];
 
-		double duration;
-		double ticksPerSecond;
+		float duration;
+		float ticksPerSecond;
 
 		unsigned int keysLength;
 		unsigned int bonesLength;
 
 		/*
-		* Length of this array is bonesLength,
-		* for each bone we have a pre and a post state
-		*/
-		AnimationEdge * preStates;
-		AnimationEdge * postStates;
-
-		/*
 		* Length of this array is keysLength
 		* for each animation key we have a timestamp
 		*/
-		double * times;
+		float * times;
 
 		/*
 		* This is a linearized structure, to access a row:

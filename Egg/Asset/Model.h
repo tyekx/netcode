@@ -7,6 +7,7 @@
 #include <memory>
 #include "../Common.h"
 #include "../MemoryFunctions.h"
+#include "Collider.h"
 
 namespace Egg::Asset {
 	class Model {
@@ -15,6 +16,7 @@ namespace Egg::Asset {
 		freed_unique_ptr_t meshesAlloc;
 		freed_unique_ptr_t materialsAlloc;
 		freed_unique_ptr_t animDataAlloc;
+		freed_unique_ptr_t colliderDataAlloc;
 	public:
 		unsigned int meshesLength;
 		Mesh * meshes;
@@ -29,6 +31,7 @@ namespace Egg::Asset {
 		Bone * bones;
 
 		Model() : meshesAlloc{ nullptr, std::free }, materialsAlloc{ nullptr, std::free }, animDataAlloc{ nullptr, std::free },
+			colliderDataAlloc{ nullptr, std::free },
 			meshesLength{ 0 }, meshes{ nullptr }, 
 			materialsLength{ 0 }, materials{ nullptr },
 			animationsLength{ 0 }, animations{ nullptr },
@@ -75,14 +78,16 @@ namespace Egg::Asset {
 			animations = InterpretAsArray<Animation>(&ptr, animationsLength);
 
 			for(unsigned int i = 0; i < animationsLength; ++i) {
-				animations[i].preStates = InterpretAsArray<AnimationEdge>(&ptr, animations[i].bonesLength);
-				animations[i].postStates = InterpretAsArray<AnimationEdge>(&ptr, animations[i].bonesLength);
-				animations[i].times = InterpretAsArray<double>(&ptr, animations[i].keysLength);
+				animations[i].times = InterpretAsArray<float>(&ptr, animations[i].keysLength);
 				animations[i].keys = InterpretAsArray<AnimationKey>(&ptr, animations[i].keysLength * animations[i].bonesLength);
 			}
 
 			bonesLength = InterpretAs<unsigned int>(&ptr);
 			bones = InterpretAsArray<Bone>(&ptr, bonesLength);
+		}
+		
+		void SetColliderData(void * ptr) {
+
 		}
 	};
 }

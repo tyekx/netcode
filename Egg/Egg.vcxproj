@@ -47,6 +47,7 @@
     <ClInclude Include="AnimationState.h" />
     <ClInclude Include="Asset\Animation.h" />
     <ClInclude Include="Asset\Bone.h" />
+    <ClInclude Include="Asset\Collider.h" />
     <ClInclude Include="Asset\Material.h" />
     <ClInclude Include="Asset\Mesh.h" />
     <ClInclude Include="Asset\Model.h" />

@@ -319,6 +319,9 @@
     <ClInclude Include="DX12GraphicsModuleForWin32.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
+    <ClInclude Include="Asset\Collider.h">
+      <Filter>Asset</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
