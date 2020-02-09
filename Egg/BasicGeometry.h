@@ -35,7 +35,9 @@ namespace Egg::Graphics {
 		Fills a vertices data buffer's position values. Creates a capsule with the given arguments
 		Designed to work with linelist primitive topology
 		*/
-		static void CreateCapsuleWireframe(_Out_writes_(108 * stride) void * dstData, unsigned int stride, float height, float radius, unsigned int positionDataOffset = 0);
+		static void CreateCapsuleWireframe(_Out_writes_(108 * stride) void * dstData, unsigned int stride, const DirectX::XMFLOAT2 & args, unsigned int positionDataOffset = 0);
+
+		static void CreateSphereWireFrame(void * dstData, uint32_t stride, float radius, uint32_t positionDataOffset = 0);
 
 	};
 

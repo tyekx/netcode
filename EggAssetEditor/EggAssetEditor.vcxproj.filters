@@ -58,6 +58,24 @@
     <ClCompile Include="ColliderTypeConverter.cpp">
       <Filter>XAML\Converters</Filter>
     </ClCompile>
+    <ClCompile Include="FloatBox.cpp">
+      <Filter>XAML\UserControls</Filter>
+    </ClCompile>
+    <ClCompile Include="DC_Vector2Control.cpp">
+      <Filter>XAML\UserControls\DataContexts</Filter>
+    </ClCompile>
+    <ClCompile Include="DC_Vector3Control.cpp">
+      <Filter>XAML\UserControls\DataContexts</Filter>
+    </ClCompile>
+    <ClCompile Include="DC_Vector4Control.cpp">
+      <Filter>XAML\UserControls\DataContexts</Filter>
+    </ClCompile>
+    <ClCompile Include="SelectionToVisibilityConverter.cpp">
+      <Filter>XAML\Converters</Filter>
+    </ClCompile>
+    <ClCompile Include="DepthToMarginConverter.cpp">
+      <Filter>XAML\Converters</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -128,6 +146,24 @@
     <ClInclude Include="ColliderTypeConverter.h">
       <Filter>XAML\Converters</Filter>
     </ClInclude>
+    <ClInclude Include="FloatBox.h">
+      <Filter>XAML\UserControls</Filter>
+    </ClInclude>
+    <ClInclude Include="DC_Vector2Control.h">
+      <Filter>XAML\UserControls\DataContexts</Filter>
+    </ClInclude>
+    <ClInclude Include="DC_Vector3Control.h">
+      <Filter>XAML\UserControls\DataContexts</Filter>
+    </ClInclude>
+    <ClInclude Include="DC_Vector4Control.h">
+      <Filter>XAML\UserControls\DataContexts</Filter>
+    </ClInclude>
+    <ClInclude Include="SelectionToVisibilityConverter.h">
+      <Filter>XAML\Converters</Filter>
+    </ClInclude>
+    <ClInclude Include="DepthToMarginConverter.h">
+      <Filter>XAML\Converters</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">
@@ -192,6 +228,9 @@
     <Filter Include="XAML\Converters">
       <UniqueIdentifier>{aebe35a6-9629-4e67-a229-1784b3bc02dd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="XAML\UserControls\DataContexts">
+      <UniqueIdentifier>{999a38e4-7a37-45bc-9d25-5de3a1500306}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="PropertySheet.props" />
@@ -230,11 +269,17 @@
     <Page Include="CollidersPage.xaml">
       <Filter>XAML\Pages</Filter>
     </Page>
-    <Page Include="UC_Bone.xaml">
-      <Filter>XAML</Filter>
-    </Page>
     <Page Include="CreateColliderDialog.xaml">
       <Filter>XAML\Dialogs</Filter>
+    </Page>
+    <Page Include="Vector4Control.xaml">
+      <Filter>XAML\UserControls</Filter>
+    </Page>
+    <Page Include="Vector3Control.xaml">
+      <Filter>XAML\UserControls</Filter>
+    </Page>
+    <Page Include="Vector2Control.xaml">
+      <Filter>XAML\UserControls</Filter>
     </Page>
   </ItemGroup>
   <ItemGroup>
@@ -248,6 +293,12 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Editor_BoneVisibilityPass_Pixel.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Editor_ColliderPass_Vertex.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Editor_ColliderPass_Pixel.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

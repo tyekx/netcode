@@ -13,13 +13,13 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="4*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="55*"/>
-            <RowDefinition Height="58*"/>
-            <RowDefinition Height="887*"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="1*"/>
         </Grid.RowDefinitions>
         <Grid x:Name="loadingScreen" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Grid.RowSpan="3" Canvas.ZIndex="100" Background="#7F4B4B4B" Visibility="Collapsed">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">
@@ -43,10 +43,10 @@
                 <TextBlock x:Name="loadingScreenTitle" Text="Henlo world" FontSize="30"></TextBlock>
             </StackPanel>
         </Grid>
-        <MenuBar Grid.Row="0" Grid.ColumnSpan="2" Foreground="#FFE03333" Background="#FFC7C7C7">
+        <MenuBar Grid.Row="0" Grid.ColumnSpan="2" Background="{ThemeResource SystemChromeLowColor}">
             <MenuBarItem Title="File">
                 <MenuFlyoutItem Text="Create Manifest" Icon="Add" Click="FileCtx_CreateManifest_Click"></MenuFlyoutItem>
-                <MenuFlyoutItem Text="Open Manifest" Icon="OpenFile"></MenuFlyoutItem>
+                <MenuFlyoutItem Text="Open Manifest" Icon="OpenFile" Click="FileCtx_LoadManifest_Click"></MenuFlyoutItem>
                 <MenuFlyoutSeparator />
                 <MenuFlyoutItem Text="Save Manifest" Icon="Save" Click="FileCtx_SaveManifest_Click"></MenuFlyoutItem>
                 <MenuFlyoutItem Text="Save Manifest As" Icon="Save"></MenuFlyoutItem>
@@ -60,13 +60,10 @@
                 <MenuFlyoutItem Text="Import Animation" Icon="Import" Click="AssetCtx_ImportAnimation_Click"></MenuFlyoutItem>
                 <MenuFlyoutItem Text="Import Mesh" Icon="Import"></MenuFlyoutItem>
                 <MenuFlyoutItem Text="Import Material" Icon="Import"></MenuFlyoutItem>
-                <MenuFlyoutSeparator />
-                <MenuFlyoutItem Text="Add Static Collider" Icon="Add" Click="AssetCtx_AddStaticCollider_Click"></MenuFlyoutItem>
-                <MenuFlyoutItem Text="Add Bone attached Collider" Icon="Add"></MenuFlyoutItem>
             </MenuBarItem>
         </MenuBar>
 
-        <Pivot x:Name="mainPivot" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" SelectionChanged="Pivot_SelectionChanged" Background="#FF7C7C7C" BorderBrush="#FF292929" BorderThickness="0,0,0,2" Height="58" VerticalAlignment="Center">
+        <Pivot x:Name="mainPivot" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" SelectionChanged="Pivot_SelectionChanged" Background="{ThemeResource SystemBaseLowColor}">
             <PivotItem Header="Geometry"></PivotItem>
             <PivotItem Header="Materials"></PivotItem>
             <PivotItem Header="Bones"></PivotItem>
@@ -74,7 +71,7 @@
             <PivotItem Header="Colliders"></PivotItem>
         </Pivot>
 
-        <Frame x:Name="mainFrame" Grid.Row="2" Grid.Column="0" Background="#FF608A93" CacheSize="10" />
+        <Frame x:Name="mainFrame" Grid.Row="2" Grid.Column="0" Background="{ThemeResource SystemChromeLowColor}" CacheSize="10" />
 
         <Grid Grid.Row="2" Grid.Column="1" Background="#FF7C7C7C">
             <SwapChainPanel x:Name="swapChainPanel"

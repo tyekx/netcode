@@ -30,7 +30,14 @@ namespace winrt::EggAssetEditor::implementation
                 auto dcMat = winrt::make<EggAssetEditor::implementation::DC_Material>();
 
                 dcMat.Name(to_hstring(material.name));
-                dcMat.DiffuseColor(Windows::Foundation::Numerics::float4(material.diffuseColor.x, material.diffuseColor.y, material.diffuseColor.z, material.diffuseColor.w));
+
+                Windows::UI::Color color;
+                color.A = static_cast<uint8_t>(material.diffuseColor.w * 255.0f);
+                color.B = static_cast<uint8_t>(material.diffuseColor.z * 255.0f);
+                color.G = static_cast<uint8_t>(material.diffuseColor.y * 255.0f);
+                color.R = static_cast<uint8_t>(material.diffuseColor.x * 255.0f);
+
+                dcMat.DiffuseColor(color);
                 dcMat.FresnelR0(Windows::Foundation::Numerics::float3(material.fresnelR0.x, material.fresnelR0.y, material.fresnelR0.z));
                 dcMat.AmbientMapReference(to_hstring(material.ambientMapReference));
                 dcMat.DiffuseMapReference(to_hstring(material.diffuseMapReference));

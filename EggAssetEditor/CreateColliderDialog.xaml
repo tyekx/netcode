@@ -11,7 +11,7 @@
             <ListView x:Name="bonesList" ItemsSource="{x:Bind Bones}" SelectionMode="Multiple">
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="local:DC_Bone">
-                        <local:UC_Bone DataContext="{Binding}"></local:UC_Bone>
+                        <TextBlock Text="{Binding Name}"></TextBlock>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>

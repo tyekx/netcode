@@ -83,6 +83,8 @@ namespace winrt::EggAssetEditor::implementation
     */
     void MainPage::swapChainPanel_PointerPressed(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs const & e)
     {
+        DataContext().as<DC_MainPage>()->BoxedTestFloat4(box_value(Windows::Foundation::Numerics::float4{ 1.0f, 2.0f, 3.0f, 4.0f }));
+
         pointerHeld = true;
         Windows::Foundation::Numerics::float2 swapChainActualSize = swapChainPanel().ActualSize();
 
@@ -135,7 +137,7 @@ namespace winrt::EggAssetEditor::implementation
 
 
 
-
+    /*
     winrt::fire_and_forget MainPage::AssetCtx_AddStaticCollider_Click(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e)
     {
         auto lifetime = get_strong();
@@ -148,16 +150,15 @@ namespace winrt::EggAssetEditor::implementation
 
         auto resultView = result.GetView();
 
-        //for(const auto & i : resultView) {
-
-        //}
-
         Collider c;
-        c.boxArgs = DirectX::XMFLOAT3{ 1.0f, 1.0f, 1.0f };
+        c.localPosition = DirectX::XMFLOAT3{ 0.0f, 5.0f, 0.0f };
+        c.localRotation = DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f };
+        c.boxArgs = DirectX::XMFLOAT3{ 10.0f, 10.0f, 10.0f };
         c.type = ColliderType::BOX;
+        c.boneReference = 8;
 
         Global::Model->colliders.push_back(c);
-    }
+    }*/
 
 
     void MainPage::Pivot_SelectionChanged(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs const & e)
@@ -296,7 +297,7 @@ namespace winrt::EggAssetEditor::implementation
     {
         auto lifetime = get_strong();
 
-        if(Global::Manifest == nullptr) {
+        if(Global::Manifest == nullptr || Global::Model == nullptr) {
             return;
         }
         /**/
@@ -310,6 +311,8 @@ namespace winrt::EggAssetEditor::implementation
         if(file != nullptr) {
             Windows::Storage::CachedFileManager::DeferUpdates(file);
 
+            Global::Manifest->colliders.clear();
+            Global::Manifest->colliders = Global::Model->colliders;
             co_await Windows::Storage::FileIO::WriteTextAsync(file, winrt::to_hstring(Global::Manifest->Store().dump()));
 
             Windows::Storage::Provider::FileUpdateStatus status = co_await Windows::Storage::CachedFileManager::CompleteUpdatesAsync(file);
@@ -319,6 +322,117 @@ namespace winrt::EggAssetEditor::implementation
             }
         }
         /**/
+
+
+    }
+
+    fire_and_forget MainPage::FileCtx_LoadManifest_Click(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e)
+    {
+        auto lifetime = get_strong();
+
+        Windows::Storage::Pickers::FileOpenPicker fileOpenPicker;
+
+        fileOpenPicker.FileTypeFilter().ReplaceAll({ L".json" });
+        fileOpenPicker.SuggestedStartLocation(Windows::Storage::Pickers::PickerLocationId::Objects3D);
+
+        loadingScreen().Visibility(Windows::UI::Xaml::Visibility::Visible);
+        loadingScreenTitle().Text(L"Waiting for manifest...");
+
+        /**/
+        Windows::Storage::StorageFile file = co_await fileOpenPicker.PickSingleFileAsync();
+
+        if(file != nullptr) {
+
+            loadingScreenTitle().Text(L"Loading " + file.DisplayName() + L"...");
+
+            Windows::Storage::Streams::IRandomAccessStream readStream = co_await file.OpenAsync(Windows::Storage::FileAccessMode::Read);
+
+            uint64_t size = readStream.Size();
+
+            if(size > 0xFFFFFFFFull) {
+                throw hresult_out_of_bounds();
+            }
+
+            Windows::Storage::Streams::IBuffer buffer = Windows::Storage::Streams::Buffer{ static_cast<uint32_t>(size) };
+
+            buffer = co_await readStream.ReadAsync(buffer, static_cast<uint32_t>(size), Windows::Storage::Streams::InputStreamOptions::None);
+
+            std::string str;
+            str.assign(reinterpret_cast<char *>(buffer.data()), static_cast<size_t>(buffer.Length()));
+
+            std::string err;
+            json11::Json json = json11::Json::parse(str, err);
+
+            if(Global::Manifest == nullptr) {
+                Global::Manifest = std::make_unique<Manifest>();
+            }
+
+            if(!Global::Manifest->Load(json)) {
+                OutputDebugStringW(L"Not ok\r\n");
+            }
+
+            if(Global::Model == nullptr) {
+                Global::Model = std::make_unique<Model>();
+            }
+
+            Windows::Storage::StorageFile baseFile = co_await Windows::Storage::StorageFile::GetFileFromPathAsync(to_hstring(Global::Manifest->base.file));
+
+            loadingScreenTitle().Text(L"Loading " + baseFile.DisplayName() + L".fbx...");
+
+            Windows::Storage::Streams::IRandomAccessStream baseReadStream = co_await baseFile.OpenAsync(Windows::Storage::FileAccessMode::Read);
+
+            Windows::Storage::Streams::IBuffer baseBuffer = Windows::Storage::Streams::Buffer{ static_cast<uint32_t>(baseReadStream.Size()) };
+
+            baseBuffer = co_await baseReadStream.ReadAsync(baseBuffer, static_cast<uint32_t>(baseReadStream.Size()), Windows::Storage::Streams::InputStreamOptions::None);
+
+            *Global::Model = FBXImporter::FromMemory(baseBuffer.data(), baseBuffer.Length());
+
+            for(const auto & animRef : Global::Manifest->animations) {
+                hstring animFile = to_hstring(animRef.source.file);
+
+                Windows::Storage::StorageFile animationFile = co_await Windows::Storage::StorageFile::GetFileFromPathAsync(animFile);
+
+                loadingScreenTitle().Text(L"Loading " + animationFile.DisplayName() + L".fbx...");
+
+                Windows::Storage::Streams::IRandomAccessStream animReadStream = co_await animationFile.OpenAsync(Windows::Storage::FileAccessMode::Read);
+
+                Windows::Storage::Streams::IBuffer animBuffer = Windows::Storage::Streams::Buffer{ static_cast<uint32_t>(animReadStream.Size()) };
+
+                animBuffer = co_await animReadStream.ReadAsync(animBuffer, static_cast<uint32_t>(animReadStream.Size()), Windows::Storage::Streams::InputStreamOptions::None);
+
+                auto anim = FBXImporter::ImportAnimationsFromMemory(animBuffer.data(), animBuffer.Length(), Global::Model->skeleton);
+                auto optimizedAnim = FBXImporter::OptimizeAnimation(anim.front(), Global::Model->skeleton);
+
+                Global::Model->animations.push_back(std::move(optimizedAnim));
+            }
+
+            Global::Model->colliders = Global::Manifest->colliders;
+            Global::EditorApp->SetColliders(Global::Model->colliders);
+
+            std::vector<DirectX::BoundingBox> boundingBoxes;
+            boundingBoxes.reserve(Global::Model->meshes.size());
+            for(Mesh & m : Global::Model->meshes) {
+                boundingBoxes.push_back(m.boundingBox);
+            }
+            Global::EditorApp->SetBoundingBoxes(std::move(boundingBoxes));
+
+            auto dcMainPage = DataContext().as<DC_MainPage>();
+
+            dcMainPage->Meshes().Clear();
+            for(const Mesh & mesh : Global::Model->meshes) {
+                auto dcMesh = winrt::make<DC_Mesh>();
+                dcMesh.Name(winrt::to_hstring(mesh.name));
+
+                for(const LOD & lod : mesh.lods) {
+                    dcMesh.LodLevels().Append(winrt::make<DC_Lod>(lod.vertexCount, lod.indexCount, 0, 0, lod.vertexDataSizeInBytes, lod.indexDataSizeInBytes));
+                }
+
+                dcMainPage->Meshes().Append(dcMesh);
+            }
+
+        }/**/
+
+        loadingScreen().Visibility(Windows::UI::Xaml::Visibility::Collapsed);
     }
 
     winrt::fire_and_forget MainPage::FileCtx_Compile_Click(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e)

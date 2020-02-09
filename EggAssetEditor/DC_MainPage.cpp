@@ -5,7 +5,7 @@
 namespace winrt::EggAssetEditor::implementation
 {
 
-    DC_MainPage::DC_MainPage() : meshes{ winrt::single_threaded_observable_vector<EggAssetEditor::DC_Mesh>() } {
+    DC_MainPage::DC_MainPage() : meshes{ winrt::single_threaded_observable_vector<EggAssetEditor::DC_Mesh>() }, propertyChanged{} {
 
     }
 

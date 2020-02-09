@@ -10,6 +10,10 @@ namespace winrt::EggAssetEditor::implementation
 
         DC_MainPage();
 
+        void BoxedTestFloat4(Windows::Foundation::IInspectable const & value) {
+            propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"BoxedTestFloat4"));
+        }
+
         Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Mesh> Meshes();
         void Meshes(Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Mesh> const& value);
 

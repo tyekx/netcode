@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "BonesPage.g.h"
-#include "UC_Bone.h"
+#include "DepthToMarginConverter.h"
 
 namespace winrt::EggAssetEditor::implementation
 {

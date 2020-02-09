@@ -32,3 +32,9 @@ struct PerObjectData {
 	DirectX::XMFLOAT4X4A Model;
 	DirectX::XMFLOAT4X4A InvModel;
 };
+
+struct ColliderData {
+	DirectX::XMFLOAT4X4A LocalTransform;
+	DirectX::XMFLOAT4A Color;
+	uint32_t BoneReference;
+};

@@ -26,11 +26,16 @@ class EditorFrameGraph {
 	Egg::RootSignatureRef envmapPass_RootSignature;
 	Egg::PipelineStateRef envmapPass_PipelineState;
 
+	Egg::RootSignatureRef colliderPass_RootSignature;
+	Egg::PipelineStateRef colliderPass_PipelineState;
+
 	uint64_t cloudynoonTexture;
 	Egg::ResourceViewsRef cloudynoonView;
 
 	uint64_t gbufferPass_DepthStencil;
 	Egg::ResourceViewsRef gbufferPass_DepthStencilView;
+
+
 
 	void CreateFSQuad(Egg::Module::IGraphicsModule * g) {
 		struct PT_Vert {
@@ -207,6 +212,35 @@ class EditorFrameGraph {
 		envmapPass_PipelineState = psoBuilder->Build();
 	}
 
+	void Create_ColliderPass_PermanentResource(Egg::Module::IGraphicsModule * g) {
+		auto ilBuilder = g->CreateInputLayoutBuilder();
+		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
+		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+
+		auto shaderBuilder = g->CreateShaderBuilder();
+		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"Editor_ColliderPass_Vertex.cso");
+		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"Editor_ColliderPass_Pixel.cso");
+
+		auto rootSigBuilder = g->CreateRootSignatureBuilder();
+		colliderPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
+
+		Egg::DepthStencilDesc depthStencilDesc;
+		depthStencilDesc.depthEnable = true;
+		depthStencilDesc.stencilEnable = false;
+		depthStencilDesc.depthWriteMaskZero = true;
+
+		auto psoBuilder = g->CreateGPipelineStateBuilder();
+		psoBuilder->SetRootSignature(colliderPass_RootSignature);
+		psoBuilder->SetInputLayout(inputLayout);
+		psoBuilder->SetVertexShader(vs);
+		psoBuilder->SetPixelShader(ps);
+		psoBuilder->SetDepthStencilState(depthStencilDesc);
+		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
+		psoBuilder->SetDepthStencilFormat(DXGI_FORMAT_D32_FLOAT_S8X24_UINT);
+		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::LINE);
+		colliderPass_PipelineState = psoBuilder->Build();
+	}
+
 	void CreateGbufferPass(FrameGraphBuilder & builder) {
 		builder.CreateRenderPass("Gbuffer pass", [](IResourceContext * ctx) ->void { },
 			[this](IRenderContext * ctx) -> void {
@@ -276,6 +310,27 @@ class EditorFrameGraph {
 		});
 	}
 
+
+	void CreateColliderPass(FrameGraphBuilder & builder) {
+		builder.CreateRenderPass("Collider pass", [](IResourceContext * ctx) ->void { },
+			[this](IRenderContext * ctx) -> void {
+
+			ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencilView);
+			ctx->SetPrimitiveTopology(PrimitiveTopology::LINELIST);
+			ctx->SetRootSignature(colliderPass_RootSignature);
+			ctx->SetPipelineState(colliderPass_PipelineState);
+
+			uint32_t idx = 0;
+			for(GBuffer & gb : colliderPass_Input) {
+				ctx->SetConstants(0, colliderPass_DataInput.at(idx++));
+				ctx->SetConstants(1, *perFrameData);
+				ctx->SetConstants(2, *boneData);
+				ctx->SetConstants(3, *perObjectData);
+				ctx->SetVertexBuffer(gb.vertexBuffer);
+				ctx->Draw(gb.vertexCount);
+			}
+		});
+	}
 public:
 
 	PerFrameData * perFrameData;
@@ -284,18 +339,22 @@ public:
 	PerObjectData * perObjectData;
 
 	std::vector<GBuffer> gbufferPass_Input;
+	std::vector<GBuffer> colliderPass_Input;
+	std::vector<ColliderData> colliderPass_DataInput;
 
 	void CreatePermanentResources(Egg::Module::IGraphicsModule * g) {
 		CreateFSQuad(g);
 		Create_GBufferPass_PermanentResources(g);
 		Create_BackgroundPass_PermanentResources(g);
 		Create_BoneVisibilityPass_PermanentResources(g);
+		Create_ColliderPass_PermanentResource(g);
 	}
 
 	void CreateFrameGraph(FrameGraphBuilder & builder) {
 		CreateGbufferPass(builder);
 		CreateBoneVisibilityPass(builder);
 		CreateBackgroundPass(builder);
+		CreateColliderPass(builder);
 	}
 
 };

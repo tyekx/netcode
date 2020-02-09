@@ -6,6 +6,7 @@
 #include <algorithm>
 #include "Model.h"
 #include "BoundingBoxHelpers.h"
+#include <Egg/BasicGeometry.h>
 
 namespace Egg::Module {
 
@@ -34,6 +35,91 @@ namespace Egg::Module {
 
 		std::vector<GBuffer> gbuffers;
 		std::vector<GBuffer> boneGbuffers;
+		std::vector<GBuffer> colliderGbuffers;
+		std::vector<ColliderData> colliderData;
+		
+		virtual void UpdateColliderData(const std::vector<Collider> & colls) {
+			colliderData.clear();
+
+			for(const Collider & c : colls) {
+				ColliderData cd;
+				cd.Color = DirectX::XMFLOAT4A{ 0.0f, 0.0f, 1.0f, 1.0f };
+				cd.BoneReference = c.boneReference;
+
+				DirectX::XMVECTOR localRotationQuat = DirectX::XMLoadFloat4(&c.localRotation);
+				DirectX::XMMATRIX R = DirectX::XMMatrixRotationQuaternion(localRotationQuat);
+				DirectX::XMMATRIX T = DirectX::XMMatrixTranslation(c.localPosition.x, c.localPosition.y, c.localPosition.z);
+				DirectX::XMMATRIX RT = DirectX::XMMatrixMultiply(R, T);
+				DirectX::XMStoreFloat4x4A(&cd.LocalTransform, DirectX::XMMatrixTranspose(RT));
+
+				colliderData.push_back(cd);
+			}
+		}
+
+		virtual void SetColliders(std::vector<Collider> colls) {
+			if(!colliderGbuffers.empty()) {
+				for(GBuffer g : colliderGbuffers) {
+					graphics->resources->ReleaseResource(g.vertexBuffer);
+				}
+				colliderGbuffers.clear();
+			}
+
+			UpdateColliderData(colls);
+
+			Egg::Graphics::UploadBatch upload;
+			std::vector<std::unique_ptr<DirectX::XMFLOAT3[]>> data;
+
+			for(const Collider & c : colls) {
+				GBuffer g;
+
+				switch(c.type) {
+					case ColliderType::BOX:
+					{
+						std::unique_ptr<DirectX::XMFLOAT3[]> boxVData = std::make_unique<DirectX::XMFLOAT3[]>(24);
+						Egg::Graphics::BasicGeometry::CreateBoxWireframe(boxVData.get(), sizeof(DirectX::XMFLOAT3), c.boxArgs);
+						g.vertexBuffer = graphics->resources->CreateVertexBuffer(24 * sizeof(DirectX::XMFLOAT3), sizeof(DirectX::XMFLOAT3), ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
+						g.vertexCount = 24;
+						upload.Upload(g.vertexBuffer, boxVData.get(), 24 * sizeof(DirectX::XMFLOAT3));
+						upload.ResourceBarrier(g.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
+						data.emplace_back(std::move(boxVData));
+					}
+					break;
+					case ColliderType::CAPSULE:
+					{
+						uint32_t vCount = 108;
+						uint32_t stride = sizeof(DirectX::XMFLOAT3);
+						uint32_t sizeInBytes = vCount * stride;
+						std::unique_ptr<DirectX::XMFLOAT3[]> boxVData = std::make_unique<DirectX::XMFLOAT3[]>(vCount);
+						Egg::Graphics::BasicGeometry::CreateCapsuleWireframe(boxVData.get(), stride, c.capsuleArgs);
+						g.vertexBuffer = graphics->resources->CreateVertexBuffer(sizeInBytes, stride, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
+						g.vertexCount = vCount;
+						upload.Upload(g.vertexBuffer, boxVData.get(), sizeInBytes);
+						upload.ResourceBarrier(g.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
+						data.emplace_back(std::move(boxVData));
+					}
+					break;
+					case ColliderType::SPHERE:
+					{
+						uint32_t vCount = 1920;
+						uint32_t stride = sizeof(DirectX::XMFLOAT3);
+						uint32_t sizeInBytes = vCount * stride;
+						std::unique_ptr<DirectX::XMFLOAT3[]> boxVData = std::make_unique<DirectX::XMFLOAT3[]>(vCount);
+						Egg::Graphics::BasicGeometry::CreateSphereWireFrame(boxVData.get(), stride, c.sphereArgs);
+						g.vertexBuffer = graphics->resources->CreateVertexBuffer(sizeInBytes, stride, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
+						g.vertexCount = vCount;
+						upload.Upload(g.vertexBuffer, boxVData.get(), sizeInBytes);
+						upload.ResourceBarrier(g.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
+						data.emplace_back(std::move(boxVData));
+					}
+					break;
+					default:
+						throw std::exception("Not implemented");
+				}
+				colliderGbuffers.push_back(g);
+			}
+
+			graphics->frame->SyncUpload(upload);
+		}
 
 		virtual void SetSelectedBones(std::vector<uint32_t> boneIndices) {
 			memset(boneVisibilityData.BoneVisibility, 0, sizeof(BoneVisibilityData));
@@ -212,6 +298,8 @@ namespace Egg::Module {
 			editorFrameGraph.perObjectData = &perObjectData;
 			editorFrameGraph.boneVisibilityData = &boneVisibilityData;
 			editorFrameGraph.gbufferPass_Input = gbuffers;
+			editorFrameGraph.colliderPass_Input = colliderGbuffers;
+			editorFrameGraph.colliderPass_DataInput = colliderData;
 
 			FrameGraphBuilder builder;
 			editorFrameGraph.CreateFrameGraph(builder);

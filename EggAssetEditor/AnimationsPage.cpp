@@ -94,6 +94,7 @@ namespace winrt::EggAssetEditor::implementation
     
     void AnimationsPage::OnTick(Windows::Foundation::IInspectable const & sender, Windows::Foundation::IInspectable const & e)
     {
+
         float dt = stopwatch.Restart();
 
         playbackTime += dt * Global::Model->animations[selectedAnimation].framesPerSecond;

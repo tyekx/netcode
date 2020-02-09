@@ -6,7 +6,7 @@ namespace winrt::EggAssetEditor::implementation
     struct DC_Material : DC_MaterialT<DC_Material>
     {
         hstring name;
-        Windows::Foundation::Numerics::float4 diffuseColor;
+        Windows::UI::Color diffuseColor;
         Windows::Foundation::Numerics::float3 fresnelR0;
 
         float shininess;
@@ -25,8 +25,8 @@ namespace winrt::EggAssetEditor::implementation
         hstring Name();
         void Name(hstring const& value);
 
-        Windows::Foundation::Numerics::float4 DiffuseColor();
-        void DiffuseColor(Windows::Foundation::Numerics::float4 const& value);
+        Windows::UI::Color DiffuseColor();
+        void DiffuseColor(Windows::UI::Color const& value);
 
         Windows::Foundation::Numerics::float3 FresnelR0();
         void FresnelR0(Windows::Foundation::Numerics::float3 const& value);

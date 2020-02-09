@@ -7,7 +7,8 @@ json11::Json::shape Manifest::jsonShape_root = {
 	{ "base",  json11::Json::Type::OBJECT },
 	{ "materials", json11::Json::Type::ARRAY },
 	{ "colliders", json11::Json::Type::ARRAY },
-	{ "animations", json11::Json::Type::ARRAY }
+	{ "animations", json11::Json::Type::ARRAY },
+	{ "geometry", json11::Json::Type::ARRAY },
 };
 
 json11::Json::shape Manifest::jsonShape_Geometry = {
@@ -22,11 +23,10 @@ json11::Json::shape Manifest::jsonShape_Material = {
 
 json11::Json::shape Manifest::jsonShape_Collider = {
 	{ "type", json11::Json::Type::NUMBER },
-	{ "shape", json11::Json::Type::NUMBER },
 	{ "bone_reference", json11::Json::Type::NUMBER },
 	{ "local_position", json11::Json::Type::ARRAY },
 	{ "local_rotation", json11::Json::Type::ARRAY },
-	{ "shape_data", json11::Json::Type::OBJECT }
+	{ "shape_data", json11::Json::Type::ARRAY }
 };
 
 json11::Json::shape Manifest::jsonShape_Animation = {

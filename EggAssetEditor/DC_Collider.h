@@ -15,10 +15,10 @@ namespace winrt::EggAssetEditor::implementation
         };
 
         Windows::Foundation::Numerics::float3 localPosition;
-        Windows::Foundation::Numerics::float4 localRotation;
+        Windows::Foundation::Numerics::float3 localRotation;
 
         ColliderType type;
-        uint32_t boneReference;
+        int32_t boneReference;
 
         winrt::event<Windows::UI::Xaml::Data::PropertyChangedEventHandler> propertyChanged;
 
@@ -26,8 +26,8 @@ namespace winrt::EggAssetEditor::implementation
         uint32_t Type();
         void Type(uint32_t value);
 
-        uint32_t BoneReference();
-        void BoneReference(uint32_t value);
+        int32_t BoneReference();
+        void BoneReference(int32_t value);
 
         float SphereArg();
         void SphereArg(float value);
@@ -35,8 +35,8 @@ namespace winrt::EggAssetEditor::implementation
         Windows::Foundation::Numerics::float3 LocalPosition();
         void LocalPosition(Windows::Foundation::Numerics::float3 const& value);
 
-        Windows::Foundation::Numerics::float4 LocalRotation();
-        void LocalRotation(Windows::Foundation::Numerics::float4 const& value);
+        Windows::Foundation::Numerics::float3 LocalRotation();
+        void LocalRotation(Windows::Foundation::Numerics::float3 const& value);
 
         Windows::Foundation::Numerics::float2 CapsuleArgs();
         void CapsuleArgs(Windows::Foundation::Numerics::float2 const& value);

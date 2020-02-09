@@ -7,13 +7,29 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d" NavigationCacheMode="Enabled">
 
-    <ScrollViewer VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Auto">
-        <ListView x:Name="bonesList" SelectionMode="Multiple" SelectionChanged="bonesList_SelectionChanged">
-            <ListView.ItemTemplate>
-                <DataTemplate x:DataType="local:DC_Bone">
-                    <local:UC_Bone DataContext="{Binding}"></local:UC_Bone>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
-    </ScrollViewer>
+    <Page.Resources>
+        <local:DepthToMarginConverter x:Name="DepthToMargin" />
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Vertical" Background="{ThemeResource SystemAccentColor}" Grid.Row="0" Grid.Column="0">
+            <TextBlock Text="Bones" FontSize="20" Margin="15,7,15,7" VerticalAlignment="Center"></TextBlock>
+        </StackPanel>
+        
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Auto">
+            <ListView x:Name="bonesList" SelectionMode="Multiple" SelectionChanged="bonesList_SelectionChanged">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="local:DC_Bone">
+                        <TextBlock Text="{Binding Name}" Margin="{Binding Depth, Converter={StaticResource DepthToMargin}, ConverterParameter=10}"></TextBlock>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </ScrollViewer>
+    </Grid>
+    
 </Page>

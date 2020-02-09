@@ -53,7 +53,7 @@ namespace EggAssetEditor
         DC_Material();
 
         String Name;
-        Windows.Foundation.Numerics.Vector4 DiffuseColor;
+        Windows.UI.Color DiffuseColor;
         Windows.Foundation.Numerics.Vector3 FresnelR0;
         Single Shininess;
         String DiffuseMapReference;
@@ -78,8 +78,18 @@ namespace EggAssetEditor
     }
 
     [default_interface]
+    runtimeclass SelectionToVisibilityConverter : Windows.UI.Xaml.Data.IValueConverter {
+        SelectionToVisibilityConverter();
+    }
+
+    [default_interface]
     runtimeclass ColliderTypeVisibilityConverter : Windows.UI.Xaml.Data.IValueConverter {
         ColliderTypeVisibilityConverter();
+    }
+
+    [default_interface]
+    runtimeclass DepthToMarginConverter : Windows.UI.Xaml.Data.IValueConverter {
+        DepthToMarginConverter();
     }
 
     [default_interface]
@@ -135,6 +145,11 @@ namespace EggAssetEditor
         Windows.Foundation.Collections.IObservableVector<DC_Mesh> Meshes;
     }
 
+    [default_interface]
+    runtimeclass FloatBox : Windows.UI.Xaml.Controls.TextBox {
+        FloatBox();
+    }
+
     delegate void ManifestChangedHandler(UInt64 manifestPtr);
     delegate void ModelChangedHandler(UInt64 modelChangedPtr);
 
@@ -145,5 +160,31 @@ namespace EggAssetEditor
 
         event ManifestChangedHandler ManifestChanged;
         event ModelChangedHandler ModelChanged;
+    }
+
+    [bindable]
+    [default_interface]
+    runtimeclass DC_Collider : Windows.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        DC_Collider();
+
+        UInt32 Type;
+        Int32 BoneReference;
+        Single SphereArg;
+
+        Windows.Foundation.Numerics.Vector3 LocalPosition;
+        Windows.Foundation.Numerics.Vector3 LocalRotation;
+
+        Windows.Foundation.Numerics.Vector2 CapsuleArgs;
+        Windows.Foundation.Numerics.Vector3 BoxArgs;
+    }
+
+    [default_interface]
+    runtimeclass CollidersPage : Windows.UI.Xaml.Controls.Page
+    {
+        CollidersPage();
+
+        Windows.Foundation.Collections.IObservableVector<DC_Collider> Colliders{ get; };
+        Windows.Foundation.Collections.IObservableVector<DC_Bone> Bones{ get; };
     }
 }

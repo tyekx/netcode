@@ -10,7 +10,7 @@ namespace winrt::EggAssetEditor::implementation
         ColliderType type = static_cast<ColliderType>(unbox_value<uint32_t>(value));
 
         switch(type) {
-            case ColliderType::BOX: 
+            case ColliderType::BOX:
                 return box_value(L"Box");
             case ColliderType::CAPSULE:
                 return box_value(L"Capsule");

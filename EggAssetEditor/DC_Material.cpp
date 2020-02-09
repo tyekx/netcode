@@ -15,12 +15,12 @@ namespace winrt::EggAssetEditor::implementation
         propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"Name"));
     }
 
-    Windows::Foundation::Numerics::float4 DC_Material::DiffuseColor()
+    Windows::UI::Color DC_Material::DiffuseColor()
     {
         return diffuseColor;
     }
 
-    void DC_Material::DiffuseColor(Windows::Foundation::Numerics::float4 const& value)
+    void DC_Material::DiffuseColor(Windows::UI::Color const& value)
     {
         diffuseColor = value;
         propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"DiffuseColor"));

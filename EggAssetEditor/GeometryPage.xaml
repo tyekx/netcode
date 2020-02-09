@@ -13,10 +13,14 @@
 
         <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="5*"/>
+            <RowDefinition Height="40"/>
             <RowDefinition Height="1*"/>
         </Grid.RowDefinitions>
-        <ListView x:Name="geometryListView" ItemsSource="{Binding Meshes}" Grid.Row="0" Grid.Column="0" SelectionMode="Multiple" CanReorderItems="False" SelectionChanged="ListView_SelectionChanged" ContainerContentChanging="geometryListView_ContainerContentChanging">
+
+        <StackPanel Orientation="Vertical" Background="{ThemeResource SystemAccentColor}" Grid.Row="0" Grid.Column="0">
+            <TextBlock Text="Meshes" FontSize="20" Margin="15,7,15,7" VerticalAlignment="Center"></TextBlock>
+        </StackPanel>
+        <ListView x:Name="geometryListView" ItemsSource="{Binding Meshes}" Grid.Row="1" Grid.Column="0" SelectionMode="Multiple" CanReorderItems="False" SelectionChanged="ListView_SelectionChanged" ContainerContentChanging="geometryListView_ContainerContentChanging">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <local:UC_Mesh DataContext="{Binding}"></local:UC_Mesh>

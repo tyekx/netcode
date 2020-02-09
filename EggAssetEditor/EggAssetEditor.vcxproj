@@ -113,12 +113,17 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     <ClInclude Include="DC_MainPage.h" />
     <ClInclude Include="DC_Material.h" />
     <ClInclude Include="DC_Mesh.h" />
+    <ClInclude Include="DC_Vector2Control.h" />
+    <ClInclude Include="DC_Vector3Control.h" />
+    <ClInclude Include="DC_Vector4Control.h" />
+    <ClInclude Include="DepthToMarginConverter.h" />
     <ClInclude Include="DX12GraphicsModuleForXaml.h" />
     <ClInclude Include="EditorApp.h" />
     <ClInclude Include="EditorFrameGraph.h" />
     <ClInclude Include="EditorModuleFactory.h" />
     <ClInclude Include="EggAssetExporter.h" />
     <ClInclude Include="FBXImporter.h" />
+    <ClInclude Include="FloatBox.h" />
     <ClInclude Include="GBuffer.h" />
     <ClInclude Include="GeometryPage.h">
       <DependentUpon>GeometryPage.xaml</DependentUpon>
@@ -137,16 +142,25 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     <ClInclude Include="MainPage.h">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClInclude>
-    <ClInclude Include="UC_Bone.h">
-      <DependentUpon>UC_Bone.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
+    <ClInclude Include="SelectionToVisibilityConverter.h" />
     <ClInclude Include="UC_Lod.h">
       <DependentUpon>UC_Lod.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
     <ClInclude Include="UC_Mesh.h">
       <DependentUpon>UC_Mesh.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="Vector2Control.h">
+      <DependentUpon>Vector2Control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="Vector3Control.h">
+      <DependentUpon>Vector3Control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="Vector4Control.h">
+      <DependentUpon>Vector4Control.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
     <ClInclude Include="VectorConverter.h" />
@@ -178,13 +192,19 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     <Page Include="MaterialsPage.xaml">
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="UC_Bone.xaml">
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="UC_Lod.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Include="UC_Mesh.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Vector2Control.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Vector3Control.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Vector4Control.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
@@ -229,10 +249,15 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     <ClCompile Include="DC_MainPage.cpp" />
     <ClCompile Include="DC_Material.cpp" />
     <ClCompile Include="DC_Mesh.cpp" />
+    <ClCompile Include="DC_Vector2Control.cpp" />
+    <ClCompile Include="DC_Vector3Control.cpp" />
+    <ClCompile Include="DC_Vector4Control.cpp" />
+    <ClCompile Include="DepthToMarginConverter.cpp" />
     <ClCompile Include="DX12GraphicsModuleForXaml.cpp" />
     <ClCompile Include="EditorModuleFactory.cpp" />
     <ClCompile Include="EggAssetExporter.cpp" />
     <ClCompile Include="FBXImporter.cpp" />
+    <ClCompile Include="FloatBox.cpp" />
     <ClCompile Include="GeometryPage.cpp">
       <DependentUpon>GeometryPage.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -252,16 +277,25 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-    <ClCompile Include="UC_Bone.cpp">
-      <DependentUpon>UC_Bone.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
+    <ClCompile Include="SelectionToVisibilityConverter.cpp" />
     <ClCompile Include="UC_Lod.cpp">
       <DependentUpon>UC_Lod.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
     <ClCompile Include="UC_Mesh.cpp">
       <DependentUpon>UC_Mesh.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="Vector2Control.cpp">
+      <DependentUpon>Vector2Control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="Vector3Control.cpp">
+      <DependentUpon>Vector3Control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="Vector4Control.cpp">
+      <DependentUpon>Vector4Control.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
     <ClCompile Include="VectorConverter.cpp" />
@@ -276,10 +310,6 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
       <DependentUpon>BonesPage.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Midl>
-    <Midl Include="CollidersPage.idl">
-      <DependentUpon>CollidersPage.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
     <Midl Include="GeometryPage.idl">
       <DependentUpon>GeometryPage.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -287,8 +317,16 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     <Midl Include="MainPage.idl">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Midl>
-    <Midl Include="UC_Bone.idl">
-      <DependentUpon>UC_Bone.xaml</DependentUpon>
+    <Midl Include="Vector2Control.idl">
+      <DependentUpon>Vector2Control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="Vector3Control.idl">
+      <DependentUpon>Vector3Control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="Vector4Control.idl">
+      <DependentUpon>Vector4Control.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Midl>
   </ItemGroup>
@@ -301,6 +339,12 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Editor_BoneVisibilityPass_Vertex.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Editor_ColliderPass_Pixel.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Editor_ColliderPass_Vertex.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="Editor_GBufferPass_Pixel.hlsl">

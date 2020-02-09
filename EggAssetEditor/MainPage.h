@@ -10,8 +10,11 @@
 #include <Egg/Modules.h>
 #include "XamlGlobal.h"
 #include "MaterialsPage.h"
+#include "CollidersPage.h"
 #include "ColliderTypeConverter.h"
 #include "ColliderTypeVisibilityConverter.h"
+#include "SelectionToVisibilityConverter.h"
+#include "DepthToMarginConverter.h"
 
 namespace winrt::EggAssetEditor::implementation
 {
@@ -36,10 +39,12 @@ namespace winrt::EggAssetEditor::implementation
 		void FileCtx_CreateManifest_Click(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
         winrt::fire_and_forget FileCtx_SaveManifest_Click(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
         winrt::fire_and_forget FileCtx_Compile_Click(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
+        winrt::fire_and_forget FileCtx_LoadManifest_Click(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e);
 
         winrt::fire_and_forget AssetCtx_ImportFBX_Click(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
         winrt::fire_and_forget AssetCtx_ImportAnimation_Click(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
-        winrt::fire_and_forget AssetCtx_AddStaticCollider_Click(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
+        
+
     
 
         void swapChainPanel_Loaded(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);

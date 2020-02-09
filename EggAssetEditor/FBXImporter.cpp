@@ -545,14 +545,8 @@ static std::vector<Material> ImportMaterials(const aiScene * scene) {
 	return materials;
 }
 
-Model FBXImporter::FromMemory(const uint8_t * source, uint32_t sizeInBytes)
-{
-	Assimp::Importer importer;
+static Model ImportModel(const aiScene * scene) {
 	Model importedModel;
-
-	uint32_t flags = aiProcess_Triangulate | aiProcess_FlipWindingOrder | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeMeshes;
-
-	const aiScene * scene = importer.ReadFileFromMemory(source, sizeInBytes, flags, ".fbx");
 
 	if(scene != nullptr) {
 		importedModel.meshes = ImportMeshes(scene);
@@ -567,14 +561,35 @@ Model FBXImporter::FromMemory(const uint8_t * source, uint32_t sizeInBytes)
 	return importedModel;
 }
 
-std::vector<Animation> FBXImporter::ImportAnimationsFromMemory(const uint8_t * source, uint32_t sizeInBytes, const Skeleton & skeleton) {
-	std::vector<Animation> animations;
+Model FBXImporter::FromFile(const std::string & file) {
+	Assimp::Importer importer;
 
+	uint32_t flags = aiProcess_Triangulate | aiProcess_FlipWindingOrder | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeMeshes;
+
+	const aiScene * scene = importer.ReadFile(file, flags);
+
+	if(scene == nullptr) {
+		const char * err = importer.GetErrorString();
+		OutputDebugStringA(err);
+	}
+
+	return ImportModel(scene);
+}
+
+Model FBXImporter::FromMemory(const uint8_t * source, uint32_t sizeInBytes)
+{
 	Assimp::Importer importer;
 
 	uint32_t flags = aiProcess_Triangulate | aiProcess_FlipWindingOrder | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeMeshes;
 
 	const aiScene * scene = importer.ReadFileFromMemory(source, sizeInBytes, flags, ".fbx");
+
+	return ImportModel(scene);
+}
+
+
+static std::vector<Animation> ImportAnimations(const aiScene * scene, const Skeleton & skeleton) {
+	std::vector<Animation> animations;
 
 	for(uint32_t i = 0; i < scene->mNumAnimations; ++i) {
 
@@ -587,7 +602,7 @@ std::vector<Animation> FBXImporter::ImportAnimationsFromMemory(const uint8_t * s
 
 		for(uint32_t boneIt = 0; boneIt < anim->mNumChannels; ++boneIt) {
 			const aiNodeAnim * nodeAnim = anim->mChannels[boneIt];
-			
+
 			BoneAnimation importedBoneAnimation;
 			importedBoneAnimation.BoneId = skeleton.GetBoneIndex(nodeAnim->mNodeName.C_Str());
 			importedBoneAnimation.PostState = static_cast<AnimationEdge>(nodeAnim->mPostState);
@@ -622,7 +637,7 @@ std::vector<Animation> FBXImporter::ImportAnimationsFromMemory(const uint8_t * s
 				rk.rotation.y = nodeAnim->mRotationKeys[keyIt].mValue.y;
 				rk.rotation.z = nodeAnim->mRotationKeys[keyIt].mValue.z;
 				rk.rotation.w = nodeAnim->mRotationKeys[keyIt].mValue.w;
-				
+
 				rk.time = nodeAnim->mRotationKeys[keyIt].mTime;
 
 				importedBoneAnimation.rotationKeys.push_back(rk);
@@ -647,6 +662,28 @@ std::vector<Animation> FBXImporter::ImportAnimationsFromMemory(const uint8_t * s
 	}
 
 	return animations;
+}
+
+std::vector<Animation> FBXImporter::ImportAnimationsFromFile(const std::string & file, const Skeleton & skeleton) {
+
+	Assimp::Importer importer;
+
+	uint32_t flags = aiProcess_Triangulate | aiProcess_FlipWindingOrder | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeMeshes;
+
+	const aiScene * scene = importer.ReadFile(file, flags);
+
+	return ImportAnimations(scene, skeleton);
+}
+
+std::vector<Animation> FBXImporter::ImportAnimationsFromMemory(const uint8_t * source, uint32_t sizeInBytes, const Skeleton & skeleton) {
+	
+	Assimp::Importer importer;
+
+	uint32_t flags = aiProcess_Triangulate | aiProcess_FlipWindingOrder | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeMeshes;
+
+	const aiScene * scene = importer.ReadFileFromMemory(source, sizeInBytes, flags, ".fbx");
+
+	return ImportAnimations(scene, skeleton);
 }
 
 static bool StrictlyGreater(double a, double b, double epsilon = 0.001) {

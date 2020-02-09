@@ -10,17 +10,35 @@
     <Page.Resources>
         <local:ColliderTypeVisibilityConverter x:Name="ColliderTypeVisibility" />
         <local:ColliderTypeConverter x:Name="ColliderType" />
-        <local:VectorConverter x:Name="VectorConverter" />
+        <local:SelectionToVisibilityConverter x:Name="SelectionToVisibility"/>
     </Page.Resources>
 
-    <Grid>
+    <Grid Background="{ThemeResource SystemAltLowColor}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="5*"/>
-            <RowDefinition Height="5*"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="3*"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="7*"/>
         </Grid.RowDefinitions>
 
-        <ScrollViewer Grid.Row="0" Grid.Column="0">
-            <ListView x:Name="collidersList" ItemsSource="{x:Bind Colliders}">
+        <StackPanel Orientation="Vertical"  Grid.Row="0" Grid.Column="0">
+            <StackPanel Orientation="Horizontal" Background="{ThemeResource SystemAccentColor}">
+                <TextBlock Text="Colliders" FontSize="20" Margin="15,7,15,7" VerticalAlignment="Center"></TextBlock>
+                <Button>
+                    <SymbolIcon Symbol="Add"></SymbolIcon>
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem Text="Add Collider" Click="AddCollider_Click"></MenuFlyoutItem>
+                            <MenuFlyoutItem Text="Approximate collider for bones" IsEnabled="False" ToolTipService.ToolTip="Not implemented"></MenuFlyoutItem>
+                            <MenuFlyoutItem Text="Approximate collider for mesh" IsEnabled="False" ToolTipService.ToolTip="Not implemented"></MenuFlyoutItem>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+            </StackPanel>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" Grid.Column="0">
+            <ListView x:Name="collidersList" ItemsSource="{x:Bind Colliders}" SelectionChanged="collidersList_SelectionChanged">
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="local:DC_Collider">
                         <TextBlock Text="{Binding Type, Converter={StaticResource ColliderType}}"></TextBlock>
@@ -28,34 +46,71 @@
                 </ListView.ItemTemplate>
             </ListView>
         </ScrollViewer>
-        
-        <ScrollViewer Grid.Row="1" Grid.Column="0">
-            <StackPanel Orientation="Vertical">
-                <StackPanel Orientation="Vertical">
-                    <TextBlock Text="Type:"></TextBlock>
-                    <TextBlock Text="{Binding SelectedItem.Type, Converter={StaticResource ColliderType}, ElementName=collidersList}"></TextBlock>
-                </StackPanel>
-<!--
-                <ComboBox x:Name="typeComboBox">
-                    <ComboBoxItem Content="Box"></ComboBoxItem>
-                    <ComboBoxItem Content="Sphere"></ComboBoxItem>
-                    <ComboBoxItem Content="Capsule"></ComboBoxItem>
-                    <ComboBoxItem Content="Plane"></ComboBoxItem>
-                    <ComboBoxItem Content="Mesh"></ComboBoxItem>
-                </ComboBox>-->
-                
-                <StackPanel Orientation="Vertical" Visibility="{Binding SelectedItem.Type, ElementName=collidersList, Converter={StaticResource ColliderTypeVisibility}, ConverterParameter=3}">
-                    <TextBlock Text="Box arguments:"></TextBlock>
-                    <TextBlock Text="{Binding SelectedItem.BoxArgs, Converter={StaticResource VectorConverter}, ElementName=collidersList}"></TextBlock>
+
+        <StackPanel Orientation="Vertical" Background="{ThemeResource SystemAccentColor}" Grid.Row="2" Grid.Column="0">
+            <TextBlock Text="Properties" FontSize="20" Margin="15,7,15,7" VerticalAlignment="Center"></TextBlock>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="3" Grid.Column="0" Visibility="{Binding SelectedIndex, ElementName=collidersList, Converter={StaticResource SelectionToVisibility}}">
+
+            <StackPanel Orientation="Vertical" >
+
+                <StackPanel Orientation="Vertical" Margin="0,15,0,0">
+                    <TextBlock Margin="15,0,0,5" Text="Type:"></TextBlock>
+                    <ComboBox SelectedIndex="{Binding SelectedItem.Type, Mode=TwoWay, ElementName=collidersList}" Width="240" Margin="30,0,0,0">
+                        <ComboBoxItem IsEnabled="False" Content="Undefined"></ComboBoxItem>
+                        <ComboBoxItem Content="Sphere"></ComboBoxItem>
+                        <ComboBoxItem Content="Capsule"></ComboBoxItem>
+                        <ComboBoxItem Content="Box"></ComboBoxItem>
+                    </ComboBox>
                 </StackPanel>
 
-                <StackPanel Orientation="Vertical" Visibility="{Binding SelectedItem.Type, ElementName=collidersList, Converter={StaticResource ColliderTypeVisibility}, ConverterParameter=1}">
-                    <TextBlock Text="Sphere arguments:"></TextBlock>
-                    <TextBlock Text="{Binding SelectedItem.SphereArg, ElementName=collidersList}"></TextBlock>
+                <StackPanel Orientation="Vertical" Margin="0,15,0,0">
+                    <TextBlock Margin="15,0,0,5" Text="Local Position:" />
+                    <local:Vector3Control Margin="30,0,0,0" Value="{Binding SelectedItem.LocalPosition, Mode=TwoWay, ElementName=collidersList}"></local:Vector3Control>
+                </StackPanel>
+
+                <StackPanel Orientation="Vertical" Margin="0,15,0,0">
+                    <TextBlock Margin="15,0,0,5" Text="Local Rotation:" />
+                    <local:Vector3Control Margin="30,0,0,0" Value="{Binding SelectedItem.LocalRotation, Mode=TwoWay, ElementName=collidersList}"></local:Vector3Control>
+                </StackPanel>
+                
+                <StackPanel Orientation="Vertical" Margin="0,15,0,0">
+                    <TextBlock Margin="15,0,0,5" Text="Bone Reference:" />
+                    <StackPanel Orientation="Horizontal" Margin="30,0,0,0">
+                        <ComboBox x:Name="boneComboBox" ItemsSource="{x:Bind Bones}" SelectionChanged="boneComboBox_SelectionChanged" Width="240">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="local:DC_Bone">
+                                    <TextBlock Text="{Binding Name}"></TextBlock>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Button ToolTipService.ToolTip="Clear Bone Reference" Click="ClearBoneReference_Click">
+                            <SymbolIcon Symbol="Clear"></SymbolIcon>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Orientation="Vertical" Visibility="{Binding SelectedItem.Type, ElementName=collidersList, Converter={StaticResource ColliderTypeVisibility}, ConverterParameter=3}" Margin="0,15,0,15">
+                    <TextBlock Margin="15,0,0,5" Text="Box arguments:"></TextBlock>
+                    <local:Vector3Control Margin="30,0,0,0" Value="{Binding SelectedItem.BoxArgs, Mode=TwoWay, ElementName=collidersList}"></local:Vector3Control>
+                </StackPanel>
+
+                <StackPanel Orientation="Vertical" Visibility="{Binding SelectedItem.Type, ElementName=collidersList, Converter={StaticResource ColliderTypeVisibility}, ConverterParameter=2}" Margin="0,15,0,15">
+                    <TextBlock Margin="15,0,0,5" Text="Capsule arguments:"></TextBlock>
+                    <local:Vector2Control Margin="30,0,0,0" Value="{Binding SelectedItem.CapsuleArgs, Mode=TwoWay, ElementName=collidersList}"></local:Vector2Control>
+                </StackPanel>
+
+                <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Visibility="{Binding SelectedItem.Type, ElementName=collidersList, Converter={StaticResource ColliderTypeVisibility}, ConverterParameter=1}" Margin="0,15,0,15">
+                    <TextBlock Margin="15,0,0,5" Text="Sphere arguments:"></TextBlock>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Margin="35,0,5,0" Text="R:" VerticalAlignment="Center"></TextBlock>
+                        <local:FloatBox Text="{Binding SelectedItem.SphereArg, Mode=TwoWay, ElementName=collidersList}" MaxWidth="240"></local:FloatBox>
+                    </StackPanel>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>
         
     </Grid>
-    
+
 </Page>

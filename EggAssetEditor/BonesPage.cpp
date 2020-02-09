@@ -4,7 +4,6 @@
 #include "BonesPage.g.cpp"
 #endif
 
-#include "UC_Bone.h"
 #include "DC_Bone.h"
 #include "XamlGlobal.h"
 #include "XamlHelpers.h"
@@ -26,14 +25,14 @@ namespace winrt::EggAssetEditor::implementation
             DataContext(e.Parameter());
 
             firstNavigation = false;
-
-            if(Global::Model != nullptr && !Global::Model->meshes.empty()) {
-                Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Bone> bones = XamlHelpers::ConvertBones();
-
-                bonesList().ItemsSource(bones);
-            }
-
         }
+
+        if(Global::Model != nullptr && !Global::Model->meshes.empty()) {
+            Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Bone> bones = XamlHelpers::ConvertBones();
+
+            bonesList().ItemsSource(bones);
+        }
+
         __super::OnNavigatedTo(e);
     }
 
@@ -50,8 +49,6 @@ namespace winrt::EggAssetEditor::implementation
             return;
         }
 
-
-
         auto selectedRanges = bonesList().SelectedRanges();
 
         std::vector<uint32_t> selectedBoneIndices;
@@ -67,6 +64,7 @@ namespace winrt::EggAssetEditor::implementation
         }
 
         Global::EditorApp->SetSelectedBones(selectedBoneIndices);
+        Global::EditorApp->Run();
     }
 }
 

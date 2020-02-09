@@ -8,16 +8,23 @@
     mc:Ignorable="d" NavigationCacheMode="Enabled">
 
     <Page.Resources>
-        <local:VectorConverter x:Name="VectorConverter"></local:VectorConverter>
+        <local:VectorConverter x:Name="VectorConverter" />
+        <local:SelectionToVisibilityConverter x:Name="SelectionToVisibility" />
     </Page.Resources>
-    
+
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="13*"/>
-            <RowDefinition Height="2*"/>
-            <RowDefinition Height="35*"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="3*"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="7*"/>
         </Grid.RowDefinitions>
-        <ScrollViewer Grid.Row="0" Grid.Column="0" VerticalScrollBarVisibility="Visible" Grid.RowSpan="2">
+
+        <StackPanel Orientation="Vertical" Background="{ThemeResource SystemAccentColor}" Grid.Row="0" Grid.Column="0">
+            <TextBlock Text="Materials" FontSize="20" Margin="15,7,15,7" VerticalAlignment="Center"></TextBlock>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" Grid.Column="0" VerticalScrollBarVisibility="Visible" Grid.RowSpan="2">
             <ListView x:Name="materialsList" ItemsSource="{x:Bind Materials}" SelectionMode="Single">
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="local:DC_Material">
@@ -27,54 +34,54 @@
             </ListView>
         </ScrollViewer>
 
-        <StackPanel Background="#FF212121" Grid.Row="1">
-            <TextBlock Foreground="Wheat" Text="Properties" FontSize="20"></TextBlock>
+        <StackPanel Orientation="Vertical" Background="{ThemeResource SystemAccentColor}" Grid.Row="2" Grid.Column="0">
+            <TextBlock Text="Properties" FontSize="20" Margin="15,7,15,7" VerticalAlignment="Center"></TextBlock>
         </StackPanel>
 
-        <ScrollViewer Grid.Row="2" Grid.Column="0">
-            <StackPanel Orientation="Vertical">
-                <StackPanel Margin="0,10,0,10">
-                    <TextBlock Text="Name:"></TextBlock>
-                    <TextBlock Text="{Binding SelectedItem.Name, ElementName=materialsList}"></TextBlock>
+        <ScrollViewer Grid.Row="3" Grid.Column="0">
+            <StackPanel Orientation="Vertical" Visibility="{Binding SelectedIndex, Converter={StaticResource SelectionToVisibility}, ElementName=materialsList}">
+                <StackPanel Margin="0,15,0,0">
+                    <TextBlock Text="Name:" Margin="15,0,0,5"></TextBlock>
+                    <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.Name, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
-                <StackPanel Margin="0,10,0,10">
-                    <TextBlock Text="Diffuse Color:"></TextBlock>
-                    <TextBlock Text="{Binding SelectedItem.DiffuseColor, Converter={StaticResource VectorConverter}, ElementName=materialsList}"></TextBlock>
+                <StackPanel Margin="0,15,0,0">
+                    <TextBlock Text="Diffuse Color:" Margin="15,0,0,5"></TextBlock>
+                    <ColorPicker ColorSpectrumShape="Ring" IsAlphaEnabled="True" Color="{Binding SelectedItem.DiffuseColor, Mode=TwoWay, ElementName=materialsList}"></ColorPicker>
                 </StackPanel>
-                <StackPanel Margin="0,10,0,10">
-                    <TextBlock Text="Fresnel R0:"></TextBlock>
-                    <TextBlock Text="{Binding SelectedItem.FresnelR0, Converter={StaticResource VectorConverter}, ElementName=materialsList}"></TextBlock>
+                <StackPanel Margin="0,15,0,0">
+                    <TextBlock Text="Fresnel R0:" Margin="15,0,0,5"></TextBlock>
+                    <local:Vector3Control Margin="30,0,30,0" Value="{Binding SelectedItem.FresnelR0, Mode=TwoWay, ElementName=materialsList}"></local:Vector3Control>
                 </StackPanel>
-                <StackPanel Margin="0,10,0,10">
-                    <TextBlock Text="Shininess:"></TextBlock>
-                    <TextBlock Text="{Binding SelectedItem.Shininess, ElementName=materialsList}"></TextBlock>
+                <StackPanel Margin="0,15,0,0" HorizontalAlignment="Left">
+                    <TextBlock Text="Shininess:" Margin="15,0,0,5"></TextBlock>
+                    <local:FloatBox Margin="30,0,30,0" Text="{Binding SelectedItem.Shininess, Mode=TwoWay, ElementName=materialsList}" MaxWidth="240"></local:FloatBox>
                 </StackPanel>
-                <StackPanel Margin="0,10,0,10">
-                    <TextBlock Text="DiffuseMapReference:"></TextBlock>
-                    <TextBox Text="{Binding SelectedItem.DiffuseMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
+                <StackPanel Margin="0,15,0,0">
+                    <TextBlock Margin="15,0,0,5" Text="DiffuseMapReference:"></TextBlock>
+                    <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.DiffuseMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
-                <StackPanel Margin="0,10,0,10">
-                    <TextBlock Text="NormalMapReference:"></TextBlock>
-                    <TextBox Text="{Binding SelectedItem.NormalMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
+                <StackPanel Margin="0,15,0,0">
+                    <TextBlock Margin="15,0,0,5" Text="NormalMapReference:"></TextBlock>
+                    <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.NormalMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
-                <StackPanel Margin="0,10,0,10">
-                    <TextBlock Text="SpecularMapReference:"></TextBlock>
-                    <TextBox Text="{Binding SelectedItem.SpecularMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
+                <StackPanel Margin="0,15,0,0">
+                    <TextBlock Margin="15,0,0,5" Text="SpecularMapReference:"></TextBlock>
+                    <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.SpecularMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
-                <StackPanel Margin="0,10,0,10">
-                    <TextBlock Text="RoughnessMapReference:"></TextBlock>
-                    <TextBox Text="{Binding SelectedItem.RoughnessMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
+                <StackPanel Margin="0,15,0,0">
+                    <TextBlock Margin="15,0,0,5" Text="RoughnessMapReference:"></TextBlock>
+                    <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.RoughnessMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
-                <StackPanel Margin="0,10,0,10">
-                    <TextBlock Text="AmbientMapReference:"></TextBlock>
-                    <TextBox Text="{Binding SelectedItem.AmbientMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
+                <StackPanel Margin="0,15,0,0">
+                    <TextBlock Margin="15,0,0,5" Text="AmbientMapReference:"></TextBlock>
+                    <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.AmbientMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
-                <StackPanel Margin="0,10,0,10">
-                    <TextBlock Text="HeightMapReference:"></TextBlock>
-                    <TextBox Text="{Binding SelectedItem.HeightMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
+                <StackPanel Margin="0,15,0,0">
+                    <TextBlock Margin="15,0,0,5" Text="HeightMapReference:"></TextBlock>
+                    <TextBox  Margin="30,0,30,0" Text="{Binding SelectedItem.HeightMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
-                <StackPanel Margin="0,10,0,10">
-                    <Button Content="Save Changes" Click="PropertiesButton_Click"></Button>
+                <StackPanel HorizontalAlignment="Right"  Margin="0,15,0,15">
+                    <Button Margin="30,0,30,0" Content="Save Changes" Click="PropertiesButton_Click"></Button>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

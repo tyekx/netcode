@@ -15,26 +15,15 @@ namespace winrt::EggAssetEditor::implementation
         propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"Type"));
     }
 
-    uint32_t DC_Collider::BoneReference()
+    int32_t DC_Collider::BoneReference()
     {
         return boneReference;
     }
 
-    void DC_Collider::BoneReference(uint32_t value)
+    void DC_Collider::BoneReference(int32_t value)
     {
         boneReference = value;
         propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"BoneReference"));
-    }
-
-    float DC_Collider::SphereArg()
-    {
-        return sphereArg;
-    }
-
-    void DC_Collider::SphereArg(float value)
-    {
-        throw hresult_not_implemented();
-        propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"SphereArg"));
     }
 
     Windows::Foundation::Numerics::float3 DC_Collider::LocalPosition()
@@ -48,15 +37,27 @@ namespace winrt::EggAssetEditor::implementation
         propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"LocalPosition"));
     }
 
-    Windows::Foundation::Numerics::float4 DC_Collider::LocalRotation()
+    Windows::Foundation::Numerics::float3 DC_Collider::LocalRotation()
     {
         return localRotation;
     }
 
-    void DC_Collider::LocalRotation(Windows::Foundation::Numerics::float4 const& value)
+    void DC_Collider::LocalRotation(Windows::Foundation::Numerics::float3 const& value)
     {
         localRotation = value;
         propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"LocalRotation"));
+    }
+
+    float DC_Collider::SphereArg()
+    {
+        return sphereArg;
+    }
+
+    void DC_Collider::SphereArg(float value)
+    {
+        sphereArg = value;
+        Type(static_cast<uint32_t>(ColliderType::SPHERE));
+        propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"SphereArg"));
     }
 
     Windows::Foundation::Numerics::float2 DC_Collider::CapsuleArgs()

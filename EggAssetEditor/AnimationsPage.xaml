@@ -8,10 +8,19 @@
     mc:Ignorable="d" NavigationCacheMode="Enabled">
 
     <Grid>
-        <ScrollViewer>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
+        
+        <StackPanel Orientation="Vertical" Background="{ThemeResource SystemAccentColor}" Grid.Row="0" Grid.Column="0">
+            <TextBlock Text="Animations" FontSize="20" Margin="15,7,15,7" VerticalAlignment="Center"></TextBlock>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1">
             <ListView x:Name="animationsView" ItemsSource="{x:Bind Animations}" SelectionMode="Single" SelectionChanged="ListView_SelectionChanged">
                 <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="local:AnimationsPage">
+                    <DataTemplate x:DataType="local:DC_Animation">
                         <TextBlock Text="{Binding Name}"></TextBlock>
                     </DataTemplate>
                 </ListView.ItemTemplate>

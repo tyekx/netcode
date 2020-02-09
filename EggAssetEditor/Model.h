@@ -158,7 +158,7 @@ struct Collider {
 	};
 	DirectX::XMFLOAT3 localPosition;
 	DirectX::XMFLOAT4 localRotation;
-	uint32_t boneReference;
+	int32_t boneReference;
 };
 
 class Model {

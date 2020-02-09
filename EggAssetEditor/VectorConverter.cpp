@@ -11,7 +11,6 @@ namespace winrt::EggAssetEditor::implementation
 
             return box_value(L"[" + to_hstring(f4.x) + L" ; " + to_hstring(f4.y) + L" ; " + to_hstring(f4.z) + L" ; " + to_hstring(f4.w) + L"]");
         } catch(winrt::hresult_no_interface& e) {
-
             auto f3 = unbox_value<Windows::Foundation::Numerics::float3>(value);
 
             return box_value(L"[" + to_hstring(f3.x) + L" ; " + to_hstring(f3.y) + L" ; " + to_hstring(f3.z) + L"]");

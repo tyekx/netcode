@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "CreateColliderDialog.g.h"
-#include "UC_Bone.h"
 #include "DC_Bone.h"
 
 namespace winrt::EggAssetEditor::implementation

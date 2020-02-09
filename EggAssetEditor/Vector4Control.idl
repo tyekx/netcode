@@ -1,0 +1,26 @@
+namespace EggAssetEditor
+{
+    [bindable]
+    [default_interface]
+    runtimeclass DC_Vector4Control : Windows.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        DC_Vector4Control();
+
+        IInspectable VectorValue;
+
+        Single ValueX;
+        Single ValueY;
+        Single ValueZ;
+        Single ValueW;
+    }
+
+    [default_interface]
+    runtimeclass Vector4Control : Windows.UI.Xaml.Controls.UserControl
+    {
+        Vector4Control();
+
+        static Windows.UI.Xaml.DependencyProperty ValueProperty{ get; };
+
+        IInspectable Value;
+    }
+}
