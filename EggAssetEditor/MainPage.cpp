@@ -402,6 +402,7 @@ namespace winrt::EggAssetEditor::implementation
 
                 auto anim = FBXImporter::ImportAnimationsFromMemory(animBuffer.data(), animBuffer.Length(), Global::Model->skeleton);
                 auto optimizedAnim = FBXImporter::OptimizeAnimation(anim.front(), Global::Model->skeleton);
+                optimizedAnim.name = animRef.name;
 
                 Global::Model->animations.push_back(std::move(optimizedAnim));
             }

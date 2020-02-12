@@ -18,7 +18,7 @@ namespace Egg::Graphics::DX12 {
 	}
 
 	uint16_t Texture::GetMipLevelCount() const {
-		return textureData.GetMetadata().mipLevels;
+		return static_cast<uint16_t>(textureData.GetMetadata().mipLevels);
 	}
 
 	const Image * Texture::GetImage(uint16_t mipIndex, uint16_t arrayIndex, uint32_t slice) {

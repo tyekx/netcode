@@ -62,7 +62,7 @@ namespace Egg::Graphics::DX12 {
 	void ResourceViews::CreateRTV(uint32_t idx, ID3D12Resource * resource, DXGI_FORMAT format) {
 		INT offset = static_cast<INT>(idx);
 
-		ASSERT(offset < numDescriptors && offset >= 0, "ResourceViews: idx is out of range");
+		ASSERT(static_cast<uint32_t>(offset) < numDescriptors && offset >= 0, "ResourceViews: idx is out of range");
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_RTV, "ResourceViews: invalid heap type");
 
 		D3D12_RENDER_TARGET_VIEW_DESC rtvd;
@@ -77,7 +77,7 @@ namespace Egg::Graphics::DX12 {
 	void ResourceViews::CreateSRV(uint32_t idx, uint64_t resourceHandle) {
 		INT offset = static_cast<INT>(idx);
 
-		ASSERT(offset < numDescriptors && offset >= 0, "ResourceViews: idx is out of range");
+		ASSERT(static_cast<uint32_t>(offset) < numDescriptors && offset >= 0, "ResourceViews: idx is out of range");
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "ResourceViews: invalid heap type");
 
 		const GResource & resource = (*reinterpret_cast<const GResource *>(resourceHandle));
@@ -90,7 +90,7 @@ namespace Egg::Graphics::DX12 {
 	void ResourceViews::CreateRTV(uint32_t idx, uint64_t resourceHandle) {
 		INT offset = static_cast<INT>(idx);
 
-		ASSERT(offset < numDescriptors && offset >= 0, "ResourceViews: idx is out of range");
+		ASSERT(static_cast<uint32_t>(offset) < numDescriptors && offset >= 0, "ResourceViews: idx is out of range");
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_RTV, "ResourceViews: invalid heap type");
 
 		const GResource & resource = (*reinterpret_cast<const GResource *>(resourceHandle));

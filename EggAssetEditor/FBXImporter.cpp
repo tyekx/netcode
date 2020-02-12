@@ -260,6 +260,7 @@ static std::vector<Mesh> ImportMeshes(const aiScene * scene) {
 		importedMesh.bones = ImportBones(mesh);
 		importedMesh.inputLayout = std::move(inputLayout);
 		importedMesh.vertexStride = vertexStride;
+		importedMesh.materialIdx = mesh->mMaterialIndex;
 		importedMesh.lods.push_back(std::move(lod0));
 		meshes.push_back(std::move(importedMesh));
 	}

@@ -32,17 +32,23 @@ namespace Egg::Importer {
 			return;
 		}
 
-		unsigned int meshesSize;
-		unsigned int materialsSize;
-		unsigned int animDataSize;
+		uint32_t meshesSize;
+		uint32_t materialsSize;
+		uint32_t animDataSize;
+		uint32_t colliderDataSize;
+		uint32_t boneDataSize;
 
-		fread(&meshesSize, sizeof(unsigned int), 1, file);
-		fread(&materialsSize, sizeof(unsigned int), 1, file);
-		fread(&animDataSize, sizeof(unsigned int), 1, file);
+		fread(&meshesSize, sizeof(uint32_t), 1, file);
+		fread(&animDataSize, sizeof(uint32_t), 1, file);
+		fread(&materialsSize, sizeof(uint32_t), 1, file);
+		fread(&boneDataSize, sizeof(uint32_t), 1, file);
+		fread(&colliderDataSize, sizeof(uint32_t), 1, file);
 
 		void * meshesData = nullptr;
 		void * materialsData = nullptr;
 		void * animData = nullptr;
+		void * colliderData = nullptr;
+		void * boneData = nullptr;
 
 		if(meshesSize > 0) {
 			meshesData = std::malloc(meshesSize);
@@ -59,29 +65,22 @@ namespace Egg::Importer {
 			fread(animData, 1, animDataSize, file);
 		}
 
+		if(boneDataSize > 0) {
+			boneData = std::malloc(boneDataSize);
+			fread(boneData, 1, boneDataSize, file);
+		}
+
+		if(colliderDataSize > 0) {
+			colliderData = std::malloc(colliderDataSize);
+			fread(colliderData, 1, colliderDataSize, file);
+		}
+
 		m.SetMeshes(meshesData);
 		m.SetMaterials(materialsData);
 		m.SetAnimData(animData);
+		m.SetColliderData(colliderData);
+		m.SetBoneData(boneData);
 
 		fclose(file);
-
-		/*
-		Post processing: deleting every unresolved texture references
-		*/
-		for(unsigned int i = 0; i < m.materialsLength; ++i) {
-			if(m.materials[i].HasDiffuseTexture()) {
-				MediaPath mp{ Egg::Utility::ToWideString(m.materials[i].diffuseTexture) };
-				if(!Egg::Path::FileExists(mp.GetAbsolutePath().c_str())) {
-					ZeroMemory(m.materials[i].diffuseTexture, sizeof(m.materials[i].diffuseTexture));
-				}
-			}
-			if(m.materials[i].HasNormalTexture()) {
-				MediaPath mp{ Egg::Utility::ToWideString(m.materials[i].normalTexture) };
-				if(!Egg::Path::FileExists(mp.GetAbsolutePath().c_str())) {
-					ZeroMemory(m.materials[i].normalTexture, sizeof(m.materials[i].normalTexture));
-				}
-			}
-		}
-
 	}
 }

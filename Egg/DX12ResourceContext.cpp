@@ -30,7 +30,7 @@ namespace Egg::Graphics::DX12 {
 		desc.flags = flags;
 		desc.type = resourceType;
 		desc.sizeInBytes = 0;
-		desc.strideInBytes = DirectX::BitsPerPixel(format) / 8U;
+		desc.strideInBytes = static_cast<uint32_t>(DirectX::BitsPerPixel(format) / 8U);
 		desc.height = height;
 		desc.state = initialState;
 		ZeroMemory(&desc.clearValue, sizeof(ClearValue));
@@ -49,7 +49,7 @@ namespace Egg::Graphics::DX12 {
 		desc.flags = flags;
 		desc.type = resourceType;
 		desc.sizeInBytes = 0;
-		desc.strideInBytes = DirectX::BitsPerPixel(format) / 8U;
+		desc.strideInBytes = static_cast<uint32_t>(DirectX::BitsPerPixel(format) / 8U);
 		desc.height = height;
 		desc.state = initialState;
 		ZeroMemory(&desc.clearValue, sizeof(ClearValue));
@@ -88,7 +88,7 @@ namespace Egg::Graphics::DX12 {
 		desc.flags = ResourceFlags::ALLOW_RENDER_TARGET;
 		desc.type = resourceType;
 		desc.sizeInBytes = 0;
-		desc.strideInBytes = DirectX::BitsPerPixel(format) / 8U;
+		desc.strideInBytes = static_cast<uint32_t>(DirectX::BitsPerPixel(format) / 8U);
 		desc.height = height;
 		desc.state = initState;
 		desc.clearValue.Color[0] = clearColor.x;
@@ -147,7 +147,7 @@ namespace Egg::Graphics::DX12 {
 		desc.flags = ResourceFlags::ALLOW_DEPTH_STENCIL;
 		desc.type = resourceType;
 		desc.sizeInBytes = 0;
-		desc.strideInBytes = DirectX::BitsPerPixel(format) / 8U;
+		desc.strideInBytes = static_cast<uint32_t>(DirectX::BitsPerPixel(format) / 8U);
 		desc.height = height;
 		desc.state = initState;
 		desc.clearValue.DepthStencil.Depth = clearDepth;

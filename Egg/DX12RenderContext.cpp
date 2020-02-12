@@ -144,10 +144,10 @@ namespace Egg::Graphics::DX12 {
 	void RenderContext::SetViewport(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
 	{
 		D3D12_VIEWPORT vp;
-		vp.TopLeftX = left;
-		vp.Width = right;
-		vp.TopLeftY = top;
-		vp.Height = bottom;
+		vp.TopLeftX = static_cast<float>(left);
+		vp.Width = static_cast<float>(right);
+		vp.TopLeftY = static_cast<float>(top);
+		vp.Height = static_cast<float>(bottom);
 		vp.MinDepth = 0.0f;
 		vp.MaxDepth = 1.0f;
 

@@ -21,7 +21,7 @@
             <ListView x:Name="animationsView" ItemsSource="{x:Bind Animations}" SelectionMode="Single" SelectionChanged="ListView_SelectionChanged">
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="local:DC_Animation">
-                        <TextBlock Text="{Binding Name}"></TextBlock>
+                        <TextBlock Text="{Binding Name, Mode=OneWay}"></TextBlock>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>

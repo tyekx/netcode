@@ -179,9 +179,9 @@ namespace Egg::Graphics {
 		DirectX::XMFLOAT3 point1 = vIter[p1];
 		DirectX::XMFLOAT3 point2 = vIter[p2];
 		DirectX::XMFLOAT3 middle = DirectX::XMFLOAT3(
-			(point1.x + point2.x) / 2.0,
-			(point1.y + point2.y) / 2.0,
-			(point1.z + point2.z) / 2.0);
+			(point1.x + point2.x) / 2.0f,
+			(point1.y + point2.y) / 2.0f,
+			(point1.z + point2.z) / 2.0f);
 
 		uint32_t idx = AddVertex(vIter, middle);
 

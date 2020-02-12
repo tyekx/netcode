@@ -326,7 +326,7 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 
 			DirectX::XMStoreFloat4x4A(&cbuffer.transform, DirectX::XMMatrixTranspose(transformMat));
 			renderContext->SetConstants(1, cbuffer);
-			renderContext->SetVertexBuffer(vertexBuffer, vertexOffset);
+			renderContext->SetVertexBuffer(vertexBuffer, static_cast<uint32_t>(vertexOffset));
 			renderContext->DrawIndexed(indexCount);
 
 			// Advance the buffer position.

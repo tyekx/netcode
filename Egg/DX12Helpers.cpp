@@ -168,7 +168,7 @@ namespace Egg::Graphics::DX12 {
 	{
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvd;
 		cbvd.BufferLocation = resource.address;
-		cbvd.SizeInBytes = resource.desc.sizeInBytes;
+		cbvd.SizeInBytes = static_cast<uint32_t>(resource.desc.sizeInBytes);
 
 		return cbvd;
 	}

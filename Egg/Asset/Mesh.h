@@ -4,32 +4,37 @@
 
 namespace Egg::Asset {
 
+	struct InputElement {
+		char semanticName[32];
+		int32_t semanticIndex;
+		DXGI_FORMAT format;
+		uint32_t byteOffset;
+	};
+
 	struct LODLevel {
-		// not byte offset (need to multiply this by vertexSize to get byte offset)
-		unsigned int vertexOffset;
-		unsigned int vertexCount;
-		unsigned int verticesLength;
-		// not byte offset (need to multiply this by vertexSize to get byte offset)
-		unsigned int indexOffset;
-		unsigned int indexCount;
-		unsigned int indicesLength;
+		uint32_t vertexBufferByteOffset;
+		uint32_t vertexCount;
+		uint32_t vertexBufferSizeInBytes;
+		uint32_t indexBufferByteOffset;
+		uint32_t indexCount;
+		uint32_t indexBufferSizeInBytes;
 	};
 
 	struct Mesh {
-		unsigned int materialId;
-		unsigned int vertexType;
-		unsigned int vertexSize;
-
-		void * vertices;
-		unsigned int * indices;
-
-		unsigned int verticesLength;
-		unsigned int indicesLength;
+		uint32_t materialId;
+		uint32_t vertexSize;
 
 		DirectX::BoundingBox boundingBox;
 
+		uint32_t verticesSizeInBytes;
+		uint32_t indicesSizeInBytes;
+		uint32_t lodLevelsLength;
+		uint32_t inputElementsLength;
+
+		InputElement * inputElements;
+		void * vertices;
+		uint32_t * indices;
 		LODLevel * lodLevels;
-		unsigned int lodLevelsLength;
 	};
 
 }

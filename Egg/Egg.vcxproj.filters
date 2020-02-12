@@ -130,9 +130,6 @@
     <ClInclude Include="Modules.h">
       <Filter>Modules</Filter>
     </ClInclude>
-    <ClInclude Include="Importer.h">
-      <Filter>Legacy</Filter>
-    </ClInclude>
     <ClInclude Include="LinearClassifier.h">
       <Filter>Legacy</Filter>
     </ClInclude>
@@ -322,6 +319,9 @@
     <ClInclude Include="Asset\Collider.h">
       <Filter>Asset</Filter>
     </ClInclude>
+    <ClInclude Include="Importer.h">
+      <Filter>Serialization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
@@ -357,9 +357,6 @@
     </ClCompile>
     <ClCompile Include="Modules.cpp">
       <Filter>Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="Importer.cpp">
-      <Filter>Legacy</Filter>
     </ClCompile>
     <ClCompile Include="LinearClassifier.cpp">
       <Filter>Legacy</Filter>
@@ -498,6 +495,9 @@
     </ClCompile>
     <ClCompile Include="DX12GraphicsModuleForWin32.cpp">
       <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Importer.cpp">
+      <Filter>Serialization</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

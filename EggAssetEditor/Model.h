@@ -4,6 +4,7 @@
 #include <vector>
 #include <DirectXCollision.h>
 #include <dxgiformat.h>
+#include <Egg/Asset/Collider.h>
 
 struct LOD {
 	size_t vertexDataSizeInBytes;
@@ -47,6 +48,7 @@ struct Mesh {
 	std::vector<InputElement> inputLayout;
 	std::vector<Bone> bones;
 	uint32_t vertexStride;
+	uint32_t materialIdx;
 	DirectX::BoundingBox boundingBox;
 };
 
@@ -144,22 +146,8 @@ struct Skeleton {
 	}
 };
 
-enum class ColliderType : unsigned {
-	UNDEFINED, SPHERE, CAPSULE, BOX, PLANE, MESH
-};
-
-struct Collider {
-	ColliderType type;
-	union {
-		DirectX::XMFLOAT3 boxArgs;
-		DirectX::XMFLOAT3 planeArgs;
-		DirectX::XMFLOAT2 capsuleArgs;
-		float sphereArgs;
-	};
-	DirectX::XMFLOAT3 localPosition;
-	DirectX::XMFLOAT4 localRotation;
-	int32_t boneReference;
-};
+using Egg::Asset::ColliderType;
+using Egg::Asset::Collider;
 
 class Model {
 public:

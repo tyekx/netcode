@@ -7,5 +7,5 @@ class EggAssetExporter {
 	EggAssetExporter() = delete;
 	~EggAssetExporter() = delete;
 public:
-	static std::vector<uint8_t> Export(const Model & model);
+	static void Export(const std::string & path, const Model & model);
 };

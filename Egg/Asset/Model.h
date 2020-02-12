@@ -10,32 +10,38 @@
 #include "Collider.h"
 
 namespace Egg::Asset {
+
+
+
 	class Model {
 		using freed_unique_ptr_t = std::unique_ptr<void, void(*)(void *)>;
 
 		freed_unique_ptr_t meshesAlloc;
 		freed_unique_ptr_t materialsAlloc;
 		freed_unique_ptr_t animDataAlloc;
+		freed_unique_ptr_t boneDataAlloc;
 		freed_unique_ptr_t colliderDataAlloc;
 	public:
-		unsigned int meshesLength;
-		Mesh * meshes;
 
-		unsigned int materialsLength;
-		Material * materials;
+		ArrayView<Mesh> meshes;
+		ArrayView<Material> materials;
+		ArrayView<Animation> animations;
+		ArrayView<Bone> bones;
+		ArrayView<Collider> colliders;
 
-		unsigned int animationsLength;
-		Animation * animations;
 
-		unsigned int bonesLength;
-		Bone * bones;
-
-		Model() : meshesAlloc{ nullptr, std::free }, materialsAlloc{ nullptr, std::free }, animDataAlloc{ nullptr, std::free },
+		Model() : meshesAlloc{ nullptr, std::free },
+			materialsAlloc{ nullptr, std::free },
+			animDataAlloc{ nullptr, std::free },
+			boneDataAlloc{ nullptr, std::free },
 			colliderDataAlloc{ nullptr, std::free },
-			meshesLength{ 0 }, meshes{ nullptr }, 
-			materialsLength{ 0 }, materials{ nullptr },
-			animationsLength{ 0 }, animations{ nullptr },
-			bonesLength{ 0 }, bones{ nullptr } {}
+			meshes{},
+			materials{},
+			animations{},
+			bones{},
+			colliders{} {
+		
+		}
 
 		void SetMaterials(void * ptr) {
 			if(!ptr) {
@@ -44,8 +50,10 @@ namespace Egg::Asset {
 
 			materialsAlloc.reset(ptr);
 
-			materialsLength = InterpretAs<unsigned int>(&ptr);
-			materials = InterpretAsArray<Material>(&ptr, materialsLength);
+			uint32_t len = InterpretAs<uint32_t>(&ptr);
+			Material* mats = InterpretAsArray<Material>(&ptr, len);
+
+			materials = ArrayView<Material>(mats, static_cast<size_t>(len));
 		}
 
 		void SetMeshes(void * ptr) {
@@ -55,18 +63,19 @@ namespace Egg::Asset {
 
 			meshesAlloc.reset(ptr);
 
-			meshesLength = InterpretAs<unsigned int>(&ptr);
-			meshes = InterpretAsArray<Mesh>(&ptr, meshesLength);
+			uint32_t meshesLength = InterpretAs<unsigned int>(&ptr);
+			Mesh* loadedMeshes = InterpretAsArray<Mesh>(&ptr, meshesLength);
 			
 			for(unsigned int i = 0; i < meshesLength; ++i) {
-				meshes[i].vertices = ptr;
-				InterpretSkip(&ptr, meshes[i].verticesLength);
-				meshes[i].indices = InterpretAsArray<unsigned int>(&ptr, meshes[i].indicesLength);
-				meshes[i].lodLevels = InterpretAsArray<Asset::LODLevel>(&ptr, meshes[i].lodLevelsLength);
+				loadedMeshes[i].vertices = ptr;
+				InterpretSkip(&ptr, loadedMeshes[i].verticesLength);
+				loadedMeshes[i].indices = InterpretAsArray<unsigned int>(&ptr, loadedMeshes[i].indicesLength);
+				loadedMeshes[i].lodLevels = InterpretAsArray<Asset::LODLevel>(&ptr, loadedMeshes[i].lodLevelsLength);
 			}
+
+			meshes = ArrayView<Mesh>(loadedMeshes, static_cast<size_t>(meshesLength));
 		}
 
-		// contains bones too
 		void SetAnimData(void * ptr) {
 			if(!ptr) {
 				return;
@@ -74,20 +83,41 @@ namespace Egg::Asset {
 
 			animDataAlloc.reset(ptr);
 
-			animationsLength = InterpretAs<unsigned int>(&ptr);
-			animations = InterpretAsArray<Animation>(&ptr, animationsLength);
+			uint32_t animationsLength = InterpretAs<uint32_t>(&ptr);
+			Animation* loadedAnims = InterpretAsArray<Animation>(&ptr, animationsLength);
 
 			for(unsigned int i = 0; i < animationsLength; ++i) {
-				animations[i].times = InterpretAsArray<float>(&ptr, animations[i].keysLength);
-				animations[i].keys = InterpretAsArray<AnimationKey>(&ptr, animations[i].keysLength * animations[i].bonesLength);
+				loadedAnims[i].times = InterpretAsArray<float>(&ptr, loadedAnims[i].keysLength);
+				loadedAnims[i].keys = InterpretAsArray<AnimationKey>(&ptr, loadedAnims[i].keysLength * loadedAnims[i].bonesLength);
 			}
 
-			bonesLength = InterpretAs<unsigned int>(&ptr);
-			bones = InterpretAsArray<Bone>(&ptr, bonesLength);
+			animations = ArrayView<Animation>(loadedAnims, animationsLength);
+		}
+
+		void SetBoneData(void * ptr) {
+			if(!ptr) {
+				return;
+			}
+
+			boneDataAlloc.reset(ptr);
+
+			uint32_t bonesLength = InterpretAs<unsigned int>(&ptr);
+			Bone * loadedBones = InterpretAsArray<Bone>(&ptr, bonesLength);
+
+			bones = ArrayView<Bone>(loadedBones, static_cast<size_t>(bonesLength));
 		}
 		
 		void SetColliderData(void * ptr) {
+			if(!ptr) {
+				return;
+			}
 
+			colliderDataAlloc.reset(ptr);
+
+			uint32_t collidersLength = InterpretAs<uint32_t>(&ptr);
+			Collider * loadedColliders = InterpretAsArray<Collider>(&ptr, collidersLength);
+
+			colliders = ArrayView<Collider>(loadedColliders, collidersLength);
 		}
 	};
 }
