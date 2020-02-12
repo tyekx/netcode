@@ -5,6 +5,7 @@
 #include <DirectXCollision.h>
 #include <dxgiformat.h>
 #include <Egg/Asset/Collider.h>
+#include <Egg/Asset/Animation.h>
 
 struct LOD {
 	size_t vertexDataSizeInBytes;
@@ -98,12 +99,7 @@ struct BoneAnimation {
 	std::vector<ScaleKey> scaleKeys;
 };
 
-
-struct OptimizedAnimationKey {
-	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT4 rotation;
-	DirectX::XMFLOAT3 scale;
-};
+using OptimizedAnimationKey = Egg::Asset::AnimationKey;
 
 struct Animation {
 	double duration;

@@ -31,7 +31,7 @@ namespace Egg {
 		}
 
 		T * Data() const {
-			return ptr;
+			return begin;
 		}
 	};
 

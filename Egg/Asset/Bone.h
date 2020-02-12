@@ -6,7 +6,7 @@ namespace Egg::Asset {
 
 	struct Bone {
 
-		char name[28];
+		char name[64];
 		int parentId;
 		DirectX::XMFLOAT4X4 transform;
 

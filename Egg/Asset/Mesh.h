@@ -1,6 +1,7 @@
 #pragma once
 
 #include <DirectXCollision.h>
+#include "../Formats.h"
 
 namespace Egg::Asset {
 

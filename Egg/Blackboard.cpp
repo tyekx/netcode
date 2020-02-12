@@ -47,7 +47,7 @@ namespace Egg::Animation {
 		classifier.Initialize(requiredSize);
 
 		blender = classifier.Allocate<AnimationBlender>();
-		new (blender) AnimationBlender{ model->bones, model->bonesLength };
+		new (blender) AnimationBlender{ model->bones.Data(), static_cast<uint32_t>(model->bones.Size()) };
 
 		// step1: allocate and initialize states
 		states = static_cast<AnimationState *>(classifier.Allocate(static_cast<unsigned int>(sizeof(AnimationState) * sts.size())));
@@ -56,7 +56,7 @@ namespace Egg::Animation {
 		unsigned int idx = 0;
 		for(auto & i : sts) {
 			new (states + idx) AnimationState{ i };
-			(states + idx)->SetAnimationRef(model->animations + i.id);
+			(states + idx)->SetAnimationRef(model->animations.Data() + i.id);
 			++idx;
 		}
 

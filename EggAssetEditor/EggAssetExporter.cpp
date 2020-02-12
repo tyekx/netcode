@@ -2,7 +2,7 @@
 #include "EggAssetExporter.h"
 #include <Egg/Exporter.h>
 
-void EggAssetExporter::Export(const std::string & path, const Model & model) {
+std::tuple<std::unique_ptr<uint8_t[]>, size_t> EggAssetExporter::Export(const Model & model) {
 
 	Egg::Asset::Model eggModel;
 	
@@ -31,7 +31,7 @@ void EggAssetExporter::Export(const std::string & path, const Model & model) {
 			eggIE.format = inputElement.format;
 			eggIE.byteOffset = inputElement.byteOffset;
 			eggIE.semanticIndex = inputElement.semanticIndex;
-			memcpy_s(eggIE.semanticName, 31, inputElement.semanticName.c_str(), inputElement.semanticName.size());
+			strcpy_s(eggIE.semanticName, inputElement.semanticName.c_str());
 			eggIE.semanticName[31] = '\0';
 			eggInputElements.emplace_back(eggIE);
 			eggElementIdx += 1;
@@ -84,14 +84,87 @@ void EggAssetExporter::Export(const std::string & path, const Model & model) {
 		vbuffers.emplace_back(std::move(vbuffer));
 		ibuffers.emplace_back(std::move(ibuffer));
 	}
-
+	
+	uint32_t bonesLength = static_cast<uint32_t>(model.skeleton.bones.size());
+	std::vector<std::unique_ptr<Egg::Asset::AnimationKey[]>> keyStorage;
 	std::vector<Egg::Asset::Animation> eggAnims;
 
 	for(const auto & anim : model.animations) {
+		Egg::Asset::Animation eggAnim = {};
+		eggAnim.bonesLength = bonesLength;
+		eggAnim.keysLength = static_cast<uint32_t>(anim.keyTimes.size());
+		eggAnim.ticksPerSecond = anim.framesPerSecond;
+		eggAnim.duration = anim.duration;
+		eggAnim.times = (float*)anim.keyTimes.data();
+		strcpy_s(eggAnim.name, anim.name.c_str());
+		eggAnim.name[55] = '\0';
 
+		std::unique_ptr<Egg::Asset::AnimationKey[]> tempKeys = std::make_unique<Egg::Asset::AnimationKey[]>(bonesLength * eggAnim.keysLength);
+		uint32_t offset = 0;
+		for(const auto & boneAnim : anim.keys) {
+			memcpy(tempKeys.get() + offset, boneAnim.boneData.data(), sizeof(Egg::Asset::AnimationKey) * bonesLength);
+			offset += bonesLength;
+		}
+
+		eggAnim.keys = tempKeys.get();
+		keyStorage.emplace_back(std::move(tempKeys));
+		eggAnims.push_back(eggAnim);
 	}
 
-	//Egg::Exporter::ExportModel(path.c_str(), ...);
+	std::vector<Egg::Asset::Collider> eggColliders = model.colliders;
 
+	eggModel.meshes = Egg::ArrayView<Egg::Asset::Mesh>(eggMeshes.data(), eggMeshes.size());
+	eggModel.animations = Egg::ArrayView<Egg::Asset::Animation>(eggAnims.data(), eggAnims.size());
+	eggModel.colliders = Egg::ArrayView<Egg::Asset::Collider>(eggColliders.data(), eggColliders.size());
+
+	std::vector<Egg::Asset::Material> eggMats;
+
+	for(const auto & mat : model.materials) {
+		Egg::Asset::Material eggMat = {};
+		eggMat.diffuseColor = mat.diffuseColor;
+		eggMat.ambientColor = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+		
+		strcpy_s(eggMat.diffuseTexture, mat.diffuseMapReference.c_str());
+		strcpy_s(eggMat.normalTexture, mat.normalMapReference.c_str());
+		strcpy_s(eggMat.ambientTexture, mat.ambientMapReference.c_str());
+		strcpy_s(eggMat.roughnessTexture, mat.roughnessMapReference.c_str());
+		strcpy_s(eggMat.specularTexture, mat.specularMapReference.c_str());
+
+		eggMat.diffuseTexture[255] = '\0';
+		eggMat.normalTexture[255] = '\0';
+		eggMat.ambientTexture[255] = '\0';
+		eggMat.roughnessTexture[255] = '\0';
+		eggMat.specularTexture[255] = '\0';
+
+		eggMats.push_back(eggMat);
+	}
+
+	eggModel.materials = Egg::ArrayView<Egg::Asset::Material>(eggMats.data(), eggMats.size());
+	
+
+	std::vector<Egg::Asset::Bone> eggBones;
+
+	for(const auto & bone : model.skeleton.bones) {
+		Egg::Asset::Bone eggBone = {};
+		strcpy_s(eggBone.name, bone.boneName.c_str());
+		eggBone.name[63] = '\0';
+		eggBone.parentId = bone.parentIndex;
+		eggBone.transform = bone.transform;
+		eggBones.push_back(eggBone);
+	}
+
+	eggModel.bones = Egg::ArrayView<Egg::Asset::Bone>(eggBones.data(), eggBones.size());
+	
+	size_t s = Egg::Exporter::CalculateTotalSize(eggModel);
+	std::unique_ptr<uint8_t[]> rawData = std::make_unique<uint8_t[]>(s);
+
+
+	Egg::Exporter::ExportModelToMemory(rawData.get(), eggModel);
+
+	std::tuple<std::unique_ptr<uint8_t[]>, size_t> rv;
+	std::get<0>(rv) = std::move(rawData);
+	std::get<1>(rv) = s;
+
+	return rv;
 }
 

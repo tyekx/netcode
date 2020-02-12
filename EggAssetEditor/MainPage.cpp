@@ -12,6 +12,7 @@
 #include "CollidersPage.h"
 #include "GeometryPage.h"
 #include "MaterialsPage.h"
+#include "EggAssetExporter.h"
 
 namespace winrt::EggAssetEditor::implementation
 {
@@ -449,17 +450,10 @@ namespace winrt::EggAssetEditor::implementation
        // Windows::Storage::StorageFile & file = *(reinterpret_cast<Windows::Storage::StorageFile *>(0));
 
         if(file != nullptr) {
-            Windows::Storage::CachedFileManager::DeferUpdates(file);
 
-            //Windows::Storage::FileIO::WriteBytesAsync()
-            
-            //co_await Windows::Storage::FileIO::WriteTextAsync(file, ...);
+            hstring path = file.Path();
 
-            Windows::Storage::Provider::FileUpdateStatus status = co_await Windows::Storage::CachedFileManager::CompleteUpdatesAsync(file);
-
-            if(status == Windows::Storage::Provider::FileUpdateStatus::Complete) {
-                OutputDebugStringW(L"Egg Asset Saved\r\n");
-            }
+            auto [rawData, size] = EggAssetExporter::Export(*Global::Model);
         }
         /**/
     }

@@ -26,8 +26,8 @@ namespace Egg {
 			acc += static_cast<uint32_t>(sizeof(Asset::Mesh) * m.meshes.Size());
 
 			for(uint32_t i = 0; i < m.meshes.Size(); ++i) {
-				acc += m.meshes[i].verticesLength;
-				acc += m.meshes[i].indicesLength * sizeof(uint32_t);
+				acc += m.meshes[i].indicesSizeInBytes;
+				acc += m.meshes[i].verticesSizeInBytes;
 				acc += m.meshes[i].lodLevelsLength * sizeof(Asset::LODLevel);
 			}
 
@@ -56,7 +56,73 @@ namespace Egg {
 		}
 
 		uint32_t CalculateTotalSize(const Asset::Model & m) {
-			return CalculateAnimDataSize(m) + CalculateMaterialsSize(m) + CalculateMeshesSize(m) + CalculateCollidersSize(m) + CalculateBonesSize(m);
+			return 5 * sizeof(uint32_t) + CalculateAnimDataSize(m) + CalculateMaterialsSize(m) + CalculateMeshesSize(m) + CalculateCollidersSize(m) + CalculateBonesSize(m);
+		}
+
+		class BinaryWriter {
+			uint8_t * data;
+
+		public:
+			BinaryWriter(uint8_t * d) : data{ d } { }
+
+			template<typename T>
+			void Write(const T & v) {
+				memcpy(data, &v, sizeof(T));
+				data += sizeof(T);
+			}
+
+			template<typename T>
+			void Write(const T & v, uint32_t s) {
+				memcpy(data, &v, sizeof(T) * s);
+				data += sizeof(T) * s;
+			}
+		};
+
+		void ExportModelToMemory(uint8_t * dst, const Asset::Model & m) {
+			uint32_t meshesSize = CalculateMeshesSize(m);
+			uint32_t materialsSize = CalculateMaterialsSize(m);
+			uint32_t animDataSize = CalculateAnimDataSize(m);
+			uint32_t colliderDataSize = CalculateCollidersSize(m);
+			uint32_t boneDataSize = CalculateBonesSize(m);
+
+			BinaryWriter bw(dst);
+
+			bw.Write(meshesSize);
+			bw.Write(animDataSize);
+			bw.Write(materialsSize);
+			bw.Write(boneDataSize);
+			bw.Write(colliderDataSize);
+
+			uint32_t meshesLength = static_cast<uint32_t>(m.meshes.Size());
+			uint32_t materialsLength = static_cast<uint32_t>(m.materials.Size());
+			uint32_t animsLength = static_cast<uint32_t>(m.animations.Size());
+			uint32_t bonesLength = static_cast<uint32_t>(m.bones.Size());
+			uint32_t collidersLength = static_cast<uint32_t>(m.colliders.Size());
+
+			bw.Write(meshesLength);
+			bw.Write(*m.meshes.Data(), meshesLength);
+
+			for(uint32_t i = 0; i < meshesLength; ++i) {
+				bw.Write(*(reinterpret_cast<uint8_t *>(m.meshes[i].vertices)), m.meshes[i].verticesSizeInBytes);
+				bw.Write(*(reinterpret_cast<uint8_t *>(m.meshes[i].indices)), m.meshes[i].indicesSizeInBytes);
+				bw.Write(m.meshes[i].lodLevelsLength);
+				bw.Write(*(m.meshes[i].lodLevels), m.meshes[i].lodLevelsLength);
+			}
+
+			bw.Write(animsLength);
+			bw.Write(*m.animations.Data(), animsLength);
+
+			for(uint32_t i = 0; i < animsLength; ++i) {
+				bw.Write(*m.animations[i].times, m.animations[i].keysLength);
+				bw.Write(*m.animations[i].keys, m.animations[i].keysLength * m.animations[i].bonesLength);
+			}
+
+			bw.Write(materialsLength);
+			bw.Write(*m.materials.Data(), materialsLength);
+			bw.Write(bonesLength);
+			bw.Write(*m.bones.Data(), bonesLength);
+			bw.Write(collidersLength);
+			bw.Write(*m.colliders.Data(), collidersLength);
 		}
 
 		// here be dragons
@@ -66,7 +132,7 @@ namespace Egg {
 
 			ASSERT(r == 0, "Failed to open file for writing: %s", path);
 			if(file == nullptr) {
-				return;
+				return -1;
 			}
 
 			uint32_t meshesSize = CalculateMeshesSize(m);
@@ -77,11 +143,11 @@ namespace Egg {
 
 			size_t writtenSize = 0;
 
-			sizeof(uint32_t) * fwrite(&meshesSize, sizeof(uint32_t), 1, file);
-			sizeof(uint32_t) * fwrite(&animDataSize, sizeof(uint32_t), 1, file);
-			sizeof(uint32_t) * fwrite(&materialsSize, sizeof(uint32_t), 1, file);
-			sizeof(uint32_t) * fwrite(&boneDataSize, sizeof(uint32_t), 1, file);
-			sizeof(uint32_t) * fwrite(&colliderDataSize, sizeof(uint32_t), 1, file);
+			writtenSize += sizeof(uint32_t) * fwrite(&meshesSize, sizeof(uint32_t), 1, file);
+			writtenSize += sizeof(uint32_t) * fwrite(&animDataSize, sizeof(uint32_t), 1, file);
+			writtenSize += sizeof(uint32_t) * fwrite(&materialsSize, sizeof(uint32_t), 1, file);
+			writtenSize += sizeof(uint32_t) * fwrite(&boneDataSize, sizeof(uint32_t), 1, file);
+			writtenSize += sizeof(uint32_t) * fwrite(&colliderDataSize, sizeof(uint32_t), 1, file);
 
 			uint32_t meshesLength = static_cast<uint32_t>(m.meshes.Size());
 			uint32_t materialsLength = static_cast<uint32_t>(m.materials.Size());
@@ -93,8 +159,8 @@ namespace Egg {
 			writtenSize += sizeof(Asset::Mesh) * fwrite(m.meshes.Data(), sizeof(Asset::Mesh), meshesLength, file);
 
 			for(uint32_t i = 0; i < meshesLength; ++i) {
-				writtenSize += fwrite(m.meshes[i].vertices, 1, m.meshes[i].verticesLength, file);
-				writtenSize += sizeof(uint32_t) * fwrite(m.meshes[i].indices, sizeof(uint32_t), m.meshes[i].indicesLength, file);
+				writtenSize += fwrite(m.meshes[i].vertices, 1, m.meshes[i].verticesSizeInBytes, file);
+				writtenSize += fwrite(m.meshes[i].indices, 1, m.meshes[i].indicesSizeInBytes, file);
 				writtenSize += sizeof(Asset::LODLevel) * fwrite(m.meshes[i].lodLevels, sizeof(Asset::LODLevel), m.meshes[i].lodLevelsLength, file);
 			}
 

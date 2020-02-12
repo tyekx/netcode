@@ -7,5 +7,5 @@ class EggAssetExporter {
 	EggAssetExporter() = delete;
 	~EggAssetExporter() = delete;
 public:
-	static void Export(const std::string & path, const Model & model);
+	static std::tuple<std::unique_ptr<uint8_t[]>, size_t> Export(const Model & model);
 };
