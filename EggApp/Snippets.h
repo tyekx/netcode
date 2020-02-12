@@ -6,7 +6,7 @@ void CreateYbotAnimationComponent(Egg::Asset::Model * model, Animation * anim) {
 	anim->blackboard.CreateResources(model,
 				// states
 				{
-					{ "Idle",			4,		Egg::Animation::StateBehaviour::LOOP },
+					{ "Idle",			5,		Egg::Animation::StateBehaviour::LOOP },
 					{ "Forward",		6,		Egg::Animation::StateBehaviour::LOOP },
 					{ "Backward",		7,		Egg::Animation::StateBehaviour::LOOP },
 					{ "Left",			12,		Egg::Animation::StateBehaviour::LOOP },
@@ -15,7 +15,7 @@ void CreateYbotAnimationComponent(Egg::Asset::Model * model, Animation * anim) {
 					{ "ForwardRight",	11,		Egg::Animation::StateBehaviour::LOOP },
 					{ "BackwardLeft",	8,		Egg::Animation::StateBehaviour::LOOP },
 					{ "BackwardRight",	9,		Egg::Animation::StateBehaviour::LOOP },
-					{ "JumpStart",		5,		Egg::Animation::StateBehaviour::ONCE },
+					{ "JumpStart",		4,		Egg::Animation::StateBehaviour::ONCE },
 					{ "JumpLoop",		3,		Egg::Animation::StateBehaviour::LOOP },
 					{ "JumpLand",		2,		Egg::Animation::StateBehaviour::ONCE }
 				},
