@@ -71,7 +71,10 @@ namespace Egg::Asset {
 				InterpretSkip(&ptr, loadedMeshes[i].verticesSizeInBytes);
 				loadedMeshes[i].indices = reinterpret_cast<uint32_t *>(ptr);
 				InterpretSkip(&ptr, loadedMeshes[i].indicesSizeInBytes);
+				loadedMeshes[i].lodLevelsLength = InterpretAs<uint32_t>(&ptr);
 				loadedMeshes[i].lodLevels = InterpretAsArray<Asset::LODLevel>(&ptr, loadedMeshes[i].lodLevelsLength);
+				loadedMeshes[i].inputElementsLength = InterpretAs<uint32_t>(&ptr);
+				loadedMeshes[i].inputElements = InterpretAsArray<Asset::InputElement>(&ptr, loadedMeshes[i].inputElementsLength);
 			}
 
 			meshes = ArrayView<Mesh>(loadedMeshes, static_cast<size_t>(meshesLength));

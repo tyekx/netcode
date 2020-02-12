@@ -121,7 +121,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			physics->AddToScene(boxActor);
 		}
 
-		Egg::Importer::ImportModel(L"ybot.eggasset", ybotModel);
+		Egg::Importer::ImportModel(L"test.eggasset", ybotModel);
 
 		const DirectX::XMMATRIX identity = DirectX::XMMatrixIdentity();
 		model->boneData = std::make_unique<BoneData>();

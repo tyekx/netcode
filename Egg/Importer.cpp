@@ -55,14 +55,14 @@ namespace Egg::Importer {
 			fread(meshesData, 1, meshesSize, file);
 		}
 
-		if(materialsSize > 0) {
-			materialsData = std::malloc(materialsSize);
-			fread(materialsData, 1, materialsSize, file);
-		}
-
 		if(animDataSize > 0) {
 			animData = std::malloc(animDataSize);
 			fread(animData, 1, animDataSize, file);
+		}
+
+		if(materialsSize > 0) {
+			materialsData = std::malloc(materialsSize);
+			fread(materialsData, 1, materialsSize, file);
 		}
 
 		if(boneDataSize > 0) {

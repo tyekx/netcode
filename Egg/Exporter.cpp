@@ -28,7 +28,10 @@ namespace Egg {
 			for(uint32_t i = 0; i < m.meshes.Size(); ++i) {
 				acc += m.meshes[i].indicesSizeInBytes;
 				acc += m.meshes[i].verticesSizeInBytes;
+				acc += sizeof(uint32_t);
 				acc += m.meshes[i].lodLevelsLength * sizeof(Asset::LODLevel);
+				acc += sizeof(uint32_t);
+				acc += m.meshes[i].inputElementsLength * sizeof(Asset::InputElement);
 			}
 
 			return acc;
@@ -107,6 +110,8 @@ namespace Egg {
 				bw.Write(*(reinterpret_cast<uint8_t *>(m.meshes[i].indices)), m.meshes[i].indicesSizeInBytes);
 				bw.Write(m.meshes[i].lodLevelsLength);
 				bw.Write(*(m.meshes[i].lodLevels), m.meshes[i].lodLevelsLength);
+				bw.Write(m.meshes[i].inputElementsLength);
+				bw.Write(*(m.meshes[i].inputElements), m.meshes[i].inputElementsLength);
 			}
 
 			bw.Write(animsLength);
@@ -127,6 +132,8 @@ namespace Egg {
 
 		// here be dragons
 		uint32_t ExportModel(const char * path, const  Asset::Model & m) {
+			return -1;
+
 			FILE * file;
 			errno_t r = fopen_s(&file, path, "wb");
 

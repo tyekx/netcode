@@ -447,13 +447,23 @@ namespace winrt::EggAssetEditor::implementation
 
         /**/
         Windows::Storage::StorageFile file = co_await fileSavePicker.PickSaveFileAsync();
-       // Windows::Storage::StorageFile & file = *(reinterpret_cast<Windows::Storage::StorageFile *>(0));
 
         if(file != nullptr) {
+            Windows::Storage::CachedFileManager::DeferUpdates(file);
 
             hstring path = file.Path();
 
             auto [rawData, size] = EggAssetExporter::Export(*Global::Model);
+
+            winrt::array_view<const uint8_t> arrayView( rawData.get(), rawData.get() + size );
+
+            co_await Windows::Storage::FileIO::WriteBytesAsync(file, arrayView);
+
+            Windows::Storage::Provider::FileUpdateStatus status = co_await Windows::Storage::CachedFileManager::CompleteUpdatesAsync(file);
+
+            if(status == Windows::Storage::Provider::FileUpdateStatus::Complete) {
+                OutputDebugStringW(L"Ok\r\n");
+            }
         }
         /**/
     }

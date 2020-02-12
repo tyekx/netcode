@@ -9,7 +9,17 @@ std::tuple<std::unique_ptr<uint8_t[]>, size_t> EggAssetExporter::Export(const Mo
 	std::vector<Egg::Asset::InputElement> eggInputElements;
 	std::vector<Egg::Asset::LODLevel> eggLods;
 	std::vector<Egg::Asset::Mesh> eggMeshes;
+
 	eggMeshes.reserve(model.meshes.size());
+	uint32_t numLods = 0;
+	uint32_t numIEs = 0;
+	for(const auto & mesh : model.meshes) {
+		numLods += mesh.lods.size();
+		numIEs += mesh.inputLayout.size();
+	}
+
+	eggLods.reserve(numLods);
+	eggInputElements.reserve(numIEs);
 
 	uint32_t eggElementIdx = 0;
 	uint32_t eggLodIdx = 0;
@@ -78,7 +88,6 @@ std::tuple<std::unique_ptr<uint8_t[]>, size_t> EggAssetExporter::Export(const Mo
 		eggMesh.inputElements = eggInputElements.data() + cIEIdx;
 		eggMesh.inputElementsLength = static_cast<uint32_t>(mesh.inputLayout.size());
 		eggMesh.materialId = mesh.materialIdx;
-
 
 		eggMeshes.push_back(eggMesh);
 		vbuffers.emplace_back(std::move(vbuffer));
