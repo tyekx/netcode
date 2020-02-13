@@ -110,7 +110,7 @@ namespace Egg::Physics {
 
 	HSHAPE PhysXModule::CreateCapsule(HPXMAT material, const DirectX::XMFLOAT2 & capsuleArgs)
 	{
-		physx::PxCapsuleGeometry geometry{ capsuleArgs.y, capsuleArgs.x };
+		physx::PxCapsuleGeometry geometry{ capsuleArgs.y , capsuleArgs.x / 2.0f };
 		auto * shape = physics->createShape(geometry, *(reinterpret_cast<physx::PxMaterial *>(material)), true, physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eVISUALIZATION);
 		shapes.push_back(shape);
 		return shape;

@@ -100,8 +100,8 @@ namespace Egg::Graphics {
 
 		float h = args.x;
 		float r = args.y;
-		constexpr static float PI = 3.1415925f;
-		constexpr static float PI2 = 2.0f * PI;
+		constexpr static float PI = DirectX::XM_PI;
+		constexpr static float PI2 = DirectX::XM_2PI;
 
 		for(unsigned int i = 0; i < 12; ++i) {
 			float arg = float(i) * PI2 / 12.0f;
@@ -110,8 +110,8 @@ namespace Egg::Graphics {
 			vertices[2 * i] = DirectX::XMFLOAT3 { h / 2.0f, r * cosf(arg), r * sinf(arg) };
 			vertices[2 * i + 1] = DirectX::XMFLOAT3 { h / 2.0f, r * cosf(argEnd), r * sinf(argEnd) };
 
-			vertices[2 * i + 26] = DirectX::XMFLOAT3{ -h / 2.0f, r * cosf(arg), r * sinf(arg) };;
-			vertices[2 * i + 27] = DirectX::XMFLOAT3{ -h / 2.0f, r * cosf(argEnd), r * sinf(argEnd) };;
+			vertices[2 * i + 26] = DirectX::XMFLOAT3{ -h / 2.0f, r * cosf(arg), r * sinf(arg) };
+			vertices[2 * i + 27] = DirectX::XMFLOAT3{ -h / 2.0f, r * cosf(argEnd), r * sinf(argEnd) };
 		}
 
 		vertices[24] = vertices[23];

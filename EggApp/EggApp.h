@@ -91,30 +91,16 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 							DirectX::XMVECTOR rotQ = DirectX::XMLoadFloat4(&collider.localRotation);
 							DirectX::XMMATRIX R = DirectX::XMMatrixRotationQuaternion(rotQ);
 
-							DirectX::XMFLOAT3 axis{ 1.0f, 0.0f, 0.0f };
-							DirectX::XMVECTOR axisV = DirectX::XMLoadFloat3(&axis);
-							DirectX::XMMATRIX CorrectR = DirectX::XMMatrixRotationAxis(axisV, DirectX::XM_PIDIV2);
-
-							toRoot = DirectX::XMMatrixMultiply(toRoot, DirectX::XMMatrixMultiply(R, T));
-
+							toRoot = DirectX::XMMatrixMultiply(DirectX::XMMatrixMultiply(R, T), DirectX::XMMatrixTranspose(toRoot));
 
 							DirectX::XMFLOAT4X4 res;
 							DirectX::XMStoreFloat4x4(&res, toRoot);
 
 							DirectX::XMFLOAT3 tr{
-								res._14 / res._44,
-								res._24 / res._44,
-								res._34 / res._44
+								res._41,
+								res._42,
+								res._43
 							};
-
-							float v[9] = {
-								res._11, res._21, res._31,
-								res._12, res._22, res._32,
-								res._13, res._23, res._33 };
-
-							physx::PxMat33 m(
-								v
-							);
 
 							toRoot = DirectX::XMLoadFloat4x4(&res);
 
@@ -123,12 +109,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 							DirectX::XMStoreFloat4(&rot, rotQ);
 
 							physics->SetShapeLocalPosition(colliderShape, tr);
-							//physics->SetShapeLocalQuaternion(colliderShape, rot);
-
-							physx::PxShape * sp = reinterpret_cast<physx::PxShape *>(colliderShape);
-							physx::PxTransform transform = sp->getLocalPose();
-							transform.q = physx::PxQuat(m).getNormalized();
-							sp->setLocalPose(transform);
+							physics->SetShapeLocalQuaternion(colliderShape, rot);
 						}
 					}
 				}
