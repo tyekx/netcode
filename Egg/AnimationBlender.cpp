@@ -101,7 +101,7 @@ namespace Egg::Animation {
 				toRoot[i] = DirectX::XMMatrixMultiply(toRoot[i], toRoot[bones[i].parentId]);
 			}
 
-			//DirectX::XMStoreFloat4x4A(dest->ToRootTransform + i, DirectX::XMMatrixTranspose(toRoot[i]));
+			DirectX::XMStoreFloat4x4A(toRootTransform + i, DirectX::XMMatrixTranspose(toRoot[i]));
 
 			bindTrans = DirectX::XMLoadFloat4x4(&bones[i].transform);
 			bindTrans = DirectX::XMMatrixMultiply(bindTrans, toRoot[i]);
@@ -129,6 +129,11 @@ namespace Egg::Animation {
 	void AnimationBlender::CopyBoneDataInto(void * dest)
 	{
 		memcpy(dest, bindTransform, sizeof(DirectX::XMFLOAT4X4A) * bonesLength);
+	}
+
+	void AnimationBlender::CopyToRootDataInto(void * dest)
+	{
+		memcpy(dest, toRootTransform, sizeof(DirectX::XMFLOAT4X4A) * bonesLength);
 	}
 
 }

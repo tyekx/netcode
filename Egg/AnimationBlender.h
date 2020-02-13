@@ -14,6 +14,7 @@ namespace Egg::Animation {
 		constexpr static int MAX_ACTIVE_STATE_COUNT = 8;
 
 		BoneSRT buffer[128];
+		DirectX::XMFLOAT4X4A toRootTransform[128];
 		DirectX::XMFLOAT4X4A bindTransform[128];
 		AnimationState * activeStates[MAX_ACTIVE_STATE_COUNT];
 		unsigned int numActiveStates;
@@ -30,7 +31,7 @@ namespace Egg::Animation {
 		void UpdateStates(float dt);
 
 		void CopyBoneDataInto(void * dest);
-
+		void CopyToRootDataInto(void * dest);
 	};
 
 }

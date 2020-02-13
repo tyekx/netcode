@@ -3,51 +3,49 @@
 #include "DebugPhysxActor.h"
 #include "DebugPhysxRaycast.h"
 #include <algorithm>
+#include "Modules.h"
+#include "BasicGeometry.h"
 
 namespace Egg {
 	/*
 	class DebugPhysx {
-		Egg::Material debugMaterial;
-		Egg::Material debugRayMaterial;
-		Egg::Graphics::Geometry debugRayGeometry;
+		Egg::PipelineStateRef debugShape_PipelineState;
+		Egg::RootSignatureRef debugShape_RootSignature;
+		Egg::PipelineStateRef debugRay_PipelineState;
+		Egg::RootSignatureRef debugRay_RootSignature;
+		uint64_t ray_VBuffer;
+		uint32_t ray_VCount;
 
 		int startRays;
 		int numRays;
 		constexpr static int MAX_RAY_COUNT = 32;
 
-		DebugPhysxRaycast* raycasts;
-		std::vector<DebugPhysxActor> actors;
-		ID3D12Device * device;
-
+		Egg::Module::IGraphicsModule * graphics;
 	public:
 
 		~DebugPhysx() {
 			ReleaseResources();
 		}
 
-		void UploadResources(ID3D12GraphicsCommandList * gcl) {
-			for(auto & i : actors) {
-				i.UploadResources(gcl);
-			}
-		}
+		void CreateResources(Egg::Module::IGraphicsModule * g) {
+			graphics = g;
 
-		void ReleaseUploadResources() {
-			for(auto & i : actors) {
-				i.ReleaseUploadResources();
-			}
-		}
+			//raycasts = (DebugPhysxRaycast *)std::malloc(sizeof(DebugPhysxRaycast) * MAX_RAY_COUNT);
+			//ZeroMemory(raycasts, sizeof(DebugPhysxRaycast) * MAX_RAY_COUNT);
+			//startRays = 0;
+			//numRays = 0;
+			DirectX::XMFLOAT3 linePts[2];
+			ray_VCount = 2;
+			Egg::Graphics::BasicGeometry::CreateLine(linePts, sizeof(DirectX::XMFLOAT3));
+			ray_VBuffer = g->resources->CreateVertexBuffer(sizeof(linePts), sizeof(DirectX::XMFLOAT3), Egg::Graphics::ResourceType::PERMANENT_DEFAULT, Egg::Graphics::ResourceState::COPY_DEST);
 
-		void CreateResources(ID3D12Device * dev) {
-			device = dev;
-			raycasts = (DebugPhysxRaycast *)std::malloc(sizeof(DebugPhysxRaycast) * MAX_RAY_COUNT);
-			ZeroMemory(raycasts, sizeof(DebugPhysxRaycast) * MAX_RAY_COUNT);
-			startRays = 0;
-			numRays = 0;
-
-			debugRayGeometry = BasicGeometry::CreateLine(device, DirectX::XMFLOAT3{ 0.2f, 0.3f, 0.9f });
+			Egg::Graphics::UploadBatch upload;
+			upload.Upload(ray_VBuffer, linePts, sizeof(linePts));
+			upload.ResourceBarrier(ray_VBuffer, Egg::Graphics::ResourceState::COPY_DEST, Egg::Graphics::ResourceState::VERTEX_AND_CONSTANT_BUFFER);
 
 			{
 				//debugMaterial = resMan->FromFiles(L"DebugPhysxVS.cso", L"DebugPhysxPS.cso", debugRayGeometry);
+
 
 				Egg::PipelineState::P dbpso = Egg::PipelineState::Create();
 				dbpso->SetRootSignature(debugPhysxRS);
@@ -82,77 +80,22 @@ namespace Egg {
 			actors.reserve(32);
 		}
 
-		void ReleaseResources() {
-			actors.clear();
-
-			for(int i = 0; i < numRays; ++i) {
-				raycasts[(startRays + i) % MAX_RAY_COUNT].ReleaseResources();
-			}
-
-			std::free(raycasts);
-			numRays = 0;
-			startRays = 0;
-
-			//debugMaterial.reset();
-			//debugRayMaterial.reset();
-			//debugRayGeometry.reset();
-		}
-
 		Egg::DebugPhysxActor& AddActor(physx::PxRigidActor * actor) {
 			actors.emplace_back(device, debugMaterial, actor);
 			return actors.back();
 		}
 
-		void RemoveActor(physx::PxActor * actor) {
-			//@todo
-		}
-
 		void AfterPhysxUpdate(float dt) {
-			for(auto & i : actors) {
-				i.AfterPhysxUpdate();
-			}
 
-			for(int i = 0; i < numRays; ++i) {
-				raycasts[(startRays + i) % MAX_RAY_COUNT].Update(dt);
-			}
-
-			for(int i = 0; i < numRays; ++i) {
-				if(raycasts[(startRays + i) % MAX_RAY_COUNT].IsAlive()) {
-					break;
-				} else {
-					raycasts[(startRays + i) % MAX_RAY_COUNT].~DebugPhysxRaycast();
-					--numRays;
-					startRays = (startRays + 1) % MAX_RAY_COUNT;
-				}
-			}
 		}
 
 		void AddRaycast(const DirectX::XMFLOAT3 & rayDir, const DirectX::XMFLOAT3 & rayStart, float length, const DirectX::XMFLOAT3 & color = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f }) {
 
-			if(numRays < MAX_RAY_COUNT) {
-				new (raycasts + ((startRays + numRays) % MAX_RAY_COUNT)) DebugPhysxRaycast(device, debugRayMaterial.get(), debugRayGeometry.get(),
-																		 10.0f, rayDir, rayStart, color, length);
-				++numRays;
-			}
-
 		}
 
-		void Draw(ID3D12GraphicsCommandList * gcl, D3D12_GPU_VIRTUAL_ADDRESS perFrameCb) {
-			debugMaterial.SetPipelineState(gcl);
-			debugMaterial.BindConstantBuffer(gcl, PerFrameCb::id, perFrameCb);
+		void Draw(Egg::Graphics::IRenderContext * ctx) {
+			//ctx->SetPipelineState()
 
-			for(auto & i : actors) {
-				i.Draw(gcl);
-			}
-
-			//debugRayMaterial.SetPipelineState(gcl);
-			//debugRayMaterial.BindConstantBuffer(gcl, PerFrameCb::id, perFrameCb);
-
-			//for(int i = 0; i < numRays; ++i) {
-			//	raycasts[(startRays + i) % MAX_RAY_COUNT].Draw(gcl);
-			//}
 		}
-
-	};
-	*/
+	};*/
 }

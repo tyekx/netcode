@@ -194,9 +194,12 @@ namespace Egg::Module {
 		virtual HACTOR CreateKinematicActor(HSHAPE firstShape, float density) = 0;
 		virtual HACTOR CreatePlane(HPXMAT material, const DirectX::XMFLOAT3 & normalVector, float distanceFromOrigin) = 0;
 		virtual HSHAPE CreateBox(HPXMAT material, const DirectX::XMFLOAT3 & halfExtensions) = 0;
+		virtual HSHAPE CreateCapsule(HPXMAT material, const DirectX::XMFLOAT2 & capsuleArgs) = 0;
+		virtual HSHAPE CreateSphere(HPXMAT material, float radius) = 0;
 		virtual void AddToScene(HACTOR actor) = 0;
 		virtual void RemoveFromScene(HACTOR actor) = 0;
 
+		virtual void AttachShape(HACTOR actor, HSHAPE shape) = 0;
 		virtual void SetShapeLocalPosition(HSHAPE shape, const DirectX::XMFLOAT3 & position) = 0;
 		virtual void SetShapeLocalQuaternion(HSHAPE shape, const DirectX::XMFLOAT4 & quaternion) = 0;
 		virtual void SetActorPosition(HACTOR actor, const DirectX::XMFLOAT3 & position) = 0;

@@ -43,6 +43,12 @@ namespace Egg::Physics {
 
 		virtual HSHAPE CreatePlane(HPXMAT material, const DirectX::XMFLOAT3 & normalVector, float distanceFromOrigin) override;
 
+		virtual HSHAPE CreateCapsule(HPXMAT material, const DirectX::XMFLOAT2 & capsuleArgs) override;
+
+		virtual HSHAPE CreateSphere(HPXMAT material, float radius) override;
+
+		virtual void AttachShape(HACTOR actor, HSHAPE shape) override;
+
 		virtual void AddToScene(HACTOR actor) override;
 
 		virtual void RemoveFromScene(HACTOR actor) override;

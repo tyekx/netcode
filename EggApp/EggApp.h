@@ -19,6 +19,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	Egg::Stopwatch stopwatch;
 
 	//@TODO: refactor these
+	std::vector<Egg::HSHAPE> ybotShapes;
 	Egg::Asset::Model ybotModel;
 	Egg::Asset::Model railgun;
 	Egg::MovementController movCtrl;
@@ -29,6 +30,8 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	AnimationSystem animSystem;
 
 	Scene scene;
+
+	float totalTime;
 	
 	
 
@@ -65,13 +68,70 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	}
 
 	void Simulate(float dt) {
+		totalTime += dt;
 		physics->Simulate(dt);
 
 		for(std::size_t i = 0; i < scene.count; ++i) {
 			GameObject * obj = scene.objects.data() + i;
 			if(obj->IsActive()) {
 				scriptSystem.Run(obj, dt);
-				animSystem.Run(obj, dt * 0.5f);
+				animSystem.Run(obj, dt);
+
+				if(obj->HasComponent<Model>()) {
+					Model * model = obj->GetComponent<Model>();
+
+					if(model->boneData.get()) {
+						for(size_t colliderI = 0; colliderI < ybotModel.colliders.Size(); ++colliderI) {
+							Egg::HSHAPE colliderShape = ybotShapes.at(colliderI);
+
+							const auto & collider = ybotModel.colliders[colliderI];
+
+							DirectX::XMMATRIX toRoot = DirectX::XMLoadFloat4x4A(&model->boneData->ToRootTransform[collider.boneReference]);
+							DirectX::XMMATRIX T = DirectX::XMMatrixTranslation(collider.localPosition.x, collider.localPosition.y, collider.localPosition.z);
+							DirectX::XMVECTOR rotQ = DirectX::XMLoadFloat4(&collider.localRotation);
+							DirectX::XMMATRIX R = DirectX::XMMatrixRotationQuaternion(rotQ);
+
+							DirectX::XMFLOAT3 axis{ 1.0f, 0.0f, 0.0f };
+							DirectX::XMVECTOR axisV = DirectX::XMLoadFloat3(&axis);
+							DirectX::XMMATRIX CorrectR = DirectX::XMMatrixRotationAxis(axisV, DirectX::XM_PIDIV2);
+
+							toRoot = DirectX::XMMatrixMultiply(toRoot, DirectX::XMMatrixMultiply(R, T));
+
+
+							DirectX::XMFLOAT4X4 res;
+							DirectX::XMStoreFloat4x4(&res, toRoot);
+
+							DirectX::XMFLOAT3 tr{
+								res._14 / res._44,
+								res._24 / res._44,
+								res._34 / res._44
+							};
+
+							float v[9] = {
+								res._11, res._21, res._31,
+								res._12, res._22, res._32,
+								res._13, res._23, res._33 };
+
+							physx::PxMat33 m(
+								v
+							);
+
+							toRoot = DirectX::XMLoadFloat4x4(&res);
+
+							rotQ = DirectX::XMQuaternionRotationMatrix(toRoot);
+							DirectX::XMFLOAT4 rot;
+							DirectX::XMStoreFloat4(&rot, rotQ);
+
+							physics->SetShapeLocalPosition(colliderShape, tr);
+							//physics->SetShapeLocalQuaternion(colliderShape, rot);
+
+							physx::PxShape * sp = reinterpret_cast<physx::PxShape *>(colliderShape);
+							physx::PxTransform transform = sp->getLocalPose();
+							transform.q = physx::PxQuat(m).getNormalized();
+							sp->setLocalPose(transform);
+						}
+					}
+				}
 			}
 		}
 	}
@@ -138,6 +198,32 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		Egg::HPXMAT pxMat = physics->CreateMaterial(0.5f, 0.5f, 0.5f);
 		Egg::HSHAPE shape = physics->CreateBox(pxMat, DirectX::XMFLOAT3{ 50.0f, 50.0f, 50.0f });
 		Egg::HACTOR pxActor = physics->CreateKinematicActor(shape, 50.0f);
+
+		for(size_t colliderI = 0; colliderI < ybotModel.colliders.Size(); ++colliderI) {
+			Egg::HSHAPE colliderShape = nullptr;
+
+			const auto & collider = ybotModel.colliders[colliderI];
+
+			switch(collider.type) {
+				case Egg::Asset::ColliderType::CAPSULE:
+				{
+					colliderShape = physics->CreateCapsule(pxMat, collider.capsuleArgs);
+				}
+					break;
+				case Egg::Asset::ColliderType::SPHERE:
+				{
+					colliderShape = physics->CreateSphere(pxMat, collider.sphereArgs);
+				}
+				break;
+			}
+
+			physics->SetShapeLocalPosition(colliderShape, collider.localPosition);
+			physics->SetShapeLocalQuaternion(colliderShape, collider.localRotation);
+
+			physics->AttachShape(pxActor, colliderShape);
+			ybotShapes.push_back(colliderShape);
+		}
+
 		physics->AddToScene(pxActor);
 
 		CreateYbotAnimationComponent(&ybotModel, anim);

@@ -98,9 +98,9 @@ namespace Egg::Physics {
 		return shape;
 	}
 
-	HACTOR PhysXModule::CreatePlane(HPXMAT material, const DirectX::XMFLOAT3 & normalVector, float distanceFromOrigin) {
-		physx::PxPlaneGeometry geometry;
 
+
+	HACTOR PhysXModule::CreatePlane(HPXMAT material, const DirectX::XMFLOAT3 & normalVector, float distanceFromOrigin) {
 		physx::PxPlane plane{ ToPxVec3(normalVector) , distanceFromOrigin };
 
 		auto * actor = physx::PxCreatePlane(*physics, plane, *(reinterpret_cast<physx::PxMaterial *>(material)));;
@@ -108,6 +108,29 @@ namespace Egg::Physics {
 		return actor;
 	}
 
+	HSHAPE PhysXModule::CreateCapsule(HPXMAT material, const DirectX::XMFLOAT2 & capsuleArgs)
+	{
+		physx::PxCapsuleGeometry geometry{ capsuleArgs.y, capsuleArgs.x };
+		auto * shape = physics->createShape(geometry, *(reinterpret_cast<physx::PxMaterial *>(material)), true, physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eVISUALIZATION);
+		shapes.push_back(shape);
+		return shape;
+	}
+
+	HSHAPE PhysXModule::CreateSphere(HPXMAT material, float radius)
+	{
+		physx::PxSphereGeometry geometry{ radius };
+		auto * shape = physics->createShape(geometry, *(reinterpret_cast<physx::PxMaterial *>(material)), true, physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eVISUALIZATION);
+		shapes.push_back(shape);
+		return shape;
+	}
+
+	void PhysXModule::AttachShape(HACTOR actor, HSHAPE shape) {
+		auto pxActor = static_cast<physx::PxRigidDynamic *>(actor);
+
+		bool b = pxActor->attachShape(*reinterpret_cast<physx::PxShape *>(shape));
+		
+		ASSERT(b, "Failed to attach shape");
+	}
 
 	void PhysXModule::AddToScene(HACTOR actor) {
 		scene->addActor(*(static_cast<physx::PxActor *>(actor)));

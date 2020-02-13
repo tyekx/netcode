@@ -38,6 +38,7 @@ namespace Egg::Animation {
 		void Update(float dt, MovementController * movCtrl);
 
 		void CopyBoneDataInto(void * dest);
+		void CopyToRootDataInto(void * dest);
 	};
 
 }

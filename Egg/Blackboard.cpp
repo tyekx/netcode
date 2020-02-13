@@ -113,4 +113,8 @@ namespace Egg::Animation {
 		blender->CopyBoneDataInto(dest);
 	}
 
+	void Blackboard::CopyToRootDataInto(void * dest) {
+		blender->CopyToRootDataInto(dest);
+	}
+
 }

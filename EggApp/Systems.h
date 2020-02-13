@@ -81,6 +81,7 @@ public:
 			movementController->Update();
 			anim->blackboard.Update(dt, movementController);
 			anim->blackboard.CopyBoneDataInto(model->boneData->BindTransform);
+			anim->blackboard.CopyToRootDataInto(model->boneData->ToRootTransform);
 		}
 	}
 };
