@@ -28,10 +28,6 @@ namespace Egg::Module {
 			evtSys->AddHandler(network.get());
 		}
 
-		if(physics) {
-			evtSys->AddHandler(physics.get());
-		}
-
 		if(audio) {
 			evtSys->AddHandler(audio.get());
 		}

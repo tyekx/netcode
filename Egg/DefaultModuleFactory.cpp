@@ -1,7 +1,6 @@
 #include "DefaultModuleFactory.h"
 #include "WinapiWindowModule.h"
 #include "DX12GraphicsModuleForWin32.h"
-#include "PhysxModule.h"
 
 namespace Egg::Module {
 
@@ -19,10 +18,6 @@ namespace Egg::Module {
 
 	std::unique_ptr<IAudioModule> DefaultModuleFactory::CreateAudioModule(AApp * app, int audioType) {
 		return nullptr;
-	}
-
-	std::unique_ptr<IPhysicsModule> DefaultModuleFactory::CreatePhysicsModule(AApp * app, int physicsType) {
-		return std::make_unique<Egg::Physics::PhysXModule>();
 	}
 
 }

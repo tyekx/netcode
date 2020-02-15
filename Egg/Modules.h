@@ -30,7 +30,6 @@ namespace Egg::Module {
 	class IWindowModule;
 	class IGraphicsModule;
 	class INetworkModule;
-	class IPhysicsModule;
 	class IAudioModule;
 
 	enum class EAppEventType : unsigned {
@@ -104,7 +103,6 @@ namespace Egg::Module {
 		std::unique_ptr<IWindowModule> window;
 		std::unique_ptr<IGraphicsModule> graphics;
 		std::unique_ptr<INetworkModule> network;
-		std::unique_ptr<IPhysicsModule> physics;
 		std::unique_ptr<IAudioModule> audio;
 
 		virtual ~AApp() = default;
@@ -182,34 +180,6 @@ namespace Egg::Module {
 
 	};
 
-	class IPhysicsModule : public IModule {
-	public:
-		virtual ~IPhysicsModule() = default;
-		virtual void * GetUnderlyingPointer() = 0;
-
-		virtual void SetGravity(const DirectX::XMFLOAT3 & gravityVector) = 0;
-		virtual HPXMAT CreateMaterial(float staticFriction, float dynamicFriction, float restitution) = 0;
-		virtual HACTOR CreateStaticActor(HSHAPE firstShape) = 0;
-		virtual HACTOR CreateDynamicActor(HSHAPE firstShape, float density) = 0;
-		virtual HACTOR CreateKinematicActor(HSHAPE firstShape, float density) = 0;
-		virtual HACTOR CreatePlane(HPXMAT material, const DirectX::XMFLOAT3 & normalVector, float distanceFromOrigin) = 0;
-		virtual HSHAPE CreateBox(HPXMAT material, const DirectX::XMFLOAT3 & halfExtensions) = 0;
-		virtual HSHAPE CreateCapsule(HPXMAT material, const DirectX::XMFLOAT2 & capsuleArgs) = 0;
-		virtual HSHAPE CreateSphere(HPXMAT material, float radius) = 0;
-		virtual void AddToScene(HACTOR actor) = 0;
-		virtual void RemoveFromScene(HACTOR actor) = 0;
-
-		virtual void AttachShape(HACTOR actor, HSHAPE shape) = 0;
-		virtual void SetShapeLocalPosition(HSHAPE shape, const DirectX::XMFLOAT3 & position) = 0;
-		virtual void SetShapeLocalQuaternion(HSHAPE shape, const DirectX::XMFLOAT4 & quaternion) = 0;
-		virtual void SetActorPosition(HACTOR actor, const DirectX::XMFLOAT3 & position) = 0;
-		virtual void SetActorRotation(HACTOR actor, const DirectX::XMFLOAT4 & quaternion) = 0;
-		virtual DirectX::XMFLOAT3 GetActorPosition(HACTOR actor) = 0;
-		virtual DirectX::XMFLOAT4 GetActorRotation(HACTOR actor) = 0;
-
-		virtual void Simulate(float dt) = 0;
-	};
-
 	class IModuleFactory {
 	public:
 		virtual ~IModuleFactory() = default;
@@ -217,7 +187,6 @@ namespace Egg::Module {
 		virtual std::unique_ptr<IGraphicsModule> CreateGraphicsModule(AApp * app, int graphicsType) = 0;
 		virtual std::unique_ptr<INetworkModule> CreateNetworkModule(AApp * app, int networkType) = 0;
 		virtual std::unique_ptr<IAudioModule> CreateAudioModule(AApp * app, int audioType) = 0;
-		virtual std::unique_ptr<IPhysicsModule> CreatePhysicsModule(AApp * app, int physicsType) = 0;
 	};
 
 }

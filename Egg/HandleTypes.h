@@ -24,10 +24,6 @@ This also heavily favors the DirectX ecosystem, but thats an issue for possible 
 
 namespace Egg {
 
-	using HACTOR = void *;
-	using HSHAPE = void *;
-	using HPXMAT = void *;
-
 #if !defined(EGG_OS_WINDOWS)
 
 	struct Image
@@ -440,9 +436,5 @@ namespace Egg {
 	};
 
 	using SpriteFontBuilderRef = std::shared_ptr<SpriteFontBuilder>;
-
-	
-
-
 
 }

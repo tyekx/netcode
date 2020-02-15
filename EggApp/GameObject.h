@@ -10,8 +10,10 @@
 #include <Egg/Blackboard.h>
 #include "Material.h"
 #include "Mesh.h"
+#include <Egg/PhysXScene.h>
 
 class GameObject;
+using ColliderShape = Egg::Asset::Collider;
 
 #define COMPONENT_ALIGN __declspec(align(16))
 
@@ -92,7 +94,14 @@ public:
 	Egg::Animation::Blackboard blackboard;
 };
 
-using Components_T = std::tuple<Transform, Model, Script>;
+COMPONENT_ALIGN class Collider {
+public:
+	physx::PxActor * actorRef;
+	std::vector<ColliderShape> shapes;
+};
+
+
+using Components_T = std::tuple<Transform, Model, Script, Collider>;
 using ExtensionComponents_T = std::tuple<Camera, Animation>;
 
 class ComponentStorage {

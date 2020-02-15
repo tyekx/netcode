@@ -296,11 +296,14 @@ static Skeleton CreateSkeleton(const Model & partiallyImportedModel, const aiSce
 		if(uniqueImportedBones.size() == 0) {
 			uniqueImportedBones = importedMesh.bones;
 		} else {
-			auto zipped = ZipConst(uniqueImportedBones, importedMesh.bones);
+			for(const auto & bone : importedMesh.bones) {
+				auto it = std::find_if(std::begin(uniqueImportedBones), std::end(uniqueImportedBones), [&bone](const Bone & b) -> bool {
+					return b.boneName == bone.boneName;
+				});
 
-			for(const auto [lhs, rhs] : zipped) {
-				if(lhs != rhs) {
-					OutputDebugStringW(L"\r\nERROR: multiple skeletons are not supported\r\n");
+				if(it == std::end(uniqueImportedBones)) {
+					OutputDebugStringW(L"error, meshes have different skeletons associated to them\r\n");
+					throw std::exception();
 				}
 			}
 		}
@@ -901,16 +904,18 @@ OptimizedAnimation FBXImporter::OptimizeAnimation(const Animation & anim, const 
 		optBoneAnim.boneData.resize(skeleton.bones.size());
 
 		// set defaults
-		for(size_t i = 0; i < anim.boneAnimations.size(); ++i) {
+		for(size_t i = 0; i < skeleton.bones.size(); ++i) {
 			optBoneAnim.boneData[i].position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
 			optBoneAnim.boneData[i].rotation = DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f };
 			optBoneAnim.boneData[i].scale = DirectX::XMFLOAT3{ 1.0f, 1.0f, 1.0f };
 		}
 
 		for(const BoneAnimation & bA : anim.boneAnimations) {
-			optBoneAnim.boneData[bA.BoneId].position = SamplePosition(bA.positionKeys, t);
-			optBoneAnim.boneData[bA.BoneId].rotation = SampleRotation(bA.rotationKeys, t);
-			optBoneAnim.boneData[bA.BoneId].scale = SampleScale(bA.scaleKeys, t);
+			if(bA.BoneId > 0) {
+				optBoneAnim.boneData[bA.BoneId].position = SamplePosition(bA.positionKeys, t);
+				optBoneAnim.boneData[bA.BoneId].rotation = SampleRotation(bA.rotationKeys, t);
+				optBoneAnim.boneData[bA.BoneId].scale = SampleScale(bA.scaleKeys, t);
+			}
 		}
 
 		optAnim.keys.push_back(std::move(optBoneAnim));

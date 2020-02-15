@@ -73,3 +73,7 @@ void RenderSystem::Run(GameObject * gameObject) {
 void AnimationSystem::Run(GameObject * gameObject, float dt) {
 	TryInvoke(gameObject, this, dt);
 }
+
+void PhysXSystem::Run(GameObject * gameObject) {
+	TryInvoke(gameObject, this);
+}

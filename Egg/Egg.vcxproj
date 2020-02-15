@@ -122,7 +122,7 @@
     <ClInclude Include="ModulesConfig.h" />
     <ClInclude Include="MovementController.h" />
     <ClInclude Include="Path.h" />
-    <ClInclude Include="PhysxModule.h" />
+    <ClInclude Include="PhysXScene.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="ProgramArgs.h" />
     <ClInclude Include="DX12SpriteFont.h" />
@@ -187,7 +187,7 @@
     <ClCompile Include="MemoryFunctions.cpp" />
     <ClCompile Include="Modules.cpp" />
     <ClCompile Include="Path.cpp" />
-    <ClCompile Include="PhysxModule.cpp" />
+    <ClCompile Include="PhysXScene.cpp" />
     <ClCompile Include="DX12SpriteFont.cpp" />
     <ClCompile Include="DX12ResourceContext.cpp" />
     <ClCompile Include="ResourceEnums.cpp" />

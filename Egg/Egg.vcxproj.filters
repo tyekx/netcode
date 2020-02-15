@@ -145,9 +145,6 @@
     <ClInclude Include="MemoryFunctions.h">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="PhysxModule.h">
-      <Filter>Physics</Filter>
-    </ClInclude>
     <ClInclude Include="DX12Common.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
@@ -322,6 +319,9 @@
     <ClInclude Include="Importer.h">
       <Filter>Serialization</Filter>
     </ClInclude>
+    <ClInclude Include="PhysXScene.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
@@ -369,9 +369,6 @@
     </ClCompile>
     <ClCompile Include="MemoryFunctions.cpp">
       <Filter>Utility</Filter>
-    </ClCompile>
-    <ClCompile Include="PhysxModule.cpp">
-      <Filter>Physics</Filter>
     </ClCompile>
     <ClCompile Include="DX12Common.cpp">
       <Filter>Graphics\DX12</Filter>
@@ -498,6 +495,9 @@
     </ClCompile>
     <ClCompile Include="Importer.cpp">
       <Filter>Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysXScene.cpp">
+      <Filter>Physics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
