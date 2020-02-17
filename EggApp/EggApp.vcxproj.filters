@@ -19,6 +19,9 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{00a9e6eb-88f5-444b-952f-93557bd2d4d9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Prefabs">
+      <UniqueIdentifier>{0e029dab-e26a-4ba1-ad36-f716f914b08e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -79,6 +82,15 @@
     </ClInclude>
     <ClInclude Include="PhysxHelpers.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AssetManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RemotePlayerPrefab.h">
+      <Filter>Prefabs</Filter>
+    </ClInclude>
+    <ClInclude Include="LocalPlayerPrefab.h">
+      <Filter>Prefabs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

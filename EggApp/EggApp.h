@@ -1,12 +1,12 @@
 #pragma once
 
-#include <Egg/Importer.h>
 #include <Egg/Input.h>
 #include <Egg/BasicGeometry.h>
 #include <Egg/DebugPhysx.h>
 #include <Egg/EggMath.h>
 #include <Egg/Modules.h>
 #include <Egg/Stopwatch.h>
+#include <Egg/Service.hpp>
 
 #include "Asset.h"
 #include "GameObject.h"
@@ -16,6 +16,7 @@
 #include "PlayerBehavior.h"
 #include "Snippets.h"
 #include "PhysxHelpers.h"
+#include "AssetManager.h"
 
 using Egg::Graphics::ResourceType;
 using Egg::Graphics::ResourceState;
@@ -24,11 +25,8 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	Egg::Stopwatch stopwatch;
 	Egg::Physics::PhysXScene pxScene;
 	physx::PxMaterial * defaultPhysxMaterial;
-
-	//@TODO: refactor these
-	Egg::Asset::Model ybotModel;
-	Egg::Asset::Model railgun;
-	Egg::Asset::Model rampModel;
+	AssetManager assetManager;
+	
 	Egg::MovementController movCtrl;
 
 	TransformSystem transformSystem;
@@ -100,6 +98,15 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		pxScene.UpdateDebugCamera(t->position, cam->up, p);
 	}
 
+	void LoadServices() {
+		using Service = Egg::Service<std::tuple<AssetManager>>;
+
+		Service::Init<AssetManager>();
+
+		auto * assetManager = Service::Get<AssetManager>();
+
+	}
+
 	void LoadAssets() {
 		scene.Setup();
 
@@ -110,25 +117,11 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 		renderSystem.CreatePermanentResources(graphics.get());
 
+		/*
 		GameObject * avatar = scene.Insert();
 		avatar->AddComponent<Transform>();
 		Model * model = avatar->AddComponent<Model>();
 		Animation * anim = avatar->AddComponent<Animation>();
-
-		Egg::Importer::ImportModel(L"test.eggasset", ybotModel);
-		Egg::Importer::ImportModel(L"ramp.eggasset", rampModel);
-
-		const DirectX::XMMATRIX identity = DirectX::XMMatrixIdentity();
-		model->boneData = std::make_unique<BoneData>();
-		for(unsigned int i = 0; i < BoneData::MAX_BONE_COUNT; ++i) {
-			DirectX::XMStoreFloat4x4A(&model->boneData->BindTransform[i], identity);
-			DirectX::XMStoreFloat4x4A(&model->boneData->ToRootTransform[i], identity);
-		}
-
-		LoadItem(graphics.get(), &ybotModel, model);
-
-		DirectX::XMStoreFloat4x4A(&model->perObjectData.Model, identity);
-		DirectX::XMStoreFloat4x4A(&model->perObjectData.InvModel, identity);
 
 		auto* physics = pxScene.Get();
 		auto * pxController = pxScene.CreateController();
@@ -148,9 +141,6 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			auto planeActor = physx::PxCreatePlane(*physics, physx::PxPlane{ 0.0f, 1.0f, 0.0f, 0.0f }, *pxMaterial);
 			pxScene.AddActor(planeActor);
 		}
-
-		//physx::PxShape* meshShape = CreateShapeFromAsset(rampModel.colliders[0], pxScene, pxMaterial, physx::PxShapeFlag::eSIMULATION_SHAPE | physx::PxShapeFlag::eVISUALIZATION);
-
 		std::vector<ColliderShape> localShapes;
 		localShapes.reserve(ybotModel.colliders.Size());
 
@@ -159,10 +149,6 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			auto * shape = CreateHitboxShapeFromAsset(ybotModel.colliders[colliderI], physics);
 			pxActor->attachShape(*shape);
 		}
-
-		Collider dummy;
-		LoadPhysxComponent(&rampModel, &dummy);
-		pxScene.AddActor(dummy.actorRef);
 
 		Collider * coll = avatar->AddComponent<Collider>();
 		coll->shapes = std::move(localShapes);
@@ -186,10 +172,38 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		s->SetBehavior(std::move(playerBehaviour));
 		s->Setup(avatar);
 
-		scene.SetCamera(avatar);
+		scene.SetCamera(avatar);*/
 	}
 
-	void LoadPhysxComponent(Egg::Asset::Model * model, Collider * colliderComponent) {
+	void InitializeBoneData(Model* modelComponent) {
+		const DirectX::XMMATRIX identity = DirectX::XMMatrixIdentity();
+		modelComponent->boneData = std::make_unique<BoneData>();
+		for(unsigned int i = 0; i < BoneData::MAX_BONE_COUNT; ++i) {
+			DirectX::XMStoreFloat4x4A(&modelComponent->boneData->BindTransform[i], identity);
+			DirectX::XMStoreFloat4x4A(&modelComponent->boneData->ToRootTransform[i], identity);
+		}
+	}
+
+	void LoadComponents(Egg::Asset::Model * model, GameObject * gameObject) {
+		gameObject->AddComponent<Transform>();
+
+		if(model->meshes.Size() > 0) {
+			Model * modelComponent = gameObject->AddComponent<Model>();
+			LoadModelComponent(model, modelComponent);
+
+			if(model->bones.Size() > 0 && model->animations.Size() > 0) {
+				InitializeBoneData(modelComponent);
+			}
+		}
+
+		if(model->colliders.Size() > 0) {
+			Collider * colliderComponent = gameObject->AddComponent<Collider>();
+			LoadColliderComponent(model, colliderComponent);
+		}
+
+	}
+
+	void LoadColliderComponent(Egg::Asset::Model * model, Collider * colliderComponent) {
 		if(model->colliders.Size() == 0) {
 			return;
 		}
@@ -213,7 +227,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			}
 
 			if(eggCollider->type == Egg::Asset::ColliderType::MESH) {
-				const auto& mesh = model->meshes[0];
+				const auto & mesh = model->meshes[0];
 				physx::PxConvexMeshDesc cmd;
 				cmd.points.count = mesh.lodLevels[0].vertexCount;
 				cmd.points.data = mesh.vertices;
@@ -250,6 +264,9 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		for(size_t meshIdx = 0; meshIdx < model->meshes.Size(); ++meshIdx) {
 			Egg::Asset::Material * mat = model->materials.Data() + model->meshes[meshIdx].materialId;
 			Egg::Asset::Mesh * mesh = model->meshes.Data() + meshIdx;
+
+			DirectX::XMStoreFloat4x4A(&modelComponent->perObjectData.Model, DirectX::XMMatrixIdentity());
+			DirectX::XMStoreFloat4x4A(&modelComponent->perObjectData.InvModel, DirectX::XMMatrixIdentity());
 
 			Egg::InputLayoutBuilderRef inputLayoutBuilder = graphics->CreateInputLayoutBuilder();
 

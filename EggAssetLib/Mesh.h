@@ -1,13 +1,14 @@
 #pragma once
 
 #include <DirectXCollision.h>
+#include <EggFoundation/Formats.h>
 
 namespace Egg::Asset {
 
 	struct InputElement {
 		char semanticName[32];
 		int32_t semanticIndex;
-		uint32_t format;
+		DXGI_FORMAT format;
 		uint32_t byteOffset;
 	};
 

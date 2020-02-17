@@ -78,9 +78,6 @@
     <ClInclude Include="File.h">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="Exporter.h">
-      <Filter>Serialization</Filter>
-    </ClInclude>
     <ClInclude Include="EggMath.h" />
     <ClInclude Include="Input.h">
       <Filter>Gameplay</Filter>
@@ -283,11 +280,11 @@
     <ClInclude Include="DX12GraphicsModuleForWin32.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="Importer.h">
-      <Filter>Serialization</Filter>
-    </ClInclude>
     <ClInclude Include="PhysXScene.h">
       <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Service.hpp">
+      <Filter>Modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -302,9 +299,6 @@
     </ClCompile>
     <ClCompile Include="Utility.cpp">
       <Filter>Utility</Filter>
-    </ClCompile>
-    <ClCompile Include="Exporter.cpp">
-      <Filter>Serialization</Filter>
     </ClCompile>
     <ClCompile Include="EggMath.cpp" />
     <ClCompile Include="Input.cpp">
@@ -456,9 +450,6 @@
     </ClCompile>
     <ClCompile Include="DX12GraphicsModuleForWin32.cpp">
       <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Importer.cpp">
-      <Filter>Serialization</Filter>
     </ClCompile>
     <ClCompile Include="PhysXScene.cpp">
       <Filter>Physics</Filter>

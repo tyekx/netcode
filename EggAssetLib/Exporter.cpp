@@ -1,6 +1,5 @@
 #include "Exporter.h"
 #include <cstdio>
-#include "Common.h"
 
 namespace Egg {
 
@@ -137,7 +136,6 @@ namespace Egg {
 			FILE * file;
 			errno_t r = fopen_s(&file, path, "wb");
 
-			ASSERT(r == 0, "Failed to open file for writing: %s", path);
 			if(file == nullptr) {
 				return -1;
 			}

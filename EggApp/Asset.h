@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Egg/Modules.h>
-#include <Egg/Asset/Model.h>
 #include "Model.h"
 #include <map>
 #include <string>

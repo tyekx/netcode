@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Serialization">
+      <UniqueIdentifier>{7cdc9146-2fef-44e2-888e-a3d34c05eb93}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Model.h">
@@ -39,6 +42,12 @@
     <ClInclude Include="JsonUtility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Importer.h">
+      <Filter>Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Exporter.h">
+      <Filter>Serialization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Model.cpp">
@@ -52,6 +61,12 @@
     </ClCompile>
     <ClCompile Include="JsonUtility.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Importer.cpp">
+      <Filter>Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="Exporter.cpp">
+      <Filter>Serialization</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

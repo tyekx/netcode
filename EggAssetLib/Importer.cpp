@@ -1,32 +1,20 @@
 #include "Importer.h"
 
-#include "Utility.h"
-#include "Vertex.h"
-#include "LinearClassifier.h"
-
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include <system_error>
 #include <cstdio>
 
 #include <DirectXTex/DirectXTex.h>
 
-namespace Egg::Importer {
-
-	void ImportModel(const MediaPath & mediaFile, Asset::Model & model) {
-		std::string mediaFilePath = Egg::Utility::ToNarrowString(mediaFile.GetAbsolutePath());
-		ImportModel(mediaFilePath.c_str(), model);
-	}
+namespace  Egg::Asset { 
 
 	void ImportModel(const char * filePath, Asset::Model & m) {
 		std::string path = filePath;
 
 		FILE * file;
 		errno_t r = fopen_s(&file, path.c_str(), "rb");
-
-		ASSERT(r == 0, "Failed to open file for reading: %s", path.c_str());
 
 		if(file == nullptr) {
 			return;

@@ -93,13 +93,11 @@
     <ClInclude Include="DX12Texture.h" />
     <ClInclude Include="DX12TextureBuilder.h" />
     <ClInclude Include="EggMpl.hpp" />
-    <ClInclude Include="Exporter.h" />
     <ClInclude Include="DX12Fence.h" />
     <ClInclude Include="FancyIterators.hpp" />
     <ClInclude Include="File.h" />
     <ClInclude Include="GraphicsContexts.h" />
     <ClInclude Include="HandleTypes.h" />
-    <ClInclude Include="Importer.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="LinearClassifier.h" />
     <ClInclude Include="DX12ResourceContext.h" />
@@ -119,6 +117,7 @@
     <ClInclude Include="FrameGraph.h" />
     <ClInclude Include="ResourceDesc.h" />
     <ClInclude Include="ResourceEnums.h" />
+    <ClInclude Include="Service.hpp" />
     <ClInclude Include="Stopwatch.h" />
     <ClInclude Include="Transition.h" />
     <ClInclude Include="UploadBatch.h" />
@@ -166,8 +165,6 @@
     <ClCompile Include="DX12StreamOutputLibrary.cpp" />
     <ClCompile Include="DX12Texture.cpp" />
     <ClCompile Include="DX12TextureBuilder.cpp" />
-    <ClCompile Include="Exporter.cpp" />
-    <ClCompile Include="Importer.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="LinearClassifier.cpp" />
