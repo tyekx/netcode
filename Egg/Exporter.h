@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Asset/Model.h"
+#include <EggAssetLib/Model.h>
 
 namespace Egg {
 

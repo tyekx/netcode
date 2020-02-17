@@ -64,6 +64,8 @@
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="PhysxHelpers.h" />
+    <ClInclude Include="PlayerBehavior.h" />
     <ClInclude Include="RenderPassTest.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Snippets.h" />

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Model.h"
-#include "Manifest.h"
 
 class EggAssetExporter {
 	EggAssetExporter() = delete;

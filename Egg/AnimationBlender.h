@@ -1,7 +1,7 @@
 #pragma once
 
 #include "AnimationState.h"
-#include "Asset/Bone.h"
+#include <EggAssetLib/Bone.h>
 
 namespace Egg::Animation {
 	class AnimationBlender {

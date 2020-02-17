@@ -65,6 +65,8 @@ namespace winrt::EggAssetEditor::implementation
                     case ColliderType::SPHERE:
                         collider.sphereArgs = dcCollider.SphereArg();
                         break;
+                    case ColliderType::MESH:
+                        return;
                 }
 
                 Global::EditorApp->SetColliders(Global::Model->colliders);

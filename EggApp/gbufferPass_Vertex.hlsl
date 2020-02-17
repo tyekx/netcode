@@ -10,6 +10,11 @@ struct GbufferPass_VertexOutput {
 	float2 texCoord : TEXCOORD;
 };
 
+cbuffer ObjectData : register(b1) {
+	float4x4 model;
+	float4x4 modelInv;
+};
+
 cbuffer FrameData : register(b2) {
 	float4x4 viewProj;
 	float4x4 viewProjInv;
@@ -33,8 +38,8 @@ GbufferPass_VertexOutput main(GbufferPass_VertexInput input)
 {
 	GbufferPass_VertexOutput output;
 
-	output.position = mul(float4(input.position, 1), viewProj);
-	output.normal = input.normal;
+	output.position = mul(mul(float4(input.position, 1), model), viewProj);
+	output.normal = mul(modelInv, float4(input.normal, 0)).xyz;
 	output.texCoord = input.texCoord;
 
 	return output;

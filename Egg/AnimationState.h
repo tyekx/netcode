@@ -2,7 +2,7 @@
 
 #include <string>
 #include "MovementController.h"
-#include "Asset/Animation.h"
+#include <EggAssetLib/Animation.h>
 
 namespace Egg::Animation {
 

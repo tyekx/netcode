@@ -2,7 +2,7 @@
 
 #include "AnimationState.h"
 #include "Transition.h"
-#include "Asset/Model.h"
+#include <EggAssetLib/Model.h>
 #include <vector>
 #include "LinearClassifier.h"
 #include "AnimationBlender.h"

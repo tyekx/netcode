@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "EggAssetExporter.h"
 #include <Egg/Exporter.h>
+#include <EggFoundation/ArrayView.hpp>
+#include <EggAssetLib/Model.h>
 
 std::tuple<std::unique_ptr<uint8_t[]>, size_t> EggAssetExporter::Export(const Model & model) {
 

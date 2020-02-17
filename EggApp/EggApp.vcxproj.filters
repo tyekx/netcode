@@ -74,6 +74,12 @@
     <ClInclude Include="Material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PlayerBehavior.h">
+      <Filter>Scripts</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysxHelpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EggApp.natvis" />

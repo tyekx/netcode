@@ -13,7 +13,7 @@
     <EggPhysXVersion>4.1</EggPhysXVersion>
     <EggPhysXBin>$(EggSDK)\PhysX\$(EggPhysXVersion)\$(EggBuildSelect)\</EggPhysXBin>
     <EggPhysXInclude>$(EggSDK)\PhysX\$(EggPhysXVersion)\include\</EggPhysXInclude>
-    <EggPhysXLibs>PhysX_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib</EggPhysXLibs>
+    <EggPhysXLibs>PhysX_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXCooking_64.lib</EggPhysXLibs>
     <EggAssimpVersion>5.0.0</EggAssimpVersion>
     <EggAssimpInclude>$(EggSDK)\assimp\$(EggAssimpVersion)\include\</EggAssimpInclude>
     <EggAssimpBin>$(EggSDK)\assimp\$(EggAssimpVersion)\$(EggBuildSelect)\</EggAssimpBin>

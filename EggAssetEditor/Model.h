@@ -4,8 +4,8 @@
 #include <vector>
 #include <DirectXCollision.h>
 #include <dxgiformat.h>
-#include <Egg/Asset/Collider.h>
-#include <Egg/Asset/Animation.h>
+#include <EggAssetLib/Collider.h>
+#include <EggAssetLib/Animation.h>
 
 struct LOD {
 	size_t vertexDataSizeInBytes;

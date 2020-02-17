@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.29215.179
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Egg", "Egg\Egg.vcxproj", "{C235BD63-6E30-4F13-A0FF-C5D5FCA38558}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D968F35A-74B8-4107-853E-3608AE3B4F40} = {D968F35A-74B8-4107-853E-3608AE3B4F40}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EggApp", "EggApp\EggApp.vcxproj", "{54EB8DF4-E47F-4674-B521-02F2F3D55D04}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -25,34 +28,30 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EggAssetEditor", "EggAssetE
 		{C235BD63-6E30-4F13-A0FF-C5D5FCA38558} = {C235BD63-6E30-4F13-A0FF-C5D5FCA38558}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EggAssetLib", "EggAssetLib\EggAssetLib.vcxproj", "{90CF318B-D8DA-4E22-A8E0-30D42B2B9AB2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EggFoundation", "EggFoundation\EggFoundation.vcxproj", "{D968F35A-74B8-4107-853E-3608AE3B4F40}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
-		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{C235BD63-6E30-4F13-A0FF-C5D5FCA38558}.Debug|x64.ActiveCfg = Debug|x64
 		{C235BD63-6E30-4F13-A0FF-C5D5FCA38558}.Debug|x64.Build.0 = Debug|x64
-		{C235BD63-6E30-4F13-A0FF-C5D5FCA38558}.Release|x64.ActiveCfg = Debug|x64
-		{C235BD63-6E30-4F13-A0FF-C5D5FCA38558}.Release|x64.Build.0 = Debug|x64
 		{54EB8DF4-E47F-4674-B521-02F2F3D55D04}.Debug|x64.ActiveCfg = Debug|x64
 		{54EB8DF4-E47F-4674-B521-02F2F3D55D04}.Debug|x64.Build.0 = Debug|x64
-		{54EB8DF4-E47F-4674-B521-02F2F3D55D04}.Release|x64.ActiveCfg = Debug|x64
-		{54EB8DF4-E47F-4674-B521-02F2F3D55D04}.Release|x64.Build.0 = Debug|x64
 		{FC1D628B-7783-4A87-8756-901F308B2BB4}.Debug|x64.ActiveCfg = Debug|x64
 		{FC1D628B-7783-4A87-8756-901F308B2BB4}.Debug|x64.Build.0 = Debug|x64
-		{FC1D628B-7783-4A87-8756-901F308B2BB4}.Release|x64.ActiveCfg = Debug|x64
-		{FC1D628B-7783-4A87-8756-901F308B2BB4}.Release|x64.Build.0 = Debug|x64
 		{21633A79-2B61-414C-A125-FC0F8C0E93E7}.Debug|x64.ActiveCfg = Debug|x64
 		{21633A79-2B61-414C-A125-FC0F8C0E93E7}.Debug|x64.Build.0 = Debug|x64
-		{21633A79-2B61-414C-A125-FC0F8C0E93E7}.Release|x64.ActiveCfg = Debug|x64
-		{21633A79-2B61-414C-A125-FC0F8C0E93E7}.Release|x64.Build.0 = Debug|x64
 		{16DC0694-3F5D-480C-9ED7-AAE8B06A6300}.Debug|x64.ActiveCfg = Debug|x64
 		{16DC0694-3F5D-480C-9ED7-AAE8B06A6300}.Debug|x64.Build.0 = Debug|x64
 		{16DC0694-3F5D-480C-9ED7-AAE8B06A6300}.Debug|x64.Deploy.0 = Debug|x64
-		{16DC0694-3F5D-480C-9ED7-AAE8B06A6300}.Release|x64.ActiveCfg = Debug|x64
-		{16DC0694-3F5D-480C-9ED7-AAE8B06A6300}.Release|x64.Build.0 = Debug|x64
-		{16DC0694-3F5D-480C-9ED7-AAE8B06A6300}.Release|x64.Deploy.0 = Debug|x64
+		{90CF318B-D8DA-4E22-A8E0-30D42B2B9AB2}.Debug|x64.ActiveCfg = Debug|x64
+		{90CF318B-D8DA-4E22-A8E0-30D42B2B9AB2}.Debug|x64.Build.0 = Debug|x64
+		{D968F35A-74B8-4107-853E-3608AE3B4F40}.Debug|x64.ActiveCfg = Debug|x64
+		{D968F35A-74B8-4107-853E-3608AE3B4F40}.Debug|x64.Build.0 = Debug|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

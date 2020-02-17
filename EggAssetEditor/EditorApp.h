@@ -113,7 +113,7 @@ namespace Egg::Module {
 					}
 					break;
 					default:
-						throw std::exception("Not implemented");
+						continue;
 				}
 				colliderGbuffers.push_back(g);
 			}

@@ -11,6 +11,7 @@
 #include "Material.h"
 #include "Mesh.h"
 #include <Egg/PhysXScene.h>
+#include <physx/characterkinematic/PxCapsuleController.h>
 
 class GameObject;
 using ColliderShape = Egg::Asset::Collider;
@@ -226,22 +227,4 @@ public:
 	void SetActive(bool value) {
 		disabled = !value;
 	}
-};
-
-
-class PlayerBehavior : public IBehavior {
-	Transform * transform;
-public:
-	virtual void Setup(GameObject * owner) override {
-		transform = owner->GetComponent<Transform>();
-		
-
-	}
-
-	virtual void Update(float dt) override {
-		//float vertical = Egg::Input::GetAxis("Vertical");
-
-		//transform->position.z += vertical * 250.0f * dt;
-	}
-
 };

@@ -129,7 +129,6 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
       <DependentUpon>GeometryPage.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
-    <ClInclude Include="Manifest.h" />
     <ClInclude Include="MaterialsPage.h">
       <DependentUpon>MaterialsPage.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -262,7 +261,6 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
       <DependentUpon>GeometryPage.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
-    <ClCompile Include="Manifest.cpp" />
     <ClCompile Include="MaterialsPage.cpp">
       <DependentUpon>MaterialsPage.xaml</DependentUpon>
       <SubType>Code</SubType>

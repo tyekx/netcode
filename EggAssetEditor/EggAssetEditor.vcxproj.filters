@@ -9,9 +9,6 @@
     <ClCompile Include="App.cpp" />
     <ClCompile Include="MainPage.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-    <ClCompile Include="Manifest.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
     <ClCompile Include="DC_Lod.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -79,9 +76,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Manifest.h">
-      <Filter>Data</Filter>
-    </ClInclude>
     <ClInclude Include="Model.h">
       <Filter>Data</Filter>
     </ClInclude>

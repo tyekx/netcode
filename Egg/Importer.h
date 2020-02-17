@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Path.h"
-#include "Asset/Model.h"
+#include <EggAssetLib/Model.h>
 
 namespace Egg::Importer {
 	

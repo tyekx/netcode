@@ -5,7 +5,7 @@
 namespace Egg::Asset {
 
 	enum class ColliderType : unsigned {
-		UNDEFINED, SPHERE, CAPSULE, BOX, PLANE, MESH
+		UNDEFINED, SPHERE, CAPSULE, BOX, MESH, PLANE
 	};
 
 	struct Collider {

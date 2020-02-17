@@ -1,7 +1,6 @@
 #pragma once
 
 namespace Egg {
-
 	template<typename T>
 	class ArrayView {
 		T * begin;
@@ -18,7 +17,6 @@ namespace Egg {
 		ArrayView & operator=(ArrayView &&) = default;
 
 		const T & operator[](size_t idx) const {
-			// @TODO: debug_assert
 			return begin[idx];
 		}
 
@@ -34,23 +32,5 @@ namespace Egg {
 			return begin;
 		}
 	};
-
-	void InterpretSkip(void ** ptr, unsigned int nBytes);
-
-	template<typename T>
-	T InterpretAs(void ** ptr) {
-		void * src = *ptr;
-		T data = *(reinterpret_cast<T *>(src));
-		*ptr = reinterpret_cast<void *>(reinterpret_cast<unsigned char *>(src) + sizeof(T));
-		return data;
-	}
-
-	template<typename T>
-	T * InterpretAsArray(void ** ptr, int len) {
-		void * src = *ptr;
-		T * data = (reinterpret_cast<T *>(src));
-		*ptr = reinterpret_cast<void *>(reinterpret_cast<unsigned char *>(src) + len * sizeof(T));
-		return data;
-	}
 
 }

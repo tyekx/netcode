@@ -61,6 +61,7 @@ public:
 
 	DirectX::XMMATRIX GetView(Transform * transform, Camera * camera) {
 		DirectX::XMVECTOR eyePos = DirectX::XMLoadFloat3(&transform->position);
+		eyePos.m128_f32[1] += 180.0f;
 		DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&camera->up);
 		DirectX::XMVECTOR ahead = DirectX::XMLoadFloat3(&camera->ahead);
 		return DirectX::XMMatrixLookToRH(eyePos, ahead, up);

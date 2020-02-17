@@ -38,6 +38,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PreprocessorDefinitions>_EGG_SDK_VERSION=$(TargetPlatformVersion.Substring(5,5));%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Lib />
     <Lib />
@@ -45,12 +46,6 @@
   <ItemGroup>
     <ClInclude Include="AnimationBlender.h" />
     <ClInclude Include="AnimationState.h" />
-    <ClInclude Include="Asset\Animation.h" />
-    <ClInclude Include="Asset\Bone.h" />
-    <ClInclude Include="Asset\Collider.h" />
-    <ClInclude Include="Asset\Material.h" />
-    <ClInclude Include="Asset\Mesh.h" />
-    <ClInclude Include="Asset\Model.h" />
     <ClInclude Include="BinaryReader.h" />
     <ClInclude Include="Blackboard.h" />
     <ClInclude Include="BasicGeometry.h" />
@@ -102,28 +97,23 @@
     <ClInclude Include="DX12Fence.h" />
     <ClInclude Include="FancyIterators.hpp" />
     <ClInclude Include="File.h" />
-    <ClInclude Include="Formats.h" />
     <ClInclude Include="GraphicsContexts.h" />
     <ClInclude Include="HandleTypes.h" />
     <ClInclude Include="Importer.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="LinearClassifier.h" />
     <ClInclude Include="DX12ResourceContext.h" />
-    <ClInclude Include="Memory.hpp" />
-    <ClInclude Include="Sal.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="LuaApi.h" />
     <ClInclude Include="LuaManager.h" />
     <ClInclude Include="LuaScript.h" />
     <ClInclude Include="LuaScriptFile.h" />
     <ClInclude Include="EggMath.h" />
-    <ClInclude Include="MemoryFunctions.h" />
     <ClInclude Include="Modules.h" />
     <ClInclude Include="ModulesConfig.h" />
     <ClInclude Include="MovementController.h" />
     <ClInclude Include="Path.h" />
     <ClInclude Include="PhysXScene.h" />
-    <ClInclude Include="Platform.h" />
     <ClInclude Include="ProgramArgs.h" />
     <ClInclude Include="DX12SpriteFont.h" />
     <ClInclude Include="FrameGraph.h" />
@@ -184,7 +174,6 @@
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="LuaApi.cpp" />
     <ClCompile Include="EggMath.cpp" />
-    <ClCompile Include="MemoryFunctions.cpp" />
     <ClCompile Include="Modules.cpp" />
     <ClCompile Include="Path.cpp" />
     <ClCompile Include="PhysXScene.cpp" />

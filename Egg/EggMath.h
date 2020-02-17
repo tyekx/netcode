@@ -5,6 +5,8 @@
 
 physx::PxVec3 ToPxVec3(const DirectX::XMFLOAT3 & v);
 
+physx::PxVec3 ToPxVec3(const physx::PxExtendedVec3 & ev);
+
 physx::PxQuat ToPxQuat(const DirectX::XMFLOAT4 & q);
 
 DirectX::XMFLOAT3 ToFloat3(const physx::PxVec3 & v);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Formats.h"
+#include <EggFoundation/Formats.h>
 #include <cstdint>
 
 namespace Egg::Graphics {

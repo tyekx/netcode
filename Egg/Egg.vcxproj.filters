@@ -78,23 +78,8 @@
     <ClInclude Include="File.h">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="Asset\Mesh.h">
-      <Filter>Asset</Filter>
-    </ClInclude>
-    <ClInclude Include="Asset\Model.h">
-      <Filter>Asset</Filter>
-    </ClInclude>
-    <ClInclude Include="Asset\Animation.h">
-      <Filter>Asset</Filter>
-    </ClInclude>
-    <ClInclude Include="Asset\Bone.h">
-      <Filter>Asset</Filter>
-    </ClInclude>
     <ClInclude Include="Exporter.h">
       <Filter>Serialization</Filter>
-    </ClInclude>
-    <ClInclude Include="Asset\Material.h">
-      <Filter>Asset</Filter>
     </ClInclude>
     <ClInclude Include="EggMath.h" />
     <ClInclude Include="Input.h">
@@ -141,9 +126,6 @@
     </ClInclude>
     <ClInclude Include="DebugPhysxRaycast.h">
       <Filter>Legacy</Filter>
-    </ClInclude>
-    <ClInclude Include="MemoryFunctions.h">
-      <Filter>Utility</Filter>
     </ClInclude>
     <ClInclude Include="DX12Common.h">
       <Filter>Graphics\DX12</Filter>
@@ -226,19 +208,7 @@
     <ClInclude Include="EggMpl.hpp">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="Sal.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="Formats.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="Logger.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="Platform.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="Memory.hpp">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="DX12ShaderLibrary.h">
@@ -313,9 +283,6 @@
     <ClInclude Include="DX12GraphicsModuleForWin32.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="Asset\Collider.h">
-      <Filter>Asset</Filter>
-    </ClInclude>
     <ClInclude Include="Importer.h">
       <Filter>Serialization</Filter>
     </ClInclude>
@@ -366,9 +333,6 @@
     </ClCompile>
     <ClCompile Include="DebugPhysxActor.cpp">
       <Filter>Legacy</Filter>
-    </ClCompile>
-    <ClCompile Include="MemoryFunctions.cpp">
-      <Filter>Utility</Filter>
     </ClCompile>
     <ClCompile Include="DX12Common.cpp">
       <Filter>Graphics\DX12</Filter>

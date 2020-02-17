@@ -85,12 +85,18 @@ public:
 };
 
 class PhysXSystem {
-	void UpdateShapeLocalPose(physx::PxShape* shape, Model* model, const ColliderShape & c) {
+	void UpdateShapeLocalPose(physx::PxShape* shape, Model* model) {
+		if(shape->userData == nullptr) {
+			return;
+		}
+
+		const ColliderShape & c = *(reinterpret_cast<ColliderShape *>(shape->userData));
+
 		DirectX::XMMATRIX toRoot = DirectX::XMLoadFloat4x4A(&model->boneData->ToRootTransform[c.boneReference]);
 		DirectX::XMVECTOR rotQ = DirectX::XMLoadFloat4(&c.localRotation);
 
-		DirectX::CXMMATRIX T = DirectX::XMMatrixTranslation(c.localPosition.x, c.localPosition.y, c.localPosition.z);
-		DirectX::CXMMATRIX R = DirectX::XMMatrixRotationQuaternion(rotQ);
+		DirectX::FXMMATRIX T = DirectX::XMMatrixTranslation(c.localPosition.x, c.localPosition.y, c.localPosition.z);
+		DirectX::FXMMATRIX R = DirectX::XMMatrixRotationQuaternion(rotQ);
 
 		toRoot = DirectX::XMMatrixMultiply(DirectX::XMMatrixMultiply(R, T), DirectX::XMMatrixTranspose(toRoot));
 
@@ -126,7 +132,7 @@ class PhysXSystem {
 				uint32_t written = rigidBody->getShapes(shapes, SHAPES_BUFFER_SIZE, idx);
 
 				for(uint32_t i = 0; i < written; ++i) {
-					UpdateShapeLocalPose(shapes[i], model, collider->shapes.at(idx + i));
+					UpdateShapeLocalPose(shapes[i], model);
 				}
 
 				idx += written;

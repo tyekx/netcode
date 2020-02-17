@@ -4,6 +4,44 @@
 
 namespace Egg::Physics {
 
+	void PhysXScene::UpdateDebugCamera(const DirectX::XMFLOAT3 & pos, const DirectX::XMFLOAT3 & up, const DirectX::XMFLOAT3 & lookAt)
+	{/*
+		physx::PxPvdSceneClient * pvdClient = scene->getScenePvdClient();
+		if(pvdClient) {
+			pvdClient->updateCamera("default", ToPxVec3(pos), ToPxVec3(up), ToPxVec3(lookAt));
+		}*/
+	}
+
+	/*
+	dont use any global memory
+	*/
+	static physx::PxFilterFlags SimulationFilterShader(
+		physx::PxFilterObjectAttributes attributes0, physx::PxFilterData filterData0,
+		physx::PxFilterObjectAttributes attributes1, physx::PxFilterData filterData1,
+		physx::PxPairFlags & pairFlags, const void * constantBlock, physx::PxU32 constantBlockSize)
+	{
+		// let triggers through
+		if(physx::PxFilterObjectIsTrigger(attributes0) || physx::PxFilterObjectIsTrigger(attributes1))
+		{
+			pairFlags = physx::PxPairFlag::eTRIGGER_DEFAULT;
+
+			if(filterData0.word0 == 1 || filterData1.word0 == 1) {
+				return physx::PxFilterFlag::eSUPPRESS;
+			}
+
+			return physx::PxFilterFlag::eDEFAULT;
+		}
+
+		pairFlags = physx::PxPairFlag::eCONTACT_DEFAULT;
+
+		// trigger the contact callback for pairs (A,B) where
+		// the filtermask of A contains the ID of B and vice versa.
+		if((filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1))
+			pairFlags |= physx::PxPairFlag::eNOTIFY_TOUCH_FOUND;
+
+		return physx::PxFilterFlag::eDEFAULT;
+	}
+
 	void PhysXScene::CreateResources() {
 		foundation = PxCreateFoundation(PX_PHYSICS_VERSION, allocator, errorCallback);
 		debugger = PxCreatePvd(*foundation);
@@ -19,10 +57,15 @@ namespace Egg::Physics {
 		physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, physx::PxTolerancesScale{ }, true, debugger);
 		dispatcher = physx::PxDefaultCpuDispatcherCreate(2);
 
+		physx::PxTolerancesScale defaultToleranceScale;
+		physx::PxCookingParams defaultCookingParams{ defaultToleranceScale };
+
+		cooking = PxCreateCooking(PX_PHYSICS_VERSION, *foundation, defaultCookingParams);
+
 		physx::PxSceneDesc sceneDesc{ physics->getTolerancesScale() };
 		sceneDesc.gravity = physx::PxVec3{ 0.0f, -981.0f, 0.0f };
 		sceneDesc.cpuDispatcher = dispatcher;
-		sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
+		sceneDesc.filterShader = SimulationFilterShader;
 
 		scene = physics->createScene(sceneDesc);
 		controllerManager = PxCreateControllerManager(*scene);
@@ -35,21 +78,9 @@ namespace Egg::Physics {
 	}
 
 	void PhysXScene::ReleaseResources() {
-		for(auto * actor : actors) {
-			scene->removeActor(*actor);
-			PX_RELEASE(actor);
-		}
-
-		for(auto * shape : shapes) {
-			PX_RELEASE(shape);
-		}
-
-		for(auto * material : materials) {
-			PX_RELEASE(material);
-		}
-
 		PX_RELEASE(controllerManager);
 		PX_RELEASE(scene);
+		PX_RELEASE(cooking);
 		PX_RELEASE(dispatcher);
 		PX_RELEASE(physics);
 

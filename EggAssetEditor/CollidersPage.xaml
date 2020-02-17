@@ -62,6 +62,7 @@
                         <ComboBoxItem Content="Sphere"></ComboBoxItem>
                         <ComboBoxItem Content="Capsule"></ComboBoxItem>
                         <ComboBoxItem Content="Box"></ComboBoxItem>
+                        <ComboBoxItem Content="Mesh"></ComboBoxItem>
                     </ComboBox>
                 </StackPanel>
 

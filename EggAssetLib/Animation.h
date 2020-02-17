@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <DirectXMath.h>
 
 namespace Egg::Asset {
@@ -24,8 +23,8 @@ namespace Egg::Asset {
 		float duration;
 		float ticksPerSecond;
 
-		unsigned int keysLength;
-		unsigned int bonesLength;
+		uint32_t keysLength;
+		uint32_t bonesLength;
 
 		/*
 		* Length of this array is keysLength

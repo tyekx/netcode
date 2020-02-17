@@ -13,15 +13,22 @@
 #include "Systems.h"
 #include "Scene.h"
 #include "DevCameraScript.h"
+#include "PlayerBehavior.h"
 #include "Snippets.h"
+#include "PhysxHelpers.h"
+
+using Egg::Graphics::ResourceType;
+using Egg::Graphics::ResourceState;
 
 class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	Egg::Stopwatch stopwatch;
 	Egg::Physics::PhysXScene pxScene;
+	physx::PxMaterial * defaultPhysxMaterial;
 
 	//@TODO: refactor these
 	Egg::Asset::Model ybotModel;
 	Egg::Asset::Model railgun;
+	Egg::Asset::Model rampModel;
 	Egg::MovementController movCtrl;
 
 	TransformSystem transformSystem;
@@ -33,8 +40,6 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	Scene scene;
 
 	float totalTime;
-	
-	
 
 	void Render() {
 		graphics->frame->Prepare();
@@ -80,6 +85,19 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 				animSystem.Run(obj, dt);
 			}
 		}
+
+		auto* cam = scene.camera->GetComponent<Camera>();
+		auto * t = scene.camera->GetComponent<Transform>();
+
+		auto xmpv = DirectX::XMLoadFloat3(&t->position);
+		auto xmav = DirectX::XMLoadFloat3(&cam->ahead);
+
+		xmpv = DirectX::XMVectorAdd(xmpv, DirectX::XMVectorScale(xmav, 10.0f));
+
+		DirectX::XMFLOAT3 p;
+		DirectX::XMStoreFloat3(&p, xmpv);
+
+		pxScene.UpdateDebugCamera(t->position, cam->up, p);
 	}
 
 	void LoadAssets() {
@@ -90,24 +108,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		Egg::Input::SetAxis("Jump", VK_SPACE, 0);
 		Egg::Input::SetAxis("Fire", VK_LBUTTON, 0);
 
-
-
 		renderSystem.CreatePermanentResources(graphics.get());
-
-		{
-			GameObject * camObj = scene.Insert();
-			Transform *camT = camObj->AddComponent<Transform>();
-			Script * scriptComponent = camObj->AddComponent<Script>();
-			Camera * camComponent = camObj->AddComponent<Camera>();
-			camT->position = DirectX::XMFLOAT3{ 0.0f, 90.0f, 180.0f };
-			camComponent->ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
-			camComponent->nearPlane = 1.0f;
-			camComponent->farPlane = 500.0f;
-			camComponent->up = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
-			scriptComponent->SetBehavior(std::make_unique<DevCameraScript>());
-			scriptComponent->Setup(camObj);
-			scene.SetCamera(camObj);
-		}
 
 		GameObject * avatar = scene.Insert();
 		avatar->AddComponent<Transform>();
@@ -115,6 +116,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		Animation * anim = avatar->AddComponent<Animation>();
 
 		Egg::Importer::ImportModel(L"test.eggasset", ybotModel);
+		Egg::Importer::ImportModel(L"ramp.eggasset", rampModel);
 
 		const DirectX::XMMATRIX identity = DirectX::XMMatrixIdentity();
 		model->boneData = std::make_unique<BoneData>();
@@ -129,57 +131,188 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		DirectX::XMStoreFloat4x4A(&model->perObjectData.InvModel, identity);
 
 		auto* physics = pxScene.Get();
-
+		auto * pxController = pxScene.CreateController();
 		auto * pxMaterial = physics->createMaterial(0.5f, 0.5f, 0.5f);
-		physx::PxRigidDynamic * pxActor = physics->createRigidDynamic(physx::PxTransform{ physx::PxVec3{ 0.0f, 0.0f, 0.0f}, physx::PxQuat{ 0.0f, 0.0f, 0.f, 1.0f} });
-		pxActor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, true);
 
+		defaultPhysxMaterial = physics->createMaterial(0.5f, 0.5f, 0.5f);
+
+		physx::PxShape * defaultControllerCapsuleShape = nullptr;
+		pxController->getActor()->getShapes(&defaultControllerCapsuleShape, 1, 0);
+		defaultControllerCapsuleShape->setFlag(physx::PxShapeFlag::eSCENE_QUERY_SHAPE, false);
+
+		physx::PxRigidDynamic * pxActor = physics->createRigidDynamic(physx::PxTransform{ ToPxVec3(pxController->getPosition()), physx::PxQuat(0.0f, 0.0f, 0.0f, 1.0f) });
+		pxActor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, true);
+		pxActor->setRigidBodyFlag(physx::PxRigidBodyFlag::eUSE_KINEMATIC_TARGET_FOR_SCENE_QUERIES, true);
+		
 		{
 			auto planeActor = physx::PxCreatePlane(*physics, physx::PxPlane{ 0.0f, 1.0f, 0.0f, 0.0f }, *pxMaterial);
 			pxScene.AddActor(planeActor);
 		}
 
+		//physx::PxShape* meshShape = CreateShapeFromAsset(rampModel.colliders[0], pxScene, pxMaterial, physx::PxShapeFlag::eSIMULATION_SHAPE | physx::PxShapeFlag::eVISUALIZATION);
+
 		std::vector<ColliderShape> localShapes;
+		localShapes.reserve(ybotModel.colliders.Size());
 
 		for(size_t colliderI = 0; colliderI < ybotModel.colliders.Size(); ++colliderI) {
-
-			physx::PxShape * colliderShape = nullptr;
 			localShapes.push_back(ybotModel.colliders[colliderI]);
-
-			const auto & cShape = localShapes.at(colliderI);
-			switch(cShape.type) {
-				case Egg::Asset::ColliderType::CAPSULE:
-				{
-					physx::PxCapsuleGeometry capsuleGeometry{ cShape.capsuleArgs.y, cShape.capsuleArgs.x / 2.0f };
-					colliderShape = physics->createShape(capsuleGeometry, *pxMaterial, true, physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eVISUALIZATION);
-
-				}
-					break;
-				case Egg::Asset::ColliderType::SPHERE:
-				{
-					physx::PxSphereGeometry capsuleGeometry{ cShape.sphereArgs };
-					colliderShape = physics->createShape(capsuleGeometry, *pxMaterial, true, physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eVISUALIZATION);
-				}
-				break;
-			}
-
-			physx::PxTransform pxT{ ToPxVec3(cShape.localPosition), ToPxQuat(cShape.localRotation) };
-			colliderShape->setLocalPose(pxT);
-
-			pxActor->attachShape(*colliderShape);
+			auto * shape = CreateHitboxShapeFromAsset(ybotModel.colliders[colliderI], physics);
+			pxActor->attachShape(*shape);
 		}
 
+		Collider dummy;
+		LoadPhysxComponent(&rampModel, &dummy);
+		pxScene.AddActor(dummy.actorRef);
+
 		Collider * coll = avatar->AddComponent<Collider>();
-		pxScene.AddActor(pxActor);
-		coll->actorRef = pxActor;
 		coll->shapes = std::move(localShapes);
+		coll->actorRef = pxActor;
+		pxScene.AddActor(pxActor);
 
 		CreateYbotAnimationComponent(&ybotModel, anim);
 		animSystem.SetMovementController(&movCtrl);
 
+		Camera * fpsCam = avatar->AddComponent<Camera>();
+		fpsCam->ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
+		fpsCam->aspect = graphics->GetAspectRatio();
+		fpsCam->farPlane = 10000.0f;
+		fpsCam->nearPlane = 1.0f;
+		fpsCam->up = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
+
 		Script* s = avatar->AddComponent<Script>();
-		s->SetBehavior(std::make_unique<PlayerBehavior>());
+		auto playerBehaviour = std::make_unique<PlayerBehavior>();
+		
+		playerBehaviour->SetController(pxController);
+		s->SetBehavior(std::move(playerBehaviour));
 		s->Setup(avatar);
+
+		scene.SetCamera(avatar);
+	}
+
+	void LoadPhysxComponent(Egg::Asset::Model * model, Collider * colliderComponent) {
+		if(model->colliders.Size() == 0) {
+			return;
+		}
+
+		physx::PxPhysics * px = pxScene.Get();
+		physx::PxRigidDynamic * actor = px->createRigidDynamic(physx::PxTransform(physx::PxIdentity));
+		actor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, true);
+		std::vector<ColliderShape> eggShapes;
+		eggShapes.reserve(model->colliders.Size());
+
+		for(size_t i = 0; i < model->colliders.Size(); ++i) {
+			Egg::Asset::Collider * eggCollider = model->colliders.Data() + i;
+			eggShapes.push_back(*eggCollider);
+			physx::PxShape * shape = nullptr;
+			physx::PxShapeFlags shapeFlags;
+
+			if(eggCollider->boneReference > 0 && eggCollider->boneReference < 0x7F) {
+				shapeFlags = physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eTRIGGER_SHAPE | physx::PxShapeFlag::eVISUALIZATION;
+			} else {
+				shapeFlags = physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eSIMULATION_SHAPE | physx::PxShapeFlag::eVISUALIZATION;
+			}
+
+			if(eggCollider->type == Egg::Asset::ColliderType::MESH) {
+				const auto& mesh = model->meshes[0];
+				physx::PxConvexMeshDesc cmd;
+				cmd.points.count = mesh.lodLevels[0].vertexCount;
+				cmd.points.data = mesh.vertices;
+				cmd.points.stride = mesh.vertexSize;
+				cmd.vertexLimit = 255;
+				cmd.flags = physx::PxConvexFlag::eCOMPUTE_CONVEX | physx::PxConvexFlag::eFAST_INERTIA_COMPUTATION;
+				cmd.indices.data = mesh.indices;
+				cmd.indices.count = mesh.lodLevels[0].indexCount;
+				cmd.indices.stride = 4;
+
+				physx::PxDefaultMemoryOutputStream buf;
+				physx::PxConvexMeshCookingResult::Enum r;
+				pxScene.cooking->cookConvexMesh(cmd, buf, &r);
+
+				physx::PxDefaultMemoryInputData input(buf.getData(), buf.getSize());
+				physx::PxConvexMesh * convexMesh = px->createConvexMesh(input);
+
+				physx::PxConvexMeshGeometry pcmg{ convexMesh };
+
+				shape = px->createShape(pcmg, *defaultPhysxMaterial, true, shapeFlags);
+
+			} else {
+				shape = CreatePrimitiveShapeFromAsset(*eggCollider, px, defaultPhysxMaterial, shapeFlags);
+			}
+
+			actor->attachShape(*shape);
+		}
+
+		colliderComponent->actorRef = actor;
+		colliderComponent->shapes = std::move(eggShapes);
+	}
+
+	void LoadModelComponent(Egg::Asset::Model * model, Model * modelComponent) {
+		for(size_t meshIdx = 0; meshIdx < model->meshes.Size(); ++meshIdx) {
+			Egg::Asset::Material * mat = model->materials.Data() + model->meshes[meshIdx].materialId;
+			Egg::Asset::Mesh * mesh = model->meshes.Data() + meshIdx;
+
+			Egg::InputLayoutBuilderRef inputLayoutBuilder = graphics->CreateInputLayoutBuilder();
+
+			for(uint32_t ilIdx = 0; ilIdx < mesh->inputElementsLength; ++ilIdx) {
+				inputLayoutBuilder->AddInputElement(mesh->inputElements[ilIdx].semanticName,
+					mesh->inputElements[ilIdx].semanticIndex,
+					mesh->inputElements[ilIdx].format,
+					mesh->inputElements[ilIdx].byteOffset);
+			}
+
+			Egg::InputLayoutRef inputLayout = inputLayoutBuilder->Build();
+
+			Egg::Graphics::UploadBatch batch;
+
+			auto appMesh = std::make_shared<Mesh>();
+
+			uint8_t * const vBasePtr = reinterpret_cast<uint8_t *>(mesh->vertices);
+			uint8_t * const iBasePtr = reinterpret_cast<uint8_t *>(mesh->indices);
+
+			for(unsigned int i = 0; i < mesh->lodLevelsLength; ++i) {
+				uint8_t * vData = vBasePtr + mesh->lodLevels[i].vertexBufferByteOffset;
+				uint8_t * iData = nullptr;
+				uint64_t vbuffer = graphics->resources->CreateVertexBuffer(mesh->lodLevels[i].vertexBufferSizeInBytes, mesh->vertexSize, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
+				uint64_t vCount = mesh->lodLevels[i].vertexCount;
+				uint64_t ibuffer = 0;
+				uint64_t iCount = 0;
+
+				batch.Upload(vbuffer, vData, mesh->lodLevels[i].vertexBufferSizeInBytes);
+				batch.ResourceBarrier(vbuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
+
+				if(mesh->indices != nullptr) {
+					ibuffer = graphics->resources->CreateIndexBuffer(mesh->lodLevels[i].indexBufferSizeInBytes, DXGI_FORMAT_R32_UINT, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
+					iData = iBasePtr + mesh->lodLevels[i].indexBufferByteOffset;
+					iCount = mesh->lodLevels[i].indexCount;
+
+					batch.Upload(ibuffer, iData, mesh->lodLevels[i].indexBufferSizeInBytes);
+					batch.ResourceBarrier(ibuffer, ResourceState::COPY_DEST, ResourceState::INDEX_BUFFER);
+				}
+
+				GBuffer lod;
+				lod.indexBuffer = ibuffer;
+				lod.vertexBuffer = vbuffer;
+				lod.indexCount = iCount;
+				lod.vertexCount = vCount;
+
+				appMesh->AddLOD(lod);
+				appMesh->vertexSize = mesh->vertexSize;
+			}
+
+			appMesh->selectedLod = 0;
+			appMesh->boundingBox = mesh->boundingBox;
+
+			auto material = std::make_shared<TestMaterial>();
+
+			material->data.diffuseColor = DirectX::XMFLOAT4A{ mat->diffuseColor.x, mat->diffuseColor.y,mat->diffuseColor.z, 1.0f };
+			material->data.fresnelR0 = DirectX::XMFLOAT3{ 0.05f, 0.05f, 0.05f };
+			material->data.shininess = mat->shininess;
+
+			graphics->frame->SyncUpload(batch);
+
+			modelComponent->AddShadedMesh(appMesh, material);
+		}
+
 	}
 
 public:
@@ -256,220 +389,3 @@ public:
 	}
 };
 
-
-/*
-class EggApp : public Egg::App {
-protected:
-
-
-	Egg::Asset::Model ybotModel;
-	Egg::Asset::Model railgun;
-	std::unique_ptr<Egg::Scene> scene;
-	std::unique_ptr<Egg::Graphics::IVisualEngine> graphicsEngine;
-	PerFrameCb* perFrameCb;
-	//std::unique_ptr<Egg::DebugPhysx> debugPhysx;
-	Egg::Camera::BaseCamera baseCam;
-	Egg::MovementController movCtrl;
-	AnimationSystem animSys;
-	Egg::PhysxSystem pxSys;
-	DirectX::XMFLOAT3A velocity;
-	float cameraPitch;
-	float cameraYaw;
-	float speed;
-	float mouseSpeed;
-	float animT;
-	bool fireEnabled;
-public:
-
-	EggApp() : perFrameCb{}, baseCam{}, pxSys{}, speed{}, mouseSpeed{}, animT{ 0.0f }, fireEnabled{ true } {
-		cameraPitch = 0.0f;
-		cameraYaw = 0.0f;
-	}
-
-	virtual void Render() override {
-		UINT64 signature;
-		Egg::GameObject * gameObj;
-
-		//@TODO: move this out
-		UINT64 graphicsSig = (0x1ULL << TupleIndexOf<Egg::Transform, COMPONENTS_T>::value) |
-							 (0x1ULL << TupleIndexOf<Egg::Model, COMPONENTS_T>::value);
-
-		// cleaning up and prepraring for recording
-		graphicsEngine->PreUpdate();
-
-		// recording commands
-		for(UINT i = 0; i < scene->GetObjectCount(); ++i) {
-			gameObj = scene->operator[](i);
-			signature = gameObj->GetSignature();
-
-			if((signature & graphicsSig) == graphicsSig) {
-
-				Egg::Model * model = gameObj->GetComponent<Egg::Model>();
-
-				graphicsEngine->Render(model->gpuResourcesHandle);
-			}
-		}
-
-		// actual render call
-		graphicsEngine->PostUpdate();
-	}
-
-
-	virtual void SetWindow(void * hwnd) override {
-		//@TODO: move this out
-		graphicsEngine = std::make_unique<Egg::Graphics::DX12::Engine>();
-		graphicsEngine->CreateResources(hwnd);
-		perFrameCb = graphicsEngine->GetPerFrameBuffer();
-	}
-
-	virtual void Update(float dt, float T) override {
-
-	
-
-		DirectX::XMFLOAT3 minusUnitZ{ 0.0f, 0.0f, -1.0f };
-		DirectX::XMVECTOR cameraQuat = DirectX::XMQuaternionRotationRollPitchYaw(cameraPitch, cameraYaw, 0.0f);
-		DirectX::XMVECTOR aheadStart = DirectX::XMLoadFloat3(&minusUnitZ);
-		DirectX::XMVECTOR camUp = DirectX::XMLoadFloat3(&baseCam.Up);
-		DirectX::XMStoreFloat3(&baseCam.Ahead, DirectX::XMVector3Normalize(DirectX::XMVector3Rotate(aheadStart, cameraQuat)));
-		DirectX::XMStoreFloat3(&baseCam.Position, devCamPos);
-		baseCam.UpdateMatrices();
-
-		movCtrl.Update();
-
-		
-
-		for(UINT i = 0; i < scene->GetObjectCount(); ++i) {
-			auto * go = scene->operator[](i);
-			if(go->HasComponent<Egg::Transform>() && go->HasComponent<Egg::Model>()) {
-				Egg::Transform * transform = go->GetComponent<Egg::Transform>();
-				Egg::Model * model = go->GetComponent<Egg::Model>();
-
-				DirectX::XMVECTOR translation = DirectX::XMLoadFloat4(&transform->Position);
-				DirectX::XMVECTOR rotation = DirectX::XMLoadFloat4(&transform->Rotation);
-				DirectX::XMVECTOR scaling = DirectX::XMLoadFloat3(&transform->Scale);
-
-				DirectX::XMMATRIX modelMat = DirectX::XMMatrixAffineTransformation(scaling, DirectX::XMQuaternionIdentity(), rotation, translation);
-
-				DirectX::XMVECTOR modelMatDet = DirectX::XMMatrixDeterminant(modelMat);
-
-				DirectX::XMStoreFloat4x4A(&model->perObjectCb->Model, DirectX::XMMatrixTranspose(modelMat));
-				DirectX::XMStoreFloat4x4A(&model->perObjectCb->InvModel, DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(&modelMatDet, modelMat)));
-			}
-		}
-
-		for(UINT i = 0; i < scene->GetObjectCount(); ++i) {
-			auto * go = scene->operator[](i);
-			animSys.Run(go, dt, &movCtrl);
-		}
-
-		//DirectX::XMVECTOR offsetedPos = DirectX::XMVectorAdd(devCamPos, LoadPxExtendedVec3(chPos) );
-
-		pxSys.Simulate(dt);
-		//debugPhysx->AfterPhysxUpdate(dt);
-
-		DirectX::XMMATRIX view = DirectX::XMLoadFloat4x4A(&baseCam.GetViewMatrix());
-		DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4A(&baseCam.GetProjMatrix());
-
-
-		perFrameCb->eyePos = DirectX::XMFLOAT3A{ baseCam.Position.x, baseCam.Position.y, baseCam.Position.z };
-		perFrameCb->Light.position = DirectX::XMFLOAT4A{ 1.0f, 0.0f, 0.0f, 0.0f };
-		perFrameCb->Light.intensity = DirectX::XMFLOAT3A{ 1.0f, 1.0f, 1.0f };
-		DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(view, proj);
-		DirectX::XMStoreFloat4x4A(&perFrameCb->ViewProj, DirectX::XMMatrixTranspose(vp));
-
-		Egg::Input::Reset();
-	}
-
-	virtual void KeyPressed(uint32_t keyCode) override {
-		Egg::Input::KeyPressed(keyCode);
-	}
-
-	virtual void KeyReleased(uint32_t keyCode) override {
-		Egg::Input::KeyReleased(keyCode);
-	}
-
-	virtual void Blur() override {
-		Egg::Input::Blur();
-	}
-
-	virtual void Focused() override {
-		Egg::Input::Focused();
-	}
-
-	virtual void CreateResources() override {
-		//Egg::SimpleApp::CreateResources();
-
-		Egg::Input::SetAxis("Vertical", 'W', 'S');
-		Egg::Input::SetAxis("Horizontal", 'A', 'D');
-		Egg::Input::SetAxis("Jump", VK_SPACE, 0);
-
-		Egg::Input::SetAxis("DevCameraX", VK_NUMPAD4, VK_NUMPAD6);
-		Egg::Input::SetAxis("DevCameraZ", VK_NUMPAD8, VK_NUMPAD5);
-		Egg::Input::SetAxis("DevCameraY", VK_NUMPAD7, VK_NUMPAD9);
-
-		Egg::Input::SetAxis("Fire", VK_LBUTTON, 0);
-
-		pxSys.CreateResources();
-
-		speed = 250.0f;
-		mouseSpeed = 0.20f;
-		baseCam.NearPlane = 1.0f;
-		baseCam.FarPlane = 10000.0f;
-		baseCam.Ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
-		baseCam.Position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 180.0f };
-	}
-
-	virtual void ReleaseResources() override {
-		//Egg::SimpleApp::ReleaseResources();
-	}
-
-	virtual void LoadAssets() override {
-		scene = std::make_unique<Egg::Scene>();
-
-		DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationRollPitchYaw(-DirectX::XM_PIDIV2, 0.0f, 0.0f);
-
-
-		//
-
-		Egg::Importer::ImportModel(L"ybot.eggasset", ybotModel);
-		Egg::Importer::ImportModel(L"railgun.eggasset", railgun);
-		DirectX::XMVECTOR weaponQuatV = DirectX::XMQuaternionRotationRollPitchYaw(-DirectX::XM_PIDIV2, 0, 0);
-		DirectX::XMFLOAT4 weaponQuat;
-		DirectX::XMStoreFloat4(&weaponQuat, weaponQuatV);
-		auto * gunObject = scene->New();
-
-		gunObject->AddComponent<Egg::Transform>()->Rotation = weaponQuat;
-		auto * modelComp = gunObject->AddComponent<Egg::Model>();
-		graphicsEngine->LoadAssets(modelComp, &railgun);
-		auto * animComp = gunObject->AddComponent<AnimationComponent>();
-		animComp->blackBoard.CreateResources(&railgun, modelComp->boneDataCb, railgun.animationsLength, {
-												{ "Idle", 1, Egg::Animation::StateBehaviour::LOOP },
-											    { "Shoot", 0, Egg::Animation::StateBehaviour::ONCE }
-											 }, {
-												 { "Idle", "Shoot", &Egg::MovementController::IsFiring, nullptr, Egg::Animation::TransitionBehaviour::LERP },
-												 { "Shoot", "Idle", nullptr, &Egg::Animation::AnimationState::IsFinished, Egg::Animation::TransitionBehaviour::LERP }
-											 });
-
-		auto * playerObject = scene->New();
-		auto *tcomp = playerObject->AddComponent<Egg::Transform>();
-		tcomp->Scale = DirectX::XMFLOAT3{ 1,1,1 };
-		
-		auto * modelComponent = playerObject->AddComponent<Egg::Model>();
-		graphicsEngine->LoadAssets(modelComponent, &ybotModel);
-		auto * animComponent = playerObject->AddComponent<AnimationComponent>();
-
-		baseCam.SetAspect(graphicsEngine->GetAspectRatio());
-
-
-
-
-		//debugPhysx.reset(new Egg::DebugPhysx{});
-		//debugPhysx->CreateResources(device.Get(), resourceManager.get());
-
-		//debugPhysx->AddActor(pxSys.groundPlane).SetOffset(0, DirectX::XMMatrixTranspose(DirectX::XMMatrixScaling(2000.0f, 2000.0f, 2000.0f)));
-
-
-	}
-
-};
-*/

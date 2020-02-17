@@ -52,7 +52,7 @@ namespace winrt::EggAssetEditor::implementation
             throw hresult_not_implemented();
         }
 
-        Global::Manifest = std::make_unique<Manifest>();
+        Global::Manifest = std::make_unique<Egg::Asset::Manifest>();
 
         //manifestChanged(reinterpret_cast<uint64_t>(manifest.get()));
     }
@@ -225,7 +225,7 @@ namespace winrt::EggAssetEditor::implementation
             }
 
             if(Global::Manifest == nullptr) {
-                Global::Manifest = std::make_unique<Manifest>();
+                Global::Manifest = std::make_unique<Egg::Asset::Manifest>();
             }
 
             Global::Manifest->base.file = winrt::to_string(file.Path());
@@ -277,7 +277,7 @@ namespace winrt::EggAssetEditor::implementation
 
                 Global::Model->animations.push_back(std::move(optAnim));
 
-                Manifest::Animation anim;
+                Egg::Asset::Manifest::Animation anim;
                 anim.name = animationName;
                 anim.editorPlaybackSpeed = 1.0f;
                 anim.editorPlaybackLoop = true;
@@ -365,7 +365,7 @@ namespace winrt::EggAssetEditor::implementation
             json11::Json json = json11::Json::parse(str, err);
 
             if(Global::Manifest == nullptr) {
-                Global::Manifest = std::make_unique<Manifest>();
+                Global::Manifest = std::make_unique<Egg::Asset::Manifest>();
             }
 
             if(!Global::Manifest->Load(json)) {

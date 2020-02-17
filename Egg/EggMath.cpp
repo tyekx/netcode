@@ -8,6 +8,11 @@ physx::PxVec3 ToPxVec3(const DirectX::XMFLOAT3 & v) {
 	return physx::PxVec3{ v.x, v.y, v.z };
 }
 
+physx::PxVec3 ToPxVec3(const physx::PxExtendedVec3 & ev)
+{
+	return physx::PxVec3(static_cast<float>(ev.x), static_cast<float>(ev.y), static_cast<float>(ev.z));
+}
+
 DirectX::XMFLOAT3 ToFloat3(const physx::PxVec3 & v) {
 	return DirectX::XMFLOAT3{ v.x, v.y, v.z };
 }
