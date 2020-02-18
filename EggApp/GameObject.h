@@ -34,6 +34,10 @@ public:
 	void Setup(GameObject * owner);
 	void Update(float dt);
 
+	Script & operator=(Script script) noexcept {
+		std::swap(behavior, script.behavior);
+		return *this;
+	}
 };
 
 COMPONENT_ALIGN class Transform {
@@ -46,7 +50,10 @@ public:
 
 	}
 
-	Transform(Transform &&) = default;
+	Transform(Transform &&) noexcept = default;
+	Transform & operator=(const Transform &) = default;
+	Transform & operator=(Transform &&) noexcept = default;
+	~Transform() noexcept = default;
 };
 
 struct ShadedMesh {
@@ -57,7 +64,13 @@ struct ShadedMesh {
 
 	}
 
-	ShadedMesh(ShadedMesh &&) = default;
+	~ShadedMesh() noexcept = default;
+
+	ShadedMesh & operator=(ShadedMesh sm) noexcept {
+		std::swap(mesh, sm.mesh);
+		std::swap(material, sm.material);
+		return *this;
+	}
 };
 
 COMPONENT_ALIGN class Model {
@@ -70,7 +83,7 @@ public:
 	Model() : perObjectData{ }, boneData{ nullptr }, meshes{ } { }
 	~Model() = default;
 
-	Model(Model &&) = default;
+	Model(Model &&) noexcept = default;
 
 	ShadedMesh & AddShadedMesh(std::shared_ptr<Mesh> m, std::shared_ptr<Material> mat) {
 		return meshes.emplace_back(std::move(m), std::move(mat));
@@ -96,59 +109,59 @@ public:
 		this->nearPlane = nearPlane;
 		this->farPlane = farPlane;
 	}
+
+	Camera & operator=(const Camera &) = default;
 };
 
 COMPONENT_ALIGN class Animation {
 public:
 	Egg::Animation::Blackboard blackboard;
+
+	Animation(Animation &&) noexcept = default;
+	Animation& operator(Animation&&) 
 };
 
 COMPONENT_ALIGN class Collider {
 public:
 	physx::PxActor * actorRef;
 	std::vector<ColliderShape> shapes;
+
+	Collider(Collider &&) noexcept = default;
 };
 
 template<typename TUPLE_T, typename TUPLE_T2>
 struct TupleMoveStorageImpl;
 
-template<typename TUPLE_T, typename HEAD>
-struct TupleMoveStorageImpl<TUPLE_T, std::tuple<HEAD>> {
+template<typename TUPLE_T>
+struct TupleMoveStorageImpl<TUPLE_T, std::tuple<>> {
 	static void Invoke(uint8_t * dst, uint8_t * src, SignatureType sig) {
-		constexpr static uint32_t offsetOf = TupleOffsetOf<HEAD, TUPLE_T>::value;
-		constexpr static SignatureType mask = TupleCreateMask<std::tuple<HEAD>, TUPLE_T>::value;
 
-		if((sig & mask) != 0) {
-			HEAD * lhs = reinterpret_cast<HEAD *>(dst + offsetOf);
-			HEAD * rhs = reinterpret_cast<HEAD *>(src + offsetOf);
-			std::swap(*lhs, *rhs);
-		}
 	}
 };
 
 template<typename TUPLE_T, typename HEAD, typename ... TAIL>
 struct TupleMoveStorageImpl<TUPLE_T, std::tuple<HEAD, TAIL...>> {
 	static void Invoke(uint8_t * dst, uint8_t * src, SignatureType sig) {
-		constexpr static uint32_t offsetOf = TupleOffsetOf<HEAD, TUPLE_T>::value;
-		constexpr static SignatureType mask = TupleCreateMask<std::tuple<HEAD>, TUPLE_T>::value;
+		using ComponentType = HEAD;
+		constexpr static uint32_t offsetOf = TupleOffsetOf<ComponentType, TUPLE_T>::value;
+		constexpr static SignatureType mask = TupleCreateMask<std::tuple<ComponentType>, TUPLE_T>::value;
 
-		if((sig & mask) != 0) {
-			HEAD * lhs = reinterpret_cast<HEAD *>(dst + offsetOf);
-			HEAD * rhs = reinterpret_cast<HEAD *>(src + offsetOf);
-			std::swap(*lhs, *rhs);
+		if((sig & mask) != 0ull) {
+			ComponentType * lhs = reinterpret_cast<ComponentType *>(dst + offsetOf);
+			ComponentType * rhs = reinterpret_cast<ComponentType *>(src + offsetOf);
+			ComponentType tmp(std::move(*lhs));
+			*lhs = std::move(*rhs);
+			*rhs = std::move(tmp);
 		}
 
 		TupleMoveStorageImpl<TUPLE_T, std::tuple<TAIL...>>::Invoke(dst, src, sig);
 	}
 };
 
-template<typename ... T>
-struct TupleMoveStorage;
-
-template<typename ... T>
-struct TupleMoveStorage<std::tuple<T...>> {
+template<typename T>
+struct TupleMoveStorage {
 	static void Invoke(uint8_t * dst, uint8_t* src, SignatureType signature) {
-		TupleMoveStorageImpl< std::tuple<T...>, std::tuple<T...> >::Invoke(dst, src, signature);
+		TupleMoveStorageImpl< T, T >::Invoke(dst, src, signature);
 	}
 };
 
@@ -289,6 +302,12 @@ public:
 
 	GameObject() = default;
 	GameObject(const GameObject &) = delete;
+
+	GameObject(GameObject && rhs) noexcept {
+		std::swap(components, rhs.components);
+		std::swap(parent, rhs.parent);
+		std::swap(disabled, rhs.disabled);
+	}
 
 	GameObject & operator=(GameObject rhs) noexcept {
 		std::swap(components, rhs.components);
