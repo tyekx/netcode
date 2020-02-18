@@ -4,9 +4,9 @@
 template<typename ... T>
 struct InjectSystemArgs;
 
-template<typename SYSTEM_T, typename ... COMPONENT_TYPES, typename ... ADDITIONAL_ARGS>
-struct InjectSystemArgs<SYSTEM_T, std::tuple<COMPONENT_TYPES...>, ADDITIONAL_ARGS... > {
-	static void Invoke(SYSTEM_T & ref, GameObject * obj, ADDITIONAL_ARGS && ... args) {
+template<typename SYSTEM_T, typename OBJ_TYPE, typename ... COMPONENT_TYPES, typename ... ADDITIONAL_ARGS>
+struct InjectSystemArgs<SYSTEM_T, OBJ_TYPE, std::tuple<COMPONENT_TYPES...>, ADDITIONAL_ARGS... > {
+	static void Invoke(SYSTEM_T & ref, OBJ_TYPE * obj, ADDITIONAL_ARGS && ... args) {
 		ref(obj, obj->template GetComponent<COMPONENT_TYPES>()..., std::forward<ADDITIONAL_ARGS>(args)...);
 	}
 };

@@ -34,10 +34,8 @@ public:
 	void Setup(GameObject * owner);
 	void Update(float dt);
 
-	Script & operator=(Script script) noexcept {
-		std::swap(behavior, script.behavior);
-		return *this;
-	}
+	Script(Script &&) noexcept = default;
+	Script & operator=(Script &&) noexcept = default;
 };
 
 COMPONENT_ALIGN class Transform {
@@ -64,13 +62,9 @@ struct ShadedMesh {
 
 	}
 
+	ShadedMesh(ShadedMesh &&) noexcept = default;
 	~ShadedMesh() noexcept = default;
-
-	ShadedMesh & operator=(ShadedMesh sm) noexcept {
-		std::swap(mesh, sm.mesh);
-		std::swap(material, sm.material);
-		return *this;
-	}
+	ShadedMesh & operator=(ShadedMesh&& sm) noexcept = default;
 };
 
 COMPONENT_ALIGN class Model {
@@ -84,6 +78,7 @@ public:
 	~Model() = default;
 
 	Model(Model &&) noexcept = default;
+	Model & operator=(Model&& m) noexcept = default;
 
 	ShadedMesh & AddShadedMesh(std::shared_ptr<Mesh> m, std::shared_ptr<Material> mat) {
 		return meshes.emplace_back(std::move(m), std::move(mat));
@@ -118,7 +113,7 @@ public:
 	Egg::Animation::Blackboard blackboard;
 
 	Animation(Animation &&) noexcept = default;
-	Animation& operator(Animation&&) 
+	Animation & operator=(Animation &&) noexcept = default;
 };
 
 COMPONENT_ALIGN class Collider {
@@ -126,7 +121,10 @@ public:
 	physx::PxActor * actorRef;
 	std::vector<ColliderShape> shapes;
 
+	Collider() = default;
 	Collider(Collider &&) noexcept = default;
+
+	Collider & operator=(Collider&& c) noexcept = default;
 };
 
 template<typename TUPLE_T, typename TUPLE_T2>
@@ -149,9 +147,7 @@ struct TupleMoveStorageImpl<TUPLE_T, std::tuple<HEAD, TAIL...>> {
 		if((sig & mask) != 0ull) {
 			ComponentType * lhs = reinterpret_cast<ComponentType *>(dst + offsetOf);
 			ComponentType * rhs = reinterpret_cast<ComponentType *>(src + offsetOf);
-			ComponentType tmp(std::move(*lhs));
-			*lhs = std::move(*rhs);
-			*rhs = std::move(tmp);
+			std::swap(*lhs, *rhs);
 		}
 
 		TupleMoveStorageImpl<TUPLE_T, std::tuple<TAIL...>>::Invoke(dst, src, sig);
@@ -302,19 +298,8 @@ public:
 
 	GameObject() = default;
 	GameObject(const GameObject &) = delete;
-
-	GameObject(GameObject && rhs) noexcept {
-		std::swap(components, rhs.components);
-		std::swap(parent, rhs.parent);
-		std::swap(disabled, rhs.disabled);
-	}
-
-	GameObject & operator=(GameObject rhs) noexcept {
-		std::swap(components, rhs.components);
-		std::swap(parent, rhs.parent);
-		std::swap(disabled, rhs.disabled);
-		return *this;
-	}
+	GameObject(GameObject && rhs) noexcept = default;
+	GameObject & operator=(GameObject && rhs) noexcept = default;
 
 	template<typename T>
 	bool HasComponent() {
