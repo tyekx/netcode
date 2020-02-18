@@ -65,12 +65,13 @@
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Light.h" />
-    <ClInclude Include="Model.h" />
     <ClInclude Include="PhysxHelpers.h" />
     <ClInclude Include="PlayerBehavior.h" />
     <ClInclude Include="RemotePlayerPrefab.h" />
     <ClInclude Include="RenderPassTest.h" />
+    <ClInclude Include="GameScene.h" />
     <ClInclude Include="Scene.h" />
+    <ClInclude Include="Services.h" />
     <ClInclude Include="Snippets.h" />
     <ClInclude Include="Systems.h" />
   </ItemGroup>

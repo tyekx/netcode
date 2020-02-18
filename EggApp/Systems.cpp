@@ -1,17 +1,35 @@
 #include "Systems.h"
 
-using AllComponents_T = TupleMerge<Components_T, ExtensionComponents_T>::type;
+
+template<typename ... T>
+struct InjectSystemArgs;
+
+template<typename SYSTEM_T, typename ... COMPONENT_TYPES, typename ... ADDITIONAL_ARGS>
+struct InjectSystemArgs<SYSTEM_T, std::tuple<COMPONENT_TYPES...>, ADDITIONAL_ARGS... > {
+	static void Invoke(SYSTEM_T & ref, GameObject * obj, ADDITIONAL_ARGS && ... args) {
+		ref(obj, obj->template GetComponent<COMPONENT_TYPES>()..., std::forward<ADDITIONAL_ARGS>(args)...);
+	}
+};
 
 template<typename ... T>
 struct InjectComponents;
 
-template<typename SYSTEM_T, typename OBJECT_T, typename ... COMPONENT_TYPES, typename ... ADDITIONAL_ARGS>
-struct InjectComponents< SYSTEM_T, OBJECT_T, std::tuple<COMPONENT_TYPES...>, ADDITIONAL_ARGS... > {
-
-	static void Invoke(SYSTEM_T & ref, OBJECT_T * obj, ADDITIONAL_ARGS && ... args) {
-		ref(obj, obj->template GetComponent<COMPONENT_TYPES>()..., std::forward<ADDITIONAL_ARGS>(args)...);
+template<typename FUNC_T, typename ... COMPONENT_TYPES>
+struct InjectComponents<FUNC_T, std::tuple<COMPONENT_TYPES...>> {
+	static void Invoke(GameObject * gameObject, FUNC_T func) {
+		func(gameObject->GetComponent<COMPONENT_TYPES>()...);
 	}
 };
+
+template<typename FUNC_OWNER_T, typename FUNC_T, typename ... COMPONENT_TYPES>
+struct InjectComponents<FUNC_OWNER_T, FUNC_T, std::tuple<COMPONENT_TYPES...>> {
+	static void Invoke(GameObject * gameObject, FUNC_OWNER_T* ownerRef, FUNC_T func) {
+		((*ownerRef).*func)(gameObject->GetComponent<COMPONENT_TYPES>()...);
+	}
+};
+
+
+
 
 // cuts off the extra arguments, very specialized task
 template<bool KeepGoing, typename ACC, typename ... T>
@@ -54,8 +72,26 @@ void TryInvoke(T * obj, SYSTEM * system, ADDITIONAL_ARGS && ... args) {
 	constexpr static SignatureType requiredComponents = TupleCreateMask<AllComponents_T, ComponentTypes>::value;
 
 	if((requiredComponents & obj->GetSignature()) == requiredComponents) {
-		InjectComponents<MemberOf, T, ComponentTypes, ADDITIONAL_ARGS...>::Invoke(*system, obj, std::forward<ADDITIONAL_ARGS>(args)...);
+		InjectSystemArgs<MemberOf, T, ComponentTypes, ADDITIONAL_ARGS...>::Invoke(*system, obj, std::forward<ADDITIONAL_ARGS>(args)...);
 	}
+}
+
+
+template<typename FUNC_T, typename FUNC_OWNER_T>
+void TryInject(GameObject * gameObject, FUNC_T f, FUNC_OWNER_T * ownerRef) {
+	using ComponentArgs = typename FunctionReflection<FUNC_T>::ArgsTuple;
+	using ComponentTypes = typename TupleForEach<std::remove_pointer_t, ComponentArgs>::type;
+	using MemberOf = typename FunctionReflection<FUNC_T>::MemberOf;
+
+	if constexpr(std::is_same_v<MemberOf, void>) {
+		InjectComponents<FUNC_T, ComponentTypes>::Invoke(gameObject, f);
+	} else {
+		static_assert(std::is_base_of_v<FUNC_OWNER_T, MemberOf> || std::is_same_v<FUNC_OWNER_T, MemberOf>,
+			"Supplied function owner is invalid");
+
+		InjectComponents<FUNC_OWNER_T, FUNC_T, ComponentTypes>::Invoke(gameObject, ownerRef, f);
+	}
+
 }
 
 void TransformSystem::Run(GameObject * gameObject) {

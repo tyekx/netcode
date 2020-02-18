@@ -42,16 +42,16 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	void Render() {
 		graphics->frame->Prepare();
 
-		scene.UpdatePerFrameCb();
+		//scene.UpdatePerFrameCb();
 		
-		renderSystem.renderer.perFrameData = &scene.perFrameData;
-		renderSystem.renderer.ssaoData = &scene.ssaoData;
+		//renderSystem.renderer.perFrameData = &scene.perFrameData;
+		//renderSystem.renderer.ssaoData = &scene.ssaoData;
 
 		FrameGraphBuilder builder;
 
 		/*
 		foreach gameobject draw
-		*/
+		
 		for(std::size_t i = 0; i < scene.count; ++i) {
 			GameObject * obj = scene.objects.data() + i;
 			if(obj->IsActive()) {
@@ -60,7 +60,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 				renderSystem.Run(obj);
 			}
 		}
-
+	*/
 		renderSystem.renderer.CreateFrameGraph(builder);
 
 		FrameGraph graph = builder.Build(graphics->resources);
@@ -75,27 +75,27 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	void Simulate(float dt) {
 		totalTime += dt;
 		pxScene.Simulate(dt);
-
+		/*
 		for(std::size_t i = 0; i < scene.count; ++i) {
 			GameObject * obj = scene.objects.data() + i;
 			if(obj->IsActive()) {
 				scriptSystem.Run(obj, dt);
 				animSystem.Run(obj, dt);
 			}
-		}
+		}*/
 
-		auto* cam = scene.camera->GetComponent<Camera>();
-		auto * t = scene.camera->GetComponent<Transform>();
+		//auto* cam = scene.camera->GetComponent<Camera>();
+		//auto * t = scene.camera->GetComponent<Transform>();
 
-		auto xmpv = DirectX::XMLoadFloat3(&t->position);
-		auto xmav = DirectX::XMLoadFloat3(&cam->ahead);
+		//auto xmpv = DirectX::XMLoadFloat3(&t->position);
+		//auto xmav = DirectX::XMLoadFloat3(&cam->ahead);
 
-		xmpv = DirectX::XMVectorAdd(xmpv, DirectX::XMVectorScale(xmav, 10.0f));
+		//xmpv = DirectX::XMVectorAdd(xmpv, DirectX::XMVectorScale(xmav, 10.0f));
 
-		DirectX::XMFLOAT3 p;
-		DirectX::XMStoreFloat3(&p, xmpv);
+		//DirectX::XMFLOAT3 p;
+		//DirectX::XMStoreFloat3(&p, xmpv);
 
-		pxScene.UpdateDebugCamera(t->position, cam->up, p);
+		//pxScene.UpdateDebugCamera(t->position, cam->up, p);
 	}
 
 	void LoadServices() {
@@ -108,7 +108,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	}
 
 	void LoadAssets() {
-		scene.Setup();
+		//scene.Setup();
 
 		Egg::Input::SetAxis("Vertical", 'W', 'S');
 		Egg::Input::SetAxis("Horizontal", 'A', 'D');
@@ -336,7 +336,7 @@ public:
 
 	virtual void OnResized(int w, int h) override {
 		float asp = graphics->GetAspectRatio();
-		scene.camera->GetComponent<Camera>()->aspect = asp;
+		//scene.camera->GetComponent<Camera>()->aspect = asp;
 		renderSystem.renderer.OnResize(w, h);
 	}
 

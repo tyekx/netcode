@@ -5,6 +5,7 @@
 #include <vector>
 #include <Egg/EggMpl.hpp>
 #include <tuple>
+#include <memory>
 #include <Egg/Logger.h>
 #include <Egg/Input.h>
 #include <Egg/Blackboard.h>
@@ -32,6 +33,7 @@ public:
 	void SetBehavior(std::unique_ptr<IBehavior> behavior);
 	void Setup(GameObject * owner);
 	void Update(float dt);
+
 };
 
 COMPONENT_ALIGN class Transform {
@@ -43,6 +45,8 @@ public:
 	Transform() : position{ 0.0f, 0.0f, 0.0f }, rotation{ 0.0f, 0.0f, 0.0f, 1.0f }, scale{ 1.0f, 1.0f, 1.0f } {
 
 	}
+
+	Transform(Transform &&) = default;
 };
 
 struct ShadedMesh {
@@ -52,6 +56,8 @@ struct ShadedMesh {
 	ShadedMesh(std::shared_ptr<Mesh> m, std::shared_ptr<Material> mat) : mesh{ std::move(m) }, material{ std::move(mat) } {
 
 	}
+
+	ShadedMesh(ShadedMesh &&) = default;
 };
 
 COMPONENT_ALIGN class Model {
@@ -63,6 +69,8 @@ public:
 
 	Model() : perObjectData{ }, boneData{ nullptr }, meshes{ } { }
 	~Model() = default;
+
+	Model(Model &&) = default;
 
 	ShadedMesh & AddShadedMesh(std::shared_ptr<Mesh> m, std::shared_ptr<Material> mat) {
 		return meshes.emplace_back(std::move(m), std::move(mat));
@@ -101,9 +109,52 @@ public:
 	std::vector<ColliderShape> shapes;
 };
 
+template<typename TUPLE_T, typename TUPLE_T2>
+struct TupleMoveStorageImpl;
+
+template<typename TUPLE_T, typename HEAD>
+struct TupleMoveStorageImpl<TUPLE_T, std::tuple<HEAD>> {
+	static void Invoke(uint8_t * dst, uint8_t * src, SignatureType sig) {
+		constexpr static uint32_t offsetOf = TupleOffsetOf<HEAD, TUPLE_T>::value;
+		constexpr static SignatureType mask = TupleCreateMask<std::tuple<HEAD>, TUPLE_T>::value;
+
+		if((sig & mask) != 0) {
+			HEAD * lhs = reinterpret_cast<HEAD *>(dst + offsetOf);
+			HEAD * rhs = reinterpret_cast<HEAD *>(src + offsetOf);
+			std::swap(*lhs, *rhs);
+		}
+	}
+};
+
+template<typename TUPLE_T, typename HEAD, typename ... TAIL>
+struct TupleMoveStorageImpl<TUPLE_T, std::tuple<HEAD, TAIL...>> {
+	static void Invoke(uint8_t * dst, uint8_t * src, SignatureType sig) {
+		constexpr static uint32_t offsetOf = TupleOffsetOf<HEAD, TUPLE_T>::value;
+		constexpr static SignatureType mask = TupleCreateMask<std::tuple<HEAD>, TUPLE_T>::value;
+
+		if((sig & mask) != 0) {
+			HEAD * lhs = reinterpret_cast<HEAD *>(dst + offsetOf);
+			HEAD * rhs = reinterpret_cast<HEAD *>(src + offsetOf);
+			std::swap(*lhs, *rhs);
+		}
+
+		TupleMoveStorageImpl<TUPLE_T, std::tuple<TAIL...>>::Invoke(dst, src, sig);
+	}
+};
+
+template<typename ... T>
+struct TupleMoveStorage;
+
+template<typename ... T>
+struct TupleMoveStorage<std::tuple<T...>> {
+	static void Invoke(uint8_t * dst, uint8_t* src, SignatureType signature) {
+		TupleMoveStorageImpl< std::tuple<T...>, std::tuple<T...> >::Invoke(dst, src, signature);
+	}
+};
 
 using Components_T = std::tuple<Transform, Model, Script, Collider>;
 using ExtensionComponents_T = std::tuple<Camera, Animation>;
+using AllComponents_T = TupleMerge<Components_T, ExtensionComponents_T>::type;
 
 class ComponentStorage {
 	uint8_t storage[TupleSizeofSum<Components_T>::value];
@@ -142,9 +193,8 @@ class ComponentStorage {
 public:
 	SignatureType signature;
 
-
-	ComponentStorage() : signature{}, storage{}, extendedStorage{ nullptr } { }
-	~ComponentStorage() {
+	ComponentStorage() = default;
+	~ComponentStorage() noexcept {
 		CompositeObjectDestructor<Components_T>::Invoke(signature, storage);
 		if(extendedStorage != nullptr) {
 			signature >>= TupleCountOf<Components_T>::value;
@@ -154,8 +204,27 @@ public:
 		}
 	}
 
+	ComponentStorage & operator=(ComponentStorage rhs) noexcept {
+		constexpr static uint32_t StorageSize = TupleSizeofSum<Components_T>::value;
+		uint8_t tempStorage[StorageSize];
+
+		SignatureType signatureMask = TupleMaxMaskValue<Components_T>::value;
+		SignatureType mainStorageSignature = signature & signatureMask;
+		SignatureType rhsMainStorageSignature = rhs.signature & signatureMask;
+
+		TupleMoveStorage<Components_T>::Invoke(tempStorage, storage, mainStorageSignature);
+		TupleMoveStorage<Components_T>::Invoke(storage, rhs.storage, rhsMainStorageSignature);
+		TupleMoveStorage<Components_T>::Invoke(rhs.storage, tempStorage, mainStorageSignature);
+
+		std::swap(signature, rhs.signature);
+		std::swap(extendedStorage, rhs.extendedStorage);
+		return *this;
+	}
+
 	template<typename T>
 	bool HasComponent() {
+		static_assert(TupleContainsType<T, AllComponents_T>::value, "Component type was not found");
+
 		if constexpr(TupleContainsType<T, Components_T>::value) {
 			return (signature & (1ULL << TupleIndexOf<T, Components_T>::value)) > 0;
 		} else {
@@ -165,6 +234,16 @@ public:
 
 	template<typename T>
 	T * GetComponent() {
+		static_assert(TupleContainsType<T, AllComponents_T>::value, "Component type was not found");
+
+#if _DEBUG
+		SignatureType sigMask = 1ull << TupleIndexOf<T, AllComponents_T>::value;
+		// force a crash in debug mode
+		if((signature & sigMask) != 0) {
+			return nullptr;
+		}
+#endif
+
 		if constexpr(TupleContainsType<T, Components_T>::value) {
 			return reinterpret_cast<T *>(storage + TupleOffsetOf<T, Components_T>::value);
 		} else {
@@ -173,7 +252,18 @@ public:
 	}
 
 	template<typename T>
+	void RemoveComponent() {
+		static_assert(TupleContainsType<T, AllComponents_T>::value, "Component type was not found");
+
+		T * component = GetComponent<T>();
+		
+		component->~T();
+	}
+
+	template<typename T>
 	T * AddComponent() {
+		static_assert(TupleContainsType<T, AllComponents_T>::value, "Component type was not found");
+
 		if constexpr(TupleContainsType<T, Components_T>::value) {
 			if(!HasComponent<T>()) {
 				T * ptr = GetComponent<T>();
@@ -195,6 +285,16 @@ class GameObject {
 public:
 	inline SignatureType GetSignature() const {
 		return components.signature;
+	}
+
+	GameObject() = default;
+	GameObject(const GameObject &) = delete;
+
+	GameObject & operator=(GameObject rhs) noexcept {
+		std::swap(components, rhs.components);
+		std::swap(parent, rhs.parent);
+		std::swap(disabled, rhs.disabled);
+		return *this;
 	}
 
 	template<typename T>
