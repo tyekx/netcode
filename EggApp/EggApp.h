@@ -49,18 +49,14 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 		FrameGraphBuilder builder;
 
-		/*
-		foreach gameobject draw
-		
-		for(std::size_t i = 0; i < scene.count; ++i) {
-			GameObject * obj = scene.objects.data() + i;
-			if(obj->IsActive()) {
-				transformSystem.Run(obj);
-				pxSystem.Run(obj);
-				renderSystem.Run(obj);
+		scene.Foreach([this](GameObject * gameObject) -> void {
+			if(gameObject->IsActive()) {
+				transformSystem.Run(gameObject);
+				pxSystem.Run(gameObject);
+				renderSystem.Run(gameObject);
 			}
-		}
-	*/
+		});
+
 		renderSystem.renderer.CreateFrameGraph(builder);
 
 		FrameGraph graph = builder.Build(graphics->resources);
@@ -75,14 +71,13 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	void Simulate(float dt) {
 		totalTime += dt;
 		pxScene.Simulate(dt);
-		/*
-		for(std::size_t i = 0; i < scene.count; ++i) {
-			GameObject * obj = scene.objects.data() + i;
-			if(obj->IsActive()) {
-				scriptSystem.Run(obj, dt);
-				animSystem.Run(obj, dt);
+
+		scene.Foreach([this, dt](GameObject * gameObject)->void {
+			if(gameObject->IsActive()) {
+				scriptSystem.Run(gameObject, dt);
+				animSystem.Run(gameObject, dt);
 			}
-		}*/
+		});
 
 		//auto* cam = scene.camera->GetComponent<Camera>();
 		//auto * t = scene.camera->GetComponent<Transform>();
@@ -116,6 +111,20 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		Egg::Input::SetAxis("Fire", VK_LBUTTON, 0);
 
 		renderSystem.CreatePermanentResources(graphics.get());
+
+		for(uint32_t i = 0; i < 1000; ++i) {
+			GameObject * obj[10];
+
+			for(uint32_t j = 0; j < 10; ++j) {
+				obj[j] = scene.Insert()->Get();
+			}
+
+			for(uint32_t j = 0; j < 9; ++j) {
+				scene.Remove(obj[j]);
+			}
+		}
+		
+		OutputDebugStringW(L"ok?");
 
 		/*
 		GameObject * avatar = scene.Insert();

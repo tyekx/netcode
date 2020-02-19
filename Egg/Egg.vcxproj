@@ -49,6 +49,7 @@
     <ClInclude Include="BinaryReader.h" />
     <ClInclude Include="Blackboard.h" />
     <ClInclude Include="BasicGeometry.h" />
+    <ClInclude Include="BulkAllocator.hpp" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DebugPhysx.h" />
