@@ -52,6 +52,9 @@
     <ClCompile Include="DevCameraScript.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="RemoteAvatarScript.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="Services.cpp" />
     <ClCompile Include="Systems.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -61,13 +64,12 @@
     <ClInclude Include="DevCameraScript.h" />
     <ClInclude Include="EggApp.h" />
     <ClInclude Include="GameObject.h" />
-    <ClInclude Include="LocalPlayerPrefab.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="PhysxHelpers.h" />
     <ClInclude Include="PlayerBehavior.h" />
-    <ClInclude Include="RemotePlayerPrefab.h" />
+    <ClInclude Include="RemoteAvatarScript.h" />
     <ClInclude Include="RenderPassTest.h" />
     <ClInclude Include="GameScene.h" />
     <ClInclude Include="Scene.h" />

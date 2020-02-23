@@ -7,6 +7,7 @@
 #include <Egg/Path.h>
 #include <EggAssetLib/Importer.h>
 
+__declspec(align(16))
 class AssetManager {
 
 	std::map<std::string, std::unique_ptr<Egg::Asset::Model>> storage;
@@ -17,6 +18,8 @@ class AssetManager {
 		Egg::Asset::Model * rawPtr = model.get();
 
 		Egg::Asset::ImportModel(str.c_str(), *rawPtr);
+
+		storage.emplace(std::move(str), std::move(model));
 
 		return rawPtr;
 	}

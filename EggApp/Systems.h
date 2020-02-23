@@ -5,33 +5,50 @@
 #include "RenderPassTest.h"
 
 class TransformSystem {
-	static inline DirectX::XMMATRIX GetModelMatrix(Transform* transform) {
-		DirectX::XMVECTOR posVector = DirectX::XMLoadFloat3(&transform->position);
-		DirectX::XMVECTOR quatVector = DirectX::XMLoadFloat4(&transform->rotation);
-		DirectX::XMVECTOR scaleVector = DirectX::XMLoadFloat3(&transform->scale);
-		DirectX::XMFLOAT4 unitWValue{ 0.0f, 0.0f, 0.0f, 1.0f };
-		DirectX::XMVECTOR unitW = DirectX::XMLoadFloat4(&unitWValue);
 
-		return DirectX::XMMatrixAffineTransformation(scaleVector, unitW, quatVector, posVector);
+	static inline DirectX::XMVECTOR GetWorldRotation(Transform * transform, Transform * parentTransform) {
+		DirectX::XMVECTOR worldRotation = DirectX::XMLoadFloat4(&transform->rotation);
+		if(parentTransform != nullptr) {
+			DirectX::XMVECTOR parentWorldRotation = DirectX::XMLoadFloat4(&parentTransform->worldRotation);
+
+			worldRotation = DirectX::XMQuaternionMultiply(worldRotation, parentWorldRotation);
+		}
+
+		return worldRotation;
+	}
+
+	static inline DirectX::XMVECTOR GetWorldPosition(Transform * transform, Transform * parentTransform) {
+		DirectX::XMVECTOR worldPosition = DirectX::XMLoadFloat3(&transform->position);
+
+		if(parentTransform != nullptr) {
+			DirectX::XMVECTOR parentWorldPosition = DirectX::XMLoadFloat3(&parentTransform->worldPosition);
+
+			worldPosition = DirectX::XMVectorAdd(worldPosition, parentWorldPosition);
+		}
+
+		return worldPosition;
 	}
 public:
 
 	void Run(GameObject * gameObject);
 
-	void operator()(GameObject * gameObject, Model * model, Transform * transform) {
-		DirectX::XMMATRIX modelMat = GetModelMatrix(transform);
+	void operator()(GameObject * gameObject, Transform * transform) {
+		DirectX::XMVECTOR worldPos;
+		DirectX::XMVECTOR worldRot;
 
-		if(gameObject->Parent() != nullptr) {
-			DirectX::XMMATRIX parentTransform = GetModelMatrix(gameObject->Parent()->GetComponent<Transform>());
-			modelMat = DirectX::XMMatrixMultiply(parentTransform, modelMat);
+		GameObject * parent = gameObject->Parent();
+
+		if(parent != nullptr) {
+			Transform * parentTransform = parent->GetComponent<Transform>();
+			worldPos = GetWorldPosition(transform, parentTransform);
+			worldRot = GetWorldRotation(transform, parentTransform);
+		} else {
+			worldPos = GetWorldPosition(transform, nullptr);
+			worldRot = GetWorldRotation(transform, nullptr);
 		}
 
-
-		DirectX::XMVECTOR determinant = DirectX::XMMatrixDeterminant(modelMat);
-		DirectX::XMMATRIX invModelMat = DirectX::XMMatrixInverse(&determinant, modelMat);
-
-		DirectX::XMStoreFloat4x4A(&model->perObjectData.Model, DirectX::XMMatrixTranspose(modelMat));
-		DirectX::XMStoreFloat4x4A(&model->perObjectData.InvModel, DirectX::XMMatrixTranspose(invModelMat));
+		DirectX::XMStoreFloat3(&transform->worldPosition, worldPos);
+		DirectX::XMStoreFloat4(&transform->worldRotation, worldRot);
 	}
 };
 
@@ -54,7 +71,16 @@ public:
 
 	void Run(GameObject * gameObject);
 
-	void operator()(GameObject * gameObject, Model * model) {
+	void operator()(GameObject * gameObject, Transform * transform, Model * model) {
+		DirectX::XMVECTOR worldPos = DirectX::XMLoadFloat3(&transform->position);
+		DirectX::XMVECTOR worldRot = DirectX::XMLoadFloat4(&transform->rotation);
+		DirectX::XMVECTOR scaleVector = DirectX::XMLoadFloat3(&transform->scale);
+		DirectX::XMMATRIX modelMat = DirectX::XMMatrixAffineTransformation(scaleVector, DirectX::XMQuaternionIdentity(), worldRot, worldPos);
+		DirectX::XMVECTOR determinant = DirectX::XMMatrixDeterminant(modelMat);
+		DirectX::XMMATRIX invModelMat = DirectX::XMMatrixInverse(&determinant, modelMat);
+		DirectX::XMStoreFloat4x4A(&model->perObjectData.Model, DirectX::XMMatrixTranspose(modelMat));
+		DirectX::XMStoreFloat4x4A(&model->perObjectData.InvModel, DirectX::XMMatrixTranspose(invModelMat));
+
 		for(const auto & i : model->meshes) {
 			if(model->boneData.get() != nullptr) {
 				renderer.skinningPass_Input.Produced(RenderItem(i, &model->perObjectData, model->boneData.get()));

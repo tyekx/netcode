@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "EggAssetExporter.h"
-#include <Egg/Exporter.h>
+#include <EggAssetLib/Exporter.h>
 #include <EggFoundation/ArrayView.hpp>
 #include <EggAssetLib/Model.h>
 

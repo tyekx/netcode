@@ -44,7 +44,8 @@ class PlayerBehavior : public IBehavior {
 
 public:
 
-	void SetController(physx::PxController * ctrl) {
+	PlayerBehavior(physx::PxController * ctrl, Camera * cam) {
+		camera = cam;
 		controller = ctrl;
 		cameraPitch = 0.0f;
 		cameraYaw = 0.0f;
@@ -56,7 +57,6 @@ public:
 
 	virtual void Setup(GameObject * owner) override {
 		transform = owner->GetComponent<Transform>();
-		camera = owner->GetComponent<Camera>();
 		collider = owner->GetComponent<Collider>();
 	}
 
@@ -99,12 +99,14 @@ public:
 		};
 
 		DirectX::XMStoreFloat4(&transform->rotation, q);
-
-		if(auto * rigidBody = collider->actorRef->is<physx::PxRigidDynamic>()) {
-			physx::PxTransform pxT;
-			pxT.p = ToPxVec3(transform->position);
-			pxT.q = ToPxQuat(transform->rotation);
-			rigidBody->setKinematicTarget(pxT);
+		
+		if(collider != nullptr) {
+			if(auto * rigidBody = collider->actorRef->is<physx::PxRigidDynamic>()) {
+				physx::PxTransform pxT;
+				pxT.p = ToPxVec3(transform->position);
+				pxT.q = ToPxQuat(transform->rotation);
+				rigidBody->setKinematicTarget(pxT);
+			}
 		}
 	}
 };

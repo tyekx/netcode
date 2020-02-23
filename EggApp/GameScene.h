@@ -1,17 +1,71 @@
 #pragma once
 
+#include <Egg/PhysXScene.h>
 #include <Egg/EggMath.h>
 #include "GameObject.h"
-#include <array>
+#include "Scene.h"
 
-class GameScene {
+
+/*
+dont use any global memory
+*/
+static physx::PxFilterFlags SimulationFilterShader(
+	physx::PxFilterObjectAttributes attributes0, physx::PxFilterData filterData0,
+	physx::PxFilterObjectAttributes attributes1, physx::PxFilterData filterData1,
+	physx::PxPairFlags & pairFlags, const void * constantBlock, physx::PxU32 constantBlockSize)
+{
+	// let triggers through
+	if(physx::PxFilterObjectIsTrigger(attributes0) || physx::PxFilterObjectIsTrigger(attributes1))
+	{
+		pairFlags = physx::PxPairFlag::eTRIGGER_DEFAULT;
+
+		if(filterData0.word0 == 1 || filterData1.word0 == 1) {
+			return physx::PxFilterFlag::eSUPPRESS;
+		}
+
+		return physx::PxFilterFlag::eDEFAULT;
+	}
+
+	pairFlags = physx::PxPairFlag::eCONTACT_DEFAULT;
+
+	// trigger the contact callback for pairs (A,B) where
+	// the filtermask of A contains the ID of B and vice versa.
+	if((filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1))
+		pairFlags |= physx::PxPairFlag::eNOTIFY_TOUCH_FOUND;
+
+	return physx::PxFilterFlag::eDEFAULT;
+}
+
+__declspec(align(16)) class GameScene : public Scene {
+protected:
+	physx::PxControllerManager * controllerManager;
+	physx::PxMaterial * controllerMaterial;
+
+	GameScene() = default;
 public:
-	std::array<GameObject, 1024> objects;
-	std::size_t count;
-	GameObject * camera;
-
 	PerFrameData perFrameData;
 	SsaoData ssaoData;
+
+
+
+	GameScene(Egg::Physics::PhysX & px) : GameScene() {
+		physx::PxSceneDesc sceneDesc{ px.physics->getTolerancesScale() };
+		sceneDesc.gravity = physx::PxVec3{ 0.0f, -981.0f, 0.0f };
+		sceneDesc.cpuDispatcher = px.dispatcher;
+		sceneDesc.filterShader = SimulationFilterShader;
+		controllerMaterial = px.physics->createMaterial(0.5f, 0.6f, 0.6f);
+
+		physx::PxScene * pScene = px.physics->createScene(sceneDesc);
+		controllerManager = PxCreateControllerManager(*pScene);
+		physx::PxPvdSceneClient * pvdClient = pScene->getScenePvdClient();
+		if(pvdClient) {
+			pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
+			pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
+			pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
+		}
+
+		Scene::SetPhysXScene(pScene);
+	}
 
 	void Setup() {
 		ssaoData.Offsets[0] = DirectX::XMFLOAT4A(+1.0f, +1.0f, +1.0f, 0.0f);
@@ -50,19 +104,9 @@ public:
 		ssaoData.occlusionFadeEnd = 1.0f;
 		ssaoData.surfaceEpsilon = 0.05f;
 	}
-	
-	GameObject * Insert() {
-		if(count == objects.max_size()) {
-			return nullptr;
-		}
-		GameObject * obj = objects.data() + count;
-		count += 1;
-		return obj;
-	}
 
 	DirectX::XMMATRIX GetView(Transform * transform, Camera * camera) {
-		DirectX::XMVECTOR eyePos = DirectX::XMLoadFloat3(&transform->position);
-		eyePos.m128_f32[1] += 180.0f;
+		DirectX::XMVECTOR eyePos = DirectX::XMLoadFloat3(&transform->worldPosition);
 		DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&camera->up);
 		DirectX::XMVECTOR ahead = DirectX::XMLoadFloat3(&camera->ahead);
 		return DirectX::XMMatrixLookToRH(eyePos, ahead, up);
@@ -73,12 +117,11 @@ public:
 	}
 
 	void UpdatePerFrameCb() {
-		Transform * transform = camera->GetComponent<Transform>();
-		Camera * camComponent = camera->GetComponent<Camera>();
+		Transform * transform = cameraRef->GetComponent<Transform>();
+		Camera * camComponent = cameraRef->GetComponent<Camera>();
 
 		const DirectX::XMMATRIX view = GetView(transform, camComponent);
 		const DirectX::XMMATRIX proj = GetProj(camComponent);
-
 
 		const DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(view, proj);
 		DirectX::XMVECTOR vpDet = DirectX::XMMatrixDeterminant(vp);
@@ -115,7 +158,6 @@ public:
 
 		DirectX::XMStoreFloat4A(&perFrameData.eyePos, DirectX::XMLoadFloat4(&eyePos));
 
-
 		DirectX::XMStoreFloat4x4A(&perFrameData.ViewInv, DirectX::XMMatrixTranspose( DirectX::XMMatrixMultiply(proj, invVp) ));
 		DirectX::XMStoreFloat4x4A(&perFrameData.ProjInv, DirectX::XMMatrixTranspose( DirectX::XMMatrixMultiply(invVp, view) ));
 
@@ -126,7 +168,26 @@ public:
 		DirectX::XMStoreFloat4x4A(&perFrameData.ProjTex, DirectX::XMMatrixTranspose( DirectX::XMMatrixMultiply( proj, tex ) ));
 	}
 
-	void SetCamera(GameObject * camObject) {
-		camera = camObject;
+
+	physx::PxController * CreateController() {
+		physx::PxCapsuleControllerDesc cd;
+		cd.behaviorCallback = NULL;
+		cd.climbingMode = physx::PxCapsuleClimbingMode::eEASY;
+		cd.contactOffset = 0.1f;
+		cd.density = 10.0f;
+		cd.invisibleWallHeight = 0.0f;
+		cd.material = controllerMaterial;
+		cd.position = physx::PxExtendedVec3{ 0.0f, 200.0f, 0.0f };
+		cd.nonWalkableMode = physx::PxControllerNonWalkableMode::ePREVENT_CLIMBING;
+		cd.registerDeletionListener = true;
+		cd.reportCallback = NULL;
+		cd.scaleCoeff = 0.8f;
+		cd.slopeLimit = 0.7071f;
+		cd.stepOffset = 5.0f;
+		cd.upDirection = physx::PxVec3{ 0.0f, 1.0f, 0.0f };
+		cd.volumeGrowth = 1.5f;
+		cd.height = 80.0f;
+		cd.radius = 60.0f;
+		return controllerManager->createController(cd);
 	}
 };

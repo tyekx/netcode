@@ -16,16 +16,16 @@
 #include "PlayerBehavior.h"
 #include "Snippets.h"
 #include "PhysxHelpers.h"
-#include "AssetManager.h"
+#include "Services.h"
+#include "RemoteAvatarScript.h"
 
 using Egg::Graphics::ResourceType;
 using Egg::Graphics::ResourceState;
 
 class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	Egg::Stopwatch stopwatch;
-	Egg::Physics::PhysXScene pxScene;
+	Egg::Physics::PhysX px;
 	physx::PxMaterial * defaultPhysxMaterial;
-	AssetManager assetManager;
 	
 	Egg::MovementController movCtrl;
 
@@ -35,27 +35,27 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	AnimationSystem animSystem;
 	PhysXSystem pxSystem;
 
-	Scene scene;
+	GameScene * gameScene;
 
 	float totalTime;
 
 	void Render() {
 		graphics->frame->Prepare();
-
-		//scene.UpdatePerFrameCb();
 		
-		//renderSystem.renderer.perFrameData = &scene.perFrameData;
-		//renderSystem.renderer.ssaoData = &scene.ssaoData;
+		renderSystem.renderer.perFrameData = &gameScene->perFrameData;
+		renderSystem.renderer.ssaoData = &gameScene->ssaoData;
 
 		FrameGraphBuilder builder;
 
-		scene.Foreach([this](GameObject * gameObject) -> void {
+		gameScene->Foreach([this](GameObject * gameObject) -> void {
 			if(gameObject->IsActive()) {
 				transformSystem.Run(gameObject);
 				pxSystem.Run(gameObject);
 				renderSystem.Run(gameObject);
 			}
 		});
+
+		gameScene->UpdatePerFrameCb();
 
 		renderSystem.renderer.CreateFrameGraph(builder);
 
@@ -70,9 +70,11 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 	void Simulate(float dt) {
 		totalTime += dt;
-		pxScene.Simulate(dt);
 
-		scene.Foreach([this, dt](GameObject * gameObject)->void {
+		gameScene->GetPhysXScene()->simulate(dt);
+		gameScene->GetPhysXScene()->fetchResults(true);
+
+		gameScene->Foreach([this, dt](GameObject * gameObject)->void {
 			if(gameObject->IsActive()) {
 				scriptSystem.Run(gameObject, dt);
 				animSystem.Run(gameObject, dt);
@@ -94,16 +96,14 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	}
 
 	void LoadServices() {
-		using Service = Egg::Service<std::tuple<AssetManager>>;
-
 		Service::Init<AssetManager>();
+		Service::Init<GameScene>(px);
 
-		auto * assetManager = Service::Get<AssetManager>();
-
+		gameScene = Service::Get<GameScene>();
 	}
 
 	void LoadAssets() {
-		//scene.Setup();
+		AssetManager * assetManager = Service::Get<AssetManager>();
 
 		Egg::Input::SetAxis("Vertical", 'W', 'S');
 		Egg::Input::SetAxis("Horizontal", 'A', 'D');
@@ -111,77 +111,23 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		Egg::Input::SetAxis("Fire", VK_LBUTTON, 0);
 
 		renderSystem.CreatePermanentResources(graphics.get());
+		defaultPhysxMaterial = px.physics->createMaterial(0.5f, 0.5f, 0.5f);
 
-		for(uint32_t i = 0; i < 1000; ++i) {
-			GameObject * obj[10];
+		CreateLocalAvatar();
+		CreateRemoteAvatar();
 
-			for(uint32_t j = 0; j < 10; ++j) {
-				obj[j] = scene.Insert()->Get();
-			}
-
-			for(uint32_t j = 0; j < 9; ++j) {
-				scene.Remove(obj[j]);
-			}
-		}
-		
-		OutputDebugStringW(L"ok?");
-
-		/*
-		GameObject * avatar = scene.Insert();
-		avatar->AddComponent<Transform>();
-		Model * model = avatar->AddComponent<Model>();
-		Animation * anim = avatar->AddComponent<Animation>();
-
-		auto* physics = pxScene.Get();
-		auto * pxController = pxScene.CreateController();
-		auto * pxMaterial = physics->createMaterial(0.5f, 0.5f, 0.5f);
-
-		defaultPhysxMaterial = physics->createMaterial(0.5f, 0.5f, 0.5f);
-
-		physx::PxShape * defaultControllerCapsuleShape = nullptr;
-		pxController->getActor()->getShapes(&defaultControllerCapsuleShape, 1, 0);
-		defaultControllerCapsuleShape->setFlag(physx::PxShapeFlag::eSCENE_QUERY_SHAPE, false);
-
-		physx::PxRigidDynamic * pxActor = physics->createRigidDynamic(physx::PxTransform{ ToPxVec3(pxController->getPosition()), physx::PxQuat(0.0f, 0.0f, 0.0f, 1.0f) });
-		pxActor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, true);
-		pxActor->setRigidBodyFlag(physx::PxRigidBodyFlag::eUSE_KINEMATIC_TARGET_FOR_SCENE_QUERIES, true);
-		
-		{
-			auto planeActor = physx::PxCreatePlane(*physics, physx::PxPlane{ 0.0f, 1.0f, 0.0f, 0.0f }, *pxMaterial);
-			pxScene.AddActor(planeActor);
-		}
-		std::vector<ColliderShape> localShapes;
-		localShapes.reserve(ybotModel.colliders.Size());
-
-		for(size_t colliderI = 0; colliderI < ybotModel.colliders.Size(); ++colliderI) {
-			localShapes.push_back(ybotModel.colliders[colliderI]);
-			auto * shape = CreateHitboxShapeFromAsset(ybotModel.colliders[colliderI], physics);
-			pxActor->attachShape(*shape);
-		}
-
-		Collider * coll = avatar->AddComponent<Collider>();
-		coll->shapes = std::move(localShapes);
-		coll->actorRef = pxActor;
-		pxScene.AddActor(pxActor);
-
-		CreateYbotAnimationComponent(&ybotModel, anim);
 		animSystem.SetMovementController(&movCtrl);
 
-		Camera * fpsCam = avatar->AddComponent<Camera>();
-		fpsCam->ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
-		fpsCam->aspect = graphics->GetAspectRatio();
-		fpsCam->farPlane = 10000.0f;
-		fpsCam->nearPlane = 1.0f;
-		fpsCam->up = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
+		{
+			auto planeActor = physx::PxCreatePlane(*px.physics, physx::PxPlane{ 0.0f, 1.0f, 0.0f, 200.0f }, *defaultPhysxMaterial);
+			gameScene->SpawnPhysxActor(planeActor);
+		}
 
-		Script* s = avatar->AddComponent<Script>();
-		auto playerBehaviour = std::make_unique<PlayerBehavior>();
+		GameObject * testbox = gameScene->Create();
 		
-		playerBehaviour->SetController(pxController);
-		s->SetBehavior(std::move(playerBehaviour));
-		s->Setup(avatar);
+		LoadComponents(assetManager->Import(L"testbox.eggasset"), testbox);
 
-		scene.SetCamera(avatar);*/
+		gameScene->Spawn(testbox);
 	}
 
 	void InitializeBoneData(Model* modelComponent) {
@@ -191,6 +137,57 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			DirectX::XMStoreFloat4x4A(&modelComponent->boneData->BindTransform[i], identity);
 			DirectX::XMStoreFloat4x4A(&modelComponent->boneData->ToRootTransform[i], identity);
 		}
+	}
+
+	void CreateRemoteAvatar() {
+		AssetManager * assetManager = Service::Get<AssetManager>();
+
+		GameObject * avatarController = gameScene->Create();
+		GameObject * avatarHitboxes = gameScene->Create();
+
+		Egg::Asset::Model * avatarModel = assetManager->Import(L"test.eggasset");
+
+		LoadComponents(avatarModel, avatarHitboxes);
+		Animation* anim = avatarHitboxes->AddComponent<Animation>();
+		CreateYbotAnimationComponent(avatarModel, anim);
+
+		physx::PxController * pxController = gameScene->CreateController();
+		avatarController->AddComponent<Transform>();
+		avatarHitboxes->Parent(avatarController);
+
+		avatarController->AddComponent<Script>()->SetBehavior(std::make_unique<RemoteAvatarScript>(pxController));
+
+		gameScene->Spawn(avatarController);
+		gameScene->Spawn(avatarHitboxes);
+	}
+
+	void CreateLocalAvatar() {
+		GameObject * avatarController = gameScene->Create();
+		GameObject * avatarCamera = gameScene->Create();
+
+		avatarCamera->Parent(avatarController);
+
+		Transform* avatarCamTransform =  avatarCamera->AddComponent<Transform>();
+		avatarCamTransform->position.y = 180.0f;
+
+		Camera * fpsCam = avatarCamera->AddComponent<Camera>();
+		fpsCam->ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
+		fpsCam->aspect = graphics->GetAspectRatio();
+		fpsCam->farPlane = 10000.0f;
+		fpsCam->nearPlane = 1.0f;
+		fpsCam->up = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
+		
+		physx::PxController * pxController = gameScene->CreateController();
+
+		avatarController->AddComponent<Transform>();
+		Script* scriptComponent = avatarController->AddComponent<Script>();
+		scriptComponent->SetBehavior(std::make_unique<PlayerBehavior>(pxController, fpsCam));
+		scriptComponent->Setup(avatarController);
+
+		gameScene->Spawn(avatarController);
+		gameScene->Spawn(avatarCamera);
+
+		gameScene->SetCamera(avatarCamera);
 	}
 
 	void LoadComponents(Egg::Asset::Model * model, GameObject * gameObject) {
@@ -208,8 +205,8 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		if(model->colliders.Size() > 0) {
 			Collider * colliderComponent = gameObject->AddComponent<Collider>();
 			LoadColliderComponent(model, colliderComponent);
+			colliderComponent->actorRef->userData = gameObject;
 		}
-
 	}
 
 	void LoadColliderComponent(Egg::Asset::Model * model, Collider * colliderComponent) {
@@ -217,8 +214,8 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			return;
 		}
 
-		physx::PxPhysics * px = pxScene.Get();
-		physx::PxRigidDynamic * actor = px->createRigidDynamic(physx::PxTransform(physx::PxIdentity));
+		physx::PxPhysics * pxp = px.physics;
+		physx::PxRigidDynamic * actor = pxp->createRigidDynamic(physx::PxTransform(physx::PxIdentity));
 		actor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, true);
 		std::vector<ColliderShape> eggShapes;
 		eggShapes.reserve(model->colliders.Size());
@@ -229,7 +226,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			physx::PxShape * shape = nullptr;
 			physx::PxShapeFlags shapeFlags;
 
-			if(eggCollider->boneReference > 0 && eggCollider->boneReference < 0x7F) {
+			if(eggCollider->boneReference >= 0 && eggCollider->boneReference < 0x7F) {
 				shapeFlags = physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eTRIGGER_SHAPE | physx::PxShapeFlag::eVISUALIZATION;
 			} else {
 				shapeFlags = physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eSIMULATION_SHAPE | physx::PxShapeFlag::eVISUALIZATION;
@@ -249,19 +246,20 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 				physx::PxDefaultMemoryOutputStream buf;
 				physx::PxConvexMeshCookingResult::Enum r;
-				pxScene.cooking->cookConvexMesh(cmd, buf, &r);
+				px.cooking->cookConvexMesh(cmd, buf, &r);
 
 				physx::PxDefaultMemoryInputData input(buf.getData(), buf.getSize());
-				physx::PxConvexMesh * convexMesh = px->createConvexMesh(input);
+				physx::PxConvexMesh * convexMesh = pxp->createConvexMesh(input);
 
 				physx::PxConvexMeshGeometry pcmg{ convexMesh };
 
-				shape = px->createShape(pcmg, *defaultPhysxMaterial, true, shapeFlags);
+				shape = pxp->createShape(pcmg, *defaultPhysxMaterial, true, shapeFlags);
 
 			} else {
-				shape = CreatePrimitiveShapeFromAsset(*eggCollider, px, defaultPhysxMaterial, shapeFlags);
+				shape = CreatePrimitiveShapeFromAsset(*eggCollider, pxp, defaultPhysxMaterial, shapeFlags);
 			}
 
+			shape->userData = &eggShapes.at(i);
 			actor->attachShape(*shape);
 		}
 
@@ -379,8 +377,9 @@ public:
 
 		stopwatch.Start();
 
-		pxScene.CreateResources();
+		px.CreateResources();
 
+		LoadServices();
 		LoadAssets();
 
 	}
@@ -407,7 +406,7 @@ public:
 	Properly shutdown the application
 	*/
 	virtual void Exit() override {
-		pxScene.ReleaseResources();
+		px.ReleaseResources();
 		ShutdownModule(network.get());
 		ShutdownModule(audio.get());
 		ShutdownModule(graphics.get());

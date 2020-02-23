@@ -4,7 +4,7 @@
 
 namespace Egg::Physics {
 
-	void PhysXScene::UpdateDebugCamera(const DirectX::XMFLOAT3 & pos, const DirectX::XMFLOAT3 & up, const DirectX::XMFLOAT3 & lookAt)
+	void PhysX::UpdateDebugCamera(const DirectX::XMFLOAT3 & pos, const DirectX::XMFLOAT3 & up, const DirectX::XMFLOAT3 & lookAt)
 	{/*
 		physx::PxPvdSceneClient * pvdClient = scene->getScenePvdClient();
 		if(pvdClient) {
@@ -12,37 +12,7 @@ namespace Egg::Physics {
 		}*/
 	}
 
-	/*
-	dont use any global memory
-	*/
-	static physx::PxFilterFlags SimulationFilterShader(
-		physx::PxFilterObjectAttributes attributes0, physx::PxFilterData filterData0,
-		physx::PxFilterObjectAttributes attributes1, physx::PxFilterData filterData1,
-		physx::PxPairFlags & pairFlags, const void * constantBlock, physx::PxU32 constantBlockSize)
-	{
-		// let triggers through
-		if(physx::PxFilterObjectIsTrigger(attributes0) || physx::PxFilterObjectIsTrigger(attributes1))
-		{
-			pairFlags = physx::PxPairFlag::eTRIGGER_DEFAULT;
-
-			if(filterData0.word0 == 1 || filterData1.word0 == 1) {
-				return physx::PxFilterFlag::eSUPPRESS;
-			}
-
-			return physx::PxFilterFlag::eDEFAULT;
-		}
-
-		pairFlags = physx::PxPairFlag::eCONTACT_DEFAULT;
-
-		// trigger the contact callback for pairs (A,B) where
-		// the filtermask of A contains the ID of B and vice versa.
-		if((filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1))
-			pairFlags |= physx::PxPairFlag::eNOTIFY_TOUCH_FOUND;
-
-		return physx::PxFilterFlag::eDEFAULT;
-	}
-
-	void PhysXScene::CreateResources() {
+	void PhysX::CreateResources() {
 		foundation = PxCreateFoundation(PX_PHYSICS_VERSION, allocator, errorCallback);
 		debugger = PxCreatePvd(*foundation);
 		physx::PxPvdTransport * transport = physx::PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
@@ -61,7 +31,7 @@ namespace Egg::Physics {
 		physx::PxCookingParams defaultCookingParams{ defaultToleranceScale };
 
 		cooking = PxCreateCooking(PX_PHYSICS_VERSION, *foundation, defaultCookingParams);
-
+		/*
 		physx::PxSceneDesc sceneDesc{ physics->getTolerancesScale() };
 		sceneDesc.gravity = physx::PxVec3{ 0.0f, -981.0f, 0.0f };
 		sceneDesc.cpuDispatcher = dispatcher;
@@ -74,12 +44,10 @@ namespace Egg::Physics {
 			pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
 			pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
 			pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
-		}
+		}*/
 	}
 
-	void PhysXScene::ReleaseResources() {
-		PX_RELEASE(controllerManager);
-		PX_RELEASE(scene);
+	void PhysX::ReleaseResources() {
 		PX_RELEASE(cooking);
 		PX_RELEASE(dispatcher);
 		PX_RELEASE(physics);

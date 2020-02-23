@@ -2,8 +2,12 @@
 
 #include <Egg/Service.hpp>
 #include "AssetManager.h"
+#include "GameScene.h"
 
 using ServicesTuple = std::tuple<
-	AssetManager
+	AssetManager,
+	GameScene
 >;
 
+
+using Service = Egg::Service<ServicesTuple>;

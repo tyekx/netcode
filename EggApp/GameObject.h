@@ -34,6 +34,8 @@ public:
 	void Setup(GameObject * owner);
 	void Update(float dt);
 
+	Script() = default;
+
 	Script(Script &&) noexcept = default;
 	Script & operator=(Script &&) noexcept = default;
 };
@@ -43,8 +45,10 @@ public:
 	DirectX::XMFLOAT3 position;
 	DirectX::XMFLOAT4 rotation;
 	DirectX::XMFLOAT3 scale;
+	DirectX::XMFLOAT3 worldPosition;
+	DirectX::XMFLOAT4 worldRotation;
 
-	Transform() : position{ 0.0f, 0.0f, 0.0f }, rotation{ 0.0f, 0.0f, 0.0f, 1.0f }, scale{ 1.0f, 1.0f, 1.0f } {
+	Transform() : position{ 0.0f, 0.0f, 0.0f }, rotation{ 0.0f, 0.0f, 0.0f, 1.0f }, scale{ 1.0f, 1.0f, 1.0f }, worldPosition{ position }, worldRotation{ rotation } {
 
 	}
 
@@ -112,6 +116,7 @@ COMPONENT_ALIGN class Animation {
 public:
 	Egg::Animation::Blackboard blackboard;
 
+	Animation() = default;
 	Animation(Animation &&) noexcept = default;
 	Animation & operator=(Animation &&) noexcept = default;
 };
@@ -248,7 +253,7 @@ public:
 #if _DEBUG
 		SignatureType sigMask = 1ull << TupleIndexOf<T, AllComponents_T>::value;
 		// force a crash in debug mode
-		if((signature & sigMask) != 0) {
+		if((signature & sigMask) == 0) {
 			return nullptr;
 		}
 #endif
@@ -275,8 +280,8 @@ public:
 
 		if constexpr(TupleContainsType<T, Components_T>::value) {
 			if(!HasComponent<T>()) {
-				T * ptr = GetComponent<T>();
 				signature |= (1ULL << TupleIndexOf<T, Components_T>::value);
+				T * ptr = GetComponent<T>();
 				new (ptr) T();
 				return ptr;
 			}
@@ -287,10 +292,16 @@ public:
 	}
 };
 
+enum class GameObjectFlags : uint32_t {
+	ENABLED = 1,
+	MARKED_FOR_DELETION = 2,
+	MARKED_FOR_SPAWN = 4
+};
+
 class GameObject {
 	ComponentStorage components;
 	GameObject * parent;
-	bool disabled;
+	uint32_t flags;
 public:
 	inline SignatureType GetSignature() const {
 		return components.signature;
@@ -324,11 +335,36 @@ public:
 		parent = prt;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
 	}
 
+	bool IsDeletable() const {
+		return (flags & (static_cast<uint32_t>(GameObjectFlags::MARKED_FOR_DELETION))) != 0;
+	}
+
+	bool SetDeletable(bool value) {
+		if(value) {
+			flags |= static_cast<uint32_t>(GameObjectFlags::MARKED_FOR_DELETION);
+		} else {
+			flags &= ~(static_cast<uint32_t>(GameObjectFlags::MARKED_FOR_DELETION));
+		}
+	}
+
+	bool IsSpawnable() const {
+		return (flags & (static_cast<uint32_t>(GameObjectFlags::MARKED_FOR_SPAWN))) != 0;
+	}
+
+	void Spawn() {
+		SetActive(true);
+		flags &= ~(static_cast<uint32_t>(GameObjectFlags::MARKED_FOR_SPAWN));
+	}
+
 	bool IsActive() const {
-		return !disabled;
+		return (flags & (static_cast<uint32_t>(GameObjectFlags::ENABLED))) != 0;
 	}
 
 	void SetActive(bool value) {
-		disabled = !value;
+		if(value) {
+			flags |= static_cast<uint32_t>(GameObjectFlags::ENABLED);
+		} else {
+			flags &= ~(static_cast<uint32_t>(GameObjectFlags::ENABLED));
+		}
 	}
 };
