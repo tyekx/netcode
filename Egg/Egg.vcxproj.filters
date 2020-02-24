@@ -280,14 +280,17 @@
     <ClInclude Include="DX12GraphicsModuleForWin32.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="PhysXScene.h">
-      <Filter>Physics</Filter>
-    </ClInclude>
     <ClInclude Include="Service.hpp">
       <Filter>Modules</Filter>
     </ClInclude>
     <ClInclude Include="BulkAllocator.hpp">
       <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="BulkVector.hpp">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysXWrapper.h">
+      <Filter>Physics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -454,7 +457,7 @@
     <ClCompile Include="DX12GraphicsModuleForWin32.cpp">
       <Filter>Graphics\DX12</Filter>
     </ClCompile>
-    <ClCompile Include="PhysXScene.cpp">
+    <ClCompile Include="PhysXWrapper.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
   </ItemGroup>

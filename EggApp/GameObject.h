@@ -11,8 +11,7 @@
 #include <Egg/Blackboard.h>
 #include "Material.h"
 #include "Mesh.h"
-#include <Egg/PhysXScene.h>
-#include <physx/characterkinematic/PxCapsuleController.h>
+#include <Egg/PhysXWrapper.h>
 
 class GameObject;
 using ColliderShape = Egg::Asset::Collider;

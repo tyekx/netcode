@@ -70,7 +70,7 @@
     <ClInclude Include="PhysxHelpers.h" />
     <ClInclude Include="PlayerBehavior.h" />
     <ClInclude Include="RemoteAvatarScript.h" />
-    <ClInclude Include="RenderPassTest.h" />
+    <ClInclude Include="GraphicsEngine.h" />
     <ClInclude Include="GameScene.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Services.h" />

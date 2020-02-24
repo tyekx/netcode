@@ -2,7 +2,7 @@
 
 #include "GameObject.h"
 #include <Egg/Modules.h>
-#include "RenderPassTest.h"
+#include "GraphicsEngine.h"
 
 class TransformSystem {
 
@@ -63,7 +63,7 @@ public:
 
 class RenderSystem {
 public:
-	AppDefinedRenderer renderer;
+	GraphicsEngine renderer;
 
 	void CreatePermanentResources(Egg::Module::IGraphicsModule * graphics) {
 		renderer.CreatePermanentResources(graphics);

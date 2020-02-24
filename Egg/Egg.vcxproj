@@ -50,6 +50,7 @@
     <ClInclude Include="Blackboard.h" />
     <ClInclude Include="BasicGeometry.h" />
     <ClInclude Include="BulkAllocator.hpp" />
+    <ClInclude Include="BulkVector.hpp" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DebugPhysx.h" />
@@ -112,7 +113,7 @@
     <ClInclude Include="ModulesConfig.h" />
     <ClInclude Include="MovementController.h" />
     <ClInclude Include="Path.h" />
-    <ClInclude Include="PhysXScene.h" />
+    <ClInclude Include="PhysXWrapper.h" />
     <ClInclude Include="ProgramArgs.h" />
     <ClInclude Include="DX12SpriteFont.h" />
     <ClInclude Include="FrameGraph.h" />
@@ -174,7 +175,7 @@
     <ClCompile Include="EggMath.cpp" />
     <ClCompile Include="Modules.cpp" />
     <ClCompile Include="Path.cpp" />
-    <ClCompile Include="PhysXScene.cpp" />
+    <ClCompile Include="PhysXWrapper.cpp" />
     <ClCompile Include="DX12SpriteFont.cpp" />
     <ClCompile Include="DX12ResourceContext.cpp" />
     <ClCompile Include="ResourceEnums.cpp" />

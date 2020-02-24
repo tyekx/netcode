@@ -1,4 +1,4 @@
-#include "PhysXScene.h"
+#include "PhysXWrapper.h"
 #include "Utility.h"
 #include "EggMath.h"
 
@@ -31,20 +31,6 @@ namespace Egg::Physics {
 		physx::PxCookingParams defaultCookingParams{ defaultToleranceScale };
 
 		cooking = PxCreateCooking(PX_PHYSICS_VERSION, *foundation, defaultCookingParams);
-		/*
-		physx::PxSceneDesc sceneDesc{ physics->getTolerancesScale() };
-		sceneDesc.gravity = physx::PxVec3{ 0.0f, -981.0f, 0.0f };
-		sceneDesc.cpuDispatcher = dispatcher;
-		sceneDesc.filterShader = SimulationFilterShader;
-
-		scene = physics->createScene(sceneDesc);
-		controllerManager = PxCreateControllerManager(*scene);
-		physx::PxPvdSceneClient * pvdClient = scene->getScenePvdClient();
-		if(pvdClient) {
-			pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
-			pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
-			pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
-		}*/
 	}
 
 	void PhysX::ReleaseResources() {

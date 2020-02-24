@@ -26,7 +26,7 @@ struct RenderItem {
 	}
 };
 
-class AppDefinedRenderer {
+class GraphicsEngine {
 	// handles
 	uint64_t skinningPass_FilledSize;
 

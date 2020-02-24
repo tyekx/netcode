@@ -3,7 +3,7 @@
 #include "GameObject.h"
 #include <list>
 #include <memory>
-#include <Egg/BulkAllocator.hpp>
+#include <Egg/BulkVector.hpp>
 
 /*
 base class
@@ -14,7 +14,7 @@ protected:
 		std::swap(*lhs, *rhs);
 	}
 
-	Egg::BulkAllocator<GameObject, 512, true> storage;
+	Egg::BulkVector<GameObject, 512> storage;
 	physx::PxScene * pxScene;
 	GameObject * cameraRef;
 
@@ -43,7 +43,7 @@ public:
 	}
 
 	void Remove(GameObject * obj) {
-		storage.Deallocate(obj);
+		storage.Remove(obj);
 	}
 
 	void SpawnPhysxActor(physx::PxActor * actor) {
@@ -62,6 +62,6 @@ public:
 	}
 
 	GameObject* Create() {
-		return storage.Allocate();
+		return storage.Emplace();
 	}
 };
