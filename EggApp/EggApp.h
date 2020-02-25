@@ -225,11 +225,15 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			eggShapes.push_back(*eggCollider);
 			physx::PxShape * shape = nullptr;
 			physx::PxShapeFlags shapeFlags;
+			physx::PxFilterData filterData;
 
 			if(eggCollider->boneReference >= 0 && eggCollider->boneReference < 0x7F) {
 				shapeFlags = physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eTRIGGER_SHAPE | physx::PxShapeFlag::eVISUALIZATION;
+
+				filterData.word0 = PHYSX_COLLIDER_TYPE_HITBOX;
 			} else {
 				shapeFlags = physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eSIMULATION_SHAPE | physx::PxShapeFlag::eVISUALIZATION;
+				filterData.word0 = PHYSX_COLLIDER_TYPE_WORLD;
 			}
 
 			if(eggCollider->type == Egg::Asset::ColliderType::MESH) {
@@ -259,6 +263,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 				shape = CreatePrimitiveShapeFromAsset(*eggCollider, pxp, defaultPhysxMaterial, shapeFlags);
 			}
 
+			shape->setQueryFilterData(filterData);
 			shape->userData = &eggShapes.at(i);
 			actor->attachShape(*shape);
 		}

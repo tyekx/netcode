@@ -51,7 +51,9 @@
   <ItemGroup>
     <ClCompile Include="DevCameraScript.cpp" />
     <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PhysxHelpers.cpp" />
     <ClCompile Include="RemoteAvatarScript.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Services.cpp" />
@@ -60,6 +62,8 @@
   <ItemGroup>
     <ClInclude Include="Asset.h" />
     <ClInclude Include="AssetManager.h" />
+    <ClInclude Include="Components.h" />
+    <ClInclude Include="ComponentStorage.hpp" />
     <ClInclude Include="ConstantBufferTypes.h" />
     <ClInclude Include="DevCameraScript.h" />
     <ClInclude Include="EggApp.h" />
@@ -76,6 +80,8 @@
     <ClInclude Include="Services.h" />
     <ClInclude Include="Snippets.h" />
     <ClInclude Include="Systems.h" />
+    <ClInclude Include="UIObject.h" />
+    <ClInclude Include="UIScene.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EggApp.natvis" />

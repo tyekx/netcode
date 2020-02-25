@@ -1,46 +1,26 @@
 #pragma once
 
-#include <Egg/PhysXScene.h>
+#include <Egg/PhysXWrapper.h>
 #include <Egg/EggMath.h>
 #include "GameObject.h"
 #include "Scene.h"
+#include "PhysxHelpers.h"
 
+class GameSceneSimulationEventCallback : public physx::PxSimulationEventCallback {
+	virtual void onConstraintBreak(physx::PxConstraintInfo * constraints, physx::PxU32 count) override;
+	virtual void onWake(physx::PxActor ** actors, physx::PxU32 count) override;
+	virtual void onSleep(physx::PxActor ** actors, physx::PxU32 count) override;
+	virtual void onContact(const physx::PxContactPairHeader & pairHeader, const physx::PxContactPair * pairs, physx::PxU32 nbPairs) override;
+	virtual void onTrigger(physx::PxTriggerPair * pairs, physx::PxU32 count) override;
+	virtual void onAdvance(const physx::PxRigidBody * const * bodyBuffer, const physx::PxTransform * poseBuffer, const physx::PxU32 count) override;
+};
 
-/*
-dont use any global memory
-*/
-static physx::PxFilterFlags SimulationFilterShader(
-	physx::PxFilterObjectAttributes attributes0, physx::PxFilterData filterData0,
-	physx::PxFilterObjectAttributes attributes1, physx::PxFilterData filterData1,
-	physx::PxPairFlags & pairFlags, const void * constantBlock, physx::PxU32 constantBlockSize)
-{
-	// let triggers through
-	if(physx::PxFilterObjectIsTrigger(attributes0) || physx::PxFilterObjectIsTrigger(attributes1))
-	{
-		pairFlags = physx::PxPairFlag::eTRIGGER_DEFAULT;
-
-		if(filterData0.word0 == 1 || filterData1.word0 == 1) {
-			return physx::PxFilterFlag::eSUPPRESS;
-		}
-
-		return physx::PxFilterFlag::eDEFAULT;
-	}
-
-	pairFlags = physx::PxPairFlag::eCONTACT_DEFAULT;
-
-	// trigger the contact callback for pairs (A,B) where
-	// the filtermask of A contains the ID of B and vice versa.
-	if((filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1))
-		pairFlags |= physx::PxPairFlag::eNOTIFY_TOUCH_FOUND;
-
-	return physx::PxFilterFlag::eDEFAULT;
-}
-
-__declspec(align(16)) class GameScene : public Scene {
+__declspec(align(16)) class GameScene : public Scene<GameObject> {
 protected:
 	physx::PxControllerManager * controllerManager;
 	physx::PxMaterial * controllerMaterial;
-
+	std::unique_ptr<GameSceneSimulationEventCallback> sceneCallback;
+	void * __structPadding0;
 	GameScene() = default;
 public:
 	PerFrameData perFrameData;
@@ -49,10 +29,12 @@ public:
 
 
 	GameScene(Egg::Physics::PhysX & px) : GameScene() {
+		sceneCallback = std::make_unique<GameSceneSimulationEventCallback>();
 		physx::PxSceneDesc sceneDesc{ px.physics->getTolerancesScale() };
 		sceneDesc.gravity = physx::PxVec3{ 0.0f, -981.0f, 0.0f };
 		sceneDesc.cpuDispatcher = px.dispatcher;
 		sceneDesc.filterShader = SimulationFilterShader;
+		sceneDesc.simulationEventCallback = sceneCallback.get();
 		controllerMaterial = px.physics->createMaterial(0.5f, 0.6f, 0.6f);
 
 		physx::PxScene * pScene = px.physics->createScene(sceneDesc);
@@ -114,6 +96,16 @@ public:
 
 	DirectX::XMMATRIX GetProj(Camera * c) {
 		return DirectX::XMMatrixPerspectiveFovRH(c->fov, c->aspect, c->nearPlane, c->farPlane);
+	}
+
+
+	void Spawn(GameObject * obj) {
+		if(!obj->IsDeletable()) {
+			if(obj->HasComponent<Collider>()) {
+				SpawnPhysxActor(obj->GetComponent<Collider>()->actorRef);
+			}
+			obj->Spawn();
+		}
 	}
 
 	void UpdatePerFrameCb() {

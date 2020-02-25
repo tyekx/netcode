@@ -8,15 +8,12 @@
 /*
 base class
 */
+template<typename T>
 class Scene {
 protected:
-	static void Swap(GameObject * lhs, GameObject * rhs) {
-		std::swap(*lhs, *rhs);
-	}
-
-	Egg::BulkVector<GameObject, 512> storage;
+	Egg::BulkVector<T, 512> storage;
 	physx::PxScene * pxScene;
-	GameObject * cameraRef;
+	T * cameraRef;
 
 public:
 
@@ -28,21 +25,21 @@ public:
 		pxScene = scene;
 	}
 
-	GameObject * GetCamera() const {
+	T * GetCamera() const {
 		return cameraRef;
 	}
 
-	void SetCamera(GameObject * camera) {
+	void SetCamera(T * camera) {
 		cameraRef = camera;
 	}
 
-	void Foreach(std::function<void(GameObject *)> callback) {
+	void Foreach(std::function<void(T *)> callback) {
 		for(auto it = storage.begin(); it != nullptr; ++it) {
 			callback(it.operator->());
 		}
 	}
 
-	void Remove(GameObject * obj) {
+	void Remove(T * obj) {
 		storage.Remove(obj);
 	}
 
@@ -52,16 +49,7 @@ public:
 		}
 	}
 
-	void Spawn(GameObject * obj) {
-		if(!obj->IsDeletable()) {
-			if(obj->HasComponent<Collider>()) {
-				SpawnPhysxActor(obj->GetComponent<Collider>()->actorRef);
-			}
-			obj->Spawn();
-		}
-	}
-
-	GameObject* Create() {
+	T* Create() {
 		return storage.Emplace();
 	}
 };
