@@ -20,6 +20,7 @@ public:
 	std::function<void()> onClick;
 	std::function<void()> onMouseEnter;
 	std::function<void()> onMouseLeave;
+	bool isMouseOver;
 };
 
 COMPONENT_ALIGN struct Text {

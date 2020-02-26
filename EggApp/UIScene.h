@@ -4,5 +4,5 @@
 #include "UIObject.h"
 
 class UIScene : public Scene<UIObject> {
-
+public:
 };

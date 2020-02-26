@@ -7,6 +7,7 @@
 #define PHYSX_COLLIDER_TYPE_WORLD 1
 #define PHYSX_COLLIDER_TYPE_HITBOX 2
 #define PHYSX_COLLIDER_TYPE_KILLZONE 4
+#define PHYSX_COLLIDER_TYPE_UI 8
 
 
 class HitscanQueryFilter : physx::PxQueryFilterCallback {

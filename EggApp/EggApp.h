@@ -71,6 +71,8 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	void Simulate(float dt) {
 		totalTime += dt;
 
+		DirectX::XMINT2 p = Egg::Input::GetMousePos(window->GetUnderlyingPointer());
+
 		gameScene->GetPhysXScene()->simulate(dt);
 		gameScene->GetPhysXScene()->fetchResults(true);
 

@@ -113,3 +113,8 @@ void AnimationSystem::Run(GameObject * gameObject, float dt) {
 void PhysXSystem::Run(GameObject * gameObject) {
 	TryInvoke(gameObject, this);
 }
+
+void UISystem::Run(UIObject * object) {
+	//TryInvoke(object, this);
+}
+
