@@ -191,10 +191,9 @@ public:
 
 
 class UISystem {
-	DirectX::XMFLOAT4X4 viewProjInv;
-	DirectX::XMFLOAT4X4 rayDir;
 	DirectX::XMINT2 screenSize;
 public:
+	PerFrameData * perFrameData;
 
 	void SetScreenSize(const DirectX::XMUINT2 & dim) {
 		screenSize = DirectX::XMINT2{ static_cast<int32_t>(dim.x), static_cast<int32_t>(dim.y) };
@@ -215,8 +214,8 @@ public:
 		};
 
 		DirectX::XMVECTOR ndcMousePosV = DirectX::XMLoadFloat4(&ndcMousePos);
-		DirectX::XMMATRIX viewProjInvV = DirectX::XMLoadFloat4x4(&viewProjInv);
-		DirectX::XMMATRIX rayDirV = DirectX::XMLoadFloat4x4(&rayDir);
+		DirectX::XMMATRIX viewProjInvV = DirectX::XMLoadFloat4x4A(&perFrameData->ViewProjInv);
+		DirectX::XMMATRIX rayDirV = DirectX::XMLoadFloat4x4A(&perFrameData->RayDir);
 
 		DirectX::XMVECTOR modelSpaceMousePos = DirectX::XMVector4Transform(ndcMousePosV, viewProjInvV);
 		DirectX::XMVECTOR rayDirVector = DirectX::XMVector4Transform(ndcMousePosV, rayDirV);
