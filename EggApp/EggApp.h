@@ -36,6 +36,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	PhysXSystem pxSystem;
 
 	GameScene * gameScene;
+	UIScene * uiScene;
 
 	float totalTime;
 
@@ -71,10 +72,10 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	void Simulate(float dt) {
 		totalTime += dt;
 
-		DirectX::XMINT2 p = Egg::Input::GetMousePos(window->GetUnderlyingPointer());
-
 		gameScene->GetPhysXScene()->simulate(dt);
 		gameScene->GetPhysXScene()->fetchResults(true);
+
+		uiScene->Update();
 
 		gameScene->Foreach([this, dt](GameObject * gameObject)->void {
 			if(gameObject->IsActive()) {
@@ -100,8 +101,10 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	void LoadServices() {
 		Service::Init<AssetManager>();
 		Service::Init<GameScene>(px);
+		Service::Init<UIScene>(px);
 
 		gameScene = Service::Get<GameScene>();
+		uiScene = Service::Get<UIScene>();
 	}
 
 	void LoadAssets() {
@@ -352,6 +355,7 @@ public:
 		float asp = graphics->GetAspectRatio();
 		//scene.camera->GetComponent<Camera>()->aspect = asp;
 		renderSystem.renderer.OnResize(w, h);
+		uiScene->SetScreenSize(DirectX::XMUINT2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
 	}
 
 	virtual void AddAppEventHandlers(Egg::Module::AppEventSystem * eventSystem) override {

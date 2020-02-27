@@ -9,7 +9,6 @@
 #define PHYSX_COLLIDER_TYPE_KILLZONE 4
 #define PHYSX_COLLIDER_TYPE_UI 8
 
-
 class HitscanQueryFilter : physx::PxQueryFilterCallback {
 	virtual physx::PxQueryHitType::Enum preFilter(
 		const physx::PxFilterData & filterData,

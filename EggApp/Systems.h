@@ -5,6 +5,7 @@
 #include "GraphicsEngine.h"
 #include "UIObject.h"
 #include <Egg/Input.h>
+#include "PhysxHelpers.h"
 
 class TransformSystem {
 
@@ -191,37 +192,9 @@ public:
 
 
 class UISystem {
-	DirectX::XMINT2 screenSize;
 public:
-	PerFrameData * perFrameData;
-
-	void SetScreenSize(const DirectX::XMUINT2 & dim) {
-		screenSize = DirectX::XMINT2{ static_cast<int32_t>(dim.x), static_cast<int32_t>(dim.y) };
-	}
 
 	void Run(UIObject * object);
-
-	void Update() {
-		float lmb = Egg::Input::GetAxis("Fire");
-
-		DirectX::XMINT2 mousePos = Egg::Input::GetMousePos();
-
-		DirectX::XMFLOAT4 ndcMousePos{
-			static_cast<float>(mousePos.x) / static_cast<float>(screenSize.x),
-			static_cast<float>(mousePos.y) / static_cast<float>(screenSize.y),
-			0.0f,
-			1.0f
-		};
-
-		DirectX::XMVECTOR ndcMousePosV = DirectX::XMLoadFloat4(&ndcMousePos);
-		DirectX::XMMATRIX viewProjInvV = DirectX::XMLoadFloat4x4A(&perFrameData->ViewProjInv);
-		DirectX::XMMATRIX rayDirV = DirectX::XMLoadFloat4x4A(&perFrameData->RayDir);
-
-		DirectX::XMVECTOR modelSpaceMousePos = DirectX::XMVector4Transform(ndcMousePosV, viewProjInvV);
-		DirectX::XMVECTOR rayDirVector = DirectX::XMVector4Transform(ndcMousePosV, rayDirV);
-
-		
-	}
 
 	void operator()(UIObject * uiObject, Transform* transform, Button* button) {
 
