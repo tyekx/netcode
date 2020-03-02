@@ -5,14 +5,19 @@
 #include "ComponentStorage.hpp"
 #include "Components.h"
 
-using UIComponents_T = std::tuple<Transform, Sprite, Button, Text>;
+using UIComponents_T = std::tuple<Transform, UIElement, Sprite, Button, Text>;
 using UIExtensionComponents_T = std::tuple<Camera, LongText>;
 
 class UIObject {
+public:
+	using StorageType = ComponentStorage<UIComponents_T, UIExtensionComponents_T>;
+	using ComponentTypes = typename StorageType::ALL_COMPONENTS_T;
+
 protected:
-	ComponentStorage<UIComponents_T, UIExtensionComponents_T> components;
+	StorageType components;
 	UIObject * parent;
 	std::vector<UIObject *> children;
+	uint32_t flags;
 public:
 	inline SignatureType GetSignature() const {
 		return components.signature;
@@ -25,6 +30,22 @@ public:
 
 	UIObject * Parent() const {
 		return parent;
+	}
+
+	bool IsSpawnable() const {
+		return (flags & (0x1)) > 0;
+	}
+
+	void SetSpawnableFlag(bool tf) {
+		if(tf) {
+			flags |= 0x1;
+		} else {
+			flags &= (~0x1);
+		}
+	}
+
+	void Spawn() {
+		SetSpawnableFlag(true);
 	}
 
 	void Parent(UIObject * obj) {

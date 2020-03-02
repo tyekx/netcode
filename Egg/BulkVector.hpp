@@ -229,6 +229,27 @@ namespace Egg {
 			return Iterator(freeListHead, head);
 		}
 
+		void Clear() {
+			for(auto it = begin(); it != nullptr; ++it) {
+				T * ptr = it.operator->();
+				ptr->~T();
+			}
+
+			Bulk * iter = head;
+			while(iter != nullptr) {
+				Bulk * tmp = iter->next;
+				delete iter;
+				iter = tmp;
+			}
+
+			freeListHead = nullptr;
+			freeListTail = nullptr;
+		}
+
+		~BulkVector() noexcept {
+			Clear();
+		}
+
 		void Remove(T * ptr) {
 			ptr->~T();
 

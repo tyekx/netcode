@@ -162,7 +162,7 @@ namespace Egg::Graphics::DX12 {
 		if(effects)
 		{
 			baseOffset = XMVectorNegativeMultiplySubtract(
-				MeasureString(text),
+				MeasureString_Impl(text),
 				axisIsMirroredTable[effects & 3],
 				baseOffset);
 		}
@@ -189,7 +189,7 @@ namespace Egg::Graphics::DX12 {
 	}
 
 
-	DirectX::XMVECTOR XM_CALLCONV SpriteFont::MeasureString(_In_z_ wchar_t const * text) const
+	DirectX::XMVECTOR XM_CALLCONV SpriteFont::MeasureString_Impl(_In_z_ wchar_t const * text) const
 	{
 		DirectX::XMVECTOR result = DirectX::XMVectorZero();
 
@@ -243,9 +243,23 @@ namespace Egg::Graphics::DX12 {
 	}
 
 
-	DirectX::XMVECTOR XM_CALLCONV SpriteFont::MeasureString(_In_z_ char const * text) const
+	DirectX::XMVECTOR XM_CALLCONV SpriteFont::MeasureString_Impl(_In_z_ char const * text) const
 	{
-		return MeasureString(ConvertUTF8(text));
+		return MeasureString_Impl(ConvertUTF8(text));
+	}
+
+	DirectX::XMFLOAT2 SpriteFont::MeasureString(const char * str) const {
+		DirectX::XMFLOAT2 res;
+		DirectX::XMVECTOR v = MeasureString_Impl(str);
+		DirectX::XMStoreFloat2(&res, v);
+		return res;
+	}
+
+	DirectX::XMFLOAT2 SpriteFont::MeasureString(const wchar_t * str) const {
+		DirectX::XMFLOAT2 res;
+		DirectX::XMVECTOR v = MeasureString_Impl(str);
+		DirectX::XMStoreFloat2(&res, v);
+		return res;
 	}
 
 	RECT SpriteFont::MeasureDrawBounds(_In_z_ wchar_t const * text, DirectX::XMFLOAT2 const & position) const

@@ -117,9 +117,11 @@ namespace Egg::Graphics::DX12 {
 		streamOutput_FilledSizeLocation = res.address + ((byteOffset + 3ull) & ~(3ull));
 	}
 
-	void RenderContext::BeginSpriteRendering()
+	void RenderContext::BeginSpriteRendering(DirectX::XMFLOAT4X4 viewProj)
 	{
-		spriteBatch->Begin();
+		DirectX::XMMATRIX vp = DirectX::XMLoadFloat4x4(&viewProj);
+
+		spriteBatch->Begin(SpriteSortMode::SpriteSortMode_Deferred, vp);
 	}
 
 	void RenderContext::EndSpriteRendering()
@@ -131,6 +133,11 @@ namespace Egg::Graphics::DX12 {
 	{
 		DX12SpriteFontRef font = std::dynamic_pointer_cast<DX12SpriteFont>(spriteFont);
 		font->DrawString(spriteBatch, string, position);
+	}
+
+	void RenderContext::DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position)
+	{
+		spriteBatch->Draw(texture, textureSize, position);
 	}
 
 	void RenderContext::ResetStreamOutput()

@@ -7,16 +7,34 @@
 
 using ColliderShape = Egg::Asset::Collider;
 
+enum class HorizontalAnchor : uint32_t {
+	LEFT, CENTER, RIGHT
+};
+
+enum class VerticalAnchor : uint32_t {
+	TOP, MIDDLE, BOTTOM
+};
+
 #define COMPONENT_ALIGN __declspec(align(16))
 
-COMPONENT_ALIGN struct Sprite {
+COMPONENT_ALIGN struct UIElement {
+	VerticalAnchor verticalAlignment;
+	HorizontalAnchor horizontalAlignment;
+	DirectX::XMFLOAT4 margin;
+	DirectX::XMFLOAT4 padding;
+	float width;
+	float height;
+};
 
+COMPONENT_ALIGN struct Sprite {
+	Egg::ResourceViewsRef texture;
+	DirectX::XMUINT2 textureSize;
+	DirectX::XMFLOAT4 diffuseColor;
 };
 
 COMPONENT_ALIGN struct Button {
 public:
-	uint32_t width;
-	uint32_t height;
+	physx::PxActor * pxActor;
 	std::function<void()> onClick;
 	std::function<void()> onMouseEnter;
 	std::function<void()> onMouseLeave;

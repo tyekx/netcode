@@ -17,7 +17,6 @@
 
 using Components_T = std::tuple<Transform, Model, Script, Collider>;
 using ExtensionComponents_T = std::tuple<Camera, Animation>;
-using AllComponents_T = TupleMerge<Components_T, ExtensionComponents_T>::type;
 
 enum class GameObjectFlags : uint32_t {
 	ENABLED = 1,
@@ -26,9 +25,15 @@ enum class GameObjectFlags : uint32_t {
 };
 
 class GameObject {
-	ComponentStorage<Components_T, ExtensionComponents_T> components;
+public:
+	using StorageType = ComponentStorage<Components_T, ExtensionComponents_T>;
+	using ComponentTypes = typename StorageType::ALL_COMPONENTS_T;
+
+protected:
+	StorageType components;
 	GameObject * parent;
 	uint32_t flags;
+
 public:
 	inline SignatureType GetSignature() const {
 		return components.signature;

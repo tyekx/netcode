@@ -16,6 +16,7 @@ protected:
 	T * cameraRef;
 
 public:
+	virtual ~Scene() = default;
 
 	physx::PxScene * GetPhysXScene() const {
 		return pxScene;

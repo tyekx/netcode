@@ -89,8 +89,10 @@ namespace Egg::Graphics {
 		virtual void SetIndexBuffer(uint64_t handle) = 0;
 		virtual void DrawIndexed(uint64_t indexCount) = 0;
 		virtual void Draw(uint64_t vertexCount) = 0;
+		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position) = 0;
+		//virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const RECT & position) = 0;
 
-		virtual void BeginSpriteRendering() = 0;
+		virtual void BeginSpriteRendering(DirectX::XMFLOAT4X4 viewProj) = 0;
 		virtual void EndSpriteRendering() = 0;
 
 		virtual void DrawString(SpriteFontRef spriteFont, const wchar_t * string, const DirectX::XMFLOAT2 & position) = 0;

@@ -15,6 +15,10 @@ namespace Egg {
 
 	public:
 
+		static void Clear() {
+			CompositeObjectDestructor<TUPLE_T>::Invoke(signature, data);
+		}
+
 		template<typename T, typename ... U>
 		static void Init(U && ... args) {
 			static_assert(TupleContainsType<T, TUPLE_T>::value, "Can not initialize a service that is not declared up front");
@@ -24,6 +28,7 @@ namespace Egg {
 			constexpr SignatureType mask = 1ull << indexOf;
 
 			if((signature & mask) == 0) {
+				signature |= mask;
 				new (reinterpret_cast<T *>(data + offsetOf)) T(std::forward<U>(args)...);
 			}
 			// else debug assert

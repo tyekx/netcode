@@ -58,10 +58,11 @@ namespace Egg::Graphics::DX12 {
 		virtual void SetStreamOutputFilledSize(uint64_t handle, uint64_t byteOffset) override;
 
 
-		virtual void BeginSpriteRendering() override;
+		virtual void BeginSpriteRendering(DirectX::XMFLOAT4X4 viewProjInv) override;
 		virtual void EndSpriteRendering() override;
 
 		virtual void DrawString(SpriteFontRef spriteFont, const wchar_t * string, const DirectX::XMFLOAT2 & position) override;
+		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position) override;
 
 		virtual void ResetStreamOutput() override;
 

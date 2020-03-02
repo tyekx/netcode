@@ -6,23 +6,28 @@
 #include "PhysxHelpers.h"
 
 class UIScene : public Scene<UIObject> {
-	DirectX::XMINT2 screenSize;
+public:
+
 	PerFrameData perFrameData;
+	DirectX::XMUINT2 screenSize;
+	bool lmbHeld;
 
 	DirectX::XMMATRIX GetView(Transform * transform, Camera * camera) {
-		DirectX::XMVECTOR eyePos = DirectX::XMLoadFloat3(&transform->worldPosition);
+		DirectX::XMVECTOR eyePos = DirectX::XMLoadFloat3(&transform->position);
 		DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&camera->up);
 		DirectX::XMVECTOR ahead = DirectX::XMLoadFloat3(&camera->ahead);
 		return DirectX::XMMatrixLookToRH(eyePos, ahead, up);
 	}
 
 	DirectX::XMMATRIX GetProj(Camera * c) {
-		return DirectX::XMMatrixPerspectiveFovRH(c->fov, c->aspect, c->nearPlane, c->farPlane);
+		return DirectX::XMMatrixOrthographicRH(static_cast<float>(screenSize.x), static_cast<float>(screenSize.y), c->nearPlane, c->farPlane);
 	}
 
 	UIScene() = default;
 
 public:
+	~UIScene() noexcept = default;
+
 	UIScene(Egg::Physics::PhysX & px) : UIScene() {
 		physx::PxSceneDesc sceneDesc{ px.physics->getTolerancesScale() };
 		sceneDesc.gravity = physx::PxVec3{ 0.0f, -981.0f, 0.0f };
@@ -43,18 +48,19 @@ public:
 		Transform* transform = cameraRef->AddComponent<Transform>();
 		Camera *camera = cameraRef->AddComponent<Camera>();
 
-		transform->position = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1000.0f };
+		transform->position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
 
 		camera->ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
 		camera->aspect = 1.0f;
-		camera->farPlane = 1000.0f;
-		camera->nearPlane = 1.0f;
+		camera->farPlane = 1.0f;
+		camera->nearPlane = 0.0f;
 		camera->fov = DirectX::XM_PI / 3.0f;
 	}
 
 	void SetScreenSize(const DirectX::XMUINT2 & dim) {
-		screenSize = DirectX::XMINT2{ static_cast<int32_t>(dim.x), static_cast<int32_t>(dim.y) };
+		screenSize = dim;
 		cameraRef->GetComponent<Camera>()->aspect = static_cast<float>(dim.x) / static_cast<float>(dim.y);
+		cameraRef->GetComponent<Transform>()->position = DirectX::XMFLOAT3{ static_cast<float>(dim.x) / 2.0f ,static_cast<float>(dim.y) / 2.0f, 0.0f };
 	}
 
 	void UpdatePerFrameCb() {
@@ -109,52 +115,11 @@ public:
 	void Update() {
 		UpdatePerFrameCb();
 
-		float lmb = Egg::Input::GetAxis("Fire");
-		DirectX::XMINT2 mousePos = Egg::Input::GetMousePos();
-
-		if(lmb == 0.0f) {
-			return;
-		}
-
-		DirectX::XMFLOAT4 ndcMousePos{
-			2.0f * (static_cast<float>(mousePos.x) / static_cast<float>(screenSize.x)) - 1.0f,
-			2.0f * (1.0f - (static_cast<float>(mousePos.y) / static_cast<float>(screenSize.y))) -1.0f,
-			0.0f,
-			1.0f
-		};
-
-		DirectX::XMVECTOR ndcMousePosV = DirectX::XMLoadFloat4(&ndcMousePos);
-		DirectX::XMMATRIX viewProjInvV = DirectX::XMLoadFloat4x4A(&perFrameData.ViewProjInv);
-		DirectX::XMMATRIX rayDirV = DirectX::XMLoadFloat4x4A(&perFrameData.RayDir);
-
-		DirectX::XMVECTOR modelSpaceMousePos = DirectX::XMVector4Transform(ndcMousePosV, DirectX::XMMatrixTranspose(viewProjInvV));
-		DirectX::XMVECTOR rayDirVector = DirectX::XMVector4Transform(ndcMousePosV, DirectX::XMMatrixTranspose(rayDirV));
-
-		rayDirVector = DirectX::XMVector3Normalize(rayDirVector);
-
-		modelSpaceMousePos = DirectX::XMVectorDivide(modelSpaceMousePos, DirectX::XMVectorSwizzle<3, 3, 3, 3>(modelSpaceMousePos));
-
-		DirectX::XMFLOAT3 raycastRayDir;
-		DirectX::XMFLOAT3 raycastRayStart;
-
-		DirectX::XMStoreFloat3(&raycastRayStart, modelSpaceMousePos);
-		DirectX::XMStoreFloat3(&raycastRayDir, rayDirVector);
-
-		physx::PxVec3 pxRayStart = ToPxVec3(raycastRayStart);
-		physx::PxVec3 pxRayDir = ToPxVec3(raycastRayDir);
-
-		physx::PxQueryFilterData filterData;
-		filterData.data.word0 = PHYSX_COLLIDER_TYPE_UI;
-
-		physx::PxRaycastBuffer outRaycastResult;
-
-		if(pxScene->raycast(pxRayStart, pxRayDir, 1000.0f, outRaycastResult)) {
-			uint32_t numHits = outRaycastResult.getNbAnyHits();
-
-			for(uint32_t i = 0; i < numHits; ++i) {
-
-			}
-		}
 		
+	}
+
+	void Spawn(UIObject * object) {
+		// actual spawning handled by UISystem
+		object->Spawn();
 	}
 };

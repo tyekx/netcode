@@ -34,11 +34,16 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	RenderSystem renderSystem;
 	AnimationSystem animSystem;
 	PhysXSystem pxSystem;
+	UISystem uiSystem;
 
 	GameScene * gameScene;
 	UIScene * uiScene;
 
 	float totalTime;
+
+	void LoadSystems() {
+		uiSystem.CreateResources(uiScene->GetPhysXScene(), &uiScene->perFrameData);
+	}
 
 	void Render() {
 		graphics->frame->Prepare();
@@ -58,6 +63,13 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 		gameScene->UpdatePerFrameCb();
 
+		uiScene->Update();
+		uiSystem.Raycast();
+
+		uiScene->Foreach([this](UIObject * uiObject) ->void {
+			uiSystem.Run(uiObject);
+		});
+
 		renderSystem.renderer.CreateFrameGraph(builder);
 
 		FrameGraph graph = builder.Build(graphics->resources);
@@ -75,7 +87,6 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		gameScene->GetPhysXScene()->simulate(dt);
 		gameScene->GetPhysXScene()->fetchResults(true);
 
-		uiScene->Update();
 
 		gameScene->Foreach([this, dt](GameObject * gameObject)->void {
 			if(gameObject->IsActive()) {
@@ -109,6 +120,56 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 	void LoadAssets() {
 		AssetManager * assetManager = Service::Get<AssetManager>();
+
+		uiSystem.gEngine = &renderSystem.renderer;
+
+		UIObject* testBtn = uiScene->Create();
+		Transform * transform = testBtn->AddComponent<Transform>();
+		UIElement * uiElement = testBtn->AddComponent<UIElement>();
+		Sprite * sprite = testBtn->AddComponent<Sprite>();
+		Button *btn = testBtn->AddComponent<Button>();
+
+		transform->position.x = 100.0f;
+		transform->position.y = 200.0f;
+		transform->position.z = 0.5f;
+
+		btn->onClick = []() -> void {
+			Log::Info("TestBtn: clicked");
+		};
+
+		btn->onMouseEnter = []() -> void {
+			Log::Info("TestBtn: mouse enter");
+		};
+
+		btn->onMouseLeave = []() -> void {
+			Log::Info("TestBtn: mouse leave");
+		};
+
+		uiElement->width = 512.0f;
+		uiElement->height = 128.0f;
+
+		Text * btnText = testBtn->AddComponent<Text>();
+
+
+
+		auto texBuilder = graphics->CreateTextureBuilder();
+		texBuilder->LoadTexture2D(L"btn_background.png");
+		Egg::TextureRef texRef = texBuilder->Build();
+		const Egg::Image * img = texRef->GetImage(0, 0, 0);
+		uint64_t texHandle = graphics->resources->CreateTexture2D(img->width, img->height, img->format, Egg::Graphics::ResourceType::PERMANENT_DEFAULT, Egg::Graphics::ResourceState::COPY_DEST, Egg::Graphics::ResourceFlags::NONE);
+
+		Egg::Graphics::UploadBatch ub;
+		ub.Upload(texHandle, texRef);
+		ub.ResourceBarrier(texHandle, Egg::Graphics::ResourceState::COPY_DEST, Egg::Graphics::ResourceState::PIXEL_SHADER_RESOURCE);
+		graphics->frame->SyncUpload(ub);
+
+		auto srvRef = graphics->resources->CreateShaderResourceViews(1);
+		srvRef->CreateSRV(0, texHandle);
+
+		sprite->texture = srvRef;
+		sprite->textureSize = DirectX::XMUINT2{ static_cast<uint32_t>(img->width), static_cast<uint32_t>(img->height) };
+
+		uiScene->Spawn(testBtn);
 
 		Egg::Input::SetAxis("Vertical", 'W', 'S');
 		Egg::Input::SetAxis("Horizontal", 'A', 'D');
@@ -355,6 +416,7 @@ public:
 		float asp = graphics->GetAspectRatio();
 		//scene.camera->GetComponent<Camera>()->aspect = asp;
 		renderSystem.renderer.OnResize(w, h);
+		uiSystem.SetScreenSize(DirectX::XMUINT2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
 		uiScene->SetScreenSize(DirectX::XMUINT2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
 	}
 
@@ -390,7 +452,9 @@ public:
 
 		px.CreateResources();
 
+
 		LoadServices();
+		LoadSystems();
 		LoadAssets();
 
 	}
@@ -417,6 +481,7 @@ public:
 	Properly shutdown the application
 	*/
 	virtual void Exit() override {
+		Service::Clear();
 		px.ReleaseResources();
 		ShutdownModule(network.get());
 		ShutdownModule(audio.get());

@@ -309,14 +309,15 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 			DirectX::XMFLOAT2 texSize;
 			DirectX::XMStoreFloat2(&texSize, textureSize);
 
-			DirectX::XMFLOAT4X4 viewportTransform = DirectX::XMFLOAT4X4(1.0f / (2.0f * texSize.x), 0.0f, 0.0f, 0.0f,
-				0.0f, -1.0f / (2.0f * texSize.y), 0.0f, 0.0f,
+			
+			DirectX::XMFLOAT4X4 texTransform = DirectX::XMFLOAT4X4(-1.0f, 0.0f, 0.0f, 0.0f,
+				0.0f, -1.0f, 0.0f, 0.0f,
 				0.0f, 0.0f, 1.0f, 0.0f,
-				-1.0f, 1.0f, 0.0f, 1.0f);
+				0.0f, 0.0f, 0.0f, 1.0f);
 
-			DirectX::XMMATRIX transformMat = DirectX::XMLoadFloat4x4(&viewportTransform);
+			DirectX::XMMATRIX transformMat = DirectX::XMLoadFloat4x4(&texTransform);
 
-			transformMat = DirectX::XMMatrixMultiply(mTransformMatrix, transformMat);
+			transformMat = DirectX::XMMatrixMultiply(transformMat,  mTransformMatrix);
 
 			size_t spriteVertexTotalSize = sizeof(PCT_Vertex) * VerticesPerSprite;
 			resourceContext->CopyConstants(vertexBuffer, vertexData.get() + vertexOffset, batchSize * spriteVertexTotalSize, vertexOffset * sizeof(PCT_Vertex));
@@ -324,7 +325,7 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 			// Ok lads, the time has come for us draw ourselves some sprites!
 			UINT indexCount = static_cast<UINT>(batchSize * IndicesPerSprite);
 
-			DirectX::XMStoreFloat4x4A(&cbuffer.transform, DirectX::XMMatrixTranspose(transformMat));
+			DirectX::XMStoreFloat4x4A(&cbuffer.transform, transformMat);
 			renderContext->SetConstants(1, cbuffer);
 			renderContext->SetVertexBuffer(vertexBuffer, static_cast<uint32_t>(vertexOffset));
 			renderContext->DrawIndexed(indexCount);

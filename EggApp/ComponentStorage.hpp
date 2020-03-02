@@ -39,10 +39,12 @@ struct TupleMoveStorage {
 
 template<typename COMPONENTS_T, typename EXTENSION_COMPONENTS_T>
 class ComponentStorage {
+public:
+	using ALL_COMPONENTS_T = typename TupleMerge<COMPONENTS_T, EXTENSION_COMPONENTS_T>::type;
+
+private:
 	uint8_t storage[TupleSizeofSum<COMPONENTS_T>::value];
 	uint8_t * extendedStorage;
-
-	using ALL_COMPONENTS_T = typename TupleMerge<COMPONENTS_T, EXTENSION_COMPONENTS_T>::type;
 
 	void InitExtendedStorage() {
 		if(extendedStorage == nullptr) {
@@ -78,6 +80,7 @@ public:
 	SignatureType signature;
 
 	ComponentStorage() = default;
+
 	~ComponentStorage() noexcept {
 		CompositeObjectDestructor<COMPONENTS_T>::Invoke(signature, storage);
 		if(extendedStorage != nullptr) {

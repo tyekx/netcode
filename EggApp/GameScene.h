@@ -26,8 +26,6 @@ public:
 	PerFrameData perFrameData;
 	SsaoData ssaoData;
 
-
-
 	GameScene(Egg::Physics::PhysX & px) : GameScene() {
 		sceneCallback = std::make_unique<GameSceneSimulationEventCallback>();
 		physx::PxSceneDesc sceneDesc{ px.physics->getTolerancesScale() };

@@ -26,6 +26,13 @@ struct RenderItem {
 	}
 };
 
+struct UIRenderItem {
+	Egg::ResourceViewsRef texture;
+	const wchar_t * text;
+	DirectX::XMFLOAT2 position;
+	DirectX::XMUINT2 textureSize;
+};
+
 class GraphicsEngine {
 	// handles
 	uint64_t skinningPass_FilledSize;
@@ -80,6 +87,9 @@ public:
 
 	ScratchBuffer<RenderItem> skinningPass_Input;
 	ScratchBuffer<RenderItem> gbufferPass_Input;
+	ScratchBuffer<UIRenderItem> uiPass_Input;
+
+
 
 
 private:
@@ -564,6 +574,18 @@ private:
 		});
 	}
 
+	void CreateUIPass(FrameGraphBuilder & frameGraphBuilder) {
+		frameGraphBuilder.CreateRenderPass("UI",
+			[&](IResourceContext * context) -> void { },
+			[&](IRenderContext * context) -> void {
+			context->BeginSpriteRendering(uiPass_viewProjInv);
+			for(const UIRenderItem & i : uiPass_Input) {
+				context->DrawSprite(i.texture, i.textureSize, i.position);
+			}
+			context->EndSpriteRendering();
+		});
+	}
+
 	void CreatePostProcessPass(FrameGraphBuilder & frameGraphBuilder) {
 		frameGraphBuilder.CreateRenderPass("postProcessPass", [&](IResourceContext * context) -> void {
 
@@ -582,11 +604,9 @@ private:
 
 public:
 
-	void CreateDebugFontPassPermanentResources(Egg::Module::IGraphicsModule * g) {
-		auto spriteFontBuilder = g->CreateSpriteFontBuilder();
-		spriteFontBuilder->LoadFont(L"titillium60.spritefont");
-		testFont = spriteFontBuilder->Build();
+	DirectX::XMFLOAT4X4 uiPass_viewProjInv;
 
+	void CreateBackgroundPassPermanentResources(Egg::Module::IGraphicsModule * g) {
 		Egg::TextureBuilderRef textureBuilder = graphics->CreateTextureBuilder();
 		textureBuilder->LoadTextureCube(L"cloudynoon.dds");
 		Egg::TextureRef cloudynoon = textureBuilder->Build();
@@ -649,12 +669,13 @@ public:
 	Egg::RootSignatureRef envmapPass_RootSignature;
 	Egg::PipelineStateRef envmapPass_PipelineState;
 
-	void CreateDebugFontPass(FrameGraphBuilder & builder) {
-		builder.CreateRenderPass("Debug font pass", [](IResourceContext * ctx) ->void { },
+	void CreateBackgroundPass(FrameGraphBuilder & builder) {
+		builder.CreateRenderPass("Background", [](IResourceContext * ctx) ->void { },
 			[this](IRenderContext * ctx) -> void {
 
 			ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencilView);
 			ctx->SetStencilReference(0);
+
 			ctx->SetRootSignature(envmapPass_RootSignature);
 			ctx->SetPipelineState(envmapPass_PipelineState);
 
@@ -663,12 +684,6 @@ public:
 
 			ctx->SetVertexBuffer(fsQuad.vertexBuffer);
 			ctx->Draw(fsQuad.vertexCount);
-
-			ctx->BeginSpriteRendering();
-
-			ctx->DrawString(testFont, L"Hello World", DirectX::XMFLOAT2{ 0.0f, 0.0f });
-
-			ctx->EndSpriteRendering();
 		});
 	}
 
@@ -676,6 +691,7 @@ public:
 		skinningPass_Input.Clear();
 		gbufferPass_Input.Clear();
 		skinningPass_Output.Clear();
+		uiPass_Input.Clear();
 	}
 
 	void OnResize(int x, int y) {
@@ -697,7 +713,7 @@ public:
 		CreateSkinningPassPermanentResources(g);
 		CreateGbufferPassPermanentResources(g);
 		CreateLightingPassPermanentResources(g);
-		CreateDebugFontPassPermanentResources(g);
+		CreateBackgroundPassPermanentResources(g);
 		//CreateSSAOBlurPassPermanentResources(g);
 	  	//CreateSSAOOcclusionPassPermanentResources(g);
 		CreateFSQuad(g);
@@ -709,7 +725,8 @@ public:
 		//CreateSSAOOcclusionPass(builder);
 		//CreateSSAOBlurPass(builder);
 		CreateLightingPass(builder);
-		CreateDebugFontPass(builder);
+		CreateBackgroundPass(builder);
+		CreateUIPass(builder);
 		//CreatePostProcessPass(builder);
 	}
 

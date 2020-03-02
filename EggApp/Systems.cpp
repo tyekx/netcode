@@ -32,32 +32,32 @@ struct InjectComponents<FUNC_OWNER_T, FUNC_T, std::tuple<COMPONENT_TYPES...>> {
 
 
 // cuts off the extra arguments, very specialized task
-template<bool KeepGoing, typename ACC, typename ... T>
+template<bool KeepGoing, typename ALL_COMPONENTS_T, typename ACC, typename ... T>
 struct TupleKeepComponentsImpl;
 
-template<bool Any, typename ACC>
-struct TupleKeepComponentsImpl<Any, ACC, std::tuple<>> {
+template<bool Any, typename ALL_COMPONENTS_T, typename ACC>
+struct TupleKeepComponentsImpl<Any, ALL_COMPONENTS_T, ACC, std::tuple<>> {
 	using type = typename ACC;
 };
 
-template<typename ACC, typename HEAD, typename ... TAIL>
-struct TupleKeepComponentsImpl <false, ACC, std::tuple<HEAD, TAIL...> > {
+template<typename ALL_COMPONENTS_T, typename ACC, typename HEAD, typename ... TAIL>
+struct TupleKeepComponentsImpl <false, ALL_COMPONENTS_T, ACC, std::tuple<HEAD, TAIL...> > {
 	using type = typename ACC;
 };
 
-template<typename ACC, typename HEAD, typename ... TAIL>
-struct TupleKeepComponentsImpl <true, ACC, std::tuple<HEAD, TAIL...> > {
-	constexpr static bool Contains = TupleContainsType< std::remove_pointer_t<HEAD>, AllComponents_T>::value;
+template<typename ALL_COMPONENTS_T, typename ACC, typename HEAD, typename ... TAIL>
+struct TupleKeepComponentsImpl <true, ALL_COMPONENTS_T, ACC, std::tuple<HEAD, TAIL...> > {
+	constexpr static bool Contains = TupleContainsType< std::remove_pointer_t<HEAD>, ALL_COMPONENTS_T>::value;
 
-	using type = typename TupleKeepComponentsImpl<Contains, typename std::conditional<Contains, typename TupleAppend<HEAD, ACC>::type, ACC>::type, std::tuple<TAIL...> >::type;
+	using type = typename TupleKeepComponentsImpl<Contains, ALL_COMPONENTS_T, typename std::conditional<Contains, typename TupleAppend<HEAD, ACC>::type, ACC>::type, std::tuple<TAIL...> >::type;
 };
 
 template<typename ... T>
 struct TupleKeepComponents;
 
-template<typename HEAD, typename ... TAIL>
-struct TupleKeepComponents<std::tuple<HEAD, TAIL...>> {
-	using type = typename TupleKeepComponentsImpl<true, std::tuple<>, std::tuple<HEAD, TAIL...>>::type;
+template<typename ALL_COMPONENTS_T, typename HEAD, typename ... TAIL>
+struct TupleKeepComponents<ALL_COMPONENTS_T, std::tuple<HEAD, TAIL...>> {
+	using type = typename TupleKeepComponentsImpl<true, ALL_COMPONENTS_T, std::tuple<>, std::tuple<HEAD, TAIL...>>::type;
 };
 
 template<typename T, typename SYSTEM, typename ... ADDITIONAL_ARGS>
@@ -66,10 +66,10 @@ void TryInvoke(T * obj, SYSTEM * system, ADDITIONAL_ARGS && ... args) {
 	using ArgsTuple = typename FunctionReflection<FunctionType>::ArgsTuple;
 	using MemberOf = typename FunctionReflection<FunctionType>::MemberOf;
 	using Args = typename TupleSkipN<1, ArgsTuple>::type;
-	using ComponentArgs = typename TupleKeepComponents<Args>::type;
+	using ComponentArgs = typename TupleKeepComponents<typename T::ComponentTypes, Args>::type;
 	using ComponentTypes = typename TupleForEach<std::remove_pointer_t, ComponentArgs>::type;
 
-	constexpr static SignatureType requiredComponents = TupleCreateMask<AllComponents_T, ComponentTypes>::value;
+	constexpr static SignatureType requiredComponents = TupleCreateMask<typename T::ComponentTypes, ComponentTypes>::value;
 
 	if((requiredComponents & obj->GetSignature()) == requiredComponents) {
 		InjectSystemArgs<MemberOf, T, ComponentTypes, ADDITIONAL_ARGS...>::Invoke(*system, obj, std::forward<ADDITIONAL_ARGS>(args)...);
@@ -115,6 +115,10 @@ void PhysXSystem::Run(GameObject * gameObject) {
 }
 
 void UISystem::Run(UIObject * object) {
-	//TryInvoke(object, this);
+	TryInvoke(object, this);
 }
 
+void UITextSystem::Run(UIObject * object)
+{
+	TryInvoke(object, this);
+}

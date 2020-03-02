@@ -192,12 +192,149 @@ public:
 
 
 class UISystem {
+	physx::PxPhysics * px;
+	physx::PxScene * pxScene;
+	physx::PxMaterial * dummyMaterial;
+	DirectX::XMINT2 screenSize;
+	PerFrameData * perFrameData;
+	std::list<Button *> raycastHits;
+	bool lmbHeld;
+public:
+	GraphicsEngine * gEngine;
+
+	void SetScreenSize(const DirectX::XMUINT2 & dim) {
+		screenSize = DirectX::XMINT2{ static_cast<int32_t>(dim.x), static_cast<int32_t>(dim.y) };
+	}
+
+	void CreateResources(physx::PxScene * pxS, PerFrameData* pfd) {
+		perFrameData = pfd;
+		pxScene = pxS;
+		px = &pxS->getPhysics();
+		dummyMaterial = px->createMaterial(0.5f, 0.5f, 0.5f);
+	}
+
+	void Raycast() {
+		float lmb = Egg::Input::GetAxis("Fire");
+		DirectX::XMINT2 mousePos = Egg::Input::GetMousePos();
+
+		bool isClicked = false;
+
+		if(lmb > 0.0f && !lmbHeld) {
+			lmbHeld = true;
+			isClicked = true;
+		}
+
+		if(lmb == 0.0f && lmbHeld) {
+			lmbHeld = false;
+		}
+
+		DirectX::XMFLOAT4 ndcMousePos{
+			static_cast<float>(mousePos.x),
+			static_cast<float>(mousePos.y),
+			0.0f,
+			1.0f
+		};
+
+		DirectX::XMVECTOR ndcMousePosV = DirectX::XMLoadFloat4(&ndcMousePos);
+		DirectX::XMVECTOR rayDirVector = DirectX::g_XMIdentityR2;
+
+		DirectX::XMFLOAT3 raycastRayDir;
+		DirectX::XMFLOAT3 raycastRayStart;
+
+		DirectX::XMStoreFloat3(&raycastRayStart, ndcMousePosV);
+		DirectX::XMStoreFloat3(&raycastRayDir, rayDirVector);
+
+		physx::PxVec3 pxRayStart = ToPxVec3(raycastRayStart);
+		physx::PxVec3 pxRayDir = ToPxVec3(raycastRayDir);
+
+		physx::PxQueryFilterData filterData;
+		filterData.data.word0 = PHYSX_COLLIDER_TYPE_UI;
+
+		physx::PxRaycastBuffer outRaycastResult;
+		raycastHits.clear();
+
+		if(pxScene->raycast(pxRayStart, pxRayDir, 1.0f, outRaycastResult)) {
+			uint32_t numHits = outRaycastResult.getNbAnyHits();
+			for(uint32_t i = 0; i < numHits; ++i) {
+				const auto & hit = outRaycastResult.getAnyHit(i);
+				UIObject * obj = static_cast<UIObject *>(hit.actor->userData);
+				Button * btn = obj->GetComponent<Button>();
+
+				raycastHits.push_back(btn);
+
+				if(isClicked) {
+					btn->onClick();
+				}
+			}
+		}
+
+		gEngine->uiPass_viewProjInv = perFrameData->ViewProj;
+	}
+
+	void Run(UIObject * object);
+
+	void operator()(UIObject * uiObject, Transform* transform, UIElement * uiElement, Sprite* sprite, Button* button) {
+		// handle spawning
+		if(uiObject->IsSpawnable()) {
+			uiObject->SetSpawnableFlag(false);
+			if(button->pxActor == nullptr) {
+				physx::PxVec3 pos = ToPxVec3(transform->worldPosition);
+				physx::PxQuat rot = ToPxQuat(transform->worldRotation);
+
+				physx::PxRigidDynamic * actor = px->createRigidDynamic(physx::PxTransform(pos, rot));
+				actor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, true);
+				physx::PxBoxGeometry boxGeom{ uiElement->width / 2.0f, uiElement->height / 2.0f, 0.01f };
+				physx::PxShape * boxShape = px->createShape(boxGeom, *dummyMaterial, true, physx::PxShapeFlag::eVISUALIZATION | physx::PxShapeFlag::eTRIGGER_SHAPE | physx::PxShapeFlag::eSCENE_QUERY_SHAPE);
+				physx::PxFilterData filterData;
+				filterData.word0 = PHYSX_COLLIDER_TYPE_UI;
+				boxShape->setSimulationFilterData(filterData);
+				boxShape->setQueryFilterData(filterData);
+				physx::PxTransform localPose(physx::PxIdentity);
+				localPose.p = physx::PxVec3(uiElement->width / 2.0f, uiElement->height / 2.0f, 0.0f);
+				boxShape->setLocalPose(localPose);
+				physx::PxVec3 gPos = ToPxVec3(transform->position);
+				physx::PxTransform globalPose(physx::PxIdentity);
+				globalPose.p = gPos;
+				actor->setGlobalPose(globalPose);
+				actor->attachShape(*boxShape);
+				actor->userData = uiObject;
+				pxScene->addActor(*actor);
+			}
+		}
+
+		bool found = false;
+
+		gEngine->uiPass_Input.Produced(UIRenderItem{ sprite->texture, nullptr, DirectX::XMFLOAT2{ transform->position.x, transform->position.y }, sprite->textureSize });
+
+		// handle mouseovers
+		for(auto it = raycastHits.begin(); it != raycastHits.end(); ++it) {
+			if(button == *it) {
+				if(!button->isMouseOver) {
+					button->isMouseOver = true;
+					button->onMouseEnter();
+				}
+
+				found = true;
+				raycastHits.erase(it);
+				break;
+			}
+		}
+
+		if(!found) {
+			if(button->isMouseOver) {
+				button->isMouseOver = false;
+				button->onMouseLeave();
+			}
+		}
+	}
+};
+
+class UITextSystem {
 public:
 
 	void Run(UIObject * object);
 
-	void operator()(UIObject * uiObject, Transform* transform, Button* button) {
-
+	void operator()(UIObject * uiObject, Transform * transform, UIElement * uiElement, Text * text) {
 
 	}
 };

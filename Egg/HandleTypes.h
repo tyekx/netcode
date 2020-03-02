@@ -421,6 +421,8 @@ namespace Egg {
 	public:
 		virtual ~SpriteFont() = default;
 		virtual ResourceViewsRef GetResourceView() const = 0;
+		virtual DirectX::XMFLOAT2 MeasureString(const char * str) const = 0;
+		virtual DirectX::XMFLOAT2 MeasureString(const wchar_t * str) const = 0;
 	};
 
 	using SpriteFontRef = std::shared_ptr<SpriteFont>;
