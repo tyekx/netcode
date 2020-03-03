@@ -18,18 +18,6 @@ namespace Egg::Graphics::DX12 {
 		gcl->IASetVertexBuffers(0, 1, &vbv);
 	}
 
-	void RenderContext::SetVertexBuffer(uint64_t handle, uint32_t vertexOffset)
-	{
-		const GResource & res = resources->GetNativeResource(handle);
-
-		D3D12_VERTEX_BUFFER_VIEW vbv;
-		vbv.StrideInBytes = res.desc.strideInBytes;
-		vbv.BufferLocation = res.address + vertexOffset * vbv.StrideInBytes;
-		vbv.SizeInBytes = static_cast<UINT>(res.desc.sizeInBytes);
-
-		gcl->IASetVertexBuffers(0, 1, &vbv);
-	}
-
 	void RenderContext::SetIndexBuffer(uint64_t handle)
 	{
 		const GResource & res = resources->GetNativeResource(handle);
@@ -42,14 +30,24 @@ namespace Egg::Graphics::DX12 {
 		gcl->IASetIndexBuffer(&ibv);
 	}
 
-	void RenderContext::DrawIndexed(uint64_t indexCount)
+	void RenderContext::DrawIndexed(uint32_t indexCount)
 	{
-		gcl->DrawIndexedInstanced(static_cast<UINT>(indexCount), 1, 0, 0, 0);
+		gcl->DrawIndexedInstanced(indexCount, 1, 0, 0, 0);
 	}
 
-	void RenderContext::Draw(uint64_t vertexCount)
+	void RenderContext::DrawIndexed(uint32_t indexCount, uint32_t vertexOffset)
 	{
-		gcl->DrawInstanced(static_cast<UINT>(vertexCount), 1, 0, 0);
+		gcl->DrawIndexedInstanced(indexCount, 1, 0, vertexOffset, 0);
+	}
+
+	void RenderContext::Draw(uint32_t vertexCount)
+	{
+		gcl->DrawInstanced(vertexCount, 1, 0, 0);
+	}
+
+	void RenderContext::Draw(uint32_t vertexCount, uint32_t vertexOffset)
+	{
+		gcl->DrawInstanced(vertexCount, 1, vertexOffset, 0);
 	}
 
 	void RenderContext::SetRootSignature(RootSignatureRef rs) {

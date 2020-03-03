@@ -85,10 +85,11 @@ namespace Egg::Graphics {
 		virtual void SetRootSignature(RootSignatureRef rs) = 0;
 		virtual void SetPipelineState(PipelineStateRef pso) = 0;
 		virtual void SetVertexBuffer(uint64_t handle) = 0;
-		virtual void SetVertexBuffer(uint64_t handle, uint32_t vertexOffset) = 0;
 		virtual void SetIndexBuffer(uint64_t handle) = 0;
-		virtual void DrawIndexed(uint64_t indexCount) = 0;
-		virtual void Draw(uint64_t vertexCount) = 0;
+		virtual void DrawIndexed(uint32_t indexCount) = 0;
+		virtual void DrawIndexed(uint32_t indexCount, uint32_t vertexOffset) = 0;
+		virtual void Draw(uint32_t vertexCount) = 0;
+		virtual void Draw(uint32_t vertexCount, uint32_t vertexOffset) = 0;
 		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position) = 0;
 		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size) = 0;
 

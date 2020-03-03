@@ -299,7 +299,9 @@ public:
 
 		bool found = false;
 
-		gEngine->uiPass_Input.Produced(UIRenderItem{ sprite->texture, nullptr, nullptr, DirectX::XMFLOAT4{  DirectX::g_XMZero }, DirectX::XMFLOAT2{ transform->position.x, transform->position.y }, sprite->textureSize });
+		gEngine->uiPass_Input.Produced(UIRenderItem{ sprite->texture,
+			nullptr, nullptr, DirectX::XMFLOAT4{  DirectX::g_XMZero }, DirectX::XMFLOAT2{ transform->position.x, transform->position.y }, sprite->textureSize,
+			DirectX::XMFLOAT2{ static_cast<float>(uiElement->width), static_cast<float>(uiElement->height) } });
 
 		// handle mouseovers
 		for(auto it = raycastHits.begin(); it != raycastHits.end(); ++it) {
@@ -361,7 +363,8 @@ public:
 											text->text.c_str(),
 											text->color,
 											DirectX::XMFLOAT2 { transform->worldPosition.x, transform->worldPosition.y },
-											DirectX::XMUINT2 { 0, 0 }
+											DirectX::XMUINT2 { 0, 0 },
+											DirectX::XMFLOAT2 { 0.0f, 0.0f}
 									   });
 	}
 };

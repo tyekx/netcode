@@ -33,6 +33,7 @@ struct UIRenderItem {
 	DirectX::XMFLOAT4 fontColor;
 	DirectX::XMFLOAT2 position;
 	DirectX::XMUINT2 textureSize;
+	DirectX::XMFLOAT2 size;
 };
 
 class GraphicsEngine {
@@ -583,7 +584,7 @@ private:
 			context->BeginSpriteRendering(uiPass_viewProjInv);
 			for(const UIRenderItem & i : uiPass_Input) {
 				if(i.texture != nullptr) {
-					context->DrawSprite(i.texture, i.textureSize, i.position);
+					context->DrawSprite(i.texture, i.textureSize, i.position, i.size);
 				}
 				if(i.font != nullptr) {
 					context->DrawString(i.font, i.text, i.position, i.fontColor );
