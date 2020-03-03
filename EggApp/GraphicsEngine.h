@@ -28,7 +28,9 @@ struct RenderItem {
 
 struct UIRenderItem {
 	Egg::ResourceViewsRef texture;
+	Egg::SpriteFontRef font;
 	const wchar_t * text;
+	DirectX::XMFLOAT4 fontColor;
 	DirectX::XMFLOAT2 position;
 	DirectX::XMUINT2 textureSize;
 };
@@ -580,7 +582,12 @@ private:
 			[&](IRenderContext * context) -> void {
 			context->BeginSpriteRendering(uiPass_viewProjInv);
 			for(const UIRenderItem & i : uiPass_Input) {
-				context->DrawSprite(i.texture, i.textureSize, i.position);
+				if(i.texture != nullptr) {
+					context->DrawSprite(i.texture, i.textureSize, i.position);
+				}
+				if(i.font != nullptr) {
+					context->DrawString(i.font, i.text, i.position, i.fontColor );
+				}
 			}
 			context->EndSpriteRendering();
 		});

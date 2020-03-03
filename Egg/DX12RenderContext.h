@@ -62,6 +62,7 @@ namespace Egg::Graphics::DX12 {
 		virtual void EndSpriteRendering() override;
 
 		virtual void DrawString(SpriteFontRef spriteFont, const wchar_t * string, const DirectX::XMFLOAT2 & position) override;
+		virtual void DrawString(SpriteFontRef spriteFont, const wchar_t * string, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) override;
 		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position) override;
 
 		virtual void ResetStreamOutput() override;

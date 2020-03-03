@@ -1,5 +1,7 @@
 #pragma once
 
+#include <DirectXColors.h>
+
 #include <Egg/Input.h>
 #include <Egg/BasicGeometry.h>
 #include <Egg/DebugPhysx.h>
@@ -35,6 +37,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	AnimationSystem animSystem;
 	PhysXSystem pxSystem;
 	UISystem uiSystem;
+	UITextSystem uiTextSystem;
 
 	GameScene * gameScene;
 	UIScene * uiScene;
@@ -43,6 +46,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 	void LoadSystems() {
 		uiSystem.CreateResources(uiScene->GetPhysXScene(), &uiScene->perFrameData);
+		uiTextSystem.gEngine = &renderSystem.renderer;
 	}
 
 	void Render() {
@@ -68,6 +72,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 		uiScene->Foreach([this](UIObject * uiObject) ->void {
 			uiSystem.Run(uiObject);
+			uiTextSystem.Run(uiObject);
 		});
 
 		renderSystem.renderer.CreateFrameGraph(builder);
@@ -149,6 +154,12 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		uiElement->height = 128.0f;
 
 		Text * btnText = testBtn->AddComponent<Text>();
+		btnText->text = L"Hello World";
+		btnText->color = DirectX::XMFLOAT4{ DirectX::Colors::DarkSlateGray };
+		
+		Egg::SpriteFontBuilderRef spriteFontBuilder = graphics->CreateSpriteFontBuilder();
+		spriteFontBuilder->LoadFont(L"titillium60.spritefont");
+		btnText->font = spriteFontBuilder->Build();
 
 
 

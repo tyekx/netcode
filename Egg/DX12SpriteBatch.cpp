@@ -123,7 +123,7 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 		CreateIndexBuffer(graphics);
 	}
 
-	void XM_CALLCONV SpriteBatch::Begin(SpriteSortMode sortMode, DirectX::FXMMATRIX transformMatrix)
+	void SpriteBatch::Begin(SpriteSortMode sortMode, DirectX::FXMMATRIX transformMatrix)
 	{
 		if(mInBeginEndPair)
 			throw std::exception("Cannot nest Begin calls on a single SpriteBatch");
@@ -338,7 +338,7 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 		}
 	}
 
-	void XM_CALLCONV SpriteBatch::RenderSprite(SpriteInfo const * sprite, PCT_Vertex * vertices, DirectX::FXMVECTOR textureSize, DirectX::FXMVECTOR inverseTextureSize)
+	void SpriteBatch::RenderSprite(SpriteInfo const * sprite, PCT_Vertex * vertices, DirectX::FXMVECTOR textureSize, DirectX::FXMVECTOR inverseTextureSize)
 	{
 		// Load sprite parameters into SIMD registers.
 		DirectX::XMVECTOR source = XMLoadFloat4A(&sprite->source);
@@ -492,7 +492,7 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 		return v;
 	}
 
-	void XM_CALLCONV SpriteBatch::Draw(ResourceViewsRef texture,
+	void SpriteBatch::Draw(ResourceViewsRef texture,
 									   DirectX::XMUINT2 const & textureSize,
 									   DirectX::FXMVECTOR destination,
 									   RECT const * sourceRectangle,
@@ -560,7 +560,7 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 	}
 
 
-	void XM_CALLCONV SpriteBatch::Draw(ResourceViewsRef texture,
+	void SpriteBatch::Draw(ResourceViewsRef texture,
 									   DirectX::XMUINT2 const & textureSize,
 									   DirectX::XMFLOAT2 const & position,
 									   DirectX::FXMVECTOR color)
@@ -570,7 +570,7 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 		Draw(texture, textureSize, destination, nullptr, color, DirectX::g_XMZero, 0);
 	}
 
-	void XM_CALLCONV SpriteBatch::Draw(ResourceViewsRef texture,
+	void SpriteBatch::Draw(ResourceViewsRef texture,
 									   DirectX::XMUINT2 const & textureSize,
 									   DirectX::XMFLOAT2 const & position,
 									   RECT const * sourceRectangle,
@@ -589,7 +589,7 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 	}
 
 
-	void XM_CALLCONV SpriteBatch::Draw(ResourceViewsRef texture,
+	void SpriteBatch::Draw(ResourceViewsRef texture,
 									   DirectX::XMUINT2 const & textureSize,
 									   DirectX::XMFLOAT2 const & position,
 									   RECT const * sourceRectangle,
@@ -608,7 +608,7 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 	}
 
 
-	void XM_CALLCONV SpriteBatch::Draw(ResourceViewsRef texture, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color)
+	void SpriteBatch::Draw(ResourceViewsRef texture, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color)
 	{
 		DirectX::XMVECTOR destination = DirectX::XMVectorPermute<0, 1, 4, 5>(position, DirectX::g_XMOne); // x, y, 1, 1
 
@@ -616,7 +616,7 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 	}
 
 
-	void XM_CALLCONV SpriteBatch::Draw(ResourceViewsRef texture,
+	void SpriteBatch::Draw(ResourceViewsRef texture,
 									   DirectX::XMUINT2 const & textureSize,
 									   DirectX::FXMVECTOR position,
 									   RECT const * sourceRectangle,
@@ -637,7 +637,7 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 	}
 
 
-	void XM_CALLCONV SpriteBatch::Draw(ResourceViewsRef texture,
+	void SpriteBatch::Draw(ResourceViewsRef texture,
 									   DirectX::XMUINT2 const & textureSize,
 									   DirectX::FXMVECTOR position,
 									   RECT const * sourceRectangle,
@@ -658,7 +658,7 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 	}
 
 
-	void XM_CALLCONV SpriteBatch::Draw(ResourceViewsRef texture,
+	void SpriteBatch::Draw(ResourceViewsRef texture,
 									   DirectX::XMUINT2 const & textureSize,
 									   RECT const & destinationRectangle,
 									   DirectX::FXMVECTOR color)
@@ -669,7 +669,7 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 	}
 
 
-	void XM_CALLCONV SpriteBatch::Draw(ResourceViewsRef texture,
+	void SpriteBatch::Draw(ResourceViewsRef texture,
 									   DirectX::XMUINT2 const & textureSize,
 									   RECT const & destinationRectangle,
 									   RECT const * sourceRectangle,

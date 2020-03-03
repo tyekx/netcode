@@ -96,6 +96,7 @@ namespace Egg::Graphics {
 		virtual void EndSpriteRendering() = 0;
 
 		virtual void DrawString(SpriteFontRef spriteFont, const wchar_t * string, const DirectX::XMFLOAT2 & position) = 0;
+		virtual void DrawString(SpriteFontRef spriteFont, const wchar_t * string, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) = 0;
 
 		virtual void SetPrimitiveTopology(PrimitiveTopology topology) = 0;
 

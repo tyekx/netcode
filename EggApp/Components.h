@@ -43,11 +43,8 @@ public:
 
 COMPONENT_ALIGN struct Text {
 public:
-	wchar_t text[128];
-};
-
-COMPONENT_ALIGN struct LongText {
-public:
+	DirectX::XMFLOAT4 color;
+	Egg::SpriteFontRef font;
 	std::wstring text;
 };
 

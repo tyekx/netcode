@@ -10,5 +10,5 @@ SamplerState samplerState : register(s0);
 
 float4 main(SpriteFont_PixelInput input) : SV_Target0
 {
-    return spriteTexture.Sample(samplerState, input.texCoord);
+    return spriteTexture.Sample(samplerState, input.texCoord) * float4(input.color.rgb, 1.0f);
 }

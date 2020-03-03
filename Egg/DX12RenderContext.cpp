@@ -129,10 +129,18 @@ namespace Egg::Graphics::DX12 {
 		spriteBatch->End();
 	}
 
+	void RenderContext::DrawString(SpriteFontRef spriteFont, const wchar_t * string, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) {
+		DX12SpriteFontRef font = std::dynamic_pointer_cast<DX12SpriteFont>(spriteFont);
+
+		DirectX::FXMVECTOR cVec = DirectX::XMLoadFloat4(&color);
+
+		font->DrawString(spriteBatch, string, position, cVec);
+	}
+
 	void RenderContext::DrawString(SpriteFontRef spriteFont, const wchar_t * string, const DirectX::XMFLOAT2 & position)
 	{
 		DX12SpriteFontRef font = std::dynamic_pointer_cast<DX12SpriteFont>(spriteFont);
-		font->DrawString(spriteBatch, string, position);
+		font->DrawString(spriteBatch, string, position, DirectX::Colors::White);
 	}
 
 	void RenderContext::DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position)

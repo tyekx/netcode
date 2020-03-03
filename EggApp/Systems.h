@@ -304,7 +304,7 @@ public:
 
 		bool found = false;
 
-		gEngine->uiPass_Input.Produced(UIRenderItem{ sprite->texture, nullptr, DirectX::XMFLOAT2{ transform->position.x, transform->position.y }, sprite->textureSize });
+		gEngine->uiPass_Input.Produced(UIRenderItem{ sprite->texture, nullptr, nullptr, DirectX::XMFLOAT4{  DirectX::g_XMZero }, DirectX::XMFLOAT2{ transform->position.x, transform->position.y }, sprite->textureSize });
 
 		// handle mouseovers
 		for(auto it = raycastHits.begin(); it != raycastHits.end(); ++it) {
@@ -331,10 +331,18 @@ public:
 
 class UITextSystem {
 public:
+	GraphicsEngine * gEngine;
 
 	void Run(UIObject * object);
 
 	void operator()(UIObject * uiObject, Transform * transform, UIElement * uiElement, Text * text) {
-
+		gEngine->uiPass_Input.Produced(UIRenderItem{
+											nullptr,
+											text->font,
+											text->text.c_str(),
+											text->color,
+											DirectX::XMFLOAT2 { transform->position.x, transform->position.y },
+											DirectX::XMUINT2 { 0, 0 }
+									   });
 	}
 };

@@ -91,30 +91,30 @@ namespace Egg::Graphics::DX12 {
 		return shaderResourceView;
 	}
 
-	void XM_CALLCONV SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ const char * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, float scale, SpriteEffects effects, float layerDepth) const
+	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ const char * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, float scale, SpriteEffects effects, float layerDepth) const
 	{
 		DrawString(spriteBatch, ConvertUTF8(text), XMLoadFloat2(&position), color, rotation, DirectX::XMLoadFloat2(&origin), DirectX::XMVectorReplicate(scale), effects, layerDepth);
 	}
 
 
-	void XM_CALLCONV SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ char const * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, DirectX::XMFLOAT2 const & scale, SpriteEffects effects, float layerDepth) const
+	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ char const * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, DirectX::XMFLOAT2 const & scale, SpriteEffects effects, float layerDepth) const
 	{
 		DrawString(spriteBatch, ConvertUTF8(text), DirectX::XMLoadFloat2(&position), color, rotation, DirectX::XMLoadFloat2(&origin), DirectX::XMLoadFloat2(&scale), effects, layerDepth);
 	}
 
 
-	void XM_CALLCONV SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ char const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, float scale, SpriteEffects effects, float layerDepth) const
+	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ char const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, float scale, SpriteEffects effects, float layerDepth) const
 	{
 		DrawString(spriteBatch, ConvertUTF8(text), position, color, rotation, origin, DirectX::XMVectorReplicate(scale), effects, layerDepth);
 	}
 
 
-	void XM_CALLCONV SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ char const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, DirectX::GXMVECTOR scale, SpriteEffects effects, float layerDepth) const
+	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ char const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, DirectX::GXMVECTOR scale, SpriteEffects effects, float layerDepth) const
 	{
 		DrawString(spriteBatch, ConvertUTF8(text), position, color, rotation, origin, scale, effects, layerDepth);
 	}
 
-	void XM_CALLCONV SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, float scale, SpriteEffects effects, float layerDepth) const
+	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::XMFLOAT2 const & position, DirectX::XMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, float scale, SpriteEffects effects, float layerDepth) const
 	{
 		DirectX::XMVECTOR posV = DirectX::XMLoadFloat2(&position);
 		DirectX::XMVECTOR originV = DirectX::XMLoadFloat2(&origin);
@@ -123,18 +123,18 @@ namespace Egg::Graphics::DX12 {
 	}
 
 
-	void XM_CALLCONV SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, DirectX::XMFLOAT2 const & scale, SpriteEffects effects, float layerDepth) const
+	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, DirectX::XMFLOAT2 const & scale, SpriteEffects effects, float layerDepth) const
 	{
 		DrawString(spriteBatch, text, DirectX::XMLoadFloat2(&position), color, rotation, DirectX::XMLoadFloat2(&origin), DirectX::XMLoadFloat2(&scale), effects, layerDepth);
 	}
 
 
-	void XM_CALLCONV SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, float scale, SpriteEffects effects, float layerDepth) const
+	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, float scale, SpriteEffects effects, float layerDepth) const
 	{
 		DrawString(spriteBatch, text, position, color, rotation, origin, DirectX::XMVectorReplicate(scale), effects, layerDepth);
 	}
 
-	void XM_CALLCONV SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, DirectX::GXMVECTOR scale, SpriteEffects effects, float layerDepth) const
+	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, DirectX::GXMVECTOR scale, SpriteEffects effects, float layerDepth) const
 	{
 		static_assert(SpriteEffects_FlipHorizontally == 1 &&
 					  SpriteEffects_FlipVertically == 2, "If you change these enum values, the following tables must be updated to match");
@@ -169,7 +169,7 @@ namespace Egg::Graphics::DX12 {
 
 		
 
-		ForEachGlyph(text, [&](Glyph const * glyph, float x, float y, float advance)
+		ForEachGlyph(text, [&, color](Glyph const * glyph, float x, float y, float advance)
 		{
 			UNREFERENCED_PARAMETER(advance);
 
@@ -189,7 +189,7 @@ namespace Egg::Graphics::DX12 {
 	}
 
 
-	DirectX::XMVECTOR XM_CALLCONV SpriteFont::MeasureString_Impl(_In_z_ wchar_t const * text) const
+	DirectX::XMVECTOR SpriteFont::MeasureString_Impl(_In_z_ wchar_t const * text) const
 	{
 		DirectX::XMVECTOR result = DirectX::XMVectorZero();
 
@@ -243,7 +243,7 @@ namespace Egg::Graphics::DX12 {
 	}
 
 
-	DirectX::XMVECTOR XM_CALLCONV SpriteFont::MeasureString_Impl(_In_z_ char const * text) const
+	DirectX::XMVECTOR SpriteFont::MeasureString_Impl(_In_z_ char const * text) const
 	{
 		return MeasureString_Impl(ConvertUTF8(text));
 	}
@@ -300,7 +300,7 @@ namespace Egg::Graphics::DX12 {
 	}
 
 
-	RECT XM_CALLCONV SpriteFont::MeasureDrawBounds(_In_z_ wchar_t const * text, DirectX::FXMVECTOR position) const
+	RECT SpriteFont::MeasureDrawBounds(_In_z_ wchar_t const * text, DirectX::FXMVECTOR position) const
 	{
 		DirectX::XMFLOAT2 pos;
 		DirectX::XMStoreFloat2(&pos, position);
@@ -314,7 +314,7 @@ namespace Egg::Graphics::DX12 {
 	}
 
 
-	RECT XM_CALLCONV SpriteFont::MeasureDrawBounds(_In_z_ char const * text, DirectX::FXMVECTOR position) const
+	RECT SpriteFont::MeasureDrawBounds(_In_z_ char const * text, DirectX::FXMVECTOR position) const
 	{
 		DirectX::XMFLOAT2 pos;
 		XMStoreFloat2(&pos, position);

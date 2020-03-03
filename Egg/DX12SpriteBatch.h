@@ -112,22 +112,22 @@ namespace Egg::Graphics::DX12
         virtual ~SpriteBatch() = default;
 
         // Begin/End a batch of sprite drawing operations.
-        void XM_CALLCONV Begin(SpriteSortMode sortMode = SpriteSortMode_Deferred, DirectX::FXMMATRIX transformMatrix = MatrixIdentity);
-        void __cdecl End();
+        void Begin(SpriteSortMode sortMode = SpriteSortMode_Deferred, DirectX::FXMMATRIX transformMatrix = MatrixIdentity);
+        void End();
 
         // Draw overloads specifying position, origin and scale as XMFLOAT2.
-        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color = DirectX::Colors::White);
-        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::XMFLOAT2 const & origin = Float2Zero, float scale = 1, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
-        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, DirectX::XMFLOAT2 const & scale, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
+        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color = DirectX::Colors::White);
+        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::XMFLOAT2 const & origin = Float2Zero, float scale = 1, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
+        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, DirectX::XMFLOAT2 const & scale, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
 
         // Draw overloads specifying position, origin and scale via the first two components of an XMVECTOR.
-        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color = DirectX::Colors::White);
-        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::FXMVECTOR origin = DirectX::g_XMZero, float scale = 1, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
-        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, DirectX::GXMVECTOR scale, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
+        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color = DirectX::Colors::White);
+        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::FXMVECTOR origin = DirectX::g_XMZero, float scale = 1, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
+        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, DirectX::GXMVECTOR scale, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
 
         // Draw overloads specifying position as a RECT.
-        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, RECT const & destinationRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White);
-        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, RECT const & destinationRectangle, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::XMFLOAT2 const & origin = Float2Zero, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
+        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, RECT const & destinationRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White);
+        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, RECT const & destinationRectangle, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::XMFLOAT2 const & origin = Float2Zero, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
 
     private:
         // Implementation helper methods.
@@ -139,12 +139,12 @@ namespace Egg::Graphics::DX12
 
         void RenderBatch(ResourceViewsRef texture, DirectX::XMVECTOR textureSize, _In_reads_(count) SpriteInfo const * const * sprites, size_t count);
 
-        static void XM_CALLCONV RenderSprite(_In_ SpriteInfo const * sprite,
+        static void RenderSprite(_In_ SpriteInfo const * sprite,
                                              _Out_writes_(VerticesPerSprite) PCT_Vertex * vertices,
                                              DirectX::FXMVECTOR textureSize,
                                              DirectX::FXMVECTOR inverseTextureSize);
 
-        void XM_CALLCONV Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR destination, RECT const * sourceRectangle, DirectX::FXMVECTOR color, DirectX::FXMVECTOR originRotationDepth, unsigned int flags);
+        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR destination, RECT const * sourceRectangle, DirectX::FXMVECTOR color, DirectX::FXMVECTOR originRotationDepth, unsigned int flags);
 
         static const DirectX::XMMATRIX MatrixIdentity;
         static const DirectX::XMFLOAT2 Float2Zero;

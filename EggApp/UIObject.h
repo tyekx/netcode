@@ -6,7 +6,7 @@
 #include "Components.h"
 
 using UIComponents_T = std::tuple<Transform, UIElement, Sprite, Button, Text>;
-using UIExtensionComponents_T = std::tuple<Camera, LongText>;
+using UIExtensionComponents_T = std::tuple<Camera>;
 
 class UIObject {
 public:
