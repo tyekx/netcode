@@ -63,6 +63,49 @@ public:
 		cameraRef->GetComponent<Transform>()->position = DirectX::XMFLOAT3{ static_cast<float>(dim.x) / 2.0f ,static_cast<float>(dim.y) / 2.0f, 0.0f };
 	}
 
+	UIObject* CreateButton(std::wstring text, const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT2 & pos, float zIndex, Egg::SpriteFontRef font, Egg::ResourceViewsRef bgTex, const DirectX::XMUINT2 & texSize) {
+		UIObject * background = Create();
+		UIObject * textObject = Create();
+
+		textObject->Parent(background);
+
+		UIElement * bgElem = background->AddComponent<UIElement>();
+		bgElem->width = size.x;
+		bgElem->height = size.y;
+
+		Button * bgBtn = background->AddComponent<Button>();
+
+		Sprite * sprite = background->AddComponent<Sprite>();
+		sprite->textureSize = texSize;
+		sprite->texture = std::move(bgTex);
+
+		Transform* bgTransform = background->AddComponent<Transform>();
+		bgTransform->position = DirectX::XMFLOAT3{ pos.x, pos.y, zIndex };
+		
+		DirectX::XMFLOAT2 stringSize = font->MeasureString(text.c_str());
+
+		Transform * textTransform = textObject->AddComponent<Transform>();
+		textTransform->position = DirectX::XMFLOAT3{
+			(size.x - stringSize.x) / 2.0f,
+			(size.y - stringSize.y) / 2.0f,
+			0.0f
+		};
+
+		UIElement * textElem = textObject->AddComponent<UIElement>();
+		textElem->width = stringSize.x;
+		textElem->height = stringSize.y;
+
+		Text* txt = textObject->AddComponent<Text>();
+		txt->color = DirectX::XMFLOAT4{ 0.2f, 0.2f, 0.2f, 1.0f };
+		txt->font = std::move(font);
+		txt->text = std::move(text);
+
+		Spawn(background);
+		Spawn(textObject);
+
+		return background;
+	}
+
 	void UpdatePerFrameCb() {
 		Transform * transform = cameraRef->GetComponent<Transform>();
 		Camera * camComponent = cameraRef->GetComponent<Camera>();

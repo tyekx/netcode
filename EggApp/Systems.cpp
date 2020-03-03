@@ -122,3 +122,8 @@ void UITextSystem::Run(UIObject * object)
 {
 	TryInvoke(object, this);
 }
+
+void UITransformSystem::Run(UIObject * object)
+{
+	TryInvoke(object, this);
+}

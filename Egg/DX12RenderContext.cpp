@@ -148,6 +148,16 @@ namespace Egg::Graphics::DX12 {
 		spriteBatch->Draw(texture, textureSize, position);
 	}
 
+	void RenderContext::DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size)
+	{
+		RECT r;
+		r.left = static_cast<int32_t>(position.x);
+		r.top = static_cast<int32_t>(position.y);
+		r.right = r.left + static_cast<int32_t>(size.x);
+		r.bottom = r.top + static_cast<int32_t>(size.y);
+		spriteBatch->Draw(texture, textureSize, r);
+	}
+
 	void RenderContext::ResetStreamOutput()
 	{
 		if(streamOutput_FilledSizeLocation > 0) {

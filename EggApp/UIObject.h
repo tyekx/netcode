@@ -1,5 +1,6 @@
 #pragma once
 
+#include <set>
 #include <functional>
 #include <Egg/EggMpl.hpp>
 #include "ComponentStorage.hpp"
@@ -16,8 +17,9 @@ public:
 protected:
 	StorageType components;
 	UIObject * parent;
-	std::vector<UIObject *> children;
+	std::set<UIObject *> children;
 	uint32_t flags;
+	bool isActiveCache;
 public:
 	inline SignatureType GetSignature() const {
 		return components.signature;
@@ -33,7 +35,7 @@ public:
 	}
 
 	bool IsSpawnable() const {
-		return (flags & (0x1)) > 0;
+		return (flags & (0x1)) != 0;
 	}
 
 	void SetSpawnableFlag(bool tf) {
@@ -44,12 +46,40 @@ public:
 		}
 	}
 
+	bool IsActive() const {
+		return isActiveCache;
+	}
+
+	void IsActive(bool tf) {
+		isActiveCache = tf;
+	}
+
+	bool GetActivityFlag() const {
+		return (flags&(0x2)) != 0;
+	}
+
+	void SetActivityFlag(bool tf) {
+		if(tf) {
+			flags |= 0x2;
+		} else {
+			flags &= (~0x2);
+		}
+	}
+
 	void Spawn() {
 		SetSpawnableFlag(true);
 	}
 
 	void Parent(UIObject * obj) {
-		// @TODO
+		if(parent != nullptr) {
+			parent->children.erase(obj);
+		}
+
+		parent = obj;
+
+		if(parent != nullptr) {
+			parent->children.insert(obj);
+		}
 	}
 
 	template<typename T>

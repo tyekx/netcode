@@ -8,7 +8,7 @@
 #include "PhysxHelpers.h"
 
 class TransformSystem {
-
+public:
 	static inline DirectX::XMVECTOR GetWorldRotation(Transform * transform, Transform * parentTransform) {
 		DirectX::XMVECTOR worldRotation = DirectX::XMLoadFloat4(&transform->rotation);
 		if(parentTransform != nullptr) {
@@ -31,7 +31,6 @@ class TransformSystem {
 
 		return worldPosition;
 	}
-public:
 
 	void Run(GameObject * gameObject);
 
@@ -292,10 +291,6 @@ public:
 				physx::PxTransform localPose(physx::PxIdentity);
 				localPose.p = physx::PxVec3(uiElement->width / 2.0f, uiElement->height / 2.0f, 0.0f);
 				boxShape->setLocalPose(localPose);
-				physx::PxVec3 gPos = ToPxVec3(transform->position);
-				physx::PxTransform globalPose(physx::PxIdentity);
-				globalPose.p = gPos;
-				actor->setGlobalPose(globalPose);
 				actor->attachShape(*boxShape);
 				actor->userData = uiObject;
 				pxScene->addActor(*actor);
@@ -329,6 +324,30 @@ public:
 	}
 };
 
+class UITransformSystem {
+public:
+	void Run(UIObject * object);
+
+	void operator()(UIObject * uiObject, Transform * transform) {
+		UIObject * parent = uiObject->Parent();
+		bool isParentActive = true;
+		Transform * parentTransform = nullptr;
+
+		if(parent != nullptr) {
+			parentTransform = parent->GetComponent<Transform>();
+			isParentActive = parent->IsActive();
+		}
+
+		uiObject->IsActive(uiObject->GetActivityFlag() && isParentActive);
+
+		DirectX::FXMVECTOR worldPos = TransformSystem::GetWorldPosition(transform, parentTransform);
+		DirectX::FXMVECTOR worldRot = TransformSystem::GetWorldRotation(transform, parentTransform);
+
+		DirectX::XMStoreFloat3(&transform->worldPosition, worldPos);
+		DirectX::XMStoreFloat4(&transform->worldRotation, worldRot);
+	}
+};
+
 class UITextSystem {
 public:
 	GraphicsEngine * gEngine;
@@ -341,7 +360,7 @@ public:
 											text->font,
 											text->text.c_str(),
 											text->color,
-											DirectX::XMFLOAT2 { transform->position.x, transform->position.y },
+											DirectX::XMFLOAT2 { transform->worldPosition.x, transform->worldPosition.y },
 											DirectX::XMUINT2 { 0, 0 }
 									   });
 	}

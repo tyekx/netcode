@@ -37,6 +37,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	AnimationSystem animSystem;
 	PhysXSystem pxSystem;
 	UISystem uiSystem;
+	UITransformSystem uiTransformSystem;
 	UITextSystem uiTextSystem;
 
 	GameScene * gameScene;
@@ -70,7 +71,8 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		uiScene->Update();
 		uiSystem.Raycast();
 
-		uiScene->Foreach([this](UIObject * uiObject) ->void {
+		uiScene->Foreach([this](UIObject * uiObject) -> void {
+			uiTransformSystem.Run(uiObject);
 			uiSystem.Run(uiObject);
 			uiTextSystem.Run(uiObject);
 		});
@@ -128,40 +130,9 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 		uiSystem.gEngine = &renderSystem.renderer;
 
-		UIObject* testBtn = uiScene->Create();
-		Transform * transform = testBtn->AddComponent<Transform>();
-		UIElement * uiElement = testBtn->AddComponent<UIElement>();
-		Sprite * sprite = testBtn->AddComponent<Sprite>();
-		Button *btn = testBtn->AddComponent<Button>();
-
-		transform->position.x = 100.0f;
-		transform->position.y = 200.0f;
-		transform->position.z = 0.5f;
-
-		btn->onClick = []() -> void {
-			Log::Info("TestBtn: clicked");
-		};
-
-		btn->onMouseEnter = []() -> void {
-			Log::Info("TestBtn: mouse enter");
-		};
-
-		btn->onMouseLeave = []() -> void {
-			Log::Info("TestBtn: mouse leave");
-		};
-
-		uiElement->width = 512.0f;
-		uiElement->height = 128.0f;
-
-		Text * btnText = testBtn->AddComponent<Text>();
-		btnText->text = L"Hello World";
-		btnText->color = DirectX::XMFLOAT4{ DirectX::Colors::DarkSlateGray };
-		
 		Egg::SpriteFontBuilderRef spriteFontBuilder = graphics->CreateSpriteFontBuilder();
 		spriteFontBuilder->LoadFont(L"titillium60.spritefont");
-		btnText->font = spriteFontBuilder->Build();
-
-
+		auto titillium60Font = spriteFontBuilder->Build();
 
 		auto texBuilder = graphics->CreateTextureBuilder();
 		texBuilder->LoadTexture2D(L"btn_background.png");
@@ -177,10 +148,22 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		auto srvRef = graphics->resources->CreateShaderResourceViews(1);
 		srvRef->CreateSRV(0, texHandle);
 
-		sprite->texture = srvRef;
-		sprite->textureSize = DirectX::XMUINT2{ static_cast<uint32_t>(img->width), static_cast<uint32_t>(img->height) };
+		UIObject*btnBg = uiScene->CreateButton(L"Play", DirectX::XMFLOAT2{ 256.0f, 64.0f }, DirectX::XMFLOAT2{ 200.0f, 100.0f }, 0.5f, titillium60Font, srvRef, DirectX::XMUINT2{ static_cast<uint32_t>(img->width), static_cast<uint32_t>(img->height) });
 
-		uiScene->Spawn(testBtn);
+		Button * btn = btnBg->GetComponent<Button>();
+
+		btn->onClick = []() -> void {
+			Log::Info("TestBtn: clicked");
+		};
+
+		btn->onMouseEnter = []() -> void {
+			Log::Info("TestBtn: mouse enter");
+		};
+
+		btn->onMouseLeave = []() -> void {
+			Log::Info("TestBtn: mouse leave");
+		};
+
 
 		Egg::Input::SetAxis("Vertical", 'W', 'S');
 		Egg::Input::SetAxis("Horizontal", 'A', 'D');
