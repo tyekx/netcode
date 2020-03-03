@@ -78,6 +78,8 @@ public:
 		Sprite * sprite = background->AddComponent<Sprite>();
 		sprite->textureSize = texSize;
 		sprite->texture = std::move(bgTex);
+		sprite->diffuseColor = DirectX::XMFLOAT4{ 0.2f, 0.2f, 0.2f, 1.0f };
+		sprite->hoverColor = DirectX::XMFLOAT4{ 0.6f, 0.6f, 0.6f, 1.0f };
 
 		Transform* bgTransform = background->AddComponent<Transform>();
 		bgTransform->position = DirectX::XMFLOAT3{ pos.x, pos.y, zIndex };
@@ -96,7 +98,7 @@ public:
 		textElem->height = stringSize.y;
 
 		Text* txt = textObject->AddComponent<Text>();
-		txt->color = DirectX::XMFLOAT4{ 0.2f, 0.2f, 0.2f, 1.0f };
+		txt->color = DirectX::XMFLOAT4{ 0.8f, 0.8f, 0.8f, 1.0f };
 		txt->font = std::move(font);
 		txt->text = std::move(text);
 

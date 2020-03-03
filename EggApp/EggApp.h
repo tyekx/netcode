@@ -131,7 +131,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		uiSystem.gEngine = &renderSystem.renderer;
 
 		Egg::SpriteFontBuilderRef spriteFontBuilder = graphics->CreateSpriteFontBuilder();
-		spriteFontBuilder->LoadFont(L"titillium60.spritefont");
+		spriteFontBuilder->LoadFont(L"titillium36.spritefont");
 		auto titillium60Font = spriteFontBuilder->Build();
 
 		auto texBuilder = graphics->CreateTextureBuilder();

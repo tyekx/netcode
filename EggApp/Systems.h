@@ -299,10 +299,6 @@ public:
 
 		bool found = false;
 
-		gEngine->uiPass_Input.Produced(UIRenderItem{ sprite->texture,
-			nullptr, nullptr, DirectX::XMFLOAT4{  DirectX::g_XMZero }, DirectX::XMFLOAT2{ transform->position.x, transform->position.y }, sprite->textureSize,
-			DirectX::XMFLOAT2{ static_cast<float>(uiElement->width), static_cast<float>(uiElement->height) } });
-
 		// handle mouseovers
 		for(auto it = raycastHits.begin(); it != raycastHits.end(); ++it) {
 			if(button == *it) {
@@ -323,6 +319,19 @@ public:
 				button->onMouseLeave();
 			}
 		}
+
+		DirectX::XMFLOAT4 clr = sprite->diffuseColor;
+		if(button->isMouseOver) {
+			clr = sprite->hoverColor;
+		}
+
+		gEngine->uiPass_Input.Produced(UISpriteRenderItem(
+			sprite->texture,
+			sprite->textureSize,
+			DirectX::XMFLOAT2{ static_cast<float>(uiElement->width), static_cast<float>(uiElement->height) },
+			clr,
+			DirectX::XMFLOAT2{ transform->position.x, transform->position.y }
+		));
 	}
 };
 
@@ -357,14 +366,12 @@ public:
 	void Run(UIObject * object);
 
 	void operator()(UIObject * uiObject, Transform * transform, UIElement * uiElement, Text * text) {
-		gEngine->uiPass_Input.Produced(UIRenderItem{
-											nullptr,
-											text->font,
-											text->text.c_str(),
-											text->color,
-											DirectX::XMFLOAT2 { transform->worldPosition.x, transform->worldPosition.y },
-											DirectX::XMUINT2 { 0, 0 },
-											DirectX::XMFLOAT2 { 0.0f, 0.0f}
-									   });
+		gEngine->uiPass_Input.Produced(
+			UITextRenderItem(
+				text->font,
+				text->text.c_str(),
+				DirectX::XMFLOAT2 { transform->worldPosition.x, transform->worldPosition.y },
+				text->color
+		));
 	}
 };

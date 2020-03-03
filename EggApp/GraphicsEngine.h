@@ -6,6 +6,7 @@
 #include <Egg/Vertex.h>
 #include <DirectXPackedVector.h>
 #include <Egg/EggMath.h>
+#include <variant>
 #include "GameObject.h"
 
 using Egg::Graphics::ResourceDesc;
@@ -26,15 +27,59 @@ struct RenderItem {
 	}
 };
 
-struct UIRenderItem {
+struct UISpriteRenderItem {
 	Egg::ResourceViewsRef texture;
+	DirectX::XMUINT2 textureSize;
+	DirectX::XMFLOAT2 destSizeInPixels;
+	DirectX::XMFLOAT4 color;
+	DirectX::XMFLOAT2 position;
+
+	~UISpriteRenderItem() = default;
+	UISpriteRenderItem() = default;
+	UISpriteRenderItem(const UISpriteRenderItem &) = default;
+	UISpriteRenderItem & operator=(const UISpriteRenderItem &) = default;
+	UISpriteRenderItem(UISpriteRenderItem &&) noexcept = default;
+	UISpriteRenderItem & operator=(UISpriteRenderItem &&) noexcept = default;
+
+	UISpriteRenderItem(Egg::ResourceViewsRef tex,
+					   const DirectX::XMUINT2 & tSize,
+					   const DirectX::XMFLOAT2 & destSize,
+					   const DirectX::XMFLOAT4 & color,	
+					   const DirectX::XMFLOAT2 & pos) : 
+		texture{ std::move(tex) },
+		textureSize{ tSize },
+		destSizeInPixels{ destSize },
+		color{ color },
+		position{ pos } { }
+};
+
+struct UITextRenderItem {
 	Egg::SpriteFontRef font;
 	const wchar_t * text;
-	DirectX::XMFLOAT4 fontColor;
 	DirectX::XMFLOAT2 position;
-	DirectX::XMUINT2 textureSize;
-	DirectX::XMFLOAT2 size;
+	DirectX::XMFLOAT4 fontColor;
+
+	~UITextRenderItem() = default;
+	UITextRenderItem() = default;
+	UITextRenderItem(const UITextRenderItem &) = default;
+	UITextRenderItem & operator=(const UITextRenderItem &) = default;
+	UITextRenderItem(UITextRenderItem &&) noexcept = default;
+	UITextRenderItem & operator=(UITextRenderItem &&) noexcept = default;
+
+	UITextRenderItem(Egg::SpriteFontRef font,
+		const wchar_t* text,
+		const DirectX::XMFLOAT2 & position,
+		const DirectX::XMFLOAT4 & color) :
+		font{ std::move(font) },
+		text{ text },
+		position{ position },
+		fontColor{ color } { }
 };
+
+// to extend possible render items add type here
+using UIRenderItemTypeTuple = std::tuple<UISpriteRenderItem, UITextRenderItem>;
+
+using UIRenderItem = typename TupleRename<std::variant, UIRenderItemTypeTuple>::type;
 
 class GraphicsEngine {
 	// handles
@@ -573,7 +618,6 @@ private:
 
 			context->SetVertexBuffer(fsQuad.vertexBuffer);
 			context->Draw(fsQuad.vertexCount);
-			
 		});
 	}
 
@@ -583,11 +627,20 @@ private:
 			[&](IRenderContext * context) -> void {
 			context->BeginSpriteRendering(uiPass_viewProjInv);
 			for(const UIRenderItem & i : uiPass_Input) {
-				if(i.texture != nullptr) {
-					context->DrawSprite(i.texture, i.textureSize, i.position, i.size);
-				}
-				if(i.font != nullptr) {
-					context->DrawString(i.font, i.text, i.position, i.fontColor );
+
+				switch(i.index()) {
+					case TupleIndexOf<UISpriteRenderItem, UIRenderItemTypeTuple>::value:
+						{
+							const auto & item = std::get<UISpriteRenderItem>(i);
+							context->DrawSprite(item.texture, item.textureSize, item.position, item.destSizeInPixels, item.color);
+						}
+						break;
+					case TupleIndexOf<UITextRenderItem, UIRenderItemTypeTuple>::value:
+						{
+							const auto & item = std::get<UITextRenderItem>(i);
+							context->DrawString(item.font, item.text, item.position, item.fontColor);
+						}
+						break;
 				}
 			}
 			context->EndSpriteRendering();

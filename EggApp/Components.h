@@ -30,6 +30,7 @@ COMPONENT_ALIGN struct Sprite {
 	Egg::ResourceViewsRef texture;
 	DirectX::XMUINT2 textureSize;
 	DirectX::XMFLOAT4 diffuseColor;
+	DirectX::XMFLOAT4 hoverColor;
 };
 
 COMPONENT_ALIGN struct Button {
