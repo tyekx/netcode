@@ -127,3 +127,8 @@ void UITransformSystem::Run(UIObject * object)
 {
 	TryInvoke(object, this);
 }
+
+void UITextBoxSystem::Run(UIObject * object)
+{
+	TryInvoke(object, this);
+}

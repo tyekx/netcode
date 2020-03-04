@@ -381,3 +381,14 @@ public:
 		}
 	}
 };
+
+class UITextBoxSystem {
+public:
+	void Run(UIObject * object);
+
+	void operator()(UIObject * uiObject, Text * text, TextBox * textBox) {
+		if(TextBox::selectedId == textBox->id) {
+			Egg::Input::KeyPressed
+		}
+	}
+};

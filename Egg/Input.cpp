@@ -10,6 +10,8 @@ namespace Egg {
 
 	BYTE Input::inputBuffer[2048] = { 0 };
 
+	bool Input::keysHeld[256] = { false };
+
 	bool Input::isFocused{ false };
 	DirectX::XMINT2 Input::mousePos{};
 	DirectX::XMINT2 Input::mouseDelta{};
@@ -111,6 +113,9 @@ namespace Egg {
 		if(!isFocused) {
 			return;
 		}
+
+		OnKeyPressed.Invoke(keyCode);
+		
 		for(auto & i : axisMap) {
 			if(i.second.PositiveKey == keyCode) {
 				i.second.CurrentValue = 1.0f;
@@ -124,6 +129,7 @@ namespace Egg {
 		if(!isFocused) {
 			return;
 		}
+
 		for(auto & i : axisMap) {
 			if(i.second.PositiveKey == keyCode && i.second.CurrentValue > 0.0f) {
 				i.second.CurrentValue = 0.0f;

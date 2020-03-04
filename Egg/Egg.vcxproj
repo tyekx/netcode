@@ -96,6 +96,7 @@
     <ClInclude Include="DX12TextureBuilder.h" />
     <ClInclude Include="EggMpl.hpp" />
     <ClInclude Include="DX12Fence.h" />
+    <ClInclude Include="Event.hpp" />
     <ClInclude Include="FancyIterators.hpp" />
     <ClInclude Include="File.h" />
     <ClInclude Include="GraphicsContexts.h" />

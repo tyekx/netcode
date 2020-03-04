@@ -42,6 +42,20 @@ public:
 	bool isMouseOver;
 };
 
+COMPONENT_ALIGN struct TextBox {
+	static int idGenerator;
+	static int selectedId;
+
+	static void ClearSelection() {
+		selectedId = -1;
+	}
+
+	int id;
+	std::function<void(const std::wstring&)> contentChanged;
+
+	TextBox();
+};
+
 COMPONENT_ALIGN struct Text {
 public:
 	DirectX::XMFLOAT4 color;

@@ -3,8 +3,10 @@
 #include <string>
 #include <map>
 #include "Utility.h"
+#include "Event.hpp"
 
 #include <DirectXMath.h>
+#include <functional>
 
 namespace Egg {
 
@@ -25,6 +27,7 @@ namespace Egg {
 		static DirectX::XMINT2 mouseDelta;
 		static bool isFocused;
 		static std::map<std::string, Axis> axisMap;
+		static bool keysHeld[256];
 		static unsigned char inputBuffer[2048];
 	public:
 		static void CreateResources();
@@ -33,6 +36,8 @@ namespace Egg {
 
 		static void KeyPressed(uint32_t keyCode);
 		static void KeyReleased(uint32_t keyCode);
+
+		static Event<uint32_t> OnKeyPressed;
 
 		static float GetAxis(const std::string & axis);
 		static void SetAxis(const std::string & name, uint32_t posKey, uint32_t negKey);

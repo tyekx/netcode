@@ -292,6 +292,9 @@
     <ClInclude Include="PhysXWrapper.h">
       <Filter>Physics</Filter>
     </ClInclude>
+    <ClInclude Include="Event.hpp">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
