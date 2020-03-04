@@ -4,6 +4,8 @@
 #include "UIObject.h"
 #include <Egg/EggMath.h>
 #include "PhysxHelpers.h"
+#include "UIButtonPrefab.h"
+#include "UIPagePrefab.h"
 
 class UIScene : public Scene<UIObject> {
 public:
@@ -63,49 +65,31 @@ public:
 		cameraRef->GetComponent<Transform>()->position = DirectX::XMFLOAT3{ static_cast<float>(dim.x) / 2.0f ,static_cast<float>(dim.y) / 2.0f, 0.0f };
 	}
 
-	UIObject* CreateButton(std::wstring text, const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT2 & pos, float zIndex, Egg::SpriteFontRef font, Egg::ResourceViewsRef bgTex, const DirectX::XMUINT2 & texSize) {
+	UIButtonPrefab CreateButton(std::wstring text, const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT2 & pos, float zIndex, Egg::SpriteFontRef font, Egg::ResourceViewsRef bgTex, const DirectX::XMUINT2 & texSize) {
 		UIObject * background = Create();
 		UIObject * textObject = Create();
 
-		textObject->Parent(background);
+		UIButtonPrefab btn(background, textObject);
 
-		UIElement * bgElem = background->AddComponent<UIElement>();
-		bgElem->width = size.x;
-		bgElem->height = size.y;
-
-		Button * bgBtn = background->AddComponent<Button>();
-
-		Sprite * sprite = background->AddComponent<Sprite>();
-		sprite->textureSize = texSize;
-		sprite->texture = std::move(bgTex);
-		sprite->diffuseColor = DirectX::XMFLOAT4{ 0.2f, 0.2f, 0.2f, 1.0f };
-		sprite->hoverColor = DirectX::XMFLOAT4{ 0.6f, 0.6f, 0.6f, 1.0f };
-
-		Transform* bgTransform = background->AddComponent<Transform>();
-		bgTransform->position = DirectX::XMFLOAT3{ pos.x, pos.y, zIndex };
-		
-		DirectX::XMFLOAT2 stringSize = font->MeasureString(text.c_str());
-
-		Transform * textTransform = textObject->AddComponent<Transform>();
-		textTransform->position = DirectX::XMFLOAT3{
-			(size.x - stringSize.x) / 2.0f,
-			(size.y - stringSize.y) / 2.0f,
-			0.0f
-		};
-
-		UIElement * textElem = textObject->AddComponent<UIElement>();
-		textElem->width = stringSize.x;
-		textElem->height = stringSize.y;
-
-		Text* txt = textObject->AddComponent<Text>();
-		txt->color = DirectX::XMFLOAT4{ 0.8f, 0.8f, 0.8f, 1.0f };
-		txt->font = std::move(font);
-		txt->text = std::move(text);
+		btn.SetSize(size);
+		btn.SetPosition(pos);
+		btn.SetZIndex(zIndex);
+		btn.SetFont(std::move(font));
+		btn.SetText(std::move(text));
+		btn.SetBackgroundImage(std::move(bgTex), texSize);
 
 		Spawn(background);
 		Spawn(textObject);
 
-		return background;
+		return btn;
+	}
+
+	UIPagePrefab CreatePage() {
+		UIObject * root = Create();
+
+		Spawn(root);
+
+		return UIPagePrefab(root);
 	}
 
 	void UpdatePerFrameCb() {

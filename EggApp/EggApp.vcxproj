@@ -80,8 +80,12 @@
     <ClInclude Include="Services.h" />
     <ClInclude Include="Snippets.h" />
     <ClInclude Include="Systems.h" />
+    <ClInclude Include="UIButtonPrefab.h" />
+    <ClInclude Include="UIControl.h" />
     <ClInclude Include="UIObject.h" />
+    <ClInclude Include="UIPagePrefab.h" />
     <ClInclude Include="UIScene.h" />
+    <ClInclude Include="UITextBox.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EggApp.natvis" />

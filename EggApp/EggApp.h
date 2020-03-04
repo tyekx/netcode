@@ -148,22 +148,22 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		auto srvRef = graphics->resources->CreateShaderResourceViews(1);
 		srvRef->CreateSRV(0, texHandle);
 
-		UIObject*btnBg = uiScene->CreateButton(L"Play", DirectX::XMFLOAT2{ 256.0f, 64.0f }, DirectX::XMFLOAT2{ 200.0f, 100.0f }, 0.5f, titillium60Font, srvRef, DirectX::XMUINT2{ static_cast<uint32_t>(img->width), static_cast<uint32_t>(img->height) });
+		UIPagePrefab loginPage = uiScene->CreatePage();
+		UIButtonPrefab btn = uiScene->CreateButton(L"Login", DirectX::XMFLOAT2{ 256.0f, 64.0f }, DirectX::XMFLOAT2{ 200.0f, 100.0f }, 0.5f, titillium60Font, srvRef, DirectX::XMUINT2{ static_cast<uint32_t>(img->width), static_cast<uint32_t>(img->height) });
 
-		Button * btn = btnBg->GetComponent<Button>();
+		btn.OnClick([]() -> void {
+			Log::Info("LoginBtn: clicked");
+		});
 
-		btn->onClick = []() -> void {
-			Log::Info("TestBtn: clicked");
-		};
+		btn.OnMouseEnter([]() -> void {
+			Log::Info("LoginBtn: mouse enter");
+		});
 
-		btn->onMouseEnter = []() -> void {
-			Log::Info("TestBtn: mouse enter");
-		};
+		btn.OnMouseLeave([]() -> void {
+			Log::Info("LoginBtn: mouse leave");
+		});
 
-		btn->onMouseLeave = []() -> void {
-			Log::Info("TestBtn: mouse leave");
-		};
-
+		loginPage.AddControl(btn);
 
 		Egg::Input::SetAxis("Vertical", 'W', 'S');
 		Egg::Input::SetAxis("Horizontal", 'A', 'D');

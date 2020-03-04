@@ -19,6 +19,9 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{00a9e6eb-88f5-444b-952f-93557bd2d4d9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Prefabs">
+      <UniqueIdentifier>{4622a734-a12d-48d8-86aa-530d0d756e77}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -115,6 +118,18 @@
     </ClInclude>
     <ClInclude Include="Components.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIButtonPrefab.h">
+      <Filter>Prefabs</Filter>
+    </ClInclude>
+    <ClInclude Include="UIPagePrefab.h">
+      <Filter>Prefabs</Filter>
+    </ClInclude>
+    <ClInclude Include="UIControl.h">
+      <Filter>Prefabs</Filter>
+    </ClInclude>
+    <ClInclude Include="UITextBox.h">
+      <Filter>Prefabs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

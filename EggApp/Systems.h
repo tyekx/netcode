@@ -273,6 +273,10 @@ public:
 	void Run(UIObject * object);
 
 	void operator()(UIObject * uiObject, Transform* transform, UIElement * uiElement, Sprite* sprite, Button* button) {
+		if(!uiObject->IsActive()) {
+			return;
+		}
+
 		// handle spawning
 		if(uiObject->IsSpawnable()) {
 			uiObject->SetSpawnableFlag(false);
@@ -366,12 +370,14 @@ public:
 	void Run(UIObject * object);
 
 	void operator()(UIObject * uiObject, Transform * transform, UIElement * uiElement, Text * text) {
-		gEngine->uiPass_Input.Produced(
-			UITextRenderItem(
-				text->font,
-				text->text.c_str(),
-				DirectX::XMFLOAT2 { transform->worldPosition.x, transform->worldPosition.y },
-				text->color
-		));
+		if(uiObject->IsActive()) {
+			gEngine->uiPass_Input.Produced(
+				UITextRenderItem(
+					text->font,
+					text->text.c_str(),
+					DirectX::XMFLOAT2{ transform->worldPosition.x, transform->worldPosition.y },
+					text->color
+				));
+		}
 	}
 };
