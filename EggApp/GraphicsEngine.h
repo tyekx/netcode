@@ -15,6 +15,11 @@ using Egg::Graphics::ResourceState;
 using Egg::Graphics::ResourceFlags;
 using Egg::Graphics::PrimitiveTopology;
 
+/*
+
+		
+*/
+
 struct RenderItem {
 	GBuffer gbuffer;
 	Material * material;
@@ -126,7 +131,7 @@ class GraphicsEngine {
 	Egg::RootSignatureRef ssaoBlurPass_RootSignature;
 	Egg::PipelineStateRef ssaoBlurPass_PipelineState;
 
-	Egg::SpriteFontRef testFont;
+	Egg::SpriteBatchRef uiPass_SpriteBatch;
 
 public:
 
@@ -169,6 +174,76 @@ private:
 		uploadBatch.ResourceBarrier(fsQuad.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
 
 		g->frame->SyncUpload(uploadBatch);
+	}
+
+	void CreateUIPassPermanentResources(Egg::Module::IGraphicsModule * g) {
+		auto ilBuilder = g->CreateInputLayoutBuilder();
+		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
+		ilBuilder->AddInputElement("COLOR", DXGI_FORMAT_R32G32B32A32_FLOAT);
+		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
+		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+
+		auto shaderBuilder = g->CreateShaderBuilder();
+		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"sprite_Vertex.cso");
+		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"sprite_Pixel.cso");
+
+		auto rootSigBuilder = g->CreateRootSignatureBuilder();
+		auto rootSignature = rootSigBuilder->BuildFromShader(vs);
+
+		Egg::BlendDesc blendState;
+		Egg::RenderTargetBlendDesc rt0Blend;
+		rt0Blend.blendEnable = true;
+		rt0Blend.logicOpEnable = false;
+		rt0Blend.srcBlend = Egg::BlendMode::SRC_ALPHA;
+		rt0Blend.destBlend = Egg::BlendMode::INV_SRC_ALPHA;
+		rt0Blend.blendOp = Egg::BlendOp::ADD;
+		rt0Blend.srcBlendAlpha = Egg::BlendMode::ONE;
+		rt0Blend.destBlendAlpha = Egg::BlendMode::INV_SRC_ALPHA;
+		rt0Blend.blendOpAlpha = Egg::BlendOp::ADD;
+		rt0Blend.logicOp = Egg::LogicOp::NOOP;
+		rt0Blend.renderTargetWriteMask = 0x0F;
+
+		blendState.alphaToCoverageEnabled = false;
+		blendState.independentAlphaEnabled = false;
+		blendState.rtBlend[0] = rt0Blend;
+
+		Egg::RasterizerDesc rasterizerState;
+		rasterizerState.fillMode = Egg::FillMode::SOLID;
+		rasterizerState.cullMode = Egg::CullMode::NONE;
+		rasterizerState.frontCounterClockwise = false;
+		rasterizerState.depthBias = 0;
+		rasterizerState.depthBiasClamp = 0.0f;
+		rasterizerState.slopeScaledDepthBias = 0.0f;
+		rasterizerState.depthClipEnable = true;
+		rasterizerState.multisampleEnable = true;
+		rasterizerState.antialiasedLineEnable = false;
+		rasterizerState.forcedSampleCount = 0;
+		rasterizerState.conservativeRaster = false;
+
+		Egg::DepthStencilDesc depthStencilDesc;
+		depthStencilDesc.depthEnable = false;
+		depthStencilDesc.stencilEnable = false;
+		depthStencilDesc.depthWriteMaskZero = true;
+
+		auto psoBuilder = g->CreateGPipelineStateBuilder();
+		psoBuilder->SetInputLayout(inputLayout);
+		psoBuilder->SetRootSignature(rootSignature);
+		psoBuilder->SetVertexShader(vs);
+		psoBuilder->SetPixelShader(ps);
+		psoBuilder->SetDepthStencilFormat(DXGI_FORMAT_D32_FLOAT);
+		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
+		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
+		psoBuilder->SetBlendState(blendState);
+		psoBuilder->SetRasterizerState(rasterizerState);
+		psoBuilder->SetDepthStencilState(depthStencilDesc);
+
+		auto pipelineState = psoBuilder->Build();
+
+		Egg::SpriteBatchBuilderRef spriteBatchBuilder = g->CreateSpriteBatchBuilder();
+		spriteBatchBuilder->SetPipelineState(std::move(pipelineState));
+		spriteBatchBuilder->SetRootSignature(std::move(rootSignature));
+		uiPass_SpriteBatch = spriteBatchBuilder->Build();
+
 	}
 
 	void CreateSkinningPassPermanentResources(Egg::Module::IGraphicsModule * g) {
@@ -625,25 +700,25 @@ private:
 		frameGraphBuilder.CreateRenderPass("UI",
 			[&](IResourceContext * context) -> void { },
 			[&](IRenderContext * context) -> void {
-			context->BeginSpriteRendering(uiPass_viewProjInv);
+			uiPass_SpriteBatch->BeginRecord(uiPass_viewProjInv);
 			for(const UIRenderItem & i : uiPass_Input) {
 
 				switch(i.index()) {
 					case TupleIndexOf<UISpriteRenderItem, UIRenderItemTypeTuple>::value:
 						{
 							const auto & item = std::get<UISpriteRenderItem>(i);
-							context->DrawSprite(item.texture, item.textureSize, item.position, item.destSizeInPixels, item.color);
+							uiPass_SpriteBatch->DrawSprite(item.texture, item.textureSize, item.position, item.destSizeInPixels, item.color);
 						}
 						break;
 					case TupleIndexOf<UITextRenderItem, UIRenderItemTypeTuple>::value:
 						{
 							const auto & item = std::get<UITextRenderItem>(i);
-							context->DrawString(item.font, item.text, item.position, item.fontColor);
+							item.font->DrawString(uiPass_SpriteBatch, item.text, item.position, item.fontColor);
 						}
 						break;
 				}
 			}
-			context->EndSpriteRendering();
+			uiPass_SpriteBatch->EndRecord();
 		});
 	}
 
@@ -775,6 +850,7 @@ public:
 		CreateGbufferPassPermanentResources(g);
 		CreateLightingPassPermanentResources(g);
 		CreateBackgroundPassPermanentResources(g);
+		CreateUIPassPermanentResources(g);
 		//CreateSSAOBlurPassPermanentResources(g);
 	  	//CreateSSAOOcclusionPassPermanentResources(g);
 		CreateFSQuad(g);

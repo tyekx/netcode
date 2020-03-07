@@ -114,7 +114,7 @@ namespace Egg::Graphics::DX12 {
 
 		streamOutput_FilledSizeLocation = res.address + ((byteOffset + 3ull) & ~(3ull));
 	}
-
+	/*
 	void RenderContext::BeginSpriteRendering(DirectX::XMFLOAT4X4 viewProj)
 	{
 		DirectX::XMMATRIX vp = DirectX::XMLoadFloat4x4(&viewProj);
@@ -165,7 +165,7 @@ namespace Egg::Graphics::DX12 {
 		r.bottom = r.top + static_cast<int32_t>(size.y);
 		DirectX::FXMVECTOR clr = DirectX::XMLoadFloat4(&color);
 		spriteBatch->Draw(texture, textureSize, r, clr);
-	}
+	}*/
 
 	void RenderContext::ResetStreamOutput()
 	{

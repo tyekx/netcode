@@ -8,3 +8,7 @@ TextBox::TextBox() : id{ idGenerator++ }, contentChanged{} {
 
 }
 
+TextBox::~TextBox() {
+	Egg::Input::OnKeyPressed -= keyPressedToken;
+}
+

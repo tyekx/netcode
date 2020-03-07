@@ -59,34 +59,48 @@ namespace Egg::Graphics::DX12 {
 		SpriteFont(SpriteFont const &) = delete;
 		SpriteFont & operator= (SpriteFont const &) = delete;
 
-		SpriteFont(IResourceContext * resourceContext, IFrameContext * frameContext, _In_z_ wchar_t const * fileName);
+		SpriteFont(IResourceContext * resourceContext, IFrameContext * frameContext, wchar_t const * fileName);
 
 		virtual ResourceViewsRef GetResourceView() const override;
 
+		virtual void DrawString(Egg::SpriteBatchRef spriteBatch, const wchar_t * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const override;
+
+		virtual void DrawString(Egg::SpriteBatchRef spriteBatch, const char * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const override;
+
+		/*
 		// Wide-character / UTF-16LE
 		void  DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::XMFLOAT2 const & position, DirectX::XMVECTOR color, float rotation = 0, DirectX::XMFLOAT2 const & origin = Float2Zero, float scale = 1, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0) const;
 		void  DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, DirectX::XMFLOAT2 const & scale, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0) const;
 		void  DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::FXMVECTOR origin = DirectX::g_XMZero, float scale = 1, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0) const;
 		void  DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, DirectX::GXMVECTOR scale, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0) const;
 
-
-		RECT __cdecl MeasureDrawBounds(_In_z_ wchar_t const * text, DirectX::XMFLOAT2 const & position) const;
-		RECT  MeasureDrawBounds(_In_z_ wchar_t const * text, DirectX::FXMVECTOR position) const;
-
 		// UTF-8
 		void  DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ char const * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::XMFLOAT2 const & origin = Float2Zero, float scale = 1, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0) const;
 		void  DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ char const * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, DirectX::XMFLOAT2 const & scale, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0) const;
 		void  DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ char const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::FXMVECTOR origin = DirectX::g_XMZero, float scale = 1, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0) const;
 		void  DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ char const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, DirectX::GXMVECTOR scale, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0) const;
+		*/
 
-		DirectX::XMVECTOR  MeasureString_Impl(_In_z_ wchar_t const * text) const;
-		DirectX::XMVECTOR  MeasureString_Impl(_In_z_ char const * text) const;
+		void DrawString(Egg::SpriteBatchRef spriteBatch,
+			const wchar_t * text,
+			const DirectX::XMFLOAT2 & position,
+			const DirectX::XMFLOAT4 & color,
+			float rotation,
+			const DirectX::XMFLOAT2 & origin,
+			float scale,
+			float layerDepth) const;
+
+		RECT __cdecl MeasureDrawBounds(wchar_t const * text, DirectX::XMFLOAT2 const & position) const;
+		RECT  MeasureDrawBounds(wchar_t const * text, DirectX::FXMVECTOR position) const;
+
+		DirectX::XMVECTOR  MeasureString_Impl(wchar_t const * text) const;
+		DirectX::XMVECTOR  MeasureString_Impl(char const * text) const;
 
 		DirectX::XMFLOAT2 MeasureString(const char * str) const override;
 		DirectX::XMFLOAT2 MeasureString(const wchar_t * str) const override;
 
-		RECT __cdecl MeasureDrawBounds(_In_z_ char const * text, DirectX::XMFLOAT2 const & position) const;
-		RECT  MeasureDrawBounds(_In_z_ char const * text, DirectX::FXMVECTOR position) const;
+		RECT __cdecl MeasureDrawBounds(char const * text, DirectX::XMFLOAT2 const & position) const;
+		RECT  MeasureDrawBounds(char const * text, DirectX::FXMVECTOR position) const;
 
 		// Spacing properties
 		float __cdecl GetLineSpacing() const;
@@ -170,4 +184,7 @@ namespace Egg::Graphics::DX12 {
 		return left.Character < right;
 	}
 	
+	using DX12SpriteFont = Egg::Graphics::DX12::SpriteFont;
+	using DX12SpriteFontRef = std::shared_ptr<DX12SpriteFont>;
+
 };

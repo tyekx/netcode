@@ -139,34 +139,40 @@
     <Natvis Include="EggApp.natvis" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="skinningPass_Vertex.hlsl">
+    <FxCompile Include="Shaders\envmapPass_Vertex.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="gbufferPass_Vertex.hlsl">
+    <FxCompile Include="Shaders\gbufferPass_Pixel.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="gbufferPass_Pixel.hlsl">
+    <FxCompile Include="Shaders\gbufferPass_Vertex.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="lightingPass_Pixel.hlsl">
+    <FxCompile Include="Shaders\lightingPass_Pixel.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="lightingPass_Vertex.hlsl">
+    <FxCompile Include="Shaders\lightingPass_Vertex.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="ssaoPass_Vertex.hlsl">
+    <FxCompile Include="Shaders\skinningPass_Vertex.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="ssaoBlurPass_Pixel.hlsl">
+    <FxCompile Include="Shaders\sprite_Pixel.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="ssaoOcclusionPass_Pixel.hlsl">
+    <FxCompile Include="Shaders\sprite_Vertex.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="envmapPass_Vertex.hlsl">
+    <FxCompile Include="Shaders\ssaoBlurPass_Pixel.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="envmapPass_Pixel.hlsl">
+    <FxCompile Include="Shaders\ssaoOcclusionPass_Pixel.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\ssaoPass_Vertex.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\envmapPass_Pixel.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

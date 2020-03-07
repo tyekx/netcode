@@ -262,7 +262,9 @@ public:
 				raycastHits.push_back(btn);
 
 				if(isClicked) {
-					btn->onClick();
+					if(btn->onClick != nullptr) {
+						btn->onClick();
+					}
 				}
 			}
 		}
@@ -272,70 +274,68 @@ public:
 
 	void Run(UIObject * object);
 
-	void operator()(UIObject * uiObject, Transform* transform, UIElement * uiElement, Sprite* sprite, Button* button) {
-		if(!uiObject->IsActive()) {
-			return;
+	void operator()(UIObject * uiObject, Transform* transform, UIElement * uiElement) {
+		Button * button = nullptr;
+
+		if(uiObject->HasComponent<Button>()) {
+			button = uiObject->GetComponent<Button>();
 		}
 
 		// handle spawning
 		if(uiObject->IsSpawnable()) {
 			uiObject->SetSpawnableFlag(false);
-			if(button->pxActor == nullptr) {
-				physx::PxVec3 pos = ToPxVec3(transform->worldPosition);
-				physx::PxQuat rot = ToPxQuat(transform->worldRotation);
 
-				physx::PxRigidDynamic * actor = px->createRigidDynamic(physx::PxTransform(pos, rot));
-				actor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, true);
-				physx::PxBoxGeometry boxGeom{ uiElement->width / 2.0f, uiElement->height / 2.0f, 0.01f };
-				physx::PxShape * boxShape = px->createShape(boxGeom, *dummyMaterial, true, physx::PxShapeFlag::eVISUALIZATION | physx::PxShapeFlag::eTRIGGER_SHAPE | physx::PxShapeFlag::eSCENE_QUERY_SHAPE);
-				physx::PxFilterData filterData;
-				filterData.word0 = PHYSX_COLLIDER_TYPE_UI;
-				boxShape->setSimulationFilterData(filterData);
-				boxShape->setQueryFilterData(filterData);
-				physx::PxTransform localPose(physx::PxIdentity);
-				localPose.p = physx::PxVec3(uiElement->width / 2.0f, uiElement->height / 2.0f, 0.0f);
-				boxShape->setLocalPose(localPose);
-				actor->attachShape(*boxShape);
-				actor->userData = uiObject;
-				pxScene->addActor(*actor);
-			}
-		}
+			if(button != nullptr) {
+				if(button->pxActor == nullptr) {
+					physx::PxVec3 pos = ToPxVec3(transform->worldPosition);
+					physx::PxQuat rot = ToPxQuat(transform->worldRotation);
 
-		bool found = false;
-
-		// handle mouseovers
-		for(auto it = raycastHits.begin(); it != raycastHits.end(); ++it) {
-			if(button == *it) {
-				if(!button->isMouseOver) {
-					button->isMouseOver = true;
-					button->onMouseEnter();
+					physx::PxRigidDynamic * actor = px->createRigidDynamic(physx::PxTransform(pos, rot));
+					actor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, true);
+					physx::PxBoxGeometry boxGeom{ uiElement->width / 2.0f, uiElement->height / 2.0f, 0.01f };
+					physx::PxShape * boxShape = px->createShape(boxGeom, *dummyMaterial, true, physx::PxShapeFlag::eVISUALIZATION | physx::PxShapeFlag::eTRIGGER_SHAPE | physx::PxShapeFlag::eSCENE_QUERY_SHAPE);
+					physx::PxFilterData filterData;
+					filterData.word0 = PHYSX_COLLIDER_TYPE_UI;
+					boxShape->setSimulationFilterData(filterData);
+					boxShape->setQueryFilterData(filterData);
+					physx::PxTransform localPose(physx::PxIdentity);
+					localPose.p = physx::PxVec3(uiElement->width / 2.0f, uiElement->height / 2.0f, 0.0f);
+					boxShape->setLocalPose(localPose);
+					actor->attachShape(*boxShape);
+					actor->userData = uiObject;
+					pxScene->addActor(*actor);
 				}
-
-				found = true;
-				raycastHits.erase(it);
-				break;
 			}
 		}
 
-		if(!found) {
-			if(button->isMouseOver) {
-				button->isMouseOver = false;
-				button->onMouseLeave();
+		if(button != nullptr && uiObject->IsActive()) {
+			bool found = false;
+
+			// handle mouseovers
+			for(auto it = raycastHits.begin(); it != raycastHits.end(); ++it) {
+				if(button == *it) {
+					if(!button->isMouseOver) {
+						button->isMouseOver = true;
+						if(button->onMouseEnter != nullptr) {
+							button->onMouseEnter();
+						}
+					}
+
+					found = true;
+					raycastHits.erase(it);
+					break;
+				}
+			}
+
+			if(!found) {
+				if(button->isMouseOver) {
+					button->isMouseOver = false;
+					if(button->onMouseLeave != nullptr) {
+						button->onMouseLeave();
+					}
+				}
 			}
 		}
-
-		DirectX::XMFLOAT4 clr = sprite->diffuseColor;
-		if(button->isMouseOver) {
-			clr = sprite->hoverColor;
-		}
-
-		gEngine->uiPass_Input.Produced(UISpriteRenderItem(
-			sprite->texture,
-			sprite->textureSize,
-			DirectX::XMFLOAT2{ static_cast<float>(uiElement->width), static_cast<float>(uiElement->height) },
-			clr,
-			DirectX::XMFLOAT2{ transform->position.x, transform->position.y }
-		));
 	}
 };
 
@@ -363,6 +363,33 @@ public:
 	}
 };
 
+class UISpriteSystem {
+public:
+	GraphicsEngine * gEngine;
+	
+	void Run(UIObject * uiObject);
+
+	void operator()(UIObject * uiObject, Transform * transform, UIElement * uiElement, Sprite * sprite) {
+		DirectX::XMFLOAT4 clr = sprite->diffuseColor;
+
+		if(uiObject->HasComponent<Button>()) {
+			Button * button = uiObject->GetComponent<Button>();
+
+			if(button->isMouseOver) {
+				clr = sprite->hoverColor;
+			}
+		}
+
+		gEngine->uiPass_Input.Produced(UISpriteRenderItem(
+			sprite->texture,
+			sprite->textureSize,
+			DirectX::XMFLOAT2{ static_cast<float>(uiElement->width), static_cast<float>(uiElement->height) },
+			clr,
+			DirectX::XMFLOAT2{ transform->position.x, transform->position.y }
+		));
+	}
+};
+
 class UITextSystem {
 public:
 	GraphicsEngine * gEngine;
@@ -378,17 +405,6 @@ public:
 					DirectX::XMFLOAT2{ transform->worldPosition.x, transform->worldPosition.y },
 					text->color
 				));
-		}
-	}
-};
-
-class UITextBoxSystem {
-public:
-	void Run(UIObject * object);
-
-	void operator()(UIObject * uiObject, Text * text, TextBox * textBox) {
-		if(TextBox::selectedId == textBox->id) {
-			Egg::Input::KeyPressed
 		}
 	}
 };

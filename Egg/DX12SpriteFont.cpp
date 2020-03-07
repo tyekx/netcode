@@ -79,18 +79,24 @@ namespace Egg::Graphics::DX12 {
 		imageData.Release();
 	}
 
-	SpriteFont::SpriteFont(IResourceContext * resourceContext, IFrameContext * frameContext, _In_z_ wchar_t const * fileName)
-	{
+	SpriteFont::SpriteFont(IResourceContext * resourceContext, IFrameContext * frameContext, wchar_t const * fileName) {
 		BinaryReader reader(fileName);
 
 		Construct(&reader, resourceContext, frameContext);
 	}
 
-	ResourceViewsRef SpriteFont::GetResourceView() const
-	{
+	ResourceViewsRef SpriteFont::GetResourceView() const {
 		return shaderResourceView;
 	}
 
+	void SpriteFont::DrawString(Egg::SpriteBatchRef spriteBatch, const wchar_t * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const {
+		DrawString(spriteBatch, text, position, color, 0, DirectX::XMFLOAT2{ 0,0 }, 1.0f, 0);
+	}
+
+	void SpriteFont::DrawString(Egg::SpriteBatchRef spriteBatch, const char * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const {
+		DrawString(spriteBatch, ConvertUTF8(text), position, color, 0, DirectX::XMFLOAT2{ 0,0 }, 1.0f, 0);
+	}
+	/*
 	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ const char * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, float scale, SpriteEffects effects, float layerDepth) const
 	{
 		DrawString(spriteBatch, ConvertUTF8(text), XMLoadFloat2(&position), color, rotation, DirectX::XMLoadFloat2(&origin), DirectX::XMVectorReplicate(scale), effects, layerDepth);
@@ -132,12 +138,19 @@ namespace Egg::Graphics::DX12 {
 	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, float scale, SpriteEffects effects, float layerDepth) const
 	{
 		DrawString(spriteBatch, text, position, color, rotation, origin, DirectX::XMVectorReplicate(scale), effects, layerDepth);
-	}
+	}*/
 
-	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, DirectX::GXMVECTOR scale, SpriteEffects effects, float layerDepth) const
+	void SpriteFont::DrawString(Egg::SpriteBatchRef spriteBatch,
+		const wchar_t * text,
+		const DirectX::XMFLOAT2 & position,
+		const DirectX::XMFLOAT4 & color,
+		float rotation,
+		const DirectX::XMFLOAT2 & origin,
+		float scale,
+		float layerDepth) const
 	{
-		static_assert(SpriteEffects_FlipHorizontally == 1 &&
-					  SpriteEffects_FlipVertically == 2, "If you change these enum values, the following tables must be updated to match");
+
+		SpriteEffects effects = SpriteEffects_None;
 
 		// Lookup table indicates which way to move along each axis per SpriteEffects enum value.
 		static DirectX::XMVECTORF32 axisDirectionTable[4] =
@@ -157,7 +170,8 @@ namespace Egg::Graphics::DX12 {
 			{ { { 1, 1, 0, 0 } } },
 		};
 
-		DirectX::XMVECTOR baseOffset = origin;
+
+		DirectX::XMVECTOR baseOffset = DirectX::XMLoadFloat2(&origin);
 
 		if(effects)
 		{
@@ -166,8 +180,6 @@ namespace Egg::Graphics::DX12 {
 				axisIsMirroredTable[effects & 3],
 				baseOffset);
 		}
-
-		
 
 		ForEachGlyph(text, [&, color](Glyph const * glyph, float x, float y, float advance)
 		{
@@ -184,12 +196,15 @@ namespace Egg::Graphics::DX12 {
 				offset = XMVectorMultiplyAdd(glyphRect, axisIsMirroredTable[effects & 3], offset);
 			}
 
-			spriteBatch->Draw(shaderResourceView, textureSize, position, &glyph->Subrect, color, rotation, offset, scale, effects, layerDepth);
+			DirectX::XMFLOAT2 offsetValue;
+			DirectX::XMStoreFloat2(&offsetValue, offset);
+
+			spriteBatch->DrawSprite(shaderResourceView, textureSize, position, &glyph->Subrect, color, rotation, offsetValue, scale, layerDepth);
 		});
 	}
 
 
-	DirectX::XMVECTOR SpriteFont::MeasureString_Impl(_In_z_ wchar_t const * text) const
+	DirectX::XMVECTOR SpriteFont::MeasureString_Impl(wchar_t const * text) const
 	{
 		DirectX::XMVECTOR result = DirectX::XMVectorZero();
 
@@ -207,7 +222,7 @@ namespace Egg::Graphics::DX12 {
 
 		return result;
 	}
-	
+
 
 	void __cdecl SpriteFont::SetDefaultCharacter(wchar_t character)
 	{
@@ -243,7 +258,7 @@ namespace Egg::Graphics::DX12 {
 	}
 
 
-	DirectX::XMVECTOR SpriteFont::MeasureString_Impl(_In_z_ char const * text) const
+	DirectX::XMVECTOR SpriteFont::MeasureString_Impl(char const * text) const
 	{
 		return MeasureString_Impl(ConvertUTF8(text));
 	}
@@ -262,7 +277,7 @@ namespace Egg::Graphics::DX12 {
 		return res;
 	}
 
-	RECT SpriteFont::MeasureDrawBounds(_In_z_ wchar_t const * text, DirectX::XMFLOAT2 const & position) const
+	RECT SpriteFont::MeasureDrawBounds(wchar_t const * text, DirectX::XMFLOAT2 const & position) const
 	{
 		RECT result = { LONG_MAX, LONG_MAX, 0, 0 };
 
@@ -300,7 +315,7 @@ namespace Egg::Graphics::DX12 {
 	}
 
 
-	RECT SpriteFont::MeasureDrawBounds(_In_z_ wchar_t const * text, DirectX::FXMVECTOR position) const
+	RECT SpriteFont::MeasureDrawBounds(wchar_t const * text, DirectX::FXMVECTOR position) const
 	{
 		DirectX::XMFLOAT2 pos;
 		DirectX::XMStoreFloat2(&pos, position);
@@ -308,13 +323,13 @@ namespace Egg::Graphics::DX12 {
 		return MeasureDrawBounds(text, pos);
 	}
 
-	RECT SpriteFont::MeasureDrawBounds(_In_z_ char const * text, DirectX::XMFLOAT2 const & position) const
+	RECT SpriteFont::MeasureDrawBounds(char const * text, DirectX::XMFLOAT2 const & position) const
 	{
 		return MeasureDrawBounds(ConvertUTF8(text), position);
 	}
 
 
-	RECT SpriteFont::MeasureDrawBounds(_In_z_ char const * text, DirectX::FXMVECTOR position) const
+	RECT SpriteFont::MeasureDrawBounds(char const * text, DirectX::FXMVECTOR position) const
 	{
 		DirectX::XMFLOAT2 pos;
 		XMStoreFloat2(&pos, position);

@@ -417,12 +417,64 @@ namespace Egg {
 
 	using ResourceViewsRef = std::shared_ptr<ResourceViews>;
 
+	class SpriteBatch {
+	public:
+		virtual void BeginRecord(DirectX::XMFLOAT4X4 viewProj) = 0;
+
+		virtual void SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) = 0;
+		virtual void SetScissorRect(const RECT & rect) = 0;
+		virtual void SetScissorRect() = 0;
+
+		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position) = 0;
+		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size) = 0;
+		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT4 & color) = 0;
+
+		virtual void DrawSprite(ResourceViewsRef texture,
+			const DirectX::XMUINT2 & textureSize,
+			const DirectX::XMFLOAT2 & position,
+			const RECT * sourceRectangle,
+			const DirectX::XMFLOAT4 & color,
+			float rotation,
+			const DirectX::XMFLOAT2 & origin,
+			float scale,
+			float layerDepth) = 0;
+
+		virtual void DrawSprite(ResourceViewsRef texture,
+								const DirectX::XMUINT2 & textureSize,
+								const DirectX::XMFLOAT2 & destPosition,
+								const DirectX::XMFLOAT2 & destSize,
+								const RECT * sourceRectangle,
+								const DirectX::XMFLOAT4 & color,
+								float rotation,
+								const DirectX::XMFLOAT2 & origin,
+								float layerDepth) = 0;
+
+		virtual void EndRecord() = 0;
+	};
+
+	using SpriteBatchRef = std::shared_ptr<SpriteBatch>;
+
+	class SpriteBatchBuilder {
+	public:
+		virtual ~SpriteBatchBuilder() = default;
+
+		virtual void SetPipelineState(PipelineStateRef pipelineState) = 0;
+		virtual void SetRootSignature(RootSignatureRef rootSignature) = 0;
+		virtual SpriteBatchRef Build() = 0;
+	};
+
+	using SpriteBatchBuilderRef = std::shared_ptr<SpriteBatchBuilder>;
+
 	class SpriteFont {
 	public:
 		virtual ~SpriteFont() = default;
 		virtual ResourceViewsRef GetResourceView() const = 0;
 		virtual DirectX::XMFLOAT2 MeasureString(const char * str) const = 0;
 		virtual DirectX::XMFLOAT2 MeasureString(const wchar_t * str) const = 0;
+
+		virtual void DrawString(Egg::SpriteBatchRef spriteBatch, const wchar_t * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const = 0;
+		
+		virtual void DrawString(Egg::SpriteBatchRef spriteBatch, const char * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const = 0;
 	};
 
 	using SpriteFontRef = std::shared_ptr<SpriteFont>;
@@ -438,5 +490,4 @@ namespace Egg {
 	};
 
 	using SpriteFontBuilderRef = std::shared_ptr<SpriteFontBuilder>;
-
 }

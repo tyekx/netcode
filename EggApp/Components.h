@@ -4,6 +4,12 @@
 #include <string>
 #include "ConstantBufferTypes.h"
 #include <EggAssetLib/Collider.h>
+#include <Egg/Event.hpp>
+#include <Egg/HandleTypes.h>
+#include <Egg/PhysXWrapper.h>
+#include "Mesh.h"
+#include "Material.h"
+#include <Egg/Blackboard.h>
 
 using ColliderShape = Egg::Asset::Collider;
 
@@ -51,9 +57,11 @@ COMPONENT_ALIGN struct TextBox {
 	}
 
 	int id;
+	Egg::EventToken keyPressedToken;
 	std::function<void(const std::wstring&)> contentChanged;
 
 	TextBox();
+	~TextBox();
 };
 
 COMPONENT_ALIGN struct Text {

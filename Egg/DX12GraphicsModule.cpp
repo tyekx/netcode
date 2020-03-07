@@ -1,5 +1,4 @@
 #include "DX12GraphicsModule.h"
-#include "DX12SpriteFont.h"
 #include "DX12Builders.h"
 #include "DX12Platform.h"
 
@@ -305,9 +304,6 @@ namespace Egg::Graphics::DX12 {
 		CreateLibraries();
 
 		CreateSwapChainResources();
-
-		spriteBatch = std::make_unique<SpriteBatch>(this);
-		renderContext.spriteBatch = spriteBatch.get();
 	}
 
 	void DX12GraphicsModule::Shutdown() {
@@ -613,6 +609,11 @@ namespace Egg::Graphics::DX12 {
 
 	SpriteFontBuilderRef DX12GraphicsModule::CreateSpriteFontBuilder() const {
 		return std::make_shared<DX12SpriteFontBuilder>(spriteFontLibrary);
+	}
+
+	SpriteBatchBuilderRef DX12GraphicsModule::CreateSpriteBatchBuilder() const
+	{
+		return std::make_shared<DX12SpriteBatchBuilder>(this);
 	}
 
 	TextureBuilderRef DX12GraphicsModule::CreateTextureBuilder() const {

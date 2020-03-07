@@ -128,7 +128,7 @@ void UITransformSystem::Run(UIObject * object)
 	TryInvoke(object, this);
 }
 
-void UITextBoxSystem::Run(UIObject * object)
+void UISpriteSystem::Run(UIObject * uiObject)
 {
-	TryInvoke(object, this);
+	TryInvoke(uiObject, this);
 }

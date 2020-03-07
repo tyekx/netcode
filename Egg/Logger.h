@@ -8,6 +8,7 @@ namespace Log {
 
 	void Debug(const char * message);
 	void Debug(const char * message, int value);
+	void Debug(const char * message, int value, int value2);
 
 	void Info(const char * message);
 	void Info(const char * message, const std::string & value);

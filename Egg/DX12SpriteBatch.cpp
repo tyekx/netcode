@@ -10,7 +10,7 @@ namespace Egg::Graphics::DX12 {
 
 	uint64_t SpriteBatch::indexBuffer{ 0 };
 
-void SpriteBatch::CreateIndexBuffer(Egg::Module::IGraphicsModule * graphics)
+void SpriteBatch::CreateIndexBuffer(const Egg::Module::IGraphicsModule * graphics)
 {
 	if(indexBuffer != 0) {
 		return;
@@ -39,86 +39,35 @@ void SpriteBatch::CreateIndexBuffer(Egg::Module::IGraphicsModule * graphics)
 	UploadBatch upload;
 	upload.Upload(indexBuffer, indices.data(), ibufferSize);
 	upload.ResourceBarrier(indexBuffer, ResourceState::COPY_DEST, ResourceState::INDEX_BUFFER);
-
 	graphics->frame->SyncUpload(upload);
 }
 
-SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
-		: mSpriteQueueCount{ 0 },
-		mSpriteQueueArraySize{ 0 },
-		mInBeginEndPair{ false },
-		mSortMode{ SpriteSortMode::SpriteSortMode_Deferred },
-		mTransformMatrix{ MatrixIdentity },
-		mVertexPageSize{ 6 * 4 * MaxBatchSize * VerticesPerSprite },
-		mSpriteCount{ 0 }
+SpriteBatch::SpriteBatch(const Egg::Module::IGraphicsModule * graphics, Egg::RootSignatureRef rootSig, Egg::PipelineStateRef pso)
+			: vertexBuffer{ 0 },
+			resourceContext{ nullptr },
+			renderContext{ nullptr },
+			rootSignature{ std::move(rootSig) },
+			pipelineState{ std::move(pso) },
+			recordScissorRect{},
+			currentlyBoundScissorRect{},
+			vertexData{ nullptr },
+			mSpriteQueue{ nullptr },
+			mSpriteQueueCount{ 0 },
+			mSpriteQueueArraySize{ 0 },
+			mSortMode{ SpriteSortMode::SpriteSortMode_Deferred },
+			mTransformMatrix{ MatrixIdentity },
+			cbufferAddr{},
+			cbuffer{},
+			mVertexPageSize{ 6 * 4 * MaxBatchSize * VerticesPerSprite },
+			mSpriteCount{ 0 },
+			mInBeginEndPair{ false },
+			firstDraw{ true }
 	{
-	resourceContext = graphics->resources;
-	renderContext = graphics->renderer;
+		resourceContext = graphics->resources;
+		renderContext = graphics->renderer;
 
 		vertexBuffer = graphics->resources->CreateVertexBuffer(sizeof(PCT_Vertex) * MaxBatchSize * VerticesPerSprite, sizeof(PCT_Vertex), ResourceType::PERMANENT_UPLOAD, ResourceState::ANY_READ);
 		vertexData = std::make_unique<PCT_Vertex[]>(MaxBatchSize * VerticesPerSprite);
-
-		auto ilBuilder = graphics->CreateInputLayoutBuilder();
-		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
-		ilBuilder->AddInputElement("COLOR", DXGI_FORMAT_R32G32B32A32_FLOAT);
-		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
-		InputLayoutRef inputLayout = ilBuilder->Build();
-
-		auto shaderBuilder = graphics->CreateShaderBuilder();
-		ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"SpriteFont_Vertex.cso");
-		ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"SpriteFont_Pixel.cso");
-
-		auto rootSigBuilder = graphics->CreateRootSignatureBuilder();
-		rootSignature = rootSigBuilder->BuildFromShader(vs);
-
-		BlendDesc blendState;
-		RenderTargetBlendDesc rt0Blend;
-		rt0Blend.blendEnable = true;
-		rt0Blend.logicOpEnable = false;
-		rt0Blend.srcBlend = BlendMode::SRC_ALPHA;
-		rt0Blend.destBlend = BlendMode::INV_SRC_ALPHA;
-		rt0Blend.blendOp = BlendOp::ADD;
-		rt0Blend.srcBlendAlpha = BlendMode::ONE;
-		rt0Blend.destBlendAlpha = BlendMode::INV_SRC_ALPHA;
-		rt0Blend.blendOpAlpha = BlendOp::ADD;
-		rt0Blend.logicOp = LogicOp::NOOP;
-		rt0Blend.renderTargetWriteMask = 0x0F; // all
-		
-		blendState.alphaToCoverageEnabled = false;
-		blendState.independentAlphaEnabled = false;
-		blendState.rtBlend[0] = rt0Blend;
-
-		RasterizerDesc rasterizerState;
-		rasterizerState.fillMode = FillMode::SOLID;
-		rasterizerState.cullMode = CullMode::NONE;
-		rasterizerState.frontCounterClockwise = false;
-		rasterizerState.depthBias = 0;
-		rasterizerState.depthBiasClamp = 0.0f;
-		rasterizerState.slopeScaledDepthBias = 0.0f;
-		rasterizerState.depthClipEnable = true;
-		rasterizerState.multisampleEnable = true;
-		rasterizerState.antialiasedLineEnable = false;
-		rasterizerState.forcedSampleCount = 0;
-		rasterizerState.conservativeRaster = false;
-
-		DepthStencilDesc depthStencilDesc;
-		depthStencilDesc.depthEnable = false;
-		depthStencilDesc.stencilEnable = false;
-		depthStencilDesc.depthWriteMaskZero = true;
-
-		auto psoBuilder = graphics->CreateGPipelineStateBuilder();
-		psoBuilder->SetInputLayout(inputLayout);
-		psoBuilder->SetRootSignature(rootSignature);
-		psoBuilder->SetVertexShader(vs);
-		psoBuilder->SetPixelShader(ps);
-		psoBuilder->SetDepthStencilFormat(DXGI_FORMAT_D32_FLOAT);
-		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
-		psoBuilder->SetPrimitiveTopologyType(PrimitiveTopologyType::TRIANGLE);
-		psoBuilder->SetBlendState(blendState);
-		psoBuilder->SetRasterizerState(rasterizerState);
-		psoBuilder->SetDepthStencilState(depthStencilDesc);
-
-		pipelineState = psoBuilder->Build();
 
 		CreateIndexBuffer(graphics);
 	}
@@ -138,6 +87,8 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 		}
 
 		mInBeginEndPair = true;
+		firstDraw = true;
+		recordScissorRect.Clear();
 	}
 
 	void SpriteBatch::End()
@@ -160,7 +111,6 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 		renderContext->SetPipelineState(pipelineState);
 		renderContext->SetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
 		renderContext->SetIndexBuffer(indexBuffer);
-
 	}
 
 	// Sorts the array of queued sprites.
@@ -220,18 +170,20 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 		// Walk through the sorted sprite list, looking for adjacent entries that share a texture.
 		ResourceViewsRef batchTexture;
 		DirectX::XMVECTOR batchTextureSize = {};
+		SpriteScissorRect batchSpr;
 		size_t batchStart = 0;
 
 		for(size_t pos = 0; pos < mSpriteQueueCount; pos++)
 		{
 			ResourceViewsRef texture = mSortedSprites[pos]->texture;
+			SpriteScissorRect spr = mSortedSprites[pos]->scissorRect;
 
 			ASSERT(texture != nullptr, "Texture is not set");
 
 			DirectX::XMVECTOR textureSize = mSortedSprites[pos]->textureSize;
 
-			// Flush whenever the texture changes.
-			if(texture != batchTexture)
+			// Flush whenever the texture changes or when the scissor rect changes
+			if((texture != batchTexture) || (spr != batchSpr))
 			{
 				if(pos > batchStart)
 				{
@@ -241,6 +193,7 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 				batchTexture = texture;
 				batchTextureSize = textureSize;
 				batchStart = pos;
+				batchSpr = spr;
 			}
 		}
 
@@ -268,7 +221,6 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 
 		// Convert to vector format.
 		DirectX::XMVECTOR inverseTextureSize = DirectX::XMVectorReciprocal(textureSize);
-
 		while(count > 0)
 		{
 			// How many sprites do we want to draw?
@@ -322,8 +274,27 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 			size_t spriteVertexTotalSize = sizeof(PCT_Vertex) * VerticesPerSprite;
 			resourceContext->CopyConstants(vertexBuffer, vertexData.get() + vertexOffset, batchSize * spriteVertexTotalSize, vertexOffset * sizeof(PCT_Vertex));
 
-			// Ok lads, the time has come for us draw ourselves some sprites!
 			UINT indexCount = static_cast<UINT>(batchSize * IndicesPerSprite);
+
+			if(firstDraw) {
+				firstDraw = false;
+				currentlyBoundScissorRect.Clear();
+				renderContext->SetScissorRect();
+			}
+
+			if(currentlyBoundScissorRect != sprites[0]->scissorRect) {
+				currentlyBoundScissorRect = sprites[0]->scissorRect;
+
+				if(currentlyBoundScissorRect == 0) {
+					renderContext->SetScissorRect();
+				} else {
+					RECT r = currentlyBoundScissorRect.GetRect();
+					renderContext->SetScissorRect(static_cast<uint32_t>(r.left),
+						static_cast<uint32_t>(r.right),
+						static_cast<uint32_t>(r.top),
+						static_cast<uint32_t>(r.bottom));
+				}
+			}
 
 			DirectX::XMStoreFloat4x4A(&cbuffer.transform, transformMat);
 			renderContext->SetConstants(1, cbuffer);
@@ -404,13 +375,6 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 			{ { { 0, 1, 0, 0 } } },
 			{ { { 1, 1, 0, 0 } } },
 		};
-
-		// Tricksy alert! Texture coordinates are computed from the same cornerOffsets
-		// table as vertex positions, but if the sprite is mirrored, this table
-		// must be indexed in a different order. This is done as follows:
-		//
-		//    position = cornerOffsets[i]
-		//    texcoord = cornerOffsets[i ^ SpriteEffects]
 
 		static_assert(SpriteEffects_FlipHorizontally == 1 &&
 					  SpriteEffects_FlipVertically == 2, "If you change these enum values, the mirroring implementation must be updated to match");
@@ -547,6 +511,7 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 		sprite->texture = texture;
 		sprite->textureSize = textureSizeV;
 		sprite->flags = flags;
+		sprite->scissorRect = recordScissorRect;
 
 		if(mSortMode == SpriteSortMode_Immediate)
 		{
@@ -559,7 +524,7 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 		}
 	}
 
-
+	/*
 	void SpriteBatch::Draw(ResourceViewsRef texture,
 									   DirectX::XMUINT2 const & textureSize,
 									   DirectX::XMFLOAT2 const & position,
@@ -667,23 +632,66 @@ SpriteBatch::SpriteBatch(Egg::Module::IGraphicsModule * graphics)
 
 		Draw(texture, textureSize, destination, nullptr, color, DirectX::g_XMZero, SpriteInfo::DestSizeInPixels);
 	}
+	*/
 
+	void SpriteBatch::SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) {
+		RECT r;
+		r.left = left;
+		r.right = right;
+		r.top = top;
+		r.bottom = bottom;
+		SetScissorRect(r);
+	}
 
-	void SpriteBatch::Draw(ResourceViewsRef texture,
-									   DirectX::XMUINT2 const & textureSize,
-									   RECT const & destinationRectangle,
-									   RECT const * sourceRectangle,
-									   DirectX::FXMVECTOR color,
-									   float rotation,
-									   DirectX::XMFLOAT2 const & origin,
-									   SpriteEffects effects,
-									   float layerDepth)
+	void SpriteBatch::SetScissorRect(const RECT & rect) {
+		recordScissorRect = rect;
+	}
+
+	void SpriteBatch::SetScissorRect() {
+		recordScissorRect.Clear();
+	}
+
+	void SpriteBatch::DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position) {
+		DrawSprite(texture, textureSize, position, nullptr, DirectX::XMFLOAT4{ 1,1,1,1 }, 0, DirectX::XMFLOAT2{ 0,0 }, 1.0f, 0);
+	}
+
+	void SpriteBatch::DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size) {
+		DrawSprite(texture, textureSize, position, size, nullptr, DirectX::XMFLOAT4{ 1,1,1,1 }, 0, DirectX::XMFLOAT2{ 0,0 }, 0);
+	}
+
+	void SpriteBatch::DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT4 & color) {
+		DrawSprite(texture, textureSize, position, size, nullptr, color, 0, DirectX::XMFLOAT2{ 0,0 }, 0);
+	}
+
+	void SpriteBatch::DrawSprite(ResourceViewsRef texture,
+		const DirectX::XMUINT2 & textureSize,
+		const DirectX::XMFLOAT2 & position,
+		const RECT * sourceRectangle,
+		const DirectX::XMFLOAT4 & color,
+		float rotation,
+		const DirectX::XMFLOAT2 & origin,
+		float scale,
+		float layerDepth)
 	{
-		DirectX::XMVECTOR destination = LoadRect(&destinationRectangle); // x, y, w, h
+		DirectX::XMVECTOR destination = DirectX::XMVectorPermute<0, 1, 4, 4>(DirectX::XMLoadFloat2(&position), DirectX::XMLoadFloat(&scale));
+		DirectX::XMVECTOR originRotationDepth = DirectX::XMVectorSet(origin.x, origin.y, rotation, layerDepth);
+		Draw(texture, textureSize, destination, sourceRectangle, DirectX::XMLoadFloat4(&color), originRotationDepth, static_cast<unsigned int>(SpriteEffects_None));
+	}
 
+	void SpriteBatch::DrawSprite(ResourceViewsRef texture,
+			const DirectX::XMUINT2 & textureSize,
+			const DirectX::XMFLOAT2 & destPosition,
+			const DirectX::XMFLOAT2 & destSize,
+			const RECT * sourceRectangle,
+			const DirectX::XMFLOAT4 & color,
+			float rotation,
+			const DirectX::XMFLOAT2 & origin,
+			float layerDepth)
+	{
+		DirectX::XMVECTOR destination = DirectX::XMVectorPermute<0, 1, 4, 5>(DirectX::XMLoadFloat2(&destPosition), DirectX::XMLoadFloat2(&destSize));
 		DirectX::XMVECTOR originRotationDepth = DirectX::XMVectorSet(origin.x, origin.y, rotation, layerDepth);
 
-		Draw(texture, textureSize, destination, sourceRectangle, color, originRotationDepth, static_cast<unsigned int>(effects) | SpriteInfo::DestSizeInPixels);
+		Draw(texture, textureSize, destination, sourceRectangle, DirectX::XMLoadFloat4(&color), originRotationDepth, static_cast<unsigned int>(SpriteEffects_None) | SpriteInfo::DestSizeInPixels);
 	}
 
 }

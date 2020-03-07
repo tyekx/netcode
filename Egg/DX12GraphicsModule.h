@@ -129,7 +129,6 @@ namespace Egg::Graphics::DX12 {
 		DXGI_RGBA clearColor;
 
 		DisplayMode displayMode;
-		std::unique_ptr<SpriteBatch> spriteBatch;
 
 		void NextBackBufferIndex();
 
@@ -212,7 +211,10 @@ namespace Egg::Graphics::DX12 {
 
 		virtual SpriteFontBuilderRef CreateSpriteFontBuilder() const override;
 
+		virtual SpriteBatchBuilderRef CreateSpriteBatchBuilder() const override;
+
 		virtual TextureBuilderRef CreateTextureBuilder() const override;
+
 	};
 
 

@@ -11,6 +11,20 @@
       <Item Name="[Animation]" Condition="(components.signature &amp; 16) == 16">((Animation*)(components.extendedStorage + sizeof(Camera)))</Item>
     </Expand>
   </Type>
+  <Type Name="UIObject">
+    <DisplayString>{{ Signature = { components.signature } }}</DisplayString>
+    <Expand>
+      <Item Name="[SpawnableFlag]">(flags &amp; 1) != 0</Item>
+      <Item Name="[ActivityFlag]">(flags &amp; 2) != 0</Item>
+      <Item Name="[Transform]" Condition="(components.signature &amp; 1) == 1">((Transform*)components.storage)</Item>
+      <Item Name="[UIElement]" Condition="(components.signature &amp; 2) == 2">((UIElement*)(components.storage + sizeof(Transform)))</Item>
+      <Item Name="[Sprite]" Condition="(components.signature &amp; 4) == 4">((Sprite*)(components.storage + sizeof(UIElement) + sizeof(Transform)))</Item>
+      <Item Name="[Button]" Condition="(components.signature &amp; 8) == 8">((Button*)(components.storage + sizeof(Sprite) + sizeof(UIElement) + sizeof(Transform)))</Item>
+      <Item Name="[Text]" Condition="(components.signature &amp; 16) == 16">((Text*)(components.storage + sizeof(Button)+ sizeof(Sprite) + sizeof(UIElement) + sizeof(Transform)))</Item>
+      <Item Name="[TextBox]" Condition="(components.signature &amp; 32) == 32">((TextBox*)(components.storage + sizeof(Text) + sizeof(Button)+ sizeof(Sprite) + sizeof(UIElement) + sizeof(Transform)))</Item>
+      <Item Name="[Camera]" Condition="(components.signature &amp; 64) == 64">((Camera*)(components.extendedStorage))</Item>
+    </Expand>
+  </Type>
   <Type Name="Transform">
     <DisplayString>{{ Position={position}, Rotation={rotation}, Scale={scale} }}</DisplayString>
   </Type>

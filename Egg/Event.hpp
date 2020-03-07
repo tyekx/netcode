@@ -10,7 +10,7 @@ namespace Egg {
 
 	template<typename ... T>
 	class Event {
-		static EventToken tokenGenerator;
+		EventToken tokenGenerator;
 
 		using func_t = typename std::function<void(T...)>;
 
@@ -20,7 +20,7 @@ namespace Egg {
 	public:
 		EventToken operator+=(std::function<void(T...)> callback) {
 			EventToken t = tokenGenerator++;
-			callbacks.insert(t, std::move(callback));
+			callbacks[t] = callback;
 			return t;
 		}
 

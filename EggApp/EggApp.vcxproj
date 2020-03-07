@@ -92,34 +92,40 @@
     <Natvis Include="EggApp.natvis" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="envmapPass_Pixel.hlsl">
+    <FxCompile Include="Shaders\envmapPass_Pixel.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="envmapPass_Vertex.hlsl">
+    <FxCompile Include="Shaders\envmapPass_Vertex.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
     </FxCompile>
-    <FxCompile Include="gbufferPass_Pixel.hlsl">
+    <FxCompile Include="Shaders\gbufferPass_Pixel.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="gbufferPass_Vertex.hlsl">
+    <FxCompile Include="Shaders\gbufferPass_Vertex.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
     </FxCompile>
-    <FxCompile Include="lightingPass_Pixel.hlsl">
+    <FxCompile Include="Shaders\lightingPass_Pixel.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="lightingPass_Vertex.hlsl">
+    <FxCompile Include="Shaders\lightingPass_Vertex.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
     </FxCompile>
-    <FxCompile Include="skinningPass_Vertex.hlsl">
+    <FxCompile Include="Shaders\skinningPass_Vertex.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
     </FxCompile>
-    <FxCompile Include="ssaoBlurPass_Pixel.hlsl">
+    <FxCompile Include="Shaders\sprite_Pixel.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="ssaoOcclusionPass_Pixel.hlsl">
+    <FxCompile Include="Shaders\sprite_Vertex.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\ssaoBlurPass_Pixel.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="ssaoPass_Vertex.hlsl">
+    <FxCompile Include="Shaders\ssaoOcclusionPass_Pixel.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\ssaoPass_Vertex.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
     </FxCompile>
   </ItemGroup>

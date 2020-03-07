@@ -90,15 +90,6 @@ namespace Egg::Graphics {
 		virtual void DrawIndexed(uint32_t indexCount, uint32_t vertexOffset) = 0;
 		virtual void Draw(uint32_t vertexCount) = 0;
 		virtual void Draw(uint32_t vertexCount, uint32_t vertexOffset) = 0;
-		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position) = 0;
-		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size) = 0;
-		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT4 & color) = 0;
-
-		virtual void BeginSpriteRendering(DirectX::XMFLOAT4X4 viewProj) = 0;
-		virtual void EndSpriteRendering() = 0;
-
-		virtual void DrawString(SpriteFontRef spriteFont, const wchar_t * string, const DirectX::XMFLOAT2 & position) = 0;
-		virtual void DrawString(SpriteFontRef spriteFont, const wchar_t * string, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) = 0;
 
 		virtual void SetPrimitiveTopology(PrimitiveTopology topology) = 0;
 

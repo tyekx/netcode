@@ -295,6 +295,9 @@
     <ClInclude Include="Event.hpp">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="DX12SpriteBatchBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
@@ -463,6 +466,9 @@
     <ClCompile Include="PhysXWrapper.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
+    <ClCompile Include="DX12SpriteBatchBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DefaultPS.hlsl">
@@ -487,12 +493,6 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\DebugPhysxRayVS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="SpriteFont_Pixel.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\SpriteFont_Vertex.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

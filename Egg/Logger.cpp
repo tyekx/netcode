@@ -36,6 +36,11 @@ namespace Log {
 		spdlog::debug(message, value);
 	}
 
+	void Debug(const char * message, int value, int value2)
+	{
+		spdlog::debug(message, value, value2);
+	}
+
 	void Info(const char * message) {
 		spdlog::info(message);
 	}

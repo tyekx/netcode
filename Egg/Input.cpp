@@ -17,6 +17,8 @@ namespace Egg {
 	DirectX::XMINT2 Input::mouseDelta{};
 	std::map<std::string, Input::Axis> Input::axisMap{ };
 
+	Event<uint32_t> Input::OnKeyPressed{};
+
 	Input::Axis::Axis() : PositiveKey{ 0 }, NegativeKey{ 0 }, CurrentValue{ 0.0f } { }
 
 	Input::Axis::Axis(uint32_t posK, uint32_t negK) : PositiveKey{ posK }, NegativeKey{ negK }, CurrentValue{ 0.0f } { }

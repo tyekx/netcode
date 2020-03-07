@@ -5,7 +5,6 @@
 #include "DX12ResourcePool.h"
 #include "DX12ConstantBufferPool.h"
 #include "DX12DynamicDescriptorHeap.h"
-#include "DX12SpriteBatch.h"
 
 namespace Egg::Graphics::DX12 {
 
@@ -23,7 +22,6 @@ namespace Egg::Graphics::DX12 {
 		std::vector<D3D12_RESOURCE_BARRIER> barriers;
 		D3D12_GPU_VIRTUAL_ADDRESS streamOutput_FilledSizeLocation;
 		DynamicDescriptorHeap * descHeaps;
-		SpriteBatch * spriteBatch;
 
 		virtual void SetStencilReference(uint8_t stencilValue) override;
 
@@ -59,7 +57,7 @@ namespace Egg::Graphics::DX12 {
 
 		virtual void SetStreamOutputFilledSize(uint64_t handle, uint64_t byteOffset) override;
 
-
+		/*
 		virtual void BeginSpriteRendering(DirectX::XMFLOAT4X4 viewProjInv) override;
 		virtual void EndSpriteRendering() override;
 
@@ -68,7 +66,7 @@ namespace Egg::Graphics::DX12 {
 		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position) override;
 		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size) override;
 		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT4 & color) override;
-
+		*/
 		virtual void ResetStreamOutput() override;
 
 		virtual void SetViewport(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) override;

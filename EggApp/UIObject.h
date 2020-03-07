@@ -67,6 +67,7 @@ public:
 	}
 
 	void Spawn() {
+		SetActivityFlag(true);
 		SetSpawnableFlag(true);
 	}
 

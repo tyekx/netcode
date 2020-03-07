@@ -12,8 +12,8 @@
 
 namespace Egg::Graphics::DX12
 {
-   __declspec(align(256)) struct SpriteCbuffer {
-       DirectX::XMFLOAT4X4A transform;
+    __declspec(align(256)) struct SpriteCbuffer {
+        DirectX::XMFLOAT4X4A transform;
     };
 
     enum SpriteSortMode
@@ -33,11 +33,77 @@ namespace Egg::Graphics::DX12
         SpriteEffects_FlipBoth = SpriteEffects_FlipHorizontally | SpriteEffects_FlipVertically,
     };
 
-    class SpriteBatch
-    {
-
-
+    class RectHash {
+        uint64_t value;
     public:
+        RectHash() = default;
+
+        RectHash(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) {
+            constexpr uint64_t mask = 0xFFFF;
+
+            value = (static_cast<uint64_t>(left) & mask) << 48 |
+                (static_cast<uint64_t>(right) & mask) << 32 |
+                (static_cast<uint64_t>(top) & mask) << 16 |
+                (static_cast<uint64_t>(bottom) & mask);
+        }
+
+        RectHash(const RECT & rect) : RectHash(rect.left, rect.right, rect.top, rect.bottom) {
+
+        }
+
+        bool operator==(const RectHash & rhs) const {
+            return value == rhs.value;
+        }
+
+        bool operator!=(const RectHash & rhs) const {
+            return !operator==(rhs);
+        }
+
+        bool operator==(uint64_t v) const {
+            return value == v;
+        }
+    };
+
+    class SpriteScissorRect {
+        RectHash hash;
+        RECT rect;
+    public:
+        SpriteScissorRect() = default;
+
+        SpriteScissorRect(const RECT & r) :hash{ r }, rect{ r } {}
+
+        void Clear() {
+            rect = RECT{ 0,0,0,0 };
+        }
+
+        void SetRect(const RECT & r) {
+            rect = r;
+            hash = RectHash(r);
+        }
+
+        RECT GetRect() const {
+            return rect;
+        }
+
+        bool operator!=(const SpriteScissorRect & rhs) const {
+            return hash != rhs.hash;
+        }
+
+        bool operator==(const SpriteScissorRect & rhs) const {
+            return hash == rhs.hash;
+        }
+
+        bool operator==(uint64_t value) const {
+            return hash == value;
+        }
+    };
+
+    class SpriteBatch : public Egg::SpriteBatch {
+        static uint64_t indexBuffer;
+        static const DirectX::XMMATRIX MatrixIdentity;
+        static const DirectX::XMFLOAT2 Float2Zero;
+    public:
+
         __declspec(align(16)) struct SpriteInfo
         {
             DirectX::XMFLOAT4A source;
@@ -46,6 +112,7 @@ namespace Egg::Graphics::DX12
             DirectX::XMFLOAT4A originRotationDepth;
             ResourceViewsRef texture;
             DirectX::XMVECTOR textureSize;
+            SpriteScissorRect scissorRect;
             unsigned int flags;
 
             // Combine values from the public SpriteEffects enum with these internal-only flags.
@@ -54,7 +121,7 @@ namespace Egg::Graphics::DX12
 
             static_assert((SpriteEffects_FlipBoth & (SourceInTexels | DestSizeInPixels)) == 0, "Flag bits must not overlap");
         };
-        static uint64_t indexBuffer;
+
         uint64_t vertexBuffer;
 
         IResourceContext * resourceContext;
@@ -62,6 +129,9 @@ namespace Egg::Graphics::DX12
 
         RootSignatureRef rootSignature;
         PipelineStateRef pipelineState;
+        
+        SpriteScissorRect recordScissorRect;
+        SpriteScissorRect currentlyBoundScissorRect;
 
         std::unique_ptr<PCT_Vertex[]> vertexData;
         std::unique_ptr<SpriteInfo[]> mSpriteQueue;
@@ -71,19 +141,17 @@ namespace Egg::Graphics::DX12
 
         std::vector<SpriteInfo const *> mSortedSprites;
 
-
-        // Mode settings from the last Begin call.
-        bool mInBeginEndPair;
-
         SpriteSortMode mSortMode;
         DirectX::XMMATRIX mTransformMatrix;
-        
 
         D3D12_GPU_VIRTUAL_ADDRESS cbufferAddr;
         SpriteCbuffer cbuffer;
 
         size_t mVertexPageSize;
         size_t mSpriteCount;
+
+        bool mInBeginEndPair;
+        bool firstDraw;
 
         static const size_t MaxBatchSize = 2048;
         static const size_t MinBatchSize = 128;
@@ -99,9 +167,9 @@ namespace Egg::Graphics::DX12
             RootParameterCount
         };
 
-        void CreateIndexBuffer(Egg::Module::IGraphicsModule * graphics);
+        void CreateIndexBuffer(const Egg::Module::IGraphicsModule * graphics);
 
-        SpriteBatch(Egg::Module::IGraphicsModule * graphics);
+        SpriteBatch(const Egg::Module::IGraphicsModule * graphics, Egg::RootSignatureRef rootSig, Egg::PipelineStateRef pso);
 
         SpriteBatch(SpriteBatch && moveFrom) = default;
         SpriteBatch & operator= (SpriteBatch && moveFrom) = default;
@@ -115,6 +183,44 @@ namespace Egg::Graphics::DX12
         void Begin(SpriteSortMode sortMode = SpriteSortMode_Deferred, DirectX::FXMMATRIX transformMatrix = MatrixIdentity);
         void End();
 
+        virtual void BeginRecord(DirectX::XMFLOAT4X4 viewProj) override {
+            DirectX::FXMMATRIX tMat = DirectX::XMLoadFloat4x4(&viewProj);
+            Begin(SpriteSortMode_Deferred, tMat);
+        }
+        virtual void EndRecord() override {
+            End();
+        }
+
+        virtual void SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)  override;
+        virtual void SetScissorRect(const RECT & rect)  override;
+        virtual void SetScissorRect()  override;
+
+        virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position) override;
+
+        virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size)  override;
+
+        virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT4 & color)  override;
+
+        virtual void DrawSprite(ResourceViewsRef texture,
+            const DirectX::XMUINT2 & textureSize,
+            const DirectX::XMFLOAT2 & position,
+            const RECT * sourceRectangle,
+            const DirectX::XMFLOAT4 & color,
+            float rotation,
+            const DirectX::XMFLOAT2 & origin,
+            float scale,
+            float layerDepth) override;
+
+        virtual void DrawSprite(ResourceViewsRef texture,
+            const DirectX::XMUINT2 & textureSize,
+            const DirectX::XMFLOAT2 & destPosition,
+            const DirectX::XMFLOAT2 & destSize,
+            const RECT * sourceRectangle,
+            const DirectX::XMFLOAT4 & color,
+            float rotation,
+            const DirectX::XMFLOAT2 & origin,
+            float layerDepth) override;
+        /*
         // Draw overloads specifying position, origin and scale as XMFLOAT2.
         void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color = DirectX::Colors::White);
         void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::XMFLOAT2 const & origin = Float2Zero, float scale = 1, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
@@ -128,7 +234,7 @@ namespace Egg::Graphics::DX12
         // Draw overloads specifying position as a RECT.
         void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, RECT const & destinationRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White);
         void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, RECT const & destinationRectangle, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::XMFLOAT2 const & origin = Float2Zero, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
-
+        */
     private:
         // Implementation helper methods.
         void GrowSpriteQueue();
@@ -137,17 +243,19 @@ namespace Egg::Graphics::DX12
         void SortSprites();
         void GrowSortedSprites();
 
-        void RenderBatch(ResourceViewsRef texture, DirectX::XMVECTOR textureSize, _In_reads_(count) SpriteInfo const * const * sprites, size_t count);
+        void RenderBatch(ResourceViewsRef texture, DirectX::XMVECTOR textureSize, SpriteInfo const * const * sprites, size_t count);
 
-        static void RenderSprite(_In_ SpriteInfo const * sprite,
-                                             _Out_writes_(VerticesPerSprite) PCT_Vertex * vertices,
-                                             DirectX::FXMVECTOR textureSize,
-                                             DirectX::FXMVECTOR inverseTextureSize);
+        static void RenderSprite(SpriteInfo const * sprite,
+                                 PCT_Vertex * vertices,
+                                 DirectX::FXMVECTOR textureSize,
+                                 DirectX::FXMVECTOR inverseTextureSize);
 
         void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR destination, RECT const * sourceRectangle, DirectX::FXMVECTOR color, DirectX::FXMVECTOR originRotationDepth, unsigned int flags);
 
-        static const DirectX::XMMATRIX MatrixIdentity;
-        static const DirectX::XMFLOAT2 Float2Zero;
     };
+
+    using DX12SpriteBatch = Egg::Graphics::DX12::SpriteBatch;
+    using DX12SpriteBatchRef = std::shared_ptr<DX12SpriteBatch>;
+
 }
 

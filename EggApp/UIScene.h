@@ -6,6 +6,7 @@
 #include "PhysxHelpers.h"
 #include "UIButtonPrefab.h"
 #include "UIPagePrefab.h"
+#include "UITextBox.h"
 
 class UIScene : public Scene<UIObject> {
 public:
@@ -90,6 +91,18 @@ public:
 		Spawn(root);
 
 		return UIPagePrefab(root);
+	}
+
+	UITextBox CreateTextBox() {
+		UIObject * root = Create();
+		UIObject * btn = Create();
+		UIObject * txt = Create();
+
+		Spawn(root);
+		Spawn(btn);
+		Spawn(txt);
+
+		return UITextBox(root, btn, txt);
 	}
 
 	void UpdatePerFrameCb() {

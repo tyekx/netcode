@@ -37,6 +37,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	AnimationSystem animSystem;
 	PhysXSystem pxSystem;
 	UISystem uiSystem;
+	UISpriteSystem uiSpriteSystem;
 	UITransformSystem uiTransformSystem;
 	UITextSystem uiTextSystem;
 
@@ -48,6 +49,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	void LoadSystems() {
 		uiSystem.CreateResources(uiScene->GetPhysXScene(), &uiScene->perFrameData);
 		uiTextSystem.gEngine = &renderSystem.renderer;
+		uiSpriteSystem.gEngine = &renderSystem.renderer;
 	}
 
 	void Render() {
@@ -74,6 +76,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		uiScene->Foreach([this](UIObject * uiObject) -> void {
 			uiTransformSystem.Run(uiObject);
 			uiSystem.Run(uiObject);
+			uiSpriteSystem.Run(uiObject);
 			uiTextSystem.Run(uiObject);
 		});
 
@@ -150,6 +153,9 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 		UIPagePrefab loginPage = uiScene->CreatePage();
 		UIButtonPrefab btn = uiScene->CreateButton(L"Login", DirectX::XMFLOAT2{ 256.0f, 64.0f }, DirectX::XMFLOAT2{ 200.0f, 100.0f }, 0.5f, titillium60Font, srvRef, DirectX::XMUINT2{ static_cast<uint32_t>(img->width), static_cast<uint32_t>(img->height) });
+		UITextBox tb = uiScene->CreateTextBox();
+
+		tb.SetFont(titillium60Font);
 
 		btn.OnClick([]() -> void {
 			Log::Info("LoginBtn: clicked");
@@ -163,6 +169,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			Log::Info("LoginBtn: mouse leave");
 		});
 
+		loginPage.AddControl(tb);
 		loginPage.AddControl(btn);
 
 		Egg::Input::SetAxis("Vertical", 'W', 'S');
