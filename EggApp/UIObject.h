@@ -25,6 +25,10 @@ public:
 		return components.signature;
 	}
 
+	const std::set<UIObject *> & GetChildren() const {
+		return children;
+	}
+
 	UIObject() = default;
 	UIObject(const UIObject &) = delete;
 	UIObject(UIObject && rhs) noexcept = default;
@@ -73,13 +77,13 @@ public:
 
 	void Parent(UIObject * obj) {
 		if(parent != nullptr) {
-			parent->children.erase(obj);
+			parent->children.erase(this);
 		}
 
 		parent = obj;
 
 		if(parent != nullptr) {
-			parent->children.insert(obj);
+			parent->children.insert(this);
 		}
 	}
 

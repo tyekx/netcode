@@ -17,7 +17,8 @@ namespace Egg {
 	DirectX::XMINT2 Input::mouseDelta{};
 	std::map<std::string, Input::Axis> Input::axisMap{ };
 
-	Event<uint32_t> Input::OnKeyPressed{};
+	Event<uint32_t, uint32_t> Input::OnKeyPressed{};
+	uint32_t Input::activeModifiers{ 0 };
 
 	Input::Axis::Axis() : PositiveKey{ 0 }, NegativeKey{ 0 }, CurrentValue{ 0.0f } { }
 
@@ -116,7 +117,22 @@ namespace Egg {
 			return;
 		}
 
-		OnKeyPressed.Invoke(keyCode);
+		switch(keyCode) {
+			case VK_SHIFT:
+				activeModifiers |= static_cast<uint32_t>(KeyModifiers::SHIFT);
+				break;
+			case VK_CONTROL:
+				activeModifiers |= static_cast<uint32_t>(KeyModifiers::CTRL);
+				break;
+			case VK_CAPITAL:
+				activeModifiers |= static_cast<uint32_t>(KeyModifiers::CAPS_LOCK);
+				break;
+			case VK_MENU:
+				activeModifiers |= static_cast<uint32_t>(KeyModifiers::ALT);
+				break;
+		}
+
+		OnKeyPressed.Invoke(keyCode, activeModifiers);
 		
 		for(auto & i : axisMap) {
 			if(i.second.PositiveKey == keyCode) {
@@ -130,6 +146,21 @@ namespace Egg {
 	void Input::KeyReleased(uint32_t keyCode) {
 		if(!isFocused) {
 			return;
+		}
+
+		switch(keyCode) {
+			case VK_SHIFT:
+				activeModifiers &= (~static_cast<uint32_t>(KeyModifiers::SHIFT));
+				break;
+			case VK_CONTROL:
+				activeModifiers &= (~static_cast<uint32_t>(KeyModifiers::CTRL));
+				break;
+			case VK_CAPITAL:
+				activeModifiers &= (~static_cast<uint32_t>(KeyModifiers::CAPS_LOCK));
+				break;
+			case VK_MENU:
+				activeModifiers &= (~static_cast<uint32_t>(KeyModifiers::ALT));
+				break;
 		}
 
 		for(auto & i : axisMap) {
@@ -178,12 +209,14 @@ namespace Egg {
 
 	void Input::Blur() {
 		isFocused = false;
+		activeModifiers = 0;
 		//SetCursor(LoadCursor(NULL, IDC_ARROW));
 	}
 
 	void Input::Focused() {
 		mouseDelta = { 0, 0 };
 		isFocused = true;
+		activeModifiers = 0;
 		//SetCursor(NULL);
 	}
 

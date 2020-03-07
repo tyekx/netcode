@@ -451,10 +451,12 @@ namespace Egg::Graphics::DX12 {
 				TextureRef tex = task.textureTask.texture;
 				uint16_t imgCount = tex->GetImageCount();
 
+				size_t sum = 0;
 				for(uint16_t imgI = 0; imgI < imgCount; ++imgI) {
 					const Image* imgR = tex->GetImage(0, imgI, 0);
-					totalSize += imgR->slicePitch;
+					sum += imgR->height * imgR->rowPitch;
 				}
+				totalSize += Egg::Utility::Align512<size_t>(sum);
 			}
 		}
 
@@ -483,7 +485,7 @@ namespace Egg::Graphics::DX12 {
 					data.pData = task.bufferTask.srcData;
 					UpdateSubresources(gcl.Get(), gres.resource, uploadResource.Get(), offset, 0u, 1u, &data);
 
-					offset += task.bufferTask.srcDataSizeInBytes;
+					offset += Egg::Utility::Align512<size_t>(task.bufferTask.srcDataSizeInBytes);
 				}
 
 				if(task.type == UploadTaskType::TEXTURE) {
@@ -492,21 +494,20 @@ namespace Egg::Graphics::DX12 {
 					TextureRef tex = task.textureTask.texture;
 					uint16_t imgCount = tex->GetImageCount();
 
+					size_t sum = 0;
 					std::unique_ptr<D3D12_SUBRESOURCE_DATA[]> subResData = std::make_unique<D3D12_SUBRESOURCE_DATA[]>(imgCount);
-
-					size_t s = 0;
 
 					for(uint16_t imgI = 0; imgI < imgCount; ++imgI) {
 						const Image * imgR = tex->GetImage(0, imgI, 0);
-						s += imgR->slicePitch;
 						subResData[imgI].pData = imgR->pixels;
 						subResData[imgI].RowPitch = imgR->rowPitch;
 						subResData[imgI].SlicePitch = imgR->slicePitch;
+						sum += imgR->slicePitch;
 					}
 
 					UpdateSubresources(gcl.Get(), gres.resource, uploadResource.Get(), offset, 0u, imgCount, subResData.get());
 
-					offset += s;
+					offset += Utility::Align512<size_t>(sum);
 				}
 			}
 		}

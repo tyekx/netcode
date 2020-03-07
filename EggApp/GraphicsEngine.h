@@ -60,7 +60,7 @@ struct UISpriteRenderItem {
 
 struct UITextRenderItem {
 	Egg::SpriteFontRef font;
-	const wchar_t * text;
+	std::wstring text;
 	DirectX::XMFLOAT2 position;
 	DirectX::XMFLOAT4 fontColor;
 
@@ -72,11 +72,11 @@ struct UITextRenderItem {
 	UITextRenderItem & operator=(UITextRenderItem &&) noexcept = default;
 
 	UITextRenderItem(Egg::SpriteFontRef font,
-		const wchar_t* text,
+		std::wstring text,
 		const DirectX::XMFLOAT2 & position,
 		const DirectX::XMFLOAT4 & color) :
 		font{ std::move(font) },
-		text{ text },
+		text{ std::move(text) },
 		position{ position },
 		fontColor{ color } { }
 };
@@ -713,7 +713,7 @@ private:
 					case TupleIndexOf<UITextRenderItem, UIRenderItemTypeTuple>::value:
 						{
 							const auto & item = std::get<UITextRenderItem>(i);
-							item.font->DrawString(uiPass_SpriteBatch, item.text, item.position, item.fontColor);
+							item.font->DrawString(uiPass_SpriteBatch, item.text.c_str(), item.position, item.fontColor);
 						}
 						break;
 				}

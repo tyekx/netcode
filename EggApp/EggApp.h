@@ -143,19 +143,39 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		const Egg::Image * img = texRef->GetImage(0, 0, 0);
 		uint64_t texHandle = graphics->resources->CreateTexture2D(img->width, img->height, img->format, Egg::Graphics::ResourceType::PERMANENT_DEFAULT, Egg::Graphics::ResourceState::COPY_DEST, Egg::Graphics::ResourceFlags::NONE);
 
+		auto texBuilder2 = graphics->CreateTextureBuilder();
+		texBuilder2->LoadTexture2D(L"textbox_background.png");
+		Egg::TextureRef textBoxBackgroundImageRef = texBuilder2->Build();
+		const Egg::Image * textBoxBackgroundImg = textBoxBackgroundImageRef->GetImage(0, 0, 0);
+		uint64_t textBoxTexHandle = graphics->resources->CreateTexture2D(textBoxBackgroundImg->width, textBoxBackgroundImg->height, textBoxBackgroundImg->format, Egg::Graphics::ResourceType::PERMANENT_DEFAULT, Egg::Graphics::ResourceState::COPY_DEST, Egg::Graphics::ResourceFlags::NONE);
+
 		Egg::Graphics::UploadBatch ub;
+		ub.Upload(textBoxTexHandle, textBoxBackgroundImageRef);
 		ub.Upload(texHandle, texRef);
+		ub.ResourceBarrier(textBoxTexHandle, Egg::Graphics::ResourceState::COPY_DEST, Egg::Graphics::ResourceState::PIXEL_SHADER_RESOURCE);
 		ub.ResourceBarrier(texHandle, Egg::Graphics::ResourceState::COPY_DEST, Egg::Graphics::ResourceState::PIXEL_SHADER_RESOURCE);
 		graphics->frame->SyncUpload(ub);
 
 		auto srvRef = graphics->resources->CreateShaderResourceViews(1);
 		srvRef->CreateSRV(0, texHandle);
 
-		UIPagePrefab loginPage = uiScene->CreatePage();
-		UIButtonPrefab btn = uiScene->CreateButton(L"Login", DirectX::XMFLOAT2{ 256.0f, 64.0f }, DirectX::XMFLOAT2{ 200.0f, 100.0f }, 0.5f, titillium60Font, srvRef, DirectX::XMUINT2{ static_cast<uint32_t>(img->width), static_cast<uint32_t>(img->height) });
-		UITextBox tb = uiScene->CreateTextBox();
+		auto textBoxSrvRef = graphics->resources->CreateShaderResourceViews(1);
+		textBoxSrvRef->CreateSRV(0, textBoxTexHandle);
 
+		UIPagePrefab loginPage = uiScene->CreatePage();
+		UIButtonPrefab btn = uiScene->CreateButton(L"Login", DirectX::XMFLOAT2{ 256.0f, 64.0f }, DirectX::XMFLOAT2{ 464.0f, 172.0f }, 0.5f, titillium60Font, srvRef, DirectX::XMUINT2{ static_cast<uint32_t>(img->width), static_cast<uint32_t>(img->height) });
+		UIButtonPrefab exitBtn = uiScene->CreateButton(L"Exit", DirectX::XMFLOAT2{ 256.0f, 64.0f }, DirectX::XMFLOAT2{ 200.0f, 172.0f }, 0.5f, titillium60Font, srvRef, DirectX::XMUINT2{ static_cast<uint32_t>(img->width), static_cast<uint32_t>(img->height) });
+		UITextBox tb = uiScene->CreateTextBox();
+		UITextBox tb2 = uiScene->CreateTextBox();
+
+
+		tb.SetPosition(DirectX::XMFLOAT2{ 200.0f, 28.0f });
+		tb2.SetPosition(DirectX::XMFLOAT2{ 200.0f, 100.0f });
+		tb.SetBackgroundImage(textBoxSrvRef, DirectX::XMUINT2{ static_cast<uint32_t>(textBoxBackgroundImg->width), static_cast<uint32_t>(textBoxBackgroundImg->height) });
+		tb2.SetBackgroundImage(textBoxSrvRef, DirectX::XMUINT2{ static_cast<uint32_t>(textBoxBackgroundImg->width), static_cast<uint32_t>(textBoxBackgroundImg->height) });
 		tb.SetFont(titillium60Font);
+		tb2.SetFont(titillium60Font);
+		tb2.SetPasswordFlag();
 
 		btn.OnClick([]() -> void {
 			Log::Info("LoginBtn: clicked");
@@ -171,6 +191,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 		loginPage.AddControl(tb);
 		loginPage.AddControl(btn);
+		loginPage.AddControl(exitBtn);
 
 		Egg::Input::SetAxis("Vertical", 'W', 'S');
 		Egg::Input::SetAxis("Horizontal", 'A', 'D');

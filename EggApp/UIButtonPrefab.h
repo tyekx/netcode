@@ -7,25 +7,13 @@
 class UIButtonPrefab : public UIControl {
 	UIObject * backgroundObject;
 	UIObject * textObject;
-	
-	void AlignText() {
-		Text * textComponent = textObject->GetComponent<Text>();
-		Transform * textTransform = textObject->GetComponent<Transform>();
-		UIElement * bgElem = backgroundObject->GetComponent<UIElement>();
-
-		if(textComponent->font != nullptr) {
-			DirectX::XMFLOAT2 strSize = textComponent->font->MeasureString(textComponent->text.c_str());
-			textTransform->position.x = (bgElem->width - strSize.x) / 2.0f;
-			textTransform->position.y = (bgElem->height - strSize.y) / 2.0f;
-		}
-	}
 
 public:
 	void SetSize(const DirectX::XMFLOAT2 & size) {
 		UIElement * bgElem = backgroundObject->GetComponent<UIElement>();
 		bgElem->width = size.x;
 		bgElem->height = size.y;
-		AlignText();
+		AlignText(textObject->GetComponent<Text>(), textObject->GetComponent<Transform>(), bgElem);
 	}
 
 	void SetBackgroundImage(Egg::ResourceViewsRef resourceView, const DirectX::XMUINT2 & dimensions) {
@@ -37,19 +25,13 @@ public:
 	void SetText(std::wstring text) {
 		Text * textComponent = textObject->GetComponent<Text>();
 		textComponent->text = std::move(text);
-		AlignText();
+		AlignText(textComponent, textObject->GetComponent<Transform>(), backgroundObject->GetComponent<UIElement>());
 	}
 
 	void SetFont(Egg::SpriteFontRef spriteFont) {
 		Text * textComponent = textObject->GetComponent<Text>();
 		textComponent->font = std::move(spriteFont);
-		AlignText();
-	}
-
-	void SetPosition(const DirectX::XMFLOAT2 & pos) {
-		Transform * bgTransform = backgroundObject->GetComponent<Transform>();
-		bgTransform->position.x = pos.x;
-		bgTransform->position.y = pos.y;
+		AlignText(textComponent, textObject->GetComponent<Transform>(), backgroundObject->GetComponent<UIElement>());
 	}
 
 	void SetZIndex(float z) {
@@ -96,6 +78,8 @@ public:
 		UIElement * textElem = textObject->AddComponent<UIElement>();
 
 		Text * txt = textObject->AddComponent<Text>();
+		txt->horizontalAlignment = HorizontalAnchor::CENTER;
+		txt->verticalAlignment = VerticalAnchor::MIDDLE;
 		txt->color = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };
 	}
 };

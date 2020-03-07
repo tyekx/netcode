@@ -59,6 +59,7 @@ COMPONENT_ALIGN struct TextBox {
 	int id;
 	Egg::EventToken keyPressedToken;
 	std::function<void(const std::wstring&)> contentChanged;
+	bool isPassword;
 
 	TextBox();
 	~TextBox();
@@ -69,6 +70,8 @@ public:
 	DirectX::XMFLOAT4 color;
 	Egg::SpriteFontRef font;
 	std::wstring text;
+	HorizontalAnchor horizontalAlignment;
+	VerticalAnchor verticalAlignment;
 };
 
 class GameObject;

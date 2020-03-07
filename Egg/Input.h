@@ -10,6 +10,14 @@
 
 namespace Egg {
 
+	enum KeyModifiers {
+		CTRL = 1, ALT = 2, SHIFT = 4, CAPS_LOCK = 8, 
+		CTRL_ALT = ( CTRL | ALT ),
+		SHIFT_ALT = ( SHIFT | ALT ),
+		SHIFT_CAPS_LOCK = ( SHIFT | CAPS_LOCK )
+	};
+
+
 	class Input {
 		~Input() = delete;
 		Input() = delete;
@@ -29,6 +37,7 @@ namespace Egg {
 		static std::map<std::string, Axis> axisMap;
 		static bool keysHeld[256];
 		static unsigned char inputBuffer[2048];
+		static uint32_t activeModifiers;
 	public:
 		static void CreateResources();
 		static void ReadRawMouse(unsigned long long wParam, unsigned long long lParam);
@@ -37,7 +46,7 @@ namespace Egg {
 		static void KeyPressed(uint32_t keyCode);
 		static void KeyReleased(uint32_t keyCode);
 
-		static Event<uint32_t> OnKeyPressed;
+		static Event<uint32_t, uint32_t> OnKeyPressed;
 
 		static float GetAxis(const std::string & axis);
 		static void SetAxis(const std::string & name, uint32_t posKey, uint32_t negKey);

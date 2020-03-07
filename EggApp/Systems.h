@@ -373,11 +373,23 @@ public:
 		DirectX::XMFLOAT4 clr = sprite->diffuseColor;
 
 		if(uiObject->HasComponent<Button>()) {
+			const auto & children = uiObject->GetChildren();
 			Button * button = uiObject->GetComponent<Button>();
 
-			if(button->isMouseOver) {
+			bool isMouseOver = button->isMouseOver;
+
+			if(children.size() == 1 && (*children.begin())->HasComponent<TextBox>()) {
+				TextBox * tb = (*children.begin())->GetComponent<TextBox>();
+
+				if(tb->id == TextBox::selectedId) {
+					isMouseOver = true;
+				}
+			}
+
+			if(isMouseOver) {
 				clr = sprite->hoverColor;
 			}
+
 		}
 
 		gEngine->uiPass_Input.Produced(UISpriteRenderItem(
@@ -398,10 +410,21 @@ public:
 
 	void operator()(UIObject * uiObject, Transform * transform, UIElement * uiElement, Text * text) {
 		if(uiObject->IsActive()) {
+
+			std::wstring displayString = text->text;
+
+			if(uiObject->HasComponent<TextBox>()) {
+				TextBox * tb = uiObject->GetComponent<TextBox>();
+				
+				if(tb->isPassword) {
+					displayString = std::wstring(text->text.size(), L'*');
+				}
+			}
+
 			gEngine->uiPass_Input.Produced(
 				UITextRenderItem(
 					text->font,
-					text->text.c_str(),
+					std::move(displayString),
 					DirectX::XMFLOAT2{ transform->worldPosition.x, transform->worldPosition.y },
 					text->color
 				));

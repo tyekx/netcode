@@ -95,14 +95,12 @@ public:
 
 	UITextBox CreateTextBox() {
 		UIObject * root = Create();
-		UIObject * btn = Create();
 		UIObject * txt = Create();
 
 		Spawn(root);
-		Spawn(btn);
 		Spawn(txt);
 
-		return UITextBox(root, btn, txt);
+		return UITextBox(root, txt);
 	}
 
 	void UpdatePerFrameCb() {

@@ -35,6 +35,11 @@ namespace Egg {
 			return (v + 255U) & (~255U);
 		}
 
+		template<typename INT_T = int>
+		constexpr INT_T Align512(INT_T v) {
+			return (v + INT_T{ 511 }) & (~(INT_T{ 511 }));
+		}
+
 		/*
 		formats a wide string into a std::wstring
 		*/
