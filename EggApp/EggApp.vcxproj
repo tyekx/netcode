@@ -69,6 +69,8 @@
     <ClInclude Include="DevCameraScript.h" />
     <ClInclude Include="EggApp.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="Layer.h" />
+    <ClInclude Include="LoadingIconScript.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Light.h" />

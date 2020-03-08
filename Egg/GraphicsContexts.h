@@ -24,6 +24,11 @@ namespace Egg::Graphics {
 		virtual uint64_t CreateTexture2D(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) = 0;
 		virtual uint64_t CreateTextureCube(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) = 0;
 
+		virtual uint64_t CreateTexture2D(const Image * images) = 0;
+		virtual uint64_t CreateTexture2D(const Image * images, ResourceType resourceType) = 0;
+		virtual uint64_t CreateTexture2D(const Image * images, uint32_t mipLevels) = 0;
+		virtual uint64_t CreateTexture2D(const Image * images, uint32_t mipLevels, ResourceType resourceType) = 0;
+
 		virtual ResourceViewsRef CreateShaderResourceViews(uint32_t numDescriptors) = 0;
 		virtual ResourceViewsRef CreateRenderTargetViews(uint32_t numDescriptors) = 0;
 		virtual ResourceViewsRef CreateDepthStencilView() = 0;

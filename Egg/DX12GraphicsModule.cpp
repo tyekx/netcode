@@ -454,9 +454,9 @@ namespace Egg::Graphics::DX12 {
 				size_t sum = 0;
 				for(uint16_t imgI = 0; imgI < imgCount; ++imgI) {
 					const Image* imgR = tex->GetImage(0, imgI, 0);
-					sum += imgR->height * imgR->rowPitch;
+					sum += imgR->slicePitch;
 				}
-				totalSize += Egg::Utility::Align512<size_t>(sum);
+				totalSize += Utility::Align64K(sum);
 			}
 		}
 
@@ -485,7 +485,7 @@ namespace Egg::Graphics::DX12 {
 					data.pData = task.bufferTask.srcData;
 					UpdateSubresources(gcl.Get(), gres.resource, uploadResource.Get(), offset, 0u, 1u, &data);
 
-					offset += Egg::Utility::Align512<size_t>(task.bufferTask.srcDataSizeInBytes);
+					offset += Utility::Align64K(task.bufferTask.srcDataSizeInBytes);
 				}
 
 				if(task.type == UploadTaskType::TEXTURE) {
@@ -507,7 +507,7 @@ namespace Egg::Graphics::DX12 {
 
 					UpdateSubresources(gcl.Get(), gres.resource, uploadResource.Get(), offset, 0u, imgCount, subResData.get());
 
-					offset += Utility::Align512<size_t>(sum);
+					offset += Utility::Align64K(sum);
 				}
 			}
 		}

@@ -20,6 +20,7 @@
 #include "PhysxHelpers.h"
 #include "Services.h"
 #include "RemoteAvatarScript.h"
+#include "Layer.h"
 
 using Egg::Graphics::ResourceType;
 using Egg::Graphics::ResourceState;
@@ -40,9 +41,12 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 	UISpriteSystem uiSpriteSystem;
 	UITransformSystem uiTransformSystem;
 	UITextSystem uiTextSystem;
+	UIAnimSystem uiAnimSystem;
 
 	GameScene * gameScene;
 	UIScene * uiScene;
+
+	std::unique_ptr<Layer> menuLayer;
 
 	float totalTime;
 
@@ -97,6 +101,9 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		gameScene->GetPhysXScene()->simulate(dt);
 		gameScene->GetPhysXScene()->fetchResults(true);
 
+		uiScene->Foreach([this, dt](UIObject * uiObject) -> void {
+			uiAnimSystem.Run(uiObject, dt);
+		});
 
 		gameScene->Foreach([this, dt](GameObject * gameObject)->void {
 			if(gameObject->IsActive()) {
@@ -133,65 +140,27 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 		uiSystem.gEngine = &renderSystem.renderer;
 
-		Egg::SpriteFontBuilderRef spriteFontBuilder = graphics->CreateSpriteFontBuilder();
-		spriteFontBuilder->LoadFont(L"titillium36.spritefont");
-		auto titillium60Font = spriteFontBuilder->Build();
+		/*UIObject * loadingIcon = uiScene->Create();
+		Transform * lTrans = loadingIcon->AddComponent<Transform>();
+		UIElement * lElem = loadingIcon->AddComponent<UIElement>();
+		lElem->width = static_cast<float>(loadingIconImg->width) / 2.0f;
+		lElem->height = static_cast<float>(loadingIconImg->height) / 2.0f;
+		lElem->origin = DirectX::XMFLOAT2{ lElem->width , lElem->height };
+		Sprite * sprite = loadingIcon->AddComponent<Sprite>();
+		sprite->texture = loadingIconSrvRef;
+		sprite->diffuseColor = DirectX::XMFLOAT4{ 0.047f, 0.047f, 0.047f, 1.0f };
+		sprite->textureSize = DirectX::XMUINT2{ static_cast<uint32_t>(loadingIconImg->width), static_cast<uint32_t>(loadingIconImg->height) };
+		SpriteAnimation * spriteAnim = loadingIcon->AddComponent<SpriteAnimation>();
+		spriteAnim->onUpdate = [lElem](UIObject * object, float dt) -> void {
+			lElem->rotationZ += 10.0f * dt;
+		};
 
-		auto texBuilder = graphics->CreateTextureBuilder();
-		texBuilder->LoadTexture2D(L"btn_background.png");
-		Egg::TextureRef texRef = texBuilder->Build();
-		const Egg::Image * img = texRef->GetImage(0, 0, 0);
-		uint64_t texHandle = graphics->resources->CreateTexture2D(img->width, img->height, img->format, Egg::Graphics::ResourceType::PERMANENT_DEFAULT, Egg::Graphics::ResourceState::COPY_DEST, Egg::Graphics::ResourceFlags::NONE);
+		lTrans->position = DirectX::XMFLOAT3{ 395.0f, 310.0f, 0.0f };
+		*/
 
-		auto texBuilder2 = graphics->CreateTextureBuilder();
-		texBuilder2->LoadTexture2D(L"textbox_background.png");
-		Egg::TextureRef textBoxBackgroundImageRef = texBuilder2->Build();
-		const Egg::Image * textBoxBackgroundImg = textBoxBackgroundImageRef->GetImage(0, 0, 0);
-		uint64_t textBoxTexHandle = graphics->resources->CreateTexture2D(textBoxBackgroundImg->width, textBoxBackgroundImg->height, textBoxBackgroundImg->format, Egg::Graphics::ResourceType::PERMANENT_DEFAULT, Egg::Graphics::ResourceState::COPY_DEST, Egg::Graphics::ResourceFlags::NONE);
-
-		Egg::Graphics::UploadBatch ub;
-		ub.Upload(textBoxTexHandle, textBoxBackgroundImageRef);
-		ub.Upload(texHandle, texRef);
-		ub.ResourceBarrier(textBoxTexHandle, Egg::Graphics::ResourceState::COPY_DEST, Egg::Graphics::ResourceState::PIXEL_SHADER_RESOURCE);
-		ub.ResourceBarrier(texHandle, Egg::Graphics::ResourceState::COPY_DEST, Egg::Graphics::ResourceState::PIXEL_SHADER_RESOURCE);
-		graphics->frame->SyncUpload(ub);
-
-		auto srvRef = graphics->resources->CreateShaderResourceViews(1);
-		srvRef->CreateSRV(0, texHandle);
-
-		auto textBoxSrvRef = graphics->resources->CreateShaderResourceViews(1);
-		textBoxSrvRef->CreateSRV(0, textBoxTexHandle);
-
-		UIPagePrefab loginPage = uiScene->CreatePage();
-		UIButtonPrefab btn = uiScene->CreateButton(L"Login", DirectX::XMFLOAT2{ 256.0f, 64.0f }, DirectX::XMFLOAT2{ 464.0f, 172.0f }, 0.5f, titillium60Font, srvRef, DirectX::XMUINT2{ static_cast<uint32_t>(img->width), static_cast<uint32_t>(img->height) });
-		UIButtonPrefab exitBtn = uiScene->CreateButton(L"Exit", DirectX::XMFLOAT2{ 256.0f, 64.0f }, DirectX::XMFLOAT2{ 200.0f, 172.0f }, 0.5f, titillium60Font, srvRef, DirectX::XMUINT2{ static_cast<uint32_t>(img->width), static_cast<uint32_t>(img->height) });
-		UITextBox tb = uiScene->CreateTextBox();
-		UITextBox tb2 = uiScene->CreateTextBox();
-
-
-		tb.SetPosition(DirectX::XMFLOAT2{ 200.0f, 28.0f });
-		tb2.SetPosition(DirectX::XMFLOAT2{ 200.0f, 100.0f });
-		tb.SetBackgroundImage(textBoxSrvRef, DirectX::XMUINT2{ static_cast<uint32_t>(textBoxBackgroundImg->width), static_cast<uint32_t>(textBoxBackgroundImg->height) });
-		tb2.SetBackgroundImage(textBoxSrvRef, DirectX::XMUINT2{ static_cast<uint32_t>(textBoxBackgroundImg->width), static_cast<uint32_t>(textBoxBackgroundImg->height) });
-		tb.SetFont(titillium60Font);
-		tb2.SetFont(titillium60Font);
-		tb2.SetPasswordFlag();
-
-		btn.OnClick([]() -> void {
-			Log::Info("LoginBtn: clicked");
-		});
-
-		btn.OnMouseEnter([]() -> void {
-			Log::Info("LoginBtn: mouse enter");
-		});
-
-		btn.OnMouseLeave([]() -> void {
-			Log::Info("LoginBtn: mouse leave");
-		});
-
-		loginPage.AddControl(tb);
-		loginPage.AddControl(btn);
-		loginPage.AddControl(exitBtn);
+		menuLayer = std::make_unique<MainMenuLayer>(uiScene);
+		menuLayer->Construct(this);
+		menuLayer->Activate();
 
 		Egg::Input::SetAxis("Vertical", 'W', 'S');
 		Egg::Input::SetAxis("Horizontal", 'A', 'D');

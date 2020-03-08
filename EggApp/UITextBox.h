@@ -8,6 +8,8 @@ class UITextBox : public UIControl {
 	UIObject * textObject;
 public:
 
+	UITextBox() = default;
+
 	virtual UIObject * GetRoot() override {
 		return backgroundObject;
 	}
@@ -22,6 +24,12 @@ public:
 		Text * textComponent = textObject->GetComponent<Text>();
 		textComponent->font = std::move(spriteFont);
 		AlignText(textComponent, textObject->GetComponent<Transform>(), backgroundObject->GetComponent<UIElement>());
+	}
+
+	void SetSize(const DirectX::XMFLOAT2 & size) {
+		UIElement * bgElem = backgroundObject->AddComponent<UIElement>();
+		bgElem->width = size.x;
+		bgElem->height = size.y;
 	}
 
 	void SetBackgroundImage(Egg::ResourceViewsRef resourceView, const DirectX::XMUINT2 & textureSize) {
@@ -49,8 +57,7 @@ public:
 
 		backgroundObject->AddComponent<Transform>();
 		UIElement * bgElem = backgroundObject->AddComponent<UIElement>();
-		bgElem->width = 520.0f;
-		bgElem->height = 64.0f;
+		SetSize(DirectX::XMFLOAT2{ 390.0f, 48.0f });
 		bgElem->padding = DirectX::XMFLOAT4{ 15.0f, 0.0f, 15.0f, 0.0f };
 
 		Button* btn = backgroundObject->AddComponent<Button>();

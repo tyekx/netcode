@@ -6,6 +6,8 @@
 class UIPagePrefab : public UIControl {
 	UIObject * rootObject;
 public:
+	UIPagePrefab() = default;
+
 	UIPagePrefab(UIObject * object) : rootObject{ object } {
 		object->AddComponent<Transform>();
 		object->AddComponent<UIElement>();

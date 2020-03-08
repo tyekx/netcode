@@ -397,8 +397,19 @@ public:
 			sprite->textureSize,
 			DirectX::XMFLOAT2{ static_cast<float>(uiElement->width), static_cast<float>(uiElement->height) },
 			clr,
-			DirectX::XMFLOAT2{ transform->position.x, transform->position.y }
+			DirectX::XMFLOAT2{ transform->position.x, transform->position.y },
+			DirectX::XMFLOAT2 { uiElement->origin },
+			uiElement->rotationZ
 		));
+	}
+};
+
+class UIAnimSystem {
+public:
+	void Run(UIObject * object, float dt);
+
+	void operator()(UIObject * uiObject, SpriteAnimation * spAnim, float dt) {
+		spAnim->onUpdate(uiObject, dt);
 	}
 };
 

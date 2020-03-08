@@ -103,6 +103,16 @@ public:
 		return UITextBox(root, txt);
 	}
 
+	UITextBox CreateTextBox(const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT2 & pos, Egg::SpriteFontRef font, Egg::ResourceViewsRef bgTex, const DirectX::XMUINT2 & texSize) {
+		UITextBox tb = CreateTextBox();
+		tb.SetPosition(pos);
+		tb.SetBackgroundImage(bgTex, texSize);
+		tb.SetFont(font);
+		tb.SetPosition(pos);
+		tb.SetSize(size);
+		return tb;
+	}
+
 	void UpdatePerFrameCb() {
 		Transform * transform = cameraRef->GetComponent<Transform>();
 		Camera * camComponent = cameraRef->GetComponent<Camera>();

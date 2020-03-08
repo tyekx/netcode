@@ -56,6 +56,26 @@ namespace Egg::Graphics::DX12 {
 		return resources->CreateResource(desc);
 	}
 
+	uint64_t ResourceContext::CreateTexture2D(const Image * images)
+	{
+		return CreateTexture2D(images, ResourceType::PERMANENT_DEFAULT);
+	}
+
+	uint64_t ResourceContext::CreateTexture2D(const Image * images, ResourceType resourceType)
+	{
+		return CreateTexture2D(static_cast<uint32_t>(images->width), static_cast<uint32_t>(images->height), images->format, resourceType, ResourceState::COPY_DEST, ResourceFlags::NONE);
+	}
+
+	uint64_t ResourceContext::CreateTexture2D(const Image * images, uint32_t mipLevels)
+	{
+		return uint64_t();
+	}
+
+	uint64_t ResourceContext::CreateTexture2D(const Image * images, uint32_t mipLevels, ResourceType resourceType)
+	{
+		return uint64_t();
+	}
+
 	ResourceViewsRef ResourceContext::CreateShaderResourceViews(uint32_t numDescriptors)
 	{
 		return descHeaps->CreatePermanentSRV(numDescriptors);

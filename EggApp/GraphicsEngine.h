@@ -38,6 +38,8 @@ struct UISpriteRenderItem {
 	DirectX::XMFLOAT2 destSizeInPixels;
 	DirectX::XMFLOAT4 color;
 	DirectX::XMFLOAT2 position;
+	DirectX::XMFLOAT2 rotationOrigin;
+	float rotationZ;
 
 	~UISpriteRenderItem() = default;
 	UISpriteRenderItem() = default;
@@ -47,15 +49,19 @@ struct UISpriteRenderItem {
 	UISpriteRenderItem & operator=(UISpriteRenderItem &&) noexcept = default;
 
 	UISpriteRenderItem(Egg::ResourceViewsRef tex,
-					   const DirectX::XMUINT2 & tSize,
-					   const DirectX::XMFLOAT2 & destSize,
-					   const DirectX::XMFLOAT4 & color,	
-					   const DirectX::XMFLOAT2 & pos) : 
+		const DirectX::XMUINT2 & tSize,
+		const DirectX::XMFLOAT2 & destSize,
+		const DirectX::XMFLOAT4 & color,
+		const DirectX::XMFLOAT2 & pos,
+		const DirectX::XMFLOAT2 & rotationOrigin,
+		float rotationZ) :
 		texture{ std::move(tex) },
 		textureSize{ tSize },
 		destSizeInPixels{ destSize },
 		color{ color },
-		position{ pos } { }
+		position{ pos },
+		rotationOrigin{ rotationOrigin },
+		rotationZ{ rotationZ }{ }
 };
 
 struct UITextRenderItem {
@@ -707,7 +713,7 @@ private:
 					case TupleIndexOf<UISpriteRenderItem, UIRenderItemTypeTuple>::value:
 						{
 							const auto & item = std::get<UISpriteRenderItem>(i);
-							uiPass_SpriteBatch->DrawSprite(item.texture, item.textureSize, item.position, item.destSizeInPixels, item.color);
+							uiPass_SpriteBatch->DrawSprite(item.texture, item.textureSize, item.position, item.destSizeInPixels, nullptr, item.color, item.rotationZ, item.rotationOrigin, 0.0f);
 						}
 						break;
 					case TupleIndexOf<UITextRenderItem, UIRenderItemTypeTuple>::value:

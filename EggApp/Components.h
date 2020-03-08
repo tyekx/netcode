@@ -30,6 +30,14 @@ COMPONENT_ALIGN struct UIElement {
 	DirectX::XMFLOAT4 padding;
 	float width;
 	float height;
+	float rotationZ;
+	DirectX::XMFLOAT2 origin;
+};
+
+class UIObject;
+
+COMPONENT_ALIGN struct SpriteAnimation {
+	std::function<void(UIObject *, float)> onUpdate;
 };
 
 COMPONENT_ALIGN struct Sprite {

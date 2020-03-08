@@ -62,8 +62,8 @@ public:
 		textObject->Parent(background);
 
 		UIElement * bgElem = background->AddComponent<UIElement>();
-		bgElem->width = 256.0f;
-		bgElem->height = 64.0f;
+		bgElem->width = 192.0f;
+		bgElem->height = 48.0f;
 
 		Button * bgBtn = background->AddComponent<Button>();
 

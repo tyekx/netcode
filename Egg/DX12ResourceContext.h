@@ -30,6 +30,11 @@ namespace Egg::Graphics::DX12 {
 		virtual uint64_t CreateTexture2D(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) override;
 		virtual uint64_t CreateTextureCube(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) override;
 
+		virtual uint64_t CreateTexture2D(const Image * images);
+		virtual uint64_t CreateTexture2D(const Image * images, ResourceType resourceType);
+		virtual uint64_t CreateTexture2D(const Image * images, uint32_t mipLevels);
+		virtual uint64_t CreateTexture2D(const Image * images, uint32_t mipLevels, ResourceType resourceType);
+
 		virtual ResourceViewsRef CreateShaderResourceViews(uint32_t numDescriptors) override;
 		virtual ResourceViewsRef CreateRenderTargetViews(uint32_t numDescriptors) override;
 		virtual ResourceViewsRef CreateDepthStencilView() override;

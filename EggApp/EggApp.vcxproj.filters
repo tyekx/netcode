@@ -134,6 +134,12 @@
     <ClInclude Include="UITextBox.h">
       <Filter>Prefabs</Filter>
     </ClInclude>
+    <ClInclude Include="LoadingIconScript.h">
+      <Filter>Scripts</Filter>
+    </ClInclude>
+    <ClInclude Include="Layer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EggApp.natvis" />

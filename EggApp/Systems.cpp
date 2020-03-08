@@ -132,3 +132,8 @@ void UISpriteSystem::Run(UIObject * uiObject)
 {
 	TryInvoke(uiObject, this);
 }
+
+void UIAnimSystem::Run(UIObject * object, float dt)
+{
+	TryInvoke(object, this, dt);
+}
