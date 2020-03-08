@@ -7,6 +7,7 @@
 #include "UIButtonPrefab.h"
 #include "UIPagePrefab.h"
 #include "UITextBox.h"
+#include "UILabel.h"
 
 class UIScene : public Scene<UIObject> {
 public:
@@ -101,6 +102,26 @@ public:
 		Spawn(txt);
 
 		return UITextBox(root, txt);
+	}
+
+	UILabel CreateLabel() {
+		UIObject * root = Create();
+		UIObject * txt = Create();
+
+		Spawn(root);
+		Spawn(txt);
+
+		return UILabel(root, txt);
+	}
+
+	UILabel CreateLabel(std::wstring text, Egg::SpriteFontRef font, const DirectX::XMFLOAT2 & pos) {
+		UILabel label = CreateLabel();
+
+		label.SetPosition(pos);
+		label.SetFont(font);
+		label.SetText(std::move(text));
+
+		return label;
 	}
 
 	UITextBox CreateTextBox(const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT2 & pos, Egg::SpriteFontRef font, Egg::ResourceViewsRef bgTex, const DirectX::XMUINT2 & texSize) {

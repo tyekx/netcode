@@ -99,26 +99,32 @@ public:
 
 		UIButtonPrefab loginBtn = scene->CreateButton(L"Login",
 			DirectX::XMFLOAT2{ 192.0f, 48.0f },
-			DirectX::XMFLOAT2{ 198.0f, 112.0f },
+			DirectX::XMFLOAT2{ 198.0f, 112.0f + 100.0f },
 			0.0f, font24, btnBackgroundView, btnBackgroundTextureSize);
 
 		UIButtonPrefab exitBtn = scene->CreateButton(L"Exit",
 			DirectX::XMFLOAT2{ 192.0f, 48.0f },
-			DirectX::XMFLOAT2{ 0.0f, 112.0f },
+			DirectX::XMFLOAT2{ 0.0f, 112.0f + 100.0f },
 			0.0f, font24, btnBackgroundView, btnBackgroundTextureSize);
 
 		exitBtn.OnClick([app]() -> void {
 			app->window->Shutdown();
 		});
 
-		usernameTextBox = scene->CreateTextBox(DirectX::XMFLOAT2{ 390.0f, 48.0f }, DirectX::XMFLOAT2{ 0.0f, 0.0f }, font24, textBoxBackgroundView, textBoxBackgroundTextureSize);
-		passwordTextBox = scene->CreateTextBox(DirectX::XMFLOAT2{ 390.0f, 48.0f }, DirectX::XMFLOAT2{ 0.0f, 54.0f }, font24, textBoxBackgroundView, textBoxBackgroundTextureSize);
+
+		usernameTextBox = scene->CreateTextBox(DirectX::XMFLOAT2{ 390.0f, 48.0f }, DirectX::XMFLOAT2{ 0.0f, 0.0f + 100.0f }, font24, textBoxBackgroundView, textBoxBackgroundTextureSize);
+		passwordTextBox = scene->CreateTextBox(DirectX::XMFLOAT2{ 390.0f, 48.0f }, DirectX::XMFLOAT2{ 0.0f, 54.0f + 100.0f }, font24, textBoxBackgroundView, textBoxBackgroundTextureSize);
 		passwordTextBox.SetPasswordFlag();
+
+		UILabel netcodeLabel = scene->CreateLabel(L"Netcode", font48, DirectX::XMFLOAT2{ 0.0f, 0.0f });
+		netcodeLabel.SetSize(DirectX::XMFLOAT2{ 390.0f, 64.0f });
+		netcodeLabel.SetTextAlignment(HorizontalAnchor::CENTER);
 
 		loginPage.AddControl(loginBtn);
 		loginPage.AddControl(exitBtn);
 		loginPage.AddControl(usernameTextBox);
 		loginPage.AddControl(passwordTextBox);
+		loginPage.AddControl(netcodeLabel);
 	}
 
 	virtual void Activate() override {

@@ -85,6 +85,7 @@
     <ClInclude Include="Systems.h" />
     <ClInclude Include="UIButtonPrefab.h" />
     <ClInclude Include="UIControl.h" />
+    <ClInclude Include="UILabel.h" />
     <ClInclude Include="UIObject.h" />
     <ClInclude Include="UIPagePrefab.h" />
     <ClInclude Include="UIScene.h" />
