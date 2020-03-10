@@ -141,7 +141,6 @@ namespace Egg::Graphics::DX12 {
 
 	void DX12GraphicsModule::CreateLibraries()
 	{
-
 		shaderLibrary = std::make_shared<DX12ShaderLibrary>();
 
 		rootSigLibrary = std::make_shared<DX12RootSignatureLibrary>();
@@ -153,6 +152,9 @@ namespace Egg::Graphics::DX12 {
 
 		gPipelineLibrary = std::make_shared<DX12GPipelineStateLibrary>();
 		gPipelineLibrary->SetDevice(device);
+
+		cPipelineLibrary = std::make_shared<DX12CPipelineStateLibrary>();
+		cPipelineLibrary->SetDevice(device);
 
 		spriteFontLibrary = std::make_shared<DX12SpriteFontLibrary>();
 		spriteFontLibrary->frameCtx = frame;
@@ -594,6 +596,11 @@ namespace Egg::Graphics::DX12 {
 
 	GPipelineStateBuilderRef DX12GraphicsModule::CreateGPipelineStateBuilder() const {
 		return std::make_shared<DX12GPipelineStateBuilder>(gPipelineLibrary);
+	}
+
+	CPipelineStateBuilderRef DX12GraphicsModule::CreateCPipelineStateBuilder() const
+	{
+		return std::make_shared<DX12CPipelineStateBuilder>(cPipelineLibrary);
 	}
 
 	InputLayoutBuilderRef DX12GraphicsModule::CreateInputLayoutBuilder() const {

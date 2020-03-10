@@ -18,6 +18,7 @@
 #include "DX12RootSignatureLibrary.h"
 #include "DX12StreamOutputLibrary.h"
 #include "DX12GPipelineStateLibrary.h"
+#include "DX12CPipelineStateLibrary.h"
 
 #include "GraphicsContexts.h"
 
@@ -160,6 +161,7 @@ namespace Egg::Graphics::DX12 {
 		DX12StreamOutputLibraryRef streamOutputLibrary;
 		DX12InputLayoutLibraryRef inputLayoutLibrary;
 		DX12GPipelineStateLibraryRef gPipelineLibrary;
+		DX12CPipelineStateLibraryRef cPipelineLibrary;
 
 		HeapManager heapManager;
 		ResourcePool resourcePool;
@@ -202,6 +204,8 @@ namespace Egg::Graphics::DX12 {
 		virtual ShaderBuilderRef CreateShaderBuilder() const override;
 
 		virtual GPipelineStateBuilderRef CreateGPipelineStateBuilder() const override;
+
+		virtual CPipelineStateBuilderRef CreateCPipelineStateBuilder() const override;
 
 		virtual InputLayoutBuilderRef CreateInputLayoutBuilder() const override;
 

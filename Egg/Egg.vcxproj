@@ -60,7 +60,9 @@
     <ClInclude Include="DX12Builders.h" />
     <ClInclude Include="DX12Common.h" />
     <ClInclude Include="DX12ConstantBufferPool.h" />
-    <ClInclude Include="DX12CPipelineStatePrototype.h" />
+    <ClInclude Include="DX12CPipelineState.h" />
+    <ClInclude Include="DX12CPipelineStateBuilder.h" />
+    <ClInclude Include="DX12CPipelineStateLibrary.h" />
     <ClInclude Include="DX12DynamicDescriptorHeap.h" />
     <ClInclude Include="DX12GPipelineState.h" />
     <ClInclude Include="DX12GPipelineStateBuilder.h" />
@@ -140,6 +142,9 @@
     <ClCompile Include="DefaultModuleFactory.cpp" />
     <ClCompile Include="DX12Common.cpp" />
     <ClCompile Include="DX12ConstantBufferPool.cpp" />
+    <ClCompile Include="DX12CPipelineState.cpp" />
+    <ClCompile Include="DX12CPipelineStateBuilder.cpp" />
+    <ClCompile Include="DX12CPipelineStateLibrary.cpp" />
     <ClCompile Include="DX12DynamicDescriptorHeap.cpp" />
     <ClCompile Include="DX12GPipelineState.cpp" />
     <ClCompile Include="DX12GPipelineStateBuilder.cpp" />

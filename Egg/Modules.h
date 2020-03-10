@@ -161,6 +161,7 @@ namespace Egg::Module {
 
 		virtual ShaderBuilderRef CreateShaderBuilder() const = 0;
 		virtual GPipelineStateBuilderRef CreateGPipelineStateBuilder() const = 0;
+		virtual CPipelineStateBuilderRef CreateCPipelineStateBuilder() const = 0;
 		virtual InputLayoutBuilderRef CreateInputLayoutBuilder() const = 0;
 		virtual StreamOutputBuilderRef CreateStreamOutputBuilder() const = 0;
 		virtual RootSignatureBuilderRef CreateRootSignatureBuilder() const = 0;

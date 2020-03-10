@@ -247,9 +247,6 @@
     <ClInclude Include="DX12GPipelineStateLibrary.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CPipelineStatePrototype.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
     <ClInclude Include="DX12InputLayoutLibrary.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
@@ -296,6 +293,15 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="DX12SpriteBatchBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12CPipelineStateBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12CPipelineState.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12CPipelineStateLibrary.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
   </ItemGroup>
@@ -467,6 +473,15 @@
       <Filter>Physics</Filter>
     </ClCompile>
     <ClCompile Include="DX12SpriteBatchBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12CPipelineStateBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12CPipelineState.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12CPipelineStateLibrary.cpp">
       <Filter>Graphics\DX12</Filter>
     </ClCompile>
   </ItemGroup>

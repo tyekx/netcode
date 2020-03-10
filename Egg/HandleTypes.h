@@ -350,7 +350,6 @@ namespace Egg {
 		virtual RootSignatureRef BuildFromShader(ShaderBytecodeRef rootSigContainingBytecode) = 0;
 	};
 
-
 	using RootSignatureBuilderRef = std::shared_ptr<RootSignatureBuilder>;
 	using RootSignatureBuilderWeakRef = std::weak_ptr<RootSignatureBuilder>;
 
@@ -378,6 +377,16 @@ namespace Egg {
 
 	using GPipelineStateBuilderRef = std::shared_ptr<GPipelineStateBuilder>;
 	using GPipelineStateBuilderWeakRef = std::weak_ptr<GPipelineStateBuilder>;
+
+	class CPipelineStateBuilder {
+	public:
+		virtual ~CPipelineStateBuilder() = default;
+		virtual void SetRootSignature(RootSignatureRef rootSig) = 0;
+		virtual void SetComputeShader(ShaderBytecodeRef shader) = 0;
+		virtual PipelineStateRef Build() = 0;
+	};
+
+	using CPipelineStateBuilderRef = std::shared_ptr<CPipelineStateBuilder>;
 
 	class Texture {
 	public:
