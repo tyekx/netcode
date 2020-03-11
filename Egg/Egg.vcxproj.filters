@@ -304,6 +304,9 @@
     <ClInclude Include="DX12CPipelineStateLibrary.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
+    <ClInclude Include="DX12CommandListStorage.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">

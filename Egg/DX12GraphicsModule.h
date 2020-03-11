@@ -6,6 +6,7 @@
 #include <map>
 
 #include "DX12Common.h"
+#include "DX12Fence.h"
 #include "DX12SpriteFontLibrary.h"
 #include "DX12ConstantBufferPool.h"
 #include "DX12ResourcePool.h"
@@ -200,6 +201,8 @@ namespace Egg::Graphics::DX12 {
 		void ReleaseSwapChainResources();
 
 		void CreateSwapChainResources();
+
+		virtual FenceRef CreateFence(uint64_t initialValue) const override;
 
 		virtual ShaderBuilderRef CreateShaderBuilder() const override;
 

@@ -499,4 +499,16 @@ namespace Egg {
 	};
 
 	using SpriteFontBuilderRef = std::shared_ptr<SpriteFontBuilder>;
+
+	class Fence {
+	public:
+		virtual ~Fence() = default;
+
+		virtual void HostWait() = 0;
+		virtual uint64_t GetValue() const = 0;
+		virtual void Increment() = 0;
+	};
+
+	using FenceRef = std::shared_ptr<Fence>;
+
 }

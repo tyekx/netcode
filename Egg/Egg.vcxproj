@@ -58,6 +58,7 @@
     <ClInclude Include="DebugPhysxRaycast.h" />
     <ClInclude Include="DefaultModuleFactory.h" />
     <ClInclude Include="DX12Builders.h" />
+    <ClInclude Include="DX12CommandListStorage.h" />
     <ClInclude Include="DX12Common.h" />
     <ClInclude Include="DX12ConstantBufferPool.h" />
     <ClInclude Include="DX12CPipelineState.h" />

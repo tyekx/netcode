@@ -16,12 +16,20 @@ namespace Egg::Graphics::DX12 {
 		D3D12_CPU_DESCRIPTOR_HANDLE backbufferDepth;
 		D3D12_VIEWPORT defaultViewport;
 		D3D12_RECT defaultScissorRect;
-		ID3D12GraphicsCommandList * gcl;
+
 		ResourcePool * resources;
 		ConstantBufferPool * cbuffers;
+		DynamicDescriptorHeap * descHeaps;
+
 		std::vector<D3D12_RESOURCE_BARRIER> barriers;
 		D3D12_GPU_VIRTUAL_ADDRESS streamOutput_FilledSizeLocation;
-		DynamicDescriptorHeap * descHeaps;
+
+		com_ptr<ID3D12GraphicsCommandList> directCommandList;
+		com_ptr<ID3D12GraphicsCommandList> computeCommandList;
+		std::vector<FenceRef> directWaitFences;
+		std::vector<FenceRef> computeWaitFences;
+		FenceRef directSignalFence;
+		FenceRef computeSignalFence;
 
 		virtual void SetStencilReference(uint8_t stencilValue) override;
 
@@ -37,6 +45,20 @@ namespace Egg::Graphics::DX12 {
 
 		virtual void Draw(uint32_t vertexCount, uint32_t vertexOffset) override;
 
+		virtual void Dispatch(uint32_t threadGroupX, uint32_t threadGroupY, uint32_t threadGroupZ) override;
+
+		virtual void GraphicsIncrementalSignal(FenceRef fence) override;
+
+		virtual void ComputeIncrementalSignal(FenceRef fence) override;
+
+		virtual void GraphicsSignal(FenceRef fence) override;
+
+		virtual void ComputeSignal(FenceRef fence) override;
+
+		virtual void GraphicsWait(FenceRef fence) override;
+
+		virtual void ComputeWait(FenceRef fence) override;
+
 		virtual void SetRootSignature(RootSignatureRef rs) override;
 
 		virtual void SetPipelineState(PipelineStateRef pso) override;
@@ -44,7 +66,6 @@ namespace Egg::Graphics::DX12 {
 		virtual void SetPrimitiveTopology(PrimitiveTopology topology) override;
 
 		virtual void ClearUnorderedAccessViewUint(uint64_t handle, const DirectX::XMUINT4 & values) override;
-
 
 		virtual void ClearDepthOnly() override;
 		virtual void ClearStencilOnly() override;
@@ -56,17 +77,6 @@ namespace Egg::Graphics::DX12 {
 		virtual void SetStreamOutput(uint64_t handle) override;
 
 		virtual void SetStreamOutputFilledSize(uint64_t handle, uint64_t byteOffset) override;
-
-		/*
-		virtual void BeginSpriteRendering(DirectX::XMFLOAT4X4 viewProjInv) override;
-		virtual void EndSpriteRendering() override;
-
-		virtual void DrawString(SpriteFontRef spriteFont, const wchar_t * string, const DirectX::XMFLOAT2 & position) override;
-		virtual void DrawString(SpriteFontRef spriteFont, const wchar_t * string, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) override;
-		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position) override;
-		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size) override;
-		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT4 & color) override;
-		*/
 		virtual void ResetStreamOutput() override;
 
 		virtual void SetViewport(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) override;

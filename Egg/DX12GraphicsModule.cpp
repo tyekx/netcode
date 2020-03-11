@@ -589,6 +589,11 @@ namespace Egg::Graphics::DX12 {
 
 		backbufferIndex = swapChain->GetCurrentBackBufferIndex();
 	}
+
+	FenceRef DX12GraphicsModule::CreateFence(uint64_t initialValue) const
+	{
+		return std::make_shared<DX12Fence>(initialValue);
+	}
 	
 	ShaderBuilderRef DX12GraphicsModule::CreateShaderBuilder() const {
 		return std::make_shared<DX12ShaderBuilder>(shaderLibrary);

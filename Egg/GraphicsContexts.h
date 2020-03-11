@@ -76,6 +76,9 @@ namespace Egg::Graphics {
 		virtual void CopyConstants(uint64_t uploadResource, const void * srcData, size_t srcDataSizeInBytes) = 0;
 		virtual void CopyConstants(uint64_t uploadResource, const void * srcData, size_t srcDataSizeInBytes, size_t dstOffsetInBytes) = 0;
 
+		virtual void Readback(uint64_t readbackResource, void * dstData, size_t dstDataSizeInBytes) = 0;
+		virtual void Readback(uint64_t readbackResource, void * dstData, size_t dstDataSizeInBytes, size_t dstOffsetInBytes) = 0;
+
 		virtual uint64_t CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState) = 0;
 		virtual uint64_t CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
 
@@ -95,6 +98,14 @@ namespace Egg::Graphics {
 		virtual void DrawIndexed(uint32_t indexCount, uint32_t vertexOffset) = 0;
 		virtual void Draw(uint32_t vertexCount) = 0;
 		virtual void Draw(uint32_t vertexCount, uint32_t vertexOffset) = 0;
+		virtual void Dispatch(uint32_t threadGroupX, uint32_t threadGroupY, uint32_t threadGroupZ) = 0;
+
+		virtual void GraphicsIncrementalSignal(FenceRef fence) = 0;
+		virtual void ComputeIncrementalSignal(FenceRef fence) = 0;
+		virtual void GraphicsSignal(FenceRef fence) = 0;
+		virtual void ComputeSignal(FenceRef fence) = 0;
+		virtual void GraphicsWait(FenceRef fence) = 0;
+		virtual void ComputeWait(FenceRef fence) = 0;
 
 		virtual void SetPrimitiveTopology(PrimitiveTopology topology) = 0;
 

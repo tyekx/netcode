@@ -159,6 +159,8 @@ namespace Egg::Module {
 		virtual RECT GetDisplayRect() const = 0;
 		virtual void * GetSwapChain() const = 0;
 
+		virtual FenceRef CreateFence(uint64_t initialValue) const = 0;
+
 		virtual ShaderBuilderRef CreateShaderBuilder() const = 0;
 		virtual GPipelineStateBuilderRef CreateGPipelineStateBuilder() const = 0;
 		virtual CPipelineStateBuilderRef CreateCPipelineStateBuilder() const = 0;
