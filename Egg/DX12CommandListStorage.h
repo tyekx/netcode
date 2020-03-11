@@ -77,6 +77,7 @@ namespace Egg::Graphics::DX12 {
 			}
 
 			CLCA clca{ device.Get(), TYPE };
+
 			CommandListRef clr = std::make_shared<CommandList>(clca.type, std::move(clca.commandList), std::move(clca.commandAllocator),
 															   [this](D3D12_COMMAND_LIST_TYPE type, com_ptr<ID3D12GraphicsCommandList3> cl, com_ptr<ID3D12CommandAllocator> ca) -> void {
 				clearPairs.emplace_back(type, std::move(cl), std::move(ca));
@@ -86,6 +87,10 @@ namespace Egg::Graphics::DX12 {
 		}
 
 	public:
+		void SetDevice(com_ptr<ID3D12Device> dev) {
+			device = std::move(dev);
+		}
+
 		CommandListRef GetDirect() {
 			return GetCommandList<D3D12_COMMAND_LIST_TYPE_DIRECT>();
 		}

@@ -217,7 +217,7 @@ namespace Egg::Graphics::DX12 {
 		fr.commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(fr.swapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 		resourceContext.backbufferExtents = scissorRect;
-		renderContext.gcl = fr.commandList.Get();
+		renderContext.directCommandList = fr.commandList;
 		renderContext.backbuffer = renderTargetViews->GetCpuVisibleCpuHandle(backbufferIndex);
 		renderContext.backbufferDepth = depthStencilView->GetCpuVisibleCpuHandle(0);
 		renderContext.defaultViewport = viewport;
@@ -293,6 +293,8 @@ namespace Egg::Graphics::DX12 {
 		CreateDevice();
 
 		CreateCommandQueue();
+
+		commandListStorage.SetDevice(device);
 
 		CreateContexts();
 

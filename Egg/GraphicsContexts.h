@@ -165,6 +165,9 @@ namespace Egg::Graphics {
 
 		virtual void SyncUpload(const UploadBatch & upload) = 0;
 
+		virtual void BeginRenderPass() = 0;
+		virtual void EndRenderPass() = 0;
+
 		virtual void Prepare() = 0;
 		virtual void Render() = 0;
 		virtual void Present() = 0;

@@ -20,6 +20,7 @@
 #include "DX12StreamOutputLibrary.h"
 #include "DX12GPipelineStateLibrary.h"
 #include "DX12CPipelineStateLibrary.h"
+#include "DX12CommandListStorage.h"
 
 #include "GraphicsContexts.h"
 
@@ -155,6 +156,8 @@ namespace Egg::Graphics::DX12 {
 		void CreateContexts();
 
 		void UpdateViewport();
+
+		CommandListStorage commandListStorage;
 
 		DX12SpriteFontLibraryRef spriteFontLibrary;
 		DX12ShaderLibraryRef shaderLibrary;
