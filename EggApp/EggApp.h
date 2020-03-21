@@ -395,6 +395,7 @@ public:
 		renderSystem.renderer.OnResize(w, h);
 		uiSystem.SetScreenSize(DirectX::XMUINT2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
 		uiScene->SetScreenSize(DirectX::XMUINT2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
+		menuLayer->OnResized(w, h);
 	}
 
 	virtual void AddAppEventHandlers(Egg::Module::AppEventSystem * eventSystem) override {

@@ -122,7 +122,6 @@ float3 ComputeSpotLight(Light L, Material mat, float3 pos, float3 normal, float3
 
 float4 main(LightingPass_PixelInput input) : SV_TARGET
 {
-	/*
 	float depth = depthBuffer.Sample(linearWrapSampler, input.texCoord).x;
 
 	float3 normal = normals.Sample(linearWrapSampler, input.texCoord).xyz;
@@ -143,7 +142,9 @@ float4 main(LightingPass_PixelInput input) : SV_TARGET
 
 	float3 toEye = normalize(eyePos.xyz - worldPos.xyz);
 
-	return float4(ComputeDirectionalLight(testMat, l.intensity, -l.direction, normal, toEye), 1.0f);*/
+	float3 shaded = ComputeDirectionalLight(testMat, l.intensity, -l.direction, normal, toEye);
 
-	return float4(ssaoBuffer.Sample(linearWrapSampler, input.texCoord).xyz, 1.0f);
+	shaded += float3(0.2f, 0.2f, 0.2f) * testMat.diffuseAlbedo * ssaoBuffer.Sample(linearWrapSampler, input.texCoord).rrr;
+
+	return float4(shaded, 1.0f);
 }

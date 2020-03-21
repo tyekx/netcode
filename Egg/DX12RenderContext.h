@@ -111,6 +111,8 @@ namespace Egg::Graphics::DX12 {
 
 		virtual void SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil) override;
 
+		virtual void SetRootConstants(int slot, const void * srcData, uint32_t numConstants) override;
+
 		virtual void SetConstantBuffer(int slot, uint64_t cbufferHandle) override;
 
 		virtual void SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) override;
@@ -201,6 +203,8 @@ namespace Egg::Graphics::DX12 {
 		virtual void SetShaderResources(int slot, std::initializer_list<uint64_t> shaderResourceHandles) override;
 		virtual void SetShaderResources(int slot, ResourceViewsRef resourceView) override;
 
+
+		virtual void SetRootConstants(int slot, const void * srcData, uint32_t numConstants) override;
 		virtual void SetConstantBuffer(int slot, uint64_t cbufferHandle) override;
 		virtual void SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) override;
 

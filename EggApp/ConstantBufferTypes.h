@@ -27,6 +27,8 @@ struct SsaoData {
 	float occlusionFadeStart;
 	float occlusionFadeEnd;
 	float surfaceEpsilon;
+	DirectX::XMFLOAT4A weights[3];
+	DirectX::XMFLOAT2 invRenderTargetSize;
 };
 
 

@@ -419,7 +419,7 @@ private:
 		psoBuilder->SetInputLayout(inputLayout);
 		psoBuilder->SetVertexShader(vs);
 		psoBuilder->SetPixelShader(ps);
-		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
+		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R32_FLOAT });
 		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
 		psoBuilder->SetDepthStencilState(depthDesc);
 		ssaoOcclusionPass_PipelineState = psoBuilder->Build();
@@ -461,10 +461,10 @@ private:
 		ssaoRenderTargetSize.x = (ssaoRenderTargetSize.x == 0) ? 1 : ssaoRenderTargetSize.x;
 		ssaoRenderTargetSize.y = (ssaoRenderTargetSize.y == 0) ? 1 : ssaoRenderTargetSize.y;
 
-		ssaoPass_OcclusionRenderTarget = graphics->resources->CreateRenderTarget(ssaoRenderTargetSize.x, ssaoRenderTargetSize.y, DXGI_FORMAT_R8G8B8A8_UNORM, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
+		ssaoPass_OcclusionRenderTarget = graphics->resources->CreateRenderTarget(ssaoRenderTargetSize.x, ssaoRenderTargetSize.y, DXGI_FORMAT_R32_FLOAT, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
 		ssaoPass_BlurRenderTarget = graphics->resources->CreateRenderTarget(ssaoRenderTargetSize.x, ssaoRenderTargetSize.y, DXGI_FORMAT_R32_FLOAT, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
 		
-		lightingPass_ShaderResourceViews->CreateSRV(3, ssaoPass_OcclusionRenderTarget);
+		lightingPass_ShaderResourceViews->CreateSRV(3, ssaoPass_BlurRenderTarget);
 	}
 
 	void CreateLightingPassPermanentResources(Egg::Module::IGraphicsModule * g) {
@@ -652,30 +652,57 @@ private:
 		},
 			[&](IRenderContext * context) -> void {
 
-			context->ResourceBarrier(ssaoPass_BlurRenderTarget, ResourceState::PIXEL_SHADER_RESOURCE, ResourceState::RENDER_TARGET);
-			context->FlushResourceBarriers();
 			context->SetRootSignature(ssaoBlurPass_RootSignature);
 			context->SetPipelineState(ssaoBlurPass_PipelineState);
 			context->SetViewport(ssaoRenderTargetSize.x, ssaoRenderTargetSize.y);
+			context->SetScissorRect(0, ssaoRenderTargetSize.x, 0, ssaoRenderTargetSize.y);
+			context->SetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
 
-			context->SetRenderTargets(ssaoPass_BlurRenderTarget, 0);
-			context->ClearRenderTarget(0);
 
-			//context->SetConstants();
+			ssaoData->invRenderTargetSize = DirectX::XMFLOAT2{
+				1.0f / static_cast<float>(ssaoRenderTargetSize.x),
+				1.0f / static_cast<float>(ssaoRenderTargetSize.y)
+			};
 
-			context->SetShaderResources(0, { ssaoPass_OcclusionRenderTarget, gbufferPass_DepthBuffer });
-			context->SetVertexBuffer(fsQuad.vertexBuffer);
-			context->Draw(fsQuad.vertexCount);
+			uint32_t isHorizontal = 0;
 
-			context->ResourceBarrier(ssaoPass_BlurRenderTarget, ResourceState::RENDER_TARGET, ResourceState::PIXEL_SHADER_RESOURCE);
-			context->FlushResourceBarriers();
+			uint64_t renderTargets[2] = {
+				ssaoPass_OcclusionRenderTarget, ssaoPass_BlurRenderTarget
+			};
+
+			for(uint32_t i = 0; i < 3; ++i) {
+				uint64_t currentRenderTarget = renderTargets[(i + 1) % 2];
+				uint64_t sourceTexture = renderTargets[i % 2];
+
+				context->ResourceBarrier(currentRenderTarget, ResourceState::PIXEL_SHADER_RESOURCE, ResourceState::RENDER_TARGET);
+				context->FlushResourceBarriers();
+
+				context->SetRenderTargets(currentRenderTarget, 0);
+				context->ClearRenderTarget(0);
+
+				context->SetShaderResources(0, { sourceTexture, gbufferPass_NormalsRenderTarget, gbufferPass_DepthBuffer });
+				context->SetConstants(1, *ssaoData);
+				context->SetConstants(2, *perFrameData);
+				context->SetRootConstants(3, &isHorizontal, 1);
+				context->SetVertexBuffer(fsQuad.vertexBuffer);
+				context->Draw(fsQuad.vertexCount);
+
+				context->ResourceBarrier(currentRenderTarget, ResourceState::RENDER_TARGET, ResourceState::PIXEL_SHADER_RESOURCE);
+				context->FlushResourceBarriers();
+
+				if(isHorizontal == 0) {
+					isHorizontal = 0xFFFFFFFF;
+				} else {
+					isHorizontal = 0;
+				}
+			}
 		});
 	}
 
 	void CreateLightingPass(Egg::FrameGraphBuilderRef frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("Lighting", [&](IResourceContext * context) -> void {
 
-			context->Reads(ssaoPass_OcclusionRenderTarget);
+			context->Reads(ssaoPass_BlurRenderTarget);
 			context->Reads(gbufferPass_ColorRenderTarget);
 			context->Reads(gbufferPass_DepthBuffer);
 			context->Reads(gbufferPass_NormalsRenderTarget);
@@ -868,7 +895,7 @@ public:
 		CreateLightingPassPermanentResources(g);
 		CreateBackgroundPassPermanentResources(g);
 		CreateUIPassPermanentResources(g);
-		//	CreateSSAOBlurPassPermanentResources(g);
+		CreateSSAOBlurPassPermanentResources(g);
 		CreateSSAOOcclusionPassPermanentResources(g);
 		CreateFSQuad(g);
 	}
@@ -877,7 +904,7 @@ public:
 		CreateSkinnedGbufferPass(builder);
 		CreateGbufferPass(builder);
 		CreateSSAOOcclusionPass(builder);
-		//	CreateSSAOBlurPass(builder);
+		CreateSSAOBlurPass(builder);
 		CreateLightingPass(builder);
 		CreateBackgroundPass(builder);
 		CreateUIPass(builder);

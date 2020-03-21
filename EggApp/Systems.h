@@ -279,6 +279,12 @@ public:
 
 		if(uiObject->HasComponent<Button>()) {
 			button = uiObject->GetComponent<Button>();
+			if(button->pxActor != nullptr) {
+				physx::PxVec3 pos = ToPxVec3(transform->worldPosition);
+				physx::PxQuat rot = ToPxQuat(transform->worldRotation);
+
+				static_cast<physx::PxRigidDynamic *>(button->pxActor)->setGlobalPose(physx::PxTransform{ pos, rot });
+			}
 		}
 
 		// handle spawning
@@ -304,6 +310,7 @@ public:
 					actor->attachShape(*boxShape);
 					actor->userData = uiObject;
 					pxScene->addActor(*actor);
+					button->pxActor = actor;
 				}
 			}
 		}
@@ -397,7 +404,7 @@ public:
 			sprite->textureSize,
 			DirectX::XMFLOAT2{ static_cast<float>(uiElement->width), static_cast<float>(uiElement->height) },
 			clr,
-			DirectX::XMFLOAT2{ transform->position.x, transform->position.y },
+			DirectX::XMFLOAT2{ transform->worldPosition.x, transform->worldPosition.y },
 			DirectX::XMFLOAT2 { uiElement->origin },
 			uiElement->rotationZ
 		));
@@ -423,11 +430,15 @@ public:
 		if(uiObject->IsActive()) {
 
 			std::wstring displayString = text->text;
+			DirectX::XMFLOAT4 displayColor = text->color;
 
 			if(uiObject->HasComponent<TextBox>()) {
 				TextBox * tb = uiObject->GetComponent<TextBox>();
 				
-				if(tb->isPassword) {
+				if(text->text.empty()) {
+					displayString = tb->placeholder;
+					displayColor = tb->placeholderColor;
+				} else if(tb->isPassword) {
 					displayString = std::wstring(text->text.size(), L'*');
 				}
 			}
@@ -437,7 +448,7 @@ public:
 					text->font,
 					std::move(displayString),
 					DirectX::XMFLOAT2{ transform->worldPosition.x, transform->worldPosition.y },
-					text->color
+					displayColor
 				));
 		}
 	}

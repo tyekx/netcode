@@ -13,6 +13,12 @@ public:
 		object->AddComponent<UIElement>();
 	}
 
+	void SetSize(float width, float height) {
+		auto * uiElem = rootObject->GetComponent<UIElement>();
+		uiElem->width = width;
+		uiElem->height = height;
+	}
+
 	void AddControl(UIControl & ctrl) {
 		ctrl.GetRoot()->Parent(rootObject);
 	}

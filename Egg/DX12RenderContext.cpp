@@ -322,6 +322,10 @@ namespace Egg::Graphics::DX12 {
 		
 		commandList->SetGraphicsRootDescriptorTable(slot, srv->GetGpuHandle(0));
 	}
+	
+	void GraphicsContext::SetRootConstants(int slot, const void * srcData, uint32_t numConstants) {
+		commandList->SetGraphicsRoot32BitConstants(slot, numConstants, srcData, 0);
+	}
 
 	void GraphicsContext::SetConstantBuffer(int slot, uint64_t cbufferHandle)
 	{
@@ -502,6 +506,11 @@ namespace Egg::Graphics::DX12 {
 	void ComputeContext::SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil)
 	{
 		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::SetRootConstants(int slot, const void * srcData, uint32_t numConstants)
+	{
+		commandList->SetComputeRoot32BitConstants(slot, numConstants, srcData, 0);
 	}
 
 	void ComputeContext::SetShaderResources(int slot, std::initializer_list<uint64_t> shaderResourceHandles) {

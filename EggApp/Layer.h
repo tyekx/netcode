@@ -21,6 +21,8 @@ class MainMenuLayer : public Layer {
 	UIPagePrefab loginPage;
 	UIPagePrefab mainPage;
 
+	DirectX::XMFLOAT2 loginPageSize;
+
 	UITextBox usernameTextBox;
 	UITextBox passwordTextBox;
 
@@ -113,8 +115,10 @@ public:
 
 
 		usernameTextBox = scene->CreateTextBox(DirectX::XMFLOAT2{ 390.0f, 48.0f }, DirectX::XMFLOAT2{ 0.0f, 0.0f + 100.0f }, font24, textBoxBackgroundView, textBoxBackgroundTextureSize);
+		usernameTextBox.SetPlaceholder(L"username");
 		passwordTextBox = scene->CreateTextBox(DirectX::XMFLOAT2{ 390.0f, 48.0f }, DirectX::XMFLOAT2{ 0.0f, 54.0f + 100.0f }, font24, textBoxBackgroundView, textBoxBackgroundTextureSize);
 		passwordTextBox.SetPasswordFlag();
+		passwordTextBox.SetPlaceholder(L"password");
 
 		UILabel netcodeLabel = scene->CreateLabel(L"Netcode", font48, DirectX::XMFLOAT2{ 0.0f, 0.0f });
 		netcodeLabel.SetSize(DirectX::XMFLOAT2{ 390.0f, 64.0f });
@@ -125,6 +129,18 @@ public:
 		loginPage.AddControl(usernameTextBox);
 		loginPage.AddControl(passwordTextBox);
 		loginPage.AddControl(netcodeLabel);
+		loginPageSize.x = 390.0f;
+		loginPageSize.y = 360.0f;
+		loginPage.SetSize(loginPageSize.x, loginPageSize.y);
+	}
+
+	virtual void OnResized(int width, int height) override {
+		DirectX::XMFLOAT2 wh{ static_cast<float>(width), static_cast<float>(height) };
+
+		loginPage.SetPosition(DirectX::XMFLOAT2{
+			(wh.x - loginPageSize.x) / 2.0f,
+			(wh.y - loginPageSize.y) / 2.0f
+		});
 	}
 
 	virtual void Activate() override {

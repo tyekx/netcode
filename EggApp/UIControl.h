@@ -9,7 +9,15 @@ protected:
 			return;
 		}
 
-		DirectX::XMFLOAT2 strSize = text->font->MeasureString(text->text.c_str());
+		
+
+		DirectX::XMFLOAT2 strSize;
+		
+		if(text->text.empty()) {
+			strSize = text->font->MeasureString(L"a");
+		} else {
+			strSize = text->font->MeasureString(text->text.c_str());
+		}
 
 		switch(text->horizontalAlignment) {
 			case HorizontalAnchor::LEFT:

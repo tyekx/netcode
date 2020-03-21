@@ -65,8 +65,13 @@ COMPONENT_ALIGN struct TextBox {
 	}
 
 	int id;
+	int caretPosition;
+	int selectionEndIndex;
 	Egg::EventToken keyPressedToken;
 	std::function<void(const std::wstring&)> contentChanged;
+	std::wstring placeholder;
+	DirectX::XMFLOAT4 placeholderColor;
+	uint32_t maxCharacters;
 	bool isPassword;
 
 	TextBox();

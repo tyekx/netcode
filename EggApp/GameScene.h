@@ -1,5 +1,10 @@
 #pragma once
 
+/*
+Credits: a chunk of the SSAO implementation was based on the book "3D Game Programming with DirectX 12"
+ISBN: 978-1942270065
+*/
+
 #include <Egg/PhysXWrapper.h>
 #include <Egg/EggMath.h>
 #include "GameObject.h"
@@ -47,24 +52,35 @@ public:
 		Scene::SetPhysXScene(pScene);
 	}
 
+	std::vector<float> CalcGaussWeights(float sigma)
+	{
+		float twoSigma2 = 2.0f * sigma * sigma;
+
+		int blurRadius = (int)ceil(2.0f * sigma);
+
+		std::vector<float> weights;
+		weights.resize(2 * blurRadius + 1);
+
+		float weightSum = 0.0f;
+
+		for(int i = -blurRadius; i <= blurRadius; ++i)
+		{
+			float x = (float)i;
+
+			weights[i + blurRadius] = expf(-x * x / twoSigma2);
+
+			weightSum += weights[i + blurRadius];
+		}
+
+		for(int i = 0; i < weights.size(); ++i)
+		{
+			weights[i] /= weightSum;
+		}
+
+		return weights;
+	}
+
 	void Setup() {
-		/*
-		for(int i = 0; i < SsaoData::SAMPLE_COUNT; ++i) {
-
-			ssaoData.Offsets[i] = DirectX::XMFLOAT4A (
-				RandomFloat(-1.0f, 1.0f),
-				RandomFloat(-1.0f, 1.0f),
-				RandomFloat(-1.0f, 1.0f),
-				0.0f );
-
-			float scale = float(i) / float(SsaoData::SAMPLE_COUNT);
-			scale *= scale;
-
-			DirectX::XMVECTOR v = DirectX::XMVectorScale(DirectX::XMVector4Normalize(DirectX::XMLoadFloat4A(&ssaoData.Offsets[i])), scale);
-
-			DirectX::XMStoreFloat4A(&(ssaoData.Offsets[i]), v);
-		}*/
-
 		ssaoData.Offsets[0] = DirectX::XMFLOAT4A(+1.0f, +1.0f, +1.0f, 0.0f);
 		ssaoData.Offsets[1] = DirectX::XMFLOAT4A(-1.0f, -1.0f, -1.0f, 0.0f);
 
@@ -101,6 +117,11 @@ public:
 		ssaoData.occlusionFadeStart = 4.0f;
 		ssaoData.occlusionFadeEnd = 40.0f;
 		ssaoData.surfaceEpsilon = 0.5f;
+
+		auto blurWeights = CalcGaussWeights(2.5f);
+		ssaoData.weights[0] = DirectX::XMFLOAT4A(&blurWeights[0]);
+		ssaoData.weights[1] = DirectX::XMFLOAT4A(&blurWeights[4]);
+		ssaoData.weights[2] = DirectX::XMFLOAT4A(&blurWeights[8]);
 	}
 
 	DirectX::XMMATRIX GetView(Transform * transform, Camera * camera) {

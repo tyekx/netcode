@@ -152,6 +152,7 @@ namespace Egg::Graphics {
 		virtual void SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil) = 0;
 
 		// for frame-constant constant buffers only that are allocated with CreateConstantBuffer
+		virtual void SetRootConstants(int slot, const void * srcData, uint32_t numConstants) = 0;
 		virtual void SetConstantBuffer(int slot, uint64_t cbufferHandle) = 0;
 		virtual void SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) = 0;
 		virtual void SetShaderResources(int slot, std::initializer_list<uint64_t> shaderResourceHandles) = 0;
@@ -167,6 +168,7 @@ namespace Egg::Graphics {
 		inline void SetConstants(int slot, const T & srcData) {
 			SetConstants(slot, reinterpret_cast<const void *>(&srcData), sizeof(T));
 		}
+
 
 	};
 
