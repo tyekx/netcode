@@ -10,6 +10,12 @@ struct GbufferPass_VertexOutput {
 	float2 texCoord : TEXCOORD;
 };
 
+cbuffer MaterialData : register(b0) {
+	float4 diffuseColor;
+	float3 fresnelR0;
+	float shininess;
+};
+
 cbuffer ObjectData : register(b1) {
 	float4x4 model;
 	float4x4 modelInv;
@@ -31,7 +37,10 @@ cbuffer FrameData : register(b2) {
 	float fov;
 };
 
-#define GBUFFERPASS_ROOTSIGNATURE "RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT ), CBV(b0), CBV(b1), CBV(b2)"
+#define GBUFFERPASS_ROOTSIGNATURE "RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT ), " \
+"CBV(b0), " \
+"CBV(b1), " \
+"CBV(b2) "
 
 [RootSignature(GBUFFERPASS_ROOTSIGNATURE)]
 GbufferPass_VertexOutput main(GbufferPass_VertexInput input)

@@ -48,6 +48,23 @@ public:
 	}
 
 	void Setup() {
+		/*
+		for(int i = 0; i < SsaoData::SAMPLE_COUNT; ++i) {
+
+			ssaoData.Offsets[i] = DirectX::XMFLOAT4A (
+				RandomFloat(-1.0f, 1.0f),
+				RandomFloat(-1.0f, 1.0f),
+				RandomFloat(-1.0f, 1.0f),
+				0.0f );
+
+			float scale = float(i) / float(SsaoData::SAMPLE_COUNT);
+			scale *= scale;
+
+			DirectX::XMVECTOR v = DirectX::XMVectorScale(DirectX::XMVector4Normalize(DirectX::XMLoadFloat4A(&ssaoData.Offsets[i])), scale);
+
+			DirectX::XMStoreFloat4A(&(ssaoData.Offsets[i]), v);
+		}*/
+
 		ssaoData.Offsets[0] = DirectX::XMFLOAT4A(+1.0f, +1.0f, +1.0f, 0.0f);
 		ssaoData.Offsets[1] = DirectX::XMFLOAT4A(-1.0f, -1.0f, -1.0f, 0.0f);
 
@@ -72,17 +89,18 @@ public:
 		for(int i = 0; i < SsaoData::SAMPLE_COUNT; ++i)
 		{
 			float s = RandomFloat(0.3f, 1.0f);
-			s = s * s;
+			s *= s;
 
-			DirectX::XMVECTOR v = DirectX::XMVectorScale(DirectX::XMVector4Normalize(DirectX::XMLoadFloat4A(&ssaoData.Offsets[i])), s);
+			DirectX::XMVECTOR v = DirectX::XMVectorScale(
+				DirectX::XMVector3Normalize(DirectX::XMLoadFloat4A(&ssaoData.Offsets[i])), s);
 
 			DirectX::XMStoreFloat4A(&(ssaoData.Offsets[i]), v);
 		}
 
-		ssaoData.occlusionRadius = 0.5f;
-		ssaoData.occlusionFadeStart = 0.2f;
-		ssaoData.occlusionFadeEnd = 1.0f;
-		ssaoData.surfaceEpsilon = 0.05f;
+		ssaoData.occlusionRadius = 10.0f;
+		ssaoData.occlusionFadeStart = 4.0f;
+		ssaoData.occlusionFadeEnd = 40.0f;
+		ssaoData.surfaceEpsilon = 0.5f;
 	}
 
 	DirectX::XMMATRIX GetView(Transform * transform, Camera * camera) {
@@ -144,18 +162,18 @@ public:
 		DirectX::XMStoreFloat4x4A(&perFrameData.ViewProj, DirectX::XMMatrixTranspose(vp));
 		DirectX::XMStoreFloat4x4A(&perFrameData.ViewProjInv, DirectX::XMMatrixTranspose(invVp));
 
-		const DirectX::XMFLOAT4 eyePos{ transform->position.x, transform->position.y, transform->position.z, 1.0f };
+		const DirectX::XMFLOAT4 eyePos{ transform->worldPosition.x, transform->worldPosition.y, transform->worldPosition.z, 1.0f };
 
 		DirectX::XMStoreFloat4A(&perFrameData.eyePos, DirectX::XMLoadFloat4(&eyePos));
 
+		DirectX::XMVECTOR projDet = DirectX::XMMatrixDeterminant(proj);
+		DirectX::XMMATRIX projInv = DirectX::XMMatrixInverse(&projDet, proj);
+		//DirectX::XMMATRIX projInv2 = DirectX::XMMatrixMultiply(invVp, view);
+
 		DirectX::XMStoreFloat4x4A(&perFrameData.ViewInv, DirectX::XMMatrixTranspose( DirectX::XMMatrixMultiply(proj, invVp) ));
-		DirectX::XMStoreFloat4x4A(&perFrameData.ProjInv, DirectX::XMMatrixTranspose( DirectX::XMMatrixMultiply(invVp, view) ));
+		DirectX::XMStoreFloat4x4A(&perFrameData.ProjInv, DirectX::XMMatrixTranspose(projInv));
 
-		//DirectX::XMVECTOR pDet = DirectX::XMMatrixDeterminant(proj);
-		//const auto invP = DirectX::XMMatrixInverse(&pDet, proj);
-		//DirectX::XMStoreFloat4x4A(&perFrameData.ProjInv, DirectX::XMMatrixTranspose(invP));
-
-		DirectX::XMStoreFloat4x4A(&perFrameData.ProjTex, DirectX::XMMatrixTranspose( DirectX::XMMatrixMultiply( proj, tex ) ));
+		DirectX::XMStoreFloat4x4A(&perFrameData.ProjTex, DirectX::XMMatrixTranspose( DirectX::XMMatrixMultiply(proj, tex) ));
 	}
 
 

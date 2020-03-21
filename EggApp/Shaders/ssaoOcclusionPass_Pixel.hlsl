@@ -2,6 +2,7 @@ const static int SAMPLE_COUNT = 14;
 
 struct SsaoOcclusionPass_PixelInput {
 	float4 position : SV_POSITION;
+	float3 positionV : POSITION;
 	float2 texCoord : TEXCOORD;
 };
 
@@ -48,61 +49,68 @@ float OcclusionFunction(float distZ) {
 	return occlusion;
 }
 
-#define SSAO_OCCLUSION_ROOT_SIG "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT), CBV(b0, Visibility = SHADER_VISIBILITY_PIXEL), CBV(b1, Visibility = SHADER_VISIBILITY_PIXEL), DescriptorTable(SRV(t0, NumDescriptors=3), Visibility = SHADER_VISIBILITY_PIXEL)," \
+#define SSAO_OCCLUSION_ROOT_SIG "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT), CBV(b0), CBV(b1, Visibility = SHADER_VISIBILITY_PIXEL), DescriptorTable(SRV(t0, NumDescriptors=3), Visibility = SHADER_VISIBILITY_PIXEL)," \
 					"StaticSampler(s0, AddressU = TEXTURE_ADDRESS_WRAP, AddressV = TEXTURE_ADDRESS_WRAP, Filter = FILTER_MIN_MAG_MIP_LINEAR, Visibility  = SHADER_VISIBILITY_PIXEL)," \
 					"StaticSampler(s1, AddressU = TEXTURE_ADDRESS_CLAMP, AddressV = TEXTURE_ADDRESS_CLAMP, Filter = FILTER_MIN_MAG_MIP_POINT, Visibility  = SHADER_VISIBILITY_PIXEL)"
 
+float GetDepthSample(float2 texCoord) {
+	return depth.Sample(pointClamp, texCoord).x;
+}
+
+float3 NDCToViewSpace(float3 position) {
+	float4 hPos = mul(float4(position, 1.0f), projInv);
+	return hPos.xyz / hPos.w;
+}
+
 [RootSignature(SSAO_OCCLUSION_ROOT_SIG)]
-float main(SsaoOcclusionPass_PixelInput input) : SV_TARGET
+float4 main(SsaoOcclusionPass_PixelInput input) : SV_TARGET
 {
-	// normal in view space
-	float3 n = normalize(mul(float4(normals.Sample(pointClamp, input.texCoord).xyz, 0), view).xyz);
+	float3 n = normalize(mul(normals.Sample(linearWrap, input.texCoord), view));
+	float pz = GetDepthSample(input.texCoord);
+	
+	float3 posV = NDCToViewSpace(float3(2.0f * input.texCoord - 1.0f, pz));
 
-	// depth in NDC for pixel P
-	float pz = depth.Sample(pointClamp, input.texCoord).x;
+	//return float4(posV.x - 100.0f, posV.y - 100.0f, posV.z, 1.0f);
 
-	float2 ndcTex = 2.0f * float2(input.texCoord.x, input.texCoord.y) - 1.0f;
+	float3 randomVec = normalize(2.0f * randomVectors.Sample(linearWrap, 4.0f * input.texCoord).xyz - 1.0f);
 
-	float4 ph = mul(float4(ndcTex, pz, 1.0f), projInv);
-	float3 p = ph.xyz / ph.w;
 
-	float3 randVec = 2.0f * randomVectors.Sample(linearWrap, 4.0f * input.texCoord).xyz - 1.0f;
+	float3 tangent = normalize(randomVec - n * dot(randomVec, n));
+	float3 binormal = normalize(cross(n, tangent));
+	float3x3 tbn = float3x3(tangent, binormal, n);
 
 	float occlusionSum = 0.0f;
 
 	for(int i = 0; i < SAMPLE_COUNT; ++i) {
-		// take an offset vector
-		float3 offset = reflect(normalize(offsetVectors[i].xyz), randVec);
 
-		// check if its toward the wrong side of the view space normal
+		float3 offset = mul(offsetVectors[i], transpose(tbn));
+
 		float flip = sign(dot(offset, n));
 
-		// flip it if so, q will be the potential occlusion point
-		float3 q = p + flip * surfaceEpsilon * offset;
+		float3 qV = posV + flip * offset * occlusionRadius;
 
-		float4 projQ = mul(float4(q, 1.0f), proj);
-		projQ /= projQ.w;
+		float4 qH = mul(float4(qV, 1.0f), proj);
+		qH.xyzw /= qH.w;
 
-		// sample the projected point's depth
-		float rz = depth.Sample(pointClamp, 0.5f * (projQ.xy + 1.0f)).x;
+		float2 qTex = 0.5f * qH.xy + 0.5f;
 
-		float4 rh = mul(float4(projQ.xy, rz, 1.0f), projInv);
-		float3 r = rh.xyz / rh.w;
+		float rz = GetDepthSample(qTex);
 
-		// if distZ is positive that means r could occlude p
-		float distZ = p.z - r.z;
+		float3 rV = NDCToViewSpace(float3(qH.xy, rz));
+		
+		float distZ = rV.z - posV.z;
 
-		// check for self occlusion, if the r point is perpendicular to the surface normal, we are probably on the same triangle
-		float dp = max(dot(n, normalize(r - p)), 0.0f);
+		float3 rNorm = normalize(mul(normals.Sample(linearWrap, qTex).xyz, view));
 
-		// acculumate occlusion values
-		float occlusion = dp * OcclusionFunction(distZ);
-		occlusionSum += occlusion;
+		float dp = max(dot(n, rNorm), 0.0f);
+
+		occlusionSum += dp * OcclusionFunction(distZ);
 	}
-
+	
 	occlusionSum /= float(SAMPLE_COUNT);
 
 	float access = 1.0f - occlusionSum;
+	access *= access;
 
-	return saturate(access * access);
+	return float4(access, access, access, 1.0f);
 }

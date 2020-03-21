@@ -15,6 +15,11 @@ cbuffer MaterialData : register(b0) {
 	float shininess;
 };
 
+cbuffer ObjectData : register(b1) {
+	float4x4 model;
+	float4x4 modelInv;
+};
+
 cbuffer FrameData : register(b2) {
 	float4x4 viewProj;
 	float4x4 viewProjInv;
@@ -35,7 +40,7 @@ GbufferPass_PixelOutput main(GbufferPass_PixelInput input)
 {
 	GbufferPass_PixelOutput output;
 
-	output.color = diffuseColor;
+	output.color = float4(diffuseColor.xyz, 1.0f);
 	output.normal = float4(normalize(input.normal), 0.0f);
 
 	return output;

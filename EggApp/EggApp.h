@@ -62,8 +62,6 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		renderSystem.renderer.perFrameData = &gameScene->perFrameData;
 		renderSystem.renderer.ssaoData = &gameScene->ssaoData;
 
-		FrameGraphBuilder builder;
-
 		gameScene->Foreach([this](GameObject * gameObject) -> void {
 			if(gameObject->IsActive()) {
 				transformSystem.Run(gameObject);
@@ -84,11 +82,10 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 			uiTextSystem.Run(uiObject);
 		});
 
+		auto builder = graphics->CreateFrameGraphBuilder();
 		renderSystem.renderer.CreateFrameGraph(builder);
 
-		FrameGraph graph = builder.Build(graphics->resources);
-		graph.Render(graphics->renderer);
-
+		graphics->frame->Run(builder->Build());
 		graphics->frame->Render();
 		graphics->frame->Present();
 		
@@ -111,19 +108,6 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 				animSystem.Run(gameObject, dt);
 			}
 		});
-
-		//auto* cam = scene.camera->GetComponent<Camera>();
-		//auto * t = scene.camera->GetComponent<Transform>();
-
-		//auto xmpv = DirectX::XMLoadFloat3(&t->position);
-		//auto xmav = DirectX::XMLoadFloat3(&cam->ahead);
-
-		//xmpv = DirectX::XMVectorAdd(xmpv, DirectX::XMVectorScale(xmav, 10.0f));
-
-		//DirectX::XMFLOAT3 p;
-		//DirectX::XMStoreFloat3(&p, xmpv);
-
-		//pxScene.UpdateDebugCamera(t->position, cam->up, p);
 	}
 
 	void LoadServices() {
@@ -133,6 +117,8 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 
 		gameScene = Service::Get<GameScene>();
 		uiScene = Service::Get<UIScene>();
+
+		gameScene->Setup();
 	}
 
 	void LoadAssets() {

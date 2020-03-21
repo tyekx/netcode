@@ -24,15 +24,17 @@ namespace Egg {
 		/*
 		Takes a number and returns its closest multiplicative of 65536. The returned number is always bigger or equal than the input number
 		*/
-		constexpr unsigned int Align64K(unsigned int v) {
-			return (v + 0xFFFF) & (~0xFFFF);
+		template<typename INT_T = uint32_t>
+		constexpr INT_T Align64K(INT_T v) {
+			return (v + INT_T{ 0xFFFF }) & (~INT_T{ 0xFFFF });
 		}
 
 		/*
 		Takes a number and returns its closest multiplicative of 256. The returned number is always bigger or equal than the input number
 		*/
-		constexpr unsigned int Align256(unsigned int v) {
-			return (v + 255U) & (~255U);
+		template<typename INT_T = uint32_t>
+		constexpr INT_T Align256(INT_T v) {
+			return (v + INT_T{ 255 }) & (~INT_T{ 255 });
 		}
 
 		template<typename INT_T = int>

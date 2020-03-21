@@ -38,6 +38,7 @@ cbuffer FrameData : register(b0) {
 Texture2D<float4> colors : register(t0);
 Texture2D<float3> normals : register(t1);
 Texture2D<float> depthBuffer : register(t2);
+Texture2D<float4> ssaoBuffer : register(t3);
 
 SamplerState linearWrapSampler : register(s0);
 
@@ -121,6 +122,7 @@ float3 ComputeSpotLight(Light L, Material mat, float3 pos, float3 normal, float3
 
 float4 main(LightingPass_PixelInput input) : SV_TARGET
 {
+	/*
 	float depth = depthBuffer.Sample(linearWrapSampler, input.texCoord).x;
 
 	float3 normal = normals.Sample(linearWrapSampler, input.texCoord).xyz;
@@ -141,5 +143,7 @@ float4 main(LightingPass_PixelInput input) : SV_TARGET
 
 	float3 toEye = normalize(eyePos.xyz - worldPos.xyz);
 
-	return float4(ComputeDirectionalLight(testMat, l.intensity, -l.direction, normal, toEye), 1.0f);
+	return float4(ComputeDirectionalLight(testMat, l.intensity, -l.direction, normal, toEye), 1.0f);*/
+
+	return float4(ssaoBuffer.Sample(linearWrapSampler, input.texCoord).xyz, 1.0f);
 }

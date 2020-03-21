@@ -8,7 +8,7 @@ struct LightingPass_VertexOutput {
 	float2 texCoord : TEXCOORD;
 };
 
-#define LIGHTINGPASS_ROOTSIGNATURE "RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT ), CBV(b0, Visibility = SHADER_VISIBILITY_PIXEL), DescriptorTable(SRV(t0, NumDescriptors = 3), Visibility = SHADER_VISIBILITY_PIXEL), StaticSampler(s0, Visibility = SHADER_VISIBILITY_PIXEL)"
+#define LIGHTINGPASS_ROOTSIGNATURE "RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT ), CBV(b0, Visibility = SHADER_VISIBILITY_PIXEL), DescriptorTable(SRV(t0, NumDescriptors = 4), Visibility = SHADER_VISIBILITY_PIXEL), StaticSampler(s0, Visibility = SHADER_VISIBILITY_PIXEL)"
 
 [RootSignature(LIGHTINGPASS_ROOTSIGNATURE)]
 LightingPass_VertexOutput main(LightingPass_VertexInput input)

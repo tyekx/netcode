@@ -58,13 +58,14 @@
     <ClInclude Include="DebugPhysxRaycast.h" />
     <ClInclude Include="DefaultModuleFactory.h" />
     <ClInclude Include="DX12Builders.h" />
-    <ClInclude Include="DX12CommandListStorage.h" />
+    <ClInclude Include="DX12CommandListPool.h" />
     <ClInclude Include="DX12Common.h" />
     <ClInclude Include="DX12ConstantBufferPool.h" />
     <ClInclude Include="DX12CPipelineState.h" />
     <ClInclude Include="DX12CPipelineStateBuilder.h" />
     <ClInclude Include="DX12CPipelineStateLibrary.h" />
     <ClInclude Include="DX12DynamicDescriptorHeap.h" />
+    <ClInclude Include="DX12FrameGraph.h" />
     <ClInclude Include="DX12GPipelineState.h" />
     <ClInclude Include="DX12GPipelineStateBuilder.h" />
     <ClInclude Include="DX12GPipelineStateLibrary.h" />
@@ -106,6 +107,7 @@
     <ClInclude Include="GraphicsContexts.h" />
     <ClInclude Include="HandleTypes.h" />
     <ClInclude Include="Input.h" />
+    <ClInclude Include="LinearAllocator.h" />
     <ClInclude Include="LinearClassifier.h" />
     <ClInclude Include="DX12ResourceContext.h" />
     <ClInclude Include="Logger.h" />
@@ -147,6 +149,8 @@
     <ClCompile Include="DX12CPipelineStateBuilder.cpp" />
     <ClCompile Include="DX12CPipelineStateLibrary.cpp" />
     <ClCompile Include="DX12DynamicDescriptorHeap.cpp" />
+    <ClCompile Include="DX12Fence.cpp" />
+    <ClCompile Include="DX12FrameGraph.cpp" />
     <ClCompile Include="DX12GPipelineState.cpp" />
     <ClCompile Include="DX12GPipelineStateBuilder.cpp" />
     <ClCompile Include="DX12GPipelineStateLibrary.cpp" />
@@ -176,6 +180,7 @@
     <ClCompile Include="DX12StreamOutputLibrary.cpp" />
     <ClCompile Include="DX12Texture.cpp" />
     <ClCompile Include="DX12TextureBuilder.cpp" />
+    <ClCompile Include="FrameGraph.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="LinearClassifier.cpp" />

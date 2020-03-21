@@ -136,8 +136,8 @@ namespace Egg::Graphics::DX12
         std::unique_ptr<PCT_Vertex[]> vertexData;
         std::unique_ptr<SpriteInfo[]> mSpriteQueue;
 
-        size_t mSpriteQueueCount;
-        size_t mSpriteQueueArraySize;
+        uint32_t mSpriteQueueCount;
+        uint32_t mSpriteQueueArraySize;
 
         std::vector<SpriteInfo const *> mSortedSprites;
 
@@ -147,17 +147,17 @@ namespace Egg::Graphics::DX12
         D3D12_GPU_VIRTUAL_ADDRESS cbufferAddr;
         SpriteCbuffer cbuffer;
 
-        size_t mVertexPageSize;
-        size_t mSpriteCount;
+        uint32_t mVertexPageSize;
+        uint32_t mSpriteCount;
 
         bool mInBeginEndPair;
         bool firstDraw;
 
-        static const size_t MaxBatchSize = 2048;
-        static const size_t MinBatchSize = 128;
-        static const size_t InitialQueueSize = 64;
-        static const size_t VerticesPerSprite = 4;
-        static const size_t IndicesPerSprite = 6;
+        static const uint32_t MaxBatchSize = 2048;
+        static const uint32_t MinBatchSize = 128;
+        static const uint32_t InitialQueueSize = 64;
+        static const uint32_t VerticesPerSprite = 4;
+        static const uint32_t IndicesPerSprite = 6;
 
         enum RootParameterIndex
         {
@@ -183,10 +183,12 @@ namespace Egg::Graphics::DX12
         void Begin(SpriteSortMode sortMode = SpriteSortMode_Deferred, DirectX::FXMMATRIX transformMatrix = MatrixIdentity);
         void End();
 
-        virtual void BeginRecord(DirectX::XMFLOAT4X4 viewProj) override {
+        virtual void BeginRecord(void * ctx, DirectX::XMFLOAT4X4 viewProj) override {
+            renderContext = static_cast<Egg::Graphics::IRenderContext *>(ctx);
             DirectX::FXMMATRIX tMat = DirectX::XMLoadFloat4x4(&viewProj);
             Begin(SpriteSortMode_Deferred, tMat);
         }
+
         virtual void EndRecord() override {
             End();
         }
@@ -243,7 +245,7 @@ namespace Egg::Graphics::DX12
         void SortSprites();
         void GrowSortedSprites();
 
-        void RenderBatch(ResourceViewsRef texture, DirectX::XMVECTOR textureSize, SpriteInfo const * const * sprites, size_t count);
+        void RenderBatch(ResourceViewsRef texture, DirectX::XMVECTOR textureSize, SpriteInfo const * const * sprites, uint32_t count);
 
         static void RenderSprite(SpriteInfo const * sprite,
                                  PCT_Vertex * vertices,

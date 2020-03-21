@@ -1,5 +1,6 @@
 struct SsaoPass_PixelInput {
 	float4 position : SV_POSITION;
+	float3 positionV : POSITION;
 	float2 texCoord : TEXCOORD;
 };
 

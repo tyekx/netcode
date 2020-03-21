@@ -2,11 +2,63 @@
 #include "DX12SpriteFont.h"
 
 namespace Egg::Graphics::DX12 {
-	void RenderContext::SetStencilReference(uint8_t stencilValue) {
-		directCommandList->OMSetStencilRef(stencilValue);
+
+	BaseRenderContext::BaseRenderContext(ResourcePool * resourcePool, ConstantBufferPool * cbufferPool, DynamicDescriptorHeap * dHeaps, com_ptr<ID3D12GraphicsCommandList> cl) :
+		resources{ resourcePool }, cbuffers{ cbufferPool }, descHeaps{ dHeaps }, commandList{ std::move(cl) }, signalFence{}, waitFences{}, barriers{}
+	{
+
 	}
 
-	void RenderContext::SetVertexBuffer(uint64_t handle)
+	void BaseRenderContext::ResourceBarrier(uint64_t handle, ResourceState before, ResourceState after)
+	{
+		ID3D12Resource * res = resources->GetNativeResource(handle).resource;
+
+#if defined(EGG_DEBUG)
+		const auto it = std::find_if(std::begin(barriers), std::end(barriers), [res](const D3D12_RESOURCE_BARRIER & barrier) ->bool {
+			return (barrier.Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION) && res == barrier.Transition.pResource;
+		});
+
+		if(it != barriers.end()) {
+			Log::Warn("2 resource barrier was found for the same resource, probably forgot to call FlushResourceBarriers()");
+		}
+#endif
+
+		barriers.push_back(CD3DX12_RESOURCE_BARRIER::Transition(res, GetNativeState(before), GetNativeState(after)));
+	}
+
+	void BaseRenderContext::FlushResourceBarriers()
+	{
+		if(!barriers.empty()) {
+			commandList->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
+			barriers.clear();
+		}
+	}
+
+	GraphicsContext::GraphicsContext(
+		ResourcePool * resourcePool,
+		ConstantBufferPool * cbpool,
+		DynamicDescriptorHeap * dheaps,
+		com_ptr<ID3D12GraphicsCommandList> commandListRef,
+		const D3D12_CPU_DESCRIPTOR_HANDLE & backbuffer,
+		const D3D12_CPU_DESCRIPTOR_HANDLE & backbufferDepth,
+		const D3D12_VIEWPORT & viewPort,
+		const D3D12_RECT & scissorRect
+	) : BaseRenderContext(resourcePool, cbpool, dheaps, std::move(commandListRef)),
+		currentlyBoundDepth{},
+		currentlyBoundRenderTargets{},
+		streamOutput_FilledSizeLocation{},
+		backbuffer { backbuffer },
+		backbufferDepth{ backbufferDepth },
+		defaultViewport { viewPort },
+		defaultScissorRect { scissorRect }
+	{
+	}
+
+	void GraphicsContext::SetStencilReference(uint8_t stencilValue) {
+		commandList->OMSetStencilRef(stencilValue);
+	}
+
+	void GraphicsContext::SetVertexBuffer(uint64_t handle)
 	{
 		const GResource & res = resources->GetNativeResource(handle);
 
@@ -15,10 +67,10 @@ namespace Egg::Graphics::DX12 {
 		vbv.SizeInBytes = static_cast<UINT>(res.desc.sizeInBytes);
 		vbv.StrideInBytes = res.desc.strideInBytes;
 
-		directCommandList->IASetVertexBuffers(0, 1, &vbv);
+		commandList->IASetVertexBuffers(0, 1, &vbv);
 	}
 
-	void RenderContext::SetIndexBuffer(uint64_t handle)
+	void GraphicsContext::SetIndexBuffer(uint64_t handle)
 	{
 		const GResource & res = resources->GetNativeResource(handle);
 		
@@ -27,112 +79,95 @@ namespace Egg::Graphics::DX12 {
 		ibv.Format = res.desc.format;
 		ibv.SizeInBytes = static_cast<UINT>(res.desc.sizeInBytes);
 
-		directCommandList->IASetIndexBuffer(&ibv);
+		commandList->IASetIndexBuffer(&ibv);
 	}
 
-	void RenderContext::DrawIndexed(uint32_t indexCount)
+	void GraphicsContext::DrawIndexed(uint32_t indexCount)
 	{
-		directCommandList->DrawIndexedInstanced(indexCount, 1, 0, 0, 0);
+		commandList->DrawIndexedInstanced(indexCount, 1, 0, 0, 0);
 	}
 
-	void RenderContext::DrawIndexed(uint32_t indexCount, uint32_t vertexOffset)
+	void GraphicsContext::DrawIndexed(uint32_t indexCount, uint32_t vertexOffset)
 	{
-		directCommandList->DrawIndexedInstanced(indexCount, 1, 0, vertexOffset, 0);
+		commandList->DrawIndexedInstanced(indexCount, 1, 0, vertexOffset, 0);
 	}
 
-	void RenderContext::Draw(uint32_t vertexCount)
+	void GraphicsContext::Draw(uint32_t vertexCount)
 	{
-		directCommandList->DrawInstanced(vertexCount, 1, 0, 0);
+		commandList->DrawInstanced(vertexCount, 1, 0, 0);
 	}
 
-	void RenderContext::Draw(uint32_t vertexCount, uint32_t vertexOffset)
+	void GraphicsContext::Draw(uint32_t vertexCount, uint32_t vertexOffset)
 	{
-		directCommandList->DrawInstanced(vertexCount, 1, vertexOffset, 0);
+		commandList->DrawInstanced(vertexCount, 1, vertexOffset, 0);
 	}
 
-	void RenderContext::Dispatch(uint32_t threadGroupX, uint32_t threadGroupY, uint32_t threadGroupZ)
+	void GraphicsContext::Dispatch(uint32_t threadGroupX, uint32_t threadGroupY, uint32_t threadGroupZ)
 	{
-		//gcl->Dispatch(threadGroupX, threadGroupY, threadGroupZ);
+		Log::Debug("call to " __FUNCTION__ " is ignored");
 	}
 
-	void RenderContext::GraphicsIncrementalSignal(FenceRef fence)
+	void GraphicsContext::Signal(FenceRef fence)
 	{
-		directSignalFence = std::move(fence);
+		if(signalFence != nullptr) {
+			Log::Warn("ComputeContext: signalFence is already set, overwriting");
+		}
+		signalFence = std::move(fence);
 	}
 
-	void RenderContext::ComputeIncrementalSignal(FenceRef fence)
+	void GraphicsContext::Wait(FenceRef fence)
 	{
-		computeSignalFence = std::move(fence);
+		waitFences.emplace_back(std::move(fence));
 	}
 
-	void RenderContext::GraphicsSignal(FenceRef fence)
+	void GraphicsContext::SetRootSignature(RootSignatureRef rs) {
+		commandList->SetGraphicsRootSignature(reinterpret_cast<ID3D12RootSignature *>(rs->GetImplDetail()));
+	}
+
+	void GraphicsContext::SetPipelineState(PipelineStateRef pso)
 	{
-		Log::Warn("void RenderContext::GraphicsSignal(FenceRef fence): Not implemented");
+		commandList->SetPipelineState(reinterpret_cast<ID3D12PipelineState*>(pso->GetImplDetail()));
 	}
 
-	void RenderContext::ComputeSignal(FenceRef fence)
+	void GraphicsContext::SetPrimitiveTopology(PrimitiveTopology topology)
 	{
-		Log::Warn("void RenderContext::ComputeSignal(FenceRef fence): Not implemented");
+		commandList->IASetPrimitiveTopology(GetNativePrimitiveTopology(topology));
 	}
 
-	void RenderContext::GraphicsWait(FenceRef fence)
-	{
-		directWaitFences.emplace_back(std::move(fence));
-	}
-
-	void RenderContext::ComputeWait(FenceRef fence)
-	{
-		computeWaitFences.emplace_back(std::move(fence));
-	}
-
-	void RenderContext::SetRootSignature(RootSignatureRef rs) {
-		directCommandList->SetGraphicsRootSignature(reinterpret_cast<ID3D12RootSignature *>(rs->GetImplDetail()));
-	}
-
-	void RenderContext::SetPipelineState(PipelineStateRef pso)
-	{
-		directCommandList->SetPipelineState(reinterpret_cast<ID3D12PipelineState*>(pso->GetImplDetail()));
-	}
-
-	void RenderContext::SetPrimitiveTopology(PrimitiveTopology topology)
-	{
-		directCommandList->IASetPrimitiveTopology(GetNativePrimitiveTopology(topology));
-	}
-
-	void RenderContext::ClearUnorderedAccessViewUint(uint64_t handle, const DirectX::XMUINT4 & values)
+	void GraphicsContext::ClearUnorderedAccessViewUint(uint64_t handle, const DirectX::XMUINT4 & values)
 	{
 		const GResource & res = resources->GetNativeResource(handle);
 
 		const auto [cpuDesc, gpuDesc] = descHeaps->CreateBufferUAV(res);
 
-		directCommandList->ClearUnorderedAccessViewUint(gpuDesc, cpuDesc, res.resource, &values.x, 0, nullptr);
+		commandList->ClearUnorderedAccessViewUint(gpuDesc, cpuDesc, res.resource, &values.x, 0, nullptr);
 	}
 
 
-	void RenderContext::ClearDepthOnly() {
-		directCommandList->ClearDepthStencilView(currentlyBoundDepth, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	void GraphicsContext::ClearDepthOnly() {
+		commandList->ClearDepthStencilView(currentlyBoundDepth, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 	}
 
-	void RenderContext::ClearStencilOnly() {
-		directCommandList->ClearDepthStencilView(currentlyBoundDepth, D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	void GraphicsContext::ClearStencilOnly() {
+		commandList->ClearDepthStencilView(currentlyBoundDepth, D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 	}
 
-	void RenderContext::ClearDepthStencil() {
-		directCommandList->ClearDepthStencilView(currentlyBoundDepth, D3D12_CLEAR_FLAG_STENCIL | D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	void GraphicsContext::ClearDepthStencil() {
+		commandList->ClearDepthStencilView(currentlyBoundDepth, D3D12_CLEAR_FLAG_STENCIL | D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 	}
 
-	void RenderContext::ClearRenderTarget(uint8_t idx)
+	void GraphicsContext::ClearRenderTarget(uint8_t idx)
 	{
 		static const float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		directCommandList->ClearRenderTargetView(currentlyBoundRenderTargets[idx], clearColor, 0, nullptr);
+		commandList->ClearRenderTargetView(currentlyBoundRenderTargets[idx], clearColor, 0, nullptr);
 	}
 
-	void RenderContext::ClearRenderTarget(uint8_t idx, const float * clearColor)
+	void GraphicsContext::ClearRenderTarget(uint8_t idx, const float * clearColor)
 	{
-		directCommandList->ClearRenderTargetView(currentlyBoundRenderTargets[idx], clearColor, 0, nullptr);
+		commandList->ClearRenderTargetView(currentlyBoundRenderTargets[idx], clearColor, 0, nullptr);
 	}
 
-	void RenderContext::SetStreamOutput(uint64_t handle)
+	void GraphicsContext::SetStreamOutput(uint64_t handle)
 	{
 		const GResource & res = resources->GetNativeResource(handle);
 
@@ -140,25 +175,25 @@ namespace Egg::Graphics::DX12 {
 		sobv.BufferLocation = res.address;
 		sobv.BufferFilledSizeLocation = streamOutput_FilledSizeLocation;
 		sobv.SizeInBytes = res.desc.sizeInBytes;
-		directCommandList->SOSetTargets(0, 1, &sobv);
+		commandList->SOSetTargets(0, 1, &sobv);
 	}
 
-	void RenderContext::SetStreamOutputFilledSize(uint64_t handle, uint64_t byteOffset)
+	void GraphicsContext::SetStreamOutputFilledSize(uint64_t handle, uint64_t byteOffset)
 	{
 		const GResource & res = resources->GetNativeResource(handle);
 
 		streamOutput_FilledSizeLocation = res.address + ((byteOffset + 3ull) & ~(3ull));
 	}
 
-	void RenderContext::ResetStreamOutput()
+	void GraphicsContext::ResetStreamOutput()
 	{
 		if(streamOutput_FilledSizeLocation > 0) {
-			directCommandList->SOSetTargets(0, 0, nullptr);
+			commandList->SOSetTargets(0, 0, nullptr);
 			streamOutput_FilledSizeLocation = 0;
 		}
 	}
 
-	void RenderContext::SetViewport(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
+	void GraphicsContext::SetViewport(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
 	{
 		D3D12_VIEWPORT vp;
 		vp.TopLeftX = static_cast<float>(left);
@@ -168,20 +203,20 @@ namespace Egg::Graphics::DX12 {
 		vp.MinDepth = 0.0f;
 		vp.MaxDepth = 1.0f;
 
-		directCommandList->RSSetViewports(1, &vp);
+		commandList->RSSetViewports(1, &vp);
 	}
 
-	void RenderContext::SetViewport(uint32_t width, uint32_t height)
+	void GraphicsContext::SetViewport(uint32_t width, uint32_t height)
 	{
 		SetViewport(0, width, 0, height);
 	}
 
-	void RenderContext::SetViewport()
+	void GraphicsContext::SetViewport()
 	{
-		directCommandList->RSSetViewports(1, &defaultViewport);
+		commandList->RSSetViewports(1, &defaultViewport);
 	}
 
-	void RenderContext::SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
+	void GraphicsContext::SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
 	{
 		D3D12_RECT scissorRect;
 		scissorRect.left = left;
@@ -189,20 +224,20 @@ namespace Egg::Graphics::DX12 {
 		scissorRect.top = top;
 		scissorRect.bottom = bottom;
 
-		directCommandList->RSSetScissorRects(1, &scissorRect);
+		commandList->RSSetScissorRects(1, &scissorRect);
 	}
 
-	void RenderContext::SetScissorRect(uint32_t width, uint32_t height)
+	void GraphicsContext::SetScissorRect(uint32_t width, uint32_t height)
 	{
 		SetScissorRect(0, width, 0, height);
 	}
 
-	void RenderContext::SetScissorRect()
+	void GraphicsContext::SetScissorRect()
 	{
-		directCommandList->RSSetScissorRects(1, &defaultScissorRect);
+		commandList->RSSetScissorRects(1, &defaultScissorRect);
 	}
 
-	void RenderContext::SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil)
+	void GraphicsContext::SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil)
 	{
 		uint32_t numDescriptors;
 		if(renderTargets != nullptr) {
@@ -223,10 +258,10 @@ namespace Egg::Graphics::DX12 {
 			currentlyBoundDepth = backbufferDepth;
 		}
 
-		directCommandList->OMSetRenderTargets(numDescriptors, currentlyBoundRenderTargets, FALSE, &currentlyBoundDepth);
+		commandList->OMSetRenderTargets(numDescriptors, currentlyBoundRenderTargets, FALSE, &currentlyBoundDepth);
 	}
 
-	void RenderContext::SetRenderTargets(std::initializer_list<uint64_t> handles, uint64_t depthStencil)
+	void GraphicsContext::SetRenderTargets(std::initializer_list<uint64_t> handles, uint64_t depthStencil)
 	{
 		uint8_t k = 0;
 		for(uint64_t rtHandle : handles) {
@@ -243,10 +278,10 @@ namespace Egg::Graphics::DX12 {
 			currentlyBoundDepth = descHeaps->CreateDSV(res);
 		}
 
-		directCommandList->OMSetRenderTargets(static_cast<uint32_t>(handles.size()), currentlyBoundRenderTargets, FALSE, &currentlyBoundDepth);
+		commandList->OMSetRenderTargets(static_cast<uint32_t>(handles.size()), currentlyBoundRenderTargets, FALSE, &currentlyBoundDepth);
 	}
 
-	void RenderContext::SetRenderTargets(uint64_t handle, uint64_t depthStencil)
+	void GraphicsContext::SetRenderTargets(uint64_t handle, uint64_t depthStencil)
 	{
 		if(handle == 0) {
 			currentlyBoundRenderTargets[0] = backbuffer;
@@ -262,12 +297,10 @@ namespace Egg::Graphics::DX12 {
 			currentlyBoundDepth = descHeaps->CreateDSV(res);
 		}
 
-		directCommandList->OMSetRenderTargets(1, currentlyBoundRenderTargets, FALSE, &currentlyBoundDepth);
+		commandList->OMSetRenderTargets(1, currentlyBoundRenderTargets, FALSE, &currentlyBoundDepth);
 	}
 
-
-
-	void RenderContext::SetShaderResources(int slot, std::initializer_list<uint64_t> shaderResourceHandles) {
+	void GraphicsContext::SetShaderResources(int slot, std::initializer_list<uint64_t> shaderResourceHandles) {
 		
 
 		D3D12_GPU_DESCRIPTOR_HANDLE descriptor;
@@ -280,63 +313,241 @@ namespace Egg::Graphics::DX12 {
 			} else descHeaps->CreateSRV(gres);
 		}
 
-		directCommandList->SetGraphicsRootDescriptorTable(slot, descriptor);
+		commandList->SetGraphicsRootDescriptorTable(slot, descriptor);
 	}
 
-	void RenderContext::SetShaderResources(int slot, ResourceViewsRef resourceView)
+	void GraphicsContext::SetShaderResources(int slot, ResourceViewsRef resourceView)
 	{
 		DX12ResourceViewsRef srv = std::dynamic_pointer_cast<DX12ResourceViews>(resourceView);
 		
-		directCommandList->SetGraphicsRootDescriptorTable(slot, srv->GetGpuHandle(0));
+		commandList->SetGraphicsRootDescriptorTable(slot, srv->GetGpuHandle(0));
 	}
 
-	void RenderContext::SetConstantBuffer(int slot, uint64_t cbufferHandle)
+	void GraphicsContext::SetConstantBuffer(int slot, uint64_t cbufferHandle)
 	{
 		Log::Warn("SetConstantBuffer(int slot, uint64_t cbufferHandle) not implemneted");
 	}
 
-	void RenderContext::SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes)
+	void GraphicsContext::SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes)
 	{
 		uint64_t handle = cbuffers->CreateConstantBuffer(srcDataSizeInBytes);
 		cbuffers->CopyData(handle, srcData, srcDataSizeInBytes);
 
-		directCommandList->SetGraphicsRootConstantBufferView(slot, cbuffers->GetNativeHandle(handle));
+		commandList->SetGraphicsRootConstantBufferView(slot, cbuffers->GetNativeHandle(handle));
 	}
 
-	void RenderContext::ResourceBarrier(uint64_t handle, ResourceState before, ResourceState after)
+	void GraphicsContext::BeginPass()
 	{
-		ID3D12Resource * res = resources->GetNativeResource(handle).resource;
-
-#if defined(EGG_DEBUG)
-		const auto it = std::find_if(std::begin(barriers), std::end(barriers), [res](const D3D12_RESOURCE_BARRIER & barrier) ->bool {
-			return (barrier.Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION) && res == barrier.Transition.pResource;
-		});
-
-		if(it != barriers.end()) {
-			Log::Warn("2 resource barrier was found for the same resource, probably forgot to call FlushResourceBarriers()");
-		}
-#endif
-
-		barriers.push_back(CD3DX12_RESOURCE_BARRIER::Transition(res, GetNativeState(before), GetNativeState(after)));
+		descHeaps->SetDescriptorHeaps(commandList.Get());
 	}
 
-	void RenderContext::FlushResourceBarriers()
-	{
-		if(!barriers.empty()) {
-			directCommandList->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
-			barriers.clear();
-		}
-	}
-
-	void RenderContext::BeginPass()
-	{
-		descHeaps->SetDescriptorHeaps(directCommandList.Get());
-	}
-
-	void RenderContext::EndPass()
+	void GraphicsContext::EndPass()
 	{
 		FlushResourceBarriers();
 		ResetStreamOutput();
+	}
+
+	void ComputeContext::SetRootSignature(RootSignatureRef rs)
+	{
+		commandList->SetComputeRootSignature(reinterpret_cast<ID3D12RootSignature *>(rs->GetImplDetail()));
+	}
+
+	void ComputeContext::SetPipelineState(PipelineStateRef pso)
+	{
+		commandList->SetPipelineState(reinterpret_cast<ID3D12PipelineState *>(pso->GetImplDetail()));
+	}
+
+	void ComputeContext::SetVertexBuffer(uint64_t handle)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::SetIndexBuffer(uint64_t handle)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::DrawIndexed(uint32_t indexCount)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::DrawIndexed(uint32_t indexCount, uint32_t vertexOffset)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::Draw(uint32_t vertexCount)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::Draw(uint32_t vertexCount, uint32_t vertexOffset)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::Dispatch(uint32_t threadGroupX, uint32_t threadGroupY, uint32_t threadGroupZ)
+	{
+	}
+
+	void ComputeContext::Signal(FenceRef fence)
+	{
+		if(signalFence != nullptr) {
+			Log::Warn("ComputeContext: signalFence is already set, overwriting");
+		}
+		signalFence = std::move(fence);
+	}
+
+	void ComputeContext::Wait(FenceRef fence)
+	{
+		waitFences.emplace_back(std::move(fence));
+	}
+
+	void ComputeContext::SetPrimitiveTopology(PrimitiveTopology topology)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::ClearUnorderedAccessViewUint(uint64_t handle, const DirectX::XMUINT4 & values)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::ClearRenderTarget(uint8_t idx)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::ClearRenderTarget(uint8_t idx, const float * clearColor)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::ClearDepthOnly()
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::ClearStencilOnly()
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::ClearDepthStencil()
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::SetStreamOutput(uint64_t handle)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::SetStreamOutputFilledSize(uint64_t handle, uint64_t byteOffset)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::ResetStreamOutput()
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::SetRenderTargets(std::initializer_list<uint64_t> handles, uint64_t depthStencil)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::SetStencilReference(uint8_t stencilValue)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::SetViewport(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::SetViewport(uint32_t width, uint32_t height)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::SetViewport()
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::SetScissorRect(uint32_t width, uint32_t height)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::SetScissorRect()
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::SetRenderTargets(uint64_t renderTarget, uint64_t depthStencil)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::SetShaderResources(int slot, std::initializer_list<uint64_t> shaderResourceHandles) {
+
+
+		D3D12_GPU_DESCRIPTOR_HANDLE descriptor;
+		descriptor.ptr = 0;
+
+		for(uint64_t i : shaderResourceHandles) {
+			const GResource & gres = resources->GetNativeResource(i);
+			if(descriptor.ptr == 0) {
+				descriptor = descHeaps->CreateSRV(gres);
+			} else descHeaps->CreateSRV(gres);
+		}
+
+		commandList->SetComputeRootDescriptorTable(slot, descriptor);
+	}
+
+	void ComputeContext::SetShaderResources(int slot, ResourceViewsRef resourceView)
+	{
+		DX12ResourceViewsRef srv = std::dynamic_pointer_cast<DX12ResourceViews>(resourceView);
+
+		commandList->SetComputeRootDescriptorTable(slot, srv->GetGpuHandle(0));
+	}
+
+	void ComputeContext::SetConstantBuffer(int slot, uint64_t cbufferHandle)
+	{
+		Log::Warn("SetConstantBuffer(int slot, uint64_t cbufferHandle) not implemneted");
+	}
+
+	void ComputeContext::SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes)
+	{
+		uint64_t handle = cbuffers->CreateConstantBuffer(srcDataSizeInBytes);
+		cbuffers->CopyData(handle, srcData, srcDataSizeInBytes);
+
+		commandList->SetComputeRootConstantBufferView(slot, cbuffers->GetNativeHandle(handle));
+	}
+
+	void ComputeContext::BeginPass()
+	{
+		descHeaps->SetDescriptorHeaps(commandList.Get());
+	}
+
+	void ComputeContext::EndPass()
+	{
+		FlushResourceBarriers();
 	}
 
 }

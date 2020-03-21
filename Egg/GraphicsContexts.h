@@ -5,8 +5,14 @@
 #include "HandleTypes.h"
 #include "Common.h"
 #include "UploadBatch.h"
+#include "FrameGraph.h"
 #include <string>
 #include <map>
+
+namespace Egg {
+	class RenderPass;
+	class FrameGraph;
+}
 
 namespace Egg::Graphics {
 
@@ -17,6 +23,15 @@ namespace Egg::Graphics {
 	class IResourceContext {
 	public:
 		virtual ~IResourceContext() = default;
+
+		virtual void UseComputeContext() = 0;
+		virtual void UseGraphicsContext() = 0;
+
+		virtual void Writes(uint64_t resourceHandle) = 0;
+		virtual void Reads(uint64_t resourceHandle) = 0;
+
+		virtual void SetRenderPass(std::shared_ptr<RenderPass> renderPass) = 0;
+		virtual void ClearRenderPass() = 0;
 
 		virtual uint64_t CreateResource(const ResourceDesc & resource) = 0;
 		virtual uint64_t CreateTypedBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
@@ -100,12 +115,8 @@ namespace Egg::Graphics {
 		virtual void Draw(uint32_t vertexCount, uint32_t vertexOffset) = 0;
 		virtual void Dispatch(uint32_t threadGroupX, uint32_t threadGroupY, uint32_t threadGroupZ) = 0;
 
-		virtual void GraphicsIncrementalSignal(FenceRef fence) = 0;
-		virtual void ComputeIncrementalSignal(FenceRef fence) = 0;
-		virtual void GraphicsSignal(FenceRef fence) = 0;
-		virtual void ComputeSignal(FenceRef fence) = 0;
-		virtual void GraphicsWait(FenceRef fence) = 0;
-		virtual void ComputeWait(FenceRef fence) = 0;
+		virtual void Signal(FenceRef fence) = 0;
+		virtual void Wait(FenceRef fence) = 0;
 
 		virtual void SetPrimitiveTopology(PrimitiveTopology topology) = 0;
 
@@ -167,6 +178,8 @@ namespace Egg::Graphics {
 
 		virtual void BeginRenderPass() = 0;
 		virtual void EndRenderPass() = 0;
+
+		virtual void Run(std::shared_ptr<FrameGraph> frameGraph) = 0;
 
 		virtual void Prepare() = 0;
 		virtual void Render() = 0;

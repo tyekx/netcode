@@ -3,8 +3,45 @@
 
 namespace Egg::Graphics::DX12 {
 
+	void ResourceContext::UseComputeContext()
+	{
+		activeRenderPass->IsComputePass(true);
+	}
+
+	void ResourceContext::UseGraphicsContext()
+	{
+		if(activeRenderPass != nullptr) {
+			activeRenderPass->IsComputePass(false);
+		}
+	}
+
+	void ResourceContext::Writes(uint64_t resourceHandle)
+	{
+		if(activeRenderPass != nullptr) {
+			activeRenderPass->WritesResource(resourceHandle);
+		}
+	}
+
+	void ResourceContext::Reads(uint64_t resourceHandle)
+	{
+		if(activeRenderPass != nullptr) {
+			activeRenderPass->ReadsResource(resourceHandle);
+		}
+	}
+
+	void ResourceContext::SetRenderPass(RenderPassRef renderPass)
+	{
+		activeRenderPass = std::move(renderPass);
+	}
+
+	void ResourceContext::ClearRenderPass()
+	{
+		activeRenderPass.reset();
+	}
+
 	uint64_t ResourceContext::CreateResource(const ResourceDesc & resource)
 	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
 		return uint64_t();
 	}
 
@@ -15,6 +52,7 @@ namespace Egg::Graphics::DX12 {
 
 	uint64_t ResourceContext::CreateStructuredBuffer(size_t size, uint32_t stride, ResourceType type, ResourceState initState, ResourceFlags flags)
 	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
 		return uint64_t();
 	}
 
@@ -68,11 +106,13 @@ namespace Egg::Graphics::DX12 {
 
 	uint64_t ResourceContext::CreateTexture2D(const Image * images, uint32_t mipLevels)
 	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
 		return uint64_t();
 	}
 
 	uint64_t ResourceContext::CreateTexture2D(const Image * images, uint32_t mipLevels, ResourceType resourceType)
 	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
 		return uint64_t();
 	}
 
@@ -249,6 +289,16 @@ namespace Egg::Graphics::DX12 {
 		memcpy(mappedPtr + dstOffsetInBytes, srcData, srcDataSizeInBytes);
 
 		gres->resource->Unmap(0, &writtenRange);
+	}
+
+	void ResourceContext::Readback(uint64_t readbackResource, void * dstData, size_t dstDataSizeInBytes)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ResourceContext::Readback(uint64_t readbackResource, void * dstData, size_t dstDataSizeInBytes, size_t dstOffsetInBytes)
+	{
+		Log::Debug("call to " __FUNCTION__ " is ignored");
 	}
 
 	void ResourceContext::CopyConstants(uint64_t uploadResource, const void * srcData, size_t srcDataSizeInBytes)

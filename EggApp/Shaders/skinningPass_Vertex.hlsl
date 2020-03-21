@@ -7,17 +7,48 @@ struct SkinningPass_VertexInput {
 };
 
 struct SkinningPass_VertexOutput {
-	float3 position : POSITION;
+	float4 position : SV_POSITION;
 	float3 normal : NORMAL;
 	float2 texCoord : TEXCOORD;
 };
 
-cbuffer BoneData : register(b0) {
+cbuffer MaterialData : register(b0) {
+	float4 diffuseColor;
+	float3 fresnelR0;
+	float shininess;
+};
+
+cbuffer ObjectData : register(b1) {
+	float4x4 model;
+	float4x4 modelInv;
+};
+
+cbuffer FrameData : register(b2) {
+	float4x4 viewProj;
+	float4x4 viewProjInv;
+	float4x4 view;
+	float4x4 proj;
+	float4x4 viewInv;
+	float4x4 projInv;
+	float4x4 projTex;
+	float4x4 rayDir;
+	float4 eyePos;
+	float nearZ;
+	float farZ;
+	float aspectRatio;
+	float fov;
+};
+
+cbuffer BoneData : register(b3) {
 	float4x4 bindTransforms[128];
 	float4x4 toRootTransforms[128];
 }
 
-#define SKINNING_PASS_ROOT_SIG "RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | ALLOW_STREAM_OUTPUT ), CBV(b0)"
+#define SKINNING_PASS_ROOT_SIG "RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT ), " \
+"CBV(b0), " \
+"CBV(b1), " \
+"CBV(b2), " \
+"CBV(b3)"
 
 [RootSignature(SKINNING_PASS_ROOT_SIG)]
 SkinningPass_VertexOutput main(SkinningPass_VertexInput input)
@@ -39,8 +70,9 @@ SkinningPass_VertexOutput main(SkinningPass_VertexInput input)
 	}
 
 	SkinningPass_VertexOutput output;
-	output.position = animPos;
-	output.normal = animNormal;
+	output.position = mul(mul(float4(animPos, 1), model), viewProj);
+	output.normal = mul(modelInv, float4(animNormal, 0)).xyz;
 	output.texCoord = input.texCoord;
+
 	return output;
 }

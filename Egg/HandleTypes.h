@@ -346,6 +346,7 @@ namespace Egg {
 
 	class RootSignatureBuilder {
 	public:
+		virtual ~RootSignatureBuilder() = default;
 		virtual RootSignatureRef Build() = 0;
 		virtual RootSignatureRef BuildFromShader(ShaderBytecodeRef rootSigContainingBytecode) = 0;
 	};
@@ -428,7 +429,8 @@ namespace Egg {
 
 	class SpriteBatch {
 	public:
-		virtual void BeginRecord(DirectX::XMFLOAT4X4 viewProj) = 0;
+		virtual ~SpriteBatch() = default;
+		virtual void BeginRecord(void* renderContext, DirectX::XMFLOAT4X4 viewProj) = 0;
 
 		virtual void SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) = 0;
 		virtual void SetScissorRect(const RECT & rect) = 0;

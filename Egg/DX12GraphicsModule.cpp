@@ -1,6 +1,7 @@
 #include "DX12GraphicsModule.h"
 #include "DX12Builders.h"
 #include "DX12Platform.h"
+#include <sstream>
 
 namespace Egg::Graphics::DX12 {
 	void DX12GraphicsModule::NextBackBufferIndex() {
@@ -65,7 +66,6 @@ namespace Egg::Graphics::DX12 {
 		Platform::ShaderResourceViewIncrementSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		Platform::DepthStencilViewIncrementSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 		Platform::SamplerIncrementSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-
 	}
 
 	void DX12GraphicsModule::ClearAdapters() {
@@ -105,23 +105,44 @@ namespace Egg::Graphics::DX12 {
 	}
 	
 	void DX12GraphicsModule::CreateCommandQueue() {
-		D3D12_COMMAND_QUEUE_DESC cqd;
-		cqd.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-		cqd.NodeMask = 0;
-		cqd.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-		cqd.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+		{
+			D3D12_COMMAND_QUEUE_DESC cqd;
+			cqd.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+			cqd.NodeMask = 0;
+			cqd.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+			cqd.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
-		DX_API("Failed to create direct command queue")
-			device->CreateCommandQueue(&cqd, IID_PPV_ARGS(commandQueue.GetAddressOf()));
+			DX_API("Failed to create direct command queue")
+				device->CreateCommandQueue(&cqd, IID_PPV_ARGS(commandQueue.GetAddressOf()));
+		}
 
-		D3D12_COMMAND_QUEUE_DESC copyCqd;
-		copyCqd.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-		copyCqd.NodeMask = 0;
-		copyCqd.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-		copyCqd.Type = D3D12_COMMAND_LIST_TYPE_COPY;
+		{
+			D3D12_COMMAND_QUEUE_DESC computeCqd;
+			computeCqd.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+			computeCqd.NodeMask = 0;
+			computeCqd.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+			computeCqd.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
 
-		DX_API("Failed to create copy command queue")
-			device->CreateCommandQueue(&copyCqd, IID_PPV_ARGS(copyCommandQueue.GetAddressOf()));
+			DX_API("Failed to create compute command queue")
+				device->CreateCommandQueue(&computeCqd, IID_PPV_ARGS(computeCommandQueue.GetAddressOf()));
+		}
+
+		{
+			D3D12_COMMAND_QUEUE_DESC copyCqd;
+			copyCqd.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+			copyCqd.NodeMask = 0;
+			copyCqd.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+			copyCqd.Type = D3D12_COMMAND_LIST_TYPE_COPY;
+
+			DX_API("Failed to create copy command queue")
+				device->CreateCommandQueue(&copyCqd, IID_PPV_ARGS(copyCommandQueue.GetAddressOf()));
+		}
+	}
+
+	void DX12GraphicsModule::CreateFences()
+	{
+		mainFence = std::make_shared<DX12Fence>(device.Get(), 0);
+		uploadFence = std::make_shared<DX12Fence>(device.Get(), 0);
 	}
 	
 	void DX12GraphicsModule::QuerySyncSupport() {
@@ -175,14 +196,9 @@ namespace Egg::Graphics::DX12 {
 		cbufferPool.SetHeapManager(&heapManager);
 
 		dheaps.CreateResources(device);
-
-		renderContext.cbuffers = &cbufferPool;
-		renderContext.resources = &resourcePool;
-		renderContext.descHeaps = &dheaps;
 	}
 
 	void DX12GraphicsModule::CreateContexts() {
-		Egg::Module::IGraphicsModule::renderer = &renderContext;
 		Egg::Module::IGraphicsModule::resources = &resourceContext;
 		Egg::Module::IGraphicsModule::frame = this;
 	}
@@ -203,61 +219,40 @@ namespace Egg::Graphics::DX12 {
 	}
 
 	void DX12GraphicsModule::Prepare() {
-
-		FrameResource & fr = frameResources.at(backbufferIndex);
-
 		dheaps.Prepare();
 
-		DX_API("Failed to reset command allocator")
-			fr.commandAllocator->Reset();
-
-		DX_API("Failed to reset command list")
-			fr.commandList->Reset(fr.commandAllocator.Get(), nullptr);
-
-		fr.commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(fr.swapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
 		resourceContext.backbufferExtents = scissorRect;
-		renderContext.directCommandList = fr.commandList;
-		renderContext.backbuffer = renderTargetViews->GetCpuVisibleCpuHandle(backbufferIndex);
-		renderContext.backbufferDepth = depthStencilView->GetCpuVisibleCpuHandle(0);
-		renderContext.defaultViewport = viewport;
-		renderContext.defaultScissorRect = scissorRect;
-
-		renderer->SetRenderTargets(0, 0);
-		renderer->SetViewport();
-		renderer->SetScissorRect();
-		renderer->ClearRenderTarget(0, &(clearColor.r));
-		renderer->ClearDepthOnly();
 	}
 
 	void DX12GraphicsModule::Render() {
-		FrameResource & fr = frameResources.at(backbufferIndex);
 
-		fr.FinishRecording();
-
-		ID3D12CommandList * cls[] = { fr.commandList.Get() };
-
-		commandQueue->ExecuteCommandLists(ARRAYSIZE(cls), cls);
 
 	}
 
 	void DX12GraphicsModule::Present() {
-		FrameResource & fr = frameResources.at(backbufferIndex);
-
 		DX_API("Failed to present swap chain")
 			swapChain->Present(0, (displayMode != DisplayMode::FULLSCREEN) ? DXGI_PRESENT_ALLOW_TEARING : 0);
 
-		commandQueue->Signal(fr.fence.Get(), fr.fenceValue);
+		mainFence->Increment();
+
+		DX_API("Failed to signal fence")
+			commandQueue->Signal(mainFence->GetFence(), mainFence->GetValue());
+
+		mainFence->HostWait();
 
 		presentedBackbufferIndex = backbufferIndex;
 
 		NextBackBufferIndex();
 
-		fr.WaitForCompletion();
-
 		cbufferPool.Clear();
 		dheaps.Reset();
 		resourcePool.ReleaseTransients();
+
+		for(auto & i : inFlightCommandLists) {
+			commandListStorage.Return(std::move(i));
+		}
+
+		inFlightCommandLists.clear();
 	}
 
 	void DX12GraphicsModule::Start(Module::AApp * app)  {
@@ -293,6 +288,8 @@ namespace Egg::Graphics::DX12 {
 		CreateDevice();
 
 		CreateCommandQueue();
+
+		CreateFences();
 
 		commandListStorage.SetDevice(device);
 
@@ -422,20 +419,9 @@ namespace Egg::Graphics::DX12 {
 
 	void DX12GraphicsModule::SyncUpload(const UploadBatch & upload)
 	{
-		com_ptr<ID3D12CommandAllocator> allocator;
-		com_ptr<ID3D12GraphicsCommandList> gcl;
-		com_ptr<ID3D12Fence> fence;
 		com_ptr<ID3D12Resource> uploadResource;
-		HANDLE evt = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
-		DX_API("Failed to create command allocator")
-			device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(allocator.GetAddressOf()));
-
-		DX_API("Failed to create command list")
-			device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, allocator.Get(), nullptr, IID_PPV_ARGS(gcl.GetAddressOf()));
-
-		DX_API("Failed to create fence")
-			device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.GetAddressOf()));
+		CommandList directCl = commandListStorage.GetDirect();
 
 		std::vector<D3D12_RESOURCE_BARRIER> barriers;
 		barriers.reserve(upload.BarrierTasks().size());
@@ -450,7 +436,7 @@ namespace Egg::Graphics::DX12 {
 		
 		for(const auto & task : upload.UploadTasks()) {
 			if(task.type == UploadTaskType::BUFFER) {
-				totalSize += task.bufferTask.srcDataSizeInBytes;
+				totalSize += Utility::Align64K<size_t>(task.bufferTask.srcDataSizeInBytes);
 			} else if(task.type == UploadTaskType::TEXTURE) {
 				TextureRef tex = task.textureTask.texture;
 				uint16_t imgCount = tex->GetImageCount();
@@ -460,7 +446,7 @@ namespace Egg::Graphics::DX12 {
 					const Image* imgR = tex->GetImage(0, imgI, 0);
 					sum += imgR->slicePitch;
 				}
-				totalSize += Utility::Align64K(sum);
+				totalSize += Utility::Align64K<size_t>(sum);
 			}
 		}
 
@@ -487,9 +473,9 @@ namespace Egg::Graphics::DX12 {
 					data.RowPitch = (gres.desc.dimension == ResourceDimension::BUFFER) ? task.bufferTask.srcDataSizeInBytes : (gres.desc.strideInBytes * gres.desc.width);
 					data.SlicePitch = task.bufferTask.srcDataSizeInBytes;
 					data.pData = task.bufferTask.srcData;
-					UpdateSubresources(gcl.Get(), gres.resource, uploadResource.Get(), offset, 0u, 1u, &data);
+					UpdateSubresources(directCl.commandList.Get(), gres.resource, uploadResource.Get(), offset, 0u, 1u, &data);
 
-					offset += Utility::Align64K(task.bufferTask.srcDataSizeInBytes);
+					offset += Utility::Align64K<size_t>(task.bufferTask.srcDataSizeInBytes);
 				}
 
 				if(task.type == UploadTaskType::TEXTURE) {
@@ -509,37 +495,225 @@ namespace Egg::Graphics::DX12 {
 						sum += imgR->slicePitch;
 					}
 
-					UpdateSubresources(gcl.Get(), gres.resource, uploadResource.Get(), offset, 0u, imgCount, subResData.get());
+					UpdateSubresources(directCl.commandList.Get(), gres.resource, uploadResource.Get(), offset, 0u, imgCount, subResData.get());
 
-					offset += Utility::Align64K(sum);
+					offset += Utility::Align64K<size_t>(sum);
 				}
 			}
 		}
 
 		if(!barriers.empty()) {
-			gcl->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
+			directCl.commandList->ResourceBarrier(static_cast<uint32_t>(barriers.size()), barriers.data());
 		}
 
 		DX_API("Failed to close command list")
-			gcl->Close();
+			directCl.commandList->Close();
 
-		ID3D12CommandList * cls[] = { gcl.Get() };
+		ID3D12CommandList * cls[] = { directCl.commandList.Get() };
 
 		commandQueue->ExecuteCommandLists(ARRAYSIZE(cls), cls);
 		
-		DX_API("Failed to signal fence")
-			commandQueue->Signal(fence.Get(), 1);
+		uploadFence->Signal(commandQueue.Get());
+
+		uploadFence->HostWait();
+
+		commandListStorage.Return(std::move(directCl));
+	}
+
+	void DX12GraphicsModule::BeginRenderPass()
+	{
+	}
+
+	void DX12GraphicsModule::CullFrameGraph(FrameGraphRef frameGraph)
+	{
+		std::vector<RenderPassRef> cullable = frameGraph->QueryDanglingRenderPasses();
+
+		while(!cullable.empty()) {
+			frameGraph->EraseRenderPasses(std::move(cullable));
+			cullable = frameGraph->QueryDanglingRenderPasses();
+		}
+	}
+
+	void DX12GraphicsModule::ExecuteFrameGraph(FrameGraphRef frameGraph)
+	{
+		std::vector<RenderPassRef> runnable = frameGraph->QueryCompleteRenderPasses();
+		std::vector<FenceRef> directSignals;
+		std::vector<FenceRef> directWaits;
+		std::vector<FenceRef> computeSignals;
+		std::vector<FenceRef> computeWaits;
+		std::vector<CommandList> directCls;
+		std::vector<CommandList> computeCls;
+
+		static ID3D12CommandList * directSubmitCache[16];
+		static ID3D12CommandList * computeSubmitCache[16];
+		static uint32_t directSubmitCacheSize = 0;
+		static uint32_t computeSubmitCacheSize = 0;
+
+		CommandList p2rt = commandListStorage.GetDirect();
+		CommandList rt2p = commandListStorage.GetDirect();
+
+		GraphicsContext presentToRT { &resourcePool, &cbufferPool, &dheaps, p2rt.commandList,
+			renderTargetViews->GetCpuVisibleCpuHandle(backbufferIndex),
+			depthStencilView->GetCpuVisibleCpuHandle(0),
+			viewport, scissorRect
+		};
+
+		inFlightCommandLists.push_back(p2rt);
+		inFlightCommandLists.push_back(rt2p);
+
+		rt2p.commandList->ResourceBarrier(1,
+			&CD3DX12_RESOURCE_BARRIER::Transition(frameResources[backbufferIndex].swapChainBuffer.Get(),
+				D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
+		p2rt.commandList->ResourceBarrier(1,
+			&CD3DX12_RESOURCE_BARRIER::Transition(frameResources[backbufferIndex].swapChainBuffer.Get(),
+				D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+		presentToRT.SetRenderTargets(0, 0);
+		presentToRT.SetViewport();
+		presentToRT.SetScissorRect();
+		presentToRT.ClearRenderTarget(0, &(clearColor.r));
+		presentToRT.ClearDepthOnly();
+
+		DX_API("Failed to close command list")
+			p2rt.commandList->Close();
+
+		DX_API("Failed to close command list")
+			rt2p.commandList->Close();
+
+		directSubmitCache[0] = p2rt.commandList.Get();
+		commandQueue->ExecuteCommandLists(1, directSubmitCache);
+		
+		mainFence->Signal(commandQueue.Get());
+
+		while(!runnable.empty()) {
+			directSubmitCacheSize = 0;
+			computeSubmitCacheSize = 0;
+
+			directSignals.clear();
+			directWaits.clear();
+			computeWaits.clear();
+			directWaits.clear();
+			directCls.clear();
+			computeCls.clear();
+
+			for(auto & rp : runnable) {
+
+				if(rp->IsComputePass()) {
+					CommandList cl = commandListStorage.GetCompute();
+					ComputeContext cctx{ &resourcePool, &cbufferPool, &dheaps, cl.commandList };
+
+					cctx.BeginPass();
+					rp->Render(&cctx);
+					cctx.EndPass();
+
+					DX_API("Failed to close command list during render pass: %s", rp->name.c_str())
+						cl.commandList->Close();
 
 
-		if(fence->GetCompletedValue() != 1) {
-			DX_API("Failed to set event")
-				fence->SetEventOnCompletion(1, evt);
+					auto cpWaits = cctx.GetWaitFences();
+					computeWaits.insert(computeWaits.end(), cpWaits.begin(), cpWaits.end());
 
-			WaitForSingleObject(evt, INFINITE);
+					auto computeSignal = cctx.GetSignalFence();
+
+					if(computeSignal != nullptr) {
+						computeSignals.push_back(std::move(computeSignal));
+					}
+
+					computeCls.push_back(cl);
+					inFlightCommandLists.push_back(cl);
+				} else {
+					CommandList cl = commandListStorage.GetDirect();
+					GraphicsContext gctx{ &resourcePool, &cbufferPool, &dheaps, cl.commandList,
+						renderTargetViews->GetCpuVisibleCpuHandle(backbufferIndex),
+						depthStencilView->GetCpuVisibleCpuHandle(0),
+						viewport, scissorRect
+					};
+
+					gctx.BeginPass();
+					rp->Render(&gctx);
+					gctx.EndPass();
+					
+					DX_API("Failed to close command list during render pass: %s", rp->name.c_str())
+						cl.commandList->Close();
+
+					auto dtWaits = gctx.GetWaitFences();
+					directWaits.insert(directWaits.end(), dtWaits.begin(), dtWaits.end());
+
+					auto directSignal = gctx.GetSignalFence();
+
+					if(directSignal != nullptr) {
+						directSignals.push_back(std::move(directSignal));
+					}
+					
+					directCls.push_back(cl);
+					inFlightCommandLists.push_back(cl);
+				}
+			}
+
+			if(!computeCls.empty()) {
+				for(auto & i : computeCls) {
+					computeSubmitCache[computeSubmitCacheSize++] = i.commandList.Get();
+				}
+
+				for(auto & i : computeWaits) {
+					std::dynamic_pointer_cast<DX12Fence>(i)->Wait(computeCommandQueue.Get());
+				}
+
+				computeCommandQueue->Wait(mainFence->GetFence(), mainFence->GetValue());
+
+				mainFence->Increment();
+
+				computeCommandQueue->ExecuteCommandLists(computeSubmitCacheSize, computeSubmitCache);
+
+				computeCommandQueue->Signal(mainFence->GetFence(), mainFence->GetValue());
+
+				for(auto & i : computeSignals) {
+					std::dynamic_pointer_cast<DX12Fence>(i)->Signal(commandQueue.Get());
+				}
+			}
+
+			if(!directCls.empty()) {
+				for(auto & i : directCls) {
+					directSubmitCache[directSubmitCacheSize++] = i.commandList.Get();
+				}
+
+				for(auto & i : directWaits) {
+					std::dynamic_pointer_cast<DX12Fence>(i)->Wait(commandQueue.Get());
+				}
+
+				commandQueue->Wait(mainFence->GetFence(), mainFence->GetValue());
+
+				commandQueue->ExecuteCommandLists(directSubmitCacheSize, directSubmitCache);
+
+				mainFence->Signal(commandQueue.Get());
+
+				for(auto & i : directSignals) {
+					std::dynamic_pointer_cast<DX12Fence>(i)->Signal(commandQueue.Get());
+				}
+			}
+
+			frameGraph->EraseRenderPasses(std::move(runnable));
+			runnable = frameGraph->QueryCompleteRenderPasses();
 		}
 
-		CloseHandle(evt);
+		commandQueue->Wait(mainFence->GetFence(), mainFence->GetValue());
 
+		directSubmitCache[0] = rt2p.commandList.Get();
+		
+		commandQueue->ExecuteCommandLists(1, directSubmitCache);
+
+		mainFence->Signal(commandQueue.Get());
+	}
+
+	void DX12GraphicsModule::EndRenderPass()
+	{
+	}
+
+	void DX12GraphicsModule::Run(FrameGraphRef frameGraph)
+	{
+		CullFrameGraph(frameGraph);
+		ExecuteFrameGraph(frameGraph);
 	}
 
 	DirectX::XMUINT2 DX12GraphicsModule::GetBackbufferSize() const {
@@ -580,11 +754,19 @@ namespace Egg::Graphics::DX12 {
 		depthStencil = resources->CreateDepthStencil(depthStencilFormat, ResourceType::PERMANENT_DEFAULT);
 		depthStencilView->CreateDSV(depthStencil);
 
+		resources->SetDebugName(depthStencil, L"Default Depth Stencil");
+
 		aspectRatio = viewport.Width / viewport.Height;
 
 		for(UINT i = 0; i < backbufferDepth; ++i) {
 			DX_API("Failed to get swap chain buffer")
 				swapChain->GetBuffer(i, IID_PPV_ARGS(frameResources[i].swapChainBuffer.GetAddressOf()));
+
+			std::wstringstream wss;
+			wss << "SwapChainBuffer: " << i;
+
+			DX_API("Failed to set debug name")
+				frameResources[i].swapChainBuffer->SetName(wss.str().c_str());
 
 			renderTargetViews->CreateRTV(i, frameResources[i].swapChainBuffer.Get(), renderTargetFormat);
 		}
@@ -594,7 +776,7 @@ namespace Egg::Graphics::DX12 {
 
 	FenceRef DX12GraphicsModule::CreateFence(uint64_t initialValue) const
 	{
-		return std::make_shared<DX12Fence>(initialValue);
+		return std::make_shared<DX12Fence>(device.Get(), initialValue);
 	}
 	
 	ShaderBuilderRef DX12GraphicsModule::CreateShaderBuilder() const {
@@ -633,6 +815,11 @@ namespace Egg::Graphics::DX12 {
 
 	TextureBuilderRef DX12GraphicsModule::CreateTextureBuilder() const {
 		return std::make_shared<DX12TextureBuilder>();
+	}
+
+	FrameGraphBuilderRef DX12GraphicsModule::CreateFrameGraphBuilder() 
+	{
+		return std::make_shared<DX12FrameGraphBuilder>(&resourceContext);
 	}
 
 }

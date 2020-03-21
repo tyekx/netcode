@@ -9,3 +9,4 @@
 #include "DX12SpriteFontBuilder.h"
 #include "DX12SpriteBatchBuilder.h"
 #include "DX12TextureBuilder.h"
+#include "DX12FrameGraph.h"

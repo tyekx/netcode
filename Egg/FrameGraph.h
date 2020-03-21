@@ -1,113 +1,150 @@
 #pragma once
 
 #include <functional>
-#include <dxgiformat.h>
 #include <tuple>
 
+#include <EggFoundation/ArrayView.hpp>
 #include "GraphicsContexts.h"
 
-using Egg::Graphics::IResourceContext;
-using Egg::Graphics::IRenderContext;
+namespace Egg::Graphics {
+	class IResourceContext;
+	class IRenderContext;
+}
 
-using SetupCallback = std::function<void(IResourceContext *)>;
-using RenderCallback = std::function<void(IRenderContext *)>;
+namespace Egg {
 
-class RenderPass {
-public:
-	std::string name;
-	SetupCallback setup;
-	RenderCallback render;
+	using SetupCallback = std::function<void(Egg::Graphics::IResourceContext *)>;
+	using RenderCallback = std::function<void(Egg::Graphics::IRenderContext *)>;
 
-	RenderPass(const std::string & name, SetupCallback && setupFunc, RenderCallback && renderFunc) : name{ name }, setup{ std::move(setupFunc) }, render{ std::move(renderFunc) } {
+	class RenderPass {
+	public:
+		std::string name;
+		SetupCallback Setup;
+		RenderCallback Render;
 
-	}
-};
+		RenderPass(const std::string & name, SetupCallback setupFunc, RenderCallback renderFunc);
+		RenderPass() = default;
+		virtual ~RenderPass() = default;
 
 
+		virtual bool IsComputePass() const = 0;
+		virtual void IsComputePass(bool value) = 0;
 
-class FrameGraph {
-	std::vector<RenderPass> renderPasses;
-public:
-	FrameGraph(std::vector<RenderPass> passes) : renderPasses{ std::move(passes) } {
+		virtual Egg::ArrayView<uint64_t> GetReadResources() = 0;
+		virtual Egg::ArrayView<uint64_t> GetWrittenResources() = 0;
 
-	}
+		virtual void ReadsResource(uint64_t resource) = 0;
+		virtual void WritesResource(uint64_t resource) = 0;
+	};
 
-	void Render(IRenderContext * ctx) {
-		for(RenderPass & pass : renderPasses) {
-			ctx->BeginPass();
-			pass.render(ctx);
-			ctx->EndPass();
-		}
-	}
-};
+	using RenderPassRef = std::shared_ptr<RenderPass>;
 
-template<typename T>
-class ScratchBuffer {
-	std::vector<T> storage;
-public:
 
-	using iterator = typename std::vector<T>::iterator;
-	using const_iterator = typename std::vector<T>::const_iterator;
+	/*
+	proposed algorithm:
+	Setup(...): calls the setup function of each render pass
 
-	size_t Size() const {
-		return storage.size();
-	}
+	let v = QueryDanglingRenderPasses()
+	while v is not empty do:
+		EraseRenderPasses(v)
+		v = QueryDanglingRenderPasses()
 
-	void Expect(size_t numElements) {
-		size_t currentCap = storage.capacity();
-		size_t newSize = storage.size() + numElements;
+	v = QueryCompleteRenderPasses()
 
-		if(currentCap > newSize) {
-			return;
-		}
+	while v is not empty do:
+		foreach pass in v do:
+			pass.Render(...): invokes the render function of a render pass
+		EraseRenderPasses(v)
+		v = QueryCompleteRenderPasses()
 
-		storage.reserve(newSize);
-	}
+	by the end of this, there should not be any render pass left, all is culled or executed
+	*/
+	class FrameGraph {
+	public:
+		virtual ~FrameGraph() = default;
+		/*
+		Returns the set of render passes, that has no consumers but produces a resource.
+		This is used for culling the framegraph. An empty vector means that there is nothing left to clear
+		*/
+		virtual std::vector<RenderPassRef> QueryDanglingRenderPasses() = 0;
 
-	void Clear() {
-		storage.clear();
-	}
+		/*
+		Culls the render passes, removes its connected references
+		*/
+		virtual void EraseRenderPasses(std::vector<RenderPassRef> rps) = 0;
 
-	void Produced(const T & v) {
-		storage.push_back(v);
-	}
+		/*
+		Returns the set of render passes, that are ready to be executed
+		*/
+		virtual std::vector<RenderPassRef> QueryCompleteRenderPasses() = 0;
+	};
 
-	void Merge(const ScratchBuffer<T> & rhs) {
-		storage.insert(storage.end(), rhs.begin(), rhs.end());
-	}
+	using FrameGraphRef = std::shared_ptr<FrameGraph>;
 
-	iterator begin() noexcept {
-		return storage.begin();
-	}
+	class FrameGraphBuilder {
+	public:
+		virtual ~FrameGraphBuilder() = default;
 
-	iterator end() noexcept {
-		return storage.end();
-	}
+		virtual void CreateRenderPass(const std::string & name,
+			SetupCallback setupFunction,
+			RenderCallback renderFunction) = 0;
 
-	const_iterator begin() const noexcept {
-		return storage.begin();
-	}
+		virtual FrameGraphRef Build() = 0;
+	};
 
-	const_iterator end() const noexcept {
-		return storage.end();
-	}
+	using FrameGraphBuilderRef = std::shared_ptr<FrameGraphBuilder>;
 
-};
+	template<typename T>
+	class ScratchBuffer {
+		std::vector<T> storage;
+	public:
 
-class FrameGraphBuilder {
-	std::vector<RenderPass> renderPasses;
-public:
-	RenderPass * CreateRenderPass(const std::string & name,
-								   std::function<void(IResourceContext*)> setupFunction,
-								   std::function<void(IRenderContext*)> renderFunction) {
-		return &renderPasses.emplace_back(name, std::move(setupFunction), std::move(renderFunction));
-	}
+		using iterator = typename std::vector<T>::iterator;
+		using const_iterator = typename std::vector<T>::const_iterator;
 
-	FrameGraph Build(IResourceContext* ctx) {
-		for(RenderPass & pass : renderPasses) {
-			pass.setup(ctx);
+		size_t Size() const {
+			return storage.size();
 		}
 
-		return FrameGraph{ std::move(renderPasses) };
-	}
-};
+		void Expect(size_t numElements) {
+			size_t currentCap = storage.capacity();
+			size_t newSize = storage.size() + numElements;
+
+			if(currentCap > newSize) {
+				return;
+			}
+
+			storage.reserve(newSize);
+		}
+
+		void Clear() {
+			storage.clear();
+		}
+
+		void Produced(const T & v) {
+			storage.push_back(v);
+		}
+
+		void Merge(const ScratchBuffer<T> & rhs) {
+			storage.insert(storage.end(), rhs.begin(), rhs.end());
+		}
+
+		iterator begin() noexcept {
+			return storage.begin();
+		}
+
+		iterator end() noexcept {
+			return storage.end();
+		}
+
+		const_iterator begin() const noexcept {
+			return storage.begin();
+		}
+
+		const_iterator end() const noexcept {
+			return storage.end();
+		}
+	};
+
+}
+

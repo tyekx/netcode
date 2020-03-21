@@ -20,7 +20,7 @@ void SpriteBatch::CreateIndexBuffer(const Egg::Module::IGraphicsModule * graphic
 
 	indices.reserve(MaxBatchSize * IndicesPerSprite);
 
-	for(size_t j = 0; j < MaxBatchSize * VerticesPerSprite; j += VerticesPerSprite)
+	for(uint32_t j = 0; j < MaxBatchSize * VerticesPerSprite; j += VerticesPerSprite)
 	{
 		short i = static_cast<short>(j);
 
@@ -32,7 +32,7 @@ void SpriteBatch::CreateIndexBuffer(const Egg::Module::IGraphicsModule * graphic
 		indices.push_back(i + 3);
 		indices.push_back(i + 2);
 	}
-	size_t ibufferSize = sizeof(short) * MaxBatchSize * IndicesPerSprite;
+	uint32_t ibufferSize = sizeof(short) * MaxBatchSize * IndicesPerSprite;
 
 	indexBuffer = graphics->resources->CreateIndexBuffer(ibufferSize, DXGI_FORMAT_R16_UINT, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
 	
@@ -64,7 +64,6 @@ SpriteBatch::SpriteBatch(const Egg::Module::IGraphicsModule * graphics, Egg::Roo
 			firstDraw{ true }
 	{
 		resourceContext = graphics->resources;
-		renderContext = graphics->renderer;
 
 		vertexBuffer = graphics->resources->CreateVertexBuffer(sizeof(PCT_Vertex) * MaxBatchSize * VerticesPerSprite, sizeof(PCT_Vertex), ResourceType::PERMANENT_UPLOAD, ResourceState::ANY_READ);
 		vertexData = std::make_unique<PCT_Vertex[]>(MaxBatchSize * VerticesPerSprite);
@@ -109,6 +108,8 @@ SpriteBatch::SpriteBatch(const Egg::Module::IGraphicsModule * graphics, Egg::Roo
 	{
 		renderContext->SetRootSignature(rootSignature);
 		renderContext->SetPipelineState(pipelineState);
+		renderContext->SetViewport();
+		renderContext->SetScissorRect();
 		renderContext->SetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
 		renderContext->SetIndexBuffer(indexBuffer);
 	}
@@ -171,9 +172,9 @@ SpriteBatch::SpriteBatch(const Egg::Module::IGraphicsModule * graphics, Egg::Roo
 		ResourceViewsRef batchTexture;
 		DirectX::XMVECTOR batchTextureSize = {};
 		SpriteScissorRect batchSpr;
-		size_t batchStart = 0;
+		uint32_t batchStart = 0;
 
-		for(size_t pos = 0; pos < mSpriteQueueCount; pos++)
+		for(uint32_t pos = 0; pos < mSpriteQueueCount; pos++)
 		{
 			ResourceViewsRef texture = mSortedSprites[pos]->texture;
 			SpriteScissorRect spr = mSortedSprites[pos]->scissorRect;
@@ -200,7 +201,7 @@ SpriteBatch::SpriteBatch(const Egg::Module::IGraphicsModule * graphics, Egg::Roo
 		// Flush the final batch.
 		RenderBatch(batchTexture, batchTextureSize, &mSortedSprites[batchStart], mSpriteQueueCount - batchStart);
 
-		for(size_t i = 0; i < mSpriteQueueCount; ++i) {
+		for(uint32_t i = 0; i < mSpriteQueueCount; ++i) {
 			mSpriteQueue[i].texture.reset();
 		}
 		// Reset the queue.
@@ -215,7 +216,7 @@ SpriteBatch::SpriteBatch(const Egg::Module::IGraphicsModule * graphics, Egg::Roo
 		}
 	}
 
-	void SpriteBatch::RenderBatch(ResourceViewsRef texture, DirectX::XMVECTOR textureSize, SpriteInfo const * const * sprites, size_t count)
+	void SpriteBatch::RenderBatch(ResourceViewsRef texture, DirectX::XMVECTOR textureSize, SpriteInfo const * const * sprites, uint32_t count)
 	{
 		renderContext->SetShaderResources(0, texture);
 
@@ -224,10 +225,10 @@ SpriteBatch::SpriteBatch(const Egg::Module::IGraphicsModule * graphics, Egg::Roo
 		while(count > 0)
 		{
 			// How many sprites do we want to draw?
-			size_t batchSize = count;
+			uint32_t batchSize = count;
 
 			// How many sprites does the D3D vertex buffer have room for?
-			size_t remainingSpace = MaxBatchSize - mSpriteCount;
+			uint32_t remainingSpace = MaxBatchSize - mSpriteCount;
 
 			if(batchSize > remainingSpace)
 			{
@@ -244,12 +245,12 @@ SpriteBatch::SpriteBatch(const Egg::Module::IGraphicsModule * graphics, Egg::Roo
 				}
 			}
 
-			size_t vertexOffset = (UINT64(mSpriteCount)) * VerticesPerSprite;
+			uint32_t vertexOffset = (mSpriteCount) * VerticesPerSprite;
 
 			PCT_Vertex * vertices = vertexData.get() + vertexOffset;
 
 			// Generate sprite vertex data.
-			for(size_t i = 0; i < batchSize; i++)
+			for(uint32_t i = 0; i < batchSize; i++)
 			{
 				assert(i < count);
 				_Analysis_assume_(i < count);
@@ -271,7 +272,7 @@ SpriteBatch::SpriteBatch(const Egg::Module::IGraphicsModule * graphics, Egg::Roo
 
 			transformMat = DirectX::XMMatrixMultiply(transformMat,  mTransformMatrix);
 
-			size_t spriteVertexTotalSize = sizeof(PCT_Vertex) * VerticesPerSprite;
+			uint32_t spriteVertexTotalSize = sizeof(PCT_Vertex) * VerticesPerSprite;
 			resourceContext->CopyConstants(vertexBuffer, vertexData.get() + vertexOffset, batchSize * spriteVertexTotalSize, vertexOffset * sizeof(PCT_Vertex));
 
 			UINT indexCount = static_cast<UINT>(batchSize * IndicesPerSprite);
@@ -382,7 +383,7 @@ SpriteBatch::SpriteBatch(const Egg::Module::IGraphicsModule * graphics, Egg::Roo
 		const unsigned int mirrorBits = flags & 3u;
 
 		// Generate the four output vertices.
-		for(size_t i = 0; i < VerticesPerSprite; i++)
+		for(uint32_t i = 0; i < VerticesPerSprite; i++)
 		{
 			// Calculate position.
 			DirectX::XMVECTOR cornerOffset = DirectX::XMVectorMultiply(XMVectorSubtract(cornerOffsets[i], origin), destinationSize);
@@ -411,11 +412,11 @@ SpriteBatch::SpriteBatch(const Egg::Module::IGraphicsModule * graphics, Egg::Roo
 
 	void SpriteBatch::GrowSortedSprites()
 	{
-		size_t previousSize = mSortedSprites.size();
+		uint32_t previousSize = static_cast<uint32_t>(mSortedSprites.size());
 
 		mSortedSprites.resize(mSpriteQueueCount);
 
-		for(size_t i = previousSize; i < mSpriteQueueCount; i++)
+		for(uint32_t i = previousSize; i < mSpriteQueueCount; i++)
 		{
 			mSortedSprites[i] = &mSpriteQueue[i];
 		}
@@ -425,13 +426,13 @@ SpriteBatch::SpriteBatch(const Egg::Module::IGraphicsModule * graphics, Egg::Roo
 	void SpriteBatch::GrowSpriteQueue()
 	{
 		// Grow by a factor of 2.
-		size_t newSize = std::max(InitialQueueSize, mSpriteQueueArraySize * 2);
+		uint32_t newSize = std::max(InitialQueueSize, mSpriteQueueArraySize * 2);
 
 		// Allocate the new array.
 		std::unique_ptr<SpriteInfo[]> newArray(new SpriteInfo[newSize]);
 
 		// Copy over any existing sprites.
-		for(size_t i = 0; i < mSpriteQueueCount; i++)
+		for(uint32_t i = 0; i < mSpriteQueueCount; i++)
 		{
 			newArray[i] = mSpriteQueue[i];
 		}

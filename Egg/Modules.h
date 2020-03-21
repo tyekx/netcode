@@ -149,7 +149,6 @@ namespace Egg::Module {
 	class IGraphicsModule : public IModule {
 	public:
 		Egg::Graphics::IResourceContext * resources;
-		Egg::Graphics::IRenderContext * renderer;
 		Egg::Graphics::IFrameContext * frame;
 
 		virtual ~IGraphicsModule() = default;
@@ -170,6 +169,7 @@ namespace Egg::Module {
 		virtual SpriteFontBuilderRef CreateSpriteFontBuilder() const = 0;
 		virtual SpriteBatchBuilderRef CreateSpriteBatchBuilder() const = 0;
 		virtual TextureBuilderRef CreateTextureBuilder() const = 0;
+		virtual FrameGraphBuilderRef CreateFrameGraphBuilder() = 0;
 	};
 
 	class IAudioModule : public IModule {

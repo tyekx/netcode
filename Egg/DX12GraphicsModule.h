@@ -3,7 +3,9 @@
 #include "Utility.h"
 #include "Modules.h"
 #include "GraphicsContexts.h"
+#include "BulkAllocator.hpp"
 #include <map>
+#include <variant>
 
 #include "DX12Common.h"
 #include "DX12Fence.h"
@@ -20,7 +22,7 @@
 #include "DX12StreamOutputLibrary.h"
 #include "DX12GPipelineStateLibrary.h"
 #include "DX12CPipelineStateLibrary.h"
-#include "DX12CommandListStorage.h"
+#include "DX12CommandListPool.h"
 
 #include "GraphicsContexts.h"
 
@@ -88,6 +90,10 @@ namespace Egg::Graphics::DX12 {
 	};
 
 	class DX12GraphicsModule : public Egg::Module::IGraphicsModule, Egg::Graphics::IFrameContext {
+	private:
+		void CullFrameGraph(FrameGraphRef frameGraph);
+		void ExecuteFrameGraph(FrameGraphRef frameGraph);
+
 	protected:
 		Egg::Module::AppEventSystem * eventSystem;
 		HWND hwnd;
@@ -100,6 +106,7 @@ namespace Egg::Graphics::DX12 {
 
 		com_ptr<ID3D12Device5> device;
 		com_ptr<ID3D12CommandQueue> commandQueue;
+		com_ptr<ID3D12CommandQueue> computeCommandQueue;
 		com_ptr<ID3D12CommandQueue> copyCommandQueue;
 		
 		com_ptr<IDXGIAdapter3> adapters[8];
@@ -133,6 +140,9 @@ namespace Egg::Graphics::DX12 {
 
 		DisplayMode displayMode;
 
+		DX12FenceRef mainFence;
+		DX12FenceRef uploadFence;
+
 		void NextBackBufferIndex();
 
 		void CreateFactory();
@@ -144,6 +154,8 @@ namespace Egg::Graphics::DX12 {
 		void QueryAdapters();
 
 		void CreateCommandQueue();
+
+		void CreateFences();
 
 		void QuerySyncSupport();
 
@@ -157,7 +169,7 @@ namespace Egg::Graphics::DX12 {
 
 		void UpdateViewport();
 
-		CommandListStorage commandListStorage;
+		CommandListPool commandListStorage;
 
 		DX12SpriteFontLibraryRef spriteFontLibrary;
 		DX12ShaderLibraryRef shaderLibrary;
@@ -172,7 +184,8 @@ namespace Egg::Graphics::DX12 {
 		ConstantBufferPool cbufferPool;
 		DynamicDescriptorHeap dheaps;
 
-		RenderContext renderContext;
+		std::vector<CommandList> inFlightCommandLists;
+
 		ResourceContext resourceContext;
 
 	public:
@@ -199,6 +212,12 @@ namespace Egg::Graphics::DX12 {
 
 		virtual void SyncUpload(const UploadBatch & upload) override;
 
+		virtual void BeginRenderPass() override;
+
+		virtual void EndRenderPass() override;
+
+		virtual void Run(FrameGraphRef frameGraph) override;
+
 		virtual DirectX::XMUINT2 GetBackbufferSize() const override;
 
 		void ReleaseSwapChainResources();
@@ -224,6 +243,8 @@ namespace Egg::Graphics::DX12 {
 		virtual SpriteBatchBuilderRef CreateSpriteBatchBuilder() const override;
 
 		virtual TextureBuilderRef CreateTextureBuilder() const override;
+
+		virtual FrameGraphBuilderRef CreateFrameGraphBuilder() override;
 
 	};
 

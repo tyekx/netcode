@@ -74,8 +74,8 @@ public:
 	void Run(GameObject * gameObject);
 
 	void operator()(GameObject * gameObject, Transform * transform, Model * model) {
-		DirectX::XMVECTOR worldPos = DirectX::XMLoadFloat3(&transform->position);
-		DirectX::XMVECTOR worldRot = DirectX::XMLoadFloat4(&transform->rotation);
+		DirectX::XMVECTOR worldPos = DirectX::XMLoadFloat3(&transform->worldPosition);
+		DirectX::XMVECTOR worldRot = DirectX::XMLoadFloat4(&transform->worldRotation);
 		DirectX::XMVECTOR scaleVector = DirectX::XMLoadFloat3(&transform->scale);
 		DirectX::XMMATRIX modelMat = DirectX::XMMatrixAffineTransformation(scaleVector, DirectX::XMQuaternionIdentity(), worldRot, worldPos);
 		DirectX::XMVECTOR determinant = DirectX::XMMatrixDeterminant(modelMat);
@@ -85,7 +85,7 @@ public:
 
 		for(const auto & i : model->meshes) {
 			if(model->boneData.get() != nullptr) {
-				renderer.skinningPass_Input.Produced(RenderItem(i, &model->perObjectData, model->boneData.get()));
+				renderer.skinnedGbufferPass_Input.Produced(RenderItem(i, &model->perObjectData, model->boneData.get()));
 			} else {
 				renderer.gbufferPass_Input.Produced(RenderItem(i, &model->perObjectData, model->boneData.get()));
 			}
