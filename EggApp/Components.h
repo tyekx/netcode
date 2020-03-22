@@ -54,6 +54,7 @@ public:
 	std::function<void()> onMouseEnter;
 	std::function<void()> onMouseLeave;
 	bool isMouseOver;
+	bool isSpawned;
 };
 
 COMPONENT_ALIGN struct TextBox {

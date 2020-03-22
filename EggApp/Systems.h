@@ -279,11 +279,25 @@ public:
 
 		if(uiObject->HasComponent<Button>()) {
 			button = uiObject->GetComponent<Button>();
-			if(button->pxActor != nullptr) {
-				physx::PxVec3 pos = ToPxVec3(transform->worldPosition);
-				physx::PxQuat rot = ToPxQuat(transform->worldRotation);
+			if(uiObject->IsActive()) {
+				if(button->pxActor != nullptr) {
+					if(!button->isSpawned) {
+						pxScene->addActor(*button->pxActor);
+						button->isSpawned = true;
+					}
 
-				static_cast<physx::PxRigidDynamic *>(button->pxActor)->setGlobalPose(physx::PxTransform{ pos, rot });
+					physx::PxVec3 pos = ToPxVec3(transform->worldPosition);
+					physx::PxQuat rot = ToPxQuat(transform->worldRotation);
+
+					static_cast<physx::PxRigidDynamic *>(button->pxActor)->setGlobalPose(physx::PxTransform{ pos, rot });
+				}
+			} else {
+				if(button->pxActor != nullptr) {
+					if(button->isSpawned) {
+						pxScene->removeActor(*button->pxActor);
+						button->isSpawned = false;
+					}
+				}
 			}
 		}
 
@@ -311,6 +325,7 @@ public:
 					actor->userData = uiObject;
 					pxScene->addActor(*actor);
 					button->pxActor = actor;
+					button->isSpawned = true;
 				}
 			}
 		}
@@ -378,6 +393,10 @@ public:
 
 	void operator()(UIObject * uiObject, Transform * transform, UIElement * uiElement, Sprite * sprite) {
 		DirectX::XMFLOAT4 clr = sprite->diffuseColor;
+
+		if(!uiObject->IsActive()) {
+			return;
+		}
 
 		if(uiObject->HasComponent<Button>()) {
 			const auto & children = uiObject->GetChildren();

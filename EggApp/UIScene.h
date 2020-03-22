@@ -8,6 +8,7 @@
 #include "UIPagePrefab.h"
 #include "UITextBox.h"
 #include "UILabel.h"
+#include "UISpinner.h"
 
 class UIScene : public Scene<UIObject> {
 public:
@@ -84,6 +85,14 @@ public:
 		Spawn(textObject);
 
 		return btn;
+	}
+
+	UISpinner CreateSpinner() {
+		UIObject * root = Create();
+
+		Spawn(root);
+
+		return UISpinner(root);
 	}
 
 	UIPagePrefab CreatePage() {

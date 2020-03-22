@@ -41,6 +41,8 @@ public:
 		bgTransform->position.z = z;
 	}
 
+	UILabel() = default;
+
 	UILabel(UIObject * bg, UIObject * tx) : backgroundObject{ bg }, textObject{ tx } {
 		textObject->Parent(backgroundObject);
 

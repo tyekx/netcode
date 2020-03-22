@@ -737,10 +737,14 @@ private:
 
 		},
 			[&](IRenderContext * context) -> void {
+
+			if(uiPass_Input.Size() == 0) {
+				return;
+			}
+
 			context->SetRenderTargets(0, 0);
 			uiPass_SpriteBatch->BeginRecord(context, uiPass_viewProjInv);
 			for(const UIRenderItem & i : uiPass_Input) {
-
 				switch(i.index()) {
 					case TupleIndexOf<UISpriteRenderItem, UIRenderItemTypeTuple>::value:
 					{

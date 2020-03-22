@@ -99,7 +99,9 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		gameScene->GetPhysXScene()->fetchResults(true);
 
 		uiScene->Foreach([this, dt](UIObject * uiObject) -> void {
-			uiAnimSystem.Run(uiObject, dt);
+			if(uiObject->IsActive()) {
+				uiAnimSystem.Run(uiObject, dt);
+			}
 		});
 
 		gameScene->Foreach([this, dt](GameObject * gameObject)->void {
@@ -125,24 +127,6 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		AssetManager * assetManager = Service::Get<AssetManager>();
 
 		uiSystem.gEngine = &renderSystem.renderer;
-
-		/*UIObject * loadingIcon = uiScene->Create();
-		Transform * lTrans = loadingIcon->AddComponent<Transform>();
-		UIElement * lElem = loadingIcon->AddComponent<UIElement>();
-		lElem->width = static_cast<float>(loadingIconImg->width) / 2.0f;
-		lElem->height = static_cast<float>(loadingIconImg->height) / 2.0f;
-		lElem->origin = DirectX::XMFLOAT2{ lElem->width , lElem->height };
-		Sprite * sprite = loadingIcon->AddComponent<Sprite>();
-		sprite->texture = loadingIconSrvRef;
-		sprite->diffuseColor = DirectX::XMFLOAT4{ 0.047f, 0.047f, 0.047f, 1.0f };
-		sprite->textureSize = DirectX::XMUINT2{ static_cast<uint32_t>(loadingIconImg->width), static_cast<uint32_t>(loadingIconImg->height) };
-		SpriteAnimation * spriteAnim = loadingIcon->AddComponent<SpriteAnimation>();
-		spriteAnim->onUpdate = [lElem](UIObject * object, float dt) -> void {
-			lElem->rotationZ += 10.0f * dt;
-		};
-
-		lTrans->position = DirectX::XMFLOAT3{ 395.0f, 310.0f, 0.0f };
-		*/
 
 		menuLayer = std::make_unique<MainMenuLayer>(uiScene);
 		menuLayer->Construct(this);
