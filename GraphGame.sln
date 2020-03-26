@@ -20,9 +20,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EggAssetPipeline", "EggAsse
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EggBenchCL", "EggBenchCL\EggBenchCL.vcxproj", "{21633A79-2B61-414C-A125-FC0F8C0E93E7}"
-	ProjectSection(ProjectDependencies) = postProject
-		{C235BD63-6E30-4F13-A0FF-C5D5FCA38558} = {C235BD63-6E30-4F13-A0FF-C5D5FCA38558}
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EggAssetEditor", "EggAssetEditor\EggAssetEditor.vcxproj", "{16DC0694-3F5D-480C-9ED7-AAE8B06A6300}"
 	ProjectSection(ProjectDependencies) = postProject

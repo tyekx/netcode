@@ -19,6 +19,11 @@ public:
 		textBoxComponent->placeholder = std::move(placeholder);
 	}
 
+	std::wstring GetValue() {
+		Text * textComponent = textObject->GetComponent<Text>();
+		return textComponent->text;
+	}
+
 	void SetText(std::wstring text) {
 		Text * textComponent = textObject->GetComponent<Text>();
 		textComponent->text = std::move(text);

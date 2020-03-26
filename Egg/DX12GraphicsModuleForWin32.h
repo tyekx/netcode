@@ -2,10 +2,9 @@
 
 #include "DX12GraphicsModule.h"
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-
+#if defined(EGG_OS_WINDOWS)
 #include <Windows.h>
+#endif
 
 namespace Egg::Graphics::DX12 {
 

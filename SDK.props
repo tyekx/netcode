@@ -34,10 +34,18 @@
     <EggJson11Include>$(EggSDK)\json11\$(EggJson11Version)\include</EggJson11Include>
     <EggJson11Bin>$(EggSDK)\json11\$(EggJson11Version)\$(EggBuildSelect).static\</EggJson11Bin>
     <EggJson11Libs>json11.lib</EggJson11Libs>
-    <EggIncludes>$(EggPhysXInclude);$(EggAssimpInclude);$(EggLuaInclude);$(EggDXTexInclude);$(EggSpdLogInclude);$(EggJson11Include)</EggIncludes>
-    <EggBinaries>$(EggPhysXBin);$(EggAssimpBin);$(EggLuaBin);$(EggDXTexBin);$(EggSpdLogBin);$(EggJson11Bin)</EggBinaries>
+    <EggNetcodeVersion>0.0.0</EggNetcodeVersion>
+    <EggNetcodeInclude>C:\sdk\netcode</EggNetcodeInclude>
+    <EggNetcodeBin>C:\sdk\netcode\lib</EggNetcodeBin>
+    <EggNetcodeLibs>netcode-lib.lib;netcode-protocol.lib</EggNetcodeLibs>
+    <EggBoostVersion>1.72.0</EggBoostVersion>
+    <EggBoostInclude>$(EggSDK)\boost\$(EggBoostVersion)\include</EggBoostInclude>
+    <EggBoostBin>$(EggSDK)\boost\$(EggBoostVersion)\$(EggBuildSelect)\</EggBoostBin>
+    <EggBoostLibs>libboost_system-vc142-mt-gd-x64-1_72.lib;libboost_regex-vc142-mt-gd-x64-1_72.lib;libboost_program_options-vc142-mt-gd-x64-1_72.lib;libboost_coroutine-vc142-mt-gd-x64-1_72.lib;libboost_date_time-vc142-mt-gd-x64-1_72.lib</EggBoostLibs>
+    <EggIncludes>$(EggPhysXInclude);$(EggAssimpInclude);$(EggLuaInclude);$(EggDXTexInclude);$(EggSpdLogInclude);$(EggJson11Include);$(EggNetcodeInclude);$(EggBoostInclude)</EggIncludes>
+    <EggBinaries>$(EggPhysXBin);$(EggAssimpBin);$(EggLuaBin);$(EggDXTexBin);$(EggSpdLogBin);$(EggJson11Bin);$(EggNetcodeBin);$(EggBoostBin)</EggBinaries>
+    <EggLibraries>$(EggD3DLibs);$(EggPhysXLibs);$(EggLuaLibs);$(EggAssimpLibs);$(EggDXTexLibs);$(EggSpdLogLibs);$(EggJson11Libs);$(EggNetcodeLibs);$(EggBoostLibs)</EggLibraries>
     <EggDlls>$(EggPhysXBin);$(EggAssimpBin);$(EggLuaBin)</EggDlls>
-    <EggLibraries>$(EggD3DLibs);$(EggPhysXLibs);$(EggLuaLibs);$(EggAssimpLibs);$(EggDXTexLibs);$(EggSpdLogLibs);$(EggJson11Libs)</EggLibraries>
   </PropertyGroup>
   <PropertyGroup>
     <OutDir>$(SolutionDir)Bin\</OutDir>
@@ -46,6 +54,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>$(EggIncludes);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(EggBinaries);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -153,17 +162,41 @@
     <BuildMacro Include="EggJson11Libs">
       <Value>$(EggJson11Libs)</Value>
     </BuildMacro>
+    <BuildMacro Include="EggNetcodeVersion">
+      <Value>$(EggNetcodeVersion)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggNetcodeInclude">
+      <Value>$(EggNetcodeInclude)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggNetcodeBin">
+      <Value>$(EggNetcodeBin)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggNetcodeLibs">
+      <Value>$(EggNetcodeLibs)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggBoostVersion">
+      <Value>$(EggBoostVersion)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggBoostInclude">
+      <Value>$(EggBoostInclude)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggBoostBin">
+      <Value>$(EggBoostBin)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggBoostLibs">
+      <Value>$(EggBoostLibs)</Value>
+    </BuildMacro>
     <BuildMacro Include="EggIncludes">
       <Value>$(EggIncludes)</Value>
     </BuildMacro>
     <BuildMacro Include="EggBinaries">
       <Value>$(EggBinaries)</Value>
     </BuildMacro>
-    <BuildMacro Include="EggDlls">
-      <Value>$(EggDlls)</Value>
-    </BuildMacro>
     <BuildMacro Include="EggLibraries">
       <Value>$(EggLibraries)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EggDlls">
+      <Value>$(EggDlls)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>

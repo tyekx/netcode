@@ -36,7 +36,7 @@ COMPONENT_ALIGN struct UIElement {
 
 class UIObject;
 
-COMPONENT_ALIGN struct SpriteAnimation {
+COMPONENT_ALIGN struct UIScript {
 	std::function<void(UIObject *, float)> onUpdate;
 };
 

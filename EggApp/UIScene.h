@@ -9,6 +9,7 @@
 #include "UITextBox.h"
 #include "UILabel.h"
 #include "UISpinner.h"
+#include "UIServerRow.h"
 
 class UIScene : public Scene<UIObject> {
 public:
@@ -141,6 +142,24 @@ public:
 		tb.SetPosition(pos);
 		tb.SetSize(size);
 		return tb;
+	}
+
+	UIServerRow CreateServerRow() {
+		UIObject * o1 = Create();
+		UIObject * o2 = Create();
+		UIObject * o3 = Create();
+		UIObject * o4 = Create();
+
+		Spawn(o1);
+		Spawn(o2);
+		Spawn(o3);
+		Spawn(o4);
+
+		o2->Parent(o1);
+		o3->Parent(o1);
+		o4->Parent(o1);
+
+		return UIServerRow(o1, o2, o3, o4);
 	}
 
 	void UpdatePerFrameCb() {

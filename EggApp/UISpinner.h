@@ -53,8 +53,8 @@ public:
 		Sprite * sprite = root->AddComponent<Sprite>();
 		sprite->diffuseColor = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };
 
-		SpriteAnimation * spriteAnim = root->AddComponent<SpriteAnimation>();
-		spriteAnim->onUpdate = [lElem](UIObject * object, float dt) -> void {
+		UIScript * uiScript = root->AddComponent<UIScript>();
+		uiScript->onUpdate = [lElem](UIObject * object, float dt) -> void {
 			lElem->rotationZ += 10.0f * dt;
 		};
 	}

@@ -22,7 +22,8 @@
       <Item Name="[Button]" Condition="(components.signature &amp; 8) == 8">((Button*)(components.storage + sizeof(Sprite) + sizeof(UIElement) + sizeof(Transform)))</Item>
       <Item Name="[Text]" Condition="(components.signature &amp; 16) == 16">((Text*)(components.storage + sizeof(Button)+ sizeof(Sprite) + sizeof(UIElement) + sizeof(Transform)))</Item>
       <Item Name="[TextBox]" Condition="(components.signature &amp; 32) == 32">((TextBox*)(components.storage + sizeof(Text) + sizeof(Button)+ sizeof(Sprite) + sizeof(UIElement) + sizeof(Transform)))</Item>
-      <Item Name="[Camera]" Condition="(components.signature &amp; 64) == 64">((Camera*)(components.extendedStorage))</Item>
+      <Item Name="[UIScript]" Condition="(components.signature &amp; 64) == 64">((UIScript*)(components.extendedStorage))</Item>
+      <Item Name="[Camera]" Condition="(components.signature &amp; 128) == 128">((Camera*)(components.extendedStorage))</Item>
     </Expand>
   </Type>
   <Type Name="Transform">

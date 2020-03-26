@@ -1,6 +1,7 @@
 #include "DefaultModuleFactory.h"
 #include "WinapiWindowModule.h"
 #include "DX12GraphicsModuleForWin32.h"
+#include "NetcodeNetworkModule.h"
 
 namespace Egg::Module {
 
@@ -13,7 +14,7 @@ namespace Egg::Module {
 	}
 
 	std::unique_ptr<INetworkModule> DefaultModuleFactory::CreateNetworkModule(AApp * app, int networkType)  {
-		return nullptr;
+		return std::make_unique<Module::NetcodeNetworkModule>();
 	}
 
 	std::unique_ptr<IAudioModule> DefaultModuleFactory::CreateAudioModule(AApp * app, int audioType) {

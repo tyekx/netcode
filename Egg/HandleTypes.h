@@ -9,6 +9,8 @@
 
 #include <map>
 #include <string>
+#include <netcode/Cookie.h>
+#include <netcode/protocol/netcode-protocol.h>
 
 /*
 Note to future me:
@@ -512,5 +514,37 @@ namespace Egg {
 	};
 
 	using FenceRef = std::shared_ptr<Fence>;
+
+	struct User {
+		int id;
+		std::string hash;
+		bool isBanned;
+	};
+
+	struct Server {
+		int id;
+		int maxPlayers;
+		int activePlayers;
+		std::string address;
+		std::string owner;
+	};
+
+	struct Response {
+		int status;
+		std::string content;
+
+		Response();
+		Response(int sc);
+		Response(int sc, std::string c);
+	};
+
+	class GameSession {
+	public:
+		using TimeStamp = std::chrono::time_point<std::chrono::steady_clock>;
+
+		virtual ~GameSession() = default;
+		virtual void AddUser(netcode::protocol::User user) = 0;
+		virtual TimeStamp LastTickAt() const = 0;
+	};
 
 }

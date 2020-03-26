@@ -146,6 +146,9 @@
     <ClInclude Include="UISpinner.h">
       <Filter>Prefabs</Filter>
     </ClInclude>
+    <ClInclude Include="UIServerRow.h">
+      <Filter>Prefabs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EggApp.natvis" />

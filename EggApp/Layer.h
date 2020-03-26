@@ -2,6 +2,7 @@
 
 #include "UIScene.h"
 #include <Egg/Modules.h>
+#include <Egg/DestructiveCopyConstructible.hpp>
 
 class Layer : public Egg::Module::TAppEventHandler {
 public:
@@ -33,6 +34,8 @@ class MainMenuLayer : public Layer {
 	UISpinner spinner;
 	UILabel loadingLabel;
 
+	UIObject * loginScriptObject;
+
 	Egg::ResourceViewsRef loadIconView;
 	DirectX::XMUINT2 loadIconTextureSize;
 	Egg::ResourceViewsRef btnBackgroundView;
@@ -41,6 +44,9 @@ class MainMenuLayer : public Layer {
 	DirectX::XMUINT2 textBoxBackgroundTextureSize;
 	Egg::ResourceViewsRef serversPanelBackgroundView;
 	DirectX::XMUINT2 serversPanelBackgroundSize;
+	Egg::ResourceViewsRef serverRowBackgroundView;
+	DirectX::XMUINT2 serverRowBackgroundSize;
+	Egg::SpriteFontRef font18;
 	Egg::SpriteFontRef font24;
 	Egg::SpriteFontRef font48;
 public:
@@ -68,16 +74,24 @@ public:
 		textureBuilder->LoadTexture2D(L"server_panel_background.png");
 		Egg::TextureRef serverPanelBackgroundTexture = textureBuilder->Build();
 
+		textureBuilder->LoadTexture2D(L"server_row_border.png");
+		Egg::TextureRef serverRowBackgroundTexture = textureBuilder->Build();
+
 		spriteFontBuilder->LoadFont(L"titillium24.spritefont");
 		font24 = spriteFontBuilder->Build();
 
 		spriteFontBuilder->LoadFont(L"titillium48bold.spritefont");
 		font48 = spriteFontBuilder->Build();
 
+		spriteFontBuilder->LoadFont(L"titillium16.spritefont");
+		font18 = spriteFontBuilder->Build();
+
+
 		loadIconView = app->graphics->resources->CreateShaderResourceViews(1);
 		btnBackgroundView = app->graphics->resources->CreateShaderResourceViews(1);
 		textBoxBackgroundView = app->graphics->resources->CreateShaderResourceViews(1);
 		serversPanelBackgroundView = app->graphics->resources->CreateShaderResourceViews(1);
+		serverRowBackgroundView = app->graphics->resources->CreateShaderResourceViews(1);
 
 		{
 			const Egg::Image * loadingIconImg = loadingIconTexture->GetImage(0, 0, 0);
@@ -106,20 +120,25 @@ public:
 			btnBackgroundView->CreateSRV(0, btnBackgroundTextureHandle);
 		}
 
-		app->graphics->frame->SyncUpload(uploadBatch);
-
-		Egg::Graphics::UploadBatch ub2;
-
 		{
 			const Egg::Image * serversBackgroundImg = serverPanelBackgroundTexture->GetImage(0, 0, 0);
 			serversPanelBackgroundSize = DirectX::XMUINT2{ static_cast<uint32_t>(serversBackgroundImg->width), static_cast<uint32_t>(serversBackgroundImg->height) };
 			uint64_t serverPanelTextureHandle = app->graphics->resources->CreateTexture2D(serversBackgroundImg);
-			ub2.Upload(serverPanelTextureHandle, serverPanelBackgroundTexture);
-			ub2.ResourceBarrier(serverPanelTextureHandle, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
+			uploadBatch.Upload(serverPanelTextureHandle, serverPanelBackgroundTexture);
+			uploadBatch.ResourceBarrier(serverPanelTextureHandle, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
 			serversPanelBackgroundView->CreateSRV(0, serverPanelTextureHandle);
 		}
 
-		app->graphics->frame->SyncUpload(ub2);
+		{
+			const Egg::Image * serverRowBackgroundImg = serverRowBackgroundTexture->GetImage(0, 0, 0);
+			serverRowBackgroundSize = DirectX::XMUINT2{ static_cast<uint32_t>(serverRowBackgroundImg->width), static_cast<uint32_t>(serverRowBackgroundImg->height) };
+			uint64_t serverRowTexHandle = app->graphics->resources->CreateTexture2D(serverRowBackgroundImg);
+			uploadBatch.Upload(serverRowTexHandle, serverRowBackgroundTexture);
+			uploadBatch.ResourceBarrier(serverRowTexHandle, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
+			serverRowBackgroundView->CreateSRV(0, serverRowTexHandle);
+		}
+
+		app->graphics->frame->SyncUpload(uploadBatch);
 
 		loadPage = scene->CreatePage();
 		loginPage = scene->CreatePage();
@@ -148,6 +167,8 @@ public:
 			DirectX::XMFLOAT2{ 198.0f, 112.0f + 100.0f },
 			0.0f, font24, btnBackgroundView, btnBackgroundTextureSize);
 
+		Egg::Module::INetworkModule * network = app->network.get();
+
 		UIButtonPrefab exitBtn = scene->CreateButton(L"Exit",
 			DirectX::XMFLOAT2{ 192.0f, 48.0f },
 			DirectX::XMFLOAT2{ 0.0f, 112.0f + 100.0f },
@@ -157,16 +178,52 @@ public:
 			app->window->Shutdown();
 		});
 
-		loginBtn.OnClick([&]() -> void {
-			loginPage.Hide();
-			mainPage.Show();
-		});
+		loginScriptObject = scene->Create();
+		loginScriptObject->SetActivityFlag(true);
+		loginScriptObject->AddComponent<Transform>();
+		scene->Spawn(loginScriptObject);
 
 		usernameTextBox = scene->CreateTextBox(DirectX::XMFLOAT2{ 390.0f, 48.0f }, DirectX::XMFLOAT2{ 0.0f, 0.0f + 100.0f }, font24, textBoxBackgroundView, textBoxBackgroundTextureSize);
 		usernameTextBox.SetPlaceholder(L"username");
 		passwordTextBox = scene->CreateTextBox(DirectX::XMFLOAT2{ 390.0f, 48.0f }, DirectX::XMFLOAT2{ 0.0f, 54.0f + 100.0f }, font24, textBoxBackgroundView, textBoxBackgroundTextureSize);
 		passwordTextBox.SetPasswordFlag();
 		passwordTextBox.SetPlaceholder(L"password");
+
+		loginBtn.OnClick([&, network]() -> void {
+			if(!loginScriptObject->HasComponent<UIScript>()) {
+				loginPage.Hide();
+				loadPage.Show();
+
+				std::wstring username = usernameTextBox.GetValue();
+				std::wstring password = passwordTextBox.GetValue();
+
+				std::future<Egg::Response> resp = network->Login(std::move(username), std::move(password));
+
+				UIScript * uiScript = loginScriptObject->AddComponent<UIScript>();
+				uiScript->onUpdate = [this, network, uiScript, rs = Egg::move_to_dcc(resp)](UIObject *, float dt) -> void {
+					std::future_status status = rs.value.wait_for(std::chrono::seconds(0));
+
+					if(status == std::future_status::ready) {
+						Egg::Response r = rs.value.get();
+
+						if(r.status != 200) {
+							loginPage.Show();
+						} else {
+							mainPage.Show();
+						}
+						loadPage.Hide();
+
+						Cookie c = network->GetCookie("netcode-auth");
+						Log::Debug(c.GetValue().c_str());
+
+						uiScript->onUpdate = nullptr;
+						loginScriptObject->RemoveComponent<UIScript>();
+					}
+				};
+
+
+			}
+		});
 
 		UILabel netcodeLabel = scene->CreateLabel(L"Netcode", font48, DirectX::XMFLOAT2{ 0.0f, 0.0f });
 		netcodeLabel.SetSize(DirectX::XMFLOAT2{ 390.0f, 64.0f });
@@ -205,30 +262,30 @@ public:
 		});
 
 		UILabel playLabel = scene->CreateLabel(L"Play", font48, DirectX::XMFLOAT2{ 0.0f, 0.0f });
-		playLabel.SetSize(DirectX::XMFLOAT2{ 590.0f, 100.0f });
+		playLabel.SetSize(DirectX::XMFLOAT2{ 768.0f, 100.0f });
 		playLabel.SetTextAlignment(HorizontalAnchor::CENTER);
 
 		UIButtonPrefab playBackBtn = scene->CreateButton(L"Back",
 				DirectX::XMFLOAT2{ 192.0f, 48.0f },
-				DirectX::XMFLOAT2{ 0.0f, 394.0f },
+				DirectX::XMFLOAT2{ 178.0f, 483.0f },
 				0.0f, font24, btnBackgroundView, btnBackgroundTextureSize);
 
 		UIButtonPrefab playRefreshBtn = scene->CreateButton(L"Refresh",
 			DirectX::XMFLOAT2{ 192.0f, 48.0f },
-			DirectX::XMFLOAT2{ 198.0f, 394.0f },
+			DirectX::XMFLOAT2{ 376.0f, 483.0f },
 			0.0f, font24, btnBackgroundView, btnBackgroundTextureSize);
 
 		UIButtonPrefab playJoinBtn = scene->CreateButton(L"Join",
 			DirectX::XMFLOAT2{ 192.0f, 48.0f },
-			DirectX::XMFLOAT2{ 398.0f, 394.0f },
+			DirectX::XMFLOAT2{ 576.0f, 483.0f },
 			0.0f, font24, btnBackgroundView, btnBackgroundTextureSize);
 
 		UIObject * panelTest=  scene->Create();
 		panelTest->AddComponent<Transform>()->position = DirectX::XMFLOAT3{ 0.0f, 100.0f, 0.0f };
 
 		UIElement * uiEl = panelTest->AddComponent<UIElement>();
-		uiEl->width = 590.0f;
-		uiEl->height = 288.0f;
+		uiEl->width = 768.0f;
+		uiEl->height = 377.0f;
 		
 		Sprite * sp = panelTest->AddComponent<Sprite>();
 		sp->texture = serversPanelBackgroundView;
@@ -247,16 +304,34 @@ public:
 		mainPage.SetSize(mainPageSize.x, mainPageSize.y);
 		mainPage.Hide();
 
+		UIServerRow testRow = scene->CreateServerRow();
+		testRow.SetFont(font18);
+		testRow.SetBackground(serverRowBackgroundView, serverRowBackgroundSize);
+		testRow.SetPosition(DirectX::XMFLOAT2{ 8.0f, 8.0f });
+		
+		UIServerRow tr2 = scene->CreateServerRow();
+		tr2.SetFont(font18);
+		tr2.SetBackground(serverRowBackgroundView, serverRowBackgroundSize);
+		tr2.SetSlots(L"8/8");
+		tr2.SetOwnerName(L"LongestNameApple");
+		tr2.SetPosition(DirectX::XMFLOAT2{ 8.0f, 56.0f });
+
+		testRow.GetRoot()->Parent(panelTest);
+		tr2.GetRoot()->Parent(panelTest);
+
 		playPage.AddControl(playLabel);
 		playPage.AddControl(playJoinBtn);
 		playPage.AddControl(playRefreshBtn);
 		playPage.AddControl(playBackBtn);
-		playPageSize.x = 590.0f;
-		playPageSize.y = 436.0f;
+		playPageSize.x = 768.0f;
+		playPageSize.y = 525.0f;
 		playPage.SetSize(playPageSize.x, playPageSize.y);
 		panelTest->Parent(playPage.GetRoot());
 
-		loginPage.Hide();
+		//mainPage.Show();
+
+		loginPage.Show();
+		playPage.Hide();
 	}
 
 	virtual void OnResized(int width, int height) override {

@@ -57,6 +57,7 @@
     <ClInclude Include="DebugPhysxActor.h" />
     <ClInclude Include="DebugPhysxRaycast.h" />
     <ClInclude Include="DefaultModuleFactory.h" />
+    <ClInclude Include="DestructiveCopyConstructible.hpp" />
     <ClInclude Include="DX12Builders.h" />
     <ClInclude Include="DX12CommandListPool.h" />
     <ClInclude Include="DX12Common.h" />
@@ -119,6 +120,7 @@
     <ClInclude Include="Modules.h" />
     <ClInclude Include="ModulesConfig.h" />
     <ClInclude Include="MovementController.h" />
+    <ClInclude Include="NetcodeNetworkModule.h" />
     <ClInclude Include="Path.h" />
     <ClInclude Include="PhysXWrapper.h" />
     <ClInclude Include="ProgramArgs.h" />
@@ -181,6 +183,7 @@
     <ClCompile Include="DX12Texture.cpp" />
     <ClCompile Include="DX12TextureBuilder.cpp" />
     <ClCompile Include="FrameGraph.cpp" />
+    <ClCompile Include="HandleTypes.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="LinearClassifier.cpp" />
@@ -188,6 +191,7 @@
     <ClCompile Include="LuaApi.cpp" />
     <ClCompile Include="EggMath.cpp" />
     <ClCompile Include="Modules.cpp" />
+    <ClCompile Include="NetcodeNetworkModule.cpp" />
     <ClCompile Include="Path.cpp" />
     <ClCompile Include="PhysXWrapper.cpp" />
     <ClCompile Include="DX12SpriteFont.cpp" />

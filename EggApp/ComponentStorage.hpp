@@ -76,6 +76,16 @@ private:
 		return GetExtensionComponent<T>();
 	}
 
+	template<typename T>
+	void RemoveExtensionComponent() {
+		if(HasExtensionComponent<T>()) {
+			constexpr SignatureType componentIdx = TupleCountOf<COMPONENTS_T>::value + TupleIndexOf<T, EXTENSION_COMPONENTS_T>::value;
+			T * ptr = GetExtensionComponent<T>();
+			ptr->~T();
+			signature &= (~(1ULL << componentIdx));
+		}
+	}
+
 public:
 	SignatureType signature;
 
@@ -142,9 +152,15 @@ public:
 	void RemoveComponent() {
 		static_assert(TupleContainsType<T, ALL_COMPONENTS_T>::value, "Component type was not found");
 
-		T * component = GetComponent<T>();
-
-		component->~T();
+		if constexpr(TupleContainsType<T, COMPONENTS_T>::value) {
+			if(HasComponent<T>()) {
+				T * ptr = GetComponent<T>();
+				signature &= (~(1ULL << TupleIndexOf<T, COMPONENTS_T>::value));
+				ptr->~T();
+			}
+		} else {
+			return RemoveExtensionComponent<T>();
+		}
 	}
 
 	template<typename T>

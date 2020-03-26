@@ -5,6 +5,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <future>
 
 #include <DirectXMath.h>
 #include <DirectXCollision.h>
@@ -181,7 +182,12 @@ namespace Egg::Module {
 	class INetworkModule : public IModule {
 	public:
 		virtual ~INetworkModule() = default;
+		virtual void SetWebserverAddress(std::string ipAddr, int port) = 0;
+		virtual Cookie GetCookie(const std::string & key) = 0;
 
+		virtual std::future<Response> Login(const std::wstring & username, const std::wstring & password) = 0;
+		virtual std::future<Response> QueryServers() = 0;
+		virtual std::future<Response> Status() = 0;
 	};
 
 	class IModuleFactory {

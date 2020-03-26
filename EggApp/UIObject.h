@@ -6,7 +6,7 @@
 #include "ComponentStorage.hpp"
 #include "Components.h"
 
-using UIComponents_T = std::tuple<Transform, UIElement, Sprite, Button, Text, TextBox, SpriteAnimation>;
+using UIComponents_T = std::tuple<Transform, UIElement, Sprite, Button, Text, TextBox, UIScript>;
 using UIExtensionComponents_T = std::tuple<Camera>;
 
 class UIObject {
@@ -100,6 +100,11 @@ public:
 	template<typename T>
 	T * GetComponent() {
 		return components.GetComponent<T>();
+	}
+
+	template<typename T>
+	void RemoveComponent() {
+		components.RemoveComponent<T>();
 	}
 
 };

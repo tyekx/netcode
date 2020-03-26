@@ -46,6 +46,9 @@
     <Filter Include="Common">
       <UniqueIdentifier>{11ae1425-b474-4d87-82d0-bb06b424669f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{4418faf0-e5a2-46c3-bffc-eebeb16298fb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LuaScript.h">
@@ -313,6 +316,12 @@
     <ClInclude Include="LinearAllocator.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="NetcodeNetworkModule.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="DestructiveCopyConstructible.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
@@ -501,6 +510,12 @@
     </ClCompile>
     <ClCompile Include="DX12Fence.cpp">
       <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="NetcodeNetworkModule.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="HandleTypes.cpp">
+      <Filter>Modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

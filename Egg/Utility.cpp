@@ -7,8 +7,6 @@
 #include <cstdarg>
 
 #if defined(EGG_OS_WINDOWS)
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
 #include <Windows.h>
 #endif
 

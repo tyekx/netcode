@@ -408,6 +408,10 @@ public:
 			window->ShowWindow();
 		}
 
+		if(network) {
+			network->SetWebserverAddress("netcode.webs", 80);
+		}
+
 		AddAppEventHandlers(events.get());
 
 		stopwatch.Start();

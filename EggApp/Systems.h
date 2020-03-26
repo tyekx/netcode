@@ -434,8 +434,10 @@ class UIAnimSystem {
 public:
 	void Run(UIObject * object, float dt);
 
-	void operator()(UIObject * uiObject, SpriteAnimation * spAnim, float dt) {
-		spAnim->onUpdate(uiObject, dt);
+	void operator()(UIObject * uiObject, UIScript * uiScript, float dt) {
+		if(uiScript->onUpdate) {
+			uiScript->onUpdate(uiObject, dt);
+		}
 	}
 };
 

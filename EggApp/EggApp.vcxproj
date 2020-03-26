@@ -89,6 +89,7 @@
     <ClInclude Include="UIObject.h" />
     <ClInclude Include="UIPagePrefab.h" />
     <ClInclude Include="UIScene.h" />
+    <ClInclude Include="UIServerRow.h" />
     <ClInclude Include="UISpinner.h" />
     <ClInclude Include="UITextBox.h" />
   </ItemGroup>
