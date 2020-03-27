@@ -5,7 +5,7 @@
 #include <Netcode/Graphics/ResourceDesc.h>
 #include <Netcode/Vertex.h>
 #include <DirectXPackedVector.h>
-#include <Netcode/EggMath.h>
+#include <Netcode/NetcodeMath.h>
 #include <variant>
 #include "GameObject.h"
 

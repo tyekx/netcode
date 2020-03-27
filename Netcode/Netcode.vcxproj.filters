@@ -81,7 +81,7 @@
     <ClInclude Include="File.h">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="EggMath.h" />
+    <ClInclude Include="NetcodeMath.h" />
     <ClInclude Include="Input.h">
       <Filter>Gameplay</Filter>
     </ClInclude>
@@ -205,7 +205,7 @@
     <ClInclude Include="Common.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="EggMpl.hpp">
+    <ClInclude Include="NetcodeMpl.hpp">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="Logger.h">
@@ -336,7 +336,7 @@
     <ClCompile Include="Utility.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
-    <ClCompile Include="EggMath.cpp" />
+    <ClCompile Include="NetcodeMath.cpp" />
     <ClCompile Include="Input.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>

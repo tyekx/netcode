@@ -2,7 +2,7 @@
 
 #include <set>
 #include <functional>
-#include <Netcode/EggMpl.hpp>
+#include <Netcode/NetcodeMpl.hpp>
 #include "ComponentStorage.hpp"
 #include "Components.h"
 

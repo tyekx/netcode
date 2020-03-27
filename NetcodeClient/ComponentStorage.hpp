@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Netcode/EggMpl.hpp>
+#include <Netcode/NetcodeMpl.hpp>
 #include <cstdint>
 
 template<typename TUPLE_T, typename TUPLE_T2>

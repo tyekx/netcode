@@ -37,9 +37,9 @@ PUBLIC
 	DefaultModuleFactory.cpp
 	DefaultModuleFactory.h
 	DestructiveCopyConstructible.hpp
-	EggMath.cpp
-	EggMath.h
-	EggMpl.hpp
+	NetcodeMath.cpp
+	NetcodeMath.h
+	NetcodeMpl.hpp
 	Event.hpp
 	FancyIterators.hpp
 	File.h

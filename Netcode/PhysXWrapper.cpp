@@ -1,6 +1,6 @@
 #include "PhysXWrapper.h"
 #include "Utility.h"
-#include "EggMath.h"
+#include "NetcodeMath.h"
 
 namespace Netcode::Physics {
 

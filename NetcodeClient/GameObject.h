@@ -3,7 +3,7 @@
 #include <Netcode/HandleTypes.h>
 #include "ConstantBufferTypes.h"
 #include <vector>
-#include <Netcode/EggMpl.hpp>
+#include <Netcode/NetcodeMpl.hpp>
 #include <tuple>
 #include <memory>
 #include <Netcode/Logger.h>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EggMpl.hpp"
+#include "NetcodeMpl.hpp"
 
 namespace Netcode {
 

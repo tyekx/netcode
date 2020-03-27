@@ -108,7 +108,7 @@
     <ClInclude Include="Graphics/ResourceEnums.h" />
     <ClInclude Include="Graphics/UploadBatch.h" />
     <ClInclude Include="Graphics/GraphicsContexts.h" />
-    <ClInclude Include="EggMpl.hpp" />
+    <ClInclude Include="NetcodeMpl.hpp" />
     <ClInclude Include="Event.hpp" />
     <ClInclude Include="FancyIterators.hpp" />
     <ClInclude Include="File.h" />
@@ -117,7 +117,7 @@
     <ClInclude Include="LinearAllocator.h" />
     <ClInclude Include="LinearClassifier.h" />
     <ClInclude Include="Logger.h" />
-    <ClInclude Include="EggMath.h" />
+    <ClInclude Include="NetcodeMath.h" />
     <ClInclude Include="Modules.h" />
     <ClInclude Include="ModulesConfig.h" />
     <ClInclude Include="MovementController.h" />
@@ -188,7 +188,7 @@
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="LinearClassifier.cpp" />
     <ClCompile Include="Logger.cpp" />
-    <ClCompile Include="EggMath.cpp" />
+    <ClCompile Include="NetcodeMath.cpp" />
     <ClCompile Include="Modules.cpp" />
     <ClCompile Include="NetcodeNetworkModule.cpp" />
     <ClCompile Include="Path.cpp" />

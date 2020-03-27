@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Netcode/EggMath.h>
+#include <Netcode/NetcodeMath.h>
 #include <Netcode/PhysXWrapper.h>
 #include "GameObject.h"
 

@@ -6,7 +6,7 @@ ISBN: 978-1942270065
 */
 
 #include <Netcode/PhysXWrapper.h>
-#include <Netcode/EggMath.h>
+#include <Netcode/NetcodeMath.h>
 #include "GameObject.h"
 #include "Scene.h"
 #include "PhysxHelpers.h"

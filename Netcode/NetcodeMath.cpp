@@ -1,4 +1,4 @@
-#include "EggMath.h"
+#include "NetcodeMath.h"
 
 physx::PxQuat ToPxQuat(const DirectX::XMFLOAT4 & q) {
 	return physx::PxQuat{ q.x, q.y, q.z, q.w };

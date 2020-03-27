@@ -5,7 +5,7 @@
 #include <Netcode/Input.h>
 #include <Netcode/BasicGeometry.h>
 #include <Netcode/DebugPhysx.h>
-#include <Netcode/EggMath.h>
+#include <Netcode/NetcodeMath.h>
 #include <Netcode/Modules.h>
 #include <Netcode/Stopwatch.h>
 #include <Netcode/Service.hpp>
