@@ -2,7 +2,7 @@
 #include "DC_Collider.h"
 #include "DC_Collider.g.cpp"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     uint32_t DC_Collider::Type()
     {

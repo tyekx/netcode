@@ -1,6 +1,6 @@
 #include "DX12ConstantBufferPool.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	ID3D12Resource * ConstantBufferPool::CreatePageResource() {
 		ResourceDesc desc;

@@ -1,7 +1,7 @@
 #pragma once
 #include "DC_Animation.g.h"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     struct DC_Animation : DC_AnimationT<DC_Animation>
     {
@@ -21,7 +21,7 @@ namespace winrt::EggAssetEditor::implementation
         void PropertyChanged(winrt::event_token const& token) noexcept;
     };
 }
-namespace winrt::EggAssetEditor::factory_implementation
+namespace winrt::NetcodeAssetEditor::factory_implementation
 {
     struct DC_Animation : DC_AnimationT<DC_Animation, implementation::DC_Animation>
     {

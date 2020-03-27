@@ -4,9 +4,9 @@
 #include "DX12ResourcePool.h"
 #include "DX12DynamicDescriptorHeap.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	class ResourceContext : public Egg::Graphics::IResourceContext {
+	class ResourceContext : public Netcode::Graphics::IResourceContext {
 		ResourcePool * resources;
 		com_ptr<ID3D12Device> device;
 		RenderPassRef activeRenderPass;

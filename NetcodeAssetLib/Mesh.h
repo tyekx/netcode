@@ -3,7 +3,7 @@
 #include <DirectXCollision.h>
 #include <NetcodeFoundation/Formats.h>
 
-namespace Egg::Asset {
+namespace Netcode::Asset {
 
 	struct InputElement {
 		char semanticName[32];

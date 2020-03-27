@@ -12,7 +12,7 @@
 #include <DirectXMath.h>
 #include <DirectXColors.h>
 
-namespace Egg::Graphics::DX12
+namespace Netcode::Graphics::DX12
 {
     __declspec(align(256)) struct SpriteCbuffer {
         DirectX::XMFLOAT4X4A transform;
@@ -100,7 +100,7 @@ namespace Egg::Graphics::DX12
         }
     };
 
-    class SpriteBatch : public Egg::SpriteBatch {
+    class SpriteBatch : public Netcode::SpriteBatch {
         static uint64_t indexBuffer;
         static const DirectX::XMMATRIX MatrixIdentity;
         static const DirectX::XMFLOAT2 Float2Zero;
@@ -169,9 +169,9 @@ namespace Egg::Graphics::DX12
             RootParameterCount
         };
 
-        void CreateIndexBuffer(const Egg::Module::IGraphicsModule * graphics);
+        void CreateIndexBuffer(const Netcode::Module::IGraphicsModule * graphics);
 
-        SpriteBatch(const Egg::Module::IGraphicsModule * graphics, Egg::RootSignatureRef rootSig, Egg::PipelineStateRef pso);
+        SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netcode::RootSignatureRef rootSig, Netcode::PipelineStateRef pso);
 
         SpriteBatch(SpriteBatch && moveFrom) = default;
         SpriteBatch & operator= (SpriteBatch && moveFrom) = default;
@@ -186,7 +186,7 @@ namespace Egg::Graphics::DX12
         void End();
 
         virtual void BeginRecord(void * ctx, DirectX::XMFLOAT4X4 viewProj) override {
-            renderContext = static_cast<Egg::Graphics::IRenderContext *>(ctx);
+            renderContext = static_cast<Netcode::Graphics::IRenderContext *>(ctx);
             DirectX::FXMMATRIX tMat = DirectX::XMLoadFloat4x4(&viewProj);
             Begin(SpriteSortMode_Deferred, tMat);
         }
@@ -258,7 +258,7 @@ namespace Egg::Graphics::DX12
 
     };
 
-    using DX12SpriteBatch = Egg::Graphics::DX12::SpriteBatch;
+    using DX12SpriteBatch = Netcode::Graphics::DX12::SpriteBatch;
     using DX12SpriteBatchRef = std::shared_ptr<DX12SpriteBatch>;
 
 }

@@ -1,7 +1,7 @@
 #include "AnimationBlender.h"
 #include <memory>
 
-namespace Egg::Animation {
+namespace Netcode::Animation {
 
 
 	AnimationBlender::AnimationBlender(Asset::Bone * skeleton, unsigned int skeletonLength) {
@@ -50,7 +50,7 @@ namespace Egg::Animation {
 		for(unsigned int ai = 0; ai < numActiveStates; ++ai) {
 			float weight = activeStates[ai]->weight;
 
-			Egg::Asset::Animation * a = activeStates[ai]->animationRef;
+			Netcode::Asset::Animation * a = activeStates[ai]->animationRef;
 			float t = activeStates[ai]->animTime;
 			unsigned int idx;
 			for(idx = 1; idx < a->keysLength; ++idx) {

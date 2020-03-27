@@ -1,7 +1,7 @@
 #include "Blackboard.h"
 
 
-namespace Egg::Animation {
+namespace Netcode::Animation {
 
 	AnimationState * Blackboard::FindReferenceByName(const std::string & name) {
 

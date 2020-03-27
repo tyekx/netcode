@@ -3,7 +3,7 @@
 #include "DX12Platform.h"
 #include <sstream>
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 	void DX12GraphicsModule::NextBackBufferIndex() {
 		backbufferIndex = (backbufferIndex + 1) % backbufferDepth;
 	}
@@ -91,7 +91,7 @@ namespace Egg::Graphics::DX12 {
 			DX_API("Failed to query adapter desc")
 				adapters[adaptersLength]->GetDesc2(&adapterDesc);
 
-			Log::Info("Graphics adapter: {0}", Egg::Utility::ToNarrowString(adapterDesc.Description));
+			Log::Info("Graphics adapter: {0}", Netcode::Utility::ToNarrowString(adapterDesc.Description));
 
 			Log::Info("    Adapter dedicated VRAM: {0}", adapterDesc.DedicatedVideoMemory);
 			Log::Info("        Adapter system RAM: {0}", adapterDesc.DedicatedSystemMemory);
@@ -199,8 +199,8 @@ namespace Egg::Graphics::DX12 {
 	}
 
 	void DX12GraphicsModule::CreateContexts() {
-		Egg::Module::IGraphicsModule::resources = &resourceContext;
-		Egg::Module::IGraphicsModule::frame = this;
+		Netcode::Module::IGraphicsModule::resources = &resourceContext;
+		Netcode::Module::IGraphicsModule::frame = this;
 	}
 
 	void DX12GraphicsModule::UpdateViewport()
@@ -390,10 +390,10 @@ namespace Egg::Graphics::DX12 {
 		DX_API("Failed to resize target")
 			swapChain->ResizeTarget(&givenMode);
 
-		Egg::Module::AppEvent evt;
+		Netcode::Module::AppEvent evt;
 		evt.resizeArgs.x = w;
 		evt.resizeArgs.y = h;
-		evt.type = Egg::Module::EAppEventType::RESIZED;
+		evt.type = Netcode::Module::EAppEventType::RESIZED;
 
 		eventSystem->Broadcast(evt);
 

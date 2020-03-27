@@ -1,7 +1,7 @@
 #include "DebugPhysxActor.h"
 #include "EggMath.h"
 
-namespace Egg {
+namespace Netcode {
 	/*
 	void DebugPhysxActor::AfterPhysxUpdate() {
 		physx::PxTransform transform = actorReference->getGlobalPose();

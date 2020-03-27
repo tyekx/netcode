@@ -8,7 +8,7 @@
 Helper functions for primitive type serialization
 */
 
-namespace Egg::Asset {
+namespace Netcode::Asset {
 	float LoadFloat1(const json11::Json & obj);
 
 	DirectX::XMFLOAT2 LoadFloat2(const json11::Json & obj);
@@ -25,5 +25,5 @@ namespace Egg::Asset {
 
 	json11::Json StoreCollider(const Collider & collider);
 
-	Egg::Asset::Collider LoadCollider(const json11::Json & json);
+	Netcode::Asset::Collider LoadCollider(const json11::Json & json);
 }

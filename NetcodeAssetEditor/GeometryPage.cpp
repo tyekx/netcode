@@ -10,7 +10,7 @@
 using namespace winrt;
 using namespace Windows::UI::Xaml;
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     GeometryPage::GeometryPage()
     {

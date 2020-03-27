@@ -1,6 +1,6 @@
 #include "JsonUtility.h"
 
-namespace Egg::Asset {
+namespace Netcode::Asset {
 
 	float LoadFloat1(const json11::Json & obj) {
 		if(!obj.is_array() || obj.array_items().size() < 1 ||
@@ -112,7 +112,7 @@ namespace Egg::Asset {
 		return obj;
 	}
 
-	Egg::Asset::Collider LoadCollider(const json11::Json & json) {
+	Netcode::Asset::Collider LoadCollider(const json11::Json & json) {
 		int32_t type = json["type"].int_value();
 		int32_t boneReference = json["bone_reference"].int_value();
 

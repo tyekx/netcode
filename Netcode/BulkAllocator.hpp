@@ -3,7 +3,7 @@
 #include <list>
 #include <memory>
 
-namespace Egg {
+namespace Netcode {
 
 	template<typename T, size_t BULK_SIZE=512>
 	class BulkAllocator {

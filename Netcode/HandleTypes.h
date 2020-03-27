@@ -22,7 +22,7 @@ execution.
 This also heavily favors the DirectX ecosystem, but thats an issue for possible future opengl ports
 */
 
-namespace Egg {
+namespace Netcode {
 
 #if !defined(EGG_OS_WINDOWS)
 
@@ -372,7 +372,7 @@ namespace Egg {
 		virtual void SetDepthStencilFormat(DXGI_FORMAT format) = 0;
 		virtual void SetRenderTargetFormat(uint8_t renderTargetIdx, DXGI_FORMAT format) = 0;
 		virtual void SetRenderTargetFormats(std::initializer_list<DXGI_FORMAT> formats) = 0;
-		virtual void SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType topType) = 0;
+		virtual void SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType topType) = 0;
 		virtual PipelineStateRef Build() = 0;
 	};
 
@@ -392,7 +392,7 @@ namespace Egg {
 	class Texture {
 	public:
 		virtual ~Texture() = default;
-		virtual Egg::Graphics::ResourceDimension GetDimension() const = 0;
+		virtual Netcode::Graphics::ResourceDimension GetDimension() const = 0;
 		virtual uint16_t GetMipLevelCount() const = 0;
 		virtual const Image * GetImage(uint16_t mipIndex, uint16_t arrayIndex, uint32_t slice) = 0;
 		virtual const Image * GetImages() = 0;
@@ -483,9 +483,9 @@ namespace Egg {
 		virtual DirectX::XMFLOAT2 MeasureString(const char * str) const = 0;
 		virtual DirectX::XMFLOAT2 MeasureString(const wchar_t * str) const = 0;
 
-		virtual void DrawString(Egg::SpriteBatchRef spriteBatch, const wchar_t * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const = 0;
+		virtual void DrawString(Netcode::SpriteBatchRef spriteBatch, const wchar_t * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const = 0;
 		
-		virtual void DrawString(Egg::SpriteBatchRef spriteBatch, const char * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const = 0;
+		virtual void DrawString(Netcode::SpriteBatchRef spriteBatch, const char * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const = 0;
 	};
 
 	using SpriteFontRef = std::shared_ptr<SpriteFont>;

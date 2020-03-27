@@ -4,16 +4,16 @@
 #include "XamlGlobal.h"
 #include "XamlHelpers.h"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
 	CreateColliderDialog::CreateColliderDialog() : CreateColliderDialogT<CreateColliderDialog>() {
 		InitializeComponent();
 
-		bones = winrt::single_threaded_observable_vector<EggAssetEditor::DC_Bone>();
-		selectedBones = winrt::single_threaded_observable_vector<EggAssetEditor::DC_Bone>();
+		bones = winrt::single_threaded_observable_vector<NetcodeAssetEditor::DC_Bone>();
+		selectedBones = winrt::single_threaded_observable_vector<NetcodeAssetEditor::DC_Bone>();
 	}
 
-    Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Bone> CreateColliderDialog::Bones()
+    Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Bone> CreateColliderDialog::Bones()
     {
 		return bones;
     }
@@ -27,7 +27,7 @@ namespace winrt::EggAssetEditor::implementation
 		auto selectedItems = bonesList().SelectedItems();
 		
 		for(uint32_t i = 0; i < selectedItems.Size(); ++i) {
-			selectedBones.Append(selectedItems.GetAt(i).as<EggAssetEditor::DC_Bone>());
+			selectedBones.Append(selectedItems.GetAt(i).as<NetcodeAssetEditor::DC_Bone>());
 		}
 
 		deferral.Complete();
@@ -61,7 +61,7 @@ namespace winrt::EggAssetEditor::implementation
 		}
 	}
 
-	Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Bone> CreateColliderDialog::SelectedBones()
+	Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Bone> CreateColliderDialog::SelectedBones()
 	{
 		return selectedBones;
 	}

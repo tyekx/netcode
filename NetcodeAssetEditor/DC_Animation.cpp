@@ -2,7 +2,7 @@
 #include "DC_Animation.h"
 #include "DC_Animation.g.cpp"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     hstring DC_Animation::Name()
     {

@@ -1,4 +1,4 @@
-namespace EggAssetEditor
+namespace NetcodeAssetEditor
 {
     [default_interface]
     runtimeclass BonesPage : Windows.UI.Xaml.Controls.Page

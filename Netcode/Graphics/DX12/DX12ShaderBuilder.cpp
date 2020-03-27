@@ -1,6 +1,6 @@
 #include "DX12ShaderBuilder.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	void ShaderBuilder::SetState(BuilderState st) {
 		if(st == state) {

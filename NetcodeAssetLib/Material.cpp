@@ -1,6 +1,6 @@
 #include "Material.h"
 
-namespace Egg::Asset {
+namespace Netcode::Asset {
 
 	Material::Material() : diffuseColor{}, ambientColor{}, specularColor{}, shininess{},
 		diffuseTexture{}, normalTexture{}, specularTexture{}, ambientTexture{}, roughnessTexture{} {

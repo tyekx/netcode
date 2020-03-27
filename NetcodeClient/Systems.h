@@ -67,7 +67,7 @@ class RenderSystem {
 public:
 	GraphicsEngine renderer;
 
-	void CreatePermanentResources(Egg::Module::IGraphicsModule * graphics) {
+	void CreatePermanentResources(Netcode::Module::IGraphicsModule * graphics) {
 		renderer.CreatePermanentResources(graphics);
 	}
 
@@ -94,11 +94,11 @@ public:
 };
 
 class AnimationSystem {
-	Egg::MovementController * movementController;
+	Netcode::MovementController * movementController;
 public:
 	void Run(GameObject * gameObject, float dt);
 
-	void SetMovementController(Egg::MovementController * movCtrl) {
+	void SetMovementController(Netcode::MovementController * movCtrl) {
 		movementController = movCtrl;
 	}
 
@@ -213,8 +213,8 @@ public:
 	}
 
 	void Raycast() {
-		float lmb = Egg::Input::GetAxis("Fire");
-		DirectX::XMINT2 mousePos = Egg::Input::GetMousePos();
+		float lmb = Netcode::Input::GetAxis("Fire");
+		DirectX::XMINT2 mousePos = Netcode::Input::GetMousePos();
 
 		bool isClicked = false;
 

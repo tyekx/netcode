@@ -2,7 +2,7 @@
 
 #include "Modules.h"
 
-namespace Egg::Module {
+namespace Netcode::Module {
 
 	class DefaultModuleFactory : public IModuleFactory {
 	public:

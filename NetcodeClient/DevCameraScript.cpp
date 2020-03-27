@@ -3,9 +3,9 @@
 #include <Windows.h>
 
 void DevCameraScript::Setup(GameObject * gameObject) {
-	Egg::Input::SetAxis("DevCameraX", VK_NUMPAD6, VK_NUMPAD4);
-	Egg::Input::SetAxis("DevCameraZ", VK_NUMPAD5, VK_NUMPAD8);
-	Egg::Input::SetAxis("DevCameraY", VK_NUMPAD9, VK_NUMPAD7);
+	Netcode::Input::SetAxis("DevCameraX", VK_NUMPAD6, VK_NUMPAD4);
+	Netcode::Input::SetAxis("DevCameraZ", VK_NUMPAD5, VK_NUMPAD8);
+	Netcode::Input::SetAxis("DevCameraY", VK_NUMPAD9, VK_NUMPAD7);
 	transform = gameObject->GetComponent<Transform>();
 	camera = gameObject->GetComponent<Camera>();
 	cameraPitch = 0.0f;
@@ -15,11 +15,11 @@ void DevCameraScript::Setup(GameObject * gameObject) {
 }
 
 void DevCameraScript::Update(float dt) {
-	float devCamX = Egg::Input::GetAxis("DevCameraX");
-	float devCamZ = Egg::Input::GetAxis("DevCameraZ");
-	float devCamY = Egg::Input::GetAxis("DevCameraY");
+	float devCamX = Netcode::Input::GetAxis("DevCameraX");
+	float devCamZ = Netcode::Input::GetAxis("DevCameraZ");
+	float devCamY = Netcode::Input::GetAxis("DevCameraY");
 
-	DirectX::XMINT2 mouseDelta = Egg::Input::GetMouseDelta();
+	DirectX::XMINT2 mouseDelta = Netcode::Input::GetMouseDelta();
 
 	DirectX::XMFLOAT2A normalizedMouseDelta{ -(float)(mouseDelta.x), -(float)(mouseDelta.y) };
 	cameraPitch += mouseSpeed * normalizedMouseDelta.y * dt;

@@ -11,7 +11,7 @@
 #include "Material.h"
 #include <Netcode/Blackboard.h>
 
-using ColliderShape = Egg::Asset::Collider;
+using ColliderShape = Netcode::Asset::Collider;
 
 enum class HorizontalAnchor : uint32_t {
 	LEFT, CENTER, RIGHT
@@ -41,7 +41,7 @@ COMPONENT_ALIGN struct UIScript {
 };
 
 COMPONENT_ALIGN struct Sprite {
-	Egg::ResourceViewsRef texture;
+	Netcode::ResourceViewsRef texture;
 	DirectX::XMUINT2 textureSize;
 	DirectX::XMFLOAT4 diffuseColor;
 	DirectX::XMFLOAT4 hoverColor;
@@ -68,7 +68,7 @@ COMPONENT_ALIGN struct TextBox {
 	int id;
 	int caretPosition;
 	int selectionEndIndex;
-	Egg::EventToken keyPressedToken;
+	Netcode::EventToken keyPressedToken;
 	std::function<void(const std::wstring&)> contentChanged;
 	std::wstring placeholder;
 	DirectX::XMFLOAT4 placeholderColor;
@@ -82,7 +82,7 @@ COMPONENT_ALIGN struct TextBox {
 COMPONENT_ALIGN struct Text {
 public:
 	DirectX::XMFLOAT4 color;
-	Egg::SpriteFontRef font;
+	Netcode::SpriteFontRef font;
 	std::wstring text;
 	HorizontalAnchor horizontalAlignment;
 	VerticalAnchor verticalAlignment;
@@ -185,7 +185,7 @@ public:
 
 COMPONENT_ALIGN class Animation {
 public:
-	Egg::Animation::Blackboard blackboard;
+	Netcode::Animation::Blackboard blackboard;
 
 	Animation() = default;
 	Animation(Animation &&) noexcept = default;

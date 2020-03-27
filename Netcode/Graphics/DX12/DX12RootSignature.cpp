@@ -1,7 +1,7 @@
 #include "DX12RootSignature.h"
 #include "../../Common.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 	
 	void RootSignatureDesc::CreateRS_1_0(const D3D12_ROOT_SIGNATURE_DESC & rsDesc) {
 		size_t size = 0;

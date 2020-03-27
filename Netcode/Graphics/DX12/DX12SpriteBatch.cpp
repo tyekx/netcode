@@ -5,14 +5,14 @@
 #include "DX12SpriteBatch.h"
 #include "DX12ResourceViews.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	const DirectX::XMMATRIX SpriteBatch::MatrixIdentity = DirectX::XMMatrixIdentity();
 	const DirectX::XMFLOAT2 SpriteBatch::Float2Zero(0, 0);
 
 	uint64_t SpriteBatch::indexBuffer{ 0 };
 
-void SpriteBatch::CreateIndexBuffer(const Egg::Module::IGraphicsModule * graphics)
+void SpriteBatch::CreateIndexBuffer(const Netcode::Module::IGraphicsModule * graphics)
 {
 	if(indexBuffer != 0) {
 		return;
@@ -44,7 +44,7 @@ void SpriteBatch::CreateIndexBuffer(const Egg::Module::IGraphicsModule * graphic
 	graphics->frame->SyncUpload(upload);
 }
 
-SpriteBatch::SpriteBatch(const Egg::Module::IGraphicsModule * graphics, Egg::RootSignatureRef rootSig, Egg::PipelineStateRef pso)
+SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netcode::RootSignatureRef rootSig, Netcode::PipelineStateRef pso)
 			: vertexBuffer{ 0 },
 			resourceContext{ nullptr },
 			renderContext{ nullptr },

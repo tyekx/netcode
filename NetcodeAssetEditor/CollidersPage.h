@@ -7,24 +7,24 @@
 #include "Vector3Control.h"
 #include "Vector2Control.h"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     struct CollidersPage : CollidersPageT<CollidersPage>
     {
-        Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Collider> colliders;
-        Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Bone> bones;
+        Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Collider> colliders;
+        Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Bone> bones;
         Windows::Foundation::Collections::IVector<winrt::event_token> tokens;
 
         winrt::event_token AddCallbackFor(uint32_t idx);
-        EggAssetEditor::DC_Collider ConvertCollider(const Collider & collider);
+        NetcodeAssetEditor::DC_Collider ConvertCollider(const Collider & collider);
 
         CollidersPage();
 
-        Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Collider> Colliders();
-        Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Bone> Bones();
+        Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Collider> Colliders();
+        Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Bone> Bones();
 
         void OnCollidersCollectionChanged(
-            Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Collider> const & sender,
+            Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Collider> const & sender,
             Windows::Foundation::Collections::IVectorChangedEventArgs const & event);
 
         void OnNavigatedTo(Windows::UI::Xaml::Navigation::NavigationEventArgs const & e);
@@ -35,7 +35,7 @@ namespace winrt::EggAssetEditor::implementation
     };
 }
 
-namespace winrt::EggAssetEditor::factory_implementation
+namespace winrt::NetcodeAssetEditor::factory_implementation
 {
     struct CollidersPage : CollidersPageT<CollidersPage, implementation::CollidersPage>
     {

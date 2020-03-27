@@ -3,7 +3,7 @@
 #include "DX12ResourceDesc.h"
 #include "DX12Helpers.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	uint32_t ResourceViews::GetIncrementSize() const {
 		switch(heapType) {

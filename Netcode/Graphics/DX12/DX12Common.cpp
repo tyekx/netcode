@@ -6,7 +6,7 @@
 #include <cstdarg>
 #include <comdef.h>
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 	
 	void DebugPrintBlob(com_ptr<ID3DBlob> blob) {
 		if(blob != nullptr) {
@@ -54,7 +54,7 @@ namespace Egg::Graphics::DX12 {
 
 }
 
-Egg::Internal::HResultTester::HResultTester(const char * msg, const char * file, int line, ...) :
+Netcode::Internal::HResultTester::HResultTester(const char * msg, const char * file, int line, ...) :
 	message{ msg }, file{ file }, line{ line } {
 	va_list l;
 	va_start(l, line);
@@ -62,7 +62,7 @@ Egg::Internal::HResultTester::HResultTester(const char * msg, const char * file,
 	va_end(l);
 }
 
-void Egg::Internal::HResultTester::operator<<(HRESULT hr) {
+void Netcode::Internal::HResultTester::operator<<(HRESULT hr) {
 	if(FAILED(hr)) {
 		std::ostringstream oss;
 		oss << file << "(" << line << "): " << message;

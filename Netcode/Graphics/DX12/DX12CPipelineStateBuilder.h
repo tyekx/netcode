@@ -4,9 +4,9 @@
 #include "DX12CPipelineState.h"
 #include "DX12CPipelineStateLibrary.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	class CPipelineStateBuilder : public Egg::CPipelineStateBuilder {
+	class CPipelineStateBuilder : public Netcode::CPipelineStateBuilder {
 		CPipelineStateDesc cDesc;
 		DX12CPipelineStateLibraryRef cLib;
 	public:
@@ -17,7 +17,7 @@ namespace Egg::Graphics::DX12 {
 		virtual PipelineStateRef Build() override;
 	};
 
-	using DX12CPipelineStateBuilder = Egg::Graphics::DX12::CPipelineStateBuilder;
+	using DX12CPipelineStateBuilder = Netcode::Graphics::DX12::CPipelineStateBuilder;
 	using DX12CPipelineStateBuilderRef = std::shared_ptr<DX12CPipelineStateBuilder>;
 
 }

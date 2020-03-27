@@ -1,7 +1,7 @@
 #include "DX12RenderContext.h"
 #include "DX12SpriteFont.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	BaseRenderContext::BaseRenderContext(ResourcePool * resourcePool, ConstantBufferPool * cbufferPool, DynamicDescriptorHeap * dHeaps, com_ptr<ID3D12GraphicsCommandList> cl) :
 		resources{ resourcePool }, cbuffers{ cbufferPool }, descHeaps{ dHeaps }, commandList{ std::move(cl) }, signalFence{}, waitFences{}, barriers{}

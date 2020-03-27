@@ -3,9 +3,9 @@
 #include "../../HandleTypes.h"
 #include "DX12Common.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	class Fence : public Egg::Fence {
+	class Fence : public Netcode::Fence {
 		com_ptr<ID3D12Fence1> fence;
 		HANDLE fenceEvent;
 		UINT64 fenceValue;
@@ -28,7 +28,7 @@ namespace Egg::Graphics::DX12 {
 
 	};
 
-	using DX12Fence = Egg::Graphics::DX12::Fence;
+	using DX12Fence = Netcode::Graphics::DX12::Fence;
 	using DX12FenceRef = std::shared_ptr<DX12Fence>;
 
 }

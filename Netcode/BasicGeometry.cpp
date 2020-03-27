@@ -2,7 +2,7 @@
 #include <map>
 #include <memory>
 
-namespace Egg::Graphics {
+namespace Netcode::Graphics {
 
 	class VertexDataIterator {
 		unsigned char * data;

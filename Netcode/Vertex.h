@@ -2,7 +2,7 @@
 
 #include <DirectXMath.h>
 
-namespace Egg {
+namespace Netcode {
 	/*
 	PNT: Position, Normal, Texture
 	*/

@@ -6,9 +6,9 @@
 #include "DX12ConstantBufferPool.h"
 #include "DX12DynamicDescriptorHeap.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	class BaseRenderContext : public Egg::Graphics::IRenderContext {
+	class BaseRenderContext : public Netcode::Graphics::IRenderContext {
 	protected:
 		ResourcePool * resources;
 		ConstantBufferPool * cbuffers;

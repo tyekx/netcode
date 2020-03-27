@@ -2,7 +2,7 @@
 
 #include "Model.h"
 
-namespace Egg::Asset {
+namespace Netcode::Asset {
 	
 
 	void ImportModel(const char* filePath, Model & model);

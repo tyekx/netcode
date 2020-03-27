@@ -2,7 +2,7 @@
 
 #include "DX12CPipelineState.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	class CPipelineStateLibrary {
 		std::vector<DX12CPipelineStateRef> cpsos;
@@ -13,7 +13,7 @@ namespace Egg::Graphics::DX12 {
 		PipelineStateRef GetComputePipelineState(CPipelineStateDesc && cDesc);
 	};
 
-	using DX12CPipelineStateLibrary = Egg::Graphics::DX12::CPipelineStateLibrary;
+	using DX12CPipelineStateLibrary = Netcode::Graphics::DX12::CPipelineStateLibrary;
 	using DX12CPipelineStateLibraryRef = std::shared_ptr<DX12CPipelineStateLibrary>;
 
 }

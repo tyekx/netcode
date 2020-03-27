@@ -1,7 +1,7 @@
 #include "Manifest.h"
 
 
-namespace Egg::Asset {
+namespace Netcode::Asset {
 
 	static json11::Json::shape jsonShape_root = {
 		{ "name", json11::Json::Type::STRING },

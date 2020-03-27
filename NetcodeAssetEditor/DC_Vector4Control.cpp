@@ -3,7 +3,7 @@
 #include "DC_Vector4Control.g.cpp"
 
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     Windows::Foundation::IInspectable DC_Vector4Control::VectorValue()
     {

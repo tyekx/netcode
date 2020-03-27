@@ -10,7 +10,7 @@
 
 #include "Logger.h"
 
-namespace Egg::Internal {
+namespace Netcode::Internal {
 
 	static void LogString(const char * str) {
 #if defined(EGG_OS_WINDOWS)

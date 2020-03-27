@@ -8,7 +8,7 @@
 #include <fstream>
 #include "DX12ShaderSourceLibrary.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	class ShaderLibrary {
 		std::vector<ShaderVariantRef> shaderVariants;
@@ -83,7 +83,7 @@ namespace Egg::Graphics::DX12 {
 
 	};
 
-	using DX12ShaderLibrary = Egg::Graphics::DX12::ShaderLibrary;
+	using DX12ShaderLibrary = Netcode::Graphics::DX12::ShaderLibrary;
 	using DX12ShaderLibraryRef = std::shared_ptr<DX12ShaderLibrary>;
 
 }

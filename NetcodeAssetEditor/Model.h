@@ -99,7 +99,7 @@ struct BoneAnimation {
 	std::vector<ScaleKey> scaleKeys;
 };
 
-using OptimizedAnimationKey = Egg::Asset::AnimationKey;
+using OptimizedAnimationKey = Netcode::Asset::AnimationKey;
 
 struct Animation {
 	double duration;
@@ -142,8 +142,8 @@ struct Skeleton {
 	}
 };
 
-using Egg::Asset::ColliderType;
-using Egg::Asset::Collider;
+using Netcode::Asset::ColliderType;
+using Netcode::Asset::Collider;
 
 class Model {
 public:

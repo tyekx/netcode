@@ -9,7 +9,7 @@
 #include "Material.h"
 #include "Collider.h"
 
-namespace Egg::Asset {
+namespace Netcode::Asset {
 
 	class Model {
 		using freed_unique_ptr_t = std::unique_ptr<void, void(*)(void *)>;

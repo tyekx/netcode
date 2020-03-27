@@ -1,7 +1,7 @@
 #include "DX12StreamOutputLibrary.h"
 #include <algorithm>
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	void StreamOutputLibrary::Insert(DX12StreamOutputRef soRef) {
 		streamOutputs.push_back(std::move(soRef));

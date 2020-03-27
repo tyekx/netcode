@@ -9,7 +9,7 @@
 #include <dxgiformat.h>
 #endif
 
-namespace Egg::Graphics {
+namespace Netcode::Graphics {
 
 	struct ClearValue {
 		DXGI_FORMAT Format;

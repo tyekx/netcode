@@ -1,6 +1,6 @@
 #include "DX12StreamOutput.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	StreamOutput::StreamOutput(const D3D12_STREAM_OUTPUT_DESC & so, std::vector<D3D12_SO_DECLARATION_ENTRY> && soDecl, std::vector<UINT> && strides) :
 		streamOutput{ so }, declarations{ std::move(soDecl) }, strides{ std::move(strides) } { }

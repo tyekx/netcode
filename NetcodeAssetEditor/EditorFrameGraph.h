@@ -6,40 +6,40 @@
 #include "GBuffer.h"
 #include "ConstantBufferTypes.h"
 
-using Egg::Graphics::ResourceState;
-using Egg::Graphics::ResourceType;
-using Egg::Graphics::ResourceFlags;
-using Egg::Graphics::ResourceDesc;
-using Egg::Graphics::PrimitiveTopology;
-using Egg::Graphics::ResourceDimension;
-using Egg::Graphics::IRenderContext;
-using Egg::Graphics::IResourceContext;
+using Netcode::Graphics::ResourceState;
+using Netcode::Graphics::ResourceType;
+using Netcode::Graphics::ResourceFlags;
+using Netcode::Graphics::ResourceDesc;
+using Netcode::Graphics::PrimitiveTopology;
+using Netcode::Graphics::ResourceDimension;
+using Netcode::Graphics::IRenderContext;
+using Netcode::Graphics::IResourceContext;
 
 class EditorFrameGraph {
 
 	GBuffer fsQuad;
 
-	Egg::RootSignatureRef gbufferPass_RootSignature;
-	Egg::PipelineStateRef gbufferPass_PipelineState;
+	Netcode::RootSignatureRef gbufferPass_RootSignature;
+	Netcode::PipelineStateRef gbufferPass_PipelineState;
 
-	Egg::RootSignatureRef boneVisibilityPass_RootSignature;
-	Egg::PipelineStateRef boneVisibilityPass_PipelineState;
+	Netcode::RootSignatureRef boneVisibilityPass_RootSignature;
+	Netcode::PipelineStateRef boneVisibilityPass_PipelineState;
 
-	Egg::RootSignatureRef envmapPass_RootSignature;
-	Egg::PipelineStateRef envmapPass_PipelineState;
+	Netcode::RootSignatureRef envmapPass_RootSignature;
+	Netcode::PipelineStateRef envmapPass_PipelineState;
 
-	Egg::RootSignatureRef colliderPass_RootSignature;
-	Egg::PipelineStateRef colliderPass_PipelineState;
+	Netcode::RootSignatureRef colliderPass_RootSignature;
+	Netcode::PipelineStateRef colliderPass_PipelineState;
 
 	uint64_t cloudynoonTexture;
-	Egg::ResourceViewsRef cloudynoonView;
+	Netcode::ResourceViewsRef cloudynoonView;
 
 	uint64_t gbufferPass_DepthStencil;
-	Egg::ResourceViewsRef gbufferPass_DepthStencilView;
+	Netcode::ResourceViewsRef gbufferPass_DepthStencilView;
 
 
 
-	void CreateFSQuad(Egg::Module::IGraphicsModule * g) {
+	void CreateFSQuad(Netcode::Module::IGraphicsModule * g) {
 		struct PT_Vert {
 			DirectX::XMFLOAT3 position;
 			DirectX::XMFLOAT2 texCoord;
@@ -59,40 +59,40 @@ class EditorFrameGraph {
 		fsQuad.indexBuffer = 0;
 		fsQuad.indexCount = 0;
 
-		Egg::Graphics::UploadBatch uploadBatch;
+		Netcode::Graphics::UploadBatch uploadBatch;
 		uploadBatch.Upload(fsQuad.vertexBuffer, vData, sizeof(vData));
 		uploadBatch.ResourceBarrier(fsQuad.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
 
 		g->frame->SyncUpload(uploadBatch);
 	}
 
-	void Create_GBufferPass_PermanentResources(Egg::Module::IGraphicsModule * g) {
+	void Create_GBufferPass_PermanentResources(Netcode::Module::IGraphicsModule * g) {
 		auto ilBuilder = g->CreateInputLayoutBuilder();
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
 		ilBuilder->AddInputElement("WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("BONEIDS", DXGI_FORMAT_R32_UINT);
-		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
 
 
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"Editor_GBufferPass_Vertex.cso");
-		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"Editor_GBufferPass_Pixel.cso");
+		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"Editor_GBufferPass_Vertex.cso");
+		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"Editor_GBufferPass_Pixel.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		gbufferPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
 
-		Egg::DepthStencilDesc depthStencilDesc;
-		depthStencilDesc.backFace.stencilDepthFailOp = Egg::StencilOp::KEEP;
-		depthStencilDesc.backFace.stencilFailOp = Egg::StencilOp::KEEP;
-		depthStencilDesc.backFace.stencilPassOp = Egg::StencilOp::KEEP;
-		depthStencilDesc.backFace.stencilFunc = Egg::ComparisonFunc::NEVER;
+		Netcode::DepthStencilDesc depthStencilDesc;
+		depthStencilDesc.backFace.stencilDepthFailOp = Netcode::StencilOp::KEEP;
+		depthStencilDesc.backFace.stencilFailOp = Netcode::StencilOp::KEEP;
+		depthStencilDesc.backFace.stencilPassOp = Netcode::StencilOp::KEEP;
+		depthStencilDesc.backFace.stencilFunc = Netcode::ComparisonFunc::NEVER;
 
-		depthStencilDesc.frontFace.stencilDepthFailOp = Egg::StencilOp::KEEP;
-		depthStencilDesc.frontFace.stencilFailOp = Egg::StencilOp::KEEP;
-		depthStencilDesc.frontFace.stencilPassOp = Egg::StencilOp::REPLACE;
-		depthStencilDesc.frontFace.stencilFunc = Egg::ComparisonFunc::ALWAYS;
+		depthStencilDesc.frontFace.stencilDepthFailOp = Netcode::StencilOp::KEEP;
+		depthStencilDesc.frontFace.stencilFailOp = Netcode::StencilOp::KEEP;
+		depthStencilDesc.frontFace.stencilPassOp = Netcode::StencilOp::REPLACE;
+		depthStencilDesc.frontFace.stencilFunc = Netcode::ComparisonFunc::ALWAYS;
 
 		depthStencilDesc.depthEnable = true;
 		depthStencilDesc.stencilEnable = true;
@@ -107,7 +107,7 @@ class EditorFrameGraph {
 		psoBuilder->SetDepthStencilState(depthStencilDesc);
 		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
 		psoBuilder->SetDepthStencilFormat(DXGI_FORMAT_D32_FLOAT_S8X24_UINT);
-		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
+		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::TRIANGLE);
 		gbufferPass_PipelineState = psoBuilder->Build();
 
 		gbufferPass_DepthStencil = g->resources->CreateDepthStencil(DXGI_FORMAT_D32_FLOAT_S8X24_UINT, ResourceType::PERMANENT_DEFAULT, ResourceState::DEPTH_READ);
@@ -115,35 +115,35 @@ class EditorFrameGraph {
 		gbufferPass_DepthStencilView->CreateDSV(gbufferPass_DepthStencil);
 	}
 
-	void Create_BoneVisibilityPass_PermanentResources(Egg::Module::IGraphicsModule * g) {
+	void Create_BoneVisibilityPass_PermanentResources(Netcode::Module::IGraphicsModule * g) {
 		auto ilBuilder = g->CreateInputLayoutBuilder();
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
 		ilBuilder->AddInputElement("WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("BONEIDS", DXGI_FORMAT_R32_UINT);
-		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
 
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"Editor_BoneVisibilityPass_Vertex.cso");
-		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"Editor_BoneVisibilityPass_Pixel.cso");
+		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"Editor_BoneVisibilityPass_Vertex.cso");
+		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"Editor_BoneVisibilityPass_Pixel.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		boneVisibilityPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
 
-		Egg::DepthStencilDesc depthDesc;
+		Netcode::DepthStencilDesc depthDesc;
 		depthDesc.depthEnable = true;
-		depthDesc.depthFunc = Egg::ComparisonFunc::LESS_EQUAL;
+		depthDesc.depthFunc = Netcode::ComparisonFunc::LESS_EQUAL;
 		depthDesc.stencilEnable = false;
-		depthDesc.frontFace.stencilDepthFailOp = Egg::StencilOp::KEEP;
-		depthDesc.frontFace.stencilFailOp = Egg::StencilOp::KEEP;
-		depthDesc.frontFace.stencilPassOp = Egg::StencilOp::KEEP;
-		depthDesc.frontFace.stencilFunc = Egg::ComparisonFunc::NEVER;
+		depthDesc.frontFace.stencilDepthFailOp = Netcode::StencilOp::KEEP;
+		depthDesc.frontFace.stencilFailOp = Netcode::StencilOp::KEEP;
+		depthDesc.frontFace.stencilPassOp = Netcode::StencilOp::KEEP;
+		depthDesc.frontFace.stencilFunc = Netcode::ComparisonFunc::NEVER;
 		depthDesc.stencilReadMask = 0x00;
 		depthDesc.stencilWriteMask = 0x00;
 		depthDesc.depthWriteMaskZero = true;
 		depthDesc.backFace = depthDesc.frontFace;
-		depthDesc.backFace.stencilFunc = Egg::ComparisonFunc::NEVER;
+		depthDesc.backFace.stencilFunc = Netcode::ComparisonFunc::NEVER;
 
 		auto psoBuilder = g->CreateGPipelineStateBuilder();
 		psoBuilder->SetRootSignature(boneVisibilityPass_RootSignature);
@@ -153,22 +153,22 @@ class EditorFrameGraph {
 		psoBuilder->SetDepthStencilState(depthDesc);
 		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
 		psoBuilder->SetDepthStencilFormat(DXGI_FORMAT_D32_FLOAT_S8X24_UINT);
-		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::POINT);
+		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::POINT);
 		boneVisibilityPass_PipelineState = psoBuilder->Build();
 	}
 
-	void Create_BackgroundPass_PermanentResources(Egg::Module::IGraphicsModule * g) {
-		Egg::TextureBuilderRef textureBuilder = g->CreateTextureBuilder();
+	void Create_BackgroundPass_PermanentResources(Netcode::Module::IGraphicsModule * g) {
+		Netcode::TextureBuilderRef textureBuilder = g->CreateTextureBuilder();
 		textureBuilder->LoadTextureCube(L"cloudynoon.dds");
-		Egg::TextureRef cloudynoon = textureBuilder->Build();
+		Netcode::TextureRef cloudynoon = textureBuilder->Build();
 
-		const Egg::Image * img = cloudynoon->GetImage(0, 0, 0);
+		const Netcode::Image * img = cloudynoon->GetImage(0, 0, 0);
 
 		cloudynoonTexture = g->resources->CreateTextureCube(img->width, img->height, img->format, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST, ResourceFlags::NONE);
 
 		g->resources->SetDebugName(cloudynoonTexture, L"Cloudynoon TextureCube");
 
-		Egg::Graphics::UploadBatch batch;
+		Netcode::Graphics::UploadBatch batch;
 		batch.Upload(cloudynoonTexture, cloudynoon);
 		batch.ResourceBarrier(cloudynoonTexture, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
 		g->frame->SyncUpload(batch);
@@ -176,57 +176,57 @@ class EditorFrameGraph {
 		cloudynoonView = g->resources->CreateShaderResourceViews(1);
 		cloudynoonView->CreateSRV(0, cloudynoonTexture);
 
-		Egg::ShaderBuilderRef shaderBuilder = g->CreateShaderBuilder();
-		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"envmapPass_Vertex.cso");
-		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"envmapPass_Pixel.cso");
-		Egg::RootSignatureBuilderRef rootSigBuilder = g->CreateRootSignatureBuilder();
+		Netcode::ShaderBuilderRef shaderBuilder = g->CreateShaderBuilder();
+		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"envmapPass_Vertex.cso");
+		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"envmapPass_Pixel.cso");
+		Netcode::RootSignatureBuilderRef rootSigBuilder = g->CreateRootSignatureBuilder();
 
 		envmapPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
 
 		auto ilBuilder = g->CreateInputLayoutBuilder();
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
-		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
 
-		Egg::DepthStencilDesc depthDesc;
+		Netcode::DepthStencilDesc depthDesc;
 		depthDesc.depthEnable = false;
 		depthDesc.stencilEnable = true;
-		depthDesc.frontFace.stencilDepthFailOp = Egg::StencilOp::KEEP;
-		depthDesc.frontFace.stencilFailOp = Egg::StencilOp::KEEP;
-		depthDesc.frontFace.stencilPassOp = Egg::StencilOp::KEEP;
-		depthDesc.frontFace.stencilFunc = Egg::ComparisonFunc::EQUAL;
+		depthDesc.frontFace.stencilDepthFailOp = Netcode::StencilOp::KEEP;
+		depthDesc.frontFace.stencilFailOp = Netcode::StencilOp::KEEP;
+		depthDesc.frontFace.stencilPassOp = Netcode::StencilOp::KEEP;
+		depthDesc.frontFace.stencilFunc = Netcode::ComparisonFunc::EQUAL;
 		depthDesc.stencilReadMask = 0xFF;
 		depthDesc.stencilWriteMask = 0x00;
 		depthDesc.depthWriteMaskZero = true;
 		depthDesc.backFace = depthDesc.frontFace;
-		depthDesc.backFace.stencilFunc = Egg::ComparisonFunc::NEVER;
+		depthDesc.backFace.stencilFunc = Netcode::ComparisonFunc::NEVER;
 
-		Egg::GPipelineStateBuilderRef psoBuilder = g->CreateGPipelineStateBuilder();
+		Netcode::GPipelineStateBuilderRef psoBuilder = g->CreateGPipelineStateBuilder();
 		psoBuilder->SetInputLayout(inputLayout);
 		psoBuilder->SetVertexShader(vs);
 		psoBuilder->SetPixelShader(ps);
 		psoBuilder->SetDepthStencilFormat(DXGI_FORMAT_D32_FLOAT_S8X24_UINT);
 		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
 		psoBuilder->SetRootSignature(envmapPass_RootSignature);
-		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
+		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::TRIANGLE);
 		psoBuilder->SetDepthStencilState(depthDesc);
 
 		envmapPass_PipelineState = psoBuilder->Build();
 	}
 
-	void Create_ColliderPass_PermanentResource(Egg::Module::IGraphicsModule * g) {
+	void Create_ColliderPass_PermanentResource(Netcode::Module::IGraphicsModule * g) {
 		auto ilBuilder = g->CreateInputLayoutBuilder();
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
-		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
 
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"Editor_ColliderPass_Vertex.cso");
-		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"Editor_ColliderPass_Pixel.cso");
+		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"Editor_ColliderPass_Vertex.cso");
+		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"Editor_ColliderPass_Pixel.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		colliderPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
 
-		Egg::DepthStencilDesc depthStencilDesc;
+		Netcode::DepthStencilDesc depthStencilDesc;
 		depthStencilDesc.depthEnable = true;
 		depthStencilDesc.stencilEnable = false;
 		depthStencilDesc.depthWriteMaskZero = true;
@@ -239,11 +239,11 @@ class EditorFrameGraph {
 		psoBuilder->SetDepthStencilState(depthStencilDesc);
 		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
 		psoBuilder->SetDepthStencilFormat(DXGI_FORMAT_D32_FLOAT_S8X24_UINT);
-		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::LINE);
+		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::LINE);
 		colliderPass_PipelineState = psoBuilder->Build();
 	}
 
-	void CreateGbufferPass(Egg::FrameGraphBuilderRef builder) {
+	void CreateGbufferPass(Netcode::FrameGraphBuilderRef builder) {
 		builder->CreateRenderPass("Gbuffer pass", [this](IResourceContext * ctx) ->void {
 			ctx->Writes(0);
 			ctx->Writes(gbufferPass_DepthStencil);
@@ -276,7 +276,7 @@ class EditorFrameGraph {
 		});
 	}
 
-	void CreateBoneVisibilityPass(Egg::FrameGraphBuilderRef builder) {
+	void CreateBoneVisibilityPass(Netcode::FrameGraphBuilderRef builder) {
 		builder->CreateRenderPass("Bone visibility pass", [this](IResourceContext * ctx) ->void {
 			ctx->Reads(gbufferPass_DepthStencil);
 			ctx->Writes(0);
@@ -300,7 +300,7 @@ class EditorFrameGraph {
 		});
 	}
 
-	void CreateBackgroundPass(Egg::FrameGraphBuilderRef builder) {
+	void CreateBackgroundPass(Netcode::FrameGraphBuilderRef builder) {
 		builder->CreateRenderPass("Background pass", [this](IResourceContext * ctx) ->void {
 			ctx->Reads(gbufferPass_DepthStencil);
 			ctx->Writes(0);
@@ -322,7 +322,7 @@ class EditorFrameGraph {
 	}
 
 
-	void CreateColliderPass(Egg::FrameGraphBuilderRef builder) {
+	void CreateColliderPass(Netcode::FrameGraphBuilderRef builder) {
 		builder->CreateRenderPass("Collider pass", [this](IResourceContext * ctx) ->void {
 			ctx->Reads(gbufferPass_DepthStencil);
 			ctx->Writes(0);
@@ -356,7 +356,7 @@ public:
 	std::vector<GBuffer> colliderPass_Input;
 	std::vector<ColliderData> colliderPass_DataInput;
 
-	void CreatePermanentResources(Egg::Module::IGraphicsModule * g) {
+	void CreatePermanentResources(Netcode::Module::IGraphicsModule * g) {
 		CreateFSQuad(g);
 		Create_GBufferPass_PermanentResources(g);
 		Create_BackgroundPass_PermanentResources(g);
@@ -364,7 +364,7 @@ public:
 		Create_ColliderPass_PermanentResource(g);
 	}
 
-	void CreateFrameGraph(Egg::FrameGraphBuilderRef builder) {
+	void CreateFrameGraph(Netcode::FrameGraphBuilderRef builder) {
 		CreateGbufferPass(builder);
 		CreateBoneVisibilityPass(builder);
 		CreateBackgroundPass(builder);

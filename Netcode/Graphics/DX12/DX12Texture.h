@@ -3,15 +3,15 @@
 #include "../../HandleTypes.h"
 #include <DirectXTex/DirectXTex.h>
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	class Texture : public Egg::Texture {
+	class Texture : public Netcode::Texture {
 		DirectX::ScratchImage textureData;
 	public:
 
 		Texture(DirectX::ScratchImage && tData);
 
-		virtual Egg::Graphics::ResourceDimension GetDimension() const override;
+		virtual Netcode::Graphics::ResourceDimension GetDimension() const override;
 
 		virtual uint16_t GetMipLevelCount() const override;
 
@@ -22,8 +22,8 @@ namespace Egg::Graphics::DX12 {
 		virtual uint16_t GetImageCount() override;
 	};
 
-	using DX12Texture = Egg::Graphics::DX12::Texture;
-	using DX12TextureRef = std::shared_ptr<Egg::Graphics::DX12::Texture>;
+	using DX12Texture = Netcode::Graphics::DX12::Texture;
+	using DX12TextureRef = std::shared_ptr<Netcode::Graphics::DX12::Texture>;
 
 }
 

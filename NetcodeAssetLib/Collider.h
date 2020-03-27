@@ -2,7 +2,7 @@
 
 #include <DirectXMath.h>
 
-namespace Egg::Asset {
+namespace Netcode::Asset {
 
 	enum class ColliderType : unsigned {
 		UNDEFINED, SPHERE, CAPSULE, BOX, MESH, PLANE

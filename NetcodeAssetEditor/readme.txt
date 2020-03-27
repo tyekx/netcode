@@ -1,5 +1,5 @@
 ========================================================================
-    C++/WinRT EggAssetEditor Project Overview
+    C++/WinRT NetcodeAssetEditor Project Overview
 ========================================================================
 
 This project demonstrates how to get started writing XAML apps directly

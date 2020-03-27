@@ -9,7 +9,7 @@
 #include "Common.h"
 
 
-namespace Egg::Module {
+namespace Netcode::Module {
 
 	class AApp;
 	class IModule;
@@ -24,9 +24,9 @@ namespace Egg::Module {
 		RECT lastWindowedPos;
 		RECT lastWindowedClientRect;
 		UINT windowedStyle;
-		Egg::Module::IGraphicsModule * graphics;
+		Netcode::Module::IGraphicsModule * graphics;
 	public:
-		Egg::Graphics::DisplayMode displayMode;
+		Netcode::Graphics::DisplayMode displayMode;
 		AppEventSystem * eventSystem;
 
 		void EnterSizeMove();
@@ -35,7 +35,7 @@ namespace Egg::Module {
 
 		virtual void OnFocus() override;
 		virtual void OnBlur() override;
-		virtual void OnModeChanged(Egg::Graphics::DisplayMode mode) override;
+		virtual void OnModeChanged(Netcode::Graphics::DisplayMode mode) override;
 
 		virtual void Start(AApp * app) override;
 		virtual void Shutdown() override;

@@ -9,7 +9,7 @@
 
 #include "DX12Common.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	struct ShaderVariantDesc {
 		std::map<std::string, std::string> defines;
@@ -50,7 +50,7 @@ namespace Egg::Graphics::DX12 {
 		}
 	};
 
-	class ShaderVariant : public Egg::ShaderBytecode {
+	class ShaderVariant : public Netcode::ShaderBytecode {
 		ShaderVariantDesc desc;
 		com_ptr<ID3DBlob> shaderByteCode;
 

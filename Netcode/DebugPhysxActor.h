@@ -3,7 +3,7 @@
 #include <array>
 
 
-namespace Egg {
+namespace Netcode {
 	/*
 	class DebugPhysxActor {
 		physx::PxRigidActor * actorReference;

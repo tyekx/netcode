@@ -1,6 +1,6 @@
 #include "DX12ResourcePool.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	uint64_t ResourcePool::CreateResource(const ResourceDesc & resource) {
 		GResource res;

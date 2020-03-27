@@ -4,7 +4,7 @@
 #include "MovementController.h"
 #include <NetcodeAssetLib/Animation.h>
 
-namespace Egg::Animation {
+namespace Netcode::Animation {
 
 	enum class TransitionBehaviour : unsigned {
 		NONE = 0, STOP_AND_LERP = 1, LERP = 2

@@ -2,7 +2,7 @@
 
 #include <Netcode/DefaultModuleFactory.h>
 
-namespace Egg::Module {
+namespace Netcode::Module {
 
 	class EditorModuleFactory : public DefaultModuleFactory {
 	public:

@@ -1,6 +1,6 @@
 #include "DX12Platform.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	D3D_SHADER_MODEL Platform::MaxSupportedShaderModel;
 	D3D_ROOT_SIGNATURE_VERSION Platform::MaxSupportedRootSignatureVersion;

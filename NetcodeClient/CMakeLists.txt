@@ -23,7 +23,7 @@ PUBLIC
 	ConstantBufferTypes.h
 	DevCameraScript.cpp
 	DevCameraScript.h
-	EggApp.h
+	NetcodeApp.h
 	GameObject.cpp
 	GameObject.h
 	GameScene.cpp

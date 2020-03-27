@@ -29,7 +29,7 @@ public:
 		lTrans->position = DirectX::XMFLOAT3{ lElem->width / 2.0f, lElem->height / 2.0f, 0.0f };
 	}
 
-	void SetIcon(Egg::ResourceViewsRef resourceView, const DirectX::XMUINT2 & textureSize) {
+	void SetIcon(Netcode::ResourceViewsRef resourceView, const DirectX::XMUINT2 & textureSize) {
 		UIElement * lElem = root->GetComponent<UIElement>();
 		Transform * lTrans = root->GetComponent<Transform>();
 		Sprite * sprite = root->GetComponent<Sprite>();

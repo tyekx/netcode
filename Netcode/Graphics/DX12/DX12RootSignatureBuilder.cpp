@@ -1,7 +1,7 @@
 #include "../../Common.h"
 #include "DX12RootSignatureBuilder.h"
 
-namespace  Egg::Graphics::DX12 {
+namespace  Netcode::Graphics::DX12 {
 
 	RootSignatureBuilder::RootSignatureBuilder(DX12RootSignatureLibraryRef libRef) :rootSigLibrary{ std::move(libRef) } { }
 

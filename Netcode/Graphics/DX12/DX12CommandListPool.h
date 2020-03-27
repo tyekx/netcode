@@ -3,7 +3,7 @@
 #include "DX12Common.h"
 #include <vector>
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	struct CommandList {
 		using CL_Type = ID3D12GraphicsCommandList3;

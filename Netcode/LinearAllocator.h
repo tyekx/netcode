@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <cstdlib>
 
-namespace Egg {
+namespace Netcode {
 
 	template<size_t SIZE_IN_BYTES>
 	class LinearAllocator {

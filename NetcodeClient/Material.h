@@ -12,10 +12,10 @@
 struct Material {
 protected:
 public:
-	Egg::RootSignatureRef rootSignature;
-	Egg::PipelineStateRef pipelineState;
+	Netcode::RootSignatureRef rootSignature;
+	Netcode::PipelineStateRef pipelineState;
 
-	virtual void Apply(Egg::Graphics::IRenderContext * ctx) {
+	virtual void Apply(Netcode::Graphics::IRenderContext * ctx) {
 			
 	}
 };
@@ -23,7 +23,7 @@ public:
 struct TestMaterial : public Material {
 	MaterialData data;
 
-	virtual void Apply(Egg::Graphics::IRenderContext * ctx) override {
+	virtual void Apply(Netcode::Graphics::IRenderContext * ctx) override {
 		ctx->SetConstants(0, data);
 	}
 };

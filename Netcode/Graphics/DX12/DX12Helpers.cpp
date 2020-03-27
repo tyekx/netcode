@@ -1,6 +1,6 @@
 #include "DX12Helpers.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	D3D12_RENDER_TARGET_BLEND_DESC GetNativeRTBlendDesc(const RenderTargetBlendDesc & rtBlend) {
 		D3D12_RENDER_TARGET_BLEND_DESC rtb;

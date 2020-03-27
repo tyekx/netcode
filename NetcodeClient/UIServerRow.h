@@ -51,7 +51,7 @@ public:
 		}
 	}
 
-	void SetFont(Egg::SpriteFontRef spriteFont) {
+	void SetFont(Netcode::SpriteFontRef spriteFont) {
 		Text * t1 = ipObject->GetComponent<Text>();
 		Text * t2 = slotsObject->GetComponent<Text>();
 		Text * t3 = creatorObject->GetComponent<Text>();
@@ -83,7 +83,7 @@ public:
 		ServerRowAlignText(t2, 652.0f, tr2, slotsObject->GetComponent<UIElement>());
 	}
 
-	void SetBackground(Egg::ResourceViewsRef res, const DirectX::XMUINT2 & texSize) {
+	void SetBackground(Netcode::ResourceViewsRef res, const DirectX::XMUINT2 & texSize) {
 		Sprite * sprite = rootObject->GetComponent<Sprite>();
 		sprite->texture = std::move(res);
 		sprite->textureSize = texSize;

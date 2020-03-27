@@ -2,7 +2,7 @@
 
 #include "DX12Common.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	class Platform {
 		~Platform() = delete;

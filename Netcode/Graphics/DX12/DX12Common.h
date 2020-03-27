@@ -13,7 +13,7 @@
 template<typename T>
 using com_ptr = Microsoft::WRL::ComPtr<T>;
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	const char * RootSignatureVersionToString(D3D_ROOT_SIGNATURE_VERSION version);
 
@@ -33,7 +33,7 @@ namespace Egg::Graphics::DX12 {
 	void DebugPrintBlob(com_ptr<ID3DBlob> blob);
 }
 
-namespace Egg::Internal {
+namespace Netcode::Internal {
 
 	class HResultTester {
 	public:
@@ -49,4 +49,4 @@ namespace Egg::Internal {
 
 }
 
-#define DX_API(msg, ...) Egg::Internal::HResultTester(msg, __FILE__, __LINE__, __VA_ARGS__) <<
+#define DX_API(msg, ...) Netcode::Internal::HResultTester(msg, __FILE__, __LINE__, __VA_ARGS__) <<

@@ -1,7 +1,7 @@
 #include "Model.h"
 
 
-namespace Egg::Asset {
+namespace Netcode::Asset {
 
 	Model::Model() : meshesAlloc{ nullptr, std::free },
 		materialsAlloc{ nullptr, std::free },

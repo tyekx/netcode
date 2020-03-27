@@ -5,14 +5,14 @@
 #include "XamlGlobal.h"
 #include "DC_Bone.h"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
-    Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Bone> XamlHelpers::ConvertBones()
+    Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Bone> XamlHelpers::ConvertBones()
     {
         const auto & sk = Global::Model->skeleton;
 
-        winrt::Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Bone> bones =
-            winrt::single_threaded_observable_vector<EggAssetEditor::DC_Bone>();
+        winrt::Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Bone> bones =
+            winrt::single_threaded_observable_vector<NetcodeAssetEditor::DC_Bone>();
 
         for(const SkeletonBone & bone : sk.bones) {
             auto dcBone = winrt::make<DC_Bone>();

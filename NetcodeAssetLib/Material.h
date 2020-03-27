@@ -2,7 +2,7 @@
 
 #include <DirectXMath.h>
 
-namespace Egg::Asset {
+namespace Netcode::Asset {
 
 	struct Material {
 		DirectX::XMFLOAT4 diffuseColor;

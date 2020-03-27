@@ -1,6 +1,6 @@
 #include "DX12CPipelineStateBuilder.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	CPipelineStateBuilder::CPipelineStateBuilder(DX12CPipelineStateLibraryRef libRef) : cDesc{}, cLib{ std::move(libRef) }
 	{

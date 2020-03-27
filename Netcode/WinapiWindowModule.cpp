@@ -3,9 +3,9 @@
 #include <io.h>
 #include <fcntl.h>
 
-using Egg::Graphics::DisplayMode;
+using Netcode::Graphics::DisplayMode;
 
-namespace Egg::Module {
+namespace Netcode::Module {
 
 	void SetupConsole() {
 
@@ -60,7 +60,7 @@ namespace Egg::Module {
 			{
 				int x = LOWORD(lParam);
 				int y = HIWORD(lParam);
-				Egg::Input::SetMousePos(DirectX::XMINT2{ x, y });
+				Netcode::Input::SetMousePos(DirectX::XMINT2{ x, y });
 			}
 			break;
 
@@ -120,15 +120,15 @@ namespace Egg::Module {
 			break;
 
 		case WM_INPUT:
-			Egg::Input::ReadRawMouse(wParam, lParam);
+			Netcode::Input::ReadRawMouse(wParam, lParam);
 			return 0;
 
 		case WM_KEYDOWN:
-			Egg::Input::KeyPressed(static_cast<UINT>(wParam));
+			Netcode::Input::KeyPressed(static_cast<UINT>(wParam));
 			break;
 
 		case WM_KEYUP:
-			Egg::Input::KeyReleased(static_cast<UINT>(wParam));
+			Netcode::Input::KeyReleased(static_cast<UINT>(wParam));
 			break;
 		}
 
@@ -137,7 +137,7 @@ namespace Egg::Module {
 	}
 
 	void WinapiWindowModule::CompleteFrame() {
-		Egg::Input::Reset();
+		Netcode::Input::Reset();
 	}
 
 	bool WinapiWindowModule::KeepRunning() {
@@ -145,11 +145,11 @@ namespace Egg::Module {
 	}
 
 	void WinapiWindowModule::OnFocus() {
-		Egg::Input::Focused();
+		Netcode::Input::Focused();
 	}
 
 	void WinapiWindowModule::OnBlur() {
-		Egg::Input::Blur();
+		Netcode::Input::Blur();
 	}
 
 	void WinapiWindowModule::OnModeChanged(DisplayMode mode)

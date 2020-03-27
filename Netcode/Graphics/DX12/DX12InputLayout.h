@@ -3,9 +3,9 @@
 #include "../../HandleTypes.h"
 #include "DX12Common.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	class InputLayout : public Egg::InputLayout {
+	class InputLayout : public Netcode::InputLayout {
 		D3D12_INPUT_LAYOUT_DESC inputLayout;
 		std::vector<D3D12_INPUT_ELEMENT_DESC> elements;
 	public:
@@ -16,7 +16,7 @@ namespace Egg::Graphics::DX12 {
 		bool operator==(const std::vector<D3D12_INPUT_ELEMENT_DESC> & rhs) const;
 	};
 
-	using DX12InputLayout = Egg::Graphics::DX12::InputLayout;
+	using DX12InputLayout = Netcode::Graphics::DX12::InputLayout;
 	using DX12InputLayoutRef = std::shared_ptr<DX12InputLayout>;
 
 }

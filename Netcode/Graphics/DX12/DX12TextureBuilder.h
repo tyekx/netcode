@@ -2,9 +2,9 @@
 
 #include "DX12Texture.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	class TextureBuilder : public Egg::TextureBuilder {
+	class TextureBuilder : public Netcode::TextureBuilder {
 		DirectX::ScratchImage scratchImage;
 		DirectX::TexMetadata metaData;
 	public:
@@ -22,7 +22,7 @@ namespace Egg::Graphics::DX12 {
 		virtual TextureRef Build() override;
 	};
 
-	using DX12TextureBuilder = Egg::Graphics::DX12::TextureBuilder;
+	using DX12TextureBuilder = Netcode::Graphics::DX12::TextureBuilder;
 	using DX12TextureBuilderRef = std::shared_ptr<DX12TextureBuilder>;
 
 }

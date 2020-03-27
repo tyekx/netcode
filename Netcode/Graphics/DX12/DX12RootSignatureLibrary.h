@@ -2,7 +2,7 @@
 
 #include "DX12RootSignature.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	class RootSignatureLibrary {
 		com_ptr<ID3D12Device> device;
@@ -30,6 +30,6 @@ namespace Egg::Graphics::DX12 {
 		RootSignatureRef GetRootSignature(ShaderBytecodeRef blobWithRootSig);
 	};
 
-	using DX12RootSignatureLibrary = Egg::Graphics::DX12::RootSignatureLibrary;
+	using DX12RootSignatureLibrary = Netcode::Graphics::DX12::RootSignatureLibrary;
 	using DX12RootSignatureLibraryRef = std::shared_ptr<DX12RootSignatureLibrary>;
 }

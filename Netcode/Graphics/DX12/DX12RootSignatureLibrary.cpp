@@ -1,6 +1,6 @@
 #include "DX12RootSignatureLibrary.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	bool RootSignatureLibrary::IsCompatible(const D3D12_ROOT_SIGNATURE_DESC & lhs, const D3D12_ROOT_SIGNATURE_DESC & rhs) {
 		if(rhs.NumParameters > lhs.NumParameters) {
@@ -203,7 +203,7 @@ namespace Egg::Graphics::DX12 {
 		DX_API("Failed to create root signature")
 			device->CreateRootSignature(0, blobWithRootSig->GetBufferPointer(), blobWithRootSig->GetBufferSize(), IID_PPV_ARGS(rootSig.GetAddressOf()));
 
-		return rootSigs.emplace_back(std::make_shared<Egg::Graphics::DX12::RootSignature>(std::move(rootSig), *desc));
+		return rootSigs.emplace_back(std::make_shared<Netcode::Graphics::DX12::RootSignature>(std::move(rootSig), *desc));
 	}
 
 }

@@ -6,7 +6,7 @@
 #include <deque>
 #include <array>
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	/*
 	Simple linear allocator designed to be reset every frame

@@ -2,7 +2,7 @@
 #include "DC_Collider.g.h"
 #include "Model.h"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     struct DC_Collider : DC_ColliderT<DC_Collider>
     {
@@ -48,7 +48,7 @@ namespace winrt::EggAssetEditor::implementation
         void PropertyChanged(winrt::event_token const& token) noexcept;
     };
 }
-namespace winrt::EggAssetEditor::factory_implementation
+namespace winrt::NetcodeAssetEditor::factory_implementation
 {
     struct DC_Collider : DC_ColliderT<DC_Collider, implementation::DC_Collider>
     {

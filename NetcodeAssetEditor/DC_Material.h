@@ -1,7 +1,7 @@
 #pragma once
 #include "DC_Material.g.h"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     struct DC_Material : DC_MaterialT<DC_Material>
     {
@@ -56,7 +56,7 @@ namespace winrt::EggAssetEditor::implementation
         void PropertyChanged(winrt::event_token const& token) noexcept;
     };
 }
-namespace winrt::EggAssetEditor::factory_implementation
+namespace winrt::NetcodeAssetEditor::factory_implementation
 {
     struct DC_Material : DC_MaterialT<DC_Material, implementation::DC_Material>
     {

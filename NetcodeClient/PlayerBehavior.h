@@ -15,7 +15,7 @@ class PlayerBehavior : public IBehavior {
 	DirectX::XMVECTOR gravity;
 
 	void UpdateLookDirection(float dt) {
-		DirectX::XMINT2 mouseDelta = Egg::Input::GetMouseDelta();
+		DirectX::XMINT2 mouseDelta = Netcode::Input::GetMouseDelta();
 
 		DirectX::XMFLOAT2A normalizedMouseDelta{ -(float)(mouseDelta.x), -(float)(mouseDelta.y) };
 		cameraPitch += mouseSpeed * normalizedMouseDelta.y * dt;
@@ -32,8 +32,8 @@ class PlayerBehavior : public IBehavior {
 	}
 
 	DirectX::XMVECTOR GetDirectionalMovement() {
-		float dx = Egg::Input::GetAxis("Horizontal");
-		float dz = Egg::Input::GetAxis("Vertical");
+		float dx = Netcode::Input::GetAxis("Horizontal");
+		float dz = Netcode::Input::GetAxis("Vertical");
 
 		// 4th coord = 0 implies a vector value
 		const DirectX::XMFLOAT3 dxdz{ dx, 0.0f, dz };

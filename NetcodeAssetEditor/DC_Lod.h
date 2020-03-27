@@ -1,7 +1,7 @@
 #pragma once
 #include "DC_Lod.g.h"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     struct DC_Lod : DC_LodT<DC_Lod>
     {
@@ -34,7 +34,7 @@ namespace winrt::EggAssetEditor::implementation
     };
 }
 
-namespace winrt::EggAssetEditor::factory_implementation
+namespace winrt::NetcodeAssetEditor::factory_implementation
 {
     struct DC_Lod : DC_LodT<DC_Lod, implementation::DC_Lod>
     {

@@ -1,7 +1,7 @@
 #include "LinearClassifier.h"
 #include <cstdlib>
 
-namespace Egg::Memory {
+namespace Netcode::Memory {
 
 	LinearClassifier::LinearClassifier() {
 		Clear();

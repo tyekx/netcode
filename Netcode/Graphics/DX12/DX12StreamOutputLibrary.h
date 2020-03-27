@@ -2,7 +2,7 @@
 
 #include "DX12StreamOutput.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	class StreamOutputLibrary {
 		std::vector<DX12StreamOutputRef> streamOutputs;
@@ -13,7 +13,7 @@ namespace Egg::Graphics::DX12 {
 		StreamOutputRef GetStreamOutput(const D3D12_STREAM_OUTPUT_DESC & soDesc);
 	};
 
-	using DX12StreamOutputLibrary = Egg::Graphics::DX12::StreamOutputLibrary;
+	using DX12StreamOutputLibrary = Netcode::Graphics::DX12::StreamOutputLibrary;
 	using DX12StreamOutputLibraryRef = std::shared_ptr<DX12StreamOutputLibrary>;
 
 }

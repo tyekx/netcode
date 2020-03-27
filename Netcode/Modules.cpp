@@ -1,7 +1,7 @@
 #include "Modules.h"
 #include <algorithm>
 
-namespace Egg::Module {
+namespace Netcode::Module {
 
 	void AApp::StartModule(IModule * m) {
 		if(m) {
@@ -130,7 +130,7 @@ namespace Egg::Module {
 
 	}
 
-	void TAppEventHandler::OnModeChanged(Egg::Graphics::DisplayMode newMode)
+	void TAppEventHandler::OnModeChanged(Netcode::Graphics::DisplayMode newMode)
 	{
 	}
 }

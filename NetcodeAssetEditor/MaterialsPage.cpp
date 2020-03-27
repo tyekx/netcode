@@ -9,16 +9,16 @@
 using namespace winrt;
 using namespace Windows::UI::Xaml;
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     MaterialsPage::MaterialsPage()
     {
         InitializeComponent();
 
-        materials = winrt::single_threaded_observable_vector<EggAssetEditor::DC_Material>();
+        materials = winrt::single_threaded_observable_vector<NetcodeAssetEditor::DC_Material>();
     }
 
-    Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Material> MaterialsPage::Materials() {
+    Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Material> MaterialsPage::Materials() {
         return materials;
     }
 
@@ -27,7 +27,7 @@ namespace winrt::EggAssetEditor::implementation
 
         if(Global::Model != nullptr && !Global::Model->materials.empty()) {
             for(const auto & material : Global::Model->materials) {
-                auto dcMat = winrt::make<EggAssetEditor::implementation::DC_Material>();
+                auto dcMat = winrt::make<NetcodeAssetEditor::implementation::DC_Material>();
 
                 dcMat.Name(to_hstring(material.name));
 

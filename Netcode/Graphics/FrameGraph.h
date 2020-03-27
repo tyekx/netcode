@@ -6,15 +6,15 @@
 #include <NetcodeFoundation/ArrayView.hpp>
 #include "GraphicsContexts.h"
 
-namespace Egg::Graphics {
+namespace Netcode::Graphics {
 	class IResourceContext;
 	class IRenderContext;
 }
 
-namespace Egg {
+namespace Netcode {
 
-	using SetupCallback = std::function<void(Egg::Graphics::IResourceContext *)>;
-	using RenderCallback = std::function<void(Egg::Graphics::IRenderContext *)>;
+	using SetupCallback = std::function<void(Netcode::Graphics::IResourceContext *)>;
+	using RenderCallback = std::function<void(Netcode::Graphics::IRenderContext *)>;
 
 	class RenderPass {
 	public:
@@ -30,8 +30,8 @@ namespace Egg {
 		virtual bool IsComputePass() const = 0;
 		virtual void IsComputePass(bool value) = 0;
 
-		virtual Egg::ArrayView<uint64_t> GetReadResources() = 0;
-		virtual Egg::ArrayView<uint64_t> GetWrittenResources() = 0;
+		virtual Netcode::ArrayView<uint64_t> GetReadResources() = 0;
+		virtual Netcode::ArrayView<uint64_t> GetWrittenResources() = 0;
 
 		virtual void ReadsResource(uint64_t resource) = 0;
 		virtual void WritesResource(uint64_t resource) = 0;

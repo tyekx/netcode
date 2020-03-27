@@ -2,7 +2,7 @@
 #include "VectorConverter.h"
 #include "VectorConverter.g.cpp"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     Windows::Foundation::IInspectable VectorConverter::Convert(Windows::Foundation::IInspectable const& value, Windows::UI::Xaml::Interop::TypeName const& targetType, Windows::Foundation::IInspectable const& parameter, hstring const& language)
     {

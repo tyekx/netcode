@@ -7,7 +7,7 @@
 #include <DirectXTex/DirectXTex.h>
 
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	class ResourcePool {
 

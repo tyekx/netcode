@@ -2,24 +2,24 @@
 #include "UC_Lod.h"
 #include "UC_Lod.g.cpp"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     UC_Lod::UC_Lod() {
         InitializeComponent();
         MyContent(winrt::make<DC_Lod>());
     }
 
-    UC_Lod::UC_Lod(EggAssetEditor::DC_Lod const & myContent) {
+    UC_Lod::UC_Lod(NetcodeAssetEditor::DC_Lod const & myContent) {
         InitializeComponent();
         MyContent(myContent);
     }
 
-    EggAssetEditor::DC_Lod UC_Lod::MyContent()
+    NetcodeAssetEditor::DC_Lod UC_Lod::MyContent()
     {
-        return DataContext().as<EggAssetEditor::DC_Lod>();
+        return DataContext().as<NetcodeAssetEditor::DC_Lod>();
     }
 
-    void UC_Lod::MyContent(EggAssetEditor::DC_Lod const & value)
+    void UC_Lod::MyContent(NetcodeAssetEditor::DC_Lod const & value)
     {
         DataContext(value);
     }

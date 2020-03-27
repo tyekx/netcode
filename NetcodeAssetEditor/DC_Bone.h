@@ -1,8 +1,7 @@
 #pragma once
 #include "DC_Bone.g.h"
 
-
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     struct DC_Bone : DC_BoneT<DC_Bone>
     {
@@ -14,15 +13,14 @@ namespace winrt::EggAssetEditor::implementation
 
         uint32_t Depth();
         void Depth(uint32_t value);
-
         hstring Name();
-        void Name(hstring const& value);
-
-        winrt::event_token PropertyChanged(Windows::UI::Xaml::Data::PropertyChangedEventHandler const& handler);
-        void PropertyChanged(winrt::event_token const& token) noexcept;
+        void Name(hstring const & value);
+        winrt::event_token PropertyChanged(Windows::UI::Xaml::Data::PropertyChangedEventHandler const & handler);
+        void PropertyChanged(winrt::event_token const & token) noexcept;
     };
 }
-namespace winrt::EggAssetEditor::factory_implementation
+
+namespace winrt::NetcodeAssetEditor::factory_implementation
 {
     struct DC_Bone : DC_BoneT<DC_Bone, implementation::DC_Bone>
     {

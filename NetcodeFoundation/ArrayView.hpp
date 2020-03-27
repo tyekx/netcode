@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Egg {
+namespace Netcode {
 	template<typename T>
 	class ArrayView {
 		T * begin;

@@ -6,7 +6,7 @@
 #include <memory>
 #include <map>
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	static const char * GetShaderVersion(ShaderType type) {
 		switch(type) {
@@ -49,7 +49,7 @@ namespace Egg::Graphics::DX12 {
 		D3DCompile(shaderSource.c_str(), shaderSource.size(), nullptr, preprocDefinitions.get(), nullptr, entryFunction.c_str(), GetShaderVersion(type), 0, 0, byteCode.GetAddressOf(), errorMsg.GetAddressOf());
 
 		if(errorMsg != nullptr) {
-			Egg::Utility::Debugf("Error while compiling vertex shader (-Wall): \r\n");
+			Netcode::Utility::Debugf("Error while compiling vertex shader (-Wall): \r\n");
 			DebugPrintBlob(errorMsg);
 		}
 

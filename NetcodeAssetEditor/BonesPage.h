@@ -3,7 +3,7 @@
 #include "BonesPage.g.h"
 #include "DepthToMarginConverter.h"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     struct BonesPage : BonesPageT<BonesPage>
     {
@@ -15,7 +15,7 @@ namespace winrt::EggAssetEditor::implementation
     };
 }
 
-namespace winrt::EggAssetEditor::factory_implementation
+namespace winrt::NetcodeAssetEditor::factory_implementation
 {
     struct BonesPage : BonesPageT<BonesPage, implementation::BonesPage>
     {

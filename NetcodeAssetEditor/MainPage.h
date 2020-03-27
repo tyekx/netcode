@@ -1,6 +1,7 @@
 #pragma once
 #include "XamlHelpers.h"
 #include "DC_Animation.h"
+#include "DC_Lod.h"
 #include "DC_Bone.h"
 #include "UC_Mesh.h"
 #include "DC_Mesh.h"
@@ -16,24 +17,24 @@
 #include "SelectionToVisibilityConverter.h"
 #include "DepthToMarginConverter.h"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     struct MainPage : MainPageT<MainPage>
     {
         Windows::Foundation::Point swapChain_PointerPressedAt_ScreenSpace;
         Windows::Foundation::Point swapChain_LastPointerPosition_PanelSpace;
 
-        winrt::event<EggAssetEditor::ManifestChangedHandler> manifestChanged;
-        winrt::event<EggAssetEditor::ModelChangedHandler> modelChanged;
+        winrt::event<NetcodeAssetEditor::ManifestChangedHandler> manifestChanged;
+        winrt::event<NetcodeAssetEditor::ModelChangedHandler> modelChanged;
 
         bool pointerHeld;
 
         MainPage();
 
-        winrt::event_token ManifestChanged(EggAssetEditor::ManifestChangedHandler const & handler);
+        winrt::event_token ManifestChanged(NetcodeAssetEditor::ManifestChangedHandler const & handler);
         void ManifestChanged(winrt::event_token const & token) noexcept;
 
-        winrt::event_token ModelChanged(EggAssetEditor::ModelChangedHandler const & handler);
+        winrt::event_token ModelChanged(NetcodeAssetEditor::ModelChangedHandler const & handler);
         void ModelChanged(winrt::event_token const & token) noexcept;
 
 		void FileCtx_CreateManifest_Click(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
@@ -56,7 +57,7 @@ namespace winrt::EggAssetEditor::implementation
         void Pivot_SelectionChanged(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::Controls::SelectionChangedEventArgs const & e);
     };
 }
-namespace winrt::EggAssetEditor::factory_implementation
+namespace winrt::NetcodeAssetEditor::factory_implementation
 {
     struct MainPage : MainPageT<MainPage, implementation::MainPage>
     {

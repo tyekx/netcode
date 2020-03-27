@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 
-namespace Egg {
+namespace Netcode {
 
 	class Path {
 		static std::wstring MediaRoot;

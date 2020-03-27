@@ -3,6 +3,27 @@
   <ItemGroup>
     <Midl Include="App.idl" />
     <Midl Include="MainPage.idl" />
+    <Midl Include="BonesPage.idl">
+      <Filter>XAML</Filter>
+    </Midl>
+    <Midl Include="GeometryPage.idl">
+      <Filter>XAML</Filter>
+    </Midl>
+    <Midl Include="MainPage.idl">
+      <Filter>XAML</Filter>
+    </Midl>
+    <Midl Include="Vector2Control.idl">
+      <Filter>XAML</Filter>
+    </Midl>
+    <Midl Include="Vector3Control.idl">
+      <Filter>XAML</Filter>
+    </Midl>
+    <Midl Include="Vector4Control.idl">
+      <Filter>XAML</Filter>
+    </Midl>
+    <Midl Include="App.idl">
+      <Filter>XAML</Filter>
+    </Midl>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -35,9 +56,6 @@
     </ClCompile>
     <ClCompile Include="DC_Animation.cpp">
       <Filter>Data</Filter>
-    </ClCompile>
-    <ClCompile Include="EggAssetExporter.cpp">
-      <Filter>Export</Filter>
     </ClCompile>
     <ClCompile Include="XamlHelpers.cpp" />
     <ClCompile Include="DC_Material.cpp">
@@ -72,6 +90,48 @@
     </ClCompile>
     <ClCompile Include="DepthToMarginConverter.cpp">
       <Filter>XAML\Converters</Filter>
+    </ClCompile>
+    <ClCompile Include="NetcodeAssetExporter.cpp">
+      <Filter>Export</Filter>
+    </ClCompile>
+    <ClCompile Include="BonesPage.cpp">
+      <Filter>XAML</Filter>
+    </ClCompile>
+    <ClCompile Include="CollidersPage.cpp">
+      <Filter>XAML</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationsPage.cpp">
+      <Filter>XAML</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateColliderDialog.cpp">
+      <Filter>XAML</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometryPage.cpp">
+      <Filter>XAML</Filter>
+    </ClCompile>
+    <ClCompile Include="MainPage.cpp">
+      <Filter>XAML</Filter>
+    </ClCompile>
+    <ClCompile Include="UC_Lod.cpp">
+      <Filter>XAML</Filter>
+    </ClCompile>
+    <ClCompile Include="UC_Mesh.cpp">
+      <Filter>XAML</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector2Control.cpp">
+      <Filter>XAML</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector3Control.cpp">
+      <Filter>XAML</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector4Control.cpp">
+      <Filter>XAML</Filter>
+    </ClCompile>
+    <ClCompile Include="App.cpp">
+      <Filter>XAML</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialsPage.cpp">
+      <Filter>XAML</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -121,9 +181,6 @@
     <ClInclude Include="DC_Animation.h">
       <Filter>Data</Filter>
     </ClInclude>
-    <ClInclude Include="EggAssetExporter.h">
-      <Filter>Export</Filter>
-    </ClInclude>
     <ClInclude Include="XamlHelpers.h" />
     <ClInclude Include="DC_Material.h">
       <Filter>Data</Filter>
@@ -157,6 +214,48 @@
     </ClInclude>
     <ClInclude Include="DepthToMarginConverter.h">
       <Filter>XAML\Converters</Filter>
+    </ClInclude>
+    <ClInclude Include="NetcodeAssetExporter.h">
+      <Filter>Export</Filter>
+    </ClInclude>
+    <ClInclude Include="BonesPage.h">
+      <Filter>XAML</Filter>
+    </ClInclude>
+    <ClInclude Include="CollidersPage.h">
+      <Filter>XAML</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationsPage.h">
+      <Filter>XAML</Filter>
+    </ClInclude>
+    <ClInclude Include="CreateColliderDialog.h">
+      <Filter>XAML</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryPage.h">
+      <Filter>XAML</Filter>
+    </ClInclude>
+    <ClInclude Include="MainPage.h">
+      <Filter>XAML</Filter>
+    </ClInclude>
+    <ClInclude Include="UC_Lod.h">
+      <Filter>XAML</Filter>
+    </ClInclude>
+    <ClInclude Include="UC_Mesh.h">
+      <Filter>XAML</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector2Control.h">
+      <Filter>XAML</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector3Control.h">
+      <Filter>XAML</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector4Control.h">
+      <Filter>XAML</Filter>
+    </ClInclude>
+    <ClInclude Include="App.h">
+      <Filter>XAML</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialsPage.h">
+      <Filter>XAML</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -234,49 +333,6 @@
     <Text Include="readme.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ApplicationDefinition Include="App.xaml">
-      <Filter>XAML</Filter>
-    </ApplicationDefinition>
-  </ItemGroup>
-  <ItemGroup>
-    <Page Include="MainPage.xaml">
-      <Filter>XAML</Filter>
-    </Page>
-    <Page Include="UC_Mesh.xaml">
-      <Filter>XAML</Filter>
-    </Page>
-    <Page Include="UC_Lod.xaml">
-      <Filter>XAML</Filter>
-    </Page>
-    <Page Include="GeometryPage.xaml">
-      <Filter>XAML\Pages</Filter>
-    </Page>
-    <Page Include="AnimationsPage.xaml">
-      <Filter>XAML\Pages</Filter>
-    </Page>
-    <Page Include="BonesPage.xaml">
-      <Filter>XAML\Pages</Filter>
-    </Page>
-    <Page Include="MaterialsPage.xaml">
-      <Filter>XAML\Pages</Filter>
-    </Page>
-    <Page Include="CollidersPage.xaml">
-      <Filter>XAML\Pages</Filter>
-    </Page>
-    <Page Include="CreateColliderDialog.xaml">
-      <Filter>XAML\Dialogs</Filter>
-    </Page>
-    <Page Include="Vector4Control.xaml">
-      <Filter>XAML\UserControls</Filter>
-    </Page>
-    <Page Include="Vector3Control.xaml">
-      <Filter>XAML\UserControls</Filter>
-    </Page>
-    <Page Include="Vector2Control.xaml">
-      <Filter>XAML\UserControls</Filter>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
     <FxCompile Include="Editor_GBufferPass_Pixel.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
@@ -295,5 +351,48 @@
     <FxCompile Include="Editor_ColliderPass_Pixel.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="MaterialsPage.xaml">
+      <Filter>XAML</Filter>
+    </Page>
+    <Page Include="BonesPage.xaml">
+      <Filter>XAML</Filter>
+    </Page>
+    <Page Include="CollidersPage.xaml">
+      <Filter>XAML</Filter>
+    </Page>
+    <Page Include="AnimationsPage.xaml">
+      <Filter>XAML</Filter>
+    </Page>
+    <Page Include="CreateColliderDialog.xaml">
+      <Filter>XAML</Filter>
+    </Page>
+    <Page Include="GeometryPage.xaml">
+      <Filter>XAML</Filter>
+    </Page>
+    <Page Include="MainPage.xaml">
+      <Filter>XAML</Filter>
+    </Page>
+    <Page Include="UC_Lod.xaml">
+      <Filter>XAML</Filter>
+    </Page>
+    <Page Include="UC_Mesh.xaml">
+      <Filter>XAML</Filter>
+    </Page>
+    <Page Include="Vector4Control.xaml">
+      <Filter>XAML</Filter>
+    </Page>
+    <Page Include="Vector2Control.xaml">
+      <Filter>XAML</Filter>
+    </Page>
+    <Page Include="Vector3Control.xaml">
+      <Filter>XAML</Filter>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <Filter>XAML</Filter>
+    </ApplicationDefinition>
   </ItemGroup>
 </Project>

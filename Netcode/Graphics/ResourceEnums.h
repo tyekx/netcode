@@ -3,7 +3,7 @@
 #include <NetcodeFoundation/Formats.h>
 #include <cstdint>
 
-namespace Egg::Graphics {
+namespace Netcode::Graphics {
 
 	enum class ResourceState : unsigned {
 		COMMON = 0,

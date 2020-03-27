@@ -27,7 +27,7 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\SDK.props" />
-    <Import Project="..\EggApp.props" />
+    <Import Project="..\NetcodeApp.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -67,7 +67,7 @@
     <ClInclude Include="ComponentStorage.hpp" />
     <ClInclude Include="ConstantBufferTypes.h" />
     <ClInclude Include="DevCameraScript.h" />
-    <ClInclude Include="EggApp.h" />
+    <ClInclude Include="NetcodeApp.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Layer.h" />
     <ClInclude Include="LoadingIconScript.h" />

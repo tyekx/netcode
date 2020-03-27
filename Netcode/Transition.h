@@ -3,7 +3,7 @@
 
 #include "AnimationState.h"
 
-namespace Egg::Animation {
+namespace Netcode::Animation {
 
 	/*
 	Class that stores enough information about a transition to properly initialize

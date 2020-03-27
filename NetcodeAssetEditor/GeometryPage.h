@@ -6,7 +6,7 @@
 #include "Model.h"
 #include "EditorApp.h"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     struct GeometryPage : GeometryPageT<GeometryPage>
     {
@@ -21,7 +21,7 @@ namespace winrt::EggAssetEditor::implementation
     };
 }
 
-namespace winrt::EggAssetEditor::factory_implementation
+namespace winrt::NetcodeAssetEditor::factory_implementation
 {
     struct GeometryPage : GeometryPageT<GeometryPage, implementation::GeometryPage>
     {

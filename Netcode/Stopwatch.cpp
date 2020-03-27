@@ -1,25 +1,25 @@
 #include "Stopwatch.h"
 
-void Egg::Stopwatch::Start() {
+void Netcode::Stopwatch::Start() {
 	timestampStart = clock_type::now();
 }
 
-void Egg::Stopwatch::Stop() {
+void Netcode::Stopwatch::Stop() {
 	timestampEnd = clock_type::now();
 }
 
-float Egg::Stopwatch::Restart() {
+float Netcode::Stopwatch::Restart() {
 	Stop();
 	float value = GetElapsedSeconds();
 	Start();
 	return value;
 }
 
-void Egg::Stopwatch::Reset() {
+void Netcode::Stopwatch::Reset() {
 	Start();
 	Stop();
 }
 
-float Egg::Stopwatch::GetElapsedSeconds() {
+float Netcode::Stopwatch::GetElapsedSeconds() {
 	return std::chrono::duration<float>(timestampEnd - timestampStart).count();
 }

@@ -1,6 +1,6 @@
 #include "DX12FrameGraph.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	FrameGraph::FrameGraph(std::vector<DX12RenderPassRef> setupRenderPasses) : resources{ }, renderPasses{ } {
 

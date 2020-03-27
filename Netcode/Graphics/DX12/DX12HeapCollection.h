@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <unordered_map>
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	struct HeapAlloc {
 
@@ -240,7 +240,7 @@ namespace Egg::Graphics::DX12 {
 			ResourceHash & operator=(const ResourceHash &) = default;
 			ResourceHash(const ResourceHash &) = default;
 
-			ResourceHash(const Egg::Graphics::ResourceDesc & rd) : hash{ 0 } {
+			ResourceHash(const Netcode::Graphics::ResourceDesc & rd) : hash{ 0 } {
 				SetHeapFlagBits(GetNativeFlags(rd.flags), GetNativeDimension(rd.dimension));
 				SetHeapTypeBits(GetNativeHeapType(rd.type));
 				SetBucketIndex(HeapManager::DeduceBucketIndex(rd.sizeInBytes));

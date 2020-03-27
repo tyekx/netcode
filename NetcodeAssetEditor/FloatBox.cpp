@@ -2,7 +2,7 @@
 #include "FloatBox.h"
 #include "FloatBox.g.cpp"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     FloatBox::FloatBox() {
         TextChanged(Windows::UI::Xaml::Controls::TextChangedEventHandler(this, &FloatBox::OnTextChanged));

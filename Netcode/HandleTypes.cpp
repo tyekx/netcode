@@ -1,6 +1,6 @@
 #include "HandleTypes.h"
 
-namespace Egg {
+namespace Netcode {
 
 	Response::Response() : status{ 400 }, content{} { }
 	Response::Response(int sc) : status{ sc }, content{} {}

@@ -8,7 +8,7 @@
 #include "DC_Vector4Control.h"
 #include "FloatBox.h"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     struct Vector4Control : Vector4ControlT<Vector4Control>
     {
@@ -29,7 +29,7 @@ namespace winrt::EggAssetEditor::implementation
         }
 
         void OnValueUpdated(Windows::Foundation::IInspectable const & s, Windows::UI::Xaml::Data::PropertyChangedEventArgs const & e) {
-            Value(s.as<EggAssetEditor::DC_Vector4Control>().VectorValue());
+            Value(s.as<NetcodeAssetEditor::DC_Vector4Control>().VectorValue());
         }
 
         static void OnValueChanged(Windows::UI::Xaml::DependencyObject const & d, Windows::UI::Xaml::DependencyPropertyChangedEventArgs const & e)
@@ -41,14 +41,14 @@ namespace winrt::EggAssetEditor::implementation
                 return;
             }
 
-            auto iwlc{ d.as<EggAssetEditor::implementation::Vector4Control>() };
+            auto iwlc{ d.as<NetcodeAssetEditor::implementation::Vector4Control>() };
 
-            iwlc->wrapper().DataContext().as<EggAssetEditor::DC_Vector4Control>().VectorValue(e.NewValue());
+            iwlc->wrapper().DataContext().as<NetcodeAssetEditor::DC_Vector4Control>().VectorValue(e.NewValue());
         }
     };
 }
 
-namespace winrt::EggAssetEditor::factory_implementation
+namespace winrt::NetcodeAssetEditor::factory_implementation
 {
     struct Vector4Control : Vector4ControlT<Vector4Control, implementation::Vector4Control>
     {

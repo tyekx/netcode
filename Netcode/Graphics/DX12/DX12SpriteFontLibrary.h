@@ -6,7 +6,7 @@
 #include "DX12SpriteFont.h"
 #include <algorithm>
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	class SpriteFontLibrary {
 
@@ -25,7 +25,7 @@ namespace Egg::Graphics::DX12 {
 
 
 		DX12SpriteFontRef Get(const std::wstring & mediaPath) {
-			Egg::MediaPath fontPath{ mediaPath };
+			Netcode::MediaPath fontPath{ mediaPath };
 
 			auto it = std::find_if(std::begin(items), std::end(items), [&mediaPath](const Item & item) -> bool {
 				return item.path == mediaPath;
@@ -44,7 +44,7 @@ namespace Egg::Graphics::DX12 {
 
 	};
 
-	using DX12SpriteFontLibrary = Egg::Graphics::DX12::SpriteFontLibrary;
+	using DX12SpriteFontLibrary = Netcode::Graphics::DX12::SpriteFontLibrary;
 	using DX12SpriteFontLibraryRef = std::shared_ptr<DX12SpriteFontLibrary>;
 
 }

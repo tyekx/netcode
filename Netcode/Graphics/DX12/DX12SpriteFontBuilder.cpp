@@ -1,6 +1,6 @@
 #include "DX12SpriteFontBuilder.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	SpriteFontBuilder::SpriteFontBuilder(DX12SpriteFontLibraryRef spriteFontLib) : spriteFontLib{ std::move(spriteFontLib) }, spriteFont{ nullptr } {
 	

@@ -3,7 +3,7 @@
 #include "ColliderTypeConverter.g.cpp"
 #include "Model.h"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     Windows::Foundation::IInspectable ColliderTypeConverter::Convert(Windows::Foundation::IInspectable const& value, Windows::UI::Xaml::Interop::TypeName const& targetType, Windows::Foundation::IInspectable const& parameter, hstring const& language)
     {

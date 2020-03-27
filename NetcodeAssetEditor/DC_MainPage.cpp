@@ -2,19 +2,19 @@
 #include "DC_MainPage.h"
 #include "DC_MainPage.g.cpp"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
 
-    DC_MainPage::DC_MainPage() : meshes{ winrt::single_threaded_observable_vector<EggAssetEditor::DC_Mesh>() }, propertyChanged{} {
+    DC_MainPage::DC_MainPage() : meshes{ winrt::single_threaded_observable_vector<NetcodeAssetEditor::DC_Mesh>() }, propertyChanged{} {
 
     }
 
-    Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Mesh> DC_MainPage::Meshes()
+    Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Mesh> DC_MainPage::Meshes()
     {
         return meshes;
     }
 
-    void DC_MainPage::Meshes(Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Mesh> const& value)
+    void DC_MainPage::Meshes(Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Mesh> const& value)
     {
         meshes = value;
     }

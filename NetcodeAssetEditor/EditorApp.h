@@ -8,7 +8,7 @@
 #include "BoundingBoxHelpers.h"
 #include <Netcode/BasicGeometry.h>
 
-namespace Egg::Module {
+namespace Netcode::Module {
 
 	class EditorApp : public AApp {
 	public:
@@ -66,7 +66,7 @@ namespace Egg::Module {
 
 			UpdateColliderData(colls);
 
-			Egg::Graphics::UploadBatch upload;
+			Netcode::Graphics::UploadBatch upload;
 			std::vector<std::unique_ptr<DirectX::XMFLOAT3[]>> data;
 
 			for(const Collider & c : colls) {
@@ -76,7 +76,7 @@ namespace Egg::Module {
 					case ColliderType::BOX:
 					{
 						std::unique_ptr<DirectX::XMFLOAT3[]> boxVData = std::make_unique<DirectX::XMFLOAT3[]>(24);
-						Egg::Graphics::BasicGeometry::CreateBoxWireframe(boxVData.get(), sizeof(DirectX::XMFLOAT3), c.boxArgs);
+						Netcode::Graphics::BasicGeometry::CreateBoxWireframe(boxVData.get(), sizeof(DirectX::XMFLOAT3), c.boxArgs);
 						g.vertexBuffer = graphics->resources->CreateVertexBuffer(24 * sizeof(DirectX::XMFLOAT3), sizeof(DirectX::XMFLOAT3), ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
 						g.vertexCount = 24;
 						upload.Upload(g.vertexBuffer, boxVData.get(), 24 * sizeof(DirectX::XMFLOAT3));
@@ -90,7 +90,7 @@ namespace Egg::Module {
 						uint32_t stride = sizeof(DirectX::XMFLOAT3);
 						uint32_t sizeInBytes = vCount * stride;
 						std::unique_ptr<DirectX::XMFLOAT3[]> boxVData = std::make_unique<DirectX::XMFLOAT3[]>(vCount);
-						Egg::Graphics::BasicGeometry::CreateCapsuleWireframe(boxVData.get(), stride, c.capsuleArgs);
+						Netcode::Graphics::BasicGeometry::CreateCapsuleWireframe(boxVData.get(), stride, c.capsuleArgs);
 						g.vertexBuffer = graphics->resources->CreateVertexBuffer(sizeInBytes, stride, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
 						g.vertexCount = vCount;
 						upload.Upload(g.vertexBuffer, boxVData.get(), sizeInBytes);
@@ -104,7 +104,7 @@ namespace Egg::Module {
 						uint32_t stride = sizeof(DirectX::XMFLOAT3);
 						uint32_t sizeInBytes = vCount * stride;
 						std::unique_ptr<DirectX::XMFLOAT3[]> boxVData = std::make_unique<DirectX::XMFLOAT3[]>(vCount);
-						Egg::Graphics::BasicGeometry::CreateSphereWireFrame(boxVData.get(), stride, c.sphereArgs);
+						Netcode::Graphics::BasicGeometry::CreateSphereWireFrame(boxVData.get(), stride, c.sphereArgs);
 						g.vertexBuffer = graphics->resources->CreateVertexBuffer(sizeInBytes, stride, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
 						g.vertexCount = vCount;
 						upload.Upload(g.vertexBuffer, boxVData.get(), sizeInBytes);
@@ -197,7 +197,7 @@ namespace Egg::Module {
 			Path::SetMediaRoot(L"Media");
 			Path::SetShaderRoot(L"Shaders");
 
-			events = std::make_unique<Egg::Module::AppEventSystem>();
+			events = std::make_unique<Netcode::Module::AppEventSystem>();
 
 			graphics = factory->CreateGraphicsModule(this, 0);
 

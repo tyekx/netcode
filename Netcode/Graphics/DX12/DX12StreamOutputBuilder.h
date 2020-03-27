@@ -3,9 +3,9 @@
 #include "DX12StreamOutput.h"
 #include "DX12StreamOutputLibrary.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	class StreamOutputBuilder : public Egg::StreamOutputBuilder {
+	class StreamOutputBuilder : public Netcode::StreamOutputBuilder {
 		std::vector<D3D12_SO_DECLARATION_ENTRY> declarations;
 		std::vector<UINT> strides;
 		UINT rasterizedStream;
@@ -25,7 +25,7 @@ namespace Egg::Graphics::DX12 {
 		virtual StreamOutputRef Build() override;
 	};
 
-	using DX12StreamOutputBuilder = Egg::Graphics::DX12::StreamOutputBuilder;
-	using DX12StreamOutputBuilderRef = std::shared_ptr<Egg::Graphics::DX12::StreamOutputBuilder>;
+	using DX12StreamOutputBuilder = Netcode::Graphics::DX12::StreamOutputBuilder;
+	using DX12StreamOutputBuilderRef = std::shared_ptr<Netcode::Graphics::DX12::StreamOutputBuilder>;
 
 }

@@ -2,7 +2,7 @@
 #include "DC_Bone.h"
 #include "DC_Bone.g.cpp"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
 
     DC_Bone::DC_Bone() : propertyChanged{}, name{} {

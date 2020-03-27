@@ -7,7 +7,7 @@
 #include "Modules.h"
 
 
-namespace Egg::Module {
+namespace Netcode::Module {
 
 	namespace http = boost::beast::http;
 

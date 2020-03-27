@@ -9,14 +9,14 @@
 #include <variant>
 #include "GameObject.h"
 
-using Egg::Graphics::ResourceDesc;
-using Egg::Graphics::ResourceType;
-using Egg::Graphics::ResourceState;
-using Egg::Graphics::ResourceFlags;
-using Egg::Graphics::PrimitiveTopology;
+using Netcode::Graphics::ResourceDesc;
+using Netcode::Graphics::ResourceType;
+using Netcode::Graphics::ResourceState;
+using Netcode::Graphics::ResourceFlags;
+using Netcode::Graphics::PrimitiveTopology;
 
-using Egg::Graphics::IResourceContext;
-using Egg::Graphics::IRenderContext;
+using Netcode::Graphics::IResourceContext;
+using Netcode::Graphics::IRenderContext;
 
 /*
 
@@ -36,7 +36,7 @@ struct RenderItem {
 };
 
 struct UISpriteRenderItem {
-	Egg::ResourceViewsRef texture;
+	Netcode::ResourceViewsRef texture;
 	DirectX::XMUINT2 textureSize;
 	DirectX::XMFLOAT2 destSizeInPixels;
 	DirectX::XMFLOAT4 color;
@@ -51,7 +51,7 @@ struct UISpriteRenderItem {
 	UISpriteRenderItem(UISpriteRenderItem &&) noexcept = default;
 	UISpriteRenderItem & operator=(UISpriteRenderItem &&) noexcept = default;
 
-	UISpriteRenderItem(Egg::ResourceViewsRef tex,
+	UISpriteRenderItem(Netcode::ResourceViewsRef tex,
 		const DirectX::XMUINT2 & tSize,
 		const DirectX::XMFLOAT2 & destSize,
 		const DirectX::XMFLOAT4 & color,
@@ -68,7 +68,7 @@ struct UISpriteRenderItem {
 };
 
 struct UITextRenderItem {
-	Egg::SpriteFontRef font;
+	Netcode::SpriteFontRef font;
 	std::wstring text;
 	DirectX::XMFLOAT2 position;
 	DirectX::XMFLOAT4 fontColor;
@@ -80,7 +80,7 @@ struct UITextRenderItem {
 	UITextRenderItem(UITextRenderItem &&) noexcept = default;
 	UITextRenderItem & operator=(UITextRenderItem &&) noexcept = default;
 
-	UITextRenderItem(Egg::SpriteFontRef font,
+	UITextRenderItem(Netcode::SpriteFontRef font,
 		std::wstring text,
 		const DirectX::XMFLOAT2 & position,
 		const DirectX::XMFLOAT4 & color) :
@@ -112,44 +112,44 @@ class GraphicsEngine {
 	DirectX::XMUINT2 backbufferSize;
 	DirectX::XMUINT2 ssaoRenderTargetSize;
 
-	Egg::Module::IGraphicsModule * graphics;
+	Netcode::Module::IGraphicsModule * graphics;
 
-	Egg::ResourceViewsRef gbufferPass_RenderTargetViews;
-	Egg::ResourceViewsRef gbufferPass_DepthStencilView;
-	Egg::ResourceViewsRef lightingPass_ShaderResourceViews;
+	Netcode::ResourceViewsRef gbufferPass_RenderTargetViews;
+	Netcode::ResourceViewsRef gbufferPass_DepthStencilView;
+	Netcode::ResourceViewsRef lightingPass_ShaderResourceViews;
 
-	Egg::RootSignatureRef skinnedGbufferPass_RootSignature;
-	Egg::PipelineStateRef skinnedGbufferPass_PipelineState;
+	Netcode::RootSignatureRef skinnedGbufferPass_RootSignature;
+	Netcode::PipelineStateRef skinnedGbufferPass_PipelineState;
 
-	Egg::RootSignatureRef gbufferPass_RootSignature;
-	Egg::PipelineStateRef gbufferPass_PipelineState;
+	Netcode::RootSignatureRef gbufferPass_RootSignature;
+	Netcode::PipelineStateRef gbufferPass_PipelineState;
 
-	Egg::RootSignatureRef lightingPass_RootSignature;
-	Egg::PipelineStateRef lightingPass_PipelineState;
+	Netcode::RootSignatureRef lightingPass_RootSignature;
+	Netcode::PipelineStateRef lightingPass_PipelineState;
 
-	Egg::RootSignatureRef ssaoOcclusionPass_RootSignature;
-	Egg::PipelineStateRef ssaoOcclusionPass_PipelineState;
+	Netcode::RootSignatureRef ssaoOcclusionPass_RootSignature;
+	Netcode::PipelineStateRef ssaoOcclusionPass_PipelineState;
 
-	Egg::RootSignatureRef ssaoBlurPass_RootSignature;
-	Egg::PipelineStateRef ssaoBlurPass_PipelineState;
+	Netcode::RootSignatureRef ssaoBlurPass_RootSignature;
+	Netcode::PipelineStateRef ssaoBlurPass_PipelineState;
 
-	Egg::SpriteBatchRef uiPass_SpriteBatch;
+	Netcode::SpriteBatchRef uiPass_SpriteBatch;
 
 public:
 
 	PerFrameData * perFrameData;
 	SsaoData * ssaoData;
 
-	Egg::ScratchBuffer<RenderItem> skinnedGbufferPass_Input;
-	Egg::ScratchBuffer<RenderItem> gbufferPass_Input;
-	Egg::ScratchBuffer<UIRenderItem> uiPass_Input;
+	Netcode::ScratchBuffer<RenderItem> skinnedGbufferPass_Input;
+	Netcode::ScratchBuffer<RenderItem> gbufferPass_Input;
+	Netcode::ScratchBuffer<UIRenderItem> uiPass_Input;
 
 
 
 
 private:
 
-	void CreateFSQuad(Egg::Module::IGraphicsModule * g) {
+	void CreateFSQuad(Netcode::Module::IGraphicsModule * g) {
 		struct PT_Vert {
 			DirectX::XMFLOAT3 position;
 			DirectX::XMFLOAT2 texCoord;
@@ -169,47 +169,47 @@ private:
 		fsQuad.indexBuffer = 0;
 		fsQuad.indexCount = 0;
 
-		Egg::Graphics::UploadBatch uploadBatch;
+		Netcode::Graphics::UploadBatch uploadBatch;
 		uploadBatch.Upload(fsQuad.vertexBuffer, vData, sizeof(vData));
 		uploadBatch.ResourceBarrier(fsQuad.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
 
 		g->frame->SyncUpload(uploadBatch);
 	}
 
-	void CreateUIPassPermanentResources(Egg::Module::IGraphicsModule * g) {
+	void CreateUIPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
 		auto ilBuilder = g->CreateInputLayoutBuilder();
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("COLOR", DXGI_FORMAT_R32G32B32A32_FLOAT);
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
-		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
 
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"sprite_Vertex.cso");
-		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"sprite_Pixel.cso");
+		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"sprite_Vertex.cso");
+		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"sprite_Pixel.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		auto rootSignature = rootSigBuilder->BuildFromShader(vs);
 
-		Egg::BlendDesc blendState;
-		Egg::RenderTargetBlendDesc rt0Blend;
+		Netcode::BlendDesc blendState;
+		Netcode::RenderTargetBlendDesc rt0Blend;
 		rt0Blend.blendEnable = true;
 		rt0Blend.logicOpEnable = false;
-		rt0Blend.srcBlend = Egg::BlendMode::SRC_ALPHA;
-		rt0Blend.destBlend = Egg::BlendMode::INV_SRC_ALPHA;
-		rt0Blend.blendOp = Egg::BlendOp::ADD;
-		rt0Blend.srcBlendAlpha = Egg::BlendMode::ONE;
-		rt0Blend.destBlendAlpha = Egg::BlendMode::INV_SRC_ALPHA;
-		rt0Blend.blendOpAlpha = Egg::BlendOp::ADD;
-		rt0Blend.logicOp = Egg::LogicOp::NOOP;
+		rt0Blend.srcBlend = Netcode::BlendMode::SRC_ALPHA;
+		rt0Blend.destBlend = Netcode::BlendMode::INV_SRC_ALPHA;
+		rt0Blend.blendOp = Netcode::BlendOp::ADD;
+		rt0Blend.srcBlendAlpha = Netcode::BlendMode::ONE;
+		rt0Blend.destBlendAlpha = Netcode::BlendMode::INV_SRC_ALPHA;
+		rt0Blend.blendOpAlpha = Netcode::BlendOp::ADD;
+		rt0Blend.logicOp = Netcode::LogicOp::NOOP;
 		rt0Blend.renderTargetWriteMask = 0x0F;
 
 		blendState.alphaToCoverageEnabled = false;
 		blendState.independentAlphaEnabled = false;
 		blendState.rtBlend[0] = rt0Blend;
 
-		Egg::RasterizerDesc rasterizerState;
-		rasterizerState.fillMode = Egg::FillMode::SOLID;
-		rasterizerState.cullMode = Egg::CullMode::NONE;
+		Netcode::RasterizerDesc rasterizerState;
+		rasterizerState.fillMode = Netcode::FillMode::SOLID;
+		rasterizerState.cullMode = Netcode::CullMode::NONE;
 		rasterizerState.frontCounterClockwise = false;
 		rasterizerState.depthBias = 0;
 		rasterizerState.depthBiasClamp = 0.0f;
@@ -220,7 +220,7 @@ private:
 		rasterizerState.forcedSampleCount = 0;
 		rasterizerState.conservativeRaster = false;
 
-		Egg::DepthStencilDesc depthStencilDesc;
+		Netcode::DepthStencilDesc depthStencilDesc;
 		depthStencilDesc.depthEnable = false;
 		depthStencilDesc.stencilEnable = false;
 		depthStencilDesc.depthWriteMaskZero = true;
@@ -232,47 +232,47 @@ private:
 		psoBuilder->SetPixelShader(ps);
 		psoBuilder->SetDepthStencilFormat(DXGI_FORMAT_D32_FLOAT);
 		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
-		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
+		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::TRIANGLE);
 		psoBuilder->SetBlendState(blendState);
 		psoBuilder->SetRasterizerState(rasterizerState);
 		psoBuilder->SetDepthStencilState(depthStencilDesc);
 
 		auto pipelineState = psoBuilder->Build();
 
-		Egg::SpriteBatchBuilderRef spriteBatchBuilder = g->CreateSpriteBatchBuilder();
+		Netcode::SpriteBatchBuilderRef spriteBatchBuilder = g->CreateSpriteBatchBuilder();
 		spriteBatchBuilder->SetPipelineState(std::move(pipelineState));
 		spriteBatchBuilder->SetRootSignature(std::move(rootSignature));
 		uiPass_SpriteBatch = spriteBatchBuilder->Build();
 
 	}
 
-	void CreateSkinnedGbufferPassPermanentResources(Egg::Module::IGraphicsModule * g) {
+	void CreateSkinnedGbufferPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
 		auto ilBuilder = g->CreateInputLayoutBuilder();
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
 		ilBuilder->AddInputElement("WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("BONEIDS", DXGI_FORMAT_R32_UINT);
-		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
 
 
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"skinningPass_Vertex.cso");
-		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"gbufferPass_Pixel.cso");
+		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"skinningPass_Vertex.cso");
+		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"gbufferPass_Pixel.cso");
 
 		auto rsBuilder = g->CreateRootSignatureBuilder();
 		skinnedGbufferPass_RootSignature = rsBuilder->BuildFromShader(vs);
 
-		Egg::DepthStencilDesc depthStencilDesc;
-		depthStencilDesc.backFace.stencilDepthFailOp = Egg::StencilOp::KEEP;
-		depthStencilDesc.backFace.stencilFailOp = Egg::StencilOp::KEEP;
-		depthStencilDesc.backFace.stencilPassOp = Egg::StencilOp::KEEP;
-		depthStencilDesc.backFace.stencilFunc = Egg::ComparisonFunc::NEVER;
+		Netcode::DepthStencilDesc depthStencilDesc;
+		depthStencilDesc.backFace.stencilDepthFailOp = Netcode::StencilOp::KEEP;
+		depthStencilDesc.backFace.stencilFailOp = Netcode::StencilOp::KEEP;
+		depthStencilDesc.backFace.stencilPassOp = Netcode::StencilOp::KEEP;
+		depthStencilDesc.backFace.stencilFunc = Netcode::ComparisonFunc::NEVER;
 
-		depthStencilDesc.frontFace.stencilDepthFailOp = Egg::StencilOp::KEEP;
-		depthStencilDesc.frontFace.stencilFailOp = Egg::StencilOp::KEEP;
-		depthStencilDesc.frontFace.stencilPassOp = Egg::StencilOp::REPLACE;
-		depthStencilDesc.frontFace.stencilFunc = Egg::ComparisonFunc::ALWAYS;
+		depthStencilDesc.frontFace.stencilDepthFailOp = Netcode::StencilOp::KEEP;
+		depthStencilDesc.frontFace.stencilFailOp = Netcode::StencilOp::KEEP;
+		depthStencilDesc.frontFace.stencilPassOp = Netcode::StencilOp::REPLACE;
+		depthStencilDesc.frontFace.stencilFunc = Netcode::ComparisonFunc::ALWAYS;
 
 		depthStencilDesc.depthEnable = true;
 		depthStencilDesc.stencilEnable = true;
@@ -287,16 +287,16 @@ private:
 		psoBuilder->SetDepthStencilState(depthStencilDesc);
 		psoBuilder->SetDepthStencilFormat(gbufferPass_DepthStencilFormat);
 		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R32G32B32A32_FLOAT });
-		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
+		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::TRIANGLE);
 		skinnedGbufferPass_PipelineState = psoBuilder->Build();
 	}
 
-	void CreateGbufferPassPermanentResources(Egg::Module::IGraphicsModule * g) {
+	void CreateGbufferPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
 		gbufferPass_DepthStencilFormat = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
 
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"gbufferPass_Vertex.cso");
-		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"gbufferPass_Pixel.cso");
+		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"gbufferPass_Vertex.cso");
+		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"gbufferPass_Pixel.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		gbufferPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
@@ -305,18 +305,18 @@ private:
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
-		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
 
-		Egg::DepthStencilDesc depthStencilDesc;
-		depthStencilDesc.backFace.stencilDepthFailOp = Egg::StencilOp::KEEP;
-		depthStencilDesc.backFace.stencilFailOp = Egg::StencilOp::KEEP;
-		depthStencilDesc.backFace.stencilPassOp = Egg::StencilOp::KEEP;
-		depthStencilDesc.backFace.stencilFunc = Egg::ComparisonFunc::NEVER;
+		Netcode::DepthStencilDesc depthStencilDesc;
+		depthStencilDesc.backFace.stencilDepthFailOp = Netcode::StencilOp::KEEP;
+		depthStencilDesc.backFace.stencilFailOp = Netcode::StencilOp::KEEP;
+		depthStencilDesc.backFace.stencilPassOp = Netcode::StencilOp::KEEP;
+		depthStencilDesc.backFace.stencilFunc = Netcode::ComparisonFunc::NEVER;
 
-		depthStencilDesc.frontFace.stencilDepthFailOp = Egg::StencilOp::KEEP;
-		depthStencilDesc.frontFace.stencilFailOp = Egg::StencilOp::KEEP;
-		depthStencilDesc.frontFace.stencilPassOp = Egg::StencilOp::REPLACE;
-		depthStencilDesc.frontFace.stencilFunc = Egg::ComparisonFunc::ALWAYS;
+		depthStencilDesc.frontFace.stencilDepthFailOp = Netcode::StencilOp::KEEP;
+		depthStencilDesc.frontFace.stencilFailOp = Netcode::StencilOp::KEEP;
+		depthStencilDesc.frontFace.stencilPassOp = Netcode::StencilOp::REPLACE;
+		depthStencilDesc.frontFace.stencilFunc = Netcode::ComparisonFunc::ALWAYS;
 
 		depthStencilDesc.depthEnable = true;
 		depthStencilDesc.stencilEnable = true;
@@ -331,7 +331,7 @@ private:
 		psoBuilder->SetDepthStencilState(depthStencilDesc);
 		psoBuilder->SetDepthStencilFormat(gbufferPass_DepthStencilFormat);
 		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R32G32B32A32_FLOAT });
-		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
+		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::TRIANGLE);
 		gbufferPass_PipelineState = psoBuilder->Build();
 
 		gbufferPass_RenderTargetViews = graphics->resources->CreateRenderTargetViews(2);
@@ -369,10 +369,10 @@ private:
 		gbufferPass_DepthStencilView->CreateDSV(gbufferPass_DepthBuffer);
 	}
 
-	void CreateSSAOBlurPassPermanentResources(Egg::Module::IGraphicsModule * g) {
+	void CreateSSAOBlurPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"ssaoPass_Vertex.cso");
-		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"ssaoBlurPass_Pixel.cso");
+		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"ssaoPass_Vertex.cso");
+		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"ssaoBlurPass_Pixel.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		ssaoBlurPass_RootSignature = rootSigBuilder->BuildFromShader(ps);
@@ -381,26 +381,26 @@ private:
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
 
-		Egg::DepthStencilDesc depthDesc;
+		Netcode::DepthStencilDesc depthDesc;
 		depthDesc.depthEnable = false;
 		depthDesc.stencilEnable = false;
 
-		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
 		auto psoBuilder = g->CreateGPipelineStateBuilder();
 		psoBuilder->SetRootSignature(ssaoBlurPass_RootSignature);
 		psoBuilder->SetInputLayout(inputLayout);
 		psoBuilder->SetVertexShader(vs);
 		psoBuilder->SetPixelShader(ps);
 		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R32_FLOAT });
-		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
+		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::TRIANGLE);
 		psoBuilder->SetDepthStencilState(depthDesc);
 		ssaoBlurPass_PipelineState = psoBuilder->Build();
 	}
 
-	void CreateSSAOOcclusionPassPermanentResources(Egg::Module::IGraphicsModule * g) {
+	void CreateSSAOOcclusionPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"ssaoPass_Vertex.cso");
-		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"ssaoOcclusionPass_Pixel.cso");
+		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"ssaoPass_Vertex.cso");
+		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"ssaoOcclusionPass_Pixel.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		ssaoOcclusionPass_RootSignature = rootSigBuilder->BuildFromShader(ps);
@@ -409,18 +409,18 @@ private:
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
 
-		Egg::DepthStencilDesc depthDesc;
+		Netcode::DepthStencilDesc depthDesc;
 		depthDesc.depthEnable = false;
 		depthDesc.stencilEnable = false;
 
-		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
 		auto psoBuilder = g->CreateGPipelineStateBuilder();
 		psoBuilder->SetRootSignature(ssaoOcclusionPass_RootSignature);
 		psoBuilder->SetInputLayout(inputLayout);
 		psoBuilder->SetVertexShader(vs);
 		psoBuilder->SetPixelShader(ps);
 		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R32_FLOAT });
-		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
+		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::TRIANGLE);
 		psoBuilder->SetDepthStencilState(depthDesc);
 		ssaoOcclusionPass_PipelineState = psoBuilder->Build();
 
@@ -437,7 +437,7 @@ private:
 			}
 		}
 
-		Egg::Graphics::UploadBatch upload;
+		Netcode::Graphics::UploadBatch upload;
 		upload.Upload(ssaoPass_RandomVectorTexture, colors.get(), 256 * 256 * sizeof(DirectX::PackedVector::XMCOLOR));
 		upload.ResourceBarrier(ssaoPass_RandomVectorTexture, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
 		g->frame->SyncUpload(upload);
@@ -467,10 +467,10 @@ private:
 		lightingPass_ShaderResourceViews->CreateSRV(3, ssaoPass_BlurRenderTarget);
 	}
 
-	void CreateLightingPassPermanentResources(Egg::Module::IGraphicsModule * g) {
+	void CreateLightingPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"lightingPass_Vertex.cso");
-		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"lightingPass_Pixel.cso");
+		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"lightingPass_Vertex.cso");
+		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"lightingPass_Pixel.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		lightingPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
@@ -479,20 +479,20 @@ private:
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
 
-		Egg::DepthStencilDesc depthDesc;
+		Netcode::DepthStencilDesc depthDesc;
 		depthDesc.depthEnable = false;
 		depthDesc.stencilEnable = true;
-		depthDesc.frontFace.stencilDepthFailOp = Egg::StencilOp::KEEP;
-		depthDesc.frontFace.stencilFailOp = Egg::StencilOp::KEEP;
-		depthDesc.frontFace.stencilPassOp = Egg::StencilOp::KEEP;
-		depthDesc.frontFace.stencilFunc = Egg::ComparisonFunc::EQUAL;
+		depthDesc.frontFace.stencilDepthFailOp = Netcode::StencilOp::KEEP;
+		depthDesc.frontFace.stencilFailOp = Netcode::StencilOp::KEEP;
+		depthDesc.frontFace.stencilPassOp = Netcode::StencilOp::KEEP;
+		depthDesc.frontFace.stencilFunc = Netcode::ComparisonFunc::EQUAL;
 		depthDesc.stencilReadMask = 0xFF;
 		depthDesc.stencilWriteMask = 0x00;
 		depthDesc.depthWriteMaskZero = true;
 		depthDesc.backFace = depthDesc.frontFace;
-		depthDesc.backFace.stencilFunc = Egg::ComparisonFunc::NEVER;
+		depthDesc.backFace.stencilFunc = Netcode::ComparisonFunc::NEVER;
 
-		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
 		auto psoBuilder = g->CreateGPipelineStateBuilder();
 		psoBuilder->SetRootSignature(lightingPass_RootSignature);
 		psoBuilder->SetInputLayout(inputLayout);
@@ -500,7 +500,7 @@ private:
 		psoBuilder->SetPixelShader(ps);
 		psoBuilder->SetDepthStencilFormat(gbufferPass_DepthStencilFormat);
 		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
-		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
+		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::TRIANGLE);
 		psoBuilder->SetDepthStencilState(depthDesc);
 		lightingPass_PipelineState = psoBuilder->Build();
 
@@ -514,7 +514,7 @@ private:
 		lightingPass_ShaderResourceViews->CreateSRV(2, gbufferPass_DepthBuffer);
 	}
 
-	void CreateSkinnedGbufferPass(Egg::FrameGraphBuilderRef frameGraphBuilder) {
+	void CreateSkinnedGbufferPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("Skinned Gbuffer",
 		[&](IResourceContext * context) -> void {
 			context->Writes(2);
@@ -556,7 +556,7 @@ private:
 		);
 	}
 
-	void CreateGbufferPass(Egg::FrameGraphBuilderRef frameGraphBuilder) {
+	void CreateGbufferPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("Gbuffer", [&](IResourceContext * context) -> void {
 
 			context->Reads(2);
@@ -609,7 +609,7 @@ private:
 		});
 	}
 
-	void CreateSSAOOcclusionPass(Egg::FrameGraphBuilderRef frameGraphBuilder) {
+	void CreateSSAOOcclusionPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("SSAO Occlusion", [&](IResourceContext * context) -> void {
 
 			context->Reads(gbufferPass_NormalsRenderTarget);
@@ -643,7 +643,7 @@ private:
 		});
 	}
 
-	void CreateSSAOBlurPass(Egg::FrameGraphBuilderRef frameGraphBuilder) {
+	void CreateSSAOBlurPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("SSAO Blur", [&](IResourceContext * context) -> void {
 
 			context->Reads(ssaoPass_OcclusionRenderTarget);
@@ -699,7 +699,7 @@ private:
 		});
 	}
 
-	void CreateLightingPass(Egg::FrameGraphBuilderRef frameGraphBuilder) {
+	void CreateLightingPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("Lighting", [&](IResourceContext * context) -> void {
 
 			context->Reads(ssaoPass_BlurRenderTarget);
@@ -728,7 +728,7 @@ private:
 		});
 	}
 
-	void CreateUIPass(Egg::FrameGraphBuilderRef frameGraphBuilder) {
+	void CreateUIPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("UI",
 			[&](IResourceContext * context) -> void {
 
@@ -764,7 +764,7 @@ private:
 		});
 	}
 
-	void CreatePostProcessPass(Egg::FrameGraphBuilderRef frameGraphBuilder) {
+	void CreatePostProcessPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("postProcessPass", [&](IResourceContext * context) -> void {
 
 
@@ -778,26 +778,26 @@ private:
 	}
 
 	uint64_t cloudynoonTexture;
-	Egg::ResourceViewsRef cloudynoonView;
+	Netcode::ResourceViewsRef cloudynoonView;
 
 public:
 
 	DirectX::XMFLOAT4X4 uiPass_viewProjInv;
 
-	void CreateBackgroundPassPermanentResources(Egg::Module::IGraphicsModule * g) {
-		Egg::TextureBuilderRef textureBuilder = graphics->CreateTextureBuilder();
+	void CreateBackgroundPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
+		Netcode::TextureBuilderRef textureBuilder = graphics->CreateTextureBuilder();
 		textureBuilder->LoadTextureCube(L"cloudynoon.dds");
-		Egg::TextureRef cloudynoon = textureBuilder->Build();
+		Netcode::TextureRef cloudynoon = textureBuilder->Build();
 
 		ASSERT(cloudynoon->GetImageCount() == 6, "bad image count");
 
-		const Egg::Image * img = cloudynoon->GetImage(0, 0, 0);
+		const Netcode::Image * img = cloudynoon->GetImage(0, 0, 0);
 
 		cloudynoonTexture = g->resources->CreateTextureCube(img->width, img->height, img->format, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST, ResourceFlags::NONE);
 
 		g->resources->SetDebugName(cloudynoonTexture, L"Cloudynoon TextureCube");
 
-		Egg::Graphics::UploadBatch batch;
+		Netcode::Graphics::UploadBatch batch;
 		batch.Upload(cloudynoonTexture, cloudynoon);
 		batch.ResourceBarrier(cloudynoonTexture, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
 		g->frame->SyncUpload(batch);
@@ -805,49 +805,49 @@ public:
 		cloudynoonView = g->resources->CreateShaderResourceViews(1);
 		cloudynoonView->CreateSRV(0, cloudynoonTexture);
 
-		Egg::ShaderBuilderRef shaderBuilder = g->CreateShaderBuilder();
-		Egg::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"envmapPass_Vertex.cso");
-		Egg::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"envmapPass_Pixel.cso");
+		Netcode::ShaderBuilderRef shaderBuilder = g->CreateShaderBuilder();
+		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"envmapPass_Vertex.cso");
+		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"envmapPass_Pixel.cso");
 
-		Egg::RootSignatureBuilderRef rootSigBuilder = g->CreateRootSignatureBuilder();
+		Netcode::RootSignatureBuilderRef rootSigBuilder = g->CreateRootSignatureBuilder();
 		envmapPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
 
 		auto ilBuilder = g->CreateInputLayoutBuilder();
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
-		Egg::InputLayoutRef inputLayout = ilBuilder->Build();
+		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
 
 
-		Egg::DepthStencilDesc depthDesc;
+		Netcode::DepthStencilDesc depthDesc;
 		depthDesc.depthEnable = false;
 		depthDesc.stencilEnable = true;
-		depthDesc.frontFace.stencilDepthFailOp = Egg::StencilOp::KEEP;
-		depthDesc.frontFace.stencilFailOp = Egg::StencilOp::KEEP;
-		depthDesc.frontFace.stencilPassOp = Egg::StencilOp::KEEP;
-		depthDesc.frontFace.stencilFunc = Egg::ComparisonFunc::EQUAL;
+		depthDesc.frontFace.stencilDepthFailOp = Netcode::StencilOp::KEEP;
+		depthDesc.frontFace.stencilFailOp = Netcode::StencilOp::KEEP;
+		depthDesc.frontFace.stencilPassOp = Netcode::StencilOp::KEEP;
+		depthDesc.frontFace.stencilFunc = Netcode::ComparisonFunc::EQUAL;
 		depthDesc.stencilReadMask = 0xFF;
 		depthDesc.stencilWriteMask = 0x00;
 		depthDesc.depthWriteMaskZero = true;
 		depthDesc.backFace = depthDesc.frontFace;
-		depthDesc.backFace.stencilFunc = Egg::ComparisonFunc::NEVER;
+		depthDesc.backFace.stencilFunc = Netcode::ComparisonFunc::NEVER;
 
-		Egg::GPipelineStateBuilderRef psoBuilder = g->CreateGPipelineStateBuilder();
+		Netcode::GPipelineStateBuilderRef psoBuilder = g->CreateGPipelineStateBuilder();
 		psoBuilder->SetInputLayout(inputLayout);
 		psoBuilder->SetVertexShader(vs);
 		psoBuilder->SetPixelShader(ps);
 		psoBuilder->SetDepthStencilFormat(gbufferPass_DepthStencilFormat);
 		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
 		psoBuilder->SetRootSignature(envmapPass_RootSignature);
-		psoBuilder->SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType::TRIANGLE);
+		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::TRIANGLE);
 		psoBuilder->SetDepthStencilState(depthDesc);
 
 		envmapPass_PipelineState = psoBuilder->Build();
 	}
 
-	Egg::RootSignatureRef envmapPass_RootSignature;
-	Egg::PipelineStateRef envmapPass_PipelineState;
+	Netcode::RootSignatureRef envmapPass_RootSignature;
+	Netcode::PipelineStateRef envmapPass_PipelineState;
 
-	void CreateBackgroundPass(Egg::FrameGraphBuilderRef builder) {
+	void CreateBackgroundPass(Netcode::FrameGraphBuilderRef builder) {
 		builder->CreateRenderPass("Background", [this](IResourceContext * ctx) ->void {
 			ctx->Reads(gbufferPass_DepthBuffer);
 
@@ -891,7 +891,7 @@ public:
 		}
 	}
 
-	void CreatePermanentResources(Egg::Module::IGraphicsModule * g) {
+	void CreatePermanentResources(Netcode::Module::IGraphicsModule * g) {
 		graphics = g;
 		backbufferSize = g->GetBackbufferSize();
 		CreateGbufferPassPermanentResources(g);
@@ -904,7 +904,7 @@ public:
 		CreateFSQuad(g);
 	}
 
-	void CreateFrameGraph(Egg::FrameGraphBuilderRef builder) {
+	void CreateFrameGraph(Netcode::FrameGraphBuilderRef builder) {
 		CreateSkinnedGbufferPass(builder);
 		CreateGbufferPass(builder);
 		CreateSSAOOcclusionPass(builder);

@@ -1,4 +1,4 @@
-namespace EggAssetEditor
+namespace NetcodeAssetEditor
 {
     [bindable]
     [default_interface]

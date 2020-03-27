@@ -1,6 +1,6 @@
 #include "DX12Texture.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	Texture::Texture(DirectX::ScratchImage && tData) : textureData{ std::move(tData) } { }
 

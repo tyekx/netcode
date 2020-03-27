@@ -1,4 +1,4 @@
-namespace EggAssetEditor
+namespace NetcodeAssetEditor
 {
     [default_interface]
     runtimeclass GeometryPage : Windows.UI.Xaml.Controls.Page

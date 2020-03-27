@@ -1,7 +1,7 @@
 #include "DX12ResourceContext.h"
 #include <memory>
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	void ResourceContext::UseComputeContext()
 	{

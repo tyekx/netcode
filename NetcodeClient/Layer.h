@@ -4,16 +4,16 @@
 #include <Netcode/Modules.h>
 #include <Netcode/DestructiveCopyConstructible.hpp>
 
-class Layer : public Egg::Module::TAppEventHandler {
+class Layer : public Netcode::Module::TAppEventHandler {
 public:
 	virtual ~Layer() = default;
 
-	virtual void Construct(Egg::Module::AApp * app) = 0;
+	virtual void Construct(Netcode::Module::AApp * app) = 0;
 	virtual void Activate() = 0;
 	virtual void Deactivate() = 0;
 };
 
-using Egg::Graphics::ResourceState;
+using Netcode::Graphics::ResourceState;
 
 class MainMenuLayer : public Layer {
 	UIScene * scene;
@@ -36,19 +36,19 @@ class MainMenuLayer : public Layer {
 
 	UIObject * loginScriptObject;
 
-	Egg::ResourceViewsRef loadIconView;
+	Netcode::ResourceViewsRef loadIconView;
 	DirectX::XMUINT2 loadIconTextureSize;
-	Egg::ResourceViewsRef btnBackgroundView;
+	Netcode::ResourceViewsRef btnBackgroundView;
 	DirectX::XMUINT2 btnBackgroundTextureSize;
-	Egg::ResourceViewsRef textBoxBackgroundView;
+	Netcode::ResourceViewsRef textBoxBackgroundView;
 	DirectX::XMUINT2 textBoxBackgroundTextureSize;
-	Egg::ResourceViewsRef serversPanelBackgroundView;
+	Netcode::ResourceViewsRef serversPanelBackgroundView;
 	DirectX::XMUINT2 serversPanelBackgroundSize;
-	Egg::ResourceViewsRef serverRowBackgroundView;
+	Netcode::ResourceViewsRef serverRowBackgroundView;
 	DirectX::XMUINT2 serverRowBackgroundSize;
-	Egg::SpriteFontRef font18;
-	Egg::SpriteFontRef font24;
-	Egg::SpriteFontRef font48;
+	Netcode::SpriteFontRef font18;
+	Netcode::SpriteFontRef font24;
+	Netcode::SpriteFontRef font48;
 public:
 	MainMenuLayer() = default;
 
@@ -56,26 +56,26 @@ public:
 		this->scene = scene;
 	}
 
-	virtual void Construct(Egg::Module::AApp* app) override {
-		Egg::Graphics::UploadBatch uploadBatch;
+	virtual void Construct(Netcode::Module::AApp* app) override {
+		Netcode::Graphics::UploadBatch uploadBatch;
 		
-		Egg::TextureBuilderRef textureBuilder = app->graphics->CreateTextureBuilder();
-		Egg::SpriteFontBuilderRef spriteFontBuilder = app->graphics->CreateSpriteFontBuilder();
+		Netcode::TextureBuilderRef textureBuilder = app->graphics->CreateTextureBuilder();
+		Netcode::SpriteFontBuilderRef spriteFontBuilder = app->graphics->CreateSpriteFontBuilder();
 
 		textureBuilder->LoadTexture2D(L"btn_background.png");
-		Egg::TextureRef btnBackgroundTexture = textureBuilder->Build();
+		Netcode::TextureRef btnBackgroundTexture = textureBuilder->Build();
 
 		textureBuilder->LoadTexture2D(L"textbox_background.png");
-		Egg::TextureRef textBoxBackgroundTexture = textureBuilder->Build();
+		Netcode::TextureRef textBoxBackgroundTexture = textureBuilder->Build();
 
 		textureBuilder->LoadTexture2D(L"loading_icon.png");
-		Egg::TextureRef loadingIconTexture = textureBuilder->Build();
+		Netcode::TextureRef loadingIconTexture = textureBuilder->Build();
 
 		textureBuilder->LoadTexture2D(L"server_panel_background.png");
-		Egg::TextureRef serverPanelBackgroundTexture = textureBuilder->Build();
+		Netcode::TextureRef serverPanelBackgroundTexture = textureBuilder->Build();
 
 		textureBuilder->LoadTexture2D(L"server_row_border.png");
-		Egg::TextureRef serverRowBackgroundTexture = textureBuilder->Build();
+		Netcode::TextureRef serverRowBackgroundTexture = textureBuilder->Build();
 
 		spriteFontBuilder->LoadFont(L"titillium24.spritefont");
 		font24 = spriteFontBuilder->Build();
@@ -94,7 +94,7 @@ public:
 		serverRowBackgroundView = app->graphics->resources->CreateShaderResourceViews(1);
 
 		{
-			const Egg::Image * loadingIconImg = loadingIconTexture->GetImage(0, 0, 0);
+			const Netcode::Image * loadingIconImg = loadingIconTexture->GetImage(0, 0, 0);
 			loadIconTextureSize = DirectX::XMUINT2{ static_cast<uint32_t>(loadingIconImg->width), static_cast<uint32_t>(loadingIconImg->height) };
 			uint64_t loadingIconTextureHandle = app->graphics->resources->CreateTexture2D(loadingIconImg);
 			uploadBatch.Upload(loadingIconTextureHandle, loadingIconTexture);
@@ -103,7 +103,7 @@ public:
 		}
 
 		{
-			const Egg::Image * textBoxBackgroundImg = textBoxBackgroundTexture->GetImage(0, 0, 0);
+			const Netcode::Image * textBoxBackgroundImg = textBoxBackgroundTexture->GetImage(0, 0, 0);
 			textBoxBackgroundTextureSize = DirectX::XMUINT2{ static_cast<uint32_t>(textBoxBackgroundImg->width), static_cast<uint32_t>(textBoxBackgroundImg->height) };
 			uint64_t textBoxBackgroundTextureHandle = app->graphics->resources->CreateTexture2D(textBoxBackgroundImg);
 			uploadBatch.Upload(textBoxBackgroundTextureHandle, textBoxBackgroundTexture);
@@ -112,7 +112,7 @@ public:
 		}
 
 		{
-			const Egg::Image * btnBackgroundImg = btnBackgroundTexture->GetImage(0, 0, 0);
+			const Netcode::Image * btnBackgroundImg = btnBackgroundTexture->GetImage(0, 0, 0);
 			btnBackgroundTextureSize = DirectX::XMUINT2{ static_cast<uint32_t>(btnBackgroundImg->width), static_cast<uint32_t>(btnBackgroundImg->height) };
 			uint64_t btnBackgroundTextureHandle = app->graphics->resources->CreateTexture2D(btnBackgroundImg);
 			uploadBatch.Upload(btnBackgroundTextureHandle, btnBackgroundTexture);
@@ -121,7 +121,7 @@ public:
 		}
 
 		{
-			const Egg::Image * serversBackgroundImg = serverPanelBackgroundTexture->GetImage(0, 0, 0);
+			const Netcode::Image * serversBackgroundImg = serverPanelBackgroundTexture->GetImage(0, 0, 0);
 			serversPanelBackgroundSize = DirectX::XMUINT2{ static_cast<uint32_t>(serversBackgroundImg->width), static_cast<uint32_t>(serversBackgroundImg->height) };
 			uint64_t serverPanelTextureHandle = app->graphics->resources->CreateTexture2D(serversBackgroundImg);
 			uploadBatch.Upload(serverPanelTextureHandle, serverPanelBackgroundTexture);
@@ -130,7 +130,7 @@ public:
 		}
 
 		{
-			const Egg::Image * serverRowBackgroundImg = serverRowBackgroundTexture->GetImage(0, 0, 0);
+			const Netcode::Image * serverRowBackgroundImg = serverRowBackgroundTexture->GetImage(0, 0, 0);
 			serverRowBackgroundSize = DirectX::XMUINT2{ static_cast<uint32_t>(serverRowBackgroundImg->width), static_cast<uint32_t>(serverRowBackgroundImg->height) };
 			uint64_t serverRowTexHandle = app->graphics->resources->CreateTexture2D(serverRowBackgroundImg);
 			uploadBatch.Upload(serverRowTexHandle, serverRowBackgroundTexture);
@@ -167,7 +167,7 @@ public:
 			DirectX::XMFLOAT2{ 198.0f, 112.0f + 100.0f },
 			0.0f, font24, btnBackgroundView, btnBackgroundTextureSize);
 
-		Egg::Module::INetworkModule * network = app->network.get();
+		Netcode::Module::INetworkModule * network = app->network.get();
 
 		UIButtonPrefab exitBtn = scene->CreateButton(L"Exit",
 			DirectX::XMFLOAT2{ 192.0f, 48.0f },
@@ -197,14 +197,14 @@ public:
 				std::wstring username = usernameTextBox.GetValue();
 				std::wstring password = passwordTextBox.GetValue();
 
-				std::future<Egg::Response> resp = network->Login(std::move(username), std::move(password));
+				std::future<Netcode::Response> resp = network->Login(std::move(username), std::move(password));
 
 				UIScript * uiScript = loginScriptObject->AddComponent<UIScript>();
-				uiScript->onUpdate = [this, network, uiScript, rs = Egg::move_to_dcc(resp)](UIObject *, float dt) -> void {
+				uiScript->onUpdate = [this, network, uiScript, rs = Netcode::move_to_dcc(resp)](UIObject *, float dt) -> void {
 					std::future_status status = rs.value.wait_for(std::chrono::seconds(0));
 
 					if(status == std::future_status::ready) {
-						Egg::Response r = rs.value.get();
+						Netcode::Response r = rs.value.get();
 
 						if(r.status != 200) {
 							loginPage.Show();

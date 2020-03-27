@@ -7,7 +7,7 @@
 #include "LinearClassifier.h"
 #include "AnimationBlender.h"
 
-namespace Egg::Animation {
+namespace Netcode::Animation {
 
 
 

@@ -11,7 +11,7 @@ base class
 template<typename T>
 class Scene {
 protected:
-	Egg::BulkVector<T, 512> storage;
+	Netcode::BulkVector<T, 512> storage;
 	physx::PxScene * pxScene;
 	T * cameraRef;
 

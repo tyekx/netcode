@@ -1,6 +1,6 @@
 #include "DX12InputLayoutBuilder.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	InputLayoutBuilder::InputLayoutBuilder(DX12InputLayoutLibraryRef libRef) : inputLayoutLibrary{ libRef } { }
 	

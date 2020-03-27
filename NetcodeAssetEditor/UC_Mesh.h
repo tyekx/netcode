@@ -5,7 +5,7 @@
 #include "DC_Lod.h"
 #include "UC_Mesh.g.h"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     struct UC_Mesh : UC_MeshT<UC_Mesh>
     {
@@ -13,7 +13,7 @@ namespace winrt::EggAssetEditor::implementation
 
     };
 }
-namespace winrt::EggAssetEditor::factory_implementation
+namespace winrt::NetcodeAssetEditor::factory_implementation
 {
     struct UC_Mesh : UC_MeshT<UC_Mesh, implementation::UC_Mesh>
     {

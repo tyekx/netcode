@@ -2,7 +2,7 @@
 #include "DX12Helpers.h"
 #include "DX12RootSignature.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	void CPipelineStateDesc::FillNativeDesc(D3D12_COMPUTE_PIPELINE_STATE_DESC & cpsd)
 	{
@@ -11,7 +11,7 @@ namespace Egg::Graphics::DX12 {
 		cpsd.CS = GetNativeBytecode(CS);
 		cpsd.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
 		cpsd.NodeMask = 0;
-		cpsd.pRootSignature = static_cast<Egg::Graphics::DX12::RootSignature *>(rootSignature->GetImplDetail())->GetNativeRootSignature();
+		cpsd.pRootSignature = static_cast<Netcode::Graphics::DX12::RootSignature *>(rootSignature->GetImplDetail())->GetNativeRootSignature();
 	}
 
 	bool CPipelineStateDesc::operator==(const CPipelineStateDesc & rhs) const

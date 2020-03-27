@@ -4,7 +4,7 @@
 #include <functional>
 #include <map>
 
-namespace Egg {
+namespace Netcode {
 
 	using EventToken = int64_t;
 

@@ -4,7 +4,7 @@
 #include "../ResourceEnums.h"
 #include "DX12Common.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	struct GPipelineStateDesc {
 		RootSignatureRef rootSignature;
@@ -28,7 +28,7 @@ namespace Egg::Graphics::DX12 {
 		bool operator==(const GPipelineStateDesc & rhs) const;
 	};
 
-	class GPipelineState : public Egg::PipelineState {
+	class GPipelineState : public Netcode::PipelineState {
 		com_ptr<ID3D12PipelineState> pso;
 		GPipelineStateDesc psoDesc;
 
@@ -43,7 +43,7 @@ namespace Egg::Graphics::DX12 {
 
 	};
 
-	using DX12GPipelineState = Egg::Graphics::DX12::GPipelineState;
+	using DX12GPipelineState = Netcode::Graphics::DX12::GPipelineState;
 	using DX12GPipelineStateRef = std::shared_ptr<DX12GPipelineState>;
 
 }

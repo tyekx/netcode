@@ -9,6 +9,6 @@ TextBox::TextBox() : id{ idGenerator++ }, keyPressedToken{ 0 }, contentChanged{}
 }
 
 TextBox::~TextBox() {
-	Egg::Input::OnKeyPressed -= keyPressedToken;
+	Netcode::Input::OnKeyPressed -= keyPressedToken;
 }
 

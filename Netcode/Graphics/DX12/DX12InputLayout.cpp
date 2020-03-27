@@ -1,7 +1,7 @@
 #include "../../FancyIterators.hpp"
 #include "DX12InputLayout.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	InputLayout::InputLayout(const D3D12_INPUT_LAYOUT_DESC & il, std::vector<D3D12_INPUT_ELEMENT_DESC> && elements) : inputLayout{ il }, elements{ std::move(elements) } { }
 

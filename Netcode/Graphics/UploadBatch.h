@@ -5,7 +5,7 @@
 #include "ResourceEnums.h"
 #include <vector>
 
-namespace Egg::Graphics {
+namespace Netcode::Graphics {
 
 	enum class UploadTaskType : unsigned {
 		TEXTURE, BUFFER
@@ -15,7 +15,7 @@ namespace Egg::Graphics {
 	class UploadBatch {
 
 	public:
-		void Upload(uint64_t resourceHandle, Egg::TextureRef texture);
+		void Upload(uint64_t resourceHandle, Netcode::TextureRef texture);
 
 		void Upload(uint64_t resourceHandle, const void * srcData, size_t srcDataSizeInBytes);
 
@@ -33,13 +33,13 @@ namespace Egg::Graphics {
 
 		struct TextureUploadTask {
 			const uint64_t resourceHandle;
-			const Egg::TextureRef texture;
+			const Netcode::TextureRef texture;
 
 			TextureUploadTask();
 
 			TextureUploadTask(const TextureUploadTask &) = default;
 
-			TextureUploadTask(uint64_t h, Egg::TextureRef texture);
+			TextureUploadTask(uint64_t h, Netcode::TextureRef texture);
 		};
 
 		struct UploadTask {

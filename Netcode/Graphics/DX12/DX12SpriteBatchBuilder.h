@@ -3,14 +3,14 @@
 #include "../../HandleTypes.h"
 #include "../../Modules.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	class SpriteBatchBuilder : public Egg::SpriteBatchBuilder {
-		const Egg::Module::IGraphicsModule * gModule;
-		Egg::RootSignatureRef rootSig;
-		Egg::PipelineStateRef pso;
+	class SpriteBatchBuilder : public Netcode::SpriteBatchBuilder {
+		const Netcode::Module::IGraphicsModule * gModule;
+		Netcode::RootSignatureRef rootSig;
+		Netcode::PipelineStateRef pso;
 	public:
-		SpriteBatchBuilder(const Egg::Module::IGraphicsModule * gModule);
+		SpriteBatchBuilder(const Netcode::Module::IGraphicsModule * gModule);
 
 		virtual void SetPipelineState(PipelineStateRef pipelineState) override;
 
@@ -19,6 +19,6 @@ namespace Egg::Graphics::DX12 {
 		virtual SpriteBatchRef Build() override;
 	};
 
-	using DX12SpriteBatchBuilder = Egg::Graphics::DX12::SpriteBatchBuilder;
+	using DX12SpriteBatchBuilder = Netcode::Graphics::DX12::SpriteBatchBuilder;
 
 }

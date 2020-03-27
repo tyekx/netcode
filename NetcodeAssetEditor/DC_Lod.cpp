@@ -3,7 +3,7 @@
 #include "DC_Lod.g.cpp"
 
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     DC_Lod::DC_Lod() : vertexCount{}, indexCount{}, vertexOffset{}, indexOffset{}, vertexBufferSize{}, indexBufferSize{} {
 

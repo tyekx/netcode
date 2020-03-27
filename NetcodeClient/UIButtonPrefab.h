@@ -16,7 +16,7 @@ public:
 		AlignText(textObject->GetComponent<Text>(), textObject->GetComponent<Transform>(), bgElem);
 	}
 
-	void SetBackgroundImage(Egg::ResourceViewsRef resourceView, const DirectX::XMUINT2 & dimensions) {
+	void SetBackgroundImage(Netcode::ResourceViewsRef resourceView, const DirectX::XMUINT2 & dimensions) {
 		Sprite * sprite = backgroundObject->AddComponent<Sprite>();
 		sprite->texture = std::move(resourceView);
 		sprite->textureSize = dimensions;
@@ -28,7 +28,7 @@ public:
 		AlignText(textComponent, textObject->GetComponent<Transform>(), backgroundObject->GetComponent<UIElement>());
 	}
 
-	void SetFont(Egg::SpriteFontRef spriteFont) {
+	void SetFont(Netcode::SpriteFontRef spriteFont) {
 		Text * textComponent = textObject->GetComponent<Text>();
 		textComponent->font = std::move(spriteFont);
 		AlignText(textComponent, textObject->GetComponent<Transform>(), backgroundObject->GetComponent<UIElement>());

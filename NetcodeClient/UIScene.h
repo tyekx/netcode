@@ -34,7 +34,7 @@ public:
 public:
 	~UIScene() noexcept = default;
 
-	UIScene(Egg::Physics::PhysX & px) : UIScene() {
+	UIScene(Netcode::Physics::PhysX & px) : UIScene() {
 		physx::PxSceneDesc sceneDesc{ px.physics->getTolerancesScale() };
 		sceneDesc.gravity = physx::PxVec3{ 0.0f, -981.0f, 0.0f };
 		sceneDesc.cpuDispatcher = px.dispatcher;
@@ -69,7 +69,7 @@ public:
 		cameraRef->GetComponent<Transform>()->position = DirectX::XMFLOAT3{ static_cast<float>(dim.x) / 2.0f ,static_cast<float>(dim.y) / 2.0f, 0.0f };
 	}
 
-	UIButtonPrefab CreateButton(std::wstring text, const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT2 & pos, float zIndex, Egg::SpriteFontRef font, Egg::ResourceViewsRef bgTex, const DirectX::XMUINT2 & texSize) {
+	UIButtonPrefab CreateButton(std::wstring text, const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT2 & pos, float zIndex, Netcode::SpriteFontRef font, Netcode::ResourceViewsRef bgTex, const DirectX::XMUINT2 & texSize) {
 		UIObject * background = Create();
 		UIObject * textObject = Create();
 
@@ -124,7 +124,7 @@ public:
 		return UILabel(root, txt);
 	}
 
-	UILabel CreateLabel(std::wstring text, Egg::SpriteFontRef font, const DirectX::XMFLOAT2 & pos) {
+	UILabel CreateLabel(std::wstring text, Netcode::SpriteFontRef font, const DirectX::XMFLOAT2 & pos) {
 		UILabel label = CreateLabel();
 
 		label.SetPosition(pos);
@@ -134,7 +134,7 @@ public:
 		return label;
 	}
 
-	UITextBox CreateTextBox(const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT2 & pos, Egg::SpriteFontRef font, Egg::ResourceViewsRef bgTex, const DirectX::XMUINT2 & texSize) {
+	UITextBox CreateTextBox(const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT2 & pos, Netcode::SpriteFontRef font, Netcode::ResourceViewsRef bgTex, const DirectX::XMUINT2 & texSize) {
 		UITextBox tb = CreateTextBox();
 		tb.SetPosition(pos);
 		tb.SetBackgroundImage(bgTex, texSize);

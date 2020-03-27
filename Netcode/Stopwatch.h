@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-namespace Egg {
+namespace Netcode {
 
 	class Stopwatch {
 		using clock_type = std::chrono::high_resolution_clock;

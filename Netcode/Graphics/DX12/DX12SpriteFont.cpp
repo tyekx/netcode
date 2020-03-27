@@ -4,7 +4,7 @@
 
 static const char spriteFontMagic[] = "DXTKfont";
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 	const DirectX::XMFLOAT2 SpriteFont::Float2Zero{ 0.0f, 0.0f };
 
 	const wchar_t * SpriteFont::ConvertUTF8(const char * text) const
@@ -89,11 +89,11 @@ namespace Egg::Graphics::DX12 {
 		return shaderResourceView;
 	}
 
-	void SpriteFont::DrawString(Egg::SpriteBatchRef spriteBatch, const wchar_t * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const {
+	void SpriteFont::DrawString(Netcode::SpriteBatchRef spriteBatch, const wchar_t * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const {
 		DrawString(spriteBatch, text, position, color, 0, DirectX::XMFLOAT2{ 0,0 }, 1.0f, 0);
 	}
 
-	void SpriteFont::DrawString(Egg::SpriteBatchRef spriteBatch, const char * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const {
+	void SpriteFont::DrawString(Netcode::SpriteBatchRef spriteBatch, const char * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const {
 		DrawString(spriteBatch, ConvertUTF8(text), position, color, 0, DirectX::XMFLOAT2{ 0,0 }, 1.0f, 0);
 	}
 	/*
@@ -140,7 +140,7 @@ namespace Egg::Graphics::DX12 {
 		DrawString(spriteBatch, text, position, color, rotation, origin, DirectX::XMVectorReplicate(scale), effects, layerDepth);
 	}*/
 
-	void SpriteFont::DrawString(Egg::SpriteBatchRef spriteBatch,
+	void SpriteFont::DrawString(Netcode::SpriteBatchRef spriteBatch,
 		const wchar_t * text,
 		const DirectX::XMFLOAT2 & position,
 		const DirectX::XMFLOAT4 & color,

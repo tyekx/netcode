@@ -13,7 +13,7 @@
 #include "Graphics/GraphicsContexts.h"
 #include <NetcodeLib/Cookie.h>
 
-namespace Egg::Module {
+namespace Netcode::Module {
 
 	/*
 	The OO part of this project uses I,A,T prefixes.
@@ -45,7 +45,7 @@ namespace Egg::Module {
 		EAppEventType type;
 		union {
 			DirectX::XMINT2 resizeArgs;
-			Egg::Graphics::DisplayMode displayMode;
+			Netcode::Graphics::DisplayMode displayMode;
 		};
 	};
 
@@ -65,7 +65,7 @@ namespace Egg::Module {
 		virtual void OnFocus();
 		virtual void OnResized(int x, int y);
 		virtual void OnClosed();
-		virtual void OnModeChanged(Egg::Graphics::DisplayMode newMode);
+		virtual void OnModeChanged(Netcode::Graphics::DisplayMode newMode);
 	};
 
 	class AppEventSystem {
@@ -150,8 +150,8 @@ namespace Egg::Module {
 
 	class IGraphicsModule : public IModule {
 	public:
-		Egg::Graphics::IResourceContext * resources;
-		Egg::Graphics::IFrameContext * frame;
+		Netcode::Graphics::IResourceContext * resources;
+		Netcode::Graphics::IFrameContext * frame;
 
 		virtual ~IGraphicsModule() = default;
 

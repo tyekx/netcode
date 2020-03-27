@@ -1,7 +1,7 @@
 #include <Netcode/Common.h>
 #include <Netcode/Utility.h>
 #include <chrono>
-#include "EggApp.h"
+#include "NetcodeApp.h"
 #include <Netcode/ProgramArgs.h>
 #include <Netcode/Path.h>
 #include <shellapi.h>
@@ -14,7 +14,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	int argc;
 	wchar_t ** args = CommandLineToArgvW(command, &argc);
 	
-	Egg::ProgramArgs pa{ (const wchar_t**)args, argc };
+	Netcode::ProgramArgs pa{ (const wchar_t**)args, argc };
 
 	LocalFree(args);
 
@@ -23,13 +23,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		return 1;
 	}
 
-	Egg::Path::SetShaderRoot(pa.GetArg(L"shaderPath"));
-	Egg::Path::SetMediaRoot(pa.GetArg(L"mediaPath"));
+	Netcode::Path::SetShaderRoot(pa.GetArg(L"shaderPath"));
+	Netcode::Path::SetMediaRoot(pa.GetArg(L"mediaPath"));
 
-	Egg::Input::CreateResources();
+	Netcode::Input::CreateResources();
 
-	Egg::Module::DefaultModuleFactory defModuleFactory;
-	std::unique_ptr<Egg::Module::AApp> app = std::make_unique<GameApp>();
+	Netcode::Module::DefaultModuleFactory defModuleFactory;
+	std::unique_ptr<Netcode::Module::AApp> app = std::make_unique<GameApp>();
 	app->Setup(&defModuleFactory);
 
 	Log::Info("Initialization successful");

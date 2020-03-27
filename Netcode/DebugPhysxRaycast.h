@@ -3,7 +3,7 @@
 #include "DebugPhysxActor.h"
 #include <DirectXMath.h>
 
-namespace Egg {
+namespace Netcode {
 
 	__declspec(align(16)) struct PerRayCb {
 		constexpr static int id = 14;

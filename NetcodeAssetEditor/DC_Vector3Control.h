@@ -1,7 +1,7 @@
 #pragma once
 #include "DC_Vector3Control.g.h"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     struct DC_Vector3Control : DC_Vector3ControlT<DC_Vector3Control>
     {
@@ -23,7 +23,7 @@ namespace winrt::EggAssetEditor::implementation
         void PropertyChanged(winrt::event_token const& token) noexcept;
     };
 }
-namespace winrt::EggAssetEditor::factory_implementation
+namespace winrt::NetcodeAssetEditor::factory_implementation
 {
     struct DC_Vector3Control : DC_Vector3ControlT<DC_Vector3Control, implementation::DC_Vector3Control>
     {

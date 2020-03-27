@@ -3,9 +3,9 @@
 #include "../../HandleTypes.h"
 #include "DX12Common.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	class ShaderCompiled : public Egg::ShaderBytecode {
+	class ShaderCompiled : public Netcode::ShaderBytecode {
 		com_ptr<ID3DBlob> bufferBlob;
 		std::wstring sourceFileRef;
 

@@ -10,17 +10,17 @@
 using namespace winrt;
 using namespace Windows::UI::Xaml;
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     CollidersPage::CollidersPage()
     {
         InitializeComponent();
 
-        colliders = winrt::single_threaded_observable_vector<EggAssetEditor::DC_Collider>();
-        bones = winrt::single_threaded_observable_vector<EggAssetEditor::DC_Bone>();
+        colliders = winrt::single_threaded_observable_vector<NetcodeAssetEditor::DC_Collider>();
+        bones = winrt::single_threaded_observable_vector<NetcodeAssetEditor::DC_Bone>();
         tokens = winrt::single_threaded_vector<winrt::event_token>();
 
-        colliders.VectorChanged(Windows::Foundation::Collections::VectorChangedEventHandler<EggAssetEditor::DC_Collider>(this, &CollidersPage::OnCollidersCollectionChanged));
+        colliders.VectorChanged(Windows::Foundation::Collections::VectorChangedEventHandler<NetcodeAssetEditor::DC_Collider>(this, &CollidersPage::OnCollidersCollectionChanged));
     }
 
 
@@ -31,7 +31,7 @@ namespace winrt::EggAssetEditor::implementation
         return dcColliderOuter.PropertyChanged([idx](Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::Data::PropertyChangedEventArgs const & e) -> void {
             auto & collider = Global::Model->colliders.at(idx);
 
-            auto dcCollider = sender.as<EggAssetEditor::DC_Collider>();
+            auto dcCollider = sender.as<NetcodeAssetEditor::DC_Collider>();
 
             if(e.PropertyName() == L"LocalPosition" || e.PropertyName() == L"LocalRotation") {
                 auto lPos = dcCollider.LocalPosition();
@@ -45,27 +45,27 @@ namespace winrt::EggAssetEditor::implementation
                 Global::EditorApp->UpdateColliderData(Global::Model->colliders);
                 Global::EditorApp->Run();
             } else {
-                ::ColliderType type = static_cast<::ColliderType>(dcCollider.Type());
+                Netcode::Asset::ColliderType type = static_cast<Netcode::Asset::ColliderType>(dcCollider.Type());
                 collider.type = type;
                 collider.boneReference = dcCollider.BoneReference();
 
                 switch(type) {
-                    case ColliderType::BOX:
+                    case Netcode::Asset::ColliderType::BOX:
                     {
                         auto boxArgs = dcCollider.BoxArgs();
                         collider.boxArgs = DirectX::XMFLOAT3{ boxArgs.x, boxArgs.y, boxArgs.z };
                     }
                     break;
-                    case ColliderType::CAPSULE:
+                    case Netcode::Asset::ColliderType::CAPSULE:
                     {
                         auto capsuleArgs = dcCollider.CapsuleArgs();
                         collider.capsuleArgs = DirectX::XMFLOAT2{ capsuleArgs.x, capsuleArgs.y };
                     }
                     break;
-                    case ColliderType::SPHERE:
+                    case Netcode::Asset::ColliderType::SPHERE:
                         collider.sphereArgs = dcCollider.SphereArg();
                         break;
-                    case ColliderType::MESH:
+                    case Netcode::Asset::ColliderType::MESH:
                         return;
                 }
 
@@ -76,8 +76,8 @@ namespace winrt::EggAssetEditor::implementation
     }
 
 
-    EggAssetEditor::DC_Collider CollidersPage::ConvertCollider(const Collider & collider) {
-        auto dcCollider = winrt::make<EggAssetEditor::implementation::DC_Collider>();
+    NetcodeAssetEditor::DC_Collider CollidersPage::ConvertCollider(const Collider & collider) {
+        auto dcCollider = winrt::make<NetcodeAssetEditor::implementation::DC_Collider>();
 
         DirectX::XMVECTOR localRotationQuat = DirectX::XMLoadFloat4(&collider.localRotation);
         DirectX::XMVECTOR axis;
@@ -114,7 +114,7 @@ namespace winrt::EggAssetEditor::implementation
     }
 
     void CollidersPage::OnCollidersCollectionChanged(
-        Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Collider> const & sender,
+        Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Collider> const & sender,
         Windows::Foundation::Collections::IVectorChangedEventArgs const & evt) {
 
         auto changeEvent = evt.CollectionChange();
@@ -144,11 +144,11 @@ namespace winrt::EggAssetEditor::implementation
         }
     }
 
-    Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Collider> CollidersPage::Colliders() {
+    Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Collider> CollidersPage::Colliders() {
         return colliders;
     }
 
-    Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Bone> CollidersPage::Bones() {
+    Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Bone> CollidersPage::Bones() {
         return bones;
     }
 
@@ -159,7 +159,7 @@ namespace winrt::EggAssetEditor::implementation
         auto obones = XamlHelpers::ConvertBones();
 
         auto obonesView = obones.GetView();
-        auto noneBone = make<EggAssetEditor::implementation::DC_Bone>();
+        auto noneBone = make<NetcodeAssetEditor::implementation::DC_Bone>();
         noneBone.Name(L"None");
         noneBone.Depth(0);
 

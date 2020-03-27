@@ -3,7 +3,7 @@
 #include <DirectXMath.h>
 #include "Common.h"
 
-namespace Egg::Graphics {
+namespace Netcode::Graphics {
 
 	class BasicGeometry {
 		~BasicGeometry() = delete;

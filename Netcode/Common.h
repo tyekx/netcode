@@ -5,14 +5,14 @@
 #include <memory>
 #include "Logger.h"
 
-namespace Egg::Internal {
+namespace Netcode::Internal {
 
 	void Assert(bool trueMeansOk, const char * msgOnFail, ...);
 
 }
 
 #if defined(EGG_DEBUG)
-#define ASSERT(trueMeansOk, msgOnFail, ...) Egg::Internal::Assert(trueMeansOk, msgOnFail, __VA_ARGS__)
+#define ASSERT(trueMeansOk, msgOnFail, ...) Netcode::Internal::Assert(trueMeansOk, msgOnFail, __VA_ARGS__)
 #else 
 #define ASSERT(trueMeansOk, msgOnFail, ...)
 #endif

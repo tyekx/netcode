@@ -2,7 +2,7 @@
 
 #include "Common.h"
 
-namespace Egg {
+namespace Netcode {
 
 	class File {
 	public:

@@ -11,7 +11,7 @@
 using namespace winrt;
 using namespace Windows::UI::Xaml;
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     BonesPage::BonesPage()
     {
@@ -28,7 +28,7 @@ namespace winrt::EggAssetEditor::implementation
         }
 
         if(Global::Model != nullptr && !Global::Model->meshes.empty()) {
-            Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Bone> bones = XamlHelpers::ConvertBones();
+            Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Bone> bones = XamlHelpers::ConvertBones();
 
             bonesList().ItemsSource(bones);
         }

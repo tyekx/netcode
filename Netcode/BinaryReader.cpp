@@ -2,7 +2,7 @@
 #include <fstream>
 #include <algorithm>
 
-namespace Egg {
+namespace Netcode {
 	// Constructor reads from the filesystem.
 	BinaryReader::BinaryReader(_In_z_ wchar_t const * fileName) :
 		mPos(nullptr),

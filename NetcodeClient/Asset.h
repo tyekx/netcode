@@ -8,15 +8,15 @@
 #include "GameObject.h"
 #include "Mesh.h"
 
-using Egg::Graphics::ResourceType;
-using Egg::Graphics::ResourceState;
+using Netcode::Graphics::ResourceType;
+using Netcode::Graphics::ResourceState;
 
-void LoadItem(Egg::Module::IGraphicsModule * g, Egg::Asset::Model * model, Model* modelComponent) {
+void LoadItem(Netcode::Module::IGraphicsModule * g, Netcode::Asset::Model * model, Model* modelComponent) {
 	for(size_t meshIdx = 0; meshIdx < model->meshes.Size(); ++meshIdx) {
-		Egg::Asset::Material * mat = model->materials.Data() + model->meshes[meshIdx].materialId;
-		Egg::Asset::Mesh * mesh = model->meshes.Data() + meshIdx;
+		Netcode::Asset::Material * mat = model->materials.Data() + model->meshes[meshIdx].materialId;
+		Netcode::Asset::Mesh * mesh = model->meshes.Data() + meshIdx;
 
-		Egg::InputLayoutBuilderRef inputLayoutBuilder = g->CreateInputLayoutBuilder();
+		Netcode::InputLayoutBuilderRef inputLayoutBuilder = g->CreateInputLayoutBuilder();
 
 		for(uint32_t ilIdx = 0; ilIdx < mesh->inputElementsLength; ++ilIdx) {
 			inputLayoutBuilder->AddInputElement(mesh->inputElements[ilIdx].semanticName,
@@ -25,9 +25,9 @@ void LoadItem(Egg::Module::IGraphicsModule * g, Egg::Asset::Model * model, Model
 												mesh->inputElements[ilIdx].byteOffset);
 		}
 
-		Egg::InputLayoutRef inputLayout = inputLayoutBuilder->Build();
+		Netcode::InputLayoutRef inputLayout = inputLayoutBuilder->Build();
 
-		Egg::Graphics::UploadBatch batch;
+		Netcode::Graphics::UploadBatch batch;
 
 		auto appMesh = std::make_shared<Mesh>();
 		

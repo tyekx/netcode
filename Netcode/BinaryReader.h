@@ -4,7 +4,7 @@
 #include <exception>
 #include <stdexcept>
 
-namespace Egg {
+namespace Netcode {
 	class BinaryReader
 	{
 	public:

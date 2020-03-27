@@ -1,6 +1,6 @@
 #include "DX12Fence.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	void Fence::CreateResources(ID3D12Device * device) {
 		DX_API("Failed to create fence")

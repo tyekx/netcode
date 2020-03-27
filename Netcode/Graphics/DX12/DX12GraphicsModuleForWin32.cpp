@@ -1,10 +1,10 @@
 #include "DX12GraphicsModuleForWin32.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	
 
-	void DX12GraphicsModuleForWin32::Start(Egg::Module::AApp * app) {
+	void DX12GraphicsModuleForWin32::Start(Netcode::Module::AApp * app) {
 		if(app->window != nullptr) {
 			hwnd = reinterpret_cast<HWND>(app->window->GetUnderlyingPointer());
 		}

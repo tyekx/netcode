@@ -2,7 +2,7 @@
 #include "DC_Material.h"
 #include "DC_Material.g.cpp"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     hstring DC_Material::Name()
     {

@@ -3,7 +3,7 @@
 #include <string>
 #include <map>
 
-namespace Egg {
+namespace Netcode {
 
 	class ProgramArgs {
 		std::map<std::wstring, std::wstring> Args;

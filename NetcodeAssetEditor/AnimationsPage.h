@@ -4,22 +4,22 @@
 #include "DC_Animation.h"
 #include <Netcode/Stopwatch.h>
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     struct AnimationsPage : AnimationsPageT<AnimationsPage>
     {
         float playbackTime;
         float duration;
         uint32_t selectedAnimation;
-        Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Animation> animations;
+        Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Animation> animations;
         
         Windows::UI::Xaml::DispatcherTimer timer;
-        Egg::Stopwatch stopwatch;
+        Netcode::Stopwatch stopwatch;
 
         AnimationsPage();
 
-        Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Animation> Animations();
-        void Animations(Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Animation> const & value);
+        Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Animation> Animations();
+        void Animations(Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Animation> const & value);
 
         float PlaybackTime();
         void PlaybackTime(float value);
@@ -31,7 +31,7 @@ namespace winrt::EggAssetEditor::implementation
 	};
 }
 
-namespace winrt::EggAssetEditor::factory_implementation
+namespace winrt::NetcodeAssetEditor::factory_implementation
 {
     struct AnimationsPage : AnimationsPageT<AnimationsPage, implementation::AnimationsPage>
     {

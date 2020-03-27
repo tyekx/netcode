@@ -2,7 +2,7 @@
 #include "DC_Vector2Control.h"
 #include "DC_Vector2Control.g.cpp"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     Windows::Foundation::Numerics::float2 DC_Vector2Control::VectorValue()
     {

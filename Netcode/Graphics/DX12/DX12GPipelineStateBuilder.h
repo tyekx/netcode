@@ -3,9 +3,9 @@
 #include "DX12GPipelineState.h"
 #include "DX12GPipelineStateLibrary.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	class GPipelineStateBuilder : public Egg::GPipelineStateBuilder {
+	class GPipelineStateBuilder : public Netcode::GPipelineStateBuilder {
 		GPipelineStateDesc desc;
 		DX12GPipelineStateLibraryRef libraryRef;
 
@@ -42,11 +42,11 @@ namespace Egg::Graphics::DX12 {
 
 		virtual void SetRenderTargetFormats(std::initializer_list<DXGI_FORMAT> formats) override;
 
-		virtual void SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType topType) override;
+		virtual void SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType topType) override;
 
 		virtual PipelineStateRef Build() override;
 	};
 
-	using DX12GPipelineStateBuilder = Egg::Graphics::DX12::GPipelineStateBuilder;
-	using DX12GPipelineStateBuilderRef = std::shared_ptr<Egg::Graphics::DX12::GPipelineStateBuilder>;
+	using DX12GPipelineStateBuilder = Netcode::Graphics::DX12::GPipelineStateBuilder;
+	using DX12GPipelineStateBuilderRef = std::shared_ptr<Netcode::Graphics::DX12::GPipelineStateBuilder>;
 }

@@ -8,7 +8,7 @@
 #include <DirectXMath.h>
 #include <functional>
 
-namespace Egg {
+namespace Netcode {
 
 	enum KeyModifiers {
 		CTRL = 1, ALT = 2, SHIFT = 4, CAPS_LOCK = 8, 

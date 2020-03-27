@@ -30,19 +30,19 @@ physx::PxFilterFlags SimulationFilterShader(physx::PxFilterObjectAttributes attr
 physx::PxShape * CreatePrimitiveShapeFromAsset(ColliderShape & cShape, physx::PxPhysics * px, physx::PxMaterial * mat, physx::PxShapeFlags flags, bool isExclusive) {
 	physx::PxShape * colliderShape = nullptr;
 	switch(cShape.type) {
-	case Egg::Asset::ColliderType::CAPSULE:
+	case Netcode::Asset::ColliderType::CAPSULE:
 	{
 		physx::PxCapsuleGeometry capsuleGeometry{ cShape.capsuleArgs.y, cShape.capsuleArgs.x / 2.0f };
 		colliderShape = px->createShape(capsuleGeometry, *mat, isExclusive, flags);
 	}
 	break;
-	case Egg::Asset::ColliderType::SPHERE:
+	case Netcode::Asset::ColliderType::SPHERE:
 	{
 		physx::PxSphereGeometry sphere{ cShape.sphereArgs };
 		colliderShape = px->createShape(sphere, *mat, isExclusive, flags);
 	}
 	break;
-	case Egg::Asset::ColliderType::BOX:
+	case Netcode::Asset::ColliderType::BOX:
 	{
 		physx::PxBoxGeometry box{ ToPxVec3(cShape.boxArgs) };
 		colliderShape = px->createShape(box, *mat, isExclusive, flags);

@@ -8,7 +8,7 @@
 using namespace winrt;
 using namespace Windows::UI::Xaml;
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     AnimationsPage::AnimationsPage()
     {
@@ -22,15 +22,15 @@ namespace winrt::EggAssetEditor::implementation
         timer.Interval(std::chrono::milliseconds{ 16 });
         timer.Tick(Windows::Foundation::EventHandler<Windows::Foundation::IInspectable>(this, &AnimationsPage::OnTick));
 
-        animations = winrt::single_threaded_observable_vector<EggAssetEditor::DC_Animation>();
+        animations = winrt::single_threaded_observable_vector<NetcodeAssetEditor::DC_Animation>();
     }
 
-    Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Animation> AnimationsPage::Animations()
+    Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Animation> AnimationsPage::Animations()
     {
         return animations;
     }
 
-    void AnimationsPage::Animations(Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Animation> const & value)
+    void AnimationsPage::Animations(Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Animation> const & value)
     {
         animations = value;
     }

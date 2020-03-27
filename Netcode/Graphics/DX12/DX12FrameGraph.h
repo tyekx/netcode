@@ -4,9 +4,9 @@
 #include "../../LinearAllocator.h"
 #include <NetcodeFoundation/ArrayView.hpp>
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	class RenderPass : public Egg::RenderPass {
+	class RenderPass : public Netcode::RenderPass {
 	protected:
 		uint64_t read[32];
 		uint64_t written[32];
@@ -16,7 +16,7 @@ namespace Egg::Graphics::DX12 {
 
 	public:
 		
-		RenderPass(const std::string & name, Egg::SetupCallback setup, Egg::RenderCallback render) : Egg::RenderPass(name, setup, render),
+		RenderPass(const std::string & name, Netcode::SetupCallback setup, Netcode::RenderCallback render) : Netcode::RenderPass(name, setup, render),
 			read{}, written{}, numRead{ 0 }, numWritten{ 0 }, isComputePass{ false } {
 
 		}
@@ -37,19 +37,19 @@ namespace Egg::Graphics::DX12 {
 			written[numWritten++] = resource;
 		}
 
-		virtual Egg::ArrayView<uint64_t> GetReadResources() override {
-			return Egg::ArrayView<uint64_t>(read, static_cast<size_t>(numRead));
+		virtual Netcode::ArrayView<uint64_t> GetReadResources() override {
+			return Netcode::ArrayView<uint64_t>(read, static_cast<size_t>(numRead));
 		}
 
-		virtual Egg::ArrayView<uint64_t> GetWrittenResources() override {
-			return Egg::ArrayView<uint64_t>(written, static_cast<size_t>(numWritten));
+		virtual Netcode::ArrayView<uint64_t> GetWrittenResources() override {
+			return Netcode::ArrayView<uint64_t>(written, static_cast<size_t>(numWritten));
 		}
 	};
 
-	using DX12RenderPass = Egg::Graphics::DX12::RenderPass;
+	using DX12RenderPass = Netcode::Graphics::DX12::RenderPass;
 	using DX12RenderPassRef = std::shared_ptr<DX12RenderPass>;
 
-	class FrameGraph : public Egg::FrameGraph {
+	class FrameGraph : public Netcode::FrameGraph {
 	private:
 		struct ResourceRegistry {
 			uint32_t numReads;
@@ -74,10 +74,10 @@ namespace Egg::Graphics::DX12 {
 		virtual std::vector<RenderPassRef> QueryCompleteRenderPasses() override;
 	};
 
-	using DX12FrameGraph = Egg::Graphics::DX12::FrameGraph;
+	using DX12FrameGraph = Netcode::Graphics::DX12::FrameGraph;
 	using DX12FrameGraphRef = std::shared_ptr<DX12FrameGraph>;
 
-	class FrameGraphBuilder : public Egg::FrameGraphBuilder {
+	class FrameGraphBuilder : public Netcode::FrameGraphBuilder {
 		std::vector<DX12RenderPassRef> renderPasses;
 		IResourceContext * resourceContext;
 
@@ -103,6 +103,6 @@ namespace Egg::Graphics::DX12 {
 		}
 	};
 
-	using DX12FrameGraphBuilder = Egg::Graphics::DX12::FrameGraphBuilder;
+	using DX12FrameGraphBuilder = Netcode::Graphics::DX12::FrameGraphBuilder;
 	using DX12FrameGraphBuilderRef = std::shared_ptr<DX12FrameGraphBuilder>;
 }

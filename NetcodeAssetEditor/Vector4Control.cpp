@@ -7,7 +7,7 @@
 using namespace winrt;
 using namespace Windows::UI::Xaml;
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     Vector4Control::Vector4Control()
     {
@@ -25,7 +25,7 @@ namespace winrt::EggAssetEditor::implementation
     Windows::UI::Xaml::DependencyProperty Vector4Control::valueProperty = Windows::UI::Xaml::DependencyProperty::Register(
         L"Value",
         winrt::xaml_typename<Windows::Foundation::IInspectable>(),
-        winrt::xaml_typename<EggAssetEditor::Vector4Control>(),
+        winrt::xaml_typename<NetcodeAssetEditor::Vector4Control>(),
         Windows::UI::Xaml::PropertyMetadata{ box_value(Windows::Foundation::Numerics::float4{0.0f, 0.0f, 0.0f, 0.0f}), Windows::UI::Xaml::PropertyChangedCallback{ &Vector4Control::OnValueChanged } }
     );
 }

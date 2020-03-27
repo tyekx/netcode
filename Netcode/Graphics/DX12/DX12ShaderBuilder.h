@@ -3,9 +3,9 @@
 #include "../../HandleTypes.h"
 #include "DX12ShaderLibrary.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	class ShaderBuilder : public Egg::ShaderBuilder {
+	class ShaderBuilder : public Netcode::ShaderBuilder {
 		enum class BuilderState {
 			CLEAR, VARIANT, PRECOMPILED
 		};
@@ -34,7 +34,7 @@ namespace Egg::Graphics::DX12 {
 		virtual ShaderBytecodeRef Build() override;
 	};
 
-	using DX12ShaderBuilder = Egg::Graphics::DX12::ShaderBuilder;
+	using DX12ShaderBuilder = Netcode::Graphics::DX12::ShaderBuilder;
 	using DX12ShaderBuilderRef = std::shared_ptr<DX12ShaderBuilder>;
 
 }

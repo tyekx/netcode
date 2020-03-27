@@ -3,9 +3,9 @@
 #include "DX12InputLayout.h"
 #include "DX12InputLayoutLibrary.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	class InputLayoutBuilder : public Egg::InputLayoutBuilder {
+	class InputLayoutBuilder : public Netcode::InputLayoutBuilder {
 		std::vector<D3D12_INPUT_ELEMENT_DESC> inputElements;
 		DX12InputLayoutLibraryRef inputLayoutLibrary;
 	public:
@@ -24,8 +24,8 @@ namespace Egg::Graphics::DX12 {
 
 	};
 
-	using DX12InputLayoutBuilder = Egg::Graphics::DX12::InputLayoutBuilder;
-	using DX12InputLayoutBuilderRef = std::shared_ptr<Egg::Graphics::DX12::InputLayoutBuilder>;
+	using DX12InputLayoutBuilder = Netcode::Graphics::DX12::InputLayoutBuilder;
+	using DX12InputLayoutBuilderRef = std::shared_ptr<Netcode::Graphics::DX12::InputLayoutBuilder>;
 
 
 }

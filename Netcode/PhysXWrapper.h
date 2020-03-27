@@ -6,7 +6,7 @@
 
 #define PX_RELEASE(ptr) if(ptr) { ptr->release(); ptr = nullptr; }
 
-namespace Egg::Physics {
+namespace Netcode::Physics {
 
 	//A wrapper class for the basic physx initialization and cleanup
 	class PhysX {

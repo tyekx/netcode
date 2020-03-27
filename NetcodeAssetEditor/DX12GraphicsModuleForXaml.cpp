@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "DX12GraphicsModuleForXaml.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	void DX12GraphicsModuleForXaml::CreateSwapChain() {
 		swapChainFlags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;

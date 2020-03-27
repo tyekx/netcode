@@ -2,7 +2,7 @@
 
 #include "Input.h"
 
-namespace Egg {
+namespace Netcode {
 
 
 	class MovementController {

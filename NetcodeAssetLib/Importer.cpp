@@ -8,7 +8,7 @@
 
 #include <DirectXTex/DirectXTex.h>
 
-namespace  Egg::Asset { 
+namespace  Netcode::Asset { 
 
 	void ImportModel(const char * filePath, Asset::Model & m) {
 		std::string path = filePath;

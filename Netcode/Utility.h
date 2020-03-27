@@ -3,7 +3,7 @@
 #include "Common.h"
 #include <string>
 
-namespace Egg {
+namespace Netcode {
 
 	namespace Utility {
 

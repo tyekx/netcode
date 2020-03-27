@@ -4,9 +4,9 @@
 #include "DX12Common.h"
 #include <vector>
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	class StreamOutput : public Egg::StreamOutput {
+	class StreamOutput : public Netcode::StreamOutput {
 		D3D12_STREAM_OUTPUT_DESC streamOutput;
 		std::vector<D3D12_SO_DECLARATION_ENTRY> declarations;
 		std::vector<UINT> strides;
@@ -19,7 +19,7 @@ namespace Egg::Graphics::DX12 {
 		bool operator==(const D3D12_STREAM_OUTPUT_DESC & soOutput) const;
 	};
 
-	using DX12StreamOutput = Egg::Graphics::DX12::StreamOutput;
+	using DX12StreamOutput = Netcode::Graphics::DX12::StreamOutput;
 	using DX12StreamOutputRef = std::shared_ptr<DX12StreamOutput>;
 
 }

@@ -15,7 +15,7 @@ Only allow 1024 character long mesasges, if your message get cropped consider in
 */
 #define OUTPUT_BUFFER_SIZE 1024
 
-std::wstring Egg::Utility::WFormat(const wchar_t * format, ...) {
+std::wstring Netcode::Utility::WFormat(const wchar_t * format, ...) {
 	va_list va;
 	va_start(va, format);
 	std::wstring wstr;
@@ -27,7 +27,7 @@ std::wstring Egg::Utility::WFormat(const wchar_t * format, ...) {
 }
 
 // prints a formatted wide string to the VS output window
-void Egg::Utility::WDebugf(const wchar_t * format, ...) {
+void Netcode::Utility::WDebugf(const wchar_t * format, ...) {
 	va_list va;
 	va_start(va, format);
 
@@ -42,7 +42,7 @@ void Egg::Utility::WDebugf(const wchar_t * format, ...) {
 }
 
 // prints a formatted string to the VS output window
-void Egg::Utility::Debugf(const char * format, ...) {
+void Netcode::Utility::Debugf(const char * format, ...) {
 	va_list va;
 	va_start(va, format);
 
@@ -56,7 +56,7 @@ void Egg::Utility::Debugf(const char * format, ...) {
 	va_end(va);
 }
 
-std::string Egg::Utility::ToNarrowString(const std::wstring & wideString) {
+std::string Netcode::Utility::ToNarrowString(const std::wstring & wideString) {
 	std::string str;
 	str.resize(wideString.size());
 	BOOL usedDefault = FALSE;
@@ -65,7 +65,7 @@ std::string Egg::Utility::ToNarrowString(const std::wstring & wideString) {
 	return str;
 }
 
-std::wstring Egg::Utility::ToWideString(const std::string & narrowString) {
+std::wstring Netcode::Utility::ToWideString(const std::string & narrowString) {
 	std::wstring ws;
 	ws.resize(narrowString.size());
 	MultiByteToWideChar(0, 0, narrowString.c_str(), (int)narrowString.size(), &(ws.at(0)), (int)ws.size());
@@ -73,7 +73,7 @@ std::wstring Egg::Utility::ToWideString(const std::string & narrowString) {
 	return ws;
 }
 
-bool Egg::Utility::SlurpFile(std::string & dstBuffer, const std::wstring & filepath) {
+bool Netcode::Utility::SlurpFile(std::string & dstBuffer, const std::wstring & filepath) {
 	std::ifstream ifs{ filepath };
 
 	if(!ifs.is_open()) {
@@ -90,7 +90,7 @@ bool Egg::Utility::SlurpFile(std::string & dstBuffer, const std::wstring & filep
 	return true;
 }
 
-void Egg::Utility::DebugEvent(unsigned int msg, std::initializer_list<unsigned int> filter) {
+void Netcode::Utility::DebugEvent(unsigned int msg, std::initializer_list<unsigned int> filter) {
 	static std::multimap<int, const char *> wmTranslation = {
 		{0, "WM_NULL" },
 		{1, "WM_CREATE" },
@@ -1117,5 +1117,5 @@ void Egg::Utility::DebugEvent(unsigned int msg, std::initializer_list<unsigned i
 		}
 	}
 
-	Egg::Utility::Debugf("%s\r\n", possibleEvents.c_str());
+	Netcode::Utility::Debugf("%s\r\n", possibleEvents.c_str());
 }

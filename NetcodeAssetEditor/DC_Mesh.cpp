@@ -2,9 +2,9 @@
 #include "DC_Mesh.h"
 #include "DC_Mesh.g.cpp"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
-    DC_Mesh::DC_Mesh() : lodLevels{ winrt::single_threaded_observable_vector<DC_Lod>() }, propertyChanged{} {
+    DC_Mesh::DC_Mesh() : lodLevels{ winrt::single_threaded_observable_vector<NetcodeAssetEditor::DC_Lod>() }, propertyChanged{} {
 
     }
 
@@ -17,11 +17,11 @@ namespace winrt::EggAssetEditor::implementation
         name = value;
     }
 
-    Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Lod> DC_Mesh::LodLevels() {
+    Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Lod> DC_Mesh::LodLevels() {
         return lodLevels;
     }
 
-    void DC_Mesh::LodLevels(Windows::Foundation::Collections::IObservableVector<EggAssetEditor::DC_Lod> const & value)
+    void DC_Mesh::LodLevels(Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Lod> const & value)
     {
         lodLevels = value;
         propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"LodLevels"));

@@ -1,6 +1,6 @@
 #include "DX12InputLayoutLibrary.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	InputLayoutRef InputLayoutLibrary::Insert(std::vector<D3D12_INPUT_ELEMENT_DESC> inputElements) {
 		D3D12_INPUT_LAYOUT_DESC ld;

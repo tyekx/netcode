@@ -2,10 +2,10 @@
 #include "EditorModuleFactory.h"
 #include "DX12GraphicsModuleForXaml.h"
 
-namespace Egg::Module {
+namespace Netcode::Module {
 	std::unique_ptr<IGraphicsModule> EditorModuleFactory::CreateGraphicsModule(AApp * app, int graphicsType)
 	{
-		return std::make_unique<Egg::Graphics::DX12::DX12GraphicsModuleForXaml>();
+		return std::make_unique<Netcode::Graphics::DX12::DX12GraphicsModuleForXaml>();
 	}
 }
 

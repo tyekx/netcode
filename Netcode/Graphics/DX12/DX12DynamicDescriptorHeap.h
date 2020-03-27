@@ -5,7 +5,7 @@
 #include "DX12ResourceViews.h"
 #include <tuple>
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 
 	class DynamicDescriptorHeap {

@@ -7,7 +7,7 @@
 #include "Vector2Control.g.h"
 #include "DC_Vector2Control.h"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     struct Vector2Control : Vector2ControlT<Vector2Control>
     {
@@ -28,7 +28,7 @@ namespace winrt::EggAssetEditor::implementation
         }
 
         void OnValueUpdated(Windows::Foundation::IInspectable const & s, Windows::UI::Xaml::Data::PropertyChangedEventArgs const & e) {
-            Value(s.as<EggAssetEditor::DC_Vector2Control>().VectorValue());
+            Value(s.as<NetcodeAssetEditor::DC_Vector2Control>().VectorValue());
         }
 
         static void OnValueChanged(Windows::UI::Xaml::DependencyObject const & d, Windows::UI::Xaml::DependencyPropertyChangedEventArgs const & e)
@@ -40,14 +40,14 @@ namespace winrt::EggAssetEditor::implementation
                 return;
             }
 
-            auto iwlc{ d.as<EggAssetEditor::implementation::Vector2Control>() };
+            auto iwlc{ d.as<NetcodeAssetEditor::implementation::Vector2Control>() };
 
-            iwlc->wrapper().DataContext().as<EggAssetEditor::DC_Vector2Control>().VectorValue(f4n);
+            iwlc->wrapper().DataContext().as<NetcodeAssetEditor::DC_Vector2Control>().VectorValue(f4n);
         }
     };
 }
 
-namespace winrt::EggAssetEditor::factory_implementation
+namespace winrt::NetcodeAssetEditor::factory_implementation
 {
     struct Vector2Control : Vector2ControlT<Vector2Control, implementation::Vector2Control>
     {

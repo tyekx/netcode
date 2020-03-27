@@ -4,7 +4,7 @@
 #include "DX12InputLayout.h"
 #include "DX12RootSignature.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	void GPipelineStateDesc::FillNativeDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC & psd) {
 		psd.CachedPSO.CachedBlobSizeInBytes = 0;
@@ -28,11 +28,11 @@ namespace Egg::Graphics::DX12 {
 		}
 
 		psd.PrimitiveTopologyType = static_cast<D3D12_PRIMITIVE_TOPOLOGY_TYPE>(topologyType);
-		psd.InputLayout = static_cast<Egg::Graphics::DX12::InputLayout *>(inputLayout.get())->GetNativeInputLayout();
-		psd.pRootSignature = static_cast<Egg::Graphics::DX12::RootSignature *>(rootSignature.get())->GetNativeRootSignature();
+		psd.InputLayout = static_cast<Netcode::Graphics::DX12::InputLayout *>(inputLayout.get())->GetNativeInputLayout();
+		psd.pRootSignature = static_cast<Netcode::Graphics::DX12::RootSignature *>(rootSignature.get())->GetNativeRootSignature();
 
 		if(streamOutput != nullptr) {
-			psd.StreamOutput = static_cast<Egg::Graphics::DX12::StreamOutput *>(streamOutput.get())->GetNativeStreamOutput();
+			psd.StreamOutput = static_cast<Netcode::Graphics::DX12::StreamOutput *>(streamOutput.get())->GetNativeStreamOutput();
 		} else {
 			psd.StreamOutput.NumEntries = 0;
 			psd.StreamOutput.pBufferStrides = nullptr;

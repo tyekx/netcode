@@ -3,6 +3,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerCommandArguments>--mediaPath=$(SolutionDir)Media --shaderPath=$(OutDir)Shaders</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerEnvironment>PATH=$(EggBinaries)</LocalDebuggerEnvironment>
+    <LocalDebuggerEnvironment>PATH=$(NetcodeBinaries)</LocalDebuggerEnvironment>
   </PropertyGroup>
 </Project>

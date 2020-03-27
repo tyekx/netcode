@@ -3,7 +3,7 @@
 #include "DX12Helpers.h"
 #include "DX12Platform.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	std::tuple<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> DynamicDescriptorHeap::CreateBufferUAV(const GResource & gres) {
 		ASSERT(IsRendering, "Creating transient descriptor outside of rendering is invalid, create them after a Prepare() call");

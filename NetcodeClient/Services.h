@@ -12,4 +12,4 @@ using ServicesTuple = std::tuple<
 >;
 
 
-using Service = Egg::Service<ServicesTuple>;
+using Service = Netcode::Service<ServicesTuple>;

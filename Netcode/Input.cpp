@@ -4,7 +4,7 @@
 #include <Windows.h>
 #endif
 
-namespace Egg {
+namespace Netcode {
 
 	BYTE Input::inputBuffer[2048] = { 0 };
 
@@ -39,7 +39,7 @@ namespace Egg {
 		if(raw->header.dwType == RIM_TYPEMOUSE) {
 			Input::MouseMove(DirectX::XMINT2{ raw->data.mouse.lLastX, raw->data.mouse.lLastY });
 			if(raw->data.mouse.ulButtons != 0) {
-				Egg::Utility::Debugf("%d\r\n", raw->data.mouse.ulButtons);
+				Netcode::Utility::Debugf("%d\r\n", raw->data.mouse.ulButtons);
 
 				switch(raw->data.mouse.ulButtons) {
 				case 1:
@@ -52,7 +52,7 @@ namespace Egg {
 			}
 			auto v = DefRawInputProc(&raw, 1, sizeof(RAWINPUTHEADER));
 			if(v != S_OK) {
-				Egg::Utility::Debugf("Input Error\r\n");
+				Netcode::Utility::Debugf("Input Error\r\n");
 			}
 		}
 	}
@@ -177,7 +177,7 @@ namespace Egg {
 			return ci->second.CurrentValue;
 		}
 
-		Egg::Utility::Debugf("Error: Axis '%s' was not found. Use SetAxis first", axis.c_str());
+		Netcode::Utility::Debugf("Error: Axis '%s' was not found. Use SetAxis first", axis.c_str());
 
 		return 0.0f;
 	}
@@ -186,7 +186,7 @@ namespace Egg {
 		decltype(axisMap)::const_iterator ci = axisMap.find(name);
 
 		if(ci != axisMap.end()) {
-			Egg::Utility::Debugf("Notice: Axis '%s' was already set. Overwriting it");
+			Netcode::Utility::Debugf("Notice: Axis '%s' was already set. Overwriting it");
 		}
 
 		axisMap[name] = Axis{ posKey, negKey };

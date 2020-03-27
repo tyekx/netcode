@@ -1,7 +1,7 @@
 #include "Exporter.h"
 #include <cstdio>
 
-namespace Egg {
+namespace Netcode {
 
 	namespace Exporter {
 

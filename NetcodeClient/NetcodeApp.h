@@ -22,15 +22,15 @@
 #include "RemoteAvatarScript.h"
 #include "Layer.h"
 
-using Egg::Graphics::ResourceType;
-using Egg::Graphics::ResourceState;
+using Netcode::Graphics::ResourceType;
+using Netcode::Graphics::ResourceState;
 
-class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
-	Egg::Stopwatch stopwatch;
-	Egg::Physics::PhysX px;
+class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler {
+	Netcode::Stopwatch stopwatch;
+	Netcode::Physics::PhysX px;
 	physx::PxMaterial * defaultPhysxMaterial;
 	
-	Egg::MovementController movCtrl;
+	Netcode::MovementController movCtrl;
 
 	TransformSystem transformSystem;
 	ScriptSystem scriptSystem;
@@ -132,10 +132,10 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		menuLayer->Construct(this);
 		menuLayer->Activate();
 
-		Egg::Input::SetAxis("Vertical", 'W', 'S');
-		Egg::Input::SetAxis("Horizontal", 'A', 'D');
-		Egg::Input::SetAxis("Jump", VK_SPACE, 0);
-		Egg::Input::SetAxis("Fire", VK_LBUTTON, 0);
+		Netcode::Input::SetAxis("Vertical", 'W', 'S');
+		Netcode::Input::SetAxis("Horizontal", 'A', 'D');
+		Netcode::Input::SetAxis("Jump", VK_SPACE, 0);
+		Netcode::Input::SetAxis("Fire", VK_LBUTTON, 0);
 
 		renderSystem.CreatePermanentResources(graphics.get());
 		defaultPhysxMaterial = px.physics->createMaterial(0.5f, 0.5f, 0.5f);
@@ -172,7 +172,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		GameObject * avatarController = gameScene->Create();
 		GameObject * avatarHitboxes = gameScene->Create();
 
-		Egg::Asset::Model * avatarModel = assetManager->Import(L"test.eggasset");
+		Netcode::Asset::Model * avatarModel = assetManager->Import(L"test.eggasset");
 
 		LoadComponents(avatarModel, avatarHitboxes);
 		Animation* anim = avatarHitboxes->AddComponent<Animation>();
@@ -218,7 +218,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		gameScene->SetCamera(avatarCamera);
 	}
 
-	void LoadComponents(Egg::Asset::Model * model, GameObject * gameObject) {
+	void LoadComponents(Netcode::Asset::Model * model, GameObject * gameObject) {
 		gameObject->AddComponent<Transform>();
 
 		if(model->meshes.Size() > 0) {
@@ -237,7 +237,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		}
 	}
 
-	void LoadColliderComponent(Egg::Asset::Model * model, Collider * colliderComponent) {
+	void LoadColliderComponent(Netcode::Asset::Model * model, Collider * colliderComponent) {
 		if(model->colliders.Size() == 0) {
 			return;
 		}
@@ -249,7 +249,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		eggShapes.reserve(model->colliders.Size());
 
 		for(size_t i = 0; i < model->colliders.Size(); ++i) {
-			Egg::Asset::Collider * eggCollider = model->colliders.Data() + i;
+			Netcode::Asset::Collider * eggCollider = model->colliders.Data() + i;
 			eggShapes.push_back(*eggCollider);
 			physx::PxShape * shape = nullptr;
 			physx::PxShapeFlags shapeFlags;
@@ -264,7 +264,7 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 				filterData.word0 = PHYSX_COLLIDER_TYPE_WORLD;
 			}
 
-			if(eggCollider->type == Egg::Asset::ColliderType::MESH) {
+			if(eggCollider->type == Netcode::Asset::ColliderType::MESH) {
 				const auto & mesh = model->meshes[0];
 				physx::PxConvexMeshDesc cmd;
 				cmd.points.count = mesh.lodLevels[0].vertexCount;
@@ -300,15 +300,15 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 		colliderComponent->shapes = std::move(eggShapes);
 	}
 
-	void LoadModelComponent(Egg::Asset::Model * model, Model * modelComponent) {
+	void LoadModelComponent(Netcode::Asset::Model * model, Model * modelComponent) {
 		for(size_t meshIdx = 0; meshIdx < model->meshes.Size(); ++meshIdx) {
-			Egg::Asset::Material * mat = model->materials.Data() + model->meshes[meshIdx].materialId;
-			Egg::Asset::Mesh * mesh = model->meshes.Data() + meshIdx;
+			Netcode::Asset::Material * mat = model->materials.Data() + model->meshes[meshIdx].materialId;
+			Netcode::Asset::Mesh * mesh = model->meshes.Data() + meshIdx;
 
 			DirectX::XMStoreFloat4x4A(&modelComponent->perObjectData.Model, DirectX::XMMatrixIdentity());
 			DirectX::XMStoreFloat4x4A(&modelComponent->perObjectData.InvModel, DirectX::XMMatrixIdentity());
 
-			Egg::InputLayoutBuilderRef inputLayoutBuilder = graphics->CreateInputLayoutBuilder();
+			Netcode::InputLayoutBuilderRef inputLayoutBuilder = graphics->CreateInputLayoutBuilder();
 
 			for(uint32_t ilIdx = 0; ilIdx < mesh->inputElementsLength; ++ilIdx) {
 				inputLayoutBuilder->AddInputElement(mesh->inputElements[ilIdx].semanticName,
@@ -317,9 +317,9 @@ class GameApp : public Egg::Module::AApp, Egg::Module::TAppEventHandler {
 					mesh->inputElements[ilIdx].byteOffset);
 			}
 
-			Egg::InputLayoutRef inputLayout = inputLayoutBuilder->Build();
+			Netcode::InputLayoutRef inputLayout = inputLayoutBuilder->Build();
 
-			Egg::Graphics::UploadBatch batch;
+			Netcode::Graphics::UploadBatch batch;
 
 			auto appMesh = std::make_shared<Mesh>();
 
@@ -383,8 +383,8 @@ public:
 		menuLayer->OnResized(w, h);
 	}
 
-	virtual void AddAppEventHandlers(Egg::Module::AppEventSystem * eventSystem) override {
-		Egg::Module::AApp::AddAppEventHandlers(eventSystem);
+	virtual void AddAppEventHandlers(Netcode::Module::AppEventSystem * eventSystem) override {
+		Netcode::Module::AApp::AddAppEventHandlers(eventSystem);
 
 		eventSystem->AddHandler(this);
 	}
@@ -392,8 +392,8 @@ public:
 	/*
 	Initialize modules
 	*/
-	virtual void Setup(Egg::Module::IModuleFactory * factory) override {
-		events = std::make_unique<Egg::Module::AppEventSystem>();
+	virtual void Setup(Netcode::Module::IModuleFactory * factory) override {
+		events = std::make_unique<Netcode::Module::AppEventSystem>();
 
 		window = factory->CreateWindowModule(this, 0);
 		graphics = factory->CreateGraphicsModule(this, 0);

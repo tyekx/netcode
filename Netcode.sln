@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29215.179
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EggAssetEditor", "NetcodeAssetEditor\EggAssetEditor.vcxproj", "{16DC0694-3F5D-480C-9ED7-AAE8B06A6300}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NetcodeAssetEditor", "NetcodeAssetEditor\NetcodeAssetEditor.vcxproj", "{16DC0694-3F5D-480C-9ED7-AAE8B06A6300}"
 	ProjectSection(ProjectDependencies) = postProject
 		{D968F35A-74B8-4107-853E-3608AE3B4F40} = {D968F35A-74B8-4107-853E-3608AE3B4F40}
 		{90CF318B-D8DA-4E22-A8E0-30D42B2B9AB2} = {90CF318B-D8DA-4E22-A8E0-30D42B2B9AB2}

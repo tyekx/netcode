@@ -31,7 +31,7 @@ public:
 	PerFrameData perFrameData;
 	SsaoData ssaoData;
 
-	GameScene(Egg::Physics::PhysX & px) : GameScene() {
+	GameScene(Netcode::Physics::PhysX & px) : GameScene() {
 		sceneCallback = std::make_unique<GameSceneSimulationEventCallback>();
 		physx::PxSceneDesc sceneDesc{ px.physics->getTolerancesScale() };
 		sceneDesc.gravity = physx::PxVec3{ 0.0f, -981.0f, 0.0f };

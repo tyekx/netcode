@@ -30,7 +30,7 @@ public:
 		AlignText(textObject->GetComponent<Text>(), textObject->GetComponent<Transform>(), backgroundObject->GetComponent<UIElement>());
 	}
 
-	void SetFont(Egg::SpriteFontRef spriteFont) {
+	void SetFont(Netcode::SpriteFontRef spriteFont) {
 		Text * textComponent = textObject->GetComponent<Text>();
 		textComponent->font = std::move(spriteFont);
 		AlignText(textComponent, textObject->GetComponent<Transform>(), backgroundObject->GetComponent<UIElement>());

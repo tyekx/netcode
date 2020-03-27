@@ -7,7 +7,7 @@
 #include "JsonUtility.h"
 #include "Collider.h"
 
-namespace Egg::Asset {
+namespace Netcode::Asset {
 
 	class Manifest {
 	public:

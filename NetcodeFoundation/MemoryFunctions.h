@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Egg {
+namespace Netcode {
 
 	void InterpretSkip(void ** ptr, unsigned int nBytes);
 

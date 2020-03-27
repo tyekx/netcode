@@ -6,7 +6,7 @@
 #include <Windows.h>
 #endif
 
-namespace Egg {
+namespace Netcode {
 	std::wstring Path::MediaRoot{};
 	std::wstring Path::ShaderRoot{};
 

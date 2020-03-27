@@ -2,7 +2,7 @@
 #include "Utility.h"
 #include "EggMath.h"
 
-namespace Egg::Physics {
+namespace Netcode::Physics {
 
 	void PhysX::UpdateDebugCamera(const DirectX::XMFLOAT3 & pos, const DirectX::XMFLOAT3 & up, const DirectX::XMFLOAT3 & lookAt)
 	{/*
@@ -19,9 +19,9 @@ namespace Egg::Physics {
 		bool isDebuggerConnected = debugger->connect(*transport, physx::PxPvdInstrumentationFlag::eALL);
 
 		if(!isDebuggerConnected) {
-			Egg::Utility::Debugf("Notice: Failed to connect to Physx Visual Debugger\r\n");
+			Netcode::Utility::Debugf("Notice: Failed to connect to Physx Visual Debugger\r\n");
 		} else {
-			Egg::Utility::Debugf("PVD Connected on socket 5425\r\n");
+			Netcode::Utility::Debugf("PVD Connected on socket 5425\r\n");
 		}
 
 		physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, physx::PxTolerancesScale{ }, true, debugger);

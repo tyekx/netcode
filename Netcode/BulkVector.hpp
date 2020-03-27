@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Egg {
+namespace Netcode {
 
 	template<typename T, size_t BULK_SIZE = 512>
 	class BulkVector {

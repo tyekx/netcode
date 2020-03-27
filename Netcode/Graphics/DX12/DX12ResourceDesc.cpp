@@ -1,6 +1,6 @@
 #include "DX12ResourceDesc.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 	D3D12_PRIMITIVE_TOPOLOGY GetNativePrimitiveTopology(PrimitiveTopology t) {
 		return static_cast<D3D12_PRIMITIVE_TOPOLOGY>(t);
 	}

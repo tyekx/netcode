@@ -21,8 +21,8 @@ void HandleCommunication(
 	std::string path,
 	std::string cookies,
 	std::string body,
-	Egg::dcc_t<std::promise<Egg::Response>> promise,
-	Egg::Module::CookieStorage& cookieStorage,
+	Netcode::dcc_t<std::promise<Netcode::Response>> promise,
+	Netcode::Module::CookieStorage& cookieStorage,
 	boost::asio::yield_context yield) {
 	boost::system::error_code ec;
 
@@ -47,7 +47,7 @@ void HandleCommunication(
 
 	if(ec) {
 		Log::Error("Failed to resolve hostname");
-		promise.value.set_value(Egg::Response(static_cast<int>(http::status::service_unavailable)));
+		promise.value.set_value(Netcode::Response(static_cast<int>(http::status::service_unavailable)));
 		return;
 	}
 
@@ -66,7 +66,7 @@ void HandleCommunication(
 	if(ec || writtenSize == 0) {
 		Log::Error("Failed to write to stream");
 		Log::Error(ec.message().c_str());
-		promise.value.set_value(Egg::Response(static_cast<int>(http::status::service_unavailable)));
+		promise.value.set_value(Netcode::Response(static_cast<int>(http::status::service_unavailable)));
 		return;
 	}
 
@@ -78,7 +78,7 @@ void HandleCommunication(
 
 	if(ec || readSize == 0) {
 		Log::Error("Failed to receive from server");
-		promise.value.set_value(Egg::Response(static_cast<int>(http::status::service_unavailable)));
+		promise.value.set_value(Netcode::Response(static_cast<int>(http::status::service_unavailable)));
 		return;
 	}
 
@@ -104,7 +104,7 @@ void HandleCommunication(
 		cookieStorage.SetCookies(std::move(newCookies));
 	}
 
-	promise.value.set_value(Egg::Response(response.result_int(), response.body()));
+	promise.value.set_value(Netcode::Response(response.result_int(), response.body()));
 
 	stream.socket().shutdown(tcp::socket::shutdown_both, ec);
 
@@ -117,18 +117,18 @@ void HandleCommunication(
 
 }
 
-std::future<Egg::Response> MakeRequest(std::string host, std::string port, http::verb verb, std::string path, std::string cookies, std::string body, Egg::Module::CookieStorage& cookieStorage) {
-	std::promise<Egg::Response> promise = std::promise<Egg::Response>();
+std::future<Netcode::Response> MakeRequest(std::string host, std::string port, http::verb verb, std::string path, std::string cookies, std::string body, Netcode::Module::CookieStorage& cookieStorage) {
+	std::promise<Netcode::Response> promise = std::promise<Netcode::Response>();
 	auto rv = promise.get_future();
 
 	boost::asio::spawn(IOEngine::GetIOContext(),
 		std::bind(&HandleCommunication,
-			host, port, verb, path, cookies, body, Egg::move_to_dcc(promise), std::ref( cookieStorage ), std::placeholders::_1));
+			host, port, verb, path, cookies, body, Netcode::move_to_dcc(promise), std::ref( cookieStorage ), std::placeholders::_1));
 
 	return rv;
 }
 
-namespace Egg::Module {
+namespace Netcode::Module {
 
 	std::string CookieStorage::GetCookies() const
 	{
@@ -206,8 +206,8 @@ namespace Egg::Module {
 		std::string cookies = cookieStorage.GetCookies();
 		
 		json11::Json::object obj;
-		obj["username"] = Egg::Utility::ToNarrowString(username);
-		obj["password"] = Egg::Utility::ToNarrowString(password);
+		obj["username"] = Netcode::Utility::ToNarrowString(username);
+		obj["password"] = Netcode::Utility::ToNarrowString(password);
 
 		json11::Json js = obj;
 		std::string body = js.dump();

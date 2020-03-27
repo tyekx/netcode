@@ -2,7 +2,7 @@
 
 #include <DirectXMath.h>
 
-namespace Egg {
+namespace Netcode {
 
 	__declspec(align(16)) struct Light {
 		DirectX::XMFLOAT3A intensity;
@@ -19,7 +19,7 @@ namespace Egg {
 
 	};
 
-	struct PointLight : public Egg::Light {
+	struct PointLight : public Netcode::Light {
 		PointLight(const DirectX::XMFLOAT3A & intensity, const DirectX::XMFLOAT4A & position, float falloffStart, float falloffEnd)
 		{
 			Light::intensity = intensity;
@@ -29,7 +29,7 @@ namespace Egg {
 		}
 	};
 
-	struct DirectionalLight : public Egg::Light {
+	struct DirectionalLight : public Netcode::Light {
 		/*
 		* For directional light set position.w to 0.
 		*/
@@ -40,7 +40,7 @@ namespace Egg {
 		}
 	};
 
-	struct SpotLight : public Egg::Light {
+	struct SpotLight : public Netcode::Light {
 		SpotLight(const DirectX::XMFLOAT3A & intensity, const DirectX::XMFLOAT4A & position, const DirectX::XMFLOAT3A & direction,  float falloffStart, float falloffEnd, float spotPower)
 		{
 			Light::intensity = intensity;

@@ -1,6 +1,6 @@
 #include "DX12CPipelineStateLibrary.h" 
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	void CPipelineStateLibrary::SetDevice(com_ptr<ID3D12Device> dev)
 	{

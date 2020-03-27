@@ -5,11 +5,11 @@
 #include "DX12Common.h"
 #include <tuple>
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	class GResource {
 	public:
-		Egg::Graphics::ResourceDesc desc;
+		Netcode::Graphics::ResourceDesc desc;
 		ID3D12Resource * resource;
 		D3D12_GPU_VIRTUAL_ADDRESS address;
 	};

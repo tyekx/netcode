@@ -2,7 +2,7 @@
 
 #include <NetcodeAssetLib/Model.h>
 
-namespace Egg {
+namespace Netcode {
 
 	namespace Exporter {
 

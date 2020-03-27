@@ -12,9 +12,9 @@
 #include "CollidersPage.h"
 #include "GeometryPage.h"
 #include "MaterialsPage.h"
-#include "EggAssetExporter.h"
+#include "NetcodeAssetExporter.h"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     MainPage::MainPage() {
         
@@ -23,7 +23,7 @@ namespace winrt::EggAssetEditor::implementation
         pointerHeld = false;
     }
 
-    winrt::event_token MainPage::ManifestChanged(EggAssetEditor::ManifestChangedHandler const & handler)
+    winrt::event_token MainPage::ManifestChanged(NetcodeAssetEditor::ManifestChangedHandler const & handler)
     {
         return manifestChanged.add(handler);
     }
@@ -33,7 +33,7 @@ namespace winrt::EggAssetEditor::implementation
         manifestChanged.remove(token);
     }
 
-    winrt::event_token MainPage::ModelChanged(EggAssetEditor::ModelChangedHandler const & handler)
+    winrt::event_token MainPage::ModelChanged(NetcodeAssetEditor::ModelChangedHandler const & handler)
     {
         return modelChanged.add(handler);
     }
@@ -52,17 +52,17 @@ namespace winrt::EggAssetEditor::implementation
             throw hresult_not_implemented();
         }
 
-        Global::Manifest = std::make_unique<Egg::Asset::Manifest>();
+        Global::Manifest = std::make_unique<Netcode::Asset::Manifest>();
 
         //manifestChanged(reinterpret_cast<uint64_t>(manifest.get()));
     }
 
     void MainPage::swapChainPanel_Loaded(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e)
     {
-        Egg::Module::EditorModuleFactory editorModuleFactory;
+        Netcode::Module::EditorModuleFactory editorModuleFactory;
 
         Global::Model = std::make_unique<Model>();
-        Global::EditorApp = std::make_unique<Egg::Module::EditorApp>();
+        Global::EditorApp = std::make_unique<Netcode::Module::EditorApp>();
         Global::EditorApp->Setup(&editorModuleFactory);
 
         auto nativeSwapChainPanel = swapChainPanel().as<ISwapChainPanelNative>();
@@ -167,11 +167,11 @@ namespace winrt::EggAssetEditor::implementation
         uint32_t selectionIndex = mainPivot().SelectedIndex();
 
         switch(selectionIndex) {
-            case 0: mainFrame().Navigate(xaml_typename<EggAssetEditor::GeometryPage>(), DataContext()); break;
-            case 1: mainFrame().Navigate(xaml_typename<EggAssetEditor::MaterialsPage>(), DataContext()); break;
-            case 2: mainFrame().Navigate(xaml_typename<EggAssetEditor::BonesPage>(), DataContext()); break;
-            case 3: mainFrame().Navigate(xaml_typename<EggAssetEditor::AnimationsPage>(), DataContext()); break;
-            case 4: mainFrame().Navigate(xaml_typename<EggAssetEditor::CollidersPage>(), DataContext()); break;
+            case 0: mainFrame().Navigate(xaml_typename<NetcodeAssetEditor::GeometryPage>(), DataContext()); break;
+            case 1: mainFrame().Navigate(xaml_typename<NetcodeAssetEditor::MaterialsPage>(), DataContext()); break;
+            case 2: mainFrame().Navigate(xaml_typename<NetcodeAssetEditor::BonesPage>(), DataContext()); break;
+            case 3: mainFrame().Navigate(xaml_typename<NetcodeAssetEditor::AnimationsPage>(), DataContext()); break;
+            case 4: mainFrame().Navigate(xaml_typename<NetcodeAssetEditor::CollidersPage>(), DataContext()); break;
         }
 
     }
@@ -225,7 +225,7 @@ namespace winrt::EggAssetEditor::implementation
             }
 
             if(Global::Manifest == nullptr) {
-                Global::Manifest = std::make_unique<Egg::Asset::Manifest>();
+                Global::Manifest = std::make_unique<Netcode::Asset::Manifest>();
             }
 
             Global::Manifest->base.file = winrt::to_string(file.Path());
@@ -277,7 +277,7 @@ namespace winrt::EggAssetEditor::implementation
 
                 Global::Model->animations.push_back(std::move(optAnim));
 
-                Egg::Asset::Manifest::Animation anim;
+                Netcode::Asset::Manifest::Animation anim;
                 anim.name = animationName;
                 anim.editorPlaybackSpeed = 1.0f;
                 anim.editorPlaybackLoop = true;
@@ -365,7 +365,7 @@ namespace winrt::EggAssetEditor::implementation
             json11::Json json = json11::Json::parse(str, err);
 
             if(Global::Manifest == nullptr) {
-                Global::Manifest = std::make_unique<Egg::Asset::Manifest>();
+                Global::Manifest = std::make_unique<Netcode::Asset::Manifest>();
             }
 
             if(!Global::Manifest->Load(json)) {
@@ -442,7 +442,7 @@ namespace winrt::EggAssetEditor::implementation
         Windows::Storage::Pickers::FileSavePicker fileSavePicker;
 
         fileSavePicker.SuggestedFileName(L"asset");
-        fileSavePicker.FileTypeChoices().Insert(L"EggAsset", winrt::single_threaded_vector<hstring>({ L".eggasset" }));
+        fileSavePicker.FileTypeChoices().Insert(L"NetcodeAsset", winrt::single_threaded_vector<hstring>({ L".Netcodeasset" }));
         fileSavePicker.SuggestedStartLocation(Windows::Storage::Pickers::PickerLocationId::Objects3D);
 
         /**/
@@ -453,7 +453,7 @@ namespace winrt::EggAssetEditor::implementation
 
             hstring path = file.Path();
 
-            auto [rawData, size] = EggAssetExporter::Export(*Global::Model);
+            auto [rawData, size] = NetcodeAssetExporter::Export(*Global::Model);
 
             winrt::array_view<const uint8_t> arrayView( rawData.get(), rawData.get() + size );
 

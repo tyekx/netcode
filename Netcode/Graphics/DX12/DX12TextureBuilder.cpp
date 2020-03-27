@@ -2,7 +2,7 @@
 #include "DX12TextureBuilder.h"
 #include "DX12Common.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	void TextureBuilder::LoadTexture2D(const std::wstring & mediaPath) {
 		MediaPath media{ mediaPath };

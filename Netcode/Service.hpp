@@ -2,7 +2,7 @@
 
 #include "EggMpl.hpp"
 
-namespace Egg {
+namespace Netcode {
 
 	/**
 	* A simple dependency injector for the user, so that any dependency can be initialized, fetched, destroyed on demand

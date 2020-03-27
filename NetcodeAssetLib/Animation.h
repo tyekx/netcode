@@ -2,7 +2,7 @@
 
 #include <DirectXMath.h>
 
-namespace Egg::Asset {
+namespace Netcode::Asset {
 
 	enum class AnimationEdge {
 		DEFAULT = 0,

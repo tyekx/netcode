@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Egg::Memory {
+namespace Netcode::Memory {
 
 	/*
 	Linear classifier helps filling pre-allocated memory. Calling the constructors / destructors is the task of the user

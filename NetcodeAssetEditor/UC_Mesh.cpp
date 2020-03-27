@@ -3,7 +3,7 @@
 #include "DC_Lod.h"
 #include "UC_Mesh.g.cpp"
 
-namespace winrt::EggAssetEditor::implementation
+namespace winrt::NetcodeAssetEditor::implementation
 {
     UC_Mesh::UC_Mesh() {
         InitializeComponent();

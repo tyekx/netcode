@@ -1,6 +1,6 @@
 #include "DX12GPipelineStateBuilder.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	GPipelineStateBuilder::GPipelineStateBuilder(DX12GPipelineStateLibraryRef libRef) : desc{}, libraryRef{ libRef } {
 
@@ -77,7 +77,7 @@ namespace Egg::Graphics::DX12 {
 		}
 	}
 
-	void GPipelineStateBuilder::SetPrimitiveTopologyType(Egg::Graphics::PrimitiveTopologyType topType)
+	void GPipelineStateBuilder::SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType topType)
 	{
 		desc.topologyType = topType;
 	}

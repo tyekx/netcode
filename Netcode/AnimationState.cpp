@@ -1,6 +1,6 @@
 #include "AnimationState.h"
 
-namespace Egg::Animation {
+namespace Netcode::Animation {
 
 	AnimationState::Transition::Transition() : movQueryFunction{ nullptr }, animQueryFunction{ nullptr }, targetState{ nullptr }, behaviour{ TransitionBehaviour::NONE } { }
 

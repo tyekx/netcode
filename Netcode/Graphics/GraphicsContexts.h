@@ -9,12 +9,12 @@
 #include <string>
 #include <map>
 
-namespace Egg {
+namespace Netcode {
 	class RenderPass;
 	class FrameGraph;
 }
 
-namespace Egg::Graphics {
+namespace Netcode::Graphics {
 
 	enum class DisplayMode : unsigned {
 		WINDOWED, FULLSCREEN, BORDERLESS

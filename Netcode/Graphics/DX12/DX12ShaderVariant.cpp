@@ -2,7 +2,7 @@
 #include "DX12ShaderVariant.h"
 #include "DX12ShaderCompiler.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	uint8_t * ShaderVariant::GetBufferPointer()
 	{

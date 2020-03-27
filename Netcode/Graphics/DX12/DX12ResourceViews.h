@@ -3,9 +3,9 @@
 #include "../../HandleTypes.h"
 #include "DX12Common.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	class ResourceViews : public Egg::ResourceViews {
+	class ResourceViews : public Netcode::ResourceViews {
 		const uint32_t numDescriptors;
 		const D3D12_GPU_DESCRIPTOR_HANDLE baseGpuHandle_ShaderVisible;
 		const D3D12_CPU_DESCRIPTOR_HANDLE baseCpuHandle_ShaderVisible;
@@ -45,7 +45,7 @@ namespace Egg::Graphics::DX12 {
 		virtual void CreateSampler(uint32_t idx, uint64_t resourceHandle)  override;
 	};
 
-	using DX12ResourceViews = Egg::Graphics::DX12::ResourceViews;
+	using DX12ResourceViews = Netcode::Graphics::DX12::ResourceViews;
 	using DX12ResourceViewsRef = std::shared_ptr<DX12ResourceViews>;
 
 }

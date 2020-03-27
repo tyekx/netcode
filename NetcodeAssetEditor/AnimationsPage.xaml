@@ -1,8 +1,8 @@
 ﻿<Page
-    x:Class="EggAssetEditor.AnimationsPage"
+    x:Class="NetcodeAssetEditor.AnimationsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:EggAssetEditor"
+    xmlns:local="using:NetcodeAssetEditor"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d" NavigationCacheMode="Enabled">
@@ -20,7 +20,7 @@
         <ScrollViewer Grid.Row="1">
             <ListView x:Name="animationsView" ItemsSource="{x:Bind Animations}" SelectionMode="Single" SelectionChanged="ListView_SelectionChanged">
                 <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="local:DC_Animation">
+                    <DataTemplate>
                         <TextBlock Text="{Binding Name, Mode=OneWay}"></TextBlock>
                     </DataTemplate>
                 </ListView.ItemTemplate>

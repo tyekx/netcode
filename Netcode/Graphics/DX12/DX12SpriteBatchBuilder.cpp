@@ -1,9 +1,9 @@
 #include "DX12SpriteBatchBuilder.h"
 #include "DX12SpriteBatch.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
-	SpriteBatchBuilder::SpriteBatchBuilder(const Egg::Module::IGraphicsModule * gModule) : gModule{ gModule } {
+	SpriteBatchBuilder::SpriteBatchBuilder(const Netcode::Module::IGraphicsModule * gModule) : gModule{ gModule } {
 
 	}
 

@@ -6,7 +6,7 @@
 #include "Modules.h"
 #include "BasicGeometry.h"
 
-namespace Egg {
+namespace Netcode {
 	/*
 	class DebugPhysx {
 		Egg::PipelineStateRef debugShape_PipelineState;

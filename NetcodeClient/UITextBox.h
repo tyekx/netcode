@@ -30,7 +30,7 @@ public:
 		AlignText(textComponent, textObject->GetComponent<Transform>(), backgroundObject->GetComponent<UIElement>());
 	}
 
-	void SetFont(Egg::SpriteFontRef spriteFont) {
+	void SetFont(Netcode::SpriteFontRef spriteFont) {
 		Text * textComponent = textObject->GetComponent<Text>();
 		textComponent->font = std::move(spriteFont);
 		AlignText(textComponent, textObject->GetComponent<Transform>(), backgroundObject->GetComponent<UIElement>());
@@ -42,7 +42,7 @@ public:
 		bgElem->height = size.y;
 	}
 
-	void SetBackgroundImage(Egg::ResourceViewsRef resourceView, const DirectX::XMUINT2 & textureSize) {
+	void SetBackgroundImage(Netcode::ResourceViewsRef resourceView, const DirectX::XMUINT2 & textureSize) {
 		Sprite * sprite = nullptr;
 		if(!backgroundObject->HasComponent<Sprite>()) {
 			sprite = backgroundObject->AddComponent<Sprite>();
@@ -100,7 +100,7 @@ public:
 			Log::Debug("[TextBox({0})] onClick, now selected", textBoxComponent->id);
 		};
 
-		textBoxComponent->keyPressedToken = Egg::Input::OnKeyPressed += [textBoxComponent, textComponent](uint32_t key, uint32_t modifiers) -> void {
+		textBoxComponent->keyPressedToken = Netcode::Input::OnKeyPressed += [textBoxComponent, textComponent](uint32_t key, uint32_t modifiers) -> void {
 			if(textBoxComponent->id == TextBox::selectedId) {
 				Log::Debug("[TextBox({0})] key pressed: {1}", textBoxComponent->id, key);
 				if(key == VK_BACK) {
@@ -124,9 +124,9 @@ public:
 						Log::Debug("[TextBox({0})] full, keypress ignored: {1}", textBoxComponent->id, key);
 						return;
 					}
-					if(((modifiers & Egg::KeyModifiers::SHIFT_CAPS_LOCK) != Egg::KeyModifiers::SHIFT_CAPS_LOCK) && (
-						((modifiers & Egg::KeyModifiers::SHIFT) == Egg::KeyModifiers::SHIFT) ||
-						((modifiers & Egg::KeyModifiers::CAPS_LOCK) == Egg::KeyModifiers::CAPS_LOCK))) {
+					if(((modifiers & Netcode::KeyModifiers::SHIFT_CAPS_LOCK) != Netcode::KeyModifiers::SHIFT_CAPS_LOCK) && (
+						((modifiers & Netcode::KeyModifiers::SHIFT) == Netcode::KeyModifiers::SHIFT) ||
+						((modifiers & Netcode::KeyModifiers::CAPS_LOCK) == Netcode::KeyModifiers::CAPS_LOCK))) {
 					} else {
 						key = std::tolower(key);
 					}

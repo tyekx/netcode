@@ -3,7 +3,7 @@
 #include "../../HandleTypes.h"
 #include "DX12Common.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	class RootSignatureDesc {
 		std::unique_ptr<uint8_t[]> buffer;
@@ -19,7 +19,7 @@ namespace Egg::Graphics::DX12 {
 		const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & GetNativeDesc() const;
 	};
 
-	class RootSignature : public Egg::RootSignature {
+	class RootSignature : public Netcode::RootSignature {
 		com_ptr<ID3D12RootSignature> rootSignature;
 		RootSignatureDesc desc;
 	public:
@@ -33,7 +33,7 @@ namespace Egg::Graphics::DX12 {
 		virtual void * GetImplDetail() const override;
 	};
 
-	using DX12RootSignature = Egg::Graphics::DX12::RootSignature;
+	using DX12RootSignature = Netcode::Graphics::DX12::RootSignature;
 	using DX12RootSignatureRef = std::shared_ptr<DX12RootSignature>;
 
 }

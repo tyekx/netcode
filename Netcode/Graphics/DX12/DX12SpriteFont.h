@@ -12,7 +12,7 @@
 #include "DX12ResourceViews.h"
 #include "DX12Texture.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 	
 	template<typename T>
 	inline T AlignUp(T size, size_t alignment)
@@ -35,7 +35,7 @@ namespace Egg::Graphics::DX12 {
 		float XAdvance;
 	};
 
-	class SpriteFont : public Egg::SpriteFont
+	class SpriteFont : public Netcode::SpriteFont
 	{
 		uint64_t eggTexture;
 		DX12ResourceViewsRef shaderResourceView;
@@ -63,9 +63,9 @@ namespace Egg::Graphics::DX12 {
 
 		virtual ResourceViewsRef GetResourceView() const override;
 
-		virtual void DrawString(Egg::SpriteBatchRef spriteBatch, const wchar_t * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const override;
+		virtual void DrawString(Netcode::SpriteBatchRef spriteBatch, const wchar_t * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const override;
 
-		virtual void DrawString(Egg::SpriteBatchRef spriteBatch, const char * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const override;
+		virtual void DrawString(Netcode::SpriteBatchRef spriteBatch, const char * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const override;
 
 		/*
 		// Wide-character / UTF-16LE
@@ -81,7 +81,7 @@ namespace Egg::Graphics::DX12 {
 		void  DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ char const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, DirectX::GXMVECTOR scale, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0) const;
 		*/
 
-		void DrawString(Egg::SpriteBatchRef spriteBatch,
+		void DrawString(Netcode::SpriteBatchRef spriteBatch,
 			const wchar_t * text,
 			const DirectX::XMFLOAT2 & position,
 			const DirectX::XMFLOAT4 & color,
@@ -166,7 +166,7 @@ namespace Egg::Graphics::DX12 {
 		static const DirectX::XMFLOAT2 Float2Zero;
 	};
 
-	using DX12SpriteFont = Egg::Graphics::DX12::SpriteFont;
+	using DX12SpriteFont = Netcode::Graphics::DX12::SpriteFont;
 	using DX12SpriteFontRef = std::shared_ptr<DX12SpriteFont>;
 
 	static inline bool operator<(const Glyph & left, const Glyph & right)
@@ -184,7 +184,7 @@ namespace Egg::Graphics::DX12 {
 		return left.Character < right;
 	}
 	
-	using DX12SpriteFont = Egg::Graphics::DX12::SpriteFont;
+	using DX12SpriteFont = Netcode::Graphics::DX12::SpriteFont;
 	using DX12SpriteFontRef = std::shared_ptr<DX12SpriteFont>;
 
 };

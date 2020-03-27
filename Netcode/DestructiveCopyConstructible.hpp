@@ -3,7 +3,7 @@
 #include <type_traits>
 #include <memory>
 
-namespace Egg {
+namespace Netcode {
 
     /*
     dangerous helper class, the copy constructor moves, useful for std::function and std::bind when 

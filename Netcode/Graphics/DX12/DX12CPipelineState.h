@@ -3,7 +3,7 @@
 #include "../../HandleTypes.h"
 #include "DX12Common.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	struct CPipelineStateDesc {
 		RootSignatureRef rootSignature;
@@ -14,7 +14,7 @@ namespace Egg::Graphics::DX12 {
 		bool operator==(const CPipelineStateDesc & rhs) const;
 	};
 
-	class CPipelineState : public Egg::PipelineState {
+	class CPipelineState : public Netcode::PipelineState {
 		com_ptr<ID3D12PipelineState> pso;
 		CPipelineStateDesc psoDesc;
 
@@ -28,7 +28,7 @@ namespace Egg::Graphics::DX12 {
 		virtual void * GetImplDetail() const override;
 	};
 
-	using DX12CPipelineState = Egg::Graphics::DX12::CPipelineState;
+	using DX12CPipelineState = Netcode::Graphics::DX12::CPipelineState;
 	using DX12CPipelineStateRef = std::shared_ptr<DX12CPipelineState>;
 
 }

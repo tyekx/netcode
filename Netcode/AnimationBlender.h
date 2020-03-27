@@ -3,7 +3,7 @@
 #include "AnimationState.h"
 #include <NetcodeAssetLib/Bone.h>
 
-namespace Egg::Animation {
+namespace Netcode::Animation {
 	class AnimationBlender {
 		struct BoneSRT {
 			DirectX::XMVECTOR translation;

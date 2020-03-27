@@ -4,7 +4,7 @@
 #include "DX12ShaderCompiled.h"
 #include <fstream>
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 	ShaderCompiled::ShaderCompiled(const std::wstring & sourceFile, const void * srcData, size_t size) : bufferBlob{ nullptr }, sourceFileRef{ sourceFile } {
 
 		DX_API("Failed to create blob")

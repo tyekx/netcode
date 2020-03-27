@@ -1,8 +1,8 @@
 ﻿<Page
-    x:Class="EggAssetEditor.CollidersPage"
+    x:Class="NetcodeAssetEditor.CollidersPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:EggAssetEditor"
+    xmlns:local="using:NetcodeAssetEditor"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d" NavigationCacheMode="Enabled">
@@ -40,7 +40,7 @@
         <ScrollViewer Grid.Row="1" Grid.Column="0">
             <ListView x:Name="collidersList" ItemsSource="{x:Bind Colliders}" SelectionChanged="collidersList_SelectionChanged">
                 <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="local:DC_Collider">
+                    <DataTemplate>
                         <TextBlock Text="{Binding Type, Converter={StaticResource ColliderType}}"></TextBlock>
                     </DataTemplate>
                 </ListView.ItemTemplate>
@@ -81,7 +81,7 @@
                     <StackPanel Orientation="Horizontal" Margin="30,0,0,0">
                         <ComboBox x:Name="boneComboBox" ItemsSource="{x:Bind Bones}" SelectionChanged="boneComboBox_SelectionChanged" Width="240">
                             <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="local:DC_Bone">
+                                <DataTemplate>
                                     <TextBlock Text="{Binding Name}"></TextBlock>
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>

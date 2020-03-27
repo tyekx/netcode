@@ -1,6 +1,6 @@
 #include "DX12StreamOutputBuilder.h"
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	StreamOutputBuilder::StreamOutputBuilder(DX12StreamOutputLibraryRef streamOutputLib) :
 		declarations{}, strides{}, rasterizedStream{ D3D12_SO_NO_RASTERIZED_STREAM }, streamOutputLibrary{ streamOutputLib } {

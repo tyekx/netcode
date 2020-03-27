@@ -27,7 +27,7 @@
 
 
 
-namespace Egg::Graphics::DX12 {
+namespace Netcode::Graphics::DX12 {
 
 	class FrameResource {
 	public:
@@ -91,13 +91,13 @@ namespace Egg::Graphics::DX12 {
 		}
 	};
 
-	class DX12GraphicsModule : public Egg::Module::IGraphicsModule, Egg::Graphics::IFrameContext {
+	class DX12GraphicsModule : public Netcode::Module::IGraphicsModule, Netcode::Graphics::IFrameContext {
 	private:
 		void CullFrameGraph(FrameGraphRef frameGraph);
 		void ExecuteFrameGraph(FrameGraphRef frameGraph);
 
 	protected:
-		Egg::Module::AppEventSystem * eventSystem;
+		Netcode::Module::AppEventSystem * eventSystem;
 		HWND hwnd;
 		com_ptr<ID3D12Debug3> debugController;
 

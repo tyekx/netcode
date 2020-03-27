@@ -10,14 +10,14 @@
 __declspec(align(16))
 class AssetManager {
 
-	std::map<std::string, std::unique_ptr<Egg::Asset::Model>> storage;
+	std::map<std::string, std::unique_ptr<Netcode::Asset::Model>> storage;
 
-	Egg::Asset::Model * ImportFromFile(std::string str) {
-		std::unique_ptr<Egg::Asset::Model> model = std::make_unique<Egg::Asset::Model>();
+	Netcode::Asset::Model * ImportFromFile(std::string str) {
+		std::unique_ptr<Netcode::Asset::Model> model = std::make_unique<Netcode::Asset::Model>();
 
-		Egg::Asset::Model * rawPtr = model.get();
+		Netcode::Asset::Model * rawPtr = model.get();
 
-		Egg::Asset::ImportModel(str.c_str(), *rawPtr);
+		Netcode::Asset::ImportModel(str.c_str(), *rawPtr);
 
 		storage.emplace(std::move(str), std::move(model));
 
@@ -26,8 +26,8 @@ class AssetManager {
 
 public:
 
-	Egg::Asset::Model * Import(const Egg::MediaPath & path) {
-		std::string key = Egg::Utility::ToNarrowString(path.GetAbsolutePath());
+	Netcode::Asset::Model * Import(const Netcode::MediaPath & path) {
+		std::string key = Netcode::Utility::ToNarrowString(path.GetAbsolutePath());
 
 		const auto it = storage.find(key);
 
