@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{160DEAC8-B607-4D90-BFC3-81143E11F90F}</ProjectGuid>
+    <RootNamespace>Netcode</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\SDK.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>_NETCODE_SDK_VERSION=$(TargetPlatformVersion.Substring(5,5));%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Lib />
+    <Lib />
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="AnimationBlender.h" />
+    <ClInclude Include="AnimationState.h" />
+    <ClInclude Include="BinaryReader.h" />
+    <ClInclude Include="Blackboard.h" />
+    <ClInclude Include="BasicGeometry.h" />
+    <ClInclude Include="BulkAllocator.hpp" />
+    <ClInclude Include="BulkVector.hpp" />
+    <ClInclude Include="Common.h" />
+    <ClInclude Include="DebugPhysx.h" />
+    <ClInclude Include="DebugPhysxActor.h" />
+    <ClInclude Include="DebugPhysxRaycast.h" />
+    <ClInclude Include="DefaultModuleFactory.h" />
+    <ClInclude Include="DestructiveCopyConstructible.hpp" />
+    <ClInclude Include="Graphics/DX12/d3dx12.h" />
+    <ClInclude Include="Graphics/DX12/DX12Builders.h" />
+    <ClInclude Include="Graphics/DX12/DX12CommandListPool.h" />
+    <ClInclude Include="Graphics/DX12/DX12Common.h" />
+    <ClInclude Include="Graphics/DX12/DX12ConstantBufferPool.h" />
+    <ClInclude Include="Graphics/DX12/DX12CPipelineState.h" />
+    <ClInclude Include="Graphics/DX12/DX12CPipelineStateBuilder.h" />
+    <ClInclude Include="Graphics/DX12/DX12CPipelineStateLibrary.h" />
+    <ClInclude Include="Graphics/DX12/DX12DynamicDescriptorHeap.h" />
+    <ClInclude Include="Graphics/DX12/DX12FrameGraph.h" />
+    <ClInclude Include="Graphics/DX12/DX12GPipelineState.h" />
+    <ClInclude Include="Graphics/DX12/DX12GPipelineStateBuilder.h" />
+    <ClInclude Include="Graphics/DX12/DX12GPipelineStateLibrary.h" />
+    <ClInclude Include="Graphics/DX12/DX12GraphicsModule.h" />
+    <ClInclude Include="Graphics/DX12/DX12GraphicsModuleForWin32.h" />
+    <ClInclude Include="Graphics/DX12/DX12HeapCollection.h" />
+    <ClInclude Include="Graphics/DX12/DX12Helpers.h" />
+    <ClInclude Include="Graphics/DX12/DX12InputLayout.h" />
+    <ClInclude Include="Graphics/DX12/DX12InputLayoutBuilder.h" />
+    <ClInclude Include="Graphics/DX12/DX12InputLayoutLibrary.h" />
+    <ClInclude Include="Graphics/DX12/DX12Platform.h" />
+    <ClInclude Include="Graphics/DX12/DX12RenderContext.h" />
+    <ClInclude Include="Graphics/DX12/DX12ResourceDesc.h" />
+    <ClInclude Include="Graphics/DX12/DX12ResourcePool.h" />
+    <ClInclude Include="Graphics/DX12/DX12ResourceViews.h" />
+    <ClInclude Include="Graphics/DX12/DX12RootSignature.h" />
+    <ClInclude Include="Graphics/DX12/DX12RootSignatureBuilder.h" />
+    <ClInclude Include="Graphics/DX12/DX12RootSignatureLibrary.h" />
+    <ClInclude Include="Graphics/DX12/DX12ShaderBuilder.h" />
+    <ClInclude Include="Graphics/DX12/DX12ShaderCompiled.h" />
+    <ClInclude Include="Graphics/DX12/DX12ShaderCompiler.h" />
+    <ClInclude Include="Graphics/DX12/DX12ShaderLibrary.h" />
+    <ClInclude Include="Graphics/DX12/DX12ShaderSourceLibrary.h" />
+    <ClInclude Include="Graphics/DX12/DX12ShaderVariant.h" />
+    <ClInclude Include="Graphics/DX12/DX12SpriteBatch.h" />
+    <ClInclude Include="Graphics/DX12/DX12SpriteBatchBuilder.h" />
+    <ClInclude Include="Graphics/DX12/DX12SpriteFontBuilder.h" />
+    <ClInclude Include="Graphics/DX12/DX12SpriteFontLibrary.h" />
+    <ClInclude Include="Graphics/DX12/DX12StreamOutput.h" />
+    <ClInclude Include="Graphics/DX12/DX12StreamOutputBuilder.h" />
+    <ClInclude Include="Graphics/DX12/DX12StreamOutputLibrary.h" />
+    <ClInclude Include="Graphics/DX12/DX12Texture.h" />
+    <ClInclude Include="Graphics/DX12/DX12TextureBuilder.h" />
+    <ClInclude Include="Graphics/DX12/DX12Fence.h" />
+    <ClInclude Include="Graphics/DX12/DX12ResourceContext.h" />
+    <ClInclude Include="Graphics/DX12/DX12SpriteFont.h" />
+    <ClInclude Include="Graphics/FrameGraph.h" />
+    <ClInclude Include="Graphics/ResourceDesc.h" />
+    <ClInclude Include="Graphics/ResourceEnums.h" />
+    <ClInclude Include="Graphics/UploadBatch.h" />
+    <ClInclude Include="Graphics/GraphicsContexts.h" />
+    <ClInclude Include="EggMpl.hpp" />
+    <ClInclude Include="Event.hpp" />
+    <ClInclude Include="FancyIterators.hpp" />
+    <ClInclude Include="File.h" />
+    <ClInclude Include="HandleTypes.h" />
+    <ClInclude Include="Input.h" />
+    <ClInclude Include="LinearAllocator.h" />
+    <ClInclude Include="LinearClassifier.h" />
+    <ClInclude Include="Logger.h" />
+    <ClInclude Include="EggMath.h" />
+    <ClInclude Include="Modules.h" />
+    <ClInclude Include="ModulesConfig.h" />
+    <ClInclude Include="MovementController.h" />
+    <ClInclude Include="NetcodeNetworkModule.h" />
+    <ClInclude Include="Path.h" />
+    <ClInclude Include="PhysXWrapper.h" />
+    <ClInclude Include="ProgramArgs.h" />
+    <ClInclude Include="Service.hpp" />
+    <ClInclude Include="Stopwatch.h" />
+    <ClInclude Include="Transition.h" />
+    <ClInclude Include="Utility.h" />
+    <ClInclude Include="Vertex.h" />
+    <ClInclude Include="WinapiWindowModule.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AnimationBlender.cpp" />
+    <ClCompile Include="AnimationState.cpp" />
+    <ClCompile Include="BinaryReader.cpp" />
+    <ClCompile Include="Blackboard.cpp" />
+    <ClCompile Include="BasicGeometry.cpp" />
+    <ClCompile Include="DebugPhysx.cpp" />
+    <ClCompile Include="DebugPhysxActor.cpp" />
+    <ClCompile Include="DefaultModuleFactory.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12Common.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12ConstantBufferPool.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12CPipelineState.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12CPipelineStateBuilder.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12CPipelineStateLibrary.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12DynamicDescriptorHeap.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12Fence.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12FrameGraph.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12GPipelineState.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12GPipelineStateBuilder.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12GPipelineStateLibrary.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12GraphicsModule.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12GraphicsModuleForWin32.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12Helpers.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12InputLayout.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12InputLayoutBuilder.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12InputLayoutLibrary.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12Platform.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12RenderContext.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12ResourceDesc.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12ResourcePool.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12ResourceViews.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12RootSignature.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12RootSignatureBuilder.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12RootSignatureLibrary.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12ShaderBuilder.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12ShaderCompiled.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12ShaderCompiler.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12ShaderVariant.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12SpriteBatch.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12SpriteBatchBuilder.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12SpriteFontBuilder.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12StreamOutput.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12StreamOutputBuilder.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12StreamOutputLibrary.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12Texture.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12TextureBuilder.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12SpriteFont.cpp" />
+    <ClCompile Include="Graphics/DX12/DX12ResourceContext.cpp" />
+    <ClCompile Include="Graphics/FrameGraph.cpp" />
+    <ClCompile Include="Graphics/ResourceEnums.cpp" />
+    <ClCompile Include="Graphics/UploadBatch.cpp" />
+    <ClCompile Include="HandleTypes.cpp" />
+    <ClCompile Include="Input.cpp" />
+    <ClCompile Include="Common.cpp" />
+    <ClCompile Include="LinearClassifier.cpp" />
+    <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="EggMath.cpp" />
+    <ClCompile Include="Modules.cpp" />
+    <ClCompile Include="NetcodeNetworkModule.cpp" />
+    <ClCompile Include="Path.cpp" />
+    <ClCompile Include="PhysXWrapper.cpp" />
+    <ClCompile Include="Stopwatch.cpp" />
+    <ClCompile Include="Transition.cpp" />
+    <ClCompile Include="Utility.cpp" />
+    <ClCompile Include="WinapiWindowModule.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shaders\AvatarVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\AvatarPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\cbBasicVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Shaders\DebugPhysxPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\DebugPhysxRayVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\DebugPhysxVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\DefaultPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+    </FxCompile>
+    <Text Include="Shaders\RootSignatures.hlsli">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">RootSignature</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rootsig_1.0</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">RootSignatureTest</EntryPointName>
+      <FileType>Document</FileType>
+    </Text>
+    <FxCompile Include="Shaders\DefaultVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
+    <CustomBuild Include="Shaders\EggShaderLib.hlsli">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">xcopy %(FullPath) $(OutDir)Shaders /Y /F</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)Shaders\%(Filename)%(Extension)</Outputs>
+    </CustomBuild>
+    <None Include="Shaders\Lighting.hlsli" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

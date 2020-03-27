@@ -1,5 +1,7 @@
 .vs/
 Build/
 Bin/
-EggAssetEditor/Generated\ Files
+NetcodeAssetEditor/Generated\ Files
 packages/
+SDK.props
+CMakeSDK.txt

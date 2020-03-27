@@ -8,7 +8,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>
-      <AdditionalDependencies>EggFoundation.lib;EggAssetLib.lib;Egg.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>NetcodeFoundation.lib;NetcodeAssetLib.lib;Netcode.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <ClCompile>

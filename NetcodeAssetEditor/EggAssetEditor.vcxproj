@@ -1,0 +1,369 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.200316.3\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.200316.3\build\native\Microsoft.Windows.CppWinRT.props')" />
+  <PropertyGroup Label="Globals">
+    <CppWinRTOptimized>true</CppWinRTOptimized>
+    <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
+    <CppWinRTGenerateWindowsMetadata>true</CppWinRTGenerateWindowsMetadata>
+    <MinimalCoreWin>true</MinimalCoreWin>
+    <ProjectGuid>{16dc0694-3f5d-480c-9ed7-aae8b06a6300}</ProjectGuid>
+    <ProjectName>EggAssetEditor</ProjectName>
+    <RootNamespace>EggAssetEditor</RootNamespace>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
+    <AppContainerApplication>true</AppContainerApplication>
+    <ApplicationType>Windows Store</ApplicationType>
+    <ApplicationTypeRevision>10.0</ApplicationTypeRevision>
+    <WindowsTargetPlatformVersion Condition=" '$(WindowsTargetPlatformVersion)' == '' ">10.0.18362.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.17763.0</WindowsTargetPlatformMinVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset Condition="'$(VisualStudioVersion)' == '15.0'">v141</PlatformToolset>
+    <PlatformToolset Condition="'$(VisualStudioVersion)' == '16.0'">v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="PropertySheet.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="..\SDK.props" />
+    <Import Project="..\EggApp.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros">
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
+      <WarningLevel>Level4</WarningLevel>
+      <AdditionalOptions>%(AdditionalOptions) /bigobj</AdditionalOptions>
+      <!--Temporarily disable cppwinrt heap enforcement to work around xaml compiler generated std::shared_ptr use -->
+      <AdditionalOptions Condition="'$(CppWinRTHeapEnforcement)'==''">/DWINRT_NO_MAKE_DETECTION %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;WINRT_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <PreprocessorDefinitions>BOOST_ALL_NO_LIB;_DEBUG;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Netcode.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">comsuppwd.lib</IgnoreSpecificDefaultLibraries>
+    </Link>
+    <PostBuildEvent>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">xcopy $(OutDir)Shaders\* $(OutDir)AppX\Shaders\* /Y
+xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
+    </PostBuildEvent>
+    <Midl>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </PreprocessorDefinitions>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="AnimationsPage.h">
+      <DependentUpon>AnimationsPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="BonesPage.h">
+      <DependentUpon>BonesPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="BoundingBoxHelpers.h" />
+    <ClInclude Include="CollidersPage.h">
+      <DependentUpon>CollidersPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="ColliderTypeConverter.h" />
+    <ClInclude Include="ColliderTypeVisibilityConverter.h" />
+    <ClInclude Include="ConstantBufferTypes.h" />
+    <ClInclude Include="CreateColliderDialog.h">
+      <DependentUpon>CreateColliderDialog.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="DC_Animation.h" />
+    <ClInclude Include="DC_Bone.h" />
+    <ClInclude Include="DC_Collider.h" />
+    <ClInclude Include="DC_Lod.h" />
+    <ClInclude Include="DC_MainPage.h" />
+    <ClInclude Include="DC_Material.h" />
+    <ClInclude Include="DC_Mesh.h" />
+    <ClInclude Include="DC_Vector2Control.h" />
+    <ClInclude Include="DC_Vector3Control.h" />
+    <ClInclude Include="DC_Vector4Control.h" />
+    <ClInclude Include="DepthToMarginConverter.h" />
+    <ClInclude Include="DX12GraphicsModuleForXaml.h" />
+    <ClInclude Include="EditorApp.h" />
+    <ClInclude Include="EditorFrameGraph.h" />
+    <ClInclude Include="EditorModuleFactory.h" />
+    <ClInclude Include="EggAssetExporter.h" />
+    <ClInclude Include="FBXImporter.h" />
+    <ClInclude Include="FloatBox.h" />
+    <ClInclude Include="GBuffer.h" />
+    <ClInclude Include="GeometryPage.h">
+      <DependentUpon>GeometryPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="MaterialsPage.h">
+      <DependentUpon>MaterialsPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="Model.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="App.h">
+      <DependentUpon>App.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="MainPage.h">
+      <DependentUpon>MainPage.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="SelectionToVisibilityConverter.h" />
+    <ClInclude Include="UC_Lod.h">
+      <DependentUpon>UC_Lod.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="UC_Mesh.h">
+      <DependentUpon>UC_Mesh.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="Vector2Control.h">
+      <DependentUpon>Vector2Control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="Vector3Control.h">
+      <DependentUpon>Vector3Control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="Vector4Control.h">
+      <DependentUpon>Vector4Control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="VectorConverter.h" />
+    <ClInclude Include="XamlGlobal.h" />
+    <ClInclude Include="XamlHelpers.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <SubType>Designer</SubType>
+    </ApplicationDefinition>
+    <Page Include="AnimationsPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="BonesPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="CollidersPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="CreateColliderDialog.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="GeometryPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="MainPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="MaterialsPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UC_Lod.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UC_Mesh.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Vector2Control.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Vector3Control.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Vector4Control.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest">
+      <SubType>Designer</SubType>
+    </AppxManifest>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\loading_icon.png" />
+    <Image Include="Assets\LockScreenLogo.scale-200.png" />
+    <Image Include="Assets\SplashScreen.scale-200.png" />
+    <Image Include="Assets\Square150x150Logo.scale-200.png" />
+    <Image Include="Assets\Square44x44Logo.scale-200.png" />
+    <Image Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
+    <Image Include="Assets\StoreLogo.png" />
+    <Image Include="Assets\Wide310x150Logo.scale-200.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AnimationsPage.cpp">
+      <DependentUpon>AnimationsPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="BonesPage.cpp">
+      <DependentUpon>BonesPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="CollidersPage.cpp">
+      <DependentUpon>CollidersPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="ColliderTypeConverter.cpp" />
+    <ClCompile Include="ColliderTypeVisibilityConverter.cpp" />
+    <ClCompile Include="CreateColliderDialog.cpp">
+      <DependentUpon>CreateColliderDialog.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="DC_Animation.cpp" />
+    <ClCompile Include="DC_Bone.cpp" />
+    <ClCompile Include="DC_Collider.cpp" />
+    <ClCompile Include="DC_Lod.cpp" />
+    <ClCompile Include="DC_MainPage.cpp" />
+    <ClCompile Include="DC_Material.cpp" />
+    <ClCompile Include="DC_Mesh.cpp" />
+    <ClCompile Include="DC_Vector2Control.cpp" />
+    <ClCompile Include="DC_Vector3Control.cpp" />
+    <ClCompile Include="DC_Vector4Control.cpp" />
+    <ClCompile Include="DepthToMarginConverter.cpp" />
+    <ClCompile Include="DX12GraphicsModuleForXaml.cpp" />
+    <ClCompile Include="EditorModuleFactory.cpp" />
+    <ClCompile Include="EggAssetExporter.cpp" />
+    <ClCompile Include="FBXImporter.cpp" />
+    <ClCompile Include="FloatBox.cpp" />
+    <ClCompile Include="GeometryPage.cpp">
+      <DependentUpon>GeometryPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="MaterialsPage.cpp">
+      <DependentUpon>MaterialsPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="App.cpp">
+      <DependentUpon>App.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="MainPage.cpp">
+      <DependentUpon>MainPage.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="SelectionToVisibilityConverter.cpp" />
+    <ClCompile Include="UC_Lod.cpp">
+      <DependentUpon>UC_Lod.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="UC_Mesh.cpp">
+      <DependentUpon>UC_Mesh.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="Vector2Control.cpp">
+      <DependentUpon>Vector2Control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="Vector3Control.cpp">
+      <DependentUpon>Vector3Control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="Vector4Control.cpp">
+      <DependentUpon>Vector4Control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="VectorConverter.cpp" />
+    <ClCompile Include="XamlGlobal.cpp" />
+    <ClCompile Include="XamlHelpers.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="App.idl">
+      <DependentUpon>App.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="BonesPage.idl">
+      <DependentUpon>BonesPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="GeometryPage.idl">
+      <DependentUpon>GeometryPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="MainPage.idl">
+      <DependentUpon>MainPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="Vector2Control.idl">
+      <DependentUpon>Vector2Control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="Vector3Control.idl">
+      <DependentUpon>Vector3Control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="Vector4Control.idl">
+      <DependentUpon>Vector4Control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+    <None Include="PropertySheet.props" />
+    <Text Include="readme.txt">
+      <DeploymentContent>false</DeploymentContent>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Editor_BoneVisibilityPass_Vertex.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Editor_ColliderPass_Pixel.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Editor_ColliderPass_Vertex.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Editor_GBufferPass_Pixel.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Editor_GBufferPass_Vertex.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Editor_BoneVisibilityPass_Pixel.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.200316.3\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.200316.3\build\native\Microsoft.Windows.CppWinRT.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.200316.3\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.200316.3\build\native\Microsoft.Windows.CppWinRT.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.200316.3\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.200316.3\build\native\Microsoft.Windows.CppWinRT.targets'))" />
+  </Target>
+</Project>
