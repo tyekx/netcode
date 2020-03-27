@@ -442,7 +442,7 @@ namespace winrt::NetcodeAssetEditor::implementation
         Windows::Storage::Pickers::FileSavePicker fileSavePicker;
 
         fileSavePicker.SuggestedFileName(L"asset");
-        fileSavePicker.FileTypeChoices().Insert(L"NetcodeAsset", winrt::single_threaded_vector<hstring>({ L".Netcodeasset" }));
+        fileSavePicker.FileTypeChoices().Insert(L"NetcodeAsset", winrt::single_threaded_vector<hstring>({ L".ncasset" }));
         fileSavePicker.SuggestedStartLocation(Windows::Storage::Pickers::PickerLocationId::Objects3D);
 
         /**/

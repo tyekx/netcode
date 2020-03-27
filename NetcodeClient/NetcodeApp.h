@@ -152,7 +152,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 		GameObject * testbox = gameScene->Create();
 		
-		LoadComponents(assetManager->Import(L"testbox.eggasset"), testbox);
+		LoadComponents(assetManager->Import(L"testbox.ncasset"), testbox);
 
 		gameScene->Spawn(testbox);
 	}
@@ -172,7 +172,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		GameObject * avatarController = gameScene->Create();
 		GameObject * avatarHitboxes = gameScene->Create();
 
-		Netcode::Asset::Model * avatarModel = assetManager->Import(L"test.eggasset");
+		Netcode::Asset::Model * avatarModel = assetManager->Import(L"test.ncasset");
 
 		LoadComponents(avatarModel, avatarHitboxes);
 		Animation* anim = avatarHitboxes->AddComponent<Animation>();
