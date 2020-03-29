@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package Netcode.Protocol.Control;
+
+// client only
+enum Request {
+    LOGIN = 0;
+    JOIN = 1;
+    LEAVE = 2;
+    RESPAWN = 3;
+    UPDATEPLAYERS = 4;
+    RECONNECT = 5;
+}
+
+// server only
+enum Command {
+    CLOSED = 0;
+    KICKED = 1;
+    BANNED = 2;
+}
+
+// server only
+message Response {
+    int32 status = 1;
+    int32 assigned_id = 2;
+    string message = 3;
+}
+
+message Message {
+    int32 id = 1;
+    string hash = 2;
+    string address = 3;
+    int32 port = 4;
+
+    oneof Body {
+        Netcode.Protocol.Control.Request request = 5;
+        Netcode.Protocol.Control.Response response = 6;
+        Netcode.Protocol.Control.Command command = 7;
+    }
+}

@@ -24,6 +24,42 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/Shaders")
 	file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/Shaders")
 endif()
 
+find_program(FXC fxc)
+
+if(NOT FXC) 
+	message(FATAL_ERROR "Shader compiler was not found")
+endif()
+
+find_program(PROTOC protoc PATHS "${PROTOBUF_LIB}")
+
+if(NOT PROTOC)
+	message(FATAL_ERROR "Protobuf compiler was not found")
+endif()
+
+function(netcode_compile_proto var_generated_list source_path_list)
+	set(generated_files "")
+	set(abs_path_generated_files "")
+	set(abs_path_proto_files "")
+	foreach(proto_file ${source_path_list})
+		get_filename_component(source_filename ${proto_file} NAME_WE)
+		get_filename_component(source_path "${proto_file}" ABSOLUTE)
+		
+		set(cpp_file ${source_filename}.pb.cc)
+		set(h_file ${source_filename}.pb.h)
+		
+		list(APPEND generated_files ${cpp_file} ${h_file})
+		list(APPEND abs_path_generated_files ${CMAKE_CURRENT_SOURCE_DIR}/${cpp_file} ${CMAKE_CURRENT_SOURCE_DIR}/${h_file})
+		list(APPEND abs_path_proto_files ${CMAKE_CURRENT_SOURCE_DIR}/${proto_file})
+	endforeach(proto_file)
+	add_custom_command(OUTPUT ${abs_path_generated_files} 
+		COMMENT "Generating protobuf files..."
+		COMMAND ${PROTOC} --proto_path=\"${CMAKE_CURRENT_SOURCE_DIR}\" --cpp_out=\"${CMAKE_CURRENT_SOURCE_DIR}\" ${abs_path_proto_files}
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		DEPENDS ${abs_path_proto_files}
+	)
+	set(${var_generated_list} "${generated_files}" PARENT_SCOPE)
+endfunction()
+
 function(netcode_compile_shader var_binary_path source_path shader_type entry_point)
   get_filename_component(source_filename ${source_path} NAME_WE)
   get_filename_component(source_path "${source_path}" ABSOLUTE)
@@ -64,8 +100,11 @@ endmacro()
 project("Netcode")
 
 add_subdirectory("NetcodeFoundation")
-add_subdirectory("NetcodeLib")
 add_subdirectory("NetcodeAssetLib")
+add_subdirectory("NetcodeProtocol")
+add_subdirectory("NetcodeLib")
 add_subdirectory("Netcode")
 add_subdirectory("NetcodeClient")
 
+add_dependencies(Netcode NetcodeProtocol)
+add_dependencies(NetcodeClient Netcode)

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package Netcode.Protocol;
+
+import "client.proto";
+import "server.proto";
+import "control.proto";
+
+message Message {
+    oneof Body {
+        Netcode.Protocol.Control.Message control = 1;
+        Netcode.Protocol.Client.Update client_update = 2;
+        Netcode.Protocol.Server.Update server_update = 3;
+    }
+}

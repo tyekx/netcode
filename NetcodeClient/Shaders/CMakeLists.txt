@@ -26,11 +26,6 @@ set(NETCODE_DS "")
 
 set(NETCODE_CS "")
 
-find_program(FXC fxc)
-
-if(NOT FXC) 
-	message(FATAL_ERROR "Shader compiler was not found")
-endif()
 
 foreach(var ${NETCODE_VS})
 	NETCODE_COMPILE_VS(VS_OUT ${var})

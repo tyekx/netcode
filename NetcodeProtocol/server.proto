@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package Netcode.Protocol.Server;
+
+import "shared.proto";
+
+enum InfoType {
+    CONNECTED = 0;
+    DISCONNECTED = 1;
+    TIMEDOUT = 2;
+}
+
+message Info {
+    int32 player_id = 1;
+    InfoType type = 2;
+    bool is_relevant = 3;
+}
+
+message Log {
+    string content = 1;
+}
+
+message Update {
+    int32 id = 1;
+    int32 owner_id = 2;
+    float delta_time = 3;
+    repeated Netcode.Protocol.User users = 4;
+    repeated Netcode.Protocol.Score scores = 5;
+    repeated Netcode.Protocol.Impact impacts = 6;
+    repeated Netcode.Protocol.Chat chat = 7;
+    repeated Netcode.Protocol.Server.Log logs = 8;
+    repeated Netcode.Protocol.Server.Info infos = 9;
+}
