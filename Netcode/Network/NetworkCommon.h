@@ -25,7 +25,6 @@ namespace Netcode::Network {
 	protected:
 		udp_socket_t socket;
 		udp_endpoint_t receivedFrom;
-
 	public:
 		UdpStream(udp_socket_t socket) : socket{ std::move(socket) }, receivedFrom{} { }
 
@@ -51,7 +50,7 @@ namespace Netcode::Network {
 
 	class NetworkContext {
 		boost::asio::io_context ioc;
-		boost::asio::io_context::work work;
+		std::unique_ptr<boost::asio::io_context::work> work;
 		std::vector<std::thread> workers;
 	public:
 		~NetworkContext();
@@ -85,6 +84,7 @@ namespace Netcode::Network {
 			swapInto.reserve(swapInto.size() + send.size());
 
 			std::move(std::begin(send), std::end(send), std::back_inserter(swapInto));
+			send.clear();
 		}
 
 		void GetIncomingPackets(std::vector<T> & swapInto) {
@@ -93,6 +93,7 @@ namespace Netcode::Network {
 			swapInto.reserve(swapInto.size() + recv.size());
 			
 			std::move(std::begin(recv), std::end(recv), std::back_inserter(swapInto));
+			recv.clear();
 		}
 
 		void Send(T packet) {
@@ -125,6 +126,55 @@ namespace Netcode::Network {
 		StorageType GetBuffer();
 	};
 
+	class ClientControlPacketStorage {
+		struct Item {
+			std::chrono::steady_clock::time_point first_sent_at;
+			std::chrono::steady_clock::time_point last_sent_at;
+			int32_t packetId;
+			UdpPacket packet;
+			std::promise<ErrorCode> promise;
+
+			Item(int32_t pid, UdpPacket pck) : first_sent_at{}, last_sent_at{}, packetId{ pid }, packet{ std::move(pck) }, promise{} { }
+		};
+
+		std::list<Item> storage;
+
+	public:
+		void CheckTimeouts(uint64_t durationMs);
+
+		ErrorCode Acknowledge(int32_t ackId);
+
+		std::future<ErrorCode> Push(int32_t id, UdpPacket packet);
+
+		template<typename Func>
+		void IfExpired(Func func, uint64_t resendTimeoutMs) {
+			if(storage.empty()) {
+				return;
+			}
+
+			auto now = std::chrono::steady_clock::now();
+
+			Item & item = storage.front();
+
+			auto timestamp = item.first_sent_at;
+
+			if(timestamp.time_since_epoch() == std::chrono::steady_clock::duration::zero()) {
+				// ok
+				func(item.packet);
+				item.first_sent_at = now;
+				item.last_sent_at = now;
+				return;
+			}
+
+			timestamp = item.last_sent_at;
+
+			if(std::chrono::duration_cast<std::chrono::milliseconds>(now - timestamp).count() > resendTimeoutMs) {
+				func(item.packet);
+				item.last_sent_at = now;
+			}
+		}
+	};
+
 	class ControlPacketStorage {
 		struct Item {
 			std::chrono::steady_clock::time_point first_sent_at;
@@ -138,9 +188,7 @@ namespace Netcode::Network {
 
 		std::map<udp_endpoint_t, std::list<Item>> storage;
 	public:
-
 		void CheckTimeouts(uint64_t durationMs);
-
 		/*
 		An expired item is an item that was not sent before, or its resend-timeout is expired,
 		assumes that the call of this function means a send operation thus renewing its timestamps
@@ -167,7 +215,7 @@ namespace Netcode::Network {
 
 				timestamp = item.last_sent_at;
 
-				if(std::chrono::duration_cast<std::chrono::seconds>(now - timestamp).count() > resendTimeoutMs) {
+				if(std::chrono::duration_cast<std::chrono::milliseconds>(now - timestamp).count() > resendTimeoutMs) {
 					func(item.packet);
 					item.last_sent_at = now;
 				}

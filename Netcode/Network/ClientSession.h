@@ -13,7 +13,7 @@ namespace Netcode::Network {
 		MessageQueue<Netcode::Protocol::Message> gameQueue;
 		MessageQueue<Netcode::Protocol::Message> controlQueue;
 		PacketStorage storage;
-		ControlPacketStorage controlStorage;
+		ClientControlPacketStorage controlStorage;
 		boost::asio::deadline_timer timer;
 		boost::asio::deadline_timer protocolTimer;
 		udp_resolver_t resolver;
@@ -41,6 +41,7 @@ namespace Netcode::Network {
 		void OnRead(std::size_t transferredBytes, udp_endpoint_t endpoint, PacketStorage::StorageType buffer);
 	public:
 		ClientSession(boost::asio::io_context & ioc, Network::Config config);
+		virtual ~ClientSession() = default;
 
 		virtual bool IsRunning() const override;
 		virtual std::string GetLastError() const override;
@@ -48,6 +49,8 @@ namespace Netcode::Network {
 		virtual void SendUpdate(const udp_endpoint_t & endpoint, Protocol::Message message) override;
 		virtual void SendUpdate(Protocol::Message message) override;
 		virtual std::future<ErrorCode> SendControlMessage(Netcode::Protocol::Message message) override;
+
+		virtual void SendAll() override;
 	};
 
 }

@@ -5,39 +5,74 @@ namespace Netcode::Network {
 	void ClientSession::OnUpdateEndpointResolved(const boost::system::error_code & ec, udp_resolver_t::results_type results)
 	{
 		if(ec) {
-			Log::Error("[Network] [Client] Address resolution: {0}", ec.message());
+			if(ec == boost::asio::error::operation_aborted) {
+				Log::Info("[Network] [Client] Address resolution aborted");
+			} else {
+				Log::Error("[Network] [Client] Address resolution: {0}", ec.message());
+			}
 		} else if(results.empty()) {
 			Log::Error("[Network] [Client] Address resolution: could not resolve address");
 		} else {
-			updateEndpoint = *results.begin();
+			Log::Debug("[Network] [Client] Game endpoint resolution succeeded");
 
-			udp_socket_t socket{ ioContext, udp_endpoint_t { boost::asio::ip::udp::v4(), config.client.localPort} };
+			for(auto result : results) {
+				if(!result.endpoint().address().is_unspecified()) {
+					updateEndpoint = result.endpoint();
+					break;
+				}
+			}
+
+			if(updateEndpoint.protocol() != controlEndpoint.protocol()) {
+				Log::Error("[Network] [Client] game and control point uses different protocols, which is not supported by the client");
+				SetError(boost::asio::error::make_error_code(boost::asio::error::address_family_not_supported));
+				return;
+			}
+
+			udp_socket_t socket{ ioContext };
+			socket.open(updateEndpoint.protocol());
+			socket.bind(udp_endpoint_t{ updateEndpoint.protocol(), config.client.localPort });
 
 			stream = std::make_unique<UdpStream>(std::move(socket));
 			InitRead();
+			InitTimer();
 		}
 	}
 
 	void ClientSession::OnControlEndpointResolved(const boost::system::error_code & ec, udp_resolver_t::results_type results)
 	{
 		if(ec) {
-			Log::Error("[Network] [Client] Address resolution: {0}", ec.message());
+			if(ec == boost::asio::error::operation_aborted) {
+				Log::Info("[Network] [Client] Address resolution aborted");
+			} else {
+				Log::Error("[Network] [Client] Address resolution: {0}", ec.message());
+			}
 		} else if(results.empty()) {
 			Log::Error("[Network] [Client] Address resolution: could not resolve address");
 		} else {
-			controlEndpoint = *results.begin();
+			Log::Debug("[Network] [Client] Control endpoint resolution succeeded");
+
+			for(auto result : results) {
+				if(!result.endpoint().address().is_unspecified()) {
+					controlEndpoint = result.endpoint();
+					break;
+				}
+			}
 
 			resolver.async_resolve(config.client.serverHost, updatePort, udp_resolver_t::address_configured,
-				boost::bind(&ClientSession::OnControlEndpointResolved, this, boost::asio::placeholders::error, boost::asio::placeholders::results));
+				boost::bind(&ClientSession::OnUpdateEndpointResolved, this, boost::asio::placeholders::error, boost::asio::placeholders::results));
 		}
 	}
 
 	void ClientSession::OnTimerExpired(const boost::system::error_code & ec)
 	{
+		if(ec == boost::asio::error::operation_aborted) {
+			Log::Info("[Network] [Client] Tick operation aborted");
+			return;
+		}
+
 		if(ec) {
 			Log::Error("[Network] [Client] Timer: {0}", ec.message());
 		} else {
-			Log::Debug("[Network] [Client] Tick");
 			Tick();
 			InitTimer();
 		}
@@ -71,13 +106,21 @@ namespace Netcode::Network {
 	void ClientSession::InitRead() {
 		auto buffer = storage.GetBuffer();
 
+		Log::Debug("[Network] [Client] Initiating read");
+
 		stream->AsyncRead(boost::asio::buffer(buffer.get(), PACKET_STORAGE_SIZE),
 			[this, buffer](const boost::system::error_code & ec, std::size_t size, boost::asio::ip::udp::endpoint endpoint) -> void {
+			if(ec == boost::asio::error::operation_aborted) {
+				Log::Info("[Network] [Client] Read operation aborted");
+				return;
+			}
+
 			if(ec) {
 				Log::Error("[Network] [Client] Failed to read: {0}", ec.message());
 			} else if(endpoint != updateEndpoint && endpoint != controlEndpoint) {
 				Log::Warn("[Network] [Client] Rejected package because the source is not the server");
 			} else {
+				Log::Debug("[Network] [Client] Read {0} byte(s)", size);
 				OnRead(size, endpoint, std::move(buffer));
 				InitRead();
 			}
@@ -85,11 +128,10 @@ namespace Netcode::Network {
 	}
 
 	ClientSession::ClientSession(boost::asio::io_context & ioc, Network::Config config) :
-		ioContext{ ioc }, config{ config }, queue{}, gameQueue{}, controlQueue{}, storage{}, controlStorage{}, timer{ ioc }, protocolTimer{ ioc },
-		resolver{ boost::asio::make_strand(ioc) }, stream{ nullptr }, controlPort{}, updatePort{}, controlEndpoint{},
-		updateEndpoint{}, clientAck{ 0 }, serverAck{ 0 }, lastError{}
+		ioContext{ ioc }, config{ config }, queue{ }, gameQueue{ }, controlQueue{ }, storage{ }, controlStorage{ }, timer{ ioc }, protocolTimer{ ioc },
+		resolver{ boost::asio::make_strand(ioc) }, stream{ nullptr }, controlPort{ }, updatePort{ }, controlEndpoint{ },
+		updateEndpoint{ }, clientAck{ 0 }, serverAck{ 0 }, lastError{ }
 	{
-		InitTimer();
 		InitResolution();
 	}
 
@@ -139,7 +181,7 @@ namespace Netcode::Network {
 				if(bodyCase == Message::BodyCase::kAcknowledge) {
 					int32_t ack = ctrl.acknowledge();
 					Log::Debug("[Network] [Client] Ack received: {0}", ack);
-					controlStorage.Acknowledge(p.endpoint, ack);
+					controlStorage.Acknowledge(ack);
 					continue;
 				}
 
@@ -154,13 +196,14 @@ namespace Netcode::Network {
 				}
 
 				controlQueue.Received(std::move(message));
-			}
-
-			if(message.has_server_update()) {
+			} else if(message.has_server_update()) {
 				gameQueue.Received(std::move(message));
 			}
-
 		}
+
+		controlStorage.CheckTimeouts(config.protocol.gracePeriodMs);
+
+		SendAll();
 	}
 
 	void ClientSession::Receive(std::vector<Protocol::Message> & control, std::vector<Protocol::Message> & game)
@@ -203,9 +246,6 @@ namespace Netcode::Network {
 
 		bool v = message.SerializeToArray(buffer.get(), PACKET_STORAGE_SIZE);
 
-		// release so we dont destroy the Control::Message object twice
-		message.release_control();
-
 		if(!v) {
 			Log::Error("[Network] [Client] Failed to serialize Control message");
 			errorPromise.set_value(Errc::make_error_code(Errc::bad_message));
@@ -216,6 +256,29 @@ namespace Netcode::Network {
 		packet.endpoint = controlEndpoint;
 		packet.mBuffer = boost::asio::buffer(packet.data.get(), message.ByteSizeLong());
 
-		controlStorage.Push(controlId, std::move(packet));
+		return controlStorage.Push(controlId, std::move(packet));
+	}
+	
+	void ClientSession::SendAll() {
+		controlStorage.IfExpired([this](UdpPacket & packet) -> void {
+			std::string addr = controlEndpoint.address().to_string();
+			addr += std::string{ ":" } + std::to_string(controlEndpoint.port());
+
+			Log::Debug("[Network] [Client] SendAll: sending expired control packet to {0}", addr);
+
+			stream->AsyncWrite(packet.mBuffer, controlEndpoint, [](const ErrorCode & ec, std::size_t size) -> void {
+				if(ec == boost::asio::error::operation_aborted) {
+					Log::Info("[Network] [Client] Write operation aborted");
+					return;
+				}
+
+				if(ec) {
+					Log::Error("[Network] [Client] Failed to send message {0}", ec.message());
+				} else {
+					Log::Debug("[Network] [Client] Successfully wrote {0} byte(s) to the control socket", size);
+				}
+			});
+
+		}, config.protocol.resendTimeoutMs);
 	}
 }

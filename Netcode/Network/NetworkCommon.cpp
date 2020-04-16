@@ -43,7 +43,7 @@ namespace Netcode::Network {
 		Stop();
 	}
 
-	NetworkContext::NetworkContext() : ioc{}, work{ ioc }, workers{} {
+	NetworkContext::NetworkContext() : ioc{}, work{ std::make_unique<boost::asio::io_context::work>(ioc) }, workers{} {
 	
 	}
 
@@ -64,11 +64,23 @@ namespace Netcode::Network {
 	}
 
 	void NetworkContext::Stop() {
-		ioc.stop();
+		if(workers.empty()) {
+			return;
+		}
+
+		if(work) {
+			work.reset();
+		}
+
+		int32_t numThreads = static_cast<int32_t>(workers.size());
 
 		for(auto & thread : workers) {
 			thread.join();
 		}
+
+		workers.clear();
+
+		Log::Info("[Network] ({0}) I/O threads were joined successfully", numThreads);
 	}
 
 	boost::asio::io_context & NetworkContext::GetImpl() {
@@ -132,6 +144,56 @@ namespace Netcode::Network {
 
 	std::future<ErrorCode> ControlPacketStorage::Push(int32_t id, UdpPacket packet) {
 		return storage[packet.endpoint].emplace_back(id, std::move(packet)).promise.get_future();
+	}
+
+	void ClientControlPacketStorage::CheckTimeouts(uint64_t durationMs)
+	{
+		if(storage.empty()) {
+			return;
+		}
+
+		auto now = std::chrono::steady_clock::now();
+
+		Item & item = storage.front();
+		auto timestamp = item.first_sent_at;
+
+		if(timestamp.time_since_epoch() == std::chrono::steady_clock::duration::zero()) {
+			// was not sent yet
+			return;
+		}
+
+		if(std::chrono::duration_cast<std::chrono::milliseconds>(now - timestamp).count() > durationMs) {
+			item.promise.set_value(boost::asio::error::make_error_code(boost::asio::error::timed_out));
+			Log::Info("[Network] Control packet timed out, no ACK was received");
+			storage.pop_front();
+		}
+	}
+
+	ErrorCode ClientControlPacketStorage::Acknowledge(int32_t ackId)
+	{
+		if(storage.empty()) {
+			return Errc::make_error_code(Errc::success);
+		}
+
+		Item & item = storage.front();
+
+		// acking a packet that was not sent yet is an error
+		if(item.packetId < ackId) {
+			return Errc::make_error_code(Errc::protocol_error);
+		}
+
+		if(item.packetId == ackId) {
+			item.promise.set_value(Errc::make_error_code(Errc::success));
+			storage.pop_front();
+			Log::Debug("[Network] ACK OK: {0}", ackId);
+		} // else: possibly resent ACK that got reordered
+
+		return Errc::make_error_code(Errc::success);
+	}
+
+	std::future<ErrorCode> ClientControlPacketStorage::Push(int32_t id, UdpPacket packet)
+	{
+		return storage.emplace_back(id, std::move(packet)).promise.get_future();
 	}
 
 }

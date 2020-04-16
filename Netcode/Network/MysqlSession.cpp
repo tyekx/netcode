@@ -134,12 +134,13 @@ namespace Netcode::Network {
 				session->sql("UPDATE `game_sessions` SET `left_at` = ? WHERE `user_id` = ? AND `left_at` IS NULL AND `game_server_id` = ?"));
 
 			queryUserByHash = std::make_unique<mysqlx::SqlStatement>(
-				session->sql("SELECT `users`.`id`, `users`.`name`, `users`.`is_banned`, `sessions`.`hash`,"
+				session->sql("SELECT `users`.`id`, `users`.`name`, `users`.`is_banned`, `sessions`.`hash`, "
 					"IF(`game_sessions`.`user_id` IS NULL OR `game_sessions`.`left_at` IS NOT NULL, 1, 0) AS allowed_to_join "
 					"FROM `users` "
 					"INNER JOIN `sessions` ON `sessions`.`user_id` = `users`.`id` "
 					"LEFT JOIN `game_sessions` ON `game_sessions`.`user_id` = `users`.`id` "
-					"WHERE `sessions`.`hash` = ?"));
+					"WHERE `sessions`.`hash` = ?"
+				    "GROUP BY allowed_to_join"));
 
 		} catch(mysqlx::Error & error) {
 			Log::Error("[MySQL] exception: {0}", error.what());

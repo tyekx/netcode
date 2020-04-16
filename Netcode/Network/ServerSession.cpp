@@ -61,8 +61,6 @@ namespace Netcode::Network {
 
 		RETURN_IF(lastError);
 
-		//TimerInit();
-
 		ControlSocketReadInit();
 
 		GameSocketReadInit();
@@ -136,14 +134,25 @@ namespace Netcode::Network {
 	void ServerSession::ControlSocketReadInit()
 	{
 		auto buffer = storage.GetBuffer();
+		Log::Debug("[Network] [Server] ControlSocketReadInit()");
+
+		if(buffer == nullptr) {
+			Log::Error("[Network] [Server] buffer is nullptr");
+		}
 
 		controlStream->AsyncRead(boost::asio::buffer(buffer.get(), PACKET_STORAGE_SIZE),
 			[this, buffer](const ErrorCode & ec, std::size_t size, udp_endpoint_t sender) -> void {
+			if(ec == boost::asio::error::operation_aborted) {
+				Log::Info("[Network] [Server] [Control] Read operation aborted");
+				return;
+			}
+
 			if(ec) {
 				Log::Error("[Network] [Server] [Control] Failed to read: {0}", ec.message());
 			} else if(sender.address().is_unspecified()) {
 				Log::Warn("[Network] [Server] [Control] Rejected packet because the source address is unspecified");
 			} else {
+				Log::Debug("[Network] [Server] [Control] Received {0} byte(s)", size);
 				UdpPacket packet;
 				packet.data = std::move(buffer);
 				packet.endpoint = std::move(sender);
@@ -160,12 +169,44 @@ namespace Netcode::Network {
 		});
 	}
 
+	void ServerSession::SendAll() {
+		std::vector<UdpPacket> controlPackets;
+		std::vector<UdpPacket> gamePackets;
+		controlQueue.GetOutgoingPackets(controlPackets);
+		gameQueue.GetOutgoingPackets(gamePackets);
+
+		for(UdpPacket & p : controlPackets) {
+			controlStream->AsyncWrite(p.mBuffer, p.endpoint, boost::bind(
+				&ServerSession::OnMessageSent,
+				this,
+				boost::asio::placeholders::error,
+				boost::asio::placeholders::bytes_transferred,
+				p.data
+			));
+		}
+
+		for(UdpPacket & p : gamePackets) {
+			gameStream->AsyncWrite(p.mBuffer, p.endpoint, boost::bind(
+				&ServerSession::OnMessageSent,
+				this,
+				boost::asio::placeholders::error,
+				boost::asio::placeholders::bytes_transferred,
+				p.data
+			));
+		}
+	}
+
 	void ServerSession::GameSocketReadInit()
 	{
 		auto buffer = storage.GetBuffer();
 
 		controlStream->AsyncRead(boost::asio::buffer(buffer.get(), PACKET_STORAGE_SIZE),
 			[this, buffer](const ErrorCode & ec, std::size_t size, udp_endpoint_t sender) -> void {
+			if(ec == boost::asio::error::operation_aborted) {
+				Log::Info("[Network] [Server] [Game] Read operation aborted");
+				return;
+			}
+
 			if(ec) {
 				Log::Error("[Network] [Server] [Game] Failed to read: {0}", ec.message());
 			} else if(sender.address().is_unspecified()) {
@@ -193,6 +234,21 @@ namespace Netcode::Network {
 
 	void ServerSession::OnControlRead(UdpPacket packet) {
 		controlQueue.Received(std::move(packet));
+	}
+
+	void ServerSession::OnMessageSent(const ErrorCode & ec, std::size_t size, PacketStorage::StorageType buffer)
+	{
+		if(ec == boost::asio::error::operation_aborted) {
+			Log::Info("[Network] [Server] Write operation aborted");
+			return;
+		}
+ 
+		if(ec) {
+			Log::Error("[Network] [Server] Failed to send message: {0}", ec.message());
+		} else {
+			Log::Debug("[Network] [Server] Successfully sent {0} byte(s)", size);
+		}
+		storage.ReturnBuffer(buffer);
 	}
 
 	void ServerSession::ParseControlMessages(std::vector<Protocol::Message> & outVec, std::vector<UdpPacket> packets) {
@@ -223,8 +279,8 @@ namespace Netcode::Network {
 			const Message & ctrl = message.control();
 
 			if(ctrl.Body_case() == Message::BodyCase::kAcknowledge) {
-				//int32_t acknowledged = message.control().acknowledge();
-				// TODO: handle ack
+				int32_t acknowledged = message.control().acknowledge();
+				controlStorage.Acknowledge(p.endpoint, acknowledged);
 				continue;
 			}
 
@@ -234,7 +290,10 @@ namespace Netcode::Network {
 				continue;
 			}
 
-			// TODO: set source address/port
+			SendAck(p.endpoint, message.id());
+
+			message.set_address(p.endpoint.address().to_string());
+			message.set_port(p.endpoint.port());
 
 			outVec.emplace_back(std::move(message));
 		}
@@ -266,10 +325,32 @@ namespace Netcode::Network {
 				continue;
 			}
 
+			message.set_address(p.endpoint.address().to_string());
+			message.set_port(p.endpoint.port());
+
 			outVec.emplace_back(std::move(message));
 		}
 
 		storage.ReturnBuffer(std::move(buffersToReturn));
+	}
+
+	void ServerSession::SendAck(udp_endpoint_t endpoint, int32_t ack)
+	{
+		auto buffer = storage.GetBuffer();
+		UdpPacket packet{ std::move(buffer) };
+		packet.endpoint = endpoint;
+
+		Protocol::Message message;
+		message.mutable_control()->set_acknowledge(ack);
+
+		if(!message.SerializeToArray(packet.mBuffer.data(), packet.mBuffer.size())) {
+			Log::Error("[Network] [Server] Failed to serialize ack message");
+			return;
+		}
+
+		packet.mBuffer = boost::asio::buffer(packet.data.get(), message.ByteSizeLong());
+
+		controlQueue.Send(std::move(packet));
 	}
 
 	ServerSession::~ServerSession() {

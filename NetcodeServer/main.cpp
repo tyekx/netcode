@@ -30,11 +30,11 @@ int main(int argc, char * argv[]) {
 	po::notify(vm);
 	
 	Netcode::Module::DefaultModuleFactory dmf;
-
 	ServerApp app;
 	app.Configure(std::move(config));
 	app.Setup(&dmf);
 	app.Run();
+	app.Exit();
 
 	return 0;
 }

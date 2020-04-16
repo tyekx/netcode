@@ -9,11 +9,6 @@
 
 namespace Netcode::Network {
 
-	struct AuthResult {
-		ErrorCode result;
-		UserRow userData;
-	};
-
 	class ServerSession : public GameSession {
 		boost::asio::io_context & ioContext;
 		boost::asio::deadline_timer timer;
@@ -37,9 +32,13 @@ namespace Netcode::Network {
 		void OnGameRead(UdpPacket packet);
 		void OnControlRead(UdpPacket packet);
 
+		void OnMessageSent(const ErrorCode & ec, std::size_t size, PacketStorage::StorageType buffer);
+
 		void ParseControlMessages(std::vector<Protocol::Message> & outVec, std::vector<UdpPacket> packets);
 
 		void ParseGameMessages(std::vector<Protocol::Message> & outVec, std::vector<UdpPacket> packets);
+
+		void SendAck(udp_endpoint_t endpoint, int32_t ack);
 	public:
 		virtual ~ServerSession() override;
 
@@ -48,8 +47,7 @@ namespace Netcode::Network {
 		/*
 		messages that are validated protocol wise
 		*/
-		virtual void Receive(std::vector<Protocol::Message> & control,
-							 std::vector<Protocol::Message> & game) override;
+		virtual void Receive(std::vector<Protocol::Message> & control, std::vector<Protocol::Message> & game) override;
 
 		virtual bool IsRunning() const override {
 			return !((bool)lastError);
@@ -59,18 +57,24 @@ namespace Netcode::Network {
 			return lastError.message();
 		}
 
-		std::future<AuthResult> Authenticate(std::string hash) {
-			std::promise<AuthResult> arPromise;
-			auto future = arPromise.get_future();
-
-			boost::asio::post(ioContext, [this, hash, promise = move_to_dcc(arPromise)]() -> void {
-				AuthResult ar;
-				ar.result = db.QueryUserByHash(hash, ar.userData);
-				promise.value.set_value(ar);
+		template<typename CompletionHandler>
+		void CreateGameSession(int32_t userId, CompletionHandler completionHandler) {
+			boost::asio::post(ioContext, [this, userId, completionHandler]() -> void {
+				ErrorCode ec = db.CreateGameSession(userId);
+				completionHandler(std::move(ec));
 			});
-
-			return future;
 		}
+
+		template<typename CompletionHandler>
+		void Authenticate(std::string hash, CompletionHandler completionHandler) {
+			boost::asio::post(ioContext, [this, hash, completionHandler]() -> void {
+				UserRow ur;
+				ErrorCode ec = db.QueryUserByHash(hash, ur);
+				completionHandler(std::move(ec), std::move(ur));
+			});
+		}
+
+		virtual void SendAll() override;
 
 		virtual std::future<ErrorCode> SendControlMessage(Protocol::Message message) override {
 			std::promise<ErrorCode> errorPromise;
