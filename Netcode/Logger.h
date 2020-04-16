@@ -8,7 +8,13 @@ namespace Log {
 
 	void Debug(const char * message);
 	void Debug(const char * message, int value);
+	void Debug(const char * message, const std::string& value);
 	void Debug(const char * message, int value, int value2);
+
+	void Debug(int id, const std::string & name, const std::string & password, const std::string & salt, bool isBanned);
+	void Debug(int id, int ownerId, int maxPlayers, int interval, int status, const std::string & address, int createdAt, int closedAt);
+	void Debug(int id, int userId, const std::string & hash, int expiresAt);
+	void Debug(int id, int userId, int gameServerId, int joinedAt, int leftAt);
 
 	void Info(const char * message);
 	void Info(const char * message, const std::string & value);
@@ -18,6 +24,7 @@ namespace Log {
 	void Warn(const char * message);
 
 	void Error(const char * message);
+	void Error(const char * message, const std::string & value);
 
 	void Critical(const char * message);
 

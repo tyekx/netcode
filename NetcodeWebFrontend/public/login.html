@@ -1,0 +1,20 @@
+<div class="netcode-login" ng-if="!userLoggedIn()" ng-controller="LoginController">
+    <h2>Login</h2>
+    <form onsubmit="return false;">
+        <div class="netcode-input">
+            <label for="">Username:</label>
+            <input type="text" data-ng-model="loginUsername" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Username">
+        </div>
+        <div class="netcode-input">
+            <label for="">Password:</label>
+            <input type="password" data-ng-model="loginPassword" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="super secret password">
+        </div>
+        <div class="netcode-input">
+            <button ng-click="login()">Login</button>
+        </div>
+    </form>
+</div>
+<div class="netcode-login" ng-if="userLoggedIn()">
+    <h2>Error</h2>
+    <p>You are already logged in.</p>
+</div>

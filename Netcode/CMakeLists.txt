@@ -2,14 +2,21 @@ cmake_minimum_required(VERSION 3.8)
 
 add_library(Netcode STATIC "")
 
-include_directories(Netcode
+target_include_directories(Netcode
+PUBLIC 
 	"${PROJECT_SOURCE_DIR}"
+)
+
+target_include_directories(Netcode SYSTEM
+PUBLIC
 	"${PHYSX_INCLUDE}"
 	"${BOOST_INCLUDE}"
 	"${DXTEX_INCLUDE}"
 	"${LUA_INCLUDE}"
 	"${JSON11_INCLUDE}"
 	"${SPDLOG_INCLUDE}"
+	"${PROTOBUF_INCLUDE}"
+	"${MYSQLCONN_INCLUDE}"
 )
 
 target_sources(Netcode
@@ -43,7 +50,6 @@ PUBLIC
 	Event.hpp
 	FancyIterators.hpp
 	File.h
-	HandleTypes.cpp
 	HandleTypes.h
 	Input.cpp
 	Input.h
@@ -56,8 +62,6 @@ PUBLIC
 	Modules.h
 	ModulesConfig.h
 	MovementController.h
-	NetcodeNetworkModule.cpp
-	NetcodeNetworkModule.h
 	Path.cpp
 	Path.h
 	PhysXWrapper.cpp
@@ -75,10 +79,13 @@ PUBLIC
 	Vertex.h
 	WinapiWindowModule.cpp
 	WinapiWindowModule.h
+	ConsoleModule.h
+	ConsoleModule.cpp
 )
 
 add_subdirectory(Shaders)
 add_subdirectory(Graphics)
 add_subdirectory(Graphics/DX12)
+add_subdirectory(Network)
 
 add_dependencies(Netcode NetcodeShaders)

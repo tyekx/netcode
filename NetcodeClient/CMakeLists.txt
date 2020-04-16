@@ -2,8 +2,13 @@ cmake_minimum_required(VERSION 3.8)
 
 add_executable(NetcodeClient WIN32 "")
 
-include_directories(NetcodeClient
+target_include_directories(NetcodeClient 
+PRIVATE
 	"${PROJECT_SOURCE_DIR}"
+)
+
+target_include_directories(NetcodeClient SYSTEM
+PRIVATE
 	"${MYSQLCONN_INCLUDE}"
 	"${BOOST_INCLUDE}"
 	"${ASSIMP_INCLUDE}"
@@ -65,6 +70,7 @@ PUBLIC
 	"${DXTEX_LIB}"
 	"${BOOST_LIB}"
 	"${MYSQLCONN_LIB}"
+	"${PROTOBUF_LIB}"
 )
 
 target_link_libraries(NetcodeClient
@@ -79,6 +85,7 @@ target_link_libraries(NetcodeClient
 	"${PHYSX_LINK}"
 	"${JSON11_LINK}"
 	"${DX12_LINK}"
+	"${PROTOBUF_LINK}"
 )
 
 add_subdirectory(Shaders)

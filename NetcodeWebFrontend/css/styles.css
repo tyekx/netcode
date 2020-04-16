@@ -1,0 +1,382 @@
+* {
+    box-sizing: border-box;
+}
+
+body, html {
+    padding: 0;
+    margin: 0;
+    background-color: #1d3c50;
+}
+
+.netcode-thead{
+    border-bottom: 2px solid #ff6685;
+}
+
+.netcode-table {
+    color: #ff6685;
+    font-family: 'Titillium Web', sans-serif;
+}
+
+.netcode-col-details {
+    width: 16%;
+    float: left;
+    text-align: center;
+}
+
+.netcode-sub-row.dropdown {
+    background-color: #234c61;
+    padding: 10px;
+}
+
+.netcode-col-pid {
+    width: 28%;
+    float: left;
+    text-align: center;
+}
+
+.netcode-col-port {
+    width: 28%;
+    float: left;
+    text-align: center;
+}
+
+.netcode-col-slots {
+    width: 28%;
+    float:left;
+    text-align: center;
+}
+
+.netcode-tbody .netcode-col-details {
+    cursor: pointer;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    color: #ff6685;
+    font-family: 'Titillium Web', sans-serif;
+    text-align: center;
+}
+
+table thead {
+    font-weight: bold;
+    border-bottom: 2px solid #ff6685;
+}
+.netcode-header {
+    height: 300px;
+    background-image: url('../images/background.jpg');
+    background-position: 50% 50%;
+}
+
+.netcode-header-wrapper {
+    max-width: 1022px;
+    margin: 0px auto;
+    height: inherit;
+}
+
+.netcode-title {
+    font-family: 'Titillium Web', sans-serif;
+    font-size: 80px;
+    font-weight: 200;
+    color: #ff6685;
+    padding-top: 100px;
+    float:left;
+    padding-left: 160px;
+}
+
+.netcode-bme-iit-logo {
+    background-image: url('../images/iit-logo.png');
+    background-size: cover;
+    height: 60px;
+    width: 60px;
+    float: right;
+    margin-top: 136px;
+    margin-left: 13px;
+    margin-right: 74px;
+}
+
+.netcode-bme-logo {
+    background-image: url('../images/bme-logo-big.png');
+    background-size: contain;
+    width: 194px;
+    height: 55px;
+    float: right;
+    margin-top: 139px;
+}
+
+.netcode-nav-bg-wrapper {
+    height: 40px;
+    overflow: hidden;
+    margin-top: -40px;
+}
+
+.netcode-nav-background {
+    margin-top: -20px;
+    filter: blur(6px);
+    height: 80px;
+    margin-left: -10%;
+    width: 120%;
+    background-image: url('../images/background.jpg');
+    background-position: 50% -628px;
+}
+
+.netcode-nav {
+    max-width: 1022px;
+    margin: 0 auto;
+    height: 40px;
+    margin-top: -40px;
+    position: relative;
+    z-index: 2;
+}
+
+.netcode-nav a {
+    display: block;
+    float: right;
+    height: 40px;
+    font-size: 20px;
+    padding: 0 35px;
+    text-decoration: none;
+    font-family: 'Titillium Web', sans-serif;
+    font-weight: 400;
+    line-height: 40px;
+    color: #ff6685;
+    transition: background-color .5s linear, color .5s linear;
+}
+
+.netcode-nav a:hover {
+    background-color: #ff6685;
+    opacity: .75;
+    color: #1d3c50;
+    border: none;
+}
+
+.netcode-body {
+}
+
+.netcode-body-wrapper {
+    max-width: 1022px;
+    margin: 0 auto;
+    min-height: 600px;
+}
+
+.cl {
+    clear: both;
+}
+
+h2 {
+    margin-top: 0;
+    padding-top: 30px;
+    padding-left: 30px;
+    padding-right: 30px;
+    font-family: 'Titillium Web', sans-serif;
+    font-weight: 400;
+    color: #ff6685;
+}
+
+p {
+    color: rgba(255,255,255,.8);
+    font-family: 'Titillium Web', sans-serif;
+    font-weight: 400;
+    padding: 0 45px;
+
+}
+
+.netcode-about {
+    width: 65%;
+    float: left;
+}
+
+.netcode-register {
+    width: 35%;
+    float: left;
+}
+
+.netcode-register p{
+    font-size: 12px;
+}
+
+.netcode-register form {
+    padding: 0 45px;
+}
+
+.netcode-input {
+    margin-top: 15px;
+}
+
+.netcode-input label {
+    display: block;
+    font-family: 'Titillium Web', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: #ff6685;
+}
+
+.netcode-input input, 
+.netcode-input button {
+    height: 40px;
+    width: 267px;
+    background-color: #1d3c50;
+    outline: none;
+    border: 1px solid #ff6685;
+    border-radius: 3px;
+    padding: 0 15px;
+    font-size: 14px;
+    color: #ff6685;
+    transition: background-color .5s ease-out, color .5s ease-out;
+}
+
+.netcode-input button:hover,
+.netcode-input input:focus {
+    background-color: #ff6685;
+    color: #1d3c50;
+}
+
+.netcode-input button {
+    font-family: 'Titillium Web', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    width: 160px;
+    margin: 15px 53px;
+}
+
+::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+    color: rgba(253, 135, 143, 0.5);
+    opacity: 1; /* Firefox */
+    transition: color .3s ease-in;
+}
+
+:-ms-input-placeholder { /* Internet Explorer 10-11 */
+    color: rgba(253, 135, 143, 0.5);
+    transition: color .3s ease-in;
+}
+
+::-ms-input-placeholder { /* Microsoft Edge */
+    color: rgba(253, 135, 143, 0.5);
+    transition: color .3s ease-in;
+}
+
+input:focus::placeholder {
+    color: transparent;
+}
+
+input:focus::-ms-input-placeholder {
+    color: transparent;
+}
+
+a {
+    text-decoration: none;
+    color: #ff6685;
+    border-bottom: 1px dashed transparent;
+    transition: border-color .2s ease-in;
+}
+
+a:hover {
+    border-bottom: 1px dashed #ff6685;
+}
+
+.sign {
+    text-align: right;
+}
+
+.semicolon {
+    padding-top: 0;
+    background-image: url('../images/semicolon.png');
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: 28px 0;
+    padding-left: 71px;
+}
+
+.netcode-output .netcode-error {
+    color: #ff6685;
+    font-weight: 700;
+    font-family: 'Titillium Web', sans-serif;
+}
+
+.netcode-output .netcode-success {
+    color: #ffb9be;
+    font-family: 'Titillium Web', sans-serif;
+}
+
+.netcode-login {
+    margin: 0 auto;
+    width: 270px;
+}
+
+.netcode-login h2 {
+    width: 100%;
+    text-align: center;
+}
+
+.wrapper {
+    width: 50px;
+    height: 50px;
+    position: relative;
+    background:#1d3c50;
+    float: left;
+    margin-top: 25px;
+    margin-left: 25px;
+}
+
+.netcode-active-servers {
+    float: left;
+}
+
+.pie {
+    width: 50%;
+    height: 100%;
+    position: absolute;
+    background: #1d3c50;
+    border: 5px solid #ff6685;
+}
+
+.spinner {
+    transform-origin: right;
+    border-radius: 25px 0 0 25px;
+    z-index: 200;
+    border-right: none;
+    animation: rota 5s linear infinite;
+}
+
+.filler {
+    border-radius: 0 25px 25px 0;
+    z-index: 100;
+    border-left: none;
+    animation: fill 5s steps(1, end) infinite;
+    left: 50%;
+    opacity: 0;
+}
+
+.mask {
+    width: 50%;
+    height: 100%;
+    position: absolute;
+    z-index: 300;
+    opacity: 1;
+    background: inherit;
+    animation: mask 5s steps(1, end) infinite;
+}
+
+.cp-error {
+    color: #ff6685;
+    font-weight: 700;
+    text-align: center;
+    font-family: 'Titillium Web', sans-serif;
+    margin-top: 25px;
+}
+
+@keyframes rota {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes fill {
+    0%        { opacity: 0; }
+    50%, 100% { opacity: 1; }
+}
+
+@keyframes mask {
+    0%        { opacity: 1; }
+    50%, 100% { opacity: 0; }
+}

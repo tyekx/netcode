@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 
 add_library(NetcodeLib STATIC "")
 
-include_directories(NetcodeLib "${BOOST_INCLUDE}" "${MYSQLCONN_INCLUDE}" "${JSON11_INCLUDE}")
+target_include_directories(NetcodeLib SYSTEM PRIVATE "${BOOST_INCLUDE}" "${MYSQLCONN_INCLUDE}" "${JSON11_INCLUDE}")
 
 target_sources(NetcodeLib PUBLIC 
 	AField.cpp

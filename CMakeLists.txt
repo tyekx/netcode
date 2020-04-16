@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 
 # target_sources now uses proper relative paths
 set(CMAKE_POLICY_DEFAULT_CMP0076 NEW)
+set(CMAKE_POLICY_DEFAULT_CMP0079 NEW)
 
 # include sdk paths
 include(CMakeSDK.txt)
@@ -9,7 +10,11 @@ include(CMakeSDK.txt)
 # c++ compiler settings
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-microsoft-include")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-microsoft-include -Wno-unused-private-field -Wno-unknown-pragmas")
+
+if(DEFINED NETCODE_NO_WINAPI)
+	add_definitions(-DNETCODE_NO_WINAPI)
+endif()
 
 # c++ definitions
 add_definitions(
@@ -17,6 +22,8 @@ add_definitions(
 	-DNOMINMAX
 	-D_CXX17_DEPRECATE_ITERATOR_BASE_CLASS
 	-DBOOST_ALL_NO_LIB
+	-D_WIN32_WINNT=0x0A00
+	-D_CRT_SECURE_NO_WARNINGS
 )
 
 # shader related stuff
@@ -73,6 +80,17 @@ function(netcode_compile_shader var_binary_path source_path shader_type entry_po
   set(${var_binary_path} "${binary_path}" PARENT_SCOPE)
 endfunction()
 
+function(netcode_add_cp_command source_path dest_file)
+	get_filename_component(abs_path "${source_path}" ABSOLUTE)
+	add_custom_command(OUTPUT ${dest_file}
+		COMMENT "Copying ${source_path}..."
+		COMMAND ${CMAKE_COMMAND} -E copy \"${abs_path}\" \"${dest_file}\"
+		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+		DEPENDS "${abs_path}"
+		USES_TERMINAL
+	)
+endfunction()
+
 macro(NETCODE_COMPILE_VS outBinPath fileName)
 	NETCODE_COMPILE_SHADER(${outBinPath} ${fileName} "vs_5_0" "main")
 endmacro()
@@ -102,9 +120,10 @@ project("Netcode")
 add_subdirectory("NetcodeFoundation")
 add_subdirectory("NetcodeAssetLib")
 add_subdirectory("NetcodeProtocol")
-add_subdirectory("NetcodeLib")
 add_subdirectory("Netcode")
 add_subdirectory("NetcodeClient")
+add_subdirectory("NetcodeServer")
 
 add_dependencies(Netcode NetcodeProtocol)
 add_dependencies(NetcodeClient Netcode)
+add_dependencies(NetcodeServer Netcode)

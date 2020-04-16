@@ -123,6 +123,15 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		gameScene->Setup();
 	}
 
+	void ConnectServer() {
+		Netcode::Network::SessionConfig config;
+		config.tickIntervalMs = 500;
+		config.selfAddress = boost::asio::ip::address::from_string("127.0.0.1");
+		config.clientPort = 8889;
+
+		network->CreateClient(config);
+	}
+
 	void LoadAssets() {
 		AssetManager * assetManager = Service::Get<AssetManager>();
 

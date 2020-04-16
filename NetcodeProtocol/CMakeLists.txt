@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.8)
 
 add_library(NetcodeProtocol STATIC "")
 
-include_directories(NetcodeProtocol
+target_include_directories(NetcodeProtocol SYSTEM
+PUBLIC
 	"${PROTOBUF_INCLUDE}"
 )
 

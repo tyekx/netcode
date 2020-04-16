@@ -25,6 +25,9 @@ namespace Netcode::Animation {
 				case TransitionBehaviour::STOP_AND_LERP:
 					currentState->animSpeed = 0.0f;
 					break;
+				default:
+					currentState->animSpeed = 0.0f;
+					break;
 				}
 				currentState = t->targetState;
 				currentState->animTime = 0.0f;
@@ -85,7 +88,7 @@ namespace Netcode::Animation {
 				if(tOwner == state) {
 					AnimationState * targetState = FindReferenceByName(t.targetState);
 					AnimationState::Transition * transition = state->transitions + j;
-					new (state->transitions + j) AnimationState::Transition{ t.movQueryFunction, t.animQueryFunction, targetState, t.behaviour };
+					new (transition) AnimationState::Transition{ t.movQueryFunction, t.animQueryFunction, targetState, t.behaviour };
 					++j;
 				}
 			}

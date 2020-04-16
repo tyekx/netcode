@@ -11,7 +11,9 @@
 #include <DirectXCollision.h>
 
 #include "Graphics/GraphicsContexts.h"
-#include <NetcodeLib/Cookie.h>
+#include "Network/GameSession.h"
+#include "Network/Config.h"
+#include "Network/Cookie.h"
 
 namespace Netcode::Module {
 
@@ -183,12 +185,17 @@ namespace Netcode::Module {
 	class INetworkModule : public IModule {
 	public:
 		virtual ~INetworkModule() = default;
-		virtual void SetWebserverAddress(std::string ipAddr, int port) = 0;
-		virtual Cookie GetCookie(const std::string & key) = 0;
+		virtual void Configure(Network::Config config) = 0;
+
+		virtual Network::Cookie GetCookie(const std::string & key) = 0;
+		virtual void SetCookie(const Network::Cookie & cookie) = 0;
 
 		virtual std::future<Response> Login(const std::wstring & username, const std::wstring & password) = 0;
 		virtual std::future<Response> QueryServers() = 0;
 		virtual std::future<Response> Status() = 0;
+
+		virtual Network::GameSessionRef CreateServer(Network::Config config) = 0;
+		virtual Network::GameSessionRef CreateClient(Network::Config config) = 0;
 	};
 
 	class IModuleFactory {

@@ -1,0 +1,106 @@
+<div class="netcode-about">
+    <div class="wrapper">
+        <div class="spinner pie"></div>
+        <div class="filler pie"></div>
+        <div class="mask"></div>
+    </div>
+    <h2 class="netcode-active-servers">Active Servers ({{ activeServers }})</h2>
+    <div class="cl"></div>
+
+    <div class="netcode-table">
+        <div class="netcode-thead">
+            <div class="netcode-col-details">Details</div>
+            <div class="netcode-col-pid">PID</div>
+            <div class="netcode-col-port">Port</div>
+            <div class="netcode-col-slots">Slots</div>
+            <div class="cl"></div>
+        </div>
+        <div class="netcode-tbody">
+            <div class="netcode-row" ng-repeat="si in serverInfo track by $index">
+                <div class="netcode-sub-row">
+                    <div class="netcode-col-details" ng-click="toggleItem($index)" ng-show="!isShown($index)">+</div>
+                    <div class="netcode-col-details" ng-click="toggleItem($index)" ng-show="isShown($index)">-</div>
+                    <div class="netcode-col-pid">{{ si.pid }}</div>
+                    <div class="netcode-col-port">{{ si.port }}</div>
+                    <div class="netcode-col-slots">{{ si.clients.length }} / {{ si.max_players }}</div>
+                    <div class="cl"></div>
+                </div>
+                <div class="netcode-sub-row dropdown" ng-show="isShown($index)">
+                    Server:
+                    <table>
+                        <thead>
+                            <tr>
+                                <td>Uptime[{{ si.uptime.dimension_short }}]</td>
+                                <td>Timeframe[{{ si.timeframe.dimension_short }}]</td>
+                                <td>Avg In[b/s]</td>
+                                <td>Avg Out[b/s]</td>
+                                <td>Sim [{{ si.simulation.dimension_short }}]</td>
+                                <td>Rep [{{ si.simulation.dimension_short }}]</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{{ si.uptime.value | number: si.uptime.decimals }}</td>
+                                <td>{{ si.timeframe.value | number: si.timeframe.decimals }}</td>
+                                <td>{{ si.in_data.value / si.timeframe.value | number: 2 }}</td>
+                                <td>{{ si.out_data.value / si.timeframe.value | number: 2 }}</td>
+                                <td>{{ si.simulation.value | number: 4 }}</td>
+                                <td>{{ si.report.value | number: 4 }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    Clients:
+                    <table>
+                        <thead>
+                            <tr>
+                                <td>UserId</td>
+                                <td>Uptime[s]</td>
+                                <td>Avg In[1/s]</td>
+                                <td>Avg In[b/s]</td>
+                                <td>Avg Out[1/s]</td>
+                                <td>Avg Out[b/s]</td>
+                                <td>Err[n]</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-if="si.clients.length == 0">
+                                <td colspan="7">No clients connected</td>
+                            </tr>
+                            <tr ng-repeat="player in si.clients">
+                                <td>{{ player.user_id }}</td>
+                                <td>{{ player.uptime | number: 2 }}</td>
+                                <td>{{ player.in_count / player.timeframe | number: 2 }}</td>
+                                <td>{{ player.in_bytes / player.timeframe | number: 2 }}</td>
+                                <td>{{ player.out_count / player.timeframe | number: 2 }}</td>
+                                <td>{{ player.out_bytes / player.timeframe | number: 2 }}</td>
+                                <td>{{ player.err_count }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="cp-error">{{ cpError }}</div>
+</div>
+<div class="netcode-register">
+    <h2>Starting new server</h2>
+    <form onsubmit="return false;">
+        <div class="netcode-input">
+            <label for="">Max Players:</label>
+            <input type="text" ng-model="maxPlayers" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="1-20">
+        </div>
+        <div class="netcode-input">
+            <label for="">Port Hint:</label>
+            <input type="text" ng-model="portHint" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="5000-65535">
+        </div>
+        <div class="netcode-input">
+            <label for="">Target Tick Rate:</label>
+            <input type="text" ng-model="tickRate" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="1-1000">
+        </div>
+        <div class="netcode-input">
+            <button ng-click="createServer()">Send</button>
+        </div>
+    </form>
+</div>
+<div class="cl"></div>

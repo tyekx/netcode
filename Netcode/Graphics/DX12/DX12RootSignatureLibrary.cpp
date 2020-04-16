@@ -11,8 +11,6 @@ namespace Netcode::Graphics::DX12 {
 			return false;
 		}
 
-
-		bool result = true;
 		UINT i, j;
 		for(i = 0, j = 0; i < lhs.NumParameters && j < rhs.NumParameters; ++i, ++j) {
 			if(!IsCompatible(lhs.pParameters[i], rhs.pParameters[j])) {
@@ -134,8 +132,6 @@ namespace Netcode::Graphics::DX12 {
 			return false;
 		}
 
-
-		bool result = true;
 		UINT i, j;
 		for(i = 0, j = 0; i < lhs.NumParameters && j < rhs.NumParameters; ++i, ++j) {
 			if(!IsCompatible(lhs.pParameters[i], rhs.pParameters[j])) {

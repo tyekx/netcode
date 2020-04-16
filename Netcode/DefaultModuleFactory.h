@@ -2,6 +2,13 @@
 
 #include "Modules.h"
 
+#define WINDOW_WINAPI (0)
+#define WINDOW_CONSOLE (1)
+
+#define GRAPHICS_DX12_WIN32 (0)
+
+#define NETWORK_NETCODE (0)
+
 namespace Netcode::Module {
 
 	class DefaultModuleFactory : public IModuleFactory {

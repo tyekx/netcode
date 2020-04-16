@@ -16,7 +16,57 @@ namespace Netcode {
 		SHIFT_ALT = ( SHIFT | ALT ),
 		SHIFT_CAPS_LOCK = ( SHIFT | CAPS_LOCK )
 	};
+	/*
+	namespace Input {
 
+		class Events {
+			~Events() = delete;
+			Events() = delete;
+		public:
+
+			static Event<uint32_t, uint32_t> OnKeyPressed;
+			static Event<uint32_t, uint32_t> OnMouseMoved;
+			static Event<> OnFocused;
+			static Event<> OnBlurred;
+			// [...]
+		};
+
+		class InputBase {
+		protected:
+			static bool isFocused;
+
+		public:
+			static void Focus();
+
+			static void Blur();
+		};
+
+		class Axes {
+
+		public:
+			float GetAxis(const std::string & axis);
+			void SetAxis(const std::string & name, uint32_t posKey, uint32_t negKey);
+		};
+
+		class Mouse {
+			DirectX::XMINT2 cursorPos;
+			DirectX::XMINT2 cursorDelta;
+			std::bitset<256> keysHeld;
+		public:
+			DirectX::XMINT2 GetDelta() const {
+
+			}
+
+			DirectX::XMINT2 GetPosition() const {
+
+			}
+
+			void Consume();
+		};
+
+
+
+	}*/
 
 	class Input {
 		~Input() = delete;

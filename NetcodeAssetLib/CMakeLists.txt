@@ -2,10 +2,16 @@ cmake_minimum_required(VERSION 3.8)
 
 add_library(NetcodeAssetLib STATIC "")
 
-include_directories(NetcodeAssetLib "${PROJECT_SOURCE_DIR}")
-include_directories(NetcodeAssetLib "${JSON11_INCLUDE}")
-include_directories(NetcodeAssetLib "${ASSIMP_INCLUDE}")
-include_directories(NetcodeAssetLib "${DXTEX_INCLUDE}")
+target_include_directories(NetcodeAssetLib PUBLIC 
+	"${PROJECT_SOURCE_DIR}"
+)
+
+target_include_directories(NetcodeAssetLib SYSTEM
+PUBLIC
+	"${JSON11_INCLUDE}"
+	"${ASSIMP_INCLUDE}"
+	"${DXTEX_INCLUDE}"
+)
 
 target_sources(NetcodeAssetLib
 PUBLIC

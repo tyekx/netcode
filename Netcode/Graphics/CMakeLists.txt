@@ -9,4 +9,5 @@ target_sources(Netcode PUBLIC
 	ResourceEnums.h
 	UploadBatch.h
 	UploadBatch.cpp
+	Config.h
 )

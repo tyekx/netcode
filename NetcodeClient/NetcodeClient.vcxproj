@@ -94,7 +94,7 @@
     <ClInclude Include="UITextBox.h" />
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="EggApp.natvis" />
+    <Natvis Include="NetcodeClient.natvis" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\envmapPass_Pixel.hlsl">

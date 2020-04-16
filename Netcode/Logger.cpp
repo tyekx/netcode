@@ -36,9 +36,36 @@ namespace Log {
 		spdlog::debug(message, value);
 	}
 
+	void Debug(const char * message, const std::string & value)
+	{
+		spdlog::debug(message, value);
+	}
+
 	void Debug(const char * message, int value, int value2)
 	{
 		spdlog::debug(message, value, value2);
+	}
+
+	void Debug(int id, const std::string & name, const std::string & password, const std::string & salt, bool isBanned)
+	{
+		spdlog::debug("[Db][users] id: {0}, name: {1}, password: {2}, salt: {3}, is_banned: {4}", id, name, password, salt, isBanned);
+	}
+
+	void Debug(int id, int ownerId, int maxPlayers, int interval, int status, const std::string & address, int createdAt, int closedAt)
+	{
+		spdlog::debug("[Db][game_servers] id: {0}, owner_id: {1}, max_players: {2}, interval: {3}, status: {4}, server_ip: {5}, created_at: {6}, closed_at: {7}",
+				id, ownerId, maxPlayers, interval, status, address, createdAt, closedAt);
+	}
+
+	void Debug(int id, int userId, const std::string & hash, int expiresAt)
+	{
+		spdlog::debug("[Db][sessions] id: {0}, user_id: {1}, hash: {2}, expires_at: {3}", id, userId, hash, expiresAt);
+	}
+
+	void Debug(int id, int userId, int gameServerId, int joinedAt, int leftAt)
+	{
+		spdlog::debug("[Db][game_sessions] id: {0}, user_id: {1}, game_server_id: {2}, joined_at: {3}, left_at: {4}",
+			id, userId, gameServerId, joinedAt, leftAt);
 	}
 
 	void Info(const char * message) {
@@ -63,6 +90,11 @@ namespace Log {
 
 	void Error(const char * message) {
 		spdlog::error(message);
+	}
+
+	void Error(const char * message, const std::string & value)
+	{
+		spdlog::error(message, value);
 	}
 
 	void Critical(const char * message) {

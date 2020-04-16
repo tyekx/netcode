@@ -7,6 +7,8 @@
 #include <DirectXTex/DirectXTex.h>
 #endif
 
+#include <boost/beast/http.hpp>
+
 #include <map>
 #include <string>
 
@@ -527,13 +529,6 @@ namespace Netcode {
 		std::string owner;
 	};
 
-	struct Response {
-		int status;
-		std::string content;
-
-		Response();
-		Response(int sc);
-		Response(int sc, std::string c);
-	};
+	using Response = boost::beast::http::response<boost::beast::http::string_body>;
 
 }

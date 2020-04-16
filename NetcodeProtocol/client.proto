@@ -7,5 +7,5 @@ import "shared.proto";
 message Update {
     int32 id = 1;
     Netcode.Protocol.User user = 2;
-    repeated Netcode.Protocol.Impact impacts = 3;
+    repeated Netcode.Protocol.Shot shots = 3;
 }
