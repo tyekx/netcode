@@ -74,6 +74,8 @@ namespace Netcode::Network {
 
 		int32_t numThreads = static_cast<int32_t>(workers.size());
 
+		ioc.stop();
+
 		for(auto & thread : workers) {
 			thread.join();
 		}
@@ -88,38 +90,41 @@ namespace Netcode::Network {
 	}
 
 	void ControlPacketStorage::CheckTimeouts(uint64_t durationMs) {
+		std::scoped_lock<std::recursive_mutex> lock{ mutex };
 		auto now = std::chrono::steady_clock::now();
 
 		auto it = storage.begin();
 
-		do {
-			for(; it != storage.end(); ++it) {
-				// on an empty entry, we erase it
-				if(it->second.empty()) {
-					storage.erase(it);
-					it = storage.begin();
-					break;
-				}
-
-				Item & item = it->second.front();
-				auto timestamp = item.first_sent_at;
-
-
-				if(timestamp.time_since_epoch() == std::chrono::steady_clock::duration::zero()) {
-					// was not sent yet
-					continue;
-				}
-
-				if(std::chrono::duration_cast<std::chrono::milliseconds>(now - timestamp).count() > durationMs) {
-					item.promise.set_value(boost::asio::error::make_error_code(boost::asio::error::timed_out));
-					Log::Info("[Network] Control packet timed out, no ACK was received");
-					it->second.pop_front();
-				}
+		for(; it != storage.end();) {
+			// on an empty entry, we erase it
+			if(it->second.empty()) {
+				storage.erase(it);
+				it = storage.begin();
+				continue;
 			}
-		} while(it != storage.end());
+			 
+			Item & item = it->second.front();
+			auto timestamp = item.first_sent_at;
+
+
+			if(timestamp.time_since_epoch() == std::chrono::steady_clock::duration::zero()) {
+				// was not sent yet
+				++it;
+				continue;
+			}
+
+			if(std::chrono::duration_cast<std::chrono::milliseconds>(now - timestamp).count() > durationMs) {
+				item.completionHandler(boost::asio::error::make_error_code(boost::asio::error::timed_out));
+				Log::Info("[Network] Control packet timed out, no ACK was received");
+				it->second.pop_front();
+			}
+
+			++it;
+		}
 	}
 
 	ErrorCode ControlPacketStorage::Acknowledge(const udp_endpoint_t & source, int32_t ackId) {
+		std::scoped_lock<std::recursive_mutex> lock{ mutex };
 		auto it = storage.find(source);
 
 		if(it == storage.end() || it->second.empty()) {
@@ -134,7 +139,7 @@ namespace Netcode::Network {
 		}
 
 		if(item.packetId == ackId) {
-			it->second.front().promise.set_value(Errc::make_error_code(Errc::success));
+			item.completionHandler(Errc::make_error_code(Errc::success));
 			it->second.pop_front();
 			Log::Debug("[Network] ACK OK: {0}", ackId);
 		} // else: possibly resent ACK that got reordered
@@ -142,58 +147,9 @@ namespace Netcode::Network {
 		return Errc::make_error_code(Errc::success);
 	}
 
-	std::future<ErrorCode> ControlPacketStorage::Push(int32_t id, UdpPacket packet) {
-		return storage[packet.endpoint].emplace_back(id, std::move(packet)).promise.get_future();
+	void ControlPacketStorage::Push(int32_t id, UdpPacket packet, std::function<void(ErrorCode)> completionHandler) {
+		std::scoped_lock<std::recursive_mutex> lock{ mutex };
+
+		storage[packet.endpoint].emplace_back(id, std::move(packet), std::move(completionHandler));
 	}
-
-	void ClientControlPacketStorage::CheckTimeouts(uint64_t durationMs)
-	{
-		if(storage.empty()) {
-			return;
-		}
-
-		auto now = std::chrono::steady_clock::now();
-
-		Item & item = storage.front();
-		auto timestamp = item.first_sent_at;
-
-		if(timestamp.time_since_epoch() == std::chrono::steady_clock::duration::zero()) {
-			// was not sent yet
-			return;
-		}
-
-		if(std::chrono::duration_cast<std::chrono::milliseconds>(now - timestamp).count() > durationMs) {
-			item.promise.set_value(boost::asio::error::make_error_code(boost::asio::error::timed_out));
-			Log::Info("[Network] Control packet timed out, no ACK was received");
-			storage.pop_front();
-		}
-	}
-
-	ErrorCode ClientControlPacketStorage::Acknowledge(int32_t ackId)
-	{
-		if(storage.empty()) {
-			return Errc::make_error_code(Errc::success);
-		}
-
-		Item & item = storage.front();
-
-		// acking a packet that was not sent yet is an error
-		if(item.packetId < ackId) {
-			return Errc::make_error_code(Errc::protocol_error);
-		}
-
-		if(item.packetId == ackId) {
-			item.promise.set_value(Errc::make_error_code(Errc::success));
-			storage.pop_front();
-			Log::Debug("[Network] ACK OK: {0}", ackId);
-		} // else: possibly resent ACK that got reordered
-
-		return Errc::make_error_code(Errc::success);
-	}
-
-	std::future<ErrorCode> ClientControlPacketStorage::Push(int32_t id, UdpPacket packet)
-	{
-		return storage.emplace_back(id, std::move(packet)).promise.get_future();
-	}
-
 }

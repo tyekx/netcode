@@ -13,13 +13,11 @@ namespace Netcode::Network {
 		MessageQueue<Netcode::Protocol::Message> gameQueue;
 		MessageQueue<Netcode::Protocol::Message> controlQueue;
 		PacketStorage storage;
-		ClientControlPacketStorage controlStorage;
+		ControlPacketStorage controlStorage;
 		boost::asio::deadline_timer timer;
 		boost::asio::deadline_timer protocolTimer;
 		udp_resolver_t resolver;
-		std::unique_ptr<UdpStream> stream;
-		std::string controlPort;
-		std::string updatePort;
+		std::shared_ptr<UdpStream> stream;
 		udp_endpoint_t controlEndpoint;
 		udp_endpoint_t updateEndpoint;
 		int32_t clientAck;
@@ -30,25 +28,31 @@ namespace Netcode::Network {
 
 		void Tick();
 
-		void OnUpdateEndpointResolved(const boost::system::error_code & ec, udp_resolver_t::results_type results);
-		void OnControlEndpointResolved(const boost::system::error_code & ec, udp_resolver_t::results_type results);
-
 		void OnTimerExpired(const boost::system::error_code & ec);
 
 		void InitTimer();
-		void InitResolution();
 		void InitRead();
 		void OnRead(std::size_t transferredBytes, udp_endpoint_t endpoint, PacketStorage::StorageType buffer);
+		void OnMessageSent(const ErrorCode & ec, std::size_t size, PacketStorage::StorageType buffer);
+
+		std::shared_ptr<ClientSession> GetStrongRef() {
+			return std::dynamic_pointer_cast<ClientSession>(shared_from_this());
+		}
+
 	public:
 		ClientSession(boost::asio::io_context & ioc, Network::Config config);
 		virtual ~ClientSession() = default;
+		void SendAck(int32_t ack);
+		virtual void Start() override;
+		virtual void Stop() override {
 
+		}
 		virtual bool IsRunning() const override;
 		virtual std::string GetLastError() const override;
 		virtual void Receive(std::vector<Protocol::Message> & control, std::vector<Protocol::Message> & game) override;
 		virtual void SendUpdate(const udp_endpoint_t & endpoint, Protocol::Message message) override;
 		virtual void SendUpdate(Protocol::Message message) override;
-		virtual std::future<ErrorCode> SendControlMessage(Netcode::Protocol::Message message) override;
+		virtual void SendControlMessage(Netcode::Protocol::Message message, std::function<void(ErrorCode)> completionHandler) override;
 
 		virtual void SendAll() override;
 	};

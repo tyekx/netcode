@@ -1,67 +1,8 @@
 #include "ClientSession.h"
 #include "../Logger.h"
+#include "Macros.h"
 
 namespace Netcode::Network {
-	void ClientSession::OnUpdateEndpointResolved(const boost::system::error_code & ec, udp_resolver_t::results_type results)
-	{
-		if(ec) {
-			if(ec == boost::asio::error::operation_aborted) {
-				Log::Info("[Network] [Client] Address resolution aborted");
-			} else {
-				Log::Error("[Network] [Client] Address resolution: {0}", ec.message());
-			}
-		} else if(results.empty()) {
-			Log::Error("[Network] [Client] Address resolution: could not resolve address");
-		} else {
-			Log::Debug("[Network] [Client] Game endpoint resolution succeeded");
-
-			for(auto result : results) {
-				if(!result.endpoint().address().is_unspecified()) {
-					updateEndpoint = result.endpoint();
-					break;
-				}
-			}
-
-			if(updateEndpoint.protocol() != controlEndpoint.protocol()) {
-				Log::Error("[Network] [Client] game and control point uses different protocols, which is not supported by the client");
-				SetError(boost::asio::error::make_error_code(boost::asio::error::address_family_not_supported));
-				return;
-			}
-
-			udp_socket_t socket{ ioContext };
-			socket.open(updateEndpoint.protocol());
-			socket.bind(udp_endpoint_t{ updateEndpoint.protocol(), config.client.localPort });
-
-			stream = std::make_unique<UdpStream>(std::move(socket));
-			InitRead();
-			InitTimer();
-		}
-	}
-
-	void ClientSession::OnControlEndpointResolved(const boost::system::error_code & ec, udp_resolver_t::results_type results)
-	{
-		if(ec) {
-			if(ec == boost::asio::error::operation_aborted) {
-				Log::Info("[Network] [Client] Address resolution aborted");
-			} else {
-				Log::Error("[Network] [Client] Address resolution: {0}", ec.message());
-			}
-		} else if(results.empty()) {
-			Log::Error("[Network] [Client] Address resolution: could not resolve address");
-		} else {
-			Log::Debug("[Network] [Client] Control endpoint resolution succeeded");
-
-			for(auto result : results) {
-				if(!result.endpoint().address().is_unspecified()) {
-					controlEndpoint = result.endpoint();
-					break;
-				}
-			}
-
-			resolver.async_resolve(config.client.serverHost, updatePort, udp_resolver_t::address_configured,
-				boost::bind(&ClientSession::OnUpdateEndpointResolved, this, boost::asio::placeholders::error, boost::asio::placeholders::results));
-		}
-	}
 
 	void ClientSession::OnTimerExpired(const boost::system::error_code & ec)
 	{
@@ -81,16 +22,7 @@ namespace Netcode::Network {
 	void ClientSession::InitTimer()
 	{
 		timer.expires_from_now(boost::posix_time::milliseconds(config.client.tickIntervalMs));
-		timer.async_wait(boost::bind(&ClientSession::OnTimerExpired, this, boost::asio::placeholders::error));
-	}
-
-	void ClientSession::InitResolution()
-	{
-		controlPort = std::to_string(config.client.serverControlPort);
-		updatePort = std::to_string(config.client.serverGamePort);
-
-		resolver.async_resolve(config.client.serverHost, controlPort, udp_resolver_t::address_configured,
-			boost::bind(&ClientSession::OnControlEndpointResolved, this, boost::asio::placeholders::error, boost::asio::placeholders::results));
+		timer.async_wait(boost::bind(&ClientSession::OnTimerExpired, GetStrongRef(), boost::asio::placeholders::error));
 	}
 
 
@@ -109,30 +41,89 @@ namespace Netcode::Network {
 		Log::Debug("[Network] [Client] Initiating read");
 
 		stream->AsyncRead(boost::asio::buffer(buffer.get(), PACKET_STORAGE_SIZE),
-			[this, buffer](const boost::system::error_code & ec, std::size_t size, boost::asio::ip::udp::endpoint endpoint) -> void {
-			if(ec == boost::asio::error::operation_aborted) {
-				Log::Info("[Network] [Client] Read operation aborted");
-				return;
-			}
+			[pThis = GetStrongRef(), buffer](const boost::system::error_code & ec, std::size_t size, boost::asio::ip::udp::endpoint endpoint) -> void {
+
+			RETURN_AND_LOG_IF_ABORTED(ec, "[Network] [Client] Read operation aborted");
 
 			if(ec) {
 				Log::Error("[Network] [Client] Failed to read: {0}", ec.message());
-			} else if(endpoint != updateEndpoint && endpoint != controlEndpoint) {
+			} else if(endpoint != pThis->updateEndpoint && endpoint != pThis->controlEndpoint) {
 				Log::Warn("[Network] [Client] Rejected package because the source is not the server");
 			} else {
 				Log::Debug("[Network] [Client] Read {0} byte(s)", size);
-				OnRead(size, endpoint, std::move(buffer));
-				InitRead();
+				pThis->OnRead(size, endpoint, std::move(buffer));
+				pThis->InitRead();
 			}
 		});
 	}
 
 	ClientSession::ClientSession(boost::asio::io_context & ioc, Network::Config config) :
 		ioContext{ ioc }, config{ config }, queue{ }, gameQueue{ }, controlQueue{ }, storage{ }, controlStorage{ }, timer{ ioc }, protocolTimer{ ioc },
-		resolver{ boost::asio::make_strand(ioc) }, stream{ nullptr }, controlPort{ }, updatePort{ }, controlEndpoint{ },
+		resolver{ boost::asio::make_strand(ioc) }, stream{ nullptr }, controlEndpoint{ },
 		updateEndpoint{ }, clientAck{ 0 }, serverAck{ 0 }, lastError{ }
 	{
-		InitResolution();
+		ErrorCode ec;
+
+		std::string controlPortString = std::to_string(config.client.serverControlPort);
+		std::string gamePortString = std::to_string(config.client.serverGamePort);
+
+		auto controlResults = resolver.resolve(config.client.serverHost, controlPortString, udp_resolver_t::address_configured, ec);
+
+		RETURN_ON_ERROR(ec, "[Network] [Client] address resolution failed");
+
+		RETURN_IF_AND_LOG_ERROR(controlResults.empty(), "[Network] [Client] address resolution failed");
+
+		controlEndpoint = (*controlResults.begin());
+
+		auto gameResults = resolver.resolve(config.client.serverHost, gamePortString, udp_resolver_t::address_configured, ec);
+
+		RETURN_ON_ERROR(ec, "[Network] [Client] address resolution failed: {0}");
+
+		RETURN_IF_AND_LOG_ERROR(gameResults.empty(), "[Network] [Client] address resolution failed");
+
+		updateEndpoint = (*gameResults.begin());
+
+		RETURN_IF_AND_LOG_ERROR(updateEndpoint.protocol() != controlEndpoint.protocol(), "[Network] [Client] Protocol mismatch");
+
+		udp_socket_t socket{ ioContext };
+		socket.open(updateEndpoint.protocol(), ec);
+		RETURN_ON_ERROR(ec, "[Network] [Client] failed to bind open: {0}");
+
+		socket.bind(udp_endpoint_t{ updateEndpoint.protocol(), config.client.localPort }, ec);
+		RETURN_ON_ERROR(ec, "[Network] [Client] failed to bind socket: {0}");
+
+		stream = std::make_shared<UdpStream>(std::move(socket));
+	}
+
+	void ClientSession::SendAck(int32_t ack)
+	{
+		auto buffer = storage.GetBuffer();
+		UdpPacket packet{ std::move(buffer) };
+		packet.endpoint = controlEndpoint;
+
+		Protocol::Message message;
+		message.mutable_control()->set_acknowledge(ack);
+
+		if(!message.SerializeToArray(packet.mBuffer.data(), packet.mBuffer.size())) {
+			Log::Error("[Network] [Server] Failed to serialize ack message");
+			return;
+		}
+
+		packet.mBuffer = boost::asio::buffer(packet.data.get(), message.ByteSizeLong());
+
+		queue.Send(std::move(packet));
+	}
+
+	void ClientSession::Start()
+	{
+		RETURN_IF(lastError);
+
+		InitRead();
+
+		InitTimer();
+
+		Log::Info("[Network] [Client] Started on port {0}",
+			config.server.controlPort, config.server.gamePort);
 	}
 
 	bool ClientSession::IsRunning() const
@@ -160,9 +151,8 @@ namespace Netcode::Network {
 
 		for(const UdpPacket & p : packets) {
 			Netcode::Protocol::Message message;
-			bool parseSuccess = message.ParseFromArray(p.mBuffer.data(), p.mBuffer.size());
 
-			if(!parseSuccess) {
+			if(!message.ParseFromArray(p.mBuffer.data(), p.mBuffer.size())) {
 				Log::Debug("[Network] [Client] Failed to parse message from stream");
 				continue;
 			}
@@ -180,8 +170,14 @@ namespace Netcode::Network {
 
 				if(bodyCase == Message::BodyCase::kAcknowledge) {
 					int32_t ack = ctrl.acknowledge();
-					Log::Debug("[Network] [Client] Ack received: {0}", ack);
-					controlStorage.Acknowledge(ack);
+					ErrorCode ec = controlStorage.Acknowledge(p.endpoint, ack);
+
+					if(ec) {
+						Log::Error("[Network] [Client] A valid ACK message was received but the operation failed: {0}", ec.message());
+					} else {
+						Log::Debug("[Network] [Client] Received ACK: {0}", ack);
+					}
+
 					continue;
 				}
 
@@ -194,6 +190,8 @@ namespace Netcode::Network {
 					Log::Warn("[Network] [Client] Message body is not set, dropping packet");
 					continue;
 				}
+
+				SendAck(message.id());
 
 				controlQueue.Received(std::move(message));
 			} else if(message.has_server_update()) {
@@ -220,22 +218,20 @@ namespace Netcode::Network {
 
 	}
 
-	std::future<ErrorCode> ClientSession::SendControlMessage(Netcode::Protocol::Message message)
+	void ClientSession::SendControlMessage(Netcode::Protocol::Message message, std::function<void(ErrorCode)> completionHandler)
 	{
-		std::promise<ErrorCode> errorPromise;
-		std::future<ErrorCode> errorFuture = errorPromise.get_future();
 		if(!message.has_control()) {
 			Log::Warn("[Network] [Client] Can not send a control message without a control body");
-			errorPromise.set_value(Errc::make_error_code(Errc::operation_not_permitted));
-			return errorFuture;
+			completionHandler(boost::asio::error::make_error_code(boost::asio::error::invalid_argument));
+			return;
 		}
 
 		using Ctrl = Protocol::Control::Message;
 
 		if(message.control().Body_case() != Ctrl::BodyCase::kRequest) {
 			Log::Warn("[Network] [Client] Can only send requests");
-			errorPromise.set_value(Errc::make_error_code(Errc::operation_not_permitted));
-			return errorFuture;
+			completionHandler(boost::asio::error::make_error_code(boost::asio::error::invalid_argument));
+			return;
 		}
 
 		int32_t controlId = clientAck++;
@@ -244,33 +240,41 @@ namespace Netcode::Network {
 
 		auto buffer = storage.GetBuffer();
 
-		bool v = message.SerializeToArray(buffer.get(), PACKET_STORAGE_SIZE);
-
-		if(!v) {
+		if(!message.SerializeToArray(buffer.get(), PACKET_STORAGE_SIZE)) {
 			Log::Error("[Network] [Client] Failed to serialize Control message");
-			errorPromise.set_value(Errc::make_error_code(Errc::bad_message));
-			return errorFuture;
+			completionHandler(boost::asio::error::make_error_code(boost::asio::error::message_size));
+			return;
 		}
 
 		UdpPacket packet{ std::move(buffer) };
 		packet.endpoint = controlEndpoint;
 		packet.mBuffer = boost::asio::buffer(packet.data.get(), message.ByteSizeLong());
 
-		return controlStorage.Push(controlId, std::move(packet));
+		controlStorage.Push(controlId, std::move(packet), std::move(completionHandler));
 	}
 	
+	void ClientSession::OnMessageSent(const ErrorCode & ec, std::size_t size, PacketStorage::StorageType buffer)
+	{
+		RETURN_AND_LOG_IF_ABORTED(ec, "[Network] [Server] Write operation aborted");
+
+		if(ec) {
+			Log::Error("[Network] [Server] Failed to send message: {0}", ec.message());
+		} else {
+			Log::Debug("[Network] [Server] Successfully sent {0} byte(s)", size);
+		}
+
+		storage.ReturnBuffer(buffer);
+	}
+
 	void ClientSession::SendAll() {
-		controlStorage.IfExpired([this](UdpPacket & packet) -> void {
+		controlStorage.ForeachExpired([this](UdpPacket & packet) -> void {
 			std::string addr = controlEndpoint.address().to_string();
 			addr += std::string{ ":" } + std::to_string(controlEndpoint.port());
 
 			Log::Debug("[Network] [Client] SendAll: sending expired control packet to {0}", addr);
 
-			stream->AsyncWrite(packet.mBuffer, controlEndpoint, [](const ErrorCode & ec, std::size_t size) -> void {
-				if(ec == boost::asio::error::operation_aborted) {
-					Log::Info("[Network] [Client] Write operation aborted");
-					return;
-				}
+			stream->AsyncWrite(packet.mBuffer, controlEndpoint, [pThis = GetStrongRef()](const ErrorCode & ec, std::size_t size) -> void {
+				RETURN_AND_LOG_IF_ABORTED(ec, "[Network] [Client] Write operation aborted");
 
 				if(ec) {
 					Log::Error("[Network] [Client] Failed to send message {0}", ec.message());
@@ -280,5 +284,19 @@ namespace Netcode::Network {
 			});
 
 		}, config.protocol.resendTimeoutMs);
+
+		std::vector<UdpPacket> outgoing;
+
+		queue.GetOutgoingPackets(outgoing);
+
+		for(auto & p : outgoing) {
+			stream->AsyncWrite(p.mBuffer, p.endpoint, boost::bind(
+				&ClientSession::OnMessageSent,
+				GetStrongRef(),
+				boost::asio::placeholders::error,
+				boost::asio::placeholders::bytes_transferred,
+				p.data
+			));
+		}
 	}
 }

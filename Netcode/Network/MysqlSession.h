@@ -5,6 +5,12 @@
 #include "NetworkCommon.h"
 
 namespace Netcode::Network {
+
+	class DefaultMysqlCompletionHandler {
+	public:
+		void operator()(ErrorCode errorCode);
+	};
+
 	/*
 	wrapper for all the mysql statements that will be used during the lifetime of a server
 	*/
@@ -16,6 +22,7 @@ namespace Netcode::Network {
 		std::unique_ptr<mysqlx::SqlStatement> modifyServer;
 		std::unique_ptr<mysqlx::SqlStatement> insertGameSession;
 		std::unique_ptr<mysqlx::SqlStatement> modifyGameSession;
+		std::unique_ptr<mysqlx::SqlStatement> closeRemainingGameSessions;
 		std::mutex mutex;
 	public:
 		MysqlSession() = default;

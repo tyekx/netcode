@@ -3,22 +3,7 @@
 
 #include "../Logger.h"
 #include "ServerSession.h"
-
-#define RETURN_IF(condition) if(condition) return
-
-#define RETURN_ON_ERROR(ec, msg)	\
-if(ec) {	\
-	Log::Error(msg, ec.message()); \
-	lastError = ec;	\
-	return;	\
-}
-
-#define RETURN_VALUE_ON_ERROR(ec, msg, rv)	\
-if(ec) {	\
-	Log::Error(msg, ec.message()); \
-	lastError = ec;	\
-	return rv;	\
-}
+#include "Macros.h"
 
 namespace Netcode::Network {
 
@@ -54,11 +39,15 @@ namespace Netcode::Network {
 		config.server.controlPort = controlPort;
 		config.server.gamePort = gamePort;
 
-		controlStream = std::make_unique<UdpStream>(std::move(controlSocket));
-		gameStream = std::make_unique<UdpStream>(std::move(gameSocket));
+		controlStream = std::make_shared<UdpStream>(std::move(controlSocket));
+		gameStream = std::make_shared<UdpStream>(std::move(gameSocket));
 
 		ConnectToMysql();
 
+		RETURN_IF(lastError);
+	}
+
+	void ServerSession::Start() {
 		RETURN_IF(lastError);
 
 		ControlSocketReadInit();
@@ -67,6 +56,11 @@ namespace Netcode::Network {
 
 		Log::Info("[Network] [Server] Started on ports {0}, {1}",
 			config.server.controlPort, config.server.gamePort);
+	}
+
+	void ServerSession::Stop()
+	{
+		dbContext.Stop();
 	}
 
 	void ServerSession::Receive(std::vector<Protocol::Message> & control, std::vector<Protocol::Message> & game)
@@ -80,7 +74,15 @@ namespace Netcode::Network {
 		ParseControlMessages(control, controlSockPackets);
 		ParseGameMessages(game, gameSockPackets);
 
-		
+		controlStorage.CheckTimeouts(config.protocol.gracePeriodMs);
+	}
+
+	bool ServerSession::IsRunning() const {
+		return !((bool)lastError);
+	}
+
+	std::string ServerSession::GetLastError() const {
+		return lastError.message();
 	}
 
 	uint32_t ServerSession::BindToPort(udp_socket_t & socket, uint16_t portHint)
@@ -141,11 +143,9 @@ namespace Netcode::Network {
 		}
 
 		controlStream->AsyncRead(boost::asio::buffer(buffer.get(), PACKET_STORAGE_SIZE),
-			[this, buffer](const ErrorCode & ec, std::size_t size, udp_endpoint_t sender) -> void {
-			if(ec == boost::asio::error::operation_aborted) {
-				Log::Info("[Network] [Server] [Control] Read operation aborted");
-				return;
-			}
+			[pThis = GetStrongRef(), buffer](const ErrorCode & ec, std::size_t size, udp_endpoint_t sender) -> void {
+
+			RETURN_AND_LOG_IF_ABORTED(ec, "[Network] [Server] [Control] Read operation aborted");
 
 			if(ec) {
 				Log::Error("[Network] [Server] [Control] Failed to read: {0}", ec.message());
@@ -157,19 +157,23 @@ namespace Netcode::Network {
 				packet.data = std::move(buffer);
 				packet.endpoint = std::move(sender);
 				packet.mBuffer = boost::asio::buffer(buffer.get(), size);
-				OnControlRead(std::move(packet));
-				ControlSocketReadInit();
+				pThis->OnControlRead(std::move(packet));
+				pThis->ControlSocketReadInit();
 				return;
 			}
 
 			if(buffer != nullptr) {
 				// on error: return to storage
-				storage.ReturnBuffer(std::move(buffer));
+				pThis->storage.ReturnBuffer(std::move(buffer));
 			}
 		});
 	}
 
 	void ServerSession::SendAll() {
+		controlStorage.ForeachExpired([this](UdpPacket & packet)-> void {
+			controlQueue.Send(packet);
+		}, config.protocol.resendTimeoutMs);
+
 		std::vector<UdpPacket> controlPackets;
 		std::vector<UdpPacket> gamePackets;
 		controlQueue.GetOutgoingPackets(controlPackets);
@@ -178,7 +182,7 @@ namespace Netcode::Network {
 		for(UdpPacket & p : controlPackets) {
 			controlStream->AsyncWrite(p.mBuffer, p.endpoint, boost::bind(
 				&ServerSession::OnMessageSent,
-				this,
+				GetStrongRef(),
 				boost::asio::placeholders::error,
 				boost::asio::placeholders::bytes_transferred,
 				p.data
@@ -188,7 +192,7 @@ namespace Netcode::Network {
 		for(UdpPacket & p : gamePackets) {
 			gameStream->AsyncWrite(p.mBuffer, p.endpoint, boost::bind(
 				&ServerSession::OnMessageSent,
-				this,
+				GetStrongRef(),
 				boost::asio::placeholders::error,
 				boost::asio::placeholders::bytes_transferred,
 				p.data
@@ -196,16 +200,63 @@ namespace Netcode::Network {
 		}
 	}
 
+	void ServerSession::SendControlMessage(Protocol::Message message, std::function<void(ErrorCode)> completionHandler) {
+		if(!message.has_control()) {
+			Log::Warn("[Network] [Server] Can only send control messages through the control socket");
+			completionHandler(boost::asio::error::make_error_code(boost::asio::error::invalid_argument));
+			return;
+		}
+
+		UdpPacket packet = storage.GetBuffer();
+		packet.endpoint = udp_endpoint_t{
+			boost::asio::ip::address::from_string(message.address()),
+			static_cast<uint16_t>(message.port())
+		};
+		int32_t messageId = message.id();
+
+		if(!message.SerializeToArray(packet.mBuffer.data(), packet.mBuffer.size())) {
+			Log::Error("[Network] [Server] Failed to serialize control message");
+			completionHandler(boost::asio::error::make_error_code(boost::asio::error::message_size));
+			return;
+		}
+
+		packet.mBuffer = boost::asio::buffer(packet.data.get(), message.ByteSizeLong());
+
+		controlStorage.Push(messageId, std::move(packet), std::move(completionHandler));
+	}
+
+	void ServerSession::SendUpdate(Protocol::Message message) {
+		Log::Warn("[Network] [Server] operation is not supported");
+	}
+
+	void ServerSession::SendUpdate(const udp_endpoint_t & endpoint, Protocol::Message message) {
+		if(!message.has_server_update()) {
+			Log::Warn("[Network] [Server] Can only send server updates on the game socket");
+			return;
+		}
+
+		UdpPacket packet = storage.GetBuffer();
+		packet.endpoint = endpoint;
+
+		if(!message.SerializeToArray(packet.mBuffer.data(), packet.mBuffer.size())) {
+			Log::Error("[Network] [Server] Failed to serialize game message");
+			lastError = boost::asio::error::make_error_code(boost::asio::error::message_size);
+			return;
+		}
+
+		packet.mBuffer = boost::asio::buffer(packet.data.get(), message.ByteSizeLong());
+
+		gameQueue.Send(packet);
+	}
+
 	void ServerSession::GameSocketReadInit()
 	{
 		auto buffer = storage.GetBuffer();
 
 		controlStream->AsyncRead(boost::asio::buffer(buffer.get(), PACKET_STORAGE_SIZE),
-			[this, buffer](const ErrorCode & ec, std::size_t size, udp_endpoint_t sender) -> void {
-			if(ec == boost::asio::error::operation_aborted) {
-				Log::Info("[Network] [Server] [Game] Read operation aborted");
-				return;
-			}
+			[pThis = GetStrongRef(), buffer](const ErrorCode & ec, std::size_t size, udp_endpoint_t sender) -> void {
+
+			RETURN_AND_LOG_IF_ABORTED(ec, "[Network] [Server] [Game] Read operation aborted");
 
 			if(ec) {
 				Log::Error("[Network] [Server] [Game] Failed to read: {0}", ec.message());
@@ -216,14 +267,14 @@ namespace Netcode::Network {
 				packet.data = std::move(buffer);
 				packet.endpoint = std::move(sender);
 				packet.mBuffer = boost::asio::buffer(buffer.get(), size);
-				OnGameRead(std::move(packet));
-				GameSocketReadInit();
+				pThis->OnGameRead(std::move(packet));
+				pThis->GameSocketReadInit();
 				return;
 			}
 
 			if(buffer != nullptr) {
 				// on error: return to storage
-				storage.ReturnBuffer(std::move(buffer));
+				pThis->storage.ReturnBuffer(std::move(buffer));
 			}
 		});
 	}
@@ -238,16 +289,14 @@ namespace Netcode::Network {
 
 	void ServerSession::OnMessageSent(const ErrorCode & ec, std::size_t size, PacketStorage::StorageType buffer)
 	{
-		if(ec == boost::asio::error::operation_aborted) {
-			Log::Info("[Network] [Server] Write operation aborted");
-			return;
-		}
- 
+		RETURN_AND_LOG_IF_ABORTED(ec, "[Network] [Server] Write operation aborted");
+
 		if(ec) {
 			Log::Error("[Network] [Server] Failed to send message: {0}", ec.message());
 		} else {
 			Log::Debug("[Network] [Server] Successfully sent {0} byte(s)", size);
 		}
+		
 		storage.ReturnBuffer(buffer);
 	}
 
@@ -280,7 +329,12 @@ namespace Netcode::Network {
 
 			if(ctrl.Body_case() == Message::BodyCase::kAcknowledge) {
 				int32_t acknowledged = message.control().acknowledge();
-				controlStorage.Acknowledge(p.endpoint, acknowledged);
+				ErrorCode ec = controlStorage.Acknowledge(p.endpoint, acknowledged);
+
+				if(ec) {
+					Log::Error("[Network] [Server] A valid ACK was received but the operation failed: {0}", ec.message());
+				}
+
 				continue;
 			}
 
@@ -353,6 +407,10 @@ namespace Netcode::Network {
 		controlQueue.Send(std::move(packet));
 	}
 
+	std::shared_ptr<ServerSession> ServerSession::GetStrongRef() {
+		return std::dynamic_pointer_cast<ServerSession>(shared_from_this());
+	}
+
 	ServerSession::~ServerSession() {
 		ErrorCode ec = db.CloseServer();
 
@@ -369,6 +427,8 @@ namespace Netcode::Network {
 		ec = db.RegisterServer(config.server);
 
 		RETURN_ON_ERROR(ec, "[Network] [Server] Failed to register server, reason: {0}");
+
+		dbContext.Start(1);
 	}
 
 }

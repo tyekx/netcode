@@ -54,8 +54,13 @@ namespace Netcode::Network {
 		}
 
 		try {
-			modifyServer->bind(2, time(NULL), serverId);
+			time_t currentTime = time(NULL);
+
+			modifyServer->bind(2, currentTime, serverId);
 			mysqlx::SqlResult result = modifyServer->execute();
+
+			closeRemainingGameSessions->bind(currentTime, serverId);
+			mysqlx::SqlResult closeResult = closeRemainingGameSessions->execute();
 
 			if(result.getAffectedItemsCount() != 1) {
 				return Errc::make_error_code(Errc::result_out_of_range);
@@ -142,12 +147,22 @@ namespace Netcode::Network {
 					"WHERE `sessions`.`hash` = ?"
 				    "GROUP BY allowed_to_join"));
 
+			closeRemainingGameSessions = std::make_unique<mysqlx::SqlStatement>(
+				session->sql("UPDATE `game_sessions` SET `game_sessions`.`left_at` = ? WHERE `game_sessions`.`left_at` IS NULL AND `game_sessions`.`game_server_id` = ?"));
+
 		} catch(mysqlx::Error & error) {
 			Log::Error("[MySQL] exception: {0}", error.what());
 			return Errc::make_error_code(Errc::host_unreachable);
 		}
 
 		return Errc::make_error_code(Errc::success);
+	}
+
+	void DefaultMysqlCompletionHandler::operator()(ErrorCode errorCode)
+	{
+		if(errorCode) {
+			Log::Error("[Network] [Database] {0}", errorCode.message());
+		}
 	}
 
 }

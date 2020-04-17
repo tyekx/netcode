@@ -19,32 +19,25 @@ namespace Netcode::Network {
 
 	constexpr static uint32_t PACKET_STORAGE_SIZE = 65536;
 
-	class UdpStream {
-	public:
-
+	class UdpStream : public std::enable_shared_from_this<UdpStream> {
 	protected:
 		udp_socket_t socket;
-		udp_endpoint_t receivedFrom;
 	public:
-		UdpStream(udp_socket_t socket) : socket{ std::move(socket) }, receivedFrom{} { }
+		udp_endpoint_t _interalReceivedFrom;
+		UdpStream(udp_socket_t socket) : socket{ std::move(socket) }, _interalReceivedFrom{} { }
 
 		template<typename CompletionHandler>
 		void AsyncRead(boost::asio::mutable_buffer buffer, CompletionHandler handler) {
-			socket.async_receive_from(buffer, receivedFrom,
-				boost::bind<void>(handler,
-					boost::asio::placeholders::error,
-					boost::asio::placeholders::bytes_transferred,
-					std::ref(receivedFrom))
-			);
+			socket.async_receive_from(buffer, _interalReceivedFrom, [pThis = shared_from_this(), handler](ErrorCode ec, size_t size) -> void{
+				handler(ec, size, pThis->_interalReceivedFrom);
+			});
 		}
 
 		template<typename CompletionHandler>
 		void AsyncWrite(boost::asio::const_buffer buffer, udp_endpoint_t endpoint, CompletionHandler handler) {
-			socket.async_send_to(buffer, endpoint,
-				boost::bind<void>(handler,
-					boost::asio::placeholders::error,
-					boost::asio::placeholders::bytes_transferred)
-			);
+			socket.async_send_to(buffer, endpoint, [pThis = shared_from_this(), handler](ErrorCode ec, size_t size) -> void {
+				handler(ec, size);
+			});
 		}
 	};
 
@@ -126,67 +119,20 @@ namespace Netcode::Network {
 		StorageType GetBuffer();
 	};
 
-	class ClientControlPacketStorage {
-		struct Item {
-			std::chrono::steady_clock::time_point first_sent_at;
-			std::chrono::steady_clock::time_point last_sent_at;
-			int32_t packetId;
-			UdpPacket packet;
-			std::promise<ErrorCode> promise;
-
-			Item(int32_t pid, UdpPacket pck) : first_sent_at{}, last_sent_at{}, packetId{ pid }, packet{ std::move(pck) }, promise{} { }
-		};
-
-		std::list<Item> storage;
-
-	public:
-		void CheckTimeouts(uint64_t durationMs);
-
-		ErrorCode Acknowledge(int32_t ackId);
-
-		std::future<ErrorCode> Push(int32_t id, UdpPacket packet);
-
-		template<typename Func>
-		void IfExpired(Func func, uint64_t resendTimeoutMs) {
-			if(storage.empty()) {
-				return;
-			}
-
-			auto now = std::chrono::steady_clock::now();
-
-			Item & item = storage.front();
-
-			auto timestamp = item.first_sent_at;
-
-			if(timestamp.time_since_epoch() == std::chrono::steady_clock::duration::zero()) {
-				// ok
-				func(item.packet);
-				item.first_sent_at = now;
-				item.last_sent_at = now;
-				return;
-			}
-
-			timestamp = item.last_sent_at;
-
-			if(std::chrono::duration_cast<std::chrono::milliseconds>(now - timestamp).count() > resendTimeoutMs) {
-				func(item.packet);
-				item.last_sent_at = now;
-			}
-		}
-	};
-
 	class ControlPacketStorage {
 		struct Item {
 			std::chrono::steady_clock::time_point first_sent_at;
 			std::chrono::steady_clock::time_point last_sent_at;
 			int32_t packetId;
 			UdpPacket packet;
-			std::promise<ErrorCode> promise;
+			std::function<void(ErrorCode)> completionHandler;
 
-			Item(int32_t pid, UdpPacket pck) : first_sent_at{}, last_sent_at{}, packetId{ pid }, packet{ std::move(pck) }, promise{} { }
+			Item(int32_t pid, UdpPacket pck, std::function<void(ErrorCode)> completionHandler) :
+				first_sent_at{}, last_sent_at{}, packetId{ pid }, packet{ std::move(pck) }, completionHandler{ std::move(completionHandler) } { }
 		};
 
 		std::map<udp_endpoint_t, std::list<Item>> storage;
+		std::recursive_mutex mutex;
 	public:
 		void CheckTimeouts(uint64_t durationMs);
 		/*
@@ -224,7 +170,7 @@ namespace Netcode::Network {
 
 		ErrorCode Acknowledge(const udp_endpoint_t & source, int32_t ackId);
 
-		std::future<ErrorCode> Push(int32_t id, UdpPacket packet);
+		void Push(int32_t id, UdpPacket packet, std::function<void(ErrorCode)> completionHandler);
 	};
 
 	struct UserRow {

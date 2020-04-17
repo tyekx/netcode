@@ -7,15 +7,17 @@
 
 namespace Netcode::Network {
 
-	class GameSession {
+	class GameSession : public std::enable_shared_from_this<GameSession> {
 	public:
 		virtual ~GameSession() = default;
 
+		virtual void Start() = 0;
+		virtual void Stop() = 0;
 		virtual void SendAll() = 0;
 		virtual void Receive(std::vector<Protocol::Message> & control, std::vector<Protocol::Message> & game) = 0;
 		virtual void SendUpdate(const udp_endpoint_t & endpoint, Protocol::Message message) = 0;
 		virtual void SendUpdate(Protocol::Message message) = 0;
-		virtual std::future<ErrorCode> SendControlMessage(Netcode::Protocol::Message message) = 0;
+		virtual void SendControlMessage(Netcode::Protocol::Message message, std::function<void(ErrorCode)> completionHandler) = 0;
 		virtual bool IsRunning() const = 0;
 		virtual std::string GetLastError() const = 0;
 		
