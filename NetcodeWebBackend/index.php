@@ -200,7 +200,7 @@ Route::Post('/api/login', function() use ($db, $user) {
 
         Cookie::Set('netcode-auth', $token, COOKIE_DURATION);
 
-        Response::JSON(["id" => $id, "name" => $username, "isBanned" => $isBanned]);
+        Response::JSON(["id" => $id, "name" => $username, "is_banned" => $isBanned]);
     } else {
         Response::JSON(["error" => "Invalid login details"]);
     }

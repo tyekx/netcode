@@ -1,16 +1,6 @@
-<div class="netcode-about">
-    <h2>What is Netcode?</h2>
-    <p>Netcode is a first person shooter game developed by us, Czövek Márton and Musa Benedek throughout our journey in university.</p>
-    <p>This project started out as a collective test for every piece of game development and computer graphics we learned about. The important parts of the project was coded by us with the usage of some libraries.</p>
-    <p>The website you are currently reading was created as a multiplayer extension for the project. Basically a very in-depth test for how to create a multiplayer game from the registration to the actual communication between clients and server while gaming. While most of the project was a collaboration this project was made by me.</p>
-    <p class="sign">- Musa Benedek</p>
-    <h2 class="semicolon">Semicolon</h2>
-    <p>We are part of a bigger group of 6 people and we branched to different parts of IT, it is always very intriguing what the others are working on, so here are a few links for you to check out their works too:</p>
-    <p>- zsmb, the Kotlin enthusiast: <a href="https://zsmb.co" target="_blank">zsmb.co</a></p>
-</div>
-<div class="netcode-register">
+<div class="netcode-register" ng-if="!userLoggedIn()">
     <h2>Register</h2>
-    <p><b>Be adwised!</b> This website does not have SSL certificate, while I store your passwords in a properly salted way, the tunnel used to communicate can be eavesdropped. This means a malicious node on the network could steal your password. Use easy passwords that are not valueable when stolen.</p>
+    <p><b>Be adwised!</b> Security was not the main consideration for this project, please use passwords that you dont mind losing.</p>
     <form onsubmit="return false;">
         <div class="netcode-input">
             <label for="">Username:</label>
@@ -32,5 +22,24 @@
             <div class="netcode-success">{{ successMessage }}</div>
         </div>
     </form>
+</div>
+<div class="netcode-about">
+    <h2>What is Netcode?</h2>
+    <p>Netcode is a first person shooter game developed by us, Czövek Márton and Musa Benedek throughout our journey in university.</p>
+    <p>This project started out as a collective test for every piece of game development and computer graphics we learned about. The important parts of the project was coded by us with the usage of some libraries.</p>
+    <p>The website you are currently reading was created as a multiplayer extension for the project. Basically a deep dive for how to create a multiplayer game from the registration to the actual communication between clients and server while gaming. While the majority of the work was done by me, I had a lot of help, please continue reading to get to know my collaborators</p>
+    <p class="sign">- Musa Benedek</p>
+    <h2>SchDesign</h2>
+
+    <p>Some of the models were made by Schőnherz Design, at first we tried to create an art pipeline, but it quickly became apparent, that the work required would outweight the value of the solution. Therefore we settled for the oldschool model export-import method. It was rather interesting to work with blender the first time after so many years of 3DS Max. Be sure to give look them up if you are looking for anything design related question at <a href="https://schdesign.hu/">schdesign.hu</a>. Shoutout to Zoltán Ábrahám for the infinite patience and help.</p>
+
+    <h2>Aenami</h2>
+    <p>The image you see on the top was made by Alena Aenami, who graciously let me use her art for non-commercial purposes, please do check out her art in return. <br />
+        <a href="https://www.artstation.com/aenamiart" target="_blank">Her Artstation</a><br />
+        <a href="https://www.instagram.com/aenami.art" target="_blank">Her Instagram</a><br />
+    </p>
+    <h2 class="semicolon">Semicolon</h2>
+    <p>We are part of a bigger group of 7 people and we branched to different parts of IT, it is always very intriguing what the others are working on, so here are a few links for you to check out their works too:</p>
+    <p>- zsmb, the Kotlin enthusiast: <a href="https://zsmb.co" target="_blank">zsmb.co</a></p>
 </div>
 <div class="cl"></div>

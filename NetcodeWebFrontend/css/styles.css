@@ -182,13 +182,11 @@ p {
 }
 
 .netcode-about {
-    width: 65%;
-    float: left;
 }
 
 .netcode-register {
     width: 35%;
-    float: left;
+    float: right;
 }
 
 .netcode-register p{
@@ -280,11 +278,10 @@ a:hover {
 }
 
 .semicolon {
-    padding-top: 0;
     background-image: url('../images/semicolon.png');
     background-repeat: no-repeat;
-    background-size: contain;
-    background-position: 28px 0;
+    background-size: 30px;
+    background-position: 30px 34px;
     padding-left: 71px;
 }
 

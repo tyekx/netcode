@@ -12,6 +12,9 @@
         <div class="netcode-input">
             <button ng-click="login()">Login</button>
         </div>
+        <div class="netcode-output">
+            <div class="netcode-error">{{ errorMessage }}</div>
+        </div>
     </form>
 </div>
 <div class="netcode-login" ng-if="userLoggedIn()">

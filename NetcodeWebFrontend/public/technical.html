@@ -2,32 +2,18 @@
 
 <p>This website was written in a few languages, you can split it into 2 parts, frontend and a backend. The split is pretty self explanatory, I needed to create multiple clients for the same interface. Which screams to make a web API and use that to communicate.</p>
 
-<p>I chose JSON as a way of communicating, some token and cookie handling to handle log-ins or already logged in users (im not tracking you with my tokens, hehe)</p>
+<p>I chose JSON as a way of communicating, some token and cookie handling to handle log-ins or already logged in users</p>
 
-<p>The human interface, the one you can click around on was written in JavaScript using probably my favorite ever framework, AngularJS 1.7.2. I tried tinkering around with the newest of Angular, then when I wanted to recreate the project saw that i Just deleted 170 megs worth of WHAT EXACLTY? I dont know. So I'll just stick with a single JS file thank you very much. Aside from JavaScript I needed to use some HTML and CSS for the looks.</p>
+<p>The human interface, the one you can click around on was written in JavaScript using probably my favorite ever framework, AngularJS 1.7.2. I tried tinkering around with the newest of Angular, seeing that it compiled to 170 mbytes of code I ditched the idea. Aside from JavaScript I needed to use some HTML and CSS for the looks.</p>
 
-<p>The not so human interface, was rewritten in many frameworks as I was testing some, my favorite the old Laravel 4.2 was not working anymore, the new Laravel felt too huge for this project. The Phalcon I could not really be satisfied with. So I settled with a seemingly small Database wrapper Medoo, and some vanilla PHP. Again, most of the frameworks were designed for something bigger. I just wanted a cleaner way to use my MySQL database because that can be sometimes very very messy, and also its something that is pretty dangerous to write yourself. I like to tell myself that I know many MySQL vulnerabilities but mistakes can be made. So I'll stick to some open source stuff that has been reviewed by many people.</p>
+<p>The not so human interface, was rewritten in many frameworks as I was testing some, my favorite the old Laravel 4.2 was not working anymore, the new Laravel felt too huge for this project. The Phalcon I could not really be satisfied with. So I settled with a seemingly small Database wrapper Medoo, and some vanilla PHP. Again, most of the frameworks were designed for something bigger. I just wanted a cleaner way to use my MySQL database because that can be ugly.</p>
 
-<h2>About version 0</h2>
+<h2>The client</h2>
 
-<p>Version 0 is not even the 3D game itself. It was just created for the sole purpose that it can handle the protocol I designed for this project. This way I gave myself a bit of breathing room not to dive into integrating this whole thing into the already big 3D game of ours.</p>
-
-<p>This means that it'll probably take a longer time for the first 3D version to ship, but it also means that we won't have to refactor everything once we finally made the alphaest version work.</p>
-
-<p>So sorry, the zero-th version of this game will be basically a few dots that can move around on a 2D canvas inside a C# program.</p>
-
-<p>Why C# you might ask, it is very easy to prototype with, you get every controls and WPF is a breeze to handle after you get to know it with its weird quarks. Also you can just install some packages like JSON handling or UDP connections and one less thing to worry about when debugging.</p>
+<p>Started out as a fun little directx12 adventure, ended up begin something partially real. I tried to implement a ton of stuff, while learning them as i progressed. I watched a lot of GDC talks and how big companies build their engines, naturally I couldn't build that size, but one can try amiright.</p>
 
 <h2>About the server code</h2>
 
-<p>Now this one, this is written in massive C++, a standalone program that has been stripped from the whole 3D display-- or really, just a new empty project.</p>
+<p>For the client, I wrote a library for myself, with the server, I tried reusing and extending said library, so that the codebase are shared as much as possible.</p>
 
-<p>I used a lot of Boost::asio in my previous attempts of making internet work in C++, maybe one day i'll finish my C++ framework for web development, that will be funny though. Anyhow, I'm using Boost::asio to communicate over UDP, and a hand-designed protocol of what messages should be sent when to synchronize players and make them communicate to hold the closest model of the other as possible</p>
-
-<p>This project taught me a lot, especially how hard it is to actually time computer programs without using any busy-cycle. Or how hard it is to keep a consistent frame of the users. Doing what when can be super complex and honestly there is no best solution here. My approach is to be as fair as possible</p>
-
-<h2>Security</h2>
-
-<p>We all hate cheaters, they are very unpleasant to play against or with for that matter. This is why I <b>Plan</b> to take a great care of security, a lot of sanity checks and other type of checks to handle malicious clients. If you think about it, it is very very hard because you can only trust the server, the client can be of anything. Which is pretty sad. I have some ideas how to catch cheaters but for now I have no protection against them. This is why I ask you to NOT write any hacks for this game YET. I'll probably send out some notification when I feel like you will have a hard time writing a cheat for this game. After that point I encourage you to try it if you have affinity for hacking, also if you succeed please let me know how you did it.</p>
-
-<p>The website is properly secured aside from having no HTTPS, but I think I warned you enough, if you didn't read, well you didn't read.</p>
+<p>This project taught me a lot, especially how hard it is to actually time computer programs without using any busy-cycle. Or how hard it is to keep a consistent frame of the users. Doing what when can be super complex and honestly there is no best solution here. My approach is to be as fair as possible, meaning that every player gets the same treatment</p>

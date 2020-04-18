@@ -1,5 +1,10 @@
 var app = angular.module('NetcodeApp',['ngRoute', 'ngCookies']);
 
+function isObject(obj) {
+    var type = typeof obj;
+    return type === 'function' || type === 'object' && !!obj;
+}
+
 app.service('ApiService', ['$http', function($http) {
     return {
         register: function(data, success, fail) {
@@ -27,7 +32,13 @@ app.service('UserService', [function() {
     var user = null;
     return {
         loginUser: function(u) {
+            if(u.id === undefined ||
+               u.name === undefined || 
+               u.is_banned === undefined) {
+               return false;
+            }
             user = u;
+            return true;
         },
         logout: function() {
             user = null;
@@ -53,9 +64,7 @@ app.controller('MainController', ['$scope', 'UserService','ApiService','$cookies
     $scope.userLoggedIn = us.userLoggedIn;
 
     api.status(function(data) {
-        if(data.data.id != undefined) {
-            us.loginUser(data.data);
-        }
+        us.loginUser(data.data);
     }, function(data) {
         console.log("error", data);
     });
@@ -72,11 +81,22 @@ app.controller('LoginController', ['$scope', 'ApiService','UserService','$locati
     $scope.login = function() {
         api.login({username: $scope.loginUsername, password: $scope.loginPassword}, function(data) {
             if(data.data.error == undefined) {
-                us.loginUser(data.data);
-                $location.url('/');
+                if(!isObject(data.data)) {
+                    $scope.errorMessage = "Bad response";
+                    return;
+                }
+
+                if(us.loginUser(data.data)) {
+                    $location.url('/');
+                    console.log("Hello?");
+                } else {
+                    $scope.errorMessage = "Failed to log in";
+                }
+            } else {
+                $scope.errorMessage = data.data.error;
             }
         }, function(data) {
-            console.log("error", data);
+            $scope.errorMessage = data.toString();
         });
     }
 }]);
