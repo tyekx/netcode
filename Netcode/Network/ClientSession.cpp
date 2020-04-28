@@ -122,8 +122,12 @@ namespace Netcode::Network {
 
 		InitTimer();
 
-		Log::Info("[Network] [Client] Started on port {0}",
-			config.server.controlPort, config.server.gamePort);
+		Log::Info("[Network] [Client] Started on port {0}", config.client.localPort);
+	}
+
+	bool ClientSession::CheckVersion(const Netcode::Protocol::Version & version)
+	{
+		return true;
 	}
 
 	bool ClientSession::IsRunning() const
@@ -234,7 +238,7 @@ namespace Netcode::Network {
 			return;
 		}
 
-		int32_t controlId = clientAck++;
+		int32_t controlId = ++clientAck;
 
 		message.set_id(controlId);
 

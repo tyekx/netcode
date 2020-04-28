@@ -16,6 +16,10 @@ namespace Netcode {
 	using SetupCallback = std::function<void(Netcode::Graphics::IResourceContext *)>;
 	using RenderCallback = std::function<void(Netcode::Graphics::IRenderContext *)>;
 
+	enum class RenderPassType {
+		COMPUTE, DIRECT
+	};
+
 	class RenderPass {
 	public:
 		std::string name;
@@ -27,8 +31,8 @@ namespace Netcode {
 		virtual ~RenderPass() = default;
 
 
-		virtual bool IsComputePass() const = 0;
-		virtual void IsComputePass(bool value) = 0;
+		virtual RenderPassType Type() const = 0;
+		virtual void Type(RenderPassType value) = 0;
 
 		virtual Netcode::ArrayView<uint64_t> GetReadResources() = 0;
 		virtual Netcode::ArrayView<uint64_t> GetWrittenResources() = 0;
@@ -77,6 +81,11 @@ namespace Netcode {
 		Returns the set of render passes, that are ready to be executed
 		*/
 		virtual std::vector<RenderPassRef> QueryCompleteRenderPasses() = 0;
+
+		/*
+		Returns true if the currently remaining render passes write the null resource (backbuffer)
+		*/
+		virtual bool UsingBackbuffer() const = 0;
 	};
 
 	using FrameGraphRef = std::shared_ptr<FrameGraph>;

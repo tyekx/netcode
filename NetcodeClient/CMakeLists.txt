@@ -76,7 +76,6 @@ PUBLIC
 target_link_libraries(NetcodeClient
 	NetcodeFoundation
 	NetcodeAssetLib
-	NetcodeLib
 	Netcode
 	"${ASSIMP_LINK}"
 	"${DXTEX_LINK}"

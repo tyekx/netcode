@@ -5,13 +5,15 @@ namespace Netcode::Graphics::DX12 {
 
 	void ResourceContext::UseComputeContext()
 	{
-		activeRenderPass->IsComputePass(true);
+		if(activeRenderPass != nullptr) {
+			activeRenderPass->Type(Netcode::RenderPassType::COMPUTE);
+		}
 	}
 
 	void ResourceContext::UseGraphicsContext()
 	{
 		if(activeRenderPass != nullptr) {
-			activeRenderPass->IsComputePass(false);
+			activeRenderPass->Type(Netcode::RenderPassType::DIRECT);
 		}
 	}
 

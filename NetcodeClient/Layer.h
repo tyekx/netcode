@@ -206,14 +206,15 @@ public:
 					if(status == std::future_status::ready) {
 						Netcode::Response r = rs.value.get();
 
-						if(r.status != 200) {
+						if(r.result() != boost::beast::http::status::ok) {
 							loginPage.Show();
 						} else {
 							mainPage.Show();
 						}
 						loadPage.Hide();
 
-						Cookie c = network->GetCookie("netcode-auth");
+
+						Netcode::Network::Cookie c = network->GetCookie("netcode-auth");
 						Log::Debug(c.GetValue().c_str());
 
 						uiScript->onUpdate = nullptr;

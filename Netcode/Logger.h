@@ -20,6 +20,7 @@ namespace Log {
 	void Info(const char * message, const std::string & value);
 	void Info(const char * message, uint64_t value);
 	void Info(const char * message, int32_t x, int32_t y);
+	void Info(const char * message, int32_t x, int32_t y, int32_t z);
 
 	void Warn(const char * message);
 

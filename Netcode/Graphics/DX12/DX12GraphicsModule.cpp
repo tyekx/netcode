@@ -1,6 +1,7 @@
 #include "DX12GraphicsModule.h"
 #include "DX12Builders.h"
 #include "DX12Platform.h"
+#include "DX12FrameGraphExecutor.h"
 #include <sstream>
 
 namespace Netcode::Graphics::DX12 {
@@ -522,10 +523,6 @@ namespace Netcode::Graphics::DX12 {
 		commandListStorage.Return(std::move(directCl));
 	}
 
-	void DX12GraphicsModule::BeginRenderPass()
-	{
-	}
-
 	void DX12GraphicsModule::CullFrameGraph(FrameGraphRef frameGraph)
 	{
 		std::vector<RenderPassRef> cullable = frameGraph->QueryDanglingRenderPasses();
@@ -538,182 +535,25 @@ namespace Netcode::Graphics::DX12 {
 
 	void DX12GraphicsModule::ExecuteFrameGraph(FrameGraphRef frameGraph)
 	{
-		std::vector<RenderPassRef> runnable = frameGraph->QueryCompleteRenderPasses();
-		std::vector<FenceRef> directSignals;
-		std::vector<FenceRef> directWaits;
-		std::vector<FenceRef> computeSignals;
-		std::vector<FenceRef> computeWaits;
-		std::vector<CommandList> directCls;
-		std::vector<CommandList> computeCls;
-
-		static ID3D12CommandList * directSubmitCache[16];
-		static ID3D12CommandList * computeSubmitCache[16];
-		static uint32_t directSubmitCacheSize = 0;
-		static uint32_t computeSubmitCacheSize = 0;
-
-		CommandList p2rt = commandListStorage.GetDirect();
-		CommandList rt2p = commandListStorage.GetDirect();
-
-		GraphicsContext presentToRT { &resourcePool, &cbufferPool, &dheaps, p2rt.commandList,
+		FrameGraphExecutor executor{
+			&commandListStorage,
+			&heapManager,
+			&resourcePool,
+			&dheaps,
+			&cbufferPool,
+			commandQueue.Get(),
+			computeCommandQueue.Get(),
+			frameResources[backbufferIndex].swapChainBuffer.Get(),
+			&inFlightCommandLists,
+			&(clearColor.r),
+			mainFence,
 			renderTargetViews->GetCpuVisibleCpuHandle(backbufferIndex),
 			depthStencilView->GetCpuVisibleCpuHandle(0),
-			viewport, scissorRect
+			viewport,
+			scissorRect
 		};
 
-		inFlightCommandLists.push_back(p2rt);
-		inFlightCommandLists.push_back(rt2p);
-
-		auto rt2pTransition = CD3DX12_RESOURCE_BARRIER::Transition(frameResources[backbufferIndex].swapChainBuffer.Get(),
-			D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-
-		auto p2rtTransition = CD3DX12_RESOURCE_BARRIER::Transition(frameResources[backbufferIndex].swapChainBuffer.Get(),
-			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-		rt2p.commandList->ResourceBarrier(1,
-			&rt2pTransition);
-
-		p2rt.commandList->ResourceBarrier(1,
-			&p2rtTransition);
-
-		presentToRT.SetRenderTargets(0, 0);
-		presentToRT.SetViewport();
-		presentToRT.SetScissorRect();
-		presentToRT.ClearRenderTarget(0, &(clearColor.r));
-		presentToRT.ClearDepthOnly();
-
-		DX_API("Failed to close command list")
-			p2rt.commandList->Close();
-
-		DX_API("Failed to close command list")
-			rt2p.commandList->Close();
-
-		directSubmitCache[0] = p2rt.commandList.Get();
-		commandQueue->ExecuteCommandLists(1, directSubmitCache);
-		
-		mainFence->Signal(commandQueue.Get());
-
-		while(!runnable.empty()) {
-			directSubmitCacheSize = 0;
-			computeSubmitCacheSize = 0;
-
-			directSignals.clear();
-			directWaits.clear();
-			computeWaits.clear();
-			directWaits.clear();
-			directCls.clear();
-			computeCls.clear();
-
-			for(auto & rp : runnable) {
-
-				if(rp->IsComputePass()) {
-					CommandList cl = commandListStorage.GetCompute();
-					ComputeContext cctx{ &resourcePool, &cbufferPool, &dheaps, cl.commandList };
-
-					cctx.BeginPass();
-					rp->Render(&cctx);
-					cctx.EndPass();
-
-					DX_API("Failed to close command list during render pass: %s", rp->name.c_str())
-						cl.commandList->Close();
-
-
-					auto cpWaits = cctx.GetWaitFences();
-					computeWaits.insert(computeWaits.end(), cpWaits.begin(), cpWaits.end());
-
-					auto computeSignal = cctx.GetSignalFence();
-
-					if(computeSignal != nullptr) {
-						computeSignals.push_back(std::move(computeSignal));
-					}
-
-					computeCls.push_back(cl);
-					inFlightCommandLists.push_back(cl);
-				} else {
-					CommandList cl = commandListStorage.GetDirect();
-					GraphicsContext gctx{ &resourcePool, &cbufferPool, &dheaps, cl.commandList,
-						renderTargetViews->GetCpuVisibleCpuHandle(backbufferIndex),
-						depthStencilView->GetCpuVisibleCpuHandle(0),
-						viewport, scissorRect
-					};
-
-					gctx.BeginPass();
-					rp->Render(&gctx);
-					gctx.EndPass();
-					
-					DX_API("Failed to close command list during render pass: %s", rp->name.c_str())
-						cl.commandList->Close();
-
-					auto dtWaits = gctx.GetWaitFences();
-					directWaits.insert(directWaits.end(), dtWaits.begin(), dtWaits.end());
-
-					auto directSignal = gctx.GetSignalFence();
-
-					if(directSignal != nullptr) {
-						directSignals.push_back(std::move(directSignal));
-					}
-					
-					directCls.push_back(cl);
-					inFlightCommandLists.push_back(cl);
-				}
-			}
-
-			if(!computeCls.empty()) {
-				for(auto & i : computeCls) {
-					computeSubmitCache[computeSubmitCacheSize++] = i.commandList.Get();
-				}
-
-				for(auto & i : computeWaits) {
-					std::dynamic_pointer_cast<DX12Fence>(i)->Wait(computeCommandQueue.Get());
-				}
-
-				computeCommandQueue->Wait(mainFence->GetFence(), mainFence->GetValue());
-
-				mainFence->Increment();
-
-				computeCommandQueue->ExecuteCommandLists(computeSubmitCacheSize, computeSubmitCache);
-
-				computeCommandQueue->Signal(mainFence->GetFence(), mainFence->GetValue());
-
-				for(auto & i : computeSignals) {
-					std::dynamic_pointer_cast<DX12Fence>(i)->Signal(commandQueue.Get());
-				}
-			}
-
-			if(!directCls.empty()) {
-				for(auto & i : directCls) {
-					directSubmitCache[directSubmitCacheSize++] = i.commandList.Get();
-				}
-
-				for(auto & i : directWaits) {
-					std::dynamic_pointer_cast<DX12Fence>(i)->Wait(commandQueue.Get());
-				}
-
-				commandQueue->Wait(mainFence->GetFence(), mainFence->GetValue());
-
-				commandQueue->ExecuteCommandLists(directSubmitCacheSize, directSubmitCache);
-
-				mainFence->Signal(commandQueue.Get());
-
-				for(auto & i : directSignals) {
-					std::dynamic_pointer_cast<DX12Fence>(i)->Signal(commandQueue.Get());
-				}
-			}
-
-			frameGraph->EraseRenderPasses(std::move(runnable));
-			runnable = frameGraph->QueryCompleteRenderPasses();
-		}
-
-		commandQueue->Wait(mainFence->GetFence(), mainFence->GetValue());
-
-		directSubmitCache[0] = rt2p.commandList.Get();
-		
-		commandQueue->ExecuteCommandLists(1, directSubmitCache);
-
-		mainFence->Signal(commandQueue.Get());
-	}
-
-	void DX12GraphicsModule::EndRenderPass()
-	{
+		executor.Execute(frameGraph);
 	}
 
 	void DX12GraphicsModule::Run(FrameGraphRef frameGraph)

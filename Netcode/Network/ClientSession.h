@@ -47,6 +47,7 @@ namespace Netcode::Network {
 		virtual void Stop() override {
 
 		}
+		virtual bool CheckVersion(const Netcode::Protocol::Version & version) override;
 		virtual bool IsRunning() const override;
 		virtual std::string GetLastError() const override;
 		virtual void Receive(std::vector<Protocol::Message> & control, std::vector<Protocol::Message> & game) override;

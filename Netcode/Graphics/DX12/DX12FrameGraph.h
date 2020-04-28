@@ -12,21 +12,21 @@ namespace Netcode::Graphics::DX12 {
 		uint64_t written[32];
 		uint32_t numRead;
 		uint32_t numWritten;
-		bool isComputePass;
+		Netcode::RenderPassType type;
 
 	public:
 		
 		RenderPass(const std::string & name, Netcode::SetupCallback setup, Netcode::RenderCallback render) : Netcode::RenderPass(name, setup, render),
-			read{}, written{}, numRead{ 0 }, numWritten{ 0 }, isComputePass{ false } {
+			read{}, written{}, numRead{ 0 }, numWritten{ 0 }, type{ Netcode::RenderPassType::DIRECT } {
 
 		}
 
-		virtual void IsComputePass(bool value) override {
-			isComputePass = value;
+		virtual void Type(Netcode::RenderPassType value) override {
+			type = value;
 		}
 
-		virtual bool IsComputePass() const override {
-			return isComputePass;
+		virtual Netcode::RenderPassType Type() const override {
+			return type;
 		}
 
 		virtual void ReadsResource(uint64_t resource) override {
@@ -72,6 +72,8 @@ namespace Netcode::Graphics::DX12 {
 		virtual void EraseRenderPasses(std::vector<RenderPassRef> rps) override;
 
 		virtual std::vector<RenderPassRef> QueryCompleteRenderPasses() override;
+
+		virtual bool UsingBackbuffer() const override;
 	};
 
 	using DX12FrameGraph = Netcode::Graphics::DX12::FrameGraph;

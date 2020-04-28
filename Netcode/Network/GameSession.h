@@ -11,6 +11,7 @@ namespace Netcode::Network {
 	public:
 		virtual ~GameSession() = default;
 
+		virtual bool CheckVersion(const Netcode::Protocol::Version & version) = 0;
 		virtual void Start() = 0;
 		virtual void Stop() = 0;
 		virtual void SendAll() = 0;

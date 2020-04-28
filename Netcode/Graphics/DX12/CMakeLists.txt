@@ -86,4 +86,6 @@ target_sources(Netcode PUBLIC
 	DX12Texture.h
 	DX12TextureBuilder.cpp
 	DX12TextureBuilder.h
+	DX12FrameGraphExecutor.cpp
+	DX12FrameGraphExecutor.h
 )

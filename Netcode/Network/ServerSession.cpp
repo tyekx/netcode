@@ -1,9 +1,11 @@
 #include <mysqlx/xdevapi.h>
 #include <boost/asio.hpp>
+#include <NetcodeFoundation/Version.h>
 
 #include "../Logger.h"
 #include "ServerSession.h"
 #include "Macros.h"
+
 
 namespace Netcode::Network {
 
@@ -61,6 +63,11 @@ namespace Netcode::Network {
 	void ServerSession::Stop()
 	{
 		dbContext.Stop();
+	}
+
+	bool ServerSession::CheckVersion(const Netcode::Protocol::Version & version)
+	{
+		return version.major() == Netcode::GetMajorVersion() && version.minor() == Netcode::GetMinorVersion() && version.build() == Netcode::GetBuildVersion();
 	}
 
 	void ServerSession::Receive(std::vector<Protocol::Message> & control, std::vector<Protocol::Message> & game)
@@ -253,7 +260,7 @@ namespace Netcode::Network {
 	{
 		auto buffer = storage.GetBuffer();
 
-		controlStream->AsyncRead(boost::asio::buffer(buffer.get(), PACKET_STORAGE_SIZE),
+		gameStream->AsyncRead(boost::asio::buffer(buffer.get(), PACKET_STORAGE_SIZE),
 			[pThis = GetStrongRef(), buffer](const ErrorCode & ec, std::size_t size, udp_endpoint_t sender) -> void {
 
 			RETURN_AND_LOG_IF_ABORTED(ec, "[Network] [Server] [Game] Read operation aborted");
@@ -333,6 +340,8 @@ namespace Netcode::Network {
 
 				if(ec) {
 					Log::Error("[Network] [Server] A valid ACK was received but the operation failed: {0}", ec.message());
+				} else {
+					Log::Debug("[Network] [Server] ACK ok: {0}", acknowledged);
 				}
 
 				continue;

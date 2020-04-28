@@ -47,3 +47,5 @@ netcode_add_cp_command("config.cfg" "${CMAKE_CURRENT_BINARY_DIR}/config.cfg")
 add_custom_target(NetcodeServerConfig DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/config.cfg")
 
 add_dependencies(NetcodeServer NetcodeServerConfig)
+
+netcode_increment_build_number(NetcodeServer)

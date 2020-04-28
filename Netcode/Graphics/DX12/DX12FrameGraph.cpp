@@ -93,5 +93,15 @@ namespace Netcode::Graphics::DX12 {
 
 		return runnable;
 	}
+
+	bool FrameGraph::UsingBackbuffer() const {
+		decltype(resources)::const_iterator it = resources.find(0);
+
+		if(it == std::end(resources)) {
+			return false;
+		}
+
+		return it->second.numWrites > 0;
+	}
 }
 

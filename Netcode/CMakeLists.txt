@@ -19,6 +19,8 @@ PUBLIC
 	"${MYSQLCONN_INCLUDE}"
 )
 
+target_link_libraries(Netcode NetcodeFoundation)
+
 target_sources(Netcode
 PUBLIC
 	AnimationBlender.cpp
@@ -80,8 +82,7 @@ PUBLIC
 	WinapiWindowModule.cpp
 	WinapiWindowModule.h
 	ConsoleModule.h
-	ConsoleModule.cpp
-)
+	ConsoleModule.cpp)
 
 add_subdirectory(Shaders)
 add_subdirectory(Graphics)
@@ -89,3 +90,5 @@ add_subdirectory(Graphics/DX12)
 add_subdirectory(Network)
 
 add_dependencies(Netcode NetcodeShaders)
+add_dependencies(Netcode NetcodeFoundation)
+add_dependencies(Netcode NetcodeAssetLib)

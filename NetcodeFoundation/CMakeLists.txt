@@ -8,4 +8,4 @@ add_library(NetcodeFoundation STATIC
 	"MemoryFunctions.cpp"
 	"Platform.h"
 	"Sal.h"
-)
+	"Generated_Version.cpp")

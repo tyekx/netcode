@@ -44,6 +44,8 @@ namespace Netcode::Network {
 
 		virtual void Stop() override;
 
+		virtual bool CheckVersion(const Netcode::Protocol::Version & version) override;
+
 		/*
 		messages that are validated protocol wise
 		*/

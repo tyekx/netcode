@@ -51,23 +51,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LuaScript.h">
-      <Filter>Lua</Filter>
-    </ClInclude>
-    <ClInclude Include="LuaApi.h">
-      <Filter>Lua</Filter>
-    </ClInclude>
-    <ClInclude Include="LuaManager.h">
-      <Filter>Lua</Filter>
-    </ClInclude>
     <ClInclude Include="Path.h">
       <Filter>Utility</Filter>
     </ClInclude>
     <ClInclude Include="ProgramArgs.h">
       <Filter>Utility</Filter>
-    </ClInclude>
-    <ClInclude Include="LuaScriptFile.h">
-      <Filter>Lua</Filter>
     </ClInclude>
     <ClInclude Include="Stopwatch.h">
       <Filter>Utility</Filter>
@@ -97,20 +85,8 @@
     <ClInclude Include="WinapiWindowModule.h">
       <Filter>Window</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12GraphicsModule.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
     <ClInclude Include="HandleTypes.h">
       <Filter>Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12ShaderCompiler.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12ShaderVariant.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12ShaderSourceLibrary.h">
-      <Filter>Graphics\DX12</Filter>
     </ClInclude>
     <ClInclude Include="Modules.h">
       <Filter>Modules</Filter>
@@ -127,23 +103,8 @@
     <ClInclude Include="DebugPhysxRaycast.h">
       <Filter>Legacy</Filter>
     </ClInclude>
-    <ClInclude Include="DX12Common.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
     <ClInclude Include="ModulesConfig.h">
       <Filter>Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12SpriteFontLibrary.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12SpriteBatch.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12SpriteFont.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12Fence.h">
-      <Filter>Graphics\DX12</Filter>
     </ClInclude>
     <ClInclude Include="Transition.h">
       <Filter>Animation</Filter>
@@ -160,47 +121,8 @@
     <ClInclude Include="BasicGeometry.h">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="FrameGraph.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsContexts.h">
-      <Filter>Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="UploadBatch.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12ResourcePool.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12ResourceDesc.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="ResourceEnums.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="FancyIterators.hpp">
       <Filter>Utility</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12RenderContext.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="ResourceDesc.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12HeapCollection.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12ConstantBufferPool.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12ShaderCompiled.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/d3dx12.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12ResourceContext.h">
-      <Filter>Graphics\DX12</Filter>
     </ClInclude>
     <ClInclude Include="Common.h">
       <Filter>Common</Filter>
@@ -210,75 +132,6 @@
     </ClInclude>
     <ClInclude Include="Logger.h">
       <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12ShaderLibrary.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12ShaderBuilder.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12RootSignature.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12RootSignatureLibrary.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12InputLayout.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12InputLayoutBuilder.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12RootSignatureBuilder.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12StreamOutputBuilder.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12StreamOutputLibrary.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12StreamOutput.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12GPipelineStateBuilder.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12GPipelineState.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12GPipelineStateLibrary.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12InputLayoutLibrary.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12Helpers.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12Builders.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12Texture.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12TextureBuilder.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12DynamicDescriptorHeap.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12ResourceViews.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12Platform.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12SpriteFontBuilder.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12GraphicsModuleForWin32.h">
-      <Filter>Graphics\DX12</Filter>
     </ClInclude>
     <ClInclude Include="Service.hpp">
       <Filter>Modules</Filter>
@@ -295,40 +148,211 @@
     <ClInclude Include="Event.hpp">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12SpriteBatchBuilder.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12CPipelineStateBuilder.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12CPipelineState.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12CPipelineStateLibrary.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12CommandListPool.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics/DX12/DX12FrameGraph.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
     <ClInclude Include="LinearAllocator.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="NetcodeNetworkModule.h">
-      <Filter>Network</Filter>
-    </ClInclude>
     <ClInclude Include="DestructiveCopyConstructible.hpp">
       <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\GameSession.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\HttpSession.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\Macros.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\MysqlSession.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\NetworkCommon.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\ServerSession.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\ClientSession.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\Config.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\Cookie.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ResourceEnums.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\UploadBatch.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Config.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\FrameGraph.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\GraphicsConfig.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\GraphicsContexts.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ResourceDesc.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12Texture.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12TextureBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\d3dx12.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12Builders.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12CommandListPool.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12Common.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12ConstantBufferPool.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12CPipelineState.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12CPipelineStateBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12CPipelineStateLibrary.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12DynamicDescriptorHeap.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12Fence.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12FrameGraph.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12FrameGraphExecutor.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12GPipelineState.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12GPipelineStateBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12GPipelineStateLibrary.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12GraphicsModule.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12GraphicsModuleForWin32.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12HeapCollection.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12Helpers.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12InputLayout.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12InputLayoutBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12InputLayoutLibrary.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12Platform.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12RenderContext.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12ResourceContext.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12ResourceDesc.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12ResourcePool.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12ResourceViews.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12RootSignature.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12RootSignatureBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12RootSignatureLibrary.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12ShaderBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12ShaderCompiled.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12ShaderCompiler.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12ShaderLibrary.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12ShaderSourceLibrary.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12ShaderVariant.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12SpriteBatch.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12SpriteBatchBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12SpriteFont.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12SpriteFontBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12SpriteFontLibrary.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12StreamOutput.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12StreamOutputBuilder.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12StreamOutputLibrary.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\NetcodeNetworkModule.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="ConsoleModule.h">
+      <Filter>Window</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
       <Filter>Utility</Filter>
-    </ClCompile>
-    <ClCompile Include="LuaApi.cpp">
-      <Filter>Lua</Filter>
     </ClCompile>
     <ClCompile Include="Stopwatch.cpp">
       <Filter>Utility</Filter>
@@ -349,9 +373,6 @@
     <ClCompile Include="WinapiWindowModule.cpp">
       <Filter>Window</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12GraphicsModule.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
     <ClCompile Include="Modules.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
@@ -363,15 +384,6 @@
     </ClCompile>
     <ClCompile Include="DebugPhysxActor.cpp">
       <Filter>Legacy</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12Common.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12SpriteBatch.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12SpriteFont.cpp">
-      <Filter>Graphics\DX12</Filter>
     </ClCompile>
     <ClCompile Include="Transition.cpp">
       <Filter>Animation</Filter>
@@ -388,134 +400,170 @@
     <ClCompile Include="BasicGeometry.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12ShaderCompiler.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12ShaderVariant.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12ShaderCompiled.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12ResourceDesc.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12ResourceContext.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12ResourcePool.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12RenderContext.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
     <ClCompile Include="Common.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="Logger.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12GPipelineState.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12GPipelineStateBuilder.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12GPipelineStateLibrary.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12InputLayout.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12InputLayoutBuilder.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12InputLayoutLibrary.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12RootSignature.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12RootSignatureBuilder.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12RootSignatureLibrary.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12ShaderBuilder.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12StreamOutput.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12StreamOutputBuilder.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12StreamOutputLibrary.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12Helpers.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12ConstantBufferPool.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12DynamicDescriptorHeap.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12Texture.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12TextureBuilder.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12Platform.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12ResourceViews.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="ResourceEnums.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="UploadBatch.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12SpriteFontBuilder.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12GraphicsModuleForWin32.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
     <ClCompile Include="PhysXWrapper.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12SpriteBatchBuilder.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12CPipelineStateBuilder.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12CPipelineState.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12CPipelineStateLibrary.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12FrameGraph.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="FrameGraph.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics/DX12/DX12Fence.cpp">
-      <Filter>Graphics\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="NetcodeNetworkModule.cpp">
+    <ClCompile Include="Network\GameSession.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="HandleTypes.cpp">
-      <Filter>Modules</Filter>
+    <ClCompile Include="Network\HttpSession.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\MysqlSession.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\NetworkCommon.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\ServerSession.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\ClientSession.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\Cookie.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\UploadBatch.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\FrameGraph.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ResourceEnums.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12TextureBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12Common.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12ConstantBufferPool.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12CPipelineState.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12CPipelineStateBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12CPipelineStateLibrary.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12DynamicDescriptorHeap.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12Fence.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12FrameGraph.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12FrameGraphExecutor.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12GPipelineState.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12GPipelineStateBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12GPipelineStateLibrary.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12GraphicsModule.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12GraphicsModuleForWin32.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12Helpers.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12InputLayout.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12InputLayoutBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12InputLayoutLibrary.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12Platform.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12RenderContext.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12ResourceContext.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12ResourceDesc.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12ResourcePool.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12ResourceViews.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12RootSignature.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12RootSignatureBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12RootSignatureLibrary.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12ShaderBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12ShaderCompiled.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12ShaderCompiler.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12ShaderVariant.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12SpriteBatch.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12SpriteBatchBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12SpriteFont.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12SpriteFontBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12StreamOutput.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12StreamOutputBuilder.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12StreamOutputLibrary.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12Texture.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\NetcodeNetworkModule.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="ConsoleModule.cpp">
+      <Filter>Window</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

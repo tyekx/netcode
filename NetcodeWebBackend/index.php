@@ -267,6 +267,9 @@ Route::Get('/api/list-sessions', function() use ($db) {
         "game_servers.game_port",
         "game_servers.max_players",
         "game_servers.id",
+        "game_servers.version_major",
+        "game_servers.version_minor",
+        "game_servers.version_build",
         "users.name(owner)",
         "active_players" => \Medoo\Medoo::raw('SUM(IF(<game_sessions.left_at> IS NULL AND <game_sessions.user_id> IS NOT NULL, 1, 0))')
         /*

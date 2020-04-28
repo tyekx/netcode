@@ -214,10 +214,6 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SyncUpload(const UploadBatch & upload) override;
 
-		virtual void BeginRenderPass() override;
-
-		virtual void EndRenderPass() override;
-
 		virtual void Run(FrameGraphRef frameGraph) override;
 
 		virtual DirectX::XMUINT2 GetBackbufferSize() const override;

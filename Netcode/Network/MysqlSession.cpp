@@ -1,5 +1,6 @@
 #include "MysqlSession.h"
 #include "../Logger.h"
+#include <NetcodeFoundation/Version.h>
 
 namespace Netcode::Network {
 	ErrorCode MysqlSession::QueryUserByHash(const std::string & hash, UserRow & output) {
@@ -32,8 +33,18 @@ namespace Netcode::Network {
 	ErrorCode MysqlSession::RegisterServer(const ServerConfig & config) {
 		std::scoped_lock<std::mutex> lock{ mutex };
 		try {
-			// (owner_id, max_players, interval, status, server_ip, control_port, game_port, created_at)
-			insertServer->bind(config.ownerId, config.playerSlots, config.tickIntervalMs, 1, config.selfAddress, config.controlPort, config.gamePort, time(NULL));
+			// (owner_id, max_players, interval, status, server_ip, control_port, game_port, created_at, major, minor, build)
+			insertServer->bind(config.ownerId,
+							config.playerSlots,
+							config.tickIntervalMs,
+							1,
+							config.selfAddress,
+							config.controlPort,
+							config.gamePort,
+							time(NULL),
+							Netcode::GetMajorVersion(),
+							Netcode::GetMinorVersion(),
+							Netcode::GetBuildVersion());
 			mysqlx::SqlResult res = insertServer->execute();
 
 			if(res.getAffectedItemsCount() != 1) {
@@ -125,8 +136,8 @@ namespace Netcode::Network {
 			session = std::make_unique<mysqlx::Session>(settings);
 
 			insertServer = std::make_unique<mysqlx::SqlStatement>(
-				session->sql("INSERT INTO game_servers (`owner_id`, `max_players`, `interval`, `status`, `server_ip`, `control_port`, `game_port`, `created_at`) "
-					"VALUES (?, ?, ?, ?, ?, ?, ?, ?)"));
+				session->sql("INSERT INTO game_servers (`owner_id`, `max_players`, `interval`, `status`, `server_ip`, `control_port`, `game_port`, `created_at`, `version_major`, `version_minor`, `version_build`) "
+					"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"));
 
 			modifyServer = std::make_unique<mysqlx::SqlStatement>(
 				session->sql("UPDATE `game_servers` SET `status` = ?, `closed_at` = ? WHERE `id` = ? LIMIT 1"));

@@ -84,6 +84,11 @@ namespace Log {
 		spdlog::info(message, x, y);
 	}
 
+	void Info(const char * message, int32_t x, int32_t y, int32_t z)
+	{
+		spdlog::info(message, x, y, z);
+	}
+
 	void Warn(const char * message) {
 		spdlog::warn(message);
 	}

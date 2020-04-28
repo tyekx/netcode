@@ -48,6 +48,8 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 	std::unique_ptr<Layer> menuLayer;
 
+	Netcode::Network::GameSessionRef gameSession;
+
 	float totalTime;
 
 	void LoadSystems() {
@@ -124,12 +126,14 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	}
 
 	void ConnectServer() {
-		Netcode::Network::SessionConfig config;
-		config.tickIntervalMs = 500;
-		config.selfAddress = boost::asio::ip::address::from_string("127.0.0.1");
-		config.clientPort = 8889;
+		Netcode::Network::Config config;
+		config.web.hostAddress = "netcode.webs";
+		config.web.hostPort = 80;
 
-		network->CreateClient(config);
+		config.client.tickIntervalMs = 500;
+		config.client.localPort = 8887;
+
+		gameSession = network->CreateClient(config);
 	}
 
 	void LoadAssets() {
@@ -416,10 +420,6 @@ public:
 
 		if(window) {
 			window->ShowWindow();
-		}
-
-		if(network) {
-			network->SetWebserverAddress("netcode.webs", 80);
 		}
 
 		AddAppEventHandlers(events.get());

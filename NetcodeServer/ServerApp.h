@@ -1,5 +1,6 @@
 #pragma once 
 
+#include <NetcodeFoundation/Version.h>
 #include <Netcode/Modules.h>
 #include <Netcode/Network/ServerSession.h>
 
@@ -14,10 +15,11 @@ class PlayerStorage {
 		int32_t port;
 		Netcode::Protocol::User state;
 		Netcode::Network::UserRow userData;
-		int32_t controlId;
+		int32_t foreignControlId;
+		int32_t localControlId;
 
 		User(std::string addr, int32_t port, Netcode::Network::UserRow ud) :
-			address{ std::move(addr) }, port{ port }, state{}, userData{ std::move(ud) }, controlId{ 1 } {
+			address{ std::move(addr) }, port{ port }, state{}, userData{ std::move(ud) }, foreignControlId{ 1 }, localControlId{ 1 } {
 			state.set_id(userData.userId);
 			state.set_state(Netcode::Protocol::PlayerState::OBSERVER);
 		}
@@ -47,7 +49,7 @@ class PlayerStorage {
 			Netcode::Protocol::Message message;
 			message.set_address(user.address);
 			message.set_port(user.port);
-			message.set_id(user.controlId++);
+			message.set_id(user.localControlId++);
 
 			Netcode::Protocol::Control::Message * ctrl = message.mutable_control();
 			Netcode::Protocol::Control::Command * command = ctrl->mutable_command();
@@ -63,6 +65,27 @@ class PlayerStorage {
 		}
 	}
 
+	void _NotifyPlayers_PlayerLeftUnsafe(int32_t leftPlayerId) {
+		using Netcode::Protocol::Control::CommandType;
+
+		for(User & user : activePlayers) {
+			Netcode::Protocol::Message message;
+			message.set_address(user.address);
+			message.set_port(user.port);
+			message.set_id(user.localControlId++);
+
+			Netcode::Protocol::Control::Message * ctrl = message.mutable_control();
+			Netcode::Protocol::Control::Command * command = ctrl->mutable_command();
+
+			command->set_type(CommandType::PLAYER_TIMEDOUT);
+			Netcode::Protocol::User * newUser = command->mutable_user();
+			newUser->set_id(leftPlayerId);
+
+			serverSession->SendControlMessage(std::move(message),
+				std::bind(&PlayerStorage::OnControlMessageSent, this, std::placeholders::_1, user.userData.userId));
+		}
+	}
+
 	void _NotifyPlayers_PlayerTimedOutUnsafe(int32_t playerId) {
 		using Netcode::Protocol::Control::CommandType;
 
@@ -70,7 +93,7 @@ class PlayerStorage {
 			Netcode::Protocol::Message message;
 			message.set_address(user.address);
 			message.set_port(user.port);
-			message.set_id(user.controlId++);
+			message.set_id(user.localControlId++);
 
 			Netcode::Protocol::Control::Message * ctrl = message.mutable_control();
 			Netcode::Protocol::Control::Command * command = ctrl->mutable_command();
@@ -88,7 +111,7 @@ class PlayerStorage {
 
 	void _NotifyPlayer_JoinAcceptedUnsafe(User & user) {
 		Netcode::Protocol::Message message;
-		message.set_id(user.controlId++);
+		message.set_id(user.localControlId++);
 		message.set_address(user.address);
 		message.set_port(user.port);
 		auto * userJoined = message.mutable_control()->mutable_response()->mutable_user_joined();
@@ -96,6 +119,35 @@ class PlayerStorage {
 
 		serverSession->SendControlMessage(std::move(message),
 			std::bind(&PlayerStorage::OnControlMessageSent, this, std::placeholders::_1, user.userData.userId));
+	}
+
+	void _NotifyPlayer_AcceptLeaveUnsafe(std::string addr, int32_t port, int32_t messageId) {
+		Netcode::Protocol::Message message;
+		message.set_id(messageId);
+		message.set_address(std::move(addr));
+		message.set_port(port);
+		auto * userLeft = message.mutable_control()->mutable_response();
+		userLeft->set_type(Netcode::Protocol::Control::RequestType::LEAVE);
+	}
+
+	void _NotifyPlayer_DeclineLeaveUnsafe(std::string addr, int32_t port, int32_t messageId, std::string reason) {
+		Netcode::Protocol::Message message;
+		message.set_id(messageId);
+		message.set_address(std::move(addr));
+		message.set_port(port);
+		auto * userLeft = message.mutable_control()->mutable_response();
+		userLeft->set_type(Netcode::Protocol::Control::RequestType::LEAVE);
+		userLeft->set_note(std::move(reason));
+
+		serverSession->SendControlMessage(std::move(message), [](Netcode::Network::ErrorCode errorCode) -> void {
+			Log::Info("[Server] Player left and failed to ack the response");
+		});
+	}
+
+	std::list<User>::iterator _FindUserByHashUnsafe(const std::string & hash) {
+		return std::find_if(std::begin(activePlayers), std::end(activePlayers), [&hash](const User & player) -> bool {
+			return player.userData.hash == hash;
+		});
 	}
 
 public:
@@ -146,6 +198,26 @@ public:
 		}
 	}
 
+	void Disconnect(std::string addr, int32_t port, std::string hash) {
+		std::scoped_lock<std::mutex> lock{ mutex };
+
+		auto it = _FindUserByHashUnsafe(hash);
+
+		if(it != std::end(activePlayers)) {
+			if(it->address == addr && it->port == port) {
+				Log::Debug("[Server] Successfully disconnected user: {0}...", hash.substr(0, 8));
+				_NotifyPlayer_AcceptLeaveUnsafe(std::move(addr), port, it->localControlId++);
+				int32_t playerId = it->userData.userId;
+				activePlayers.erase(it);
+				_NotifyPlayers_PlayerLeftUnsafe(playerId);
+				return;
+			}
+		}
+
+		// not okay branch
+		_NotifyPlayer_DeclineLeaveUnsafe(std::move(addr), port, 0, "Player is not connected.");
+	}
+
 	bool AcceptConnection(int32_t userId, std::string address, int32_t port) {
 		std::scoped_lock<std::mutex> lock{ mutex };
 
@@ -165,7 +237,7 @@ public:
 
 		_NotifyPlayers_PlayerJoinedUnsafe(it->userId, it->name);
 
-		activePlayers.emplace_back(std::move(address), port, std::move(*it));
+		_NotifyPlayer_JoinAcceptedUnsafe(activePlayers.emplace_back(std::move(address), port, std::move(*it)));
 
 		pendingPlayers.erase(it);
 
@@ -214,12 +286,14 @@ public:
 		clientSession = network->CreateClient(config);
 		clientSession->Start();
 		Netcode::Protocol::Message loginMessage;
-		loginMessage.set_id(1);
 		auto * ctrl = loginMessage.mutable_control();
 		auto * req = ctrl->mutable_request();
 		req->set_hash("f5e9cd4c2a36fc5844c4513dce9eb1e1b68a4e4e815eca92297af389ff5cd8fd");
 		req->set_type(Netcode::Protocol::Control::RequestType::JOIN);
-		req->set_version("0.0.1");
+		auto * version = req->mutable_version();
+		version->set_major(Netcode::GetMajorVersion());
+		version->set_minor(Netcode::GetMinorVersion());
+		version->set_build(Netcode::GetBuildVersion());
 
 		clientSession->SendControlMessage(std::move(loginMessage), [](Netcode::Network::ErrorCode errorCode) ->void {
 			if(errorCode) {
@@ -233,6 +307,8 @@ public:
 	*/
 	virtual void Run() override {
 		using c_t = std::chrono::high_resolution_clock;
+
+		int isTested = 0;
 		while(window->KeepRunning()) {
 			window->ProcessMessages();
 			auto begin = c_t::now();
@@ -245,6 +321,27 @@ public:
 			ProcessControlMessages();
 			ProcessGameMessages();
 			serverSession->SendAll();
+
+			if(isTested != 5) {
+				isTested += 1;
+			} else {
+				isTested += 1;
+				Log::Debug("Testing leave functionality");
+				Netcode::Protocol::Message loginMessage;
+				auto * ctrl = loginMessage.mutable_control();
+				auto * req = ctrl->mutable_request();
+				req->set_hash("f5e9cd4c2a36fc5844c4513dce9eb1e1b68a4e4e815eca92297af389ff5cd8fd");
+				req->set_type(Netcode::Protocol::Control::RequestType::LEAVE);
+				auto * version = req->mutable_version();
+				version->set_major(Netcode::GetMajorVersion());
+				version->set_minor(Netcode::GetMinorVersion());
+				version->set_build(Netcode::GetBuildVersion());
+				clientSession->SendControlMessage(std::move(loginMessage), [](Netcode::Network::ErrorCode errorCode) ->void {
+					if(errorCode) {
+						Log::Error("[Client] server failed to ack leave message");
+					}
+				});
+			}
 		}
 	}
 
@@ -258,7 +355,6 @@ public:
 
 		if(players.AcceptConnection(userId, std::move(address), port)) {
 			Log::Debug("[Server] Session successfully created");
-			players.NotifyPlayer_JoinAccepted(userId);
 		} else {
 			Log::Debug("[Server] AcceptConnection failed, rolling back");
 			DeclinePlayerJoinRequest(std::move(address), port, "Something went wrong.");
@@ -316,14 +412,47 @@ public:
 		});
 	}
 
+	void DeclinePlayerLeaveRequest(std::string addr, int32_t port, std::string reason) {
+		using Netcode::Protocol::Control::RequestType;
+		Netcode::Protocol::Message message;
+		message.set_id(0);
+		message.set_address(std::move(addr));
+		message.set_port(port);
+		auto * ctrl = message.mutable_control();
+		auto * response = ctrl->mutable_response();
+		response->set_type(RequestType::LEAVE);
+		response->set_note(std::move(reason));
+
+		serverSession->SendControlMessage(std::move(message), [](Netcode::Network::ErrorCode ec) ->void {
+			if(ec) {
+				Log::Error("[Server] Client failed to ACK declined join message");
+			}
+		});
+	}
+
 	void HandleJoinRequest(const Netcode::Protocol::Message & message) {
+		using Netcode::Protocol::Control::Request;
+		const Request & request = message.control().request();
+
+		if(!request.has_version()) {
+			Log::Debug("[Server] Client has not sent the version data");
+			DeclinePlayerJoinRequest(message.address(), message.port(), "Missing version data.");
+			return;
+		}
+
+		if(!serverSession->CheckVersion(request.version())) {
+			Log::Debug("[Server] Client has a mismatching version");
+			DeclinePlayerJoinRequest(message.address(), message.port(), "Server has a mismatching version.");
+			return;
+		}
+
 		if(players.GetNumPlayers() >= config.server.playerSlots) {
 			Log::Debug("[Server] can not join, server is full");
 			DeclinePlayerJoinRequest(message.address(), message.port(), "Server is full.");
 			return;
 		}
 
-		std::string hash = message.control().request().hash();
+		std::string hash = request.hash();
 
 		if(hash.empty()) {
 			Log::Debug("[Server] user sent a malformed join request");
@@ -337,6 +466,26 @@ public:
 			message.address(),
 			message.port()));
 	}
+	
+	void HandleRespawnRequest(const Netcode::Protocol::Message & message) {
+
+	}
+
+	void HandleLeaveRequest(const Netcode::Protocol::Message & message) {
+		using Netcode::Protocol::Control::Request;
+		const Request & request = message.control().request();
+
+		std::string hash = request.hash();
+
+		if(hash.empty()) {
+			Log::Debug("[Server] user sent a malformed join request");
+			DeclinePlayerLeaveRequest(message.address(), message.port(), "Malformed leave request (missing hash).");
+			return;
+		}
+
+		Log::Debug("[Server] Trying to disconnect user: {0}", hash.substr(0, 8));
+		players.Disconnect(message.address(), message.port(), std::move(hash));
+	}
 
 	void ProcessControlMessages() {
 		using Netcode::Protocol::Control::RequestType;
@@ -349,6 +498,15 @@ public:
 				case RequestType::JOIN:
 					HandleJoinRequest(m);
 					break;
+				case RequestType::LEAVE:
+					HandleLeaveRequest(m);
+					break;
+				case RequestType::RESPAWN:
+					HandleRespawnRequest(m);
+					break;
+				default:
+					Log::Debug("[Server] Unhandled control message");
+					break;
 			}
 		}
 
@@ -356,8 +514,9 @@ public:
 	}
 
 	void ProcessGameMessages() {
-
 		gameMessages.clear();
+
+
 	}
 
 	/*

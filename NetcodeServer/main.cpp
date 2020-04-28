@@ -1,18 +1,12 @@
-#include <iostream>
-#include <NetcodeProtocol/netcode.pb.h>
-#include <google/protobuf/io/coded_stream.h>
-#include <ServerApp.h>
-#include <memory>
-#include <Netcode/Network/HttpSession.h>
-#include <Netcode/Network/ServerSession.h>
 #include <Netcode/DefaultModuleFactory.h>
-#include "ProgramOptions.h"
+#include <NetcodeFoundation/Version.h>
 
-namespace http = boost::beast::http;
-namespace net = boost::asio::ip;
+#include "ProgramOptions.h"
+#include "ServerApp.h"
 
 int main(int argc, char * argv[]) {
 	Log::Setup(true);
+	Log::Info("Build: {0}.{1}.{2}", Netcode::GetMajorVersion(), Netcode::GetMinorVersion(), Netcode::GetBuildVersion());
 	boost::asio::io_context ioc;
 
 	Netcode::Network::Config config;

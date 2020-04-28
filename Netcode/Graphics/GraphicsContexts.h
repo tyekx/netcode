@@ -178,9 +178,6 @@ namespace Netcode::Graphics {
 
 		virtual void SyncUpload(const UploadBatch & upload) = 0;
 
-		virtual void BeginRenderPass() = 0;
-		virtual void EndRenderPass() = 0;
-
 		virtual void Run(std::shared_ptr<FrameGraph> frameGraph) = 0;
 
 		virtual void Prepare() = 0;
