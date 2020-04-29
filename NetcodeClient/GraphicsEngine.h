@@ -342,6 +342,10 @@ private:
 	}
 
 	void CreateGbufferPassSizeDependentResources() {
+		gbufferPass_ColorRenderTarget.reset();
+		gbufferPass_NormalsRenderTarget.reset();
+		gbufferPass_DepthBuffer.reset();
+
 		gbufferPass_ColorRenderTarget = graphics->resources->CreateRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
 		gbufferPass_NormalsRenderTarget = graphics->resources->CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
 		gbufferPass_DepthBuffer = graphics->resources->CreateDepthStencil(gbufferPass_DepthStencilFormat, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE | ResourceState::DEPTH_READ);
@@ -436,6 +440,9 @@ private:
 
 		ssaoRenderTargetSize.x = (ssaoRenderTargetSize.x == 0) ? 1 : ssaoRenderTargetSize.x;
 		ssaoRenderTargetSize.y = (ssaoRenderTargetSize.y == 0) ? 1 : ssaoRenderTargetSize.y;
+
+		ssaoPass_OcclusionRenderTarget.reset();
+		ssaoPass_BlurRenderTarget.reset();
 
 		ssaoPass_OcclusionRenderTarget = graphics->resources->CreateRenderTarget(ssaoRenderTargetSize.x, ssaoRenderTargetSize.y, DXGI_FORMAT_R32_FLOAT, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
 		ssaoPass_BlurRenderTarget = graphics->resources->CreateRenderTarget(ssaoRenderTargetSize.x, ssaoRenderTargetSize.y, DXGI_FORMAT_R32_FLOAT, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
@@ -702,7 +709,7 @@ private:
 
 	void CreateUIPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("UI",
-			[&](IResourceContext * context) -> void {
+		[&](IResourceContext * context) -> void {
 
 			context->Writes(nullptr);
 

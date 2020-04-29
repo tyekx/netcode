@@ -78,6 +78,8 @@ namespace Netcode::Graphics::DX12 {
 				std::bind(&Heap::ReturnResource, this, std::placeholders::_1));
 		} else {
 			resource->resource = std::move(dx12Resource);
+			resource->desc = resourceDesc;
+			resource->nativeDesc = desc;
 		}
 
 		return resource;
