@@ -1,7 +1,8 @@
 #pragma once
 
 #include "DX12ResourceDesc.h"
-#include "DX12HeapCollection.h"
+#include "DX12HeapManager.h"
+#include "DX12Resource.h"
 
 #include <deque>
 #include <array>
@@ -17,11 +18,11 @@ namespace Netcode::Graphics::DX12 {
 
 		// actual cbuffer page with GPU resource
 		struct CBufferPage {
-			ID3D12Resource * resource;
+			DX12ResourceRef resource;
 			UINT64 offset;
 			const D3D12_GPU_VIRTUAL_ADDRESS baseAddr;
 
-			CBufferPage(ID3D12Resource * resource) : resource{ resource }, offset{ 0 }, baseAddr{ resource->GetGPUVirtualAddress() } { }
+			CBufferPage(DX12ResourceRef resource) : resource{ resource }, offset{ 0 }, baseAddr{ resource->resource->GetGPUVirtualAddress() } { }
 		};
 
 		// a single allocation for a cbuffer 32 bytes of management data
@@ -58,11 +59,11 @@ namespace Netcode::Graphics::DX12 {
 
 		CBufferAllocationPage * currentAllocationPage;
 
-		HeapManager * heapManager;
+		std::shared_ptr<HeapManager> heapManager;
 
 		uint8_t * mappedPtr;
 
-		ID3D12Resource * CreatePageResource();
+		DX12ResourceRef CreatePageResource();
 
 		void ValidateCurrentPageFor(size_t size);
 
@@ -70,7 +71,7 @@ namespace Netcode::Graphics::DX12 {
 
 	public:
 
-		void SetHeapManager(HeapManager * heapMan);
+		void SetHeapManager(std::shared_ptr<HeapManager> heapMan);
 
 		~ConstantBufferPool();
 

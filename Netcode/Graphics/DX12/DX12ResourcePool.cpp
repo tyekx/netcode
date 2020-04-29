@@ -2,15 +2,11 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	uint64_t ResourcePool::CreateResource(const ResourceDesc & resource) {
-		GResource res;
-		res.desc = resource;
-		res.resource = heapManager->CreateResource(res.desc);
-		res.address = (res.desc.dimension == ResourceDimension::BUFFER) ? res.resource->GetGPUVirtualAddress() : 0;
-		return reinterpret_cast<uint64_t>(&managedResources.emplace_back(res));
+	DX12ResourceRef ResourcePool::CreateResource(const ResourceDesc & resource) {
+		return heapManager->CreateResource(resource);
 	}
 
-	uint64_t ResourcePool::CreateStructuredBuffer(size_t sizeInBytes, UINT strideInBytes, ResourceType type, ResourceState initialState, ResourceFlags flags) {
+	DX12ResourceRef ResourcePool::CreateStructuredBuffer(size_t sizeInBytes, UINT strideInBytes, ResourceType type, ResourceState initialState, ResourceFlags flags) {
 		ResourceDesc rDesc;
 		rDesc.type = type;
 		rDesc.dimension = ResourceDimension::BUFFER;
@@ -26,7 +22,7 @@ namespace Netcode::Graphics::DX12 {
 		return CreateResource(rDesc);
 	}
 
-	uint64_t ResourcePool::CreateTypedBuffer(size_t sizeInBytes, DXGI_FORMAT format, ResourceType type, ResourceState initialState, ResourceFlags flags) {
+	DX12ResourceRef ResourcePool::CreateTypedBuffer(size_t sizeInBytes, DXGI_FORMAT format, ResourceType type, ResourceState initialState, ResourceFlags flags) {
 		ResourceDesc rDesc;
 		rDesc.type = type;
 		rDesc.dimension = ResourceDimension::BUFFER;
@@ -42,7 +38,7 @@ namespace Netcode::Graphics::DX12 {
 		return CreateResource(rDesc);
 	}
 
-	uint64_t ResourcePool::CreateDepthBuffer(ResourceType type, UINT width, UINT height, DXGI_FORMAT format, ResourceState initialState, ResourceFlags optFlags) {
+	DX12ResourceRef ResourcePool::CreateDepthBuffer(ResourceType type, UINT width, UINT height, DXGI_FORMAT format, ResourceState initialState, ResourceFlags optFlags) {
 		ResourceDesc rDesc;
 		rDesc.type = type;
 		rDesc.dimension = ResourceDimension::TEXTURE2D;
@@ -74,40 +70,4 @@ namespace Netcode::Graphics::DX12 {
 		return CreateResource(rDesc);
 	}
 
-	const ResourceDesc & ResourcePool::GetResourceDesc(uint64_t handle) {
-		return reinterpret_cast<GResource *>(handle)->desc;
-	}
-
-	const GResource & ResourcePool::GetNativeResource(uint64_t handle) {
-		return *(reinterpret_cast<GResource *>(handle));
-	}
-
-	void ResourcePool::ReleaseResource(uint64_t handle) {
-		GResource * ptr = reinterpret_cast<GResource *>(handle);
-
-		heapManager->ReleaseResource(ptr->resource);
-
-		for(decltype(managedResources)::iterator it = managedResources.begin(); it != managedResources.end(); ++it) {
-			if((&(*it)) == ptr) {
-				managedResources.erase(it);
-				return;
-			}
-		}
-
-	}
-	void ResourcePool::ReleaseTransients()
-	{
-		for(const auto & i : managedResources) {
-			if(i.desc.type == ResourceType::TRANSIENT_DEFAULT ||
-				i.desc.type == ResourceType::TRANSIENT_UPLOAD ||
-				i.desc.type == ResourceType::TRANSIENT_READBACK) {
-				heapManager->ReleaseResource(i.resource);
-			}
-		}
-		managedResources.remove_if([](const GResource & gres) ->bool {
-			return gres.desc.type == ResourceType::TRANSIENT_DEFAULT ||
-				gres.desc.type == ResourceType::TRANSIENT_UPLOAD ||
-				gres.desc.type == ResourceType::TRANSIENT_READBACK;
-		});
-	}
 }

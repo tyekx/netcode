@@ -1,14 +1,13 @@
 #include "DX12DynamicDescriptorHeap.h"
 #include "DX12ConstantBufferPool.h"
 #include "DX12ResourcePool.h"
-#include "DX12HeapCollection.h"
+#include "DX12HeapManager.h"
 #include "DX12CommandListPool.h"
 #include "DX12FrameGraph.h"
 #include "DX12RenderContext.h"
 #include "DX12Fence.h"
 
 namespace Netcode::Graphics::DX12 {
-
 
 	/*
 	Designed to work with RAII idiom, constructor should take all neccessary parameters to execute a frame
@@ -96,7 +95,7 @@ namespace Netcode::Graphics::DX12 {
 
 			p2rt.commandList->ResourceBarrier(1, &p2rtTransition);
 
-			presentToRT.SetRenderTargets(0, 0);
+			presentToRT.SetRenderTargets(nullptr, nullptr);
 			presentToRT.SetViewport();
 			presentToRT.SetScissorRect();
 			presentToRT.ClearRenderTarget(0, clearColor);

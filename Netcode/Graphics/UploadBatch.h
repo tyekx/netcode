@@ -15,31 +15,31 @@ namespace Netcode::Graphics {
 	class UploadBatch {
 
 	public:
-		void Upload(uint64_t resourceHandle, Netcode::TextureRef texture);
+		void Upload(GpuResourceRef resourceHandle, Netcode::TextureRef texture);
 
-		void Upload(uint64_t resourceHandle, const void * srcData, size_t srcDataSizeInBytes);
+		void Upload(GpuResourceRef resourceHandle, const void * srcData, size_t srcDataSizeInBytes);
 
-		void ResourceBarrier(uint64_t resourceHandle, ResourceState before, ResourceState after);
+		void ResourceBarrier(GpuResourceRef resourceHandle, ResourceState before, ResourceState after);
 
 		struct BufferUploadTask {
-			const uint64_t resourceHandle;
+			const GpuResourceRef resourceHandle;
 			const void * srcData;
 			const size_t srcDataSizeInBytes;
 
 			BufferUploadTask();
 
-			BufferUploadTask(uint64_t h, const void * srcData, size_t srcDataSizeInBytes);
+			BufferUploadTask(GpuResourceRef h, const void * srcData, size_t srcDataSizeInBytes);
 		};
 
 		struct TextureUploadTask {
-			const uint64_t resourceHandle;
+			const GpuResourceRef resourceHandle;
 			const Netcode::TextureRef texture;
 
 			TextureUploadTask();
 
 			TextureUploadTask(const TextureUploadTask &) = default;
 
-			TextureUploadTask(uint64_t h, Netcode::TextureRef texture);
+			TextureUploadTask(GpuResourceRef h, Netcode::TextureRef texture);
 		};
 
 		struct UploadTask {
@@ -52,12 +52,12 @@ namespace Netcode::Graphics {
 		};
 
 		struct BarrierTask {
-			const uint64_t resourceHandle;
+			const GpuResourceRef resourceHandle;
 			const ResourceState before;
 			const ResourceState after;
 			
 			BarrierTask(const BarrierTask &) = default;
-			BarrierTask(uint64_t handle, ResourceState before, ResourceState after);
+			BarrierTask(GpuResourceRef handle, ResourceState before, ResourceState after);
 		};
 
 		const std::vector<UploadTask> & UploadTasks() const;

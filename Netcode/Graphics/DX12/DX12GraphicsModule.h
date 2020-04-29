@@ -120,7 +120,7 @@ namespace Netcode::Graphics::DX12 {
 		DX12ResourceViewsRef renderTargetViews;
 		DX12ResourceViewsRef depthStencilView;
 
-		uint64_t depthStencil;
+		GpuResourceRef depthStencil;
 
 		UINT backbufferDepth;
 		DirectX::XMUINT2 lastWindowedModeSize;
@@ -155,7 +155,8 @@ namespace Netcode::Graphics::DX12 {
 		DX12GPipelineStateLibraryRef gPipelineLibrary;
 		DX12CPipelineStateLibraryRef cPipelineLibrary;
 
-		HeapManager heapManager;
+		DX12HeapManagerRef heapManager;
+
 		ResourcePool resourcePool;
 		ConstantBufferPool cbufferPool;
 		DynamicDescriptorHeap dheaps;

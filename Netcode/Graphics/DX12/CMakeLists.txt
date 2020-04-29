@@ -30,7 +30,10 @@ target_sources(Netcode PUBLIC
 	DX12GraphicsModule.h
 	DX12GraphicsModuleForWin32.cpp
 	DX12GraphicsModuleForWin32.h
-	DX12HeapCollection.h
+	DX12Heap.cpp
+	DX12Heap.h
+	DX12HeapManager.cpp
+	DX12HeapManager.h
 	DX12Helpers.cpp
 	DX12Helpers.h
 	DX12InputLayout.cpp
@@ -43,6 +46,8 @@ target_sources(Netcode PUBLIC
 	DX12Platform.h
 	DX12RenderContext.cpp
 	DX12RenderContext.h
+	DX12Resource.cpp
+	DX12Resource.h
 	DX12ResourceContext.cpp
 	DX12ResourceContext.h
 	DX12ResourceDesc.cpp

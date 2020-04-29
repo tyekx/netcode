@@ -166,13 +166,4 @@ namespace Netcode::Graphics::DX12 {
 
 		return dsvd;
 	}
-
-	D3D12_CONSTANT_BUFFER_VIEW_DESC GetConstantBufferViewDesc(const GResource & resource)
-	{
-		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvd;
-		cbvd.BufferLocation = resource.address;
-		cbvd.SizeInBytes = static_cast<uint32_t>(resource.desc.sizeInBytes);
-
-		return cbvd;
-	}
 }

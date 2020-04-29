@@ -2,7 +2,7 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	ID3D12Resource * ConstantBufferPool::CreatePageResource() {
+	DX12ResourceRef ConstantBufferPool::CreatePageResource() {
 		ResourceDesc desc;
 		desc.depth = 1;
 		desc.dimension = ResourceDimension::BUFFER;
@@ -23,12 +23,12 @@ namespace Netcode::Graphics::DX12 {
 
 		if(currentPage == nullptr) {
 			currentPage = &pages.emplace_back(CreatePageResource());
-			currentPage->resource->Map(0, &readRange, reinterpret_cast<void **>(&mappedPtr));
+			currentPage->resource->resource->Map(0, &readRange, reinterpret_cast<void **>(&mappedPtr));
 		} else {
 			if((CBUFFER_PAGE_SIZE - currentPage->offset) < size) {
-				currentPage->resource->Unmap(0, nullptr);
+				currentPage->resource->resource->Unmap(0, nullptr);
 				currentPage = &pages.emplace_back(CreatePageResource());
-				currentPage->resource->Map(0, &readRange, reinterpret_cast<void **>(&mappedPtr));
+				currentPage->resource->resource->Map(0, &readRange, reinterpret_cast<void **>(&mappedPtr));
 			}
 		}
 	}
@@ -40,8 +40,8 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 
-	void ConstantBufferPool::SetHeapManager(HeapManager * heapMan) {
-		heapManager = heapMan;
+	void ConstantBufferPool::SetHeapManager(std::shared_ptr<HeapManager> heapMan) {
+		heapManager = std::move(heapMan);
 	}
 
 	ConstantBufferPool::~ConstantBufferPool() {
@@ -56,10 +56,6 @@ namespace Netcode::Graphics::DX12 {
 		allocationPages.clear();
 		currentAllocationPage = nullptr;
 		currentPage = nullptr;
-
-		for(auto & page : pages) {
-			heapManager->ReleaseResource(page.resource);
-		}
 		pages.clear();
 	}
 
@@ -97,7 +93,7 @@ namespace Netcode::Graphics::DX12 {
 		size_t alignedSize = (size + alignment) & (~alignment);
 
 		CBufferAllocation * allocation = currentAllocationPage->Insert();
-		allocation->resource = currentPage->resource;
+		allocation->resource = currentPage->resource->resource.Get();
 		allocation->locationOffset = currentPage->offset;
 		allocation->address = currentPage->baseAddr + currentPage->offset;
 		allocation->sizeInBytes = alignedSize;

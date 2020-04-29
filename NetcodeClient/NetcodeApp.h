@@ -342,9 +342,9 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			for(unsigned int i = 0; i < mesh->lodLevelsLength; ++i) {
 				uint8_t * vData = vBasePtr + mesh->lodLevels[i].vertexBufferByteOffset;
 				uint8_t * iData = nullptr;
-				uint64_t vbuffer = graphics->resources->CreateVertexBuffer(mesh->lodLevels[i].vertexBufferSizeInBytes, mesh->vertexSize, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
+				GpuResourceRef vbuffer = graphics->resources->CreateVertexBuffer(mesh->lodLevels[i].vertexBufferSizeInBytes, mesh->vertexSize, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
 				uint64_t vCount = mesh->lodLevels[i].vertexCount;
-				uint64_t ibuffer = 0;
+				GpuResourceRef ibuffer = 0;
 				uint64_t iCount = 0;
 
 				batch.Upload(vbuffer, vData, mesh->lodLevels[i].vertexBufferSizeInBytes);

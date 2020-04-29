@@ -3,6 +3,7 @@
 #include "DX12Common.h"
 #include "DX12ResourceDesc.h"
 #include "DX12ResourceViews.h"
+#include "DX12Resource.h"
 #include <tuple>
 
 namespace Netcode::Graphics::DX12 {
@@ -44,15 +45,15 @@ namespace Netcode::Graphics::DX12 {
 
 		void CreateResources(com_ptr<ID3D12Device> dev);
 
-		std::tuple<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> CreateBufferUAV(const GResource & gres);
+		std::tuple<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> CreateBufferUAV(DX12ResourceRef resource);
 
-		D3D12_GPU_DESCRIPTOR_HANDLE CreateSRV(const GResource & gres);
+		D3D12_GPU_DESCRIPTOR_HANDLE CreateSRV(DX12ResourceRef resource);
 
-		D3D12_GPU_DESCRIPTOR_HANDLE CreateCBV(const GResource & gres);
+		D3D12_GPU_DESCRIPTOR_HANDLE CreateCBV(DX12ResourceRef resource);
 
-		D3D12_CPU_DESCRIPTOR_HANDLE CreateRTV(const GResource & gres);
+		D3D12_CPU_DESCRIPTOR_HANDLE CreateRTV(DX12ResourceRef resource);
 
-		D3D12_CPU_DESCRIPTOR_HANDLE CreateDSV(const GResource & gres);
+		D3D12_CPU_DESCRIPTOR_HANDLE CreateDSV(DX12ResourceRef resource);
 
 		DX12ResourceViewsRef CreatePermanentSRV(uint32_t numDescriptors);
 

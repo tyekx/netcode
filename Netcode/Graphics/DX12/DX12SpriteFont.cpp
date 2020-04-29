@@ -65,15 +65,15 @@ namespace Netcode::Graphics::DX12 {
 
 		memcpy(imageData.GetImage(0, 0, 0)->pixels, textureData, imageData.GetImage(0, 0, 0)->slicePitch);
 
-		eggTexture = resourceContext->CreateTexture2D(textureWidth, textureHeight, textureFormat, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST, ResourceFlags::NONE);
+		textureResource = resourceContext->CreateTexture2D(textureWidth, textureHeight, textureFormat, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST, ResourceFlags::NONE);
 		shaderResourceView = std::dynamic_pointer_cast<DX12ResourceViews>(resourceContext->CreateShaderResourceViews(1));
-		shaderResourceView->CreateSRV(0, eggTexture);
+		shaderResourceView->CreateSRV(0, textureResource);
 
-		resourceContext->SetDebugName(eggTexture, L"SpriteFont:Texture");
+		resourceContext->SetDebugName(textureResource, L"SpriteFont:Texture");
 
 		UploadBatch batch;
-		batch.Upload(eggTexture, imageData.GetPixels(), imageData.GetPixelsSize());
-		batch.ResourceBarrier(eggTexture, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
+		batch.Upload(textureResource, imageData.GetPixels(), imageData.GetPixelsSize());
+		batch.ResourceBarrier(textureResource, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
 		frameContext->SyncUpload(batch);
 
 		imageData.Release();

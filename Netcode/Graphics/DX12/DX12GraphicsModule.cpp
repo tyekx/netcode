@@ -185,16 +185,17 @@ namespace Netcode::Graphics::DX12 {
 
 	void DX12GraphicsModule::SetContextReferences()
 	{
-		heapManager.SetDevice(device.Get());
+		heapManager = std::make_shared<DX12HeapManager>();
+		heapManager->SetDevice(device);
 
-		resourcePool.SetHeapManager(&heapManager);
+		resourcePool.SetHeapManager(heapManager);
 
 		resourceContext.descHeaps = &dheaps;
 		resourceContext.SetResourcePool(&resourcePool);
 		resourceContext.SetDevice(device);
 		resourceContext.backbufferExtents = scissorRect;
 
-		cbufferPool.SetHeapManager(&heapManager);
+		cbufferPool.SetHeapManager(heapManager);
 
 		dheaps.CreateResources(device);
 	}
@@ -247,7 +248,6 @@ namespace Netcode::Graphics::DX12 {
 
 		cbufferPool.Clear();
 		dheaps.Reset();
-		resourcePool.ReleaseTransients();
 
 		for(auto & i : inFlightCommandLists) {
 			commandListStorage.Return(std::move(i));
@@ -428,7 +428,7 @@ namespace Netcode::Graphics::DX12 {
 		barriers.reserve(upload.BarrierTasks().size());
 
 		for(const auto & barrier : upload.BarrierTasks()) {
-			ID3D12Resource* resouce = resourcePool.GetNativeResource(barrier.resourceHandle).resource;
+			ID3D12Resource * resouce = std::dynamic_pointer_cast<DX12Resource>(barrier.resourceHandle)->resource.Get();
 			barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::Transition(resouce, GetNativeState(barrier.before), GetNativeState(barrier.after)));
 		}
 
@@ -470,19 +470,19 @@ namespace Netcode::Graphics::DX12 {
 
 			for(const auto & task : upload.UploadTasks()) {
 				if(task.type == UploadTaskType::BUFFER) {
-					const auto & gres = resourcePool.GetNativeResource(task.bufferTask.resourceHandle);
+					DX12ResourceRef resource = std::dynamic_pointer_cast<DX12Resource>(task.bufferTask.resourceHandle);
 
 					D3D12_SUBRESOURCE_DATA data;
-					data.RowPitch = (gres.desc.dimension == ResourceDimension::BUFFER) ? task.bufferTask.srcDataSizeInBytes : (gres.desc.strideInBytes * gres.desc.width);
+					data.RowPitch = (resource->desc.dimension == ResourceDimension::BUFFER) ? task.bufferTask.srcDataSizeInBytes : (resource->desc.strideInBytes * resource->desc.width);
 					data.SlicePitch = task.bufferTask.srcDataSizeInBytes;
 					data.pData = task.bufferTask.srcData;
-					UpdateSubresources(directCl.commandList.Get(), gres.resource, uploadResource.Get(), offset, 0u, 1u, &data);
+					UpdateSubresources(directCl.commandList.Get(), resource->resource.Get(), uploadResource.Get(), offset, 0u, 1u, &data);
 
 					offset += Utility::Align64K<size_t>(task.bufferTask.srcDataSizeInBytes);
 				}
 
 				if(task.type == UploadTaskType::TEXTURE) {
-					const auto & gres = resourcePool.GetNativeResource(task.textureTask.resourceHandle);
+					DX12ResourceRef resource = std::dynamic_pointer_cast<DX12Resource>(task.textureTask.resourceHandle);
 
 					TextureRef tex = task.textureTask.texture;
 					uint16_t imgCount = tex->GetImageCount();
@@ -498,7 +498,7 @@ namespace Netcode::Graphics::DX12 {
 						sum += imgR->slicePitch;
 					}
 
-					UpdateSubresources(directCl.commandList.Get(), gres.resource, uploadResource.Get(), offset, 0u, imgCount, subResData.get());
+					UpdateSubresources(directCl.commandList.Get(), resource->resource.Get(), uploadResource.Get(), offset, 0u, imgCount, subResData.get());
 
 					offset += Utility::Align64K<size_t>(sum);
 				}
@@ -537,7 +537,7 @@ namespace Netcode::Graphics::DX12 {
 	{
 		FrameGraphExecutor executor{
 			&commandListStorage,
-			&heapManager,
+			heapManager.get(),
 			&resourcePool,
 			&dheaps,
 			&cbufferPool,
@@ -573,10 +573,7 @@ namespace Netcode::Graphics::DX12 {
 			frameResources[i].swapChainBuffer.Reset();
 		}
 
-		if(depthStencil != 0) {
-			resources->ReleaseResource(depthStencil);
-			depthStencil = 0;
-		}
+		depthStencil.reset();
 
 		presentedBackbufferIndex = UINT_MAX;
 	}

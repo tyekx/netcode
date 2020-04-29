@@ -5,12 +5,12 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	std::tuple<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> DynamicDescriptorHeap::CreateBufferUAV(const GResource & gres) {
+	std::tuple<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> DynamicDescriptorHeap::CreateBufferUAV(DX12ResourceRef resource) {
 		ASSERT(IsRendering, "Creating transient descriptor outside of rendering is invalid, create them after a Prepare() call");
 
 		const uint32_t srvId_cpuVisible = srvOffset_CpuVisible;
 		const uint32_t srvId_shaderVisible = srvOffset_ShaderVisible;
-		const D3D12_UNORDERED_ACCESS_VIEW_DESC uavd = GetUnorderedAccessViewDesc(gres.desc);
+		const D3D12_UNORDERED_ACCESS_VIEW_DESC uavd = GetUnorderedAccessViewDesc(resource->desc);
 		const CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpuHandle_CpuVisible{ srvDheap_CpuVisible->GetCPUDescriptorHandleForHeapStart(), static_cast<int>(srvId_cpuVisible), Platform::ShaderResourceViewIncrementSize };
 		const CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpuHandle_ShaderVisible{ srvDheap_ShaderVisible->GetCPUDescriptorHandleForHeapStart(), static_cast<int>(srvId_shaderVisible), Platform::ShaderResourceViewIncrementSize };
 		const CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpuHandle_ShaderVisible{ srvDheap_ShaderVisible->GetGPUDescriptorHandleForHeapStart(), static_cast<int>(srvId_shaderVisible), Platform::ShaderResourceViewIncrementSize };
@@ -18,63 +18,65 @@ namespace Netcode::Graphics::DX12 {
 		srvOffset_CpuVisible += 1;
 		srvOffset_ShaderVisible += 1;
 
-		device->CreateUnorderedAccessView(gres.resource, nullptr, &uavd, srvCpuHandle_CpuVisible);
-		device->CreateUnorderedAccessView(gres.resource, nullptr, &uavd, srvCpuHandle_ShaderVisible);
+		device->CreateUnorderedAccessView(resource->resource.Get(), nullptr, &uavd, srvCpuHandle_CpuVisible);
+		device->CreateUnorderedAccessView(resource->resource.Get(), nullptr, &uavd, srvCpuHandle_ShaderVisible);
 
 		return std::tie(srvCpuHandle_CpuVisible, srvGpuHandle_ShaderVisible);
 	}
 
-	D3D12_CPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateRTV(const GResource & gres)
+	D3D12_CPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateRTV(DX12ResourceRef resource)
 	{
 		ASSERT(IsRendering, "Creating transient descriptor outside of rendering is invalid, create them after a Prepare() call");
 
 		const uint32_t rtvId_CpuVisible = rtvOffset_CpuVisible;
 		const CD3DX12_CPU_DESCRIPTOR_HANDLE dHandle{ rtvDheap_CpuVisible->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(rtvId_CpuVisible), Platform::RenderTargetViewIncrementSize };
-		const D3D12_RENDER_TARGET_VIEW_DESC rtvd = GetRenderTargetViewDesc(gres.desc);
+		const D3D12_RENDER_TARGET_VIEW_DESC rtvd = GetRenderTargetViewDesc(resource->desc);
 
 		rtvOffset_CpuVisible += 1;
 
-		device->CreateRenderTargetView(gres.resource, &rtvd, dHandle);
+		device->CreateRenderTargetView(resource->resource.Get(), &rtvd, dHandle);
 
 		return dHandle;
 	}
 
-	D3D12_CPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateDSV(const GResource & gres)
+	D3D12_CPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateDSV(DX12ResourceRef resource)
 	{
 		ASSERT(IsRendering, "Creating transient descriptor outside of rendering is invalid, create them after a Prepare() call");
 		const uint32_t dsvId_CpuVisible = dsvOffset_CpuVisible;
 		const CD3DX12_CPU_DESCRIPTOR_HANDLE dHandle{ dsvDheap_CpuVisible->GetCPUDescriptorHandleForHeapStart(),  static_cast<INT>(dsvId_CpuVisible), Platform::DepthStencilViewIncrementSize };
-		const D3D12_DEPTH_STENCIL_VIEW_DESC dsvd = GetDepthStencilViewDesc(gres.desc);
+		const D3D12_DEPTH_STENCIL_VIEW_DESC dsvd = GetDepthStencilViewDesc(resource->desc);
 
 		dsvOffset_CpuVisible += 1;
 		
-		device->CreateDepthStencilView(gres.resource, &dsvd, dHandle);
+		device->CreateDepthStencilView(resource->resource.Get(), &dsvd, dHandle);
 
 		return dHandle;
 	}
 
-	D3D12_GPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateSRV(const GResource & gres)
+	D3D12_GPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateSRV(DX12ResourceRef resource)
 	{
 		ASSERT(IsRendering, "Creating transient descriptor outside of rendering is invalid, create them after a Prepare() call");
 
 		const uint32_t srvId_ShaderVisible = srvOffset_ShaderVisible;
-		const D3D12_SHADER_RESOURCE_VIEW_DESC srvd = GetShaderResourceViewDesc(gres.desc);
+		const D3D12_SHADER_RESOURCE_VIEW_DESC srvd = GetShaderResourceViewDesc(resource->desc);
 		const CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle{ srvDheap_ShaderVisible->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(srvId_ShaderVisible), Platform::ShaderResourceViewIncrementSize };
 		const CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle{ srvDheap_ShaderVisible->GetGPUDescriptorHandleForHeapStart(), static_cast<INT>(srvId_ShaderVisible), Platform::ShaderResourceViewIncrementSize };
 
 		srvOffset_ShaderVisible += 1;
 
-		device->CreateShaderResourceView(gres.resource, &srvd, cpuHandle);
+		device->CreateShaderResourceView(resource->resource.Get(), &srvd, cpuHandle);
 
 		return gpuHandle;
 	}
 
-	D3D12_GPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateCBV(const GResource & gres)
+	D3D12_GPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateCBV(DX12ResourceRef resource)
 	{
 		ASSERT(IsRendering, "Creating transient descriptor outside of rendering is invalid, create them after a Prepare() call");
 
 		const uint32_t srvId_ShaderVisible = srvOffset_ShaderVisible;
-		const D3D12_CONSTANT_BUFFER_VIEW_DESC cbvd = GetConstantBufferViewDesc(gres);
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvd;
+		cbvd.BufferLocation = resource->resource->GetGPUVirtualAddress();
+		cbvd.SizeInBytes = resource->desc.sizeInBytes;
 		const CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle{ srvDheap_ShaderVisible->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(srvId_ShaderVisible), Platform::ShaderResourceViewIncrementSize };
 		const CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle{ srvDheap_ShaderVisible->GetGPUDescriptorHandleForHeapStart(), static_cast<INT>(srvId_ShaderVisible), Platform::ShaderResourceViewIncrementSize };
 

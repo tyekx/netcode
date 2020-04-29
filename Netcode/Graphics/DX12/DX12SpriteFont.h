@@ -37,7 +37,7 @@ namespace Netcode::Graphics::DX12 {
 
 	class SpriteFont : public Netcode::SpriteFont
 	{
-		uint64_t eggTexture;
+		GpuResourceRef textureResource;
 		DX12ResourceViewsRef shaderResourceView;
 
 		DirectX::ScratchImage imageData;

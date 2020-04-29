@@ -35,6 +35,11 @@ class MainMenuLayer : public Layer {
 	UILabel loadingLabel;
 
 	UIObject * loginScriptObject;
+	Netcode::GpuResourceRef loadingIconTextureHandle;
+	Netcode::GpuResourceRef textBoxBackgroundTextureHandle;
+	Netcode::GpuResourceRef btnBackgroundTextureHandle;
+	Netcode::GpuResourceRef serverPanelTextureHandle;
+	Netcode::GpuResourceRef serverRowTexHandle;
 
 	Netcode::ResourceViewsRef loadIconView;
 	DirectX::XMUINT2 loadIconTextureSize;
@@ -96,7 +101,7 @@ public:
 		{
 			const Netcode::Image * loadingIconImg = loadingIconTexture->GetImage(0, 0, 0);
 			loadIconTextureSize = DirectX::XMUINT2{ static_cast<uint32_t>(loadingIconImg->width), static_cast<uint32_t>(loadingIconImg->height) };
-			uint64_t loadingIconTextureHandle = app->graphics->resources->CreateTexture2D(loadingIconImg);
+			loadingIconTextureHandle = app->graphics->resources->CreateTexture2D(loadingIconImg);
 			uploadBatch.Upload(loadingIconTextureHandle, loadingIconTexture);
 			uploadBatch.ResourceBarrier(loadingIconTextureHandle, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
 			loadIconView->CreateSRV(0, loadingIconTextureHandle);
@@ -105,7 +110,7 @@ public:
 		{
 			const Netcode::Image * textBoxBackgroundImg = textBoxBackgroundTexture->GetImage(0, 0, 0);
 			textBoxBackgroundTextureSize = DirectX::XMUINT2{ static_cast<uint32_t>(textBoxBackgroundImg->width), static_cast<uint32_t>(textBoxBackgroundImg->height) };
-			uint64_t textBoxBackgroundTextureHandle = app->graphics->resources->CreateTexture2D(textBoxBackgroundImg);
+			textBoxBackgroundTextureHandle = app->graphics->resources->CreateTexture2D(textBoxBackgroundImg);
 			uploadBatch.Upload(textBoxBackgroundTextureHandle, textBoxBackgroundTexture);
 			uploadBatch.ResourceBarrier(textBoxBackgroundTextureHandle, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
 			textBoxBackgroundView->CreateSRV(0, textBoxBackgroundTextureHandle);
@@ -114,7 +119,7 @@ public:
 		{
 			const Netcode::Image * btnBackgroundImg = btnBackgroundTexture->GetImage(0, 0, 0);
 			btnBackgroundTextureSize = DirectX::XMUINT2{ static_cast<uint32_t>(btnBackgroundImg->width), static_cast<uint32_t>(btnBackgroundImg->height) };
-			uint64_t btnBackgroundTextureHandle = app->graphics->resources->CreateTexture2D(btnBackgroundImg);
+			btnBackgroundTextureHandle = app->graphics->resources->CreateTexture2D(btnBackgroundImg);
 			uploadBatch.Upload(btnBackgroundTextureHandle, btnBackgroundTexture);
 			uploadBatch.ResourceBarrier(btnBackgroundTextureHandle, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
 			btnBackgroundView->CreateSRV(0, btnBackgroundTextureHandle);
@@ -123,7 +128,7 @@ public:
 		{
 			const Netcode::Image * serversBackgroundImg = serverPanelBackgroundTexture->GetImage(0, 0, 0);
 			serversPanelBackgroundSize = DirectX::XMUINT2{ static_cast<uint32_t>(serversBackgroundImg->width), static_cast<uint32_t>(serversBackgroundImg->height) };
-			uint64_t serverPanelTextureHandle = app->graphics->resources->CreateTexture2D(serversBackgroundImg);
+			serverPanelTextureHandle = app->graphics->resources->CreateTexture2D(serversBackgroundImg);
 			uploadBatch.Upload(serverPanelTextureHandle, serverPanelBackgroundTexture);
 			uploadBatch.ResourceBarrier(serverPanelTextureHandle, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
 			serversPanelBackgroundView->CreateSRV(0, serverPanelTextureHandle);
@@ -132,7 +137,7 @@ public:
 		{
 			const Netcode::Image * serverRowBackgroundImg = serverRowBackgroundTexture->GetImage(0, 0, 0);
 			serverRowBackgroundSize = DirectX::XMUINT2{ static_cast<uint32_t>(serverRowBackgroundImg->width), static_cast<uint32_t>(serverRowBackgroundImg->height) };
-			uint64_t serverRowTexHandle = app->graphics->resources->CreateTexture2D(serverRowBackgroundImg);
+			serverRowTexHandle = app->graphics->resources->CreateTexture2D(serverRowBackgroundImg);
 			uploadBatch.Upload(serverRowTexHandle, serverRowBackgroundTexture);
 			uploadBatch.ResourceBarrier(serverRowTexHandle, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
 			serverRowBackgroundView->CreateSRV(0, serverRowTexHandle);
@@ -360,11 +365,11 @@ public:
 	}
 
 	virtual void Activate() override {
-		//loginPage.Show();
+		loginPage.Show();
 	}
 
 	virtual void Deactivate() override {
-		//loginPage.Hide();
+		loginPage.Hide();
 	}
 
 };

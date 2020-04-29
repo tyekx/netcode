@@ -9,6 +9,8 @@
 #include <variant>
 #include "GameObject.h"
 
+using Netcode::GpuResourceRef;
+
 using Netcode::Graphics::ResourceDesc;
 using Netcode::Graphics::ResourceType;
 using Netcode::Graphics::ResourceState;
@@ -97,13 +99,13 @@ using UIRenderItem = typename TupleRename<std::variant, UIRenderItemTypeTuple>::
 
 class GraphicsEngine {
 
-	uint64_t gbufferPass_DepthBuffer;
-	uint64_t gbufferPass_ColorRenderTarget;
-	uint64_t gbufferPass_NormalsRenderTarget;
+	GpuResourceRef gbufferPass_DepthBuffer;
+	GpuResourceRef gbufferPass_ColorRenderTarget;
+	GpuResourceRef gbufferPass_NormalsRenderTarget;
 
-	uint64_t ssaoPass_BlurRenderTarget;
-	uint64_t ssaoPass_OcclusionRenderTarget;
-	uint64_t ssaoPass_RandomVectorTexture;
+	GpuResourceRef ssaoPass_BlurRenderTarget;
+	GpuResourceRef ssaoPass_OcclusionRenderTarget;
+	GpuResourceRef ssaoPass_RandomVectorTexture;
 
 	GBuffer fsQuad;
 
@@ -255,7 +257,6 @@ private:
 		ilBuilder->AddInputElement("BONEIDS", DXGI_FORMAT_R32_UINT);
 		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
 
-
 		auto shaderBuilder = g->CreateShaderBuilder();
 		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"skinningPass_Vertex.cso");
 		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"gbufferPass_Pixel.cso");
@@ -341,21 +342,6 @@ private:
 	}
 
 	void CreateGbufferPassSizeDependentResources() {
-		if(gbufferPass_ColorRenderTarget != 0) {
-			graphics->resources->ReleaseResource(gbufferPass_ColorRenderTarget);
-			gbufferPass_ColorRenderTarget = 0;
-		}
-
-		if(gbufferPass_DepthBuffer != 0) {
-			graphics->resources->ReleaseResource(gbufferPass_DepthBuffer);
-			gbufferPass_DepthBuffer = 0;
-		}
-
-		if(gbufferPass_NormalsRenderTarget != 0) {
-			graphics->resources->ReleaseResource(gbufferPass_NormalsRenderTarget);
-			gbufferPass_NormalsRenderTarget = 0;
-		}
-
 		gbufferPass_ColorRenderTarget = graphics->resources->CreateRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
 		gbufferPass_NormalsRenderTarget = graphics->resources->CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
 		gbufferPass_DepthBuffer = graphics->resources->CreateDepthStencil(gbufferPass_DepthStencilFormat, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE | ResourceState::DEPTH_READ);
@@ -446,16 +432,6 @@ private:
 	}
 
 	void CreateSSAOOcclusionPassSizeDependentResources() {
-		if(ssaoPass_OcclusionRenderTarget != 0) {
-			graphics->resources->ReleaseResource(ssaoPass_OcclusionRenderTarget);
-			ssaoPass_OcclusionRenderTarget = 0;
-		}
-
-		if(ssaoPass_BlurRenderTarget != 0) {
-			graphics->resources->ReleaseResource(ssaoPass_BlurRenderTarget);
-			ssaoPass_BlurRenderTarget = 0;
-		}
-
 		ssaoRenderTargetSize = DirectX::XMUINT2{ backbufferSize.x / 2, backbufferSize.y / 2 };
 
 		ssaoRenderTargetSize.x = (ssaoRenderTargetSize.x == 0) ? 1 : ssaoRenderTargetSize.x;
@@ -517,7 +493,6 @@ private:
 	void CreateSkinnedGbufferPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("Skinned Gbuffer",
 		[&](IResourceContext * context) -> void {
-			context->Writes(2);
 
 			context->Writes(gbufferPass_ColorRenderTarget);
 			context->Writes(gbufferPass_NormalsRenderTarget);
@@ -558,8 +533,6 @@ private:
 
 	void CreateGbufferPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("Gbuffer", [&](IResourceContext * context) -> void {
-
-			context->Reads(2);
 
 			context->Writes(gbufferPass_ColorRenderTarget);
 			context->Writes(gbufferPass_NormalsRenderTarget);
@@ -666,13 +639,13 @@ private:
 
 			uint32_t isHorizontal = 0;
 
-			uint64_t renderTargets[2] = {
+			GpuResourceRef renderTargets[2] = {
 				ssaoPass_OcclusionRenderTarget, ssaoPass_BlurRenderTarget
 			};
 
 			for(uint32_t i = 0; i < 3; ++i) {
-				uint64_t currentRenderTarget = renderTargets[(i + 1) % 2];
-				uint64_t sourceTexture = renderTargets[i % 2];
+				GpuResourceRef currentRenderTarget = renderTargets[(i + 1) % 2];
+				GpuResourceRef sourceTexture = renderTargets[i % 2];
 
 				context->ResourceBarrier(currentRenderTarget, ResourceState::PIXEL_SHADER_RESOURCE, ResourceState::RENDER_TARGET);
 				context->FlushResourceBarriers();
@@ -706,9 +679,8 @@ private:
 			context->Reads(gbufferPass_ColorRenderTarget);
 			context->Reads(gbufferPass_DepthBuffer);
 			context->Reads(gbufferPass_NormalsRenderTarget);
-			context->Writes(1);
 
-			context->Writes(0);
+			context->Writes(nullptr);
 
 		}, [&](IRenderContext * context) -> void {
 			context->SetRootSignature(lightingPass_RootSignature);
@@ -732,8 +704,7 @@ private:
 		frameGraphBuilder->CreateRenderPass("UI",
 			[&](IResourceContext * context) -> void {
 
-			context->Reads(1);
-			context->Writes(0);
+			context->Writes(nullptr);
 
 		},
 			[&](IRenderContext * context) -> void {
@@ -777,7 +748,7 @@ private:
 		});
 	}
 
-	uint64_t cloudynoonTexture;
+	GpuResourceRef cloudynoonTexture;
 	Netcode::ResourceViewsRef cloudynoonView;
 
 public:

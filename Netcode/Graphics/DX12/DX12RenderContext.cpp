@@ -1,17 +1,18 @@
 #include "DX12RenderContext.h"
 #include "DX12SpriteFont.h"
+#include "DX12Resource.h"
 
 namespace Netcode::Graphics::DX12 {
 
 	BaseRenderContext::BaseRenderContext(ResourcePool * resourcePool, ConstantBufferPool * cbufferPool, DynamicDescriptorHeap * dHeaps, com_ptr<ID3D12GraphicsCommandList> cl) :
-		resources{ resourcePool }, cbuffers{ cbufferPool }, descHeaps{ dHeaps }, commandList{ std::move(cl) }, signalFence{}, waitFences{}, barriers{}
+		resources{ resourcePool }, cbuffers{ cbufferPool }, descHeaps{ dHeaps }, commandList{ std::move(cl) }, barriers{}
 	{
 
 	}
 
-	void BaseRenderContext::ResourceBarrier(uint64_t handle, ResourceState before, ResourceState after)
+	void BaseRenderContext::ResourceBarrier(GpuResourceRef handle, ResourceState before, ResourceState after)
 	{
-		ID3D12Resource * res = resources->GetNativeResource(handle).resource;
+		ID3D12Resource * res = std::dynamic_pointer_cast<DX12Resource>(handle)->resource.Get();
 
 #if defined(EGG_DEBUG)
 		const auto it = std::find_if(std::begin(barriers), std::end(barriers), [res](const D3D12_RESOURCE_BARRIER & barrier) ->bool {
@@ -58,26 +59,26 @@ namespace Netcode::Graphics::DX12 {
 		commandList->OMSetStencilRef(stencilValue);
 	}
 
-	void GraphicsContext::SetVertexBuffer(uint64_t handle)
+	void GraphicsContext::SetVertexBuffer(GpuResourceRef handle)
 	{
-		const GResource & res = resources->GetNativeResource(handle);
+		DX12ResourceRef rr = std::dynamic_pointer_cast<DX12Resource>(handle);
 
 		D3D12_VERTEX_BUFFER_VIEW vbv;
-		vbv.BufferLocation = res.address;
-		vbv.SizeInBytes = static_cast<UINT>(res.desc.sizeInBytes);
-		vbv.StrideInBytes = res.desc.strideInBytes;
+		vbv.BufferLocation = rr->resource->GetGPUVirtualAddress();
+		vbv.SizeInBytes = static_cast<UINT>(rr->desc.sizeInBytes);
+		vbv.StrideInBytes = rr->desc.strideInBytes;
 
 		commandList->IASetVertexBuffers(0, 1, &vbv);
 	}
 
-	void GraphicsContext::SetIndexBuffer(uint64_t handle)
+	void GraphicsContext::SetIndexBuffer(GpuResourceRef handle)
 	{
-		const GResource & res = resources->GetNativeResource(handle);
+		DX12ResourceRef rr = std::dynamic_pointer_cast<DX12Resource>(handle);
 		
 		D3D12_INDEX_BUFFER_VIEW ibv;
-		ibv.BufferLocation = res.address;
-		ibv.Format = res.desc.format;
-		ibv.SizeInBytes = static_cast<UINT>(res.desc.sizeInBytes);
+		ibv.BufferLocation = rr->resource->GetGPUVirtualAddress();
+		ibv.Format = rr->desc.format;
+		ibv.SizeInBytes = static_cast<UINT>(rr->desc.sizeInBytes);
 
 		commandList->IASetIndexBuffer(&ibv);
 	}
@@ -107,19 +108,6 @@ namespace Netcode::Graphics::DX12 {
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
 	}
 
-	void GraphicsContext::Signal(FenceRef fence)
-	{
-		if(signalFence != nullptr) {
-			Log::Warn("ComputeContext: signalFence is already set, overwriting");
-		}
-		signalFence = std::move(fence);
-	}
-
-	void GraphicsContext::Wait(FenceRef fence)
-	{
-		waitFences.emplace_back(std::move(fence));
-	}
-
 	void GraphicsContext::SetRootSignature(RootSignatureRef rs) {
 		commandList->SetGraphicsRootSignature(reinterpret_cast<ID3D12RootSignature *>(rs->GetImplDetail()));
 	}
@@ -134,13 +122,13 @@ namespace Netcode::Graphics::DX12 {
 		commandList->IASetPrimitiveTopology(GetNativePrimitiveTopology(topology));
 	}
 
-	void GraphicsContext::ClearUnorderedAccessViewUint(uint64_t handle, const DirectX::XMUINT4 & values)
+	void GraphicsContext::ClearUnorderedAccessViewUint(GpuResourceRef handle, const DirectX::XMUINT4 & values)
 	{
-		const GResource & res = resources->GetNativeResource(handle);
+		DX12ResourceRef rr = std::dynamic_pointer_cast<DX12Resource>(handle);
 
-		const auto [cpuDesc, gpuDesc] = descHeaps->CreateBufferUAV(res);
+		const auto [cpuDesc, gpuDesc] = descHeaps->CreateBufferUAV(rr);
 
-		commandList->ClearUnorderedAccessViewUint(gpuDesc, cpuDesc, res.resource, &values.x, 0, nullptr);
+		commandList->ClearUnorderedAccessViewUint(gpuDesc, cpuDesc, rr->resource.Get(), &values.x, 0, nullptr);
 	}
 
 
@@ -167,22 +155,22 @@ namespace Netcode::Graphics::DX12 {
 		commandList->ClearRenderTargetView(currentlyBoundRenderTargets[idx], clearColor, 0, nullptr);
 	}
 
-	void GraphicsContext::SetStreamOutput(uint64_t handle)
+	void GraphicsContext::SetStreamOutput(GpuResourceRef handle)
 	{
-		const GResource & res = resources->GetNativeResource(handle);
+		DX12ResourceRef rr = std::dynamic_pointer_cast<DX12Resource>(handle);
 
 		D3D12_STREAM_OUTPUT_BUFFER_VIEW sobv;
-		sobv.BufferLocation = res.address;
+		sobv.BufferLocation = rr->resource->GetGPUVirtualAddress();
 		sobv.BufferFilledSizeLocation = streamOutput_FilledSizeLocation;
-		sobv.SizeInBytes = res.desc.sizeInBytes;
+		sobv.SizeInBytes = rr->desc.sizeInBytes;
 		commandList->SOSetTargets(0, 1, &sobv);
 	}
 
-	void GraphicsContext::SetStreamOutputFilledSize(uint64_t handle, uint64_t byteOffset)
+	void GraphicsContext::SetStreamOutputFilledSize(GpuResourceRef handle, uint64_t byteOffset)
 	{
-		const GResource & res = resources->GetNativeResource(handle);
+		DX12ResourceRef rr = std::dynamic_pointer_cast<DX12Resource>(handle);
 
-		streamOutput_FilledSizeLocation = res.address + ((byteOffset + 3ull) & ~(3ull));
+		streamOutput_FilledSizeLocation = rr->resource->GetGPUVirtualAddress() + ((byteOffset + 3ull) & ~(3ull));
 	}
 
 	void GraphicsContext::ResetStreamOutput()
@@ -237,6 +225,16 @@ namespace Netcode::Graphics::DX12 {
 		commandList->RSSetScissorRects(1, &defaultScissorRect);
 	}
 
+	void GraphicsContext::SetRenderTargets(std::nullptr_t rt, ResourceViewsRef ds)
+	{
+		SetRenderTargets(ResourceViewsRef{}, std::move(ds));
+	}
+
+	void GraphicsContext::SetRenderTargets(ResourceViewsRef rt, std::nullptr_t ds)
+	{
+		SetRenderTargets(std::move(rt), ResourceViewsRef{});
+	}
+
 	void GraphicsContext::SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil)
 	{
 		uint32_t numDescriptors;
@@ -261,56 +259,71 @@ namespace Netcode::Graphics::DX12 {
 		commandList->OMSetRenderTargets(numDescriptors, currentlyBoundRenderTargets, FALSE, &currentlyBoundDepth);
 	}
 
-	void GraphicsContext::SetRenderTargets(std::initializer_list<uint64_t> handles, uint64_t depthStencil)
+	void GraphicsContext::SetRenderTargets(std::initializer_list<GpuResourceRef> handles, GpuResourceRef depthStencil)
 	{
 		uint8_t k = 0;
-		for(uint64_t rtHandle : handles) {
-			ASSERT(rtHandle != 0, "SetRenderTargets(std::initializer_list<uint64_t> handles, uint64_t depthStencil): handles array must not contain undefined (=0) handle");
-			const GResource & res = resources->GetNativeResource(rtHandle);
+		for(const GpuResourceRef & rtHandle : handles) {
+			ASSERT(rtHandle != nullptr, "SetRenderTargets(...): handles array must not contain null handle");
+			DX12ResourceRef rr = std::dynamic_pointer_cast<DX12Resource>(rtHandle);
 
-			currentlyBoundRenderTargets[k++] = descHeaps->CreateRTV(res);
+			currentlyBoundRenderTargets[k++] = descHeaps->CreateRTV(rr);
 		}
 
-		if(depthStencil == 0) {
+		if(depthStencil == nullptr) {
 			currentlyBoundDepth = backbufferDepth;
 		} else {
-			const GResource & res = resources->GetNativeResource(depthStencil);
-			currentlyBoundDepth = descHeaps->CreateDSV(res);
+			DX12ResourceRef rr = std::dynamic_pointer_cast<DX12Resource>(depthStencil);
+			currentlyBoundDepth = descHeaps->CreateDSV(rr);
 		}
 
 		commandList->OMSetRenderTargets(static_cast<uint32_t>(handles.size()), currentlyBoundRenderTargets, FALSE, &currentlyBoundDepth);
 	}
 
-	void GraphicsContext::SetRenderTargets(uint64_t handle, uint64_t depthStencil)
+	void GraphicsContext::SetRenderTargets(std::nullptr_t rt, std::nullptr_t ds)
 	{
-		if(handle == 0) {
+		SetRenderTargets(GpuResourceRef{}, GpuResourceRef{});
+	}
+
+	void GraphicsContext::SetRenderTargets(std::nullptr_t rt, GpuResourceRef ds)
+	{
+		SetRenderTargets(GpuResourceRef{}, std::move(ds));
+	}
+
+	void GraphicsContext::SetRenderTargets(GpuResourceRef rt, std::nullptr_t ds)
+	{
+		SetRenderTargets(std::move(rt), GpuResourceRef{});
+	}
+
+	void GraphicsContext::SetRenderTargets(GpuResourceRef handle, GpuResourceRef depthStencil)
+	{
+		if(handle == nullptr) {
 			currentlyBoundRenderTargets[0] = backbuffer;
 		} else {
-			const GResource & res = resources->GetNativeResource(handle);
-			currentlyBoundRenderTargets[0] = descHeaps->CreateRTV(res);
+			DX12ResourceRef rr = std::dynamic_pointer_cast<DX12Resource>(handle);
+			currentlyBoundRenderTargets[0] = descHeaps->CreateRTV(rr);
 		}
 
-		if(depthStencil == 0) {
+		if(depthStencil == nullptr) {
 			currentlyBoundDepth = backbufferDepth;
 		} else {
-			const GResource & res = resources->GetNativeResource(depthStencil);
-			currentlyBoundDepth = descHeaps->CreateDSV(res);
+			DX12ResourceRef rr = std::dynamic_pointer_cast<DX12Resource>(depthStencil);
+			currentlyBoundDepth = descHeaps->CreateDSV(rr);
 		}
 
 		commandList->OMSetRenderTargets(1, currentlyBoundRenderTargets, FALSE, &currentlyBoundDepth);
 	}
 
-	void GraphicsContext::SetShaderResources(int slot, std::initializer_list<uint64_t> shaderResourceHandles) {
+	void GraphicsContext::SetShaderResources(int slot, std::initializer_list<GpuResourceRef> shaderResourceHandles) {
 		
 
 		D3D12_GPU_DESCRIPTOR_HANDLE descriptor;
 		descriptor.ptr = 0;
 		
-		for(uint64_t i : shaderResourceHandles) {
-			const GResource & gres = resources->GetNativeResource(i);
+		for(const GpuResourceRef & i : shaderResourceHandles) {
+			DX12ResourceRef rr = std::dynamic_pointer_cast<DX12Resource>(i);
 			if(descriptor.ptr == 0) {
-				descriptor = descHeaps->CreateSRV(gres);
-			} else descHeaps->CreateSRV(gres);
+				descriptor = descHeaps->CreateSRV(rr);
+			} else descHeaps->CreateSRV(rr);
 		}
 
 		commandList->SetGraphicsRootDescriptorTable(slot, descriptor);
@@ -327,7 +340,7 @@ namespace Netcode::Graphics::DX12 {
 		commandList->SetGraphicsRoot32BitConstants(slot, numConstants, srcData, 0);
 	}
 
-	void GraphicsContext::SetConstantBuffer(int slot, uint64_t cbufferHandle)
+	void GraphicsContext::SetConstantBuffer(int slot, GpuResourceRef cbufferHandle)
 	{
 		Log::Warn("SetConstantBuffer(int slot, uint64_t cbufferHandle) not implemneted");
 	}
@@ -361,12 +374,12 @@ namespace Netcode::Graphics::DX12 {
 		commandList->SetPipelineState(reinterpret_cast<ID3D12PipelineState *>(pso->GetImplDetail()));
 	}
 
-	void ComputeContext::SetVertexBuffer(uint64_t handle)
+	void ComputeContext::SetVertexBuffer(GpuResourceRef handle)
 	{
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
 	}
 
-	void ComputeContext::SetIndexBuffer(uint64_t handle)
+	void ComputeContext::SetIndexBuffer(GpuResourceRef handle)
 	{
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
 	}
@@ -395,25 +408,12 @@ namespace Netcode::Graphics::DX12 {
 	{
 	}
 
-	void ComputeContext::Signal(FenceRef fence)
-	{
-		if(signalFence != nullptr) {
-			Log::Warn("ComputeContext: signalFence is already set, overwriting");
-		}
-		signalFence = std::move(fence);
-	}
-
-	void ComputeContext::Wait(FenceRef fence)
-	{
-		waitFences.emplace_back(std::move(fence));
-	}
-
 	void ComputeContext::SetPrimitiveTopology(PrimitiveTopology topology)
 	{
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
 	}
 
-	void ComputeContext::ClearUnorderedAccessViewUint(uint64_t handle, const DirectX::XMUINT4 & values)
+	void ComputeContext::ClearUnorderedAccessViewUint(GpuResourceRef handle, const DirectX::XMUINT4 & values)
 	{
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
 	}
@@ -443,12 +443,12 @@ namespace Netcode::Graphics::DX12 {
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
 	}
 
-	void ComputeContext::SetStreamOutput(uint64_t handle)
+	void ComputeContext::SetStreamOutput(GpuResourceRef handle)
 	{
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
 	}
 
-	void ComputeContext::SetStreamOutputFilledSize(uint64_t handle, uint64_t byteOffset)
+	void ComputeContext::SetStreamOutputFilledSize(GpuResourceRef handle, uint64_t byteOffset)
 	{
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
 	}
@@ -458,7 +458,7 @@ namespace Netcode::Graphics::DX12 {
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
 	}
 
-	void ComputeContext::SetRenderTargets(std::initializer_list<uint64_t> handles, uint64_t depthStencil)
+	void ComputeContext::SetRenderTargets(std::initializer_list<GpuResourceRef> handles, GpuResourceRef depthStencil)
 	{
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
 	}
@@ -498,9 +498,22 @@ namespace Netcode::Graphics::DX12 {
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
 	}
 
-	void ComputeContext::SetRenderTargets(uint64_t renderTarget, uint64_t depthStencil)
+	void ComputeContext::SetRenderTargets(GpuResourceRef renderTarget, GpuResourceRef depthStencil)
 	{
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
+	}
+
+	void ComputeContext::SetRenderTargets(std::nullptr_t rt, std::nullptr_t ds)
+	{
+
+	}
+
+	void ComputeContext::SetRenderTargets(std::nullptr_t rt, ResourceViewsRef ds)
+	{
+	}
+
+	void ComputeContext::SetRenderTargets(ResourceViewsRef rt, std::nullptr_t ds)
+	{
 	}
 
 	void ComputeContext::SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil)
@@ -508,22 +521,28 @@ namespace Netcode::Graphics::DX12 {
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
 	}
 
+	void ComputeContext::SetRenderTargets(std::nullptr_t rt, GpuResourceRef ds)
+	{
+	}
+
+	void ComputeContext::SetRenderTargets(GpuResourceRef rt, std::nullptr_t ds)
+	{
+	}
+
 	void ComputeContext::SetRootConstants(int slot, const void * srcData, uint32_t numConstants)
 	{
 		commandList->SetComputeRoot32BitConstants(slot, numConstants, srcData, 0);
 	}
 
-	void ComputeContext::SetShaderResources(int slot, std::initializer_list<uint64_t> shaderResourceHandles) {
-
-
+	void ComputeContext::SetShaderResources(int slot, std::initializer_list<GpuResourceRef> shaderResourceHandles) {
 		D3D12_GPU_DESCRIPTOR_HANDLE descriptor;
 		descriptor.ptr = 0;
 
-		for(uint64_t i : shaderResourceHandles) {
-			const GResource & gres = resources->GetNativeResource(i);
+		for(const GpuResourceRef & i : shaderResourceHandles) {
+			DX12ResourceRef rr = std::dynamic_pointer_cast<DX12Resource>(i);
 			if(descriptor.ptr == 0) {
-				descriptor = descHeaps->CreateSRV(gres);
-			} else descHeaps->CreateSRV(gres);
+				descriptor = descHeaps->CreateSRV(rr);
+			} else descHeaps->CreateSRV(rr);
 		}
 
 		commandList->SetComputeRootDescriptorTable(slot, descriptor);
@@ -536,7 +555,7 @@ namespace Netcode::Graphics::DX12 {
 		commandList->SetComputeRootDescriptorTable(slot, srv->GetGpuHandle(0));
 	}
 
-	void ComputeContext::SetConstantBuffer(int slot, uint64_t cbufferHandle)
+	void ComputeContext::SetConstantBuffer(int slot, GpuResourceRef cbufferHandle)
 	{
 		Log::Warn("SetConstantBuffer(int slot, uint64_t cbufferHandle) not implemneted");
 	}

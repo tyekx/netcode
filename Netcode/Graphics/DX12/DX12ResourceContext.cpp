@@ -17,17 +17,17 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 
-	void ResourceContext::Writes(uint64_t resourceHandle)
+	void ResourceContext::Writes(GpuResourceRef resourceHandle)
 	{
 		if(activeRenderPass != nullptr) {
-			activeRenderPass->WritesResource(resourceHandle);
+			activeRenderPass->WritesResource(reinterpret_cast<uint64_t>(resourceHandle.get()));
 		}
 	}
 
-	void ResourceContext::Reads(uint64_t resourceHandle)
+	void ResourceContext::Reads(GpuResourceRef resourceHandle)
 	{
 		if(activeRenderPass != nullptr) {
-			activeRenderPass->ReadsResource(resourceHandle);
+			activeRenderPass->ReadsResource(reinterpret_cast<uint64_t>(resourceHandle.get()));
 		}
 	}
 
@@ -41,24 +41,24 @@ namespace Netcode::Graphics::DX12 {
 		activeRenderPass.reset();
 	}
 
-	uint64_t ResourceContext::CreateResource(const ResourceDesc & resource)
+	GpuResourceRef ResourceContext::CreateResource(const ResourceDesc & resource)
 	{
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
-		return uint64_t();
+		return nullptr;
 	}
 
-	uint64_t ResourceContext::CreateTypedBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags)
+	GpuResourceRef ResourceContext::CreateTypedBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags)
 	{
 		return resources->CreateTypedBuffer(size, format, type, initState, flags);
 	}
 
-	uint64_t ResourceContext::CreateStructuredBuffer(size_t size, uint32_t stride, ResourceType type, ResourceState initState, ResourceFlags flags)
+	GpuResourceRef ResourceContext::CreateStructuredBuffer(size_t size, uint32_t stride, ResourceType type, ResourceState initState, ResourceFlags flags)
 	{
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
-		return uint64_t();
+		return nullptr;
 	}
 
-	uint64_t ResourceContext::CreateTexture2D(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags)
+	GpuResourceRef ResourceContext::CreateTexture2D(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags)
 	{
 		ASSERT(resourceType == ResourceType::PERMANENT_DEFAULT || resourceType == ResourceType::TRANSIENT_DEFAULT, "Texture2D must be in default heap");
 		ResourceDesc desc;
@@ -77,7 +77,7 @@ namespace Netcode::Graphics::DX12 {
 		return resources->CreateResource(desc);
 	}
 
-	uint64_t ResourceContext::CreateTextureCube(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags)
+	GpuResourceRef ResourceContext::CreateTextureCube(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags)
 	{
 		ASSERT(resourceType == ResourceType::PERMANENT_DEFAULT || resourceType == ResourceType::TRANSIENT_DEFAULT, "TextureCube must be in default heap");
 		ResourceDesc desc;
@@ -96,26 +96,26 @@ namespace Netcode::Graphics::DX12 {
 		return resources->CreateResource(desc);
 	}
 
-	uint64_t ResourceContext::CreateTexture2D(const Image * images)
+	GpuResourceRef ResourceContext::CreateTexture2D(const Image * images)
 	{
 		return CreateTexture2D(images, ResourceType::PERMANENT_DEFAULT);
 	}
 
-	uint64_t ResourceContext::CreateTexture2D(const Image * images, ResourceType resourceType)
+	GpuResourceRef ResourceContext::CreateTexture2D(const Image * images, ResourceType resourceType)
 	{
 		return CreateTexture2D(static_cast<uint32_t>(images->width), static_cast<uint32_t>(images->height), images->format, resourceType, ResourceState::COPY_DEST, ResourceFlags::NONE);
 	}
 
-	uint64_t ResourceContext::CreateTexture2D(const Image * images, uint32_t mipLevels)
+	GpuResourceRef ResourceContext::CreateTexture2D(const Image * images, uint32_t mipLevels)
 	{
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
-		return uint64_t();
+		return nullptr;
 	}
 
-	uint64_t ResourceContext::CreateTexture2D(const Image * images, uint32_t mipLevels, ResourceType resourceType)
+	GpuResourceRef ResourceContext::CreateTexture2D(const Image * images, uint32_t mipLevels, ResourceType resourceType)
 	{
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
-		return uint64_t();
+		return nullptr;
 	}
 
 	ResourceViewsRef ResourceContext::CreateShaderResourceViews(uint32_t numDescriptors)
@@ -133,12 +133,12 @@ namespace Netcode::Graphics::DX12 {
 		return descHeaps->CreatePermanentDSV();
 	}
 
-	void ResourceContext::SetDebugName(uint64_t resourceHandle, const wchar_t * name)
+	void ResourceContext::SetDebugName(GpuResourceRef resourceHandle, const wchar_t * name)
 	{
-		reinterpret_cast<GResource *>(resourceHandle)->resource->SetName(name);
+		std::dynamic_pointer_cast<DX12Resource>(resourceHandle)->resource->SetName(name);
 	}
 
-	uint64_t ResourceContext::CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, const DirectX::XMFLOAT4 & clearColor)
+	GpuResourceRef ResourceContext::CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, const DirectX::XMFLOAT4 & clearColor)
 	{
 		ASSERT(resourceType == ResourceType::PERMANENT_DEFAULT || resourceType == ResourceType::TRANSIENT_DEFAULT, "Texture2D must be in default heap");
 		ResourceDesc desc;
@@ -160,44 +160,42 @@ namespace Netcode::Graphics::DX12 {
 		return resources->CreateResource(desc);
 	}
 
-	uint64_t ResourceContext::CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, const DirectX::XMFLOAT4 & clearColor)
+	GpuResourceRef ResourceContext::CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, const DirectX::XMFLOAT4 & clearColor)
 	{
 		return CreateRenderTarget(width, height, format, resourceType, ResourceState::RENDER_TARGET, clearColor);
 	}
 
-	uint64_t ResourceContext::CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState)
+	GpuResourceRef ResourceContext::CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState)
 	{
 		return CreateRenderTarget(width, height, format, resourceType, initState, DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 0.0f });
 	}
 
-	uint64_t ResourceContext::CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType)
+	GpuResourceRef ResourceContext::CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType)
 	{
 		return CreateRenderTarget(width, height, format, resourceType, ResourceState::RENDER_TARGET);
 	}
 
-	uint64_t ResourceContext::CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, const DirectX::XMFLOAT4 & clearColor)
+	GpuResourceRef ResourceContext::CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, const DirectX::XMFLOAT4 & clearColor)
 	{
 		return CreateRenderTarget(backbufferExtents.right, backbufferExtents.bottom, format, resourceType, initState, clearColor);
 	}
 
-	uint64_t ResourceContext::CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, const DirectX::XMFLOAT4 & clearColor)
+	GpuResourceRef ResourceContext::CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, const DirectX::XMFLOAT4 & clearColor)
 	{
 		return CreateRenderTarget(backbufferExtents.right, backbufferExtents.bottom, format, resourceType, ResourceState::RENDER_TARGET, clearColor);
 	}
 
-	uint64_t ResourceContext::CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState)
+	GpuResourceRef ResourceContext::CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState)
 	{
 		return CreateRenderTarget(backbufferExtents.right, backbufferExtents.bottom, format, resourceType, initState, DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 0.0f });
 	}
 
-	uint64_t ResourceContext::CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType)
+	GpuResourceRef ResourceContext::CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType)
 	{
 		return CreateRenderTarget(backbufferExtents.right, backbufferExtents.bottom, format, resourceType, ResourceState::RENDER_TARGET, DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 0.0f });
 	}
 
-
-
-	uint64_t ResourceContext::CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, float clearDepth, uint8_t clearStencil)
+	GpuResourceRef ResourceContext::CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, float clearDepth, uint8_t clearStencil)
 	{
 		ASSERT(resourceType == ResourceType::PERMANENT_DEFAULT || resourceType == ResourceType::TRANSIENT_DEFAULT, "Texture2D must be in default heap");
 		ResourceDesc desc;
@@ -217,53 +215,42 @@ namespace Netcode::Graphics::DX12 {
 		return resources->CreateResource(desc);
 	}
 
-	uint64_t ResourceContext::CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, float clearDepth, uint8_t clearStencil)
+	GpuResourceRef ResourceContext::CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, float clearDepth, uint8_t clearStencil)
 	{
 		return CreateDepthStencil(width, height, format, resourceType, ResourceState::DEPTH_WRITE, clearDepth, clearStencil);
 	}
 
-	uint64_t ResourceContext::CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState)
+	GpuResourceRef ResourceContext::CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState)
 	{
 		return CreateDepthStencil(width, height, format, resourceType, initState, 1.0f, 0);
 	}
 
-	uint64_t ResourceContext::CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType)
+	GpuResourceRef ResourceContext::CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType)
 	{
 		return CreateDepthStencil(width, height, format, resourceType, ResourceState::DEPTH_WRITE, 1.0f, 0);
 	}
 
-	uint64_t ResourceContext::CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, float clearDepth, uint8_t clearStencil)
+	GpuResourceRef ResourceContext::CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, float clearDepth, uint8_t clearStencil)
 	{
 		return CreateDepthStencil(backbufferExtents.right, backbufferExtents.bottom, format, resourceType, initState, clearDepth, clearStencil);
 	}
 
-	uint64_t ResourceContext::CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, float clearDepth, uint8_t clearStencil)
+	GpuResourceRef ResourceContext::CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, float clearDepth, uint8_t clearStencil)
 	{
 		return CreateDepthStencil(backbufferExtents.right, backbufferExtents.bottom, format, resourceType, ResourceState::DEPTH_WRITE, clearDepth, clearStencil);
 	}
 
-	uint64_t ResourceContext::CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState)
+	GpuResourceRef ResourceContext::CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState)
 	{
 		return CreateDepthStencil(backbufferExtents.right, backbufferExtents.bottom, format, resourceType, initState, 1.0f, 0);
 	}
 
-	uint64_t ResourceContext::CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType)
+	GpuResourceRef ResourceContext::CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType)
 	{
 		return CreateDepthStencil(backbufferExtents.right, backbufferExtents.bottom, format, resourceType, ResourceState::DEPTH_WRITE, 1.0f, 0);
 	}
 
-
-	const ResourceDesc & ResourceContext::QueryDesc(uint64_t handle)
-	{
-		return reinterpret_cast<GResource *>(handle)->desc;
-	}
-
-	void ResourceContext::ReleaseResource(uint64_t handle)
-	{
-		resources->ReleaseResource(handle);
-	}
-
-	uint64_t ResourceContext::CreateConstantBuffer(size_t size)
+	GpuResourceRef ResourceContext::CreateConstantBuffer(size_t size)
 	{
 		ResourceDesc desc;
 		desc.depth = 1;
@@ -279,51 +266,52 @@ namespace Netcode::Graphics::DX12 {
 		return resources->CreateResource(desc);
 	}
 
-	void ResourceContext::CopyConstants(uint64_t uploadResource, const void * srcData, size_t srcDataSizeInBytes, size_t dstOffsetInBytes) {
-		GResource * gres = reinterpret_cast<GResource *>(uploadResource);
+	void ResourceContext::CopyConstants(GpuResourceRef uploadResource, const void * srcData, size_t srcDataSizeInBytes, size_t dstOffsetInBytes) {
+		ID3D12Resource * resource = std::dynamic_pointer_cast<DX12Resource>(uploadResource)->resource.Get();
+
 		uint8_t * mappedPtr;
 		const CD3DX12_RANGE readRange{ 0,0 };
 		const CD3DX12_RANGE writtenRange{ dstOffsetInBytes, srcDataSizeInBytes };
 
 		DX_API("Failed to map ptr")
-			gres->resource->Map(0, &readRange, reinterpret_cast<void **>(&mappedPtr));
+			resource->Map(0, &readRange, reinterpret_cast<void **>(&mappedPtr));
 
 		memcpy(mappedPtr + dstOffsetInBytes, srcData, srcDataSizeInBytes);
 
-		gres->resource->Unmap(0, &writtenRange);
+		resource->Unmap(0, &writtenRange);
 	}
 
-	void ResourceContext::Readback(uint64_t readbackResource, void * dstData, size_t dstDataSizeInBytes)
+	void ResourceContext::Readback(GpuResourceRef readbackResource, void * dstData, size_t dstDataSizeInBytes)
 	{
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
 	}
 
-	void ResourceContext::Readback(uint64_t readbackResource, void * dstData, size_t dstDataSizeInBytes, size_t dstOffsetInBytes)
+	void ResourceContext::Readback(GpuResourceRef readbackResource, void * dstData, size_t dstDataSizeInBytes, size_t dstOffsetInBytes)
 	{
 		//Log::Debug("call to " __FUNCTION__ " is ignored");
 	}
 
-	void ResourceContext::CopyConstants(uint64_t uploadResource, const void * srcData, size_t srcDataSizeInBytes)
+	void ResourceContext::CopyConstants(GpuResourceRef uploadResource, const void * srcData, size_t srcDataSizeInBytes)
 	{
 		CopyConstants(uploadResource, srcData, srcDataSizeInBytes, 0);
 	}
 
-	uint64_t ResourceContext::CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState)
+	GpuResourceRef ResourceContext::CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState)
 	{
 		return CreateVertexBuffer(size, stride, type, initState, ResourceFlags::NONE);
 	}
 
-	uint64_t ResourceContext::CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState, ResourceFlags flags)
+	GpuResourceRef ResourceContext::CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState, ResourceFlags flags)
 	{
 		return resources->CreateStructuredBuffer(size, stride, type, initState, flags);
 	}
 
-	uint64_t ResourceContext::CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState)
+	GpuResourceRef ResourceContext::CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState)
 	{
 		return CreateIndexBuffer(size, format, type, initState, ResourceFlags::NONE);
 	}
 
-	uint64_t ResourceContext::CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags)
+	GpuResourceRef ResourceContext::CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags)
 	{
 		return resources->CreateTypedBuffer(size, format, type, initState, flags);
 	}

@@ -10,11 +10,11 @@ namespace Netcode::Graphics::DX12 {
 	const DirectX::XMMATRIX SpriteBatch::MatrixIdentity = DirectX::XMMatrixIdentity();
 	const DirectX::XMFLOAT2 SpriteBatch::Float2Zero(0, 0);
 
-	uint64_t SpriteBatch::indexBuffer{ 0 };
+	GpuResourceRef SpriteBatch::indexBuffer{ nullptr };
 
 void SpriteBatch::CreateIndexBuffer(const Netcode::Module::IGraphicsModule * graphics)
 {
-	if(indexBuffer != 0) {
+	if(indexBuffer != nullptr) {
 		return;
 	}
 

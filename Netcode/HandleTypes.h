@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Graphics/ResourceEnums.h"
+#include "Graphics/ResourceDesc.h"
 #include "Common.h"
 
 #if defined(EGG_OS_WINDOWS)
@@ -259,6 +260,14 @@ namespace Netcode {
 		}
 	};
 
+	class GpuResource {
+	public:
+		virtual ~GpuResource() = default;
+		virtual const Graphics::ResourceDesc & GetDesc() const = 0;
+	};
+
+	using GpuResourceRef = std::shared_ptr<GpuResource>;
+
 	class ShaderBytecode {
 	public:
 		virtual ~ShaderBytecode() = default;
@@ -420,11 +429,11 @@ namespace Netcode {
 	class ResourceViews {
 	public:
 		virtual ~ResourceViews() = default;
-		virtual void CreateSRV(uint32_t idx, uint64_t resourceHandle) = 0;
-		virtual void CreateRTV(uint32_t idx, uint64_t resourceHandle) = 0;
-		virtual void CreateDSV(uint64_t resourceHandle) = 0;
-		virtual void CreateUAV(uint32_t idx, uint64_t resourceHandle) = 0;
-		virtual void CreateSampler(uint32_t idx, uint64_t resourceHandle) = 0;
+		virtual void CreateSRV(uint32_t idx, GpuResourceRef resourceHandle) = 0;
+		virtual void CreateRTV(uint32_t idx, GpuResourceRef resourceHandle) = 0;
+		virtual void CreateDSV(GpuResourceRef resourceHandle) = 0;
+		virtual void CreateUAV(uint32_t idx, GpuResourceRef resourceHandle) = 0;
+		virtual void CreateSampler(uint32_t idx, GpuResourceRef resourceHandle) = 0;
 	};
 
 	using ResourceViewsRef = std::shared_ptr<ResourceViews>;

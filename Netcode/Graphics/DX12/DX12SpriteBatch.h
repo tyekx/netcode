@@ -101,7 +101,7 @@ namespace Netcode::Graphics::DX12
     };
 
     class SpriteBatch : public Netcode::SpriteBatch {
-        static uint64_t indexBuffer;
+        static GpuResourceRef indexBuffer;
         static const DirectX::XMMATRIX MatrixIdentity;
         static const DirectX::XMFLOAT2 Float2Zero;
     public:
@@ -124,7 +124,7 @@ namespace Netcode::Graphics::DX12
             static_assert((SpriteEffects_FlipBoth & (SourceInTexels | DestSizeInPixels)) == 0, "Flag bits must not overlap");
         };
 
-        uint64_t vertexBuffer;
+        GpuResourceRef vertexBuffer;
 
         IResourceContext * resourceContext;
         IRenderContext * renderContext;

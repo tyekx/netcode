@@ -2,9 +2,9 @@
 
 namespace Netcode::Graphics {
 
-	UploadBatch::BarrierTask::BarrierTask(uint64_t handle, ResourceState before, ResourceState after) : resourceHandle{ handle }, before{ before }, after{ after } { }
+	UploadBatch::BarrierTask::BarrierTask(GpuResourceRef handle, ResourceState before, ResourceState after) : resourceHandle{ handle }, before{ before }, after{ after } { }
 
-	UploadBatch::BufferUploadTask::BufferUploadTask(uint64_t h, const void * srcData, size_t srcDataSizeInBytes) : resourceHandle{ h }, srcData{ srcData }, srcDataSizeInBytes{ srcDataSizeInBytes } {
+	UploadBatch::BufferUploadTask::BufferUploadTask(GpuResourceRef h, const void * srcData, size_t srcDataSizeInBytes) : resourceHandle{ h }, srcData{ srcData }, srcDataSizeInBytes{ srcDataSizeInBytes } {
 	
 	}
 
@@ -16,19 +16,19 @@ namespace Netcode::Graphics {
 	
 	}
 
-	UploadBatch::TextureUploadTask::TextureUploadTask(uint64_t h, Netcode::TextureRef texture) : resourceHandle{ h }, texture{ std::move(texture )} {
+	UploadBatch::TextureUploadTask::TextureUploadTask(GpuResourceRef h, Netcode::TextureRef texture) : resourceHandle{ h }, texture{ std::move(texture )} {
 	
 	}
 
-	void UploadBatch::Upload(uint64_t resourceHandle, const void * srcData, size_t srcDataSizeInBytes) {
+	void UploadBatch::Upload(GpuResourceRef resourceHandle, const void * srcData, size_t srcDataSizeInBytes) {
 		uploadTasks.emplace_back(BufferUploadTask(resourceHandle, srcData, srcDataSizeInBytes));
 	}
 
-	void  UploadBatch::Upload(uint64_t resourceHandle, Netcode::TextureRef texture) {
+	void  UploadBatch::Upload(GpuResourceRef resourceHandle, Netcode::TextureRef texture) {
 		uploadTasks.emplace_back(TextureUploadTask(resourceHandle, std::move(texture)));
 	}
 
-	void UploadBatch::ResourceBarrier(uint64_t resourceHandle, ResourceState before, ResourceState after) {
+	void UploadBatch::ResourceBarrier(GpuResourceRef resourceHandle, ResourceState before, ResourceState after) {
 		barrierTasks.emplace_back(resourceHandle, before, after);
 	}
 

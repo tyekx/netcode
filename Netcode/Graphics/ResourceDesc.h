@@ -3,7 +3,7 @@
 #include "../Common.h"
 #include "ResourceEnums.h"
 
-#include <stdint.h>
+#include <cstdint>
 
 #if defined(EGG_OS_WINDOWS)
 #include <dxgiformat.h>

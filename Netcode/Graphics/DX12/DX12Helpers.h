@@ -24,6 +24,4 @@ namespace Netcode::Graphics::DX12 {
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC GetDepthStencilViewDesc(const ResourceDesc & resource);
 
-	D3D12_CONSTANT_BUFFER_VIEW_DESC GetConstantBufferViewDesc(const GResource & resource);
-
 }
