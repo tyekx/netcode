@@ -197,7 +197,6 @@ namespace Netcode::Graphics::DX12 {
 						return true;
 					}
 				}
-				return false;
 			}
 
 			if(renderPass->Type() == RenderPassType::COMPUTE) {
@@ -209,8 +208,9 @@ namespace Netcode::Graphics::DX12 {
 						return true;
 					}
 				}
-				return false;
 			}
+
+			return false;
 		}
 
 		void InvokeRenderFunction(RenderPassRef renderPass) {

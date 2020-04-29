@@ -18,6 +18,8 @@ public:
 	virtual void Apply(Netcode::Graphics::IRenderContext * ctx) {
 			
 	}
+
+	virtual ~Material() = default;
 };
 
 struct TestMaterial : public Material {

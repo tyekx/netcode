@@ -11,6 +11,36 @@
 using Netcode::Graphics::ResourceType;
 using Netcode::Graphics::ResourceState;
 
+class AnimationController {
+public:
+	constexpr static uint32_t MAX_ACTIVE_STATE_COUNT = 8;
+private:
+	// states
+	// transitions
+	// active states
+public:
+	void Update(float dt) {}
+};
+
+class AnimationSet {
+public:
+	constexpr static uint32_t MAX_INSTANCE_COUNT = 32;
+	constexpr static uint32_t MAX_ANIMATION_COUNT = 64;
+private:
+
+	std::vector<std::unique_ptr<AnimationController>> content;
+
+public:
+	std::unique_ptr<AnimationController> CreateController() {
+		return nullptr;
+	}
+};
+
+struct AnimComponent {
+	std::shared_ptr<AnimationSet> animationSet;
+	std::unique_ptr<AnimationController> controller;
+};
+
 void LoadItem(Netcode::Module::IGraphicsModule * g, Netcode::Asset::Model * model, Model* modelComponent) {
 	for(size_t meshIdx = 0; meshIdx < model->meshes.Size(); ++meshIdx) {
 		Netcode::Asset::Material * mat = model->materials.Data() + model->meshes[meshIdx].materialId;

@@ -389,7 +389,7 @@ public:
 
 	virtual void OnResized(int w, int h) override {
 		float asp = graphics->GetAspectRatio();
-		//scene.camera->GetComponent<Camera>()->aspect = asp;
+		gameScene->GetCamera()->GetComponent<Camera>()->aspect = asp;
 		renderSystem.renderer.OnResize(w, h);
 		uiSystem.SetScreenSize(DirectX::XMUINT2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
 		uiScene->SetScreenSize(DirectX::XMUINT2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });

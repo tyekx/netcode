@@ -100,27 +100,27 @@ macro(netcode_increment_build_number dependent_target)
 endmacro()
 
 macro(NETCODE_COMPILE_VS outBinPath fileName)
-	NETCODE_COMPILE_SHADER(${outBinPath} ${fileName} "vs_5_0" "main")
+	NETCODE_COMPILE_SHADER(${outBinPath} ${fileName} "vs_5_1" "main")
 endmacro()
 
 macro(NETCODE_COMPILE_PS outBinPath fileName)
-	NETCODE_COMPILE_SHADER(${outBinPath} ${fileName} "ps_5_0" "main")
+	NETCODE_COMPILE_SHADER(${outBinPath} ${fileName} "ps_5_1" "main")
 endmacro()
 
 macro(NETCODE_COMPILE_GS outBinPath fileName)
-	NETCODE_COMPILE_SHADER(${outBinPath} ${fileName} "gs_5_0" "main")
+	NETCODE_COMPILE_SHADER(${outBinPath} ${fileName} "gs_5_1" "main")
 endmacro()
 
 macro(NETCODE_COMPILE_HS outBinPath fileName)
-	NETCODE_COMPILE_SHADER(${outBinPath} ${fileName} "hs_5_0" "main")
+	NETCODE_COMPILE_SHADER(${outBinPath} ${fileName} "hs_5_1" "main")
 endmacro()
 
 macro(NETCODE_COMPILE_DS outBinPath fileName)
-	NETCODE_COMPILE_SHADER(${outBinPath} ${fileName} "ds_5_0" "main")
+	NETCODE_COMPILE_SHADER(${outBinPath} ${fileName} "ds_5_1" "main")
 endmacro()
 
 macro(NETCODE_COMPILE_CS outBinPath fileName)
-	NETCODE_COMPILE_SHADER(${outBinPath} ${fileName} "cs_5_0" "main")
+	NETCODE_COMPILE_SHADER(${outBinPath} ${fileName} "cs_5_1" "main")
 endmacro()
 
 project("Netcode")

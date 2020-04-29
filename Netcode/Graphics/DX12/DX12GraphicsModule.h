@@ -145,6 +145,25 @@ namespace Netcode::Graphics::DX12 {
 		DX12FenceRef mainFence;
 		DX12FenceRef uploadFence;
 
+		CommandListPool commandListStorage;
+
+		DX12SpriteFontLibraryRef spriteFontLibrary;
+		DX12ShaderLibraryRef shaderLibrary;
+		DX12RootSignatureLibraryRef rootSigLibrary;
+		DX12StreamOutputLibraryRef streamOutputLibrary;
+		DX12InputLayoutLibraryRef inputLayoutLibrary;
+		DX12GPipelineStateLibraryRef gPipelineLibrary;
+		DX12CPipelineStateLibraryRef cPipelineLibrary;
+
+		HeapManager heapManager;
+		ResourcePool resourcePool;
+		ConstantBufferPool cbufferPool;
+		DynamicDescriptorHeap dheaps;
+
+		std::vector<CommandList> inFlightCommandLists;
+
+		ResourceContext resourceContext;
+
 		void NextBackBufferIndex();
 
 		void CreateFactory();
@@ -170,25 +189,6 @@ namespace Netcode::Graphics::DX12 {
 		void CreateContexts();
 
 		void UpdateViewport();
-
-		CommandListPool commandListStorage;
-
-		DX12SpriteFontLibraryRef spriteFontLibrary;
-		DX12ShaderLibraryRef shaderLibrary;
-		DX12RootSignatureLibraryRef rootSigLibrary;
-		DX12StreamOutputLibraryRef streamOutputLibrary;
-		DX12InputLayoutLibraryRef inputLayoutLibrary;
-		DX12GPipelineStateLibraryRef gPipelineLibrary;
-		DX12CPipelineStateLibraryRef cPipelineLibrary;
-
-		HeapManager heapManager;
-		ResourcePool resourcePool;
-		ConstantBufferPool cbufferPool;
-		DynamicDescriptorHeap dheaps;
-
-		std::vector<CommandList> inFlightCommandLists;
-
-		ResourceContext resourceContext;
 
 	public:
 

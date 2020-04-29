@@ -60,6 +60,8 @@ PUBLIC
 	UIServerRow.h
 	UISpinner.h
 	UITextBox.h
+	AnimationSet.cpp
+	AnimationController.cpp
 )
 
 target_link_directories(NetcodeClient

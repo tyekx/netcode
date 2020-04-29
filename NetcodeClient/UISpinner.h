@@ -12,7 +12,7 @@ public:
 
 	UISpinner() = default;
 
-	void SetPosition(const DirectX::XMFLOAT2 & pos) {
+	virtual void SetPosition(const DirectX::XMFLOAT2 & pos) override {
 		Transform * lTrans = root->GetComponent<Transform>();
 		UIElement * lElem = root->GetComponent<UIElement>();
 

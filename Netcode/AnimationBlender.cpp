@@ -94,12 +94,15 @@ namespace Netcode::Animation {
 		}
 
 		for(unsigned int i = 0; i < bonesLength; ++i) {
+			// A matrix
 			toRoot[i] = DirectX::XMMatrixAffineTransformation(buffer[i].scale, DirectX::XMQuaternionIdentity(), buffer[i].rotation, buffer[i].translation);
 
 			parentId = bones[i].parentId;
 			if(parentId > -1) {
+				// foreach parent A matrix * parent A matrix
 				toRoot[i] = DirectX::XMMatrixMultiply(toRoot[i], toRoot[bones[i].parentId]);
 			}
+
 
 			DirectX::XMStoreFloat4x4A(toRootTransform + i, DirectX::XMMatrixTranspose(toRoot[i]));
 
