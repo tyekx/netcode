@@ -3,10 +3,10 @@
 namespace Netcode {
 	template<typename T>
 	class ArrayView {
-		T * begin;
+		T * beginPtr;
 		size_t len;
 	public:
-		ArrayView(T * ptr, size_t arrayLength) : begin{ ptr }, len{ arrayLength } { }
+		ArrayView(T * ptr, size_t arrayLength) : beginPtr{ ptr }, len{ arrayLength } { }
 
 		ArrayView() = default;
 		ArrayView(ArrayView &&) = default;
@@ -17,11 +17,19 @@ namespace Netcode {
 		ArrayView & operator=(ArrayView &&) = default;
 
 		const T & operator[](size_t idx) const {
-			return begin[idx];
+			return beginPtr[idx];
 		}
 
 		T & operator[](size_t idx) {
-			return begin[idx];
+			return beginPtr[idx];
+		}
+
+		T * begin() {
+			return beginPtr;
+		}
+
+		T * end() {
+			return beginPtr + len;
 		}
 
 		size_t Size() const {
@@ -29,7 +37,7 @@ namespace Netcode {
 		}
 
 		T * Data() const {
-			return begin;
+			return beginPtr;
 		}
 	};
 

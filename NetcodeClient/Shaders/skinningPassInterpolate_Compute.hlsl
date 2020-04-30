@@ -15,9 +15,9 @@ cbuffer StaticConstants : register(b1) {
 	uint numAnimations;
 	uint2 __padding_StaticConstants;
 	uint startIndices[MAX_ANIMATION_COUNT];
+	int parentIndices[MAX_BONE_COUNT];
 	float4x4 offsetMatrices[MAX_BONE_COUNT];
 }
-
 
 BoneAnimationKey Interpolate(BoneAnimationKey k0, BoneAnimationKey k1, float t) {
 	float4 pos = lerp(k0.position, k1.position, t);

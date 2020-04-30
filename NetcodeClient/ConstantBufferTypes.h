@@ -19,6 +19,23 @@ struct PerFrameData {
 	float fov;
 };
 
+struct BoneData {
+	constexpr static int MAX_BONE_COUNT = 128;
+	DirectX::XMFLOAT4X4A BindTransform[MAX_BONE_COUNT];
+	DirectX::XMFLOAT4X4A ToRootTransform[MAX_BONE_COUNT];
+};
+
+struct AnimationStaticConstants {
+	constexpr static uint32_t MAX_ANIMATION_COUNT = 64;
+
+	uint32_t numBones;
+	uint32_t numAnimations;
+	DirectX::XMUINT2 __padding_StaticConstants;
+	uint32_t startIndices[MAX_ANIMATION_COUNT];
+	int32_t parentIndices[BoneData::MAX_BONE_COUNT];
+	DirectX::XMFLOAT4X4 offsetMatrices[BoneData::MAX_BONE_COUNT];
+}
+
 struct SsaoData {
 	constexpr static int SAMPLE_COUNT = 14;
 
@@ -35,12 +52,6 @@ struct SsaoData {
 struct PerObjectData {
 	DirectX::XMFLOAT4X4A Model;
 	DirectX::XMFLOAT4X4A InvModel;
-};
-
-struct BoneData {
-	constexpr static int MAX_BONE_COUNT = 128;
-	DirectX::XMFLOAT4X4A BindTransform[MAX_BONE_COUNT];
-	DirectX::XMFLOAT4X4A ToRootTransform[MAX_BONE_COUNT];
 };
 
 struct MaterialData {
