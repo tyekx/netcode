@@ -20,6 +20,10 @@ namespace Netcode {
 			return bitCount == 1;
 		}
 
+		template<typename T>
+		bool IsWeakRefEmpty(const std::weak_ptr<T> & weak) {
+			return !weak.owner_before(std::weak_ptr<T>{}) && !std::weak_ptr<T>{}.owner_before(weak);
+		}
 
 		/*
 		Takes a number and returns its closest multiplicative of 65536. The returned number is always bigger or equal than the input number

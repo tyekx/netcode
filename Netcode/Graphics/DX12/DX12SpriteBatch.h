@@ -101,7 +101,7 @@ namespace Netcode::Graphics::DX12
     };
 
     class SpriteBatch : public Netcode::SpriteBatch {
-        static GpuResourceRef indexBuffer;
+        static GpuResourceWeakRef indexBuffer;
         static const DirectX::XMMATRIX MatrixIdentity;
         static const DirectX::XMFLOAT2 Float2Zero;
     public:
@@ -125,6 +125,7 @@ namespace Netcode::Graphics::DX12
         };
 
         GpuResourceRef vertexBuffer;
+        GpuResourceRef indexBufferRef;
 
         IResourceContext * resourceContext;
         IRenderContext * renderContext;

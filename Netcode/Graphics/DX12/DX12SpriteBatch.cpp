@@ -10,11 +10,12 @@ namespace Netcode::Graphics::DX12 {
 	const DirectX::XMMATRIX SpriteBatch::MatrixIdentity = DirectX::XMMatrixIdentity();
 	const DirectX::XMFLOAT2 SpriteBatch::Float2Zero(0, 0);
 
-	GpuResourceRef SpriteBatch::indexBuffer{ nullptr };
+	GpuResourceWeakRef SpriteBatch::indexBuffer{ };
 
 void SpriteBatch::CreateIndexBuffer(const Netcode::Module::IGraphicsModule * graphics)
 {
-	if(indexBuffer != nullptr) {
+	if(!Netcode::Utility::IsWeakRefEmpty(indexBuffer)) {
+		indexBufferRef = indexBuffer.lock();
 		return;
 	}
 
@@ -36,12 +37,14 @@ void SpriteBatch::CreateIndexBuffer(const Netcode::Module::IGraphicsModule * gra
 	}
 	uint32_t ibufferSize = sizeof(short) * MaxBatchSize * IndicesPerSprite;
 
-	indexBuffer = graphics->resources->CreateIndexBuffer(ibufferSize, DXGI_FORMAT_R16_UINT, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
+	indexBufferRef = graphics->resources->CreateIndexBuffer(ibufferSize, DXGI_FORMAT_R16_UINT, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
 	
 	UploadBatch upload;
-	upload.Upload(indexBuffer, indices.data(), ibufferSize);
-	upload.ResourceBarrier(indexBuffer, ResourceState::COPY_DEST, ResourceState::INDEX_BUFFER);
+	upload.Upload(indexBufferRef, indices.data(), ibufferSize);
+	upload.ResourceBarrier(indexBufferRef, ResourceState::COPY_DEST, ResourceState::INDEX_BUFFER);
 	graphics->frame->SyncUpload(upload);
+
+	indexBuffer = indexBufferRef;
 }
 
 SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netcode::RootSignatureRef rootSig, Netcode::PipelineStateRef pso)
@@ -113,7 +116,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 		renderContext->SetViewport();
 		renderContext->SetScissorRect();
 		renderContext->SetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
-		renderContext->SetIndexBuffer(indexBuffer);
+		renderContext->SetIndexBuffer(indexBufferRef);
 	}
 
 	// Sorts the array of queued sprites.

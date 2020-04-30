@@ -266,6 +266,7 @@ namespace Netcode {
 		virtual const Graphics::ResourceDesc & GetDesc() const = 0;
 	};
 
+	using GpuResourceWeakRef = std::weak_ptr<GpuResource>;
 	using GpuResourceRef = std::shared_ptr<GpuResource>;
 
 	class ShaderBytecode {

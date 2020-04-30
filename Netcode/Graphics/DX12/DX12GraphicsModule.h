@@ -117,11 +117,6 @@ namespace Netcode::Graphics::DX12 {
 		com_ptr<IDXGIOutput1> outputs[8];
 		UINT outputsLength;
 
-		DX12ResourceViewsRef renderTargetViews;
-		DX12ResourceViewsRef depthStencilView;
-
-		GpuResourceRef depthStencil;
-
 		UINT backbufferDepth;
 		DirectX::XMUINT2 lastWindowedModeSize;
 		UINT width;
@@ -147,6 +142,12 @@ namespace Netcode::Graphics::DX12 {
 
 		CommandListPool commandListStorage;
 
+		DX12HeapManagerRef heapManager;
+
+		ResourcePool resourcePool;
+		ConstantBufferPool cbufferPool;
+		DynamicDescriptorHeap dheaps;
+
 		DX12SpriteFontLibraryRef spriteFontLibrary;
 		DX12ShaderLibraryRef shaderLibrary;
 		DX12RootSignatureLibraryRef rootSigLibrary;
@@ -155,15 +156,14 @@ namespace Netcode::Graphics::DX12 {
 		DX12GPipelineStateLibraryRef gPipelineLibrary;
 		DX12CPipelineStateLibraryRef cPipelineLibrary;
 
-		DX12HeapManagerRef heapManager;
-
-		ResourcePool resourcePool;
-		ConstantBufferPool cbufferPool;
-		DynamicDescriptorHeap dheaps;
-
 		std::vector<CommandList> inFlightCommandLists;
 
 		ResourceContext resourceContext;
+
+		DX12ResourceViewsRef renderTargetViews;
+		DX12ResourceViewsRef depthStencilView;
+
+		GpuResourceRef depthStencil;
 
 		void NextBackBufferIndex();
 

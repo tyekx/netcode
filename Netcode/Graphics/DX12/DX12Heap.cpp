@@ -25,6 +25,7 @@ namespace Netcode::Graphics::DX12 {
 		std::unique_ptr<Resource> wrappedPtr{ rawPtr };
 		freeSizeInBytes += wrappedPtr->sizeInBytes;
 		wrappedPtr->resource.Reset();
+		wrappedPtr->heap.reset();
 		freedResources.emplace_back(std::move(wrappedPtr));
 	}
 
@@ -80,6 +81,7 @@ namespace Netcode::Graphics::DX12 {
 			resource->resource = std::move(dx12Resource);
 			resource->desc = resourceDesc;
 			resource->nativeDesc = desc;
+			resource->heap = shared_from_this();
 		}
 
 		return resource;
