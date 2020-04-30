@@ -107,6 +107,8 @@ class GraphicsEngine {
 	GpuResourceRef ssaoPass_OcclusionRenderTarget;
 	GpuResourceRef ssaoPass_RandomVectorTexture;
 
+	GpuResourceRef skinningPass_IntermediateResource;
+
 	GBuffer fsQuad;
 
 	DXGI_FORMAT gbufferPass_DepthStencilFormat;
@@ -119,6 +121,12 @@ class GraphicsEngine {
 	Netcode::ResourceViewsRef gbufferPass_RenderTargetViews;
 	Netcode::ResourceViewsRef gbufferPass_DepthStencilView;
 	Netcode::ResourceViewsRef lightingPass_ShaderResourceViews;
+
+	Netcode::ResourceViewsRef skinningPass_ShaderResourceViews;
+
+	Netcode::RootSignatureRef skinningPass_RootSignature;
+	Netcode::PipelineStateRef skinningInterpolatePass_PipelineState;
+	Netcode::PipelineStateRef skinningBlendPass_PipelineState;
 
 	Netcode::RootSignatureRef skinnedGbufferPass_RootSignature;
 	Netcode::PipelineStateRef skinnedGbufferPass_PipelineState;
@@ -145,8 +153,6 @@ public:
 	Netcode::ScratchBuffer<RenderItem> skinnedGbufferPass_Input;
 	Netcode::ScratchBuffer<RenderItem> gbufferPass_Input;
 	Netcode::ScratchBuffer<UIRenderItem> uiPass_Input;
-
-
 
 
 private:
@@ -290,6 +296,26 @@ private:
 		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R32G32B32A32_FLOAT });
 		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::TRIANGLE);
 		skinnedGbufferPass_PipelineState = psoBuilder->Build();
+	}
+
+	void CreateSkinningPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
+		auto shaderBuilder = g->CreateShaderBuilder();
+		Netcode::ShaderBytecodeRef interpolateCS = shaderBuilder->LoadBytecode(L"skinningPassInterpolate_Compute.cso");
+		Netcode::ShaderBytecodeRef blendCS = shaderBuilder->LoadBytecode(L"skinningPassBlend_Compute.cso");
+
+		auto rootSigBuilder = g->CreateRootSignatureBuilder();
+		skinningPass_RootSignature = rootSigBuilder->BuildFromShader(interpolateCS);
+
+		auto cpsoBuilder = g->CreateCPipelineStateBuilder();
+		cpsoBuilder->SetComputeShader(interpolateCS);
+		cpsoBuilder->SetRootSignature(skinningPass_RootSignature);
+		skinningInterpolatePass_PipelineState = cpsoBuilder->Build();
+
+		cpsoBuilder->SetComputeShader(blendCS);
+		cpsoBuilder->SetRootSignature(skinningPass_RootSignature);
+		skinningBlendPass_PipelineState = cpsoBuilder->Build();
+
+
 	}
 
 	void CreateGbufferPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
@@ -759,7 +785,6 @@ private:
 	Netcode::ResourceViewsRef cloudynoonView;
 
 public:
-
 	DirectX::XMFLOAT4X4 uiPass_viewProjInv;
 
 	void CreateBackgroundPassPermanentResources(Netcode::Module::IGraphicsModule * g) {

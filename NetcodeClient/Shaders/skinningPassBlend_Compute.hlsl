@@ -83,7 +83,7 @@ void main(uint3 groupId : SV_GroupID, uint3 threadId : SV_GroupThreadID) {
 
 	float4x4 bindTransform = mul(toRoot, offsetMatrices[boneId]);
 
-	result[toRootDestIdx] = toRoot;
+	result[toRootDestIdx] = toRoot; 
 	result[bindTransformDestIdx] = bindTransform;
 }
 

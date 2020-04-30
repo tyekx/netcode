@@ -9,20 +9,24 @@ public:
 	constexpr static uint32_t MAX_INSTANCE_COUNT = 32;
 	constexpr static uint32_t MAX_ANIMATION_COUNT = 64;
 private:
+	uint32_t numActiveControllers;
 
 	std::vector<std::unique_ptr<AnimationController>> freedControllers;
 
 	void FreeController(AnimationController * rawPtr) {
 		std::unique_ptr<AnimationController> wrappedPtr{ rawPtr };
-
 		freedControllers.emplace_back(std::move(wrappedPtr));
 	}
 
 	std::shared_ptr<AnimationController> MakeNewController() {
+		if(numActiveControllers >= MAX_INSTANCE_COUNT) {
+			return nullptr;
+		}
+		++numActiveControllers;
+
 		return std::shared_ptr<AnimationController>(
 			new AnimationController(shared_from_this()),
-			std::bind(&AnimationSet::FreeController, this, std::placeholders::_1)
-			);
+			std::bind(&AnimationSet::FreeController, this, std::placeholders::_1));
 	}
 
 	std::shared_ptr<AnimationController> ReuseController() {
