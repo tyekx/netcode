@@ -24,13 +24,7 @@ namespace Netcode::Graphics::DX12 {
 
 	bool Heap::IsCompatible(D3D12_HEAP_TYPE requiredHeap, D3D12_HEAP_FLAGS requiredFlags) const
 	{
-		bool b = requiredHeap == type && ((flags & requiredFlags) == requiredFlags);
-
-		if(!b) {
-			Log::Debug("[GPU] Not compatible");
-		}
-
-		return b;
+		return requiredHeap == type && ((flags & requiredFlags) == requiredFlags);
 	}
 
 	void Heap::ReturnResource(Resource * rawPtr) {
@@ -43,19 +37,13 @@ namespace Netcode::Graphics::DX12 {
 			freedResources.clear();
 			offsetInBytes = 0;
 			freedSizeInBytes = 0;
-			Log::Debug("Clearing");
 		} else if(offsetInBytes == (wrappedPtr->heapOffset + wrappedPtr->sizeInBytes)) {
 			offsetInBytes -= wrappedPtr->sizeInBytes;
 		} else {
 			freedResources.emplace_back(std::move(wrappedPtr));
 			freedSizeInBytes = freeSize;
 		}
-	}
-
-	Resource * Heap::AllocateResource(uint64_t sizeInBytes)
-	{
-		return nullptr;
-	}
+	} 
 
 	bool Heap::HasEnoughSpace(uint64_t bytesToStore) const {
 		const uint64_t unallocatedSize = GetUnallocatedSize();
@@ -64,20 +52,18 @@ namespace Netcode::Graphics::DX12 {
 			return true;
 		}
 
-		bool b = false;
-
 		for(auto & i : freedResources) {
 			if(i->sizeInBytes >= bytesToStore) {
-				b = true;
-				break;
+				return true;
 			}
-		}
+		} 
 
-		if(!b) {
-			Log::Debug("[GPU] Does not have enough free space");
-		}
+		return false;
+	}
 
-		return b;
+	bool Heap::IsEmpty() const
+	{
+		return offsetInBytes == 0;
 	}
 
 	uint64_t Heap::GetUnallocatedSize() const {
@@ -149,7 +135,12 @@ namespace Netcode::Graphics::DX12 {
 		uint64_t heapOffset;
 
 		if(it != std::end(freedResources)) {
-			resource = DX12ResourceRef { std::move((*it)) };
+			Resource * rptr = it->release();
+
+			resource = DX12ResourceRef { rptr,
+				std::bind(&Heap::ReturnResource, this, std::placeholders::_1) 
+			};
+
 			allocationSize = resource->sizeInBytes;
 			heapOffset = resource->heapOffset;
 			freedResources.erase(it);
@@ -173,8 +164,6 @@ namespace Netcode::Graphics::DX12 {
 			resource->nativeDesc = desc;
 			resource->heap = shared_from_this();
 		}
-
-		debug.push_back(resource);
 
 		return resource;
 	}

@@ -16,11 +16,8 @@ namespace Netcode::Graphics::DX12 {
 		com_ptr<ID3D12Device> device;
 		com_ptr<ID3D12Heap> heap;
 		std::vector<std::unique_ptr<Resource>> freedResources;
-		std::vector<std::weak_ptr<Resource>> debug;
 
 		void ReturnResource(Resource * rawPtr);
-
-		Resource * AllocateResource(uint64_t sizeInBytes);
 
 	public:
 		Heap(com_ptr<ID3D12Device> dev, uint64_t sizeInBytes, D3D12_HEAP_TYPE type, D3D12_HEAP_FLAGS flags);
