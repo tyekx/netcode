@@ -2,30 +2,10 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	uint32_t HeapManager::DeduceBucketIndex(size_t size) {
-		constexpr static size_t s256K = 1 << 18;
-		constexpr static size_t s2M = 1 << 21;
-		constexpr static size_t s32M = 1 << 25;
-
-		if(size <= s256K) {
-			return 0;
-		}
-
-		if(size <= s2M) {
-			return 1;
-		}
-
-		if(size <= s32M) {
-			return 2;
-		}
-
-		return 3;
-	}
-
 	size_t HeapManager::GetBucketSize(size_t size) {
 		constexpr static size_t s512K = 1 << 19;
 		constexpr static size_t s4M = 1 << 22;
-		constexpr static size_t s32M = 1 << 25;
+		constexpr static size_t s64M = 1 << 26;
 
 		if(size <= s512K) {
 			return s512K;
@@ -35,8 +15,8 @@ namespace Netcode::Graphics::DX12 {
 			return s4M;
 		}
 
-		if(size <= s32M) {
-			return s32M;
+		if(size <= s64M) {
+			return s64M;
 		}
 
 		return size;
@@ -46,7 +26,21 @@ namespace Netcode::Graphics::DX12 {
 		device = std::move(dev);
 	}
 
+	D3D12_HEAP_FLAGS GetHeapFlags(D3D12_RESOURCE_FLAGS f, D3D12_RESOURCE_DIMENSION dim) {
+		if((f & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) || (f & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)) {
+			return D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
+		}
+
+		if(dim == D3D12_RESOURCE_DIMENSION_BUFFER) {
+			return D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
+		}
+
+		return D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES;
+	}
+
 	DX12ResourceRef HeapManager::CreateResource(const ResourceDesc & d) {
+		using value_type = decltype(heaps)::value_type;
+
 		const D3D12_RESOURCE_DESC dxDesc = GetNativeDesc(d);
 		const D3D12_RESOURCE_ALLOCATION_INFO dxAlloc = device->GetResourceAllocationInfo(0, 1, &dxDesc);
 
@@ -58,11 +52,8 @@ namespace Netcode::Graphics::DX12 {
 
 		const size_t bucketSize = GetBucketSize(dxAlloc.SizeInBytes);
 		const D3D12_RESOURCE_STATES initState = GetNativeState(cpy.state);
-		const ResourceHash hash(cpy);
-		const D3D12_HEAP_TYPE heapType = hash.GetHeapType();
-		const D3D12_HEAP_FLAGS heapFlags = hash.GetHeapFlag();
-
-		decltype(collections)::iterator collection = collections.find(hash);
+		const D3D12_HEAP_TYPE heapType = GetNativeHeapType(cpy.type);
+		const D3D12_HEAP_FLAGS heapFlags = GetHeapFlags(GetNativeFlags(cpy.flags), GetNativeDimension(cpy.dimension));
 
 		D3D12_CLEAR_VALUE cv;
 		D3D12_CLEAR_VALUE * optCv = nullptr;
@@ -81,23 +72,31 @@ namespace Netcode::Graphics::DX12 {
 			optCv = &cv;
 		}
 
-		if(collection != collections.end()) {
-			for(std::shared_ptr<Heap> & heap : collection->second) {
-				if(heap->HasEnoughSpace(dxAlloc.SizeInBytes)) {
-					return heap->CreateResource(cpy, dxDesc, initState, optCv, dxAlloc);
-				}
+		decltype(heaps)::iterator it = std::find_if(std::begin(heaps), std::end(heaps), [&](value_type & item) -> bool {
+			if(!item->IsCompatible(heapType, heapFlags)) {
+				return false;
 			}
-		} else {
-			collections[hash];
-			collection = collections.find(hash);
 
-			ASSERT(collection != collections.end(), "oof");
+			if(!item->HasEnoughSpace(dxAlloc.SizeInBytes)) {
+				item->Defragment();
+				return item->HasEnoughSpace(dxAlloc.SizeInBytes);
+			}
+
+			return true;
+		});
+
+		DX12ResourceRef resource;
+		if(it != std::end(heaps)) {
+			resource = (*it)->CreateResource(cpy, dxDesc, initState, optCv, dxAlloc);
+		} else {
+			value_type& newHeap = heaps.emplace_back(std::make_shared<Heap>(device, bucketSize, heapType, heapFlags));
+			resource = newHeap->CreateResource(cpy, dxDesc, initState, optCv, dxAlloc);
 		}
 
-		auto heap = std::make_shared<Heap>(device, bucketSize, heapType, heapFlags);
+		std::sort(std::begin(heaps), std::end(heaps), [](const value_type & lhs, const value_type & rhs) -> bool {
+			return lhs->GetUnallocatedSize() < rhs->GetUnallocatedSize();
+		});
 
-		collection->second.emplace_back(heap);
-
-		return heap->CreateResource(cpy, dxDesc, initState, optCv, dxAlloc);
+		return resource;
 	}
 }

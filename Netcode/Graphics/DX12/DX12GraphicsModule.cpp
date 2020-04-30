@@ -594,6 +594,7 @@ namespace Netcode::Graphics::DX12 {
 		UpdateViewport();
 		resourceContext.backbufferExtents = scissorRect;
 
+		depthStencil.reset();
 		depthStencil = resources->CreateDepthStencil(depthStencilFormat, ResourceType::PERMANENT_DEFAULT);
 		depthStencilView->CreateDSV(depthStencil);
 

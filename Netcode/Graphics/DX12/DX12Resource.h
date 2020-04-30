@@ -18,6 +18,9 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual const ResourceDesc & GetDesc() const override;
 
+		Resource() = default;
+		Resource(const Resource &) = delete;
+
 		Resource(uint64_t sizeInBytes,
 			uint64_t heapOffset,
 			const ResourceDesc & resourceDesc,
