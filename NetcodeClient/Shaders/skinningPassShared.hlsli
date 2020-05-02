@@ -26,4 +26,4 @@ uint GetResultOffset(uint instanceId) {
 	return 2 * MAX_BONE_COUNT * instanceId;
 }
 
-#define SKINNING_PASS_ROOT_SIGNATURE "CBV(b0), CBV(b1), DescriptorTable(SRV(t0), UAV(u1)), DescriptorTable(UAV(u0))"
+#define SKINNING_PASS_ROOT_SIGNATURE "CBV(b0), DescriptorTable(UAV(u0)), CBV(b1), DescriptorTable(SRV(t0), UAV(u1))"

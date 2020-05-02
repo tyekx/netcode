@@ -901,16 +901,19 @@ OptimizedAnimation FBXImporter::OptimizeAnimation(const Animation & anim, const 
 
 		// set defaults
 		for(size_t i = 0; i < skeleton.bones.size(); ++i) {
-			optBoneAnim.boneData[i].position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+			optBoneAnim.boneData[i].position = DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f };
 			optBoneAnim.boneData[i].rotation = DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f };
-			optBoneAnim.boneData[i].scale = DirectX::XMFLOAT3{ 1.0f, 1.0f, 1.0f };
+			optBoneAnim.boneData[i].scale = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 0.0f };
 		}
 
 		for(const BoneAnimation & bA : anim.boneAnimations) {
-			if(bA.BoneId > 0) {
-				optBoneAnim.boneData[bA.BoneId].position = SamplePosition(bA.positionKeys, t);
+			if(bA.BoneId >= 0) {
+				DirectX::XMFLOAT3 posSample = SamplePosition(bA.positionKeys, t);
+				DirectX::XMFLOAT3 scaleSample = SampleScale(bA.scaleKeys, t);
+
+				optBoneAnim.boneData[bA.BoneId].position = DirectX::XMFLOAT4{ posSample.x, posSample.y, posSample.z, 1.0f };
 				optBoneAnim.boneData[bA.BoneId].rotation = SampleRotation(bA.rotationKeys, t);
-				optBoneAnim.boneData[bA.BoneId].scale = SampleScale(bA.scaleKeys, t);
+				optBoneAnim.boneData[bA.BoneId].scale = DirectX::XMFLOAT4{ scaleSample.x, scaleSample.y, scaleSample.z, 0.0f };
 			}
 		}
 

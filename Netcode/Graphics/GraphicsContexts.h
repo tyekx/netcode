@@ -34,6 +34,7 @@ namespace Netcode::Graphics {
 		virtual void ClearRenderPass() = 0;
 
 		virtual GpuResourceRef CreateResource(const ResourceDesc & resource) = 0;
+		virtual GpuResourceRef CreateReadbackBuffer(size_t size, ResourceType type, ResourceFlags flags) = 0;
 		virtual GpuResourceRef CreateTypedBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
 		virtual GpuResourceRef CreateStructuredBuffer(size_t size, uint32_t stride, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
 		virtual GpuResourceRef CreateTexture2D(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) = 0;

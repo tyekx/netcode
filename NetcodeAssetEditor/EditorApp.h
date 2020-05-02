@@ -57,12 +57,7 @@ namespace Netcode::Module {
 		}
 
 		virtual void SetColliders(std::vector<Collider> colls) {
-			if(!colliderGbuffers.empty()) {
-				for(GBuffer g : colliderGbuffers) {
-					graphics->resources->ReleaseResource(g.vertexBuffer);
-				}
-				colliderGbuffers.clear();
-			}
+			colliderGbuffers.clear();
 
 			UpdateColliderData(colls);
 
@@ -168,15 +163,7 @@ namespace Netcode::Module {
 		}
 
 		virtual void SetDrawGeometry(std::vector<LOD*> lodRefs) {
-			if(!gbuffers.empty()) {
-				for(GBuffer & gb : gbuffers) {
-					if(gb.indexBuffer != 0) {
-						graphics->resources->ReleaseResource(gb.indexBuffer);
-					}
-					graphics->resources->ReleaseResource(gb.vertexBuffer);
-				}
-				gbuffers.clear();
-			}
+			gbuffers.clear();
 
 			for(LOD * lod : lodRefs) {
 				GBuffer gbuffer;

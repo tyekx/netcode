@@ -63,13 +63,13 @@ namespace winrt::NetcodeAssetEditor::implementation
         size_t boneCount = skeleton.bones.size();
 
          for(unsigned int i = 0; i < boneCount; ++i) {
-            stPos = DirectX::XMLoadFloat3(&startKey[i].position);
+            stPos = DirectX::XMLoadFloat4(&startKey[i].position);
             stQuat = DirectX::XMLoadFloat4(&startKey[i].rotation);
-            stScale = DirectX::XMLoadFloat3(&startKey[i].scale);
+            stScale = DirectX::XMLoadFloat4(&startKey[i].scale);
 
-            endPos = DirectX::XMLoadFloat3(&endKey[i].position);
+            endPos = DirectX::XMLoadFloat4(&endKey[i].position);
             endQuat = DirectX::XMLoadFloat4(&endKey[i].rotation);
-            endScale = DirectX::XMLoadFloat3(&endKey[i].scale);
+            endScale = DirectX::XMLoadFloat4(&endKey[i].scale);
 
             stPos = DirectX::XMVectorLerp(stPos, endPos, t);
             stQuat = DirectX::XMQuaternionSlerp(stQuat, endQuat, t);

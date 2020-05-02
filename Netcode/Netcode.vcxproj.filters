@@ -259,9 +259,6 @@
     <ClInclude Include="Graphics\DX12\DX12GraphicsModuleForWin32.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\DX12\DX12HeapCollection.h">
-      <Filter>Graphics\DX12</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\DX12\DX12Helpers.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
@@ -348,6 +345,15 @@
     </ClInclude>
     <ClInclude Include="ConsoleModule.h">
       <Filter>Window</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12Heap.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12HeapManager.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12Resource.h">
+      <Filter>Graphics\DX12</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -564,6 +570,15 @@
     </ClCompile>
     <ClCompile Include="ConsoleModule.cpp">
       <Filter>Window</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12HeapManager.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12Heap.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12Resource.cpp">
+      <Filter>Graphics\DX12</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

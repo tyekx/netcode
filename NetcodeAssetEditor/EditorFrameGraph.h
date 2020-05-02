@@ -31,10 +31,10 @@ class EditorFrameGraph {
 	Netcode::RootSignatureRef colliderPass_RootSignature;
 	Netcode::PipelineStateRef colliderPass_PipelineState;
 
-	uint64_t cloudynoonTexture;
+	Netcode::GpuResourceRef cloudynoonTexture;
 	Netcode::ResourceViewsRef cloudynoonView;
 
-	uint64_t gbufferPass_DepthStencil;
+	Netcode::GpuResourceRef gbufferPass_DepthStencil;
 	Netcode::ResourceViewsRef gbufferPass_DepthStencilView;
 
 

@@ -19,16 +19,21 @@ namespace Netcode::Graphics {
 
 		void Upload(GpuResourceRef resourceHandle, const void * srcData, size_t srcDataSizeInBytes);
 
+		void Upload(GpuResourceRef resourceHandle, const void * srcData, size_t srcDataSizeInBytes, size_t dstDataOffsetInBytes);
+
 		void ResourceBarrier(GpuResourceRef resourceHandle, ResourceState before, ResourceState after);
 
 		struct BufferUploadTask {
 			const GpuResourceRef resourceHandle;
 			const void * srcData;
 			const size_t srcDataSizeInBytes;
+			const size_t dstDataOffsetInBytes;
 
 			BufferUploadTask();
 
 			BufferUploadTask(GpuResourceRef h, const void * srcData, size_t srcDataSizeInBytes);
+
+			BufferUploadTask(GpuResourceRef h, const void * srcData, size_t srcDataSizeInBytes, size_t dstDataOffsetInBytes);
 		};
 
 		struct TextureUploadTask {

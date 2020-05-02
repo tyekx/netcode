@@ -6,6 +6,8 @@
 #include "UIObject.h"
 #include <Netcode/Input.h>
 #include "PhysxHelpers.h"
+#include <Netcode/MovementController.h>
+#include <Netcode/Animation/Blender.h>
 
 class TransformSystem {
 public:
@@ -95,8 +97,13 @@ public:
 
 class AnimationSystem {
 	Netcode::MovementController * movementController;
+	std::shared_ptr<Netcode::Animation::Blender> blender;
 public:
 	void Run(GameObject * gameObject, float dt);
+
+	AnimationSystem() {
+		blender = std::make_shared<Netcode::Animation::Blender>();
+	}
 
 	void SetMovementController(Netcode::MovementController * movCtrl) {
 		movementController = movCtrl;
@@ -105,9 +112,16 @@ public:
 	void operator()(GameObject * gameObject, Model * model, Animation* anim, float dt) {
 		if(model->boneData != nullptr && movementController != nullptr) {
 			movementController->Update();
+
+			anim->blackboard->Update(dt);
+
+			blender->UpdatePlan(anim->clips, anim->blackboard->GetActiveStates());
+			blender->Blend(anim->bones, anim->clips, model->boneData->ToRootTransform, model->boneData->BindTransform);
+
+			/*
 			anim->blackboard.Update(dt, movementController);
 			anim->blackboard.CopyBoneDataInto(model->boneData->BindTransform);
-			anim->blackboard.CopyToRootDataInto(model->boneData->ToRootTransform);
+			anim->blackboard.CopyToRootDataInto(model->boneData->ToRootTransform);*/
 		}
 	}
 };

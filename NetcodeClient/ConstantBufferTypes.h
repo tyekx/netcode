@@ -34,7 +34,7 @@ struct AnimationStaticConstants {
 	uint32_t startIndices[MAX_ANIMATION_COUNT];
 	int32_t parentIndices[BoneData::MAX_BONE_COUNT];
 	DirectX::XMFLOAT4X4 offsetMatrices[BoneData::MAX_BONE_COUNT];
-}
+};
 
 struct SsaoData {
 	constexpr static int SAMPLE_COUNT = 14;

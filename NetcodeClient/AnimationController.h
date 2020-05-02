@@ -16,4 +16,6 @@ public:
 	AnimationController(std::shared_ptr<AnimationSet> animationSet);
 
 	void Update(float dt) { }
+
+	friend class AnimationSet;
 };

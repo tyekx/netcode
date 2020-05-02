@@ -8,7 +8,6 @@
 #include <memory>
 #include <Netcode/Logger.h>
 #include <Netcode/Input.h>
-#include <Netcode/Blackboard.h>
 #include "Material.h"
 #include "Mesh.h"
 #include <Netcode/PhysXWrapper.h>
@@ -71,7 +70,7 @@ public:
 		return (flags & (static_cast<uint32_t>(GameObjectFlags::MARKED_FOR_DELETION))) != 0;
 	}
 
-	bool SetDeletable(bool value) {
+	void SetDeletable(bool value) {
 		if(value) {
 			flags |= static_cast<uint32_t>(GameObjectFlags::MARKED_FOR_DELETION);
 		} else {

@@ -10,9 +10,3 @@
 
 using Netcode::Graphics::ResourceType;
 using Netcode::Graphics::ResourceState;
-
-struct GpuAnimationKey {
-	DirectX::XMFLOAT4 position;
-	DirectX::XMFLOAT4 rotation;
-	DirectX::XMFLOAT4 scale;
-};

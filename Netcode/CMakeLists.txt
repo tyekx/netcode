@@ -23,16 +23,10 @@ target_link_libraries(Netcode NetcodeFoundation)
 
 target_sources(Netcode
 PUBLIC
-	AnimationBlender.cpp
-	AnimationBlender.h
-	AnimationState.cpp
-	AnimationState.h
 	BasicGeometry.cpp
 	BasicGeometry.h
 	BinaryReader.cpp
 	BinaryReader.h
-	Blackboard.cpp
-	Blackboard.h
 	BulkAllocator.hpp
 	BulkVector.hpp
 	CMakeLists.txt
@@ -74,17 +68,18 @@ PUBLIC
 	Shared.h
 	Stopwatch.cpp
 	Stopwatch.h
-	Transition.cpp
-	Transition.h
 	Utility.cpp
 	Utility.h
 	Vertex.h
 	WinapiWindowModule.cpp
 	WinapiWindowModule.h
 	ConsoleModule.h
-	ConsoleModule.cpp)
+	ConsoleModule.cpp
+	"Functions.h"
+	"Functions.cpp")
 
 add_subdirectory(Shaders)
+add_subdirectory(Animation)
 add_subdirectory(Graphics)
 add_subdirectory(Graphics/DX12)
 add_subdirectory(Network)

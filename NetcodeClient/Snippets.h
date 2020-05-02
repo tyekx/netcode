@@ -1,119 +1,147 @@
 #pragma once
 
+#include <Netcode/Functions.h>
+#include <Netcode/MovementController.h>
+#include <NetcodeAssetLib/Model.h>
+
 #include "GameObject.h"
 
+#define CLIP_ARGS(id) id, model->animations[ id ].duration, model->animations[ id ].ticksPerSecond
+
 void CreateYbotAnimationComponent(Netcode::Asset::Model * model, Animation * anim) {
-	anim->blackboard.CreateResources(model,
-				// states
-				{
-					{ "Idle",			5,		Netcode::Animation::StateBehaviour::LOOP },
-					{ "Forward",		6,		Netcode::Animation::StateBehaviour::LOOP },
-					{ "Backward",		7,		Netcode::Animation::StateBehaviour::LOOP },
-					{ "Left",			12,		Netcode::Animation::StateBehaviour::LOOP },
-					{ "Right",			13,		Netcode::Animation::StateBehaviour::LOOP },
-					{ "ForwardLeft",	10,		Netcode::Animation::StateBehaviour::LOOP },
-					{ "ForwardRight",	11,		Netcode::Animation::StateBehaviour::LOOP },
-					{ "BackwardLeft",	8,		Netcode::Animation::StateBehaviour::LOOP },
-					{ "BackwardRight",	9,		Netcode::Animation::StateBehaviour::LOOP },
-					{ "JumpStart",		4,		Netcode::Animation::StateBehaviour::ONCE },
-					{ "JumpLoop",		3,		Netcode::Animation::StateBehaviour::LOOP },
-					{ "JumpLand",		2,		Netcode::Animation::StateBehaviour::ONCE }
+	
+	namespace func = Netcode::Function;
+	using namespace Netcode::Animation;
+
+	using CtrlType = Netcode::MovementController;
+
+	const BoneMask legsMask;
+	const BoneMask bodyMask;
+
+	anim->bones = model->bones;
+	anim->clips = model->animations;
+	
+	anim->blackboard = std::shared_ptr<Blackboard<CtrlType>>(new Blackboard<CtrlType>(
+		{ // Group List
+			{ // Legs Group
+				{ // StateList
+					State<CtrlType>("Idle", legsMask, StateBehaviour::LOOP, CLIP_ARGS(5)),
+					State<CtrlType>("Forward", legsMask, StateBehaviour::LOOP, CLIP_ARGS(6)),
+					State<CtrlType>("Backward", legsMask, StateBehaviour::LOOP, CLIP_ARGS(7)),
+					State<CtrlType>("Left", legsMask, StateBehaviour::LOOP, CLIP_ARGS(12)),
+					State<CtrlType>("Right", legsMask, StateBehaviour::LOOP, CLIP_ARGS(13)),
+					State<CtrlType>("ForwardLeft", legsMask, StateBehaviour::LOOP, CLIP_ARGS(10)),
+					State<CtrlType>("ForwardRight", legsMask, StateBehaviour::LOOP, CLIP_ARGS(11)),
+					State<CtrlType>("BackwardLeft", legsMask, StateBehaviour::LOOP, CLIP_ARGS(8)),
+					State<CtrlType>("BackwardRight", legsMask, StateBehaviour::LOOP, CLIP_ARGS(9)),
+					State<CtrlType>("JumpStart", legsMask, StateBehaviour::ONCE, CLIP_ARGS(4)),
+					State<CtrlType>("JumpLoop", legsMask, StateBehaviour::LOOP, CLIP_ARGS(3)),
+					State<CtrlType>("JumpLand", legsMask, StateBehaviour::ONCE, CLIP_ARGS(2))
 				},
-				// transitions
-			   { 
-					{ "Forward",   "Idle",			&Netcode::MovementController::IsIdle,					nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Forward",   "Backward",		&Netcode::MovementController::IsMovingBackward,			nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Forward",   "Left",			&Netcode::MovementController::IsMovingLeft,				nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Forward",   "Right",			&Netcode::MovementController::IsMovingRight,			nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Forward",   "ForwardLeft",	&Netcode::MovementController::IsMovingForwardLeft,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Forward",   "ForwardRight",	&Netcode::MovementController::IsMovingForwardRight,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Forward",   "BackwardLeft",	&Netcode::MovementController::IsMovingBackwardLeft,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Forward",   "BackwardRight",	&Netcode::MovementController::IsMovingBackwardRight,	nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Forward",   "JumpStart",		&Netcode::MovementController::IsJumping,				nullptr,							Netcode::Animation::TransitionBehaviour::STOP_AND_LERP },
+				{
+					TransitionInit<CtrlType>("Forward", "Idle", &CtrlType::IsIdle, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Forward", "Backward", &CtrlType::IsMovingBackward, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Forward", "Left", &CtrlType::IsMovingLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Forward", "Right", &CtrlType::IsMovingRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Forward", "ForwardLeft", &CtrlType::IsMovingForwardLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Forward", "ForwardRight", &CtrlType::IsMovingForwardRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Forward", "BackwardLeft", &CtrlType::IsMovingBackwardLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Forward", "BackwardRight", &CtrlType::IsMovingBackwardRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Forward", "JumpStart", &CtrlType::IsJumping, nullptr, &func::EaseIn, &func::ConstantZero, 0.5f),
 
-					{ "Backward",   "Idle",			&Netcode::MovementController::IsIdle,					nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Backward",   "Forward",		&Netcode::MovementController::IsMovingForward,			nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Backward",   "Left",			&Netcode::MovementController::IsMovingLeft,				nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Backward",   "Right",		&Netcode::MovementController::IsMovingRight,			nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Backward",   "ForwardLeft",	&Netcode::MovementController::IsMovingForwardLeft,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Backward",   "ForwardRight",	&Netcode::MovementController::IsMovingForwardRight,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Backward",   "BackwardLeft",	&Netcode::MovementController::IsMovingBackwardLeft,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Backward",   "BackwardRight",&Netcode::MovementController::IsMovingBackwardRight,	nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Backward",   "JumpStart",	&Netcode::MovementController::IsJumping,				nullptr,							Netcode::Animation::TransitionBehaviour::STOP_AND_LERP },
+					TransitionInit<CtrlType>("Backward", "Idle", &CtrlType::IsIdle, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Backward", "Forward", &CtrlType::IsMovingForward, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Backward", "Left", &CtrlType::IsMovingLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Backward", "Right", &CtrlType::IsMovingRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Backward", "ForwardLeft", &CtrlType::IsMovingForwardLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Backward", "ForwardRight", &CtrlType::IsMovingForwardRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Backward", "BackwardLeft", &CtrlType::IsMovingBackwardLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Backward", "BackwardRight",&CtrlType::IsMovingBackwardRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Backward", "JumpStart", &CtrlType::IsJumping, nullptr, &func::EaseIn, &func::ConstantZero, 0.5f),
 
-					{ "Left",   "Idle",				&Netcode::MovementController::IsIdle,					nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Left",   "Forward",			&Netcode::MovementController::IsMovingForward,			nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Left",   "Backward",			&Netcode::MovementController::IsMovingBackward,			nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Left",   "Right",			&Netcode::MovementController::IsMovingRight,			nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Left",   "ForwardLeft",		&Netcode::MovementController::IsMovingForwardLeft,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Left",   "ForwardRight",		&Netcode::MovementController::IsMovingForwardRight,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Left",   "BackwardLeft",		&Netcode::MovementController::IsMovingBackwardLeft,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Left",   "BackwardRight",	&Netcode::MovementController::IsMovingBackwardRight,	nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Left",   "JumpStart",		&Netcode::MovementController::IsJumping,				nullptr,							Netcode::Animation::TransitionBehaviour::STOP_AND_LERP },
+					TransitionInit<CtrlType>("Left", "Idle", &CtrlType::IsIdle, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Left", "Forward", &CtrlType::IsMovingForward, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Left", "Backward", &CtrlType::IsMovingBackward, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Left", "Right", &CtrlType::IsMovingRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Left", "ForwardLeft", &CtrlType::IsMovingForwardLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Left", "ForwardRight", &CtrlType::IsMovingForwardRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Left", "BackwardLeft", &CtrlType::IsMovingBackwardLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Left", "BackwardRight", &CtrlType::IsMovingBackwardRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Left", "JumpStart", &CtrlType::IsJumping, nullptr, &func::EaseIn, &func::ConstantZero, 0.5f),
 
-					{ "Right",   "Idle",			&Netcode::MovementController::IsIdle,					nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Right",   "Forward",			&Netcode::MovementController::IsMovingForward,			nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Right",   "Backward",		&Netcode::MovementController::IsMovingBackward,			nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Right",   "Left",			&Netcode::MovementController::IsMovingLeft,				nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Right",   "ForwardLeft",		&Netcode::MovementController::IsMovingForwardLeft,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Right",   "ForwardRight",	&Netcode::MovementController::IsMovingForwardRight,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Right",   "BackwardLeft",	&Netcode::MovementController::IsMovingBackwardLeft,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Right",   "BackwardRight",	&Netcode::MovementController::IsMovingBackwardRight,	nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Right",   "JumpStart",		&Netcode::MovementController::IsJumping,				nullptr,							Netcode::Animation::TransitionBehaviour::STOP_AND_LERP },
+					TransitionInit<CtrlType>("Right", "Idle", &CtrlType::IsIdle, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Right", "Forward", &CtrlType::IsMovingForward, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Right", "Backward", &CtrlType::IsMovingBackward, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Right", "Left", &CtrlType::IsMovingLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Right", "ForwardLeft", &CtrlType::IsMovingForwardLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Right", "ForwardRight", &CtrlType::IsMovingForwardRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Right", "BackwardLeft", &CtrlType::IsMovingBackwardLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Right", "BackwardRight", &CtrlType::IsMovingBackwardRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Right", "JumpStart", &CtrlType::IsJumping, nullptr, &func::EaseIn, &func::ConstantZero, 0.5f),
 
-					{ "ForwardLeft",   "Idle",			&Netcode::MovementController::IsIdle,				nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "ForwardLeft",   "Forward",		&Netcode::MovementController::IsMovingForward,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "ForwardLeft",   "Backward",		&Netcode::MovementController::IsMovingBackward,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "ForwardLeft",   "Left",			&Netcode::MovementController::IsMovingLeft,			nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "ForwardLeft",   "Right",			&Netcode::MovementController::IsMovingRight,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "ForwardLeft",   "ForwardRight",	&Netcode::MovementController::IsMovingForwardRight,	nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "ForwardLeft",   "BackwardLeft",	&Netcode::MovementController::IsMovingBackwardLeft,	nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "ForwardLeft",   "BackwardRight",	&Netcode::MovementController::IsMovingBackwardRight,nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "ForwardLeft",   "JumpStart",		&Netcode::MovementController::IsJumping,			nullptr,							Netcode::Animation::TransitionBehaviour::STOP_AND_LERP },
+					TransitionInit<CtrlType>("ForwardLeft", "Idle", &CtrlType::IsIdle, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("ForwardLeft", "Forward", &CtrlType::IsMovingForward, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("ForwardLeft", "Backward", &CtrlType::IsMovingBackward, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("ForwardLeft", "Left", &CtrlType::IsMovingLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("ForwardLeft", "Right", &CtrlType::IsMovingRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("ForwardLeft", "ForwardRight", &CtrlType::IsMovingForwardRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("ForwardLeft", "BackwardLeft", &CtrlType::IsMovingBackwardLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("ForwardLeft", "BackwardRight", &CtrlType::IsMovingBackwardRight,nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("ForwardLeft", "JumpStart", &CtrlType::IsJumping, nullptr, &func::EaseIn, &func::ConstantZero, 0.5f),
 
-					{ "ForwardRight",   "Idle",			&Netcode::MovementController::IsIdle,				nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "ForwardRight",   "Forward",		&Netcode::MovementController::IsMovingForward,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "ForwardRight",   "Backward",		&Netcode::MovementController::IsMovingBackward,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "ForwardRight",   "Left",			&Netcode::MovementController::IsMovingLeft,			nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "ForwardRight",   "Right",		&Netcode::MovementController::IsMovingRight,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "ForwardRight",   "ForwardLeft",	&Netcode::MovementController::IsMovingForwardLeft,	nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "ForwardRight",   "BackwardLeft",	&Netcode::MovementController::IsMovingBackwardLeft,	nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "ForwardRight",   "BackwardRight",&Netcode::MovementController::IsMovingBackwardRight,nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "ForwardRight",   "JumpStart",	&Netcode::MovementController::IsJumping,			nullptr,							Netcode::Animation::TransitionBehaviour::STOP_AND_LERP },
+					TransitionInit<CtrlType>("ForwardRight", "Idle", &CtrlType::IsIdle, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("ForwardRight", "Forward", &CtrlType::IsMovingForward, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("ForwardRight", "Backward", &CtrlType::IsMovingBackward, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("ForwardRight", "Left", &CtrlType::IsMovingLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("ForwardRight", "Right", &CtrlType::IsMovingRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("ForwardRight", "ForwardLeft", &CtrlType::IsMovingForwardLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("ForwardRight", "BackwardLeft", &CtrlType::IsMovingBackwardLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("ForwardRight", "BackwardRight",&CtrlType::IsMovingBackwardRight,nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("ForwardRight", "JumpStart", &CtrlType::IsJumping, nullptr, &func::EaseIn, &func::ConstantZero, 0.5f),
 
-					{ "BackwardLeft",   "Idle",			&Netcode::MovementController::IsIdle,				nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "BackwardLeft",   "Forward",		&Netcode::MovementController::IsMovingForward,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "BackwardLeft",   "Backward",		&Netcode::MovementController::IsMovingBackward,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "BackwardLeft",   "Left",			&Netcode::MovementController::IsMovingLeft,			nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "BackwardLeft",   "Right",		&Netcode::MovementController::IsMovingRight,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "BackwardLeft",   "ForwardLeft",	&Netcode::MovementController::IsMovingForwardLeft,	nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "BackwardLeft",   "ForwardRight",	&Netcode::MovementController::IsMovingForwardRight,	nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "BackwardLeft",   "BackwardRight",&Netcode::MovementController::IsMovingBackwardRight,nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "BackwardLeft",   "JumpStart",	&Netcode::MovementController::IsJumping,			nullptr,							Netcode::Animation::TransitionBehaviour::STOP_AND_LERP },
+					TransitionInit<CtrlType>("BackwardLeft", "Idle", &CtrlType::IsIdle, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("BackwardLeft", "Forward", &CtrlType::IsMovingForward, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("BackwardLeft", "Backward", &CtrlType::IsMovingBackward, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("BackwardLeft", "Left", &CtrlType::IsMovingLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("BackwardLeft", "Right", &CtrlType::IsMovingRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("BackwardLeft", "ForwardLeft", &CtrlType::IsMovingForwardLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("BackwardLeft", "ForwardRight", &CtrlType::IsMovingForwardRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("BackwardLeft", "BackwardRight",&CtrlType::IsMovingBackwardRight,nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("BackwardLeft", "JumpStart", &CtrlType::IsJumping, nullptr, &func::EaseIn, &func::ConstantZero, 0.5f),
 
-					{ "BackwardRight",   "Idle",		&Netcode::MovementController::IsIdle,				nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "BackwardRight",   "Forward",		&Netcode::MovementController::IsMovingForward,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "BackwardRight",   "Backward",	&Netcode::MovementController::IsMovingBackward,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "BackwardRight",   "Left",		&Netcode::MovementController::IsMovingLeft,			nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "BackwardRight",   "Right",		&Netcode::MovementController::IsMovingRight,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "BackwardRight",   "ForwardLeft",	&Netcode::MovementController::IsMovingForwardLeft,	nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "BackwardRight",   "ForwardRight",&Netcode::MovementController::IsMovingForwardRight,	nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "BackwardRight",   "BackwardLeft",&Netcode::MovementController::IsMovingBackwardLeft,	nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "BackwardRight",   "JumpStart",	&Netcode::MovementController::IsJumping,			nullptr,							Netcode::Animation::TransitionBehaviour::STOP_AND_LERP },
+					TransitionInit<CtrlType>("BackwardRight", "Idle", &CtrlType::IsIdle, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("BackwardRight", "Forward", &CtrlType::IsMovingForward, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("BackwardRight", "Backward", &CtrlType::IsMovingBackward, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("BackwardRight", "Left", &CtrlType::IsMovingLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("BackwardRight", "Right", &CtrlType::IsMovingRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("BackwardRight", "ForwardLeft", &CtrlType::IsMovingForwardLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("BackwardRight", "ForwardRight",&CtrlType::IsMovingForwardRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("BackwardRight", "BackwardLeft",&CtrlType::IsMovingBackwardLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("BackwardRight", "JumpStart", &CtrlType::IsJumping, nullptr, &func::EaseIn, &func::ConstantZero, 0.5f),
 
-					{ "Idle",	   "Forward",			&Netcode::MovementController::IsMovingForward,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Idle",	   "Backward",			&Netcode::MovementController::IsMovingBackward,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Idle",	   "Left",				&Netcode::MovementController::IsMovingLeft,			nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Idle",	   "Right",				&Netcode::MovementController::IsMovingRight,		nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Idle",	   "ForwardLeft",		&Netcode::MovementController::IsMovingForwardLeft,	nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Idle",	   "ForwardRight",		&Netcode::MovementController::IsMovingForwardRight,	nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Idle",	   "BackwardLeft",		&Netcode::MovementController::IsMovingBackwardLeft,	nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Idle",	   "BackwardRight",		&Netcode::MovementController::IsMovingBackwardRight,nullptr,							Netcode::Animation::TransitionBehaviour::LERP },
-					{ "Idle",	   "JumpStart",			&Netcode::MovementController::IsJumping,			nullptr,							Netcode::Animation::TransitionBehaviour::STOP_AND_LERP },
+					TransitionInit<CtrlType>("Idle", "Forward", &CtrlType::IsMovingForward, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Idle", "Backward", &CtrlType::IsMovingBackward, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Idle", "Left", &CtrlType::IsMovingLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Idle", "Right", &CtrlType::IsMovingRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Idle", "ForwardLeft", &CtrlType::IsMovingForwardLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Idle", "ForwardRight", &CtrlType::IsMovingForwardRight, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Idle", "BackwardLeft", &CtrlType::IsMovingBackwardLeft, nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Idle", "BackwardRight", &CtrlType::IsMovingBackwardRight,nullptr, &func::EaseIn, &func::ConstantOne, 0.5f),
+					TransitionInit<CtrlType>("Idle", "JumpStart", &CtrlType::IsJumping, nullptr, &func::EaseIn, &func::ConstantZero, 0.5f),
 
-					{ "JumpStart", "JumpLoop",	&Netcode::MovementController::IsJumping,		&Netcode::Animation::AnimationState::IsFinished,	Netcode::Animation::TransitionBehaviour::STOP_AND_LERP },
-					{ "JumpStart", "JumpLand",	&Netcode::MovementController::IsOnGround, 		nullptr,										Netcode::Animation::TransitionBehaviour::STOP_AND_LERP },
-					{ "JumpLoop",  "JumpLand",	&Netcode::MovementController::IsOnGround,		nullptr,										Netcode::Animation::TransitionBehaviour::STOP_AND_LERP },
-					{ "JumpLand",  "Idle",		nullptr,									&Netcode::Animation::AnimationState::IsFinished,	Netcode::Animation::TransitionBehaviour::LERP },
-			   });
+					TransitionInit<CtrlType>("JumpStart", "JumpLoop", &CtrlType::IsJumping, &StateBase::IsComplete, &func::EaseIn, &func::ConstantZero, 0.5f),
+					TransitionInit<CtrlType>("JumpStart", "JumpLand", &CtrlType::IsOnGround, nullptr, &func::EaseIn, &func::ConstantZero, 0.5f),
+					TransitionInit<CtrlType>("JumpLoop", "JumpLand", &CtrlType::IsOnGround, nullptr, &func::EaseIn, &func::ConstantZero, 0.5f),
+					TransitionInit<CtrlType>("JumpLand", "Idle", nullptr, &StateBase::IsComplete, &func::EaseIn, &func::ConstantOne, 0.5f),
+				}
+			}/*,
+			{ // Upper body group
+				{
+					State<CtrlType>("Idle", bodyMask, StateBehaviour::LOOP, CLIP_ARGS(5))
+				},
+				{
+
+				}
+			}*/
+		}));
 }

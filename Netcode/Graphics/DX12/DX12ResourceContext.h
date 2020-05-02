@@ -33,6 +33,7 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual GpuResourceRef CreateResource(const ResourceDesc & resource) override;
 
+		virtual GpuResourceRef CreateReadbackBuffer(size_t size, ResourceType type, ResourceFlags flags) override;
 		virtual GpuResourceRef CreateTypedBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags) override;
 		virtual GpuResourceRef CreateStructuredBuffer(size_t size, uint32_t stride, ResourceType type, ResourceState initState, ResourceFlags flags) override;
 

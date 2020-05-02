@@ -1,10 +1,11 @@
 #pragma once
 
+#include <Netcode/HandleTypes.h>
 #include <cstdint>
 
 struct GBuffer {
-	uint64_t vertexBuffer;
-	uint64_t indexBuffer;
+	Netcode::GpuResourceRef vertexBuffer;
+	Netcode::GpuResourceRef indexBuffer;
 	uint64_t vertexCount;
 	uint64_t indexCount;
 };

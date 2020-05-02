@@ -434,7 +434,6 @@ namespace Netcode::Graphics::DX12 {
 
 		size_t totalSize = 0;
 
-		
 		for(const auto & task : upload.UploadTasks()) {
 			if(task.type == UploadTaskType::BUFFER) {
 				totalSize += Utility::Align64K<size_t>(task.bufferTask.srcDataSizeInBytes);
@@ -472,11 +471,25 @@ namespace Netcode::Graphics::DX12 {
 				if(task.type == UploadTaskType::BUFFER) {
 					DX12ResourceRef resource = std::dynamic_pointer_cast<DX12Resource>(task.bufferTask.resourceHandle);
 
-					D3D12_SUBRESOURCE_DATA data;
-					data.RowPitch = (resource->desc.dimension == ResourceDimension::BUFFER) ? task.bufferTask.srcDataSizeInBytes : (resource->desc.strideInBytes * resource->desc.width);
-					data.SlicePitch = task.bufferTask.srcDataSizeInBytes;
-					data.pData = task.bufferTask.srcData;
-					UpdateSubresources(directCl.commandList.Get(), resource->resource.Get(), uploadResource.Get(), offset, 0u, 1u, &data);
+					if(resource->GetDesc().dimension == ResourceDimension::BUFFER) {
+						uint8_t * mappedPtr;
+						CD3DX12_RANGE nullRange{ 0,0 };
+
+						DX_API("Failed to map upload resource")
+							uploadResource->Map(0, &nullRange, reinterpret_cast<void **>(&mappedPtr));
+
+						memcpy(mappedPtr + offset, task.bufferTask.srcData, task.bufferTask.srcDataSizeInBytes);
+
+						uploadResource->Unmap(0, &nullRange);
+
+						directCl.commandList->CopyBufferRegion(resource->resource.Get(), task.bufferTask.dstDataOffsetInBytes, uploadResource.Get(), offset, task.bufferTask.srcDataSizeInBytes);
+					} else {
+						D3D12_SUBRESOURCE_DATA data;
+						data.RowPitch = (resource->desc.dimension == ResourceDimension::BUFFER) ? task.bufferTask.srcDataSizeInBytes : (resource->desc.strideInBytes * resource->desc.width);
+						data.SlicePitch = task.bufferTask.srcDataSizeInBytes;
+						data.pData = task.bufferTask.srcData;
+						UpdateSubresources(directCl.commandList.Get(), resource->resource.Get(), uploadResource.Get(), offset, 0u, 1u, &data);
+					}
 
 					offset += Utility::Align64K<size_t>(task.bufferTask.srcDataSizeInBytes);
 				}

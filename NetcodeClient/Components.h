@@ -4,12 +4,15 @@
 #include <string>
 #include "ConstantBufferTypes.h"
 #include <NetcodeAssetLib/Collider.h>
+#include <NetcodeAssetLib/Bone.h>
+#include <NetcodeAssetLib/Animation.h>
 #include <Netcode/Event.hpp>
 #include <Netcode/HandleTypes.h>
 #include <Netcode/PhysXWrapper.h>
 #include "Mesh.h"
 #include "Material.h"
-#include <Netcode/Blackboard.h>
+
+#include <Netcode/Animation/Blackboard.h>
 
 using ColliderShape = Netcode::Asset::Collider;
 
@@ -185,7 +188,9 @@ public:
 
 COMPONENT_ALIGN class Animation {
 public:
-	Netcode::Animation::Blackboard blackboard;
+	std::shared_ptr<Netcode::Animation::BlackboardBase> blackboard;
+	Netcode::ArrayView<Netcode::Asset::Bone> bones;
+	Netcode::ArrayView<Netcode::Asset::Animation> clips;
 
 	Animation() = default;
 	Animation(Animation &&) noexcept = default;

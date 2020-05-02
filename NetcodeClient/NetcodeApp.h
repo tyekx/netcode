@@ -185,11 +185,12 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		GameObject * avatarController = gameScene->Create();
 		GameObject * avatarHitboxes = gameScene->Create();
 
-		Netcode::Asset::Model * avatarModel = assetManager->Import(L"test.ncasset");
+		Netcode::Asset::Model * avatarModel = assetManager->Import(L"ybot.ncasset");
 
 		LoadComponents(avatarModel, avatarHitboxes);
 		Animation* anim = avatarHitboxes->AddComponent<Animation>();
 		CreateYbotAnimationComponent(avatarModel, anim);
+		anim->blackboard->BindController(&movCtrl);
 
 		physx::PxController * pxController = gameScene->CreateController();
 		avatarController->AddComponent<Transform>();

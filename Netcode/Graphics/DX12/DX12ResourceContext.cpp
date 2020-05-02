@@ -47,6 +47,22 @@ namespace Netcode::Graphics::DX12 {
 		return nullptr;
 	}
 
+	GpuResourceRef ResourceContext::CreateReadbackBuffer(size_t size, ResourceType type, ResourceFlags flags)
+	{
+		ResourceDesc desc;
+		desc.depth = 1;
+		desc.dimension = ResourceDimension::BUFFER;
+		desc.width = size;
+		desc.mipLevels = 1;
+		desc.format = DXGI_FORMAT_UNKNOWN;
+		desc.flags = flags;
+		desc.type = type;
+		desc.sizeInBytes = desc.width;
+		desc.height = 1;
+		desc.state = ResourceState::COPY_DEST;
+		return resources->CreateResource(desc);
+	}
+
 	GpuResourceRef ResourceContext::CreateTypedBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags)
 	{
 		return resources->CreateTypedBuffer(size, format, type, initState, flags);

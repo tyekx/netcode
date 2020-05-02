@@ -12,9 +12,9 @@ namespace Netcode::Asset {
 	};
 
 	struct AnimationKey {
-		DirectX::XMFLOAT3 position;
+		DirectX::XMFLOAT4 position;
 		DirectX::XMFLOAT4 rotation;
-		DirectX::XMFLOAT3 scale;
+		DirectX::XMFLOAT4 scale;
 	};
 
 	struct Animation {

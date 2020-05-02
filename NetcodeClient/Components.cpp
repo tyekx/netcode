@@ -1,3 +1,4 @@
+#include <Netcode/Input.h>
 #include "Components.h"
 
 int TextBox::idGenerator{ 0 };
