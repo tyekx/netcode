@@ -13,11 +13,7 @@ namespace Netcode::Animation {
 
 		if(time > duration) {
 			if(behaviour == StateBehaviour::LOOP) {
-				time = 0.0f;
-			}
-
-			if(behaviour == StateBehaviour::ONCE) {
-				time = duration;
+				time = fmodf(time, duration);
 			}
 		}
 	}

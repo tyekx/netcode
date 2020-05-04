@@ -199,6 +199,8 @@ namespace Netcode::Graphics::DX12 {
 		DX_API("Failed to create root signature")
 			device->CreateRootSignature(0, blobWithRootSig->GetBufferPointer(), blobWithRootSig->GetBufferSize(), IID_PPV_ARGS(rootSig.GetAddressOf()));
 
+		rootSig->SetName(RootSigDebugName(blobWithRootSig->GetFileReference()).c_str());
+
 		return rootSigs.emplace_back(std::make_shared<Netcode::Graphics::DX12::RootSignature>(std::move(rootSig), *desc));
 	}
 

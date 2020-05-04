@@ -112,6 +112,12 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetShaderResources(int slot, ResourceViewsRef resourceView) override;
 
+		virtual void SetShaderResources(int slot, ResourceViewsRef resourceView, int descriptorOffset) override;
+
+		virtual void CopyBufferRegion(GpuResourceRef dstResource, GpuResourceRef srcResource, size_t sizeInBytes) override;
+		
+		virtual void CopyBufferRegion(GpuResourceRef dstResource, size_t dstOffset, GpuResourceRef srcResource, size_t srcOffset, size_t sizeInBytes) override;
+
 		virtual void BeginPass() override;
 
 		virtual void EndPass() override;
@@ -197,11 +203,16 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetShaderResources(int slot, std::initializer_list<GpuResourceRef> shaderResourceHandles) override;
 		virtual void SetShaderResources(int slot, ResourceViewsRef resourceView) override;
+		virtual void SetShaderResources(int slot, ResourceViewsRef resourceView, int descriptorOffset) override;
 
 
 		virtual void SetRootConstants(int slot, const void * srcData, uint32_t numConstants) override;
 		virtual void SetConstantBuffer(int slot, GpuResourceRef cbufferHandle) override;
 		virtual void SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) override;
+
+		virtual void CopyBufferRegion(GpuResourceRef dstResource, GpuResourceRef srcResource, size_t sizeInBytes) override;
+
+		virtual void CopyBufferRegion(GpuResourceRef dstResource, size_t dstOffset, GpuResourceRef srcResource, size_t srcOffset, size_t sizeInBytes) override;
 
 		virtual void BeginPass() override;
 

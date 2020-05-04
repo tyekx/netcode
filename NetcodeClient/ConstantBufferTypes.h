@@ -36,6 +36,21 @@ struct AnimationStaticConstants {
 	DirectX::XMFLOAT4X4 offsetMatrices[BoneData::MAX_BONE_COUNT];
 };
 
+struct AnimInstanceData {
+	uint32_t numStates;
+	DirectX::XMUINT3  __padding_AnimationInstance;
+	float weights[8];
+	float normalizedTimes[8];
+	uint32_t animationIndices[8];
+	uint32_t frameIndices[8 * 2];
+};
+
+struct AnimInstanceConstants {
+	uint32_t numInstances;
+	DirectX::XMUINT3 __padding_AnimationInstanceData;
+	AnimInstanceData instances[32];
+};
+
 struct SsaoData {
 	constexpr static int SAMPLE_COUNT = 14;
 

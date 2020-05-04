@@ -48,6 +48,8 @@ namespace Netcode::Graphics::DX12 {
 			});
 
 			if(it == std::end(compiledShaders)) {
+				Log::Debug("[DX12] Loading shader object: {0}", Netcode::Utility::ToNarrowString(filePath));
+
 				ShaderCompiledRef compiledRef = LoadCSO(filePath);
 				
 				ASSERT(compiledRef != nullptr, "Failed to load cso");

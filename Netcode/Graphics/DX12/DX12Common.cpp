@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstdarg>
+#include <string>
 #include <comdef.h>
 
 namespace Netcode::Graphics::DX12 {
@@ -14,6 +15,23 @@ namespace Netcode::Graphics::DX12 {
 		} else {
 			OutputDebugString("Blob was NULL");
 		}
+	}
+
+	std::wstring RootSigDebugName(const std::wstring & filename)
+	{
+		std::wostringstream woss;
+		woss << L"RS(";
+		size_t indexOf = filename.find_last_of(L'\\');
+		if(indexOf == std::wstring::npos) {
+			indexOf = filename.find_last_of(L'/');
+		}
+
+		if(indexOf == std::wstring::npos) {
+			woss << filename << L')';
+		} else {
+			woss << filename.substr(indexOf + 1) << L')';
+		}
+		return woss.str();
 	}
 
 	const char * RootSignatureVersionToString(D3D_ROOT_SIGNATURE_VERSION version)

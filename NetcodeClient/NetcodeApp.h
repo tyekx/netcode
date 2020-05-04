@@ -47,7 +47,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	UIScene * uiScene;
 
 	std::unique_ptr<Layer> menuLayer;
-
+	std::shared_ptr<AnimationSet> ybotAnimationSet;
 	Netcode::Network::GameSessionRef gameSession;
 
 	float totalTime;
@@ -76,13 +76,13 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 		uiScene->Update();
 		uiSystem.Raycast();
-
+		/*
 		uiScene->Foreach([this](UIObject * uiObject) -> void {
 			uiTransformSystem.Run(uiObject);
 			uiSystem.Run(uiObject);
 			uiSpriteSystem.Run(uiObject);
 			uiTextSystem.Run(uiObject);
-		});
+		});*/
 
 		auto builder = graphics->CreateFrameGraphBuilder();
 		renderSystem.renderer.CreateFrameGraph(builder);
@@ -92,6 +92,13 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		graphics->frame->Present();
 		
 		renderSystem.renderer.Reset();
+		/*
+		DirectX::XMFLOAT4X4 toRoot[256];
+
+		ZeroMemory(toRoot, sizeof(toRoot));
+		auto readbackBuffer = ybotAnimationSet->GetResultReadbackBuffer();
+
+		graphics->resources->Readback(readbackBuffer, toRoot, sizeof(toRoot));*/
 	}
 
 	void Simulate(float dt) {
@@ -152,6 +159,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 		renderSystem.CreatePermanentResources(graphics.get());
 		defaultPhysxMaterial = px.physics->createMaterial(0.5f, 0.5f, 0.5f);
+		animSystem.renderer = &renderSystem.renderer;
 
 		CreateLocalAvatar();
 		CreateRemoteAvatar();
@@ -170,15 +178,6 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		gameScene->Spawn(testbox);
 	}
 
-	void InitializeBoneData(Model* modelComponent) {
-		const DirectX::XMMATRIX identity = DirectX::XMMatrixIdentity();
-		modelComponent->boneData = std::make_unique<BoneData>();
-		for(unsigned int i = 0; i < BoneData::MAX_BONE_COUNT; ++i) {
-			DirectX::XMStoreFloat4x4A(&modelComponent->boneData->BindTransform[i], identity);
-			DirectX::XMStoreFloat4x4A(&modelComponent->boneData->ToRootTransform[i], identity);
-		}
-	}
-
 	void CreateRemoteAvatar() {
 		AssetManager * assetManager = Service::Get<AssetManager>();
 
@@ -187,10 +186,15 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 		Netcode::Asset::Model * avatarModel = assetManager->Import(L"ybot.ncasset");
 
+		if(ybotAnimationSet == nullptr) {
+			ybotAnimationSet = std::make_shared<AnimationSet>(graphics.get(), avatarModel->animations, avatarModel->bones);
+		}
+
 		LoadComponents(avatarModel, avatarHitboxes);
 		Animation* anim = avatarHitboxes->AddComponent<Animation>();
 		CreateYbotAnimationComponent(avatarModel, anim);
 		anim->blackboard->BindController(&movCtrl);
+		anim->controller = ybotAnimationSet->CreateController();
 
 		physx::PxController * pxController = gameScene->CreateController();
 		avatarController->AddComponent<Transform>();
@@ -218,7 +222,6 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		fpsCam->nearPlane = 1.0f;
 		fpsCam->up = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
 
-
 		physx::PxController * pxController = gameScene->CreateController();
 
 		Transform * act = avatarController->AddComponent<Transform>();
@@ -240,7 +243,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			LoadModelComponent(model, modelComponent);
 
 			if(model->bones.Size() > 0 && model->animations.Size() > 0) {
-				InitializeBoneData(modelComponent);
+
 			}
 		}
 
@@ -259,17 +262,17 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		physx::PxPhysics * pxp = px.physics;
 		physx::PxRigidDynamic * actor = pxp->createRigidDynamic(physx::PxTransform(physx::PxIdentity));
 		actor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, true);
-		std::vector<ColliderShape> eggShapes;
-		eggShapes.reserve(model->colliders.Size());
+		std::vector<ColliderShape> netcodeShapes;
+		netcodeShapes.reserve(model->colliders.Size());
 
 		for(size_t i = 0; i < model->colliders.Size(); ++i) {
-			Netcode::Asset::Collider * eggCollider = model->colliders.Data() + i;
-			eggShapes.push_back(*eggCollider);
+			Netcode::Asset::Collider * netcodeCollider = model->colliders.Data() + i;
+			netcodeShapes.push_back(*netcodeCollider);
 			physx::PxShape * shape = nullptr;
 			physx::PxShapeFlags shapeFlags;
 			physx::PxFilterData filterData;
 
-			if(eggCollider->boneReference >= 0 && eggCollider->boneReference < 0x7F) {
+			if(netcodeCollider->boneReference >= 0 && netcodeCollider->boneReference < 0x7F) {
 				shapeFlags = physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eTRIGGER_SHAPE | physx::PxShapeFlag::eVISUALIZATION;
 
 				filterData.word0 = PHYSX_COLLIDER_TYPE_HITBOX;
@@ -278,7 +281,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 				filterData.word0 = PHYSX_COLLIDER_TYPE_WORLD;
 			}
 
-			if(eggCollider->type == Netcode::Asset::ColliderType::MESH) {
+			if(netcodeCollider->type == Netcode::Asset::ColliderType::MESH) {
 				const auto & mesh = model->meshes[0];
 				physx::PxConvexMeshDesc cmd;
 				cmd.points.count = mesh.lodLevels[0].vertexCount;
@@ -302,16 +305,16 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 				shape = pxp->createShape(pcmg, *defaultPhysxMaterial, true, shapeFlags);
 
 			} else {
-				shape = CreatePrimitiveShapeFromAsset(*eggCollider, pxp, defaultPhysxMaterial, shapeFlags);
+				shape = CreatePrimitiveShapeFromAsset(*netcodeCollider, pxp, defaultPhysxMaterial, shapeFlags);
 			}
 
 			shape->setQueryFilterData(filterData);
-			shape->userData = &eggShapes.at(i);
+			shape->userData = &netcodeShapes.at(i);
 			actor->attachShape(*shape);
 		}
 
 		colliderComponent->actorRef = actor;
-		colliderComponent->shapes = std::move(eggShapes);
+		colliderComponent->shapes = std::move(netcodeShapes);
 	}
 
 	void LoadModelComponent(Netcode::Asset::Model * model, Model * modelComponent) {

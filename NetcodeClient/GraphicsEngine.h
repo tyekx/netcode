@@ -8,6 +8,7 @@
 #include <Netcode/NetcodeMath.h>
 #include <variant>
 #include "GameObject.h"
+#include "AnimationSet.h"
 
 using Netcode::GpuResourceRef;
 
@@ -29,10 +30,13 @@ struct RenderItem {
 	GBuffer gbuffer;
 	Material * material;
 	PerObjectData * objectData;
-	BoneData * boneData;
+	Netcode::ResourceViewsRef boneData;
+	int32_t boneDataOffset;
+	BoneData * debugBoneData;
 
-	RenderItem(const ShadedMesh & shadedMesh, PerObjectData * objectData, BoneData * boneData) :
-		gbuffer{ shadedMesh.mesh->GetGBuffer() }, material{ shadedMesh.material.get() }, objectData{ objectData }, boneData{ boneData } {
+	RenderItem(const ShadedMesh & shadedMesh, PerObjectData * objectData, Netcode::ResourceViewsRef boneData, int32_t boneDataOffset, BoneData * dbBoneData) :
+		gbuffer{ shadedMesh.mesh->GetGBuffer() }, material{ shadedMesh.material.get() }, objectData{ objectData }, boneData{ boneData },
+		boneDataOffset{ boneDataOffset }, debugBoneData{ dbBoneData } {
 
 	}
 };
@@ -144,12 +148,12 @@ class GraphicsEngine {
 	Netcode::PipelineStateRef ssaoBlurPass_PipelineState;
 
 	Netcode::SpriteBatchRef uiPass_SpriteBatch;
-
 public:
 
 	PerFrameData * perFrameData;
 	SsaoData * ssaoData;
 
+	Netcode::ScratchBuffer<std::shared_ptr<AnimationSet>> skinningPass_Input;
 	Netcode::ScratchBuffer<RenderItem> skinnedGbufferPass_Input;
 	Netcode::ScratchBuffer<RenderItem> gbufferPass_Input;
 	Netcode::ScratchBuffer<UIRenderItem> uiPass_Input;
@@ -307,15 +311,13 @@ private:
 		skinningPass_RootSignature = rootSigBuilder->BuildFromShader(interpolateCS);
 
 		auto cpsoBuilder = g->CreateCPipelineStateBuilder();
-		cpsoBuilder->SetComputeShader(interpolateCS);
 		cpsoBuilder->SetRootSignature(skinningPass_RootSignature);
+		cpsoBuilder->SetComputeShader(interpolateCS);
 		skinningInterpolatePass_PipelineState = cpsoBuilder->Build();
 
-		cpsoBuilder->SetComputeShader(blendCS);
 		cpsoBuilder->SetRootSignature(skinningPass_RootSignature);
+		cpsoBuilder->SetComputeShader(blendCS);
 		skinningBlendPass_PipelineState = cpsoBuilder->Build();
-
-
 	}
 
 	void CreateGbufferPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
@@ -523,9 +525,41 @@ private:
 		lightingPass_ShaderResourceViews->CreateSRV(2, gbufferPass_DepthBuffer);
 	}
 
+	void CreateSkinningPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
+		frameGraphBuilder->CreateRenderPass("Skinning",
+			[&](IResourceContext * context) -> void {
+			
+			context->UseComputeContext();
+			context->Writes(1);
+
+			for(std::shared_ptr<AnimationSet> & animSet : skinningPass_Input) {
+				animSet->UploadConstants(context);
+			}
+
+		},
+			[&](IRenderContext * context) -> void {
+
+			context->SetRootSignature(skinningPass_RootSignature);
+			context->SetPipelineState(skinningInterpolatePass_PipelineState);
+
+			for(std::shared_ptr<AnimationSet> & animSet : skinningPass_Input) {
+				animSet->BindResources(context);
+				context->Dispatch(8, animSet->GetNumInstances(), 1);
+				context->SetPipelineState(skinningBlendPass_PipelineState);
+				context->Dispatch(1, animSet->GetNumInstances(), 1);
+				animSet->CopyResults(context);
+				animSet->Clear(context);
+			}
+
+		});
+	}
+
 	void CreateSkinnedGbufferPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("Skinned Gbuffer",
 		[&](IResourceContext * context) -> void {
+
+			context->Reads(1);
+			context->Writes(3);
 
 			context->Writes(gbufferPass_ColorRenderTarget);
 			context->Writes(gbufferPass_NormalsRenderTarget);
@@ -555,7 +589,8 @@ private:
 				skinnedGbufferPass_Input.begin()->material->Apply(context);
 				context->SetConstants(1, *item.objectData);
 				context->SetConstants(2, *perFrameData);
-				context->SetConstants(3, *item.boneData);
+				//context->SetConstants(3, *item.debugBoneData);
+				context->SetShaderResources(3, item.boneData, item.boneDataOffset);
 				context->SetVertexBuffer(item.gbuffer.vertexBuffer);
 				context->SetIndexBuffer(item.gbuffer.indexBuffer);
 				context->DrawIndexed(item.gbuffer.indexCount);
@@ -567,6 +602,7 @@ private:
 	void CreateGbufferPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("Gbuffer", [&](IResourceContext * context) -> void {
 
+			context->Reads(3);
 			context->Writes(gbufferPass_ColorRenderTarget);
 			context->Writes(gbufferPass_NormalsRenderTarget);
 			context->Writes(gbufferPass_DepthBuffer);
@@ -737,6 +773,7 @@ private:
 		frameGraphBuilder->CreateRenderPass("UI",
 		[&](IResourceContext * context) -> void {
 
+			context->Reads(2);
 			context->Writes(nullptr);
 
 		},
@@ -853,8 +890,8 @@ public:
 	void CreateBackgroundPass(Netcode::FrameGraphBuilderRef builder) {
 		builder->CreateRenderPass("Background", [this](IResourceContext * ctx) ->void {
 			ctx->Reads(gbufferPass_DepthBuffer);
-
-			ctx->Writes(0);
+			ctx->Writes(2);
+			ctx->Writes(nullptr);
 		},
 			[this](IRenderContext * ctx) -> void {
 
@@ -876,6 +913,7 @@ public:
 	}
 
 	void Reset() {
+		skinningPass_Input.Clear();
 		skinnedGbufferPass_Input.Clear();
 		gbufferPass_Input.Clear();
 		uiPass_Input.Clear();
@@ -898,6 +936,7 @@ public:
 		graphics = g;
 		backbufferSize = g->GetBackbufferSize();
 		CreateGbufferPassPermanentResources(g);
+		CreateSkinningPassPermanentResources(g);
 		CreateSkinnedGbufferPassPermanentResources(g);
 		CreateLightingPassPermanentResources(g);
 		CreateBackgroundPassPermanentResources(g);
@@ -908,6 +947,7 @@ public:
 	}
 
 	void CreateFrameGraph(Netcode::FrameGraphBuilderRef builder) {
+		CreateSkinningPass(builder);
 		CreateSkinnedGbufferPass(builder);
 		CreateGbufferPass(builder);
 		CreateSSAOOcclusionPass(builder);

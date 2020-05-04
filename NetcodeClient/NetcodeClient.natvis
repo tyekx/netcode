@@ -7,8 +7,9 @@
       <Item Name="[Transform]" Condition="(components.signature &amp; 1) == 1">((Transform*)components.storage)</Item>
       <Item Name="[Model]" Condition="(components.signature &amp; 2) == 2">((Model*)(components.storage + sizeof(Transform)))</Item>
       <Item Name="[Script]" Condition="(components.signature &amp; 4) == 4">((Script*)(components.storage + sizeof(Model) + sizeof(Transform)))</Item>
-      <Item Name="[Camera]" Condition="(components.signature &amp; 8) == 8">((Camera*)(components.extendedStorage))</Item>
-      <Item Name="[Animation]" Condition="(components.signature &amp; 16) == 16">((Animation*)(components.extendedStorage + sizeof(Camera)))</Item>
+      <Item Name="[Script]" Condition="(components.signature &amp; 8) == 8">((Collider*)(components.storage + sizeof(Model) + sizeof(Transform) + sizeof(Script)))</Item>
+      <Item Name="[Camera]" Condition="(components.signature &amp; 16) == 16">((Camera*)(components.extendedStorage))</Item>
+      <Item Name="[Animation]" Condition="(components.signature &amp; 32) == 32">((Animation*)(components.extendedStorage + sizeof(Camera)))</Item>
     </Expand>
   </Type>
   <Type Name="UIObject">

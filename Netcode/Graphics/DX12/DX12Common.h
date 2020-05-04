@@ -31,6 +31,8 @@ namespace Netcode::Graphics::DX12 {
 	Prints a Blob's content as string to the Visual Studio Output window, if the blob is null, a message will still appear
 	*/
 	void DebugPrintBlob(com_ptr<ID3DBlob> blob);
+
+	std::wstring RootSigDebugName(const std::wstring & filename);
 }
 
 namespace Netcode::Internal {

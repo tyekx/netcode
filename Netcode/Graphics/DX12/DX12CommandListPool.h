@@ -2,6 +2,9 @@
 
 #include "DX12Common.h"
 #include <vector>
+#include <string>
+
+#define DEBUG_NAME(name, idx) (name + std::to_wstring(idx)).c_str()
 
 namespace Netcode::Graphics::DX12 {
 
@@ -50,14 +53,17 @@ namespace Netcode::Graphics::DX12 {
 			
 			for(uint32_t i = 0; i < numDirect; ++i) {
 				direct.emplace_back(device.Get(), D3D12_COMMAND_LIST_TYPE_DIRECT);
+				direct.back().commandList->SetName(DEBUG_NAME(L"Direct#", i));
 			}
 
 			for(uint32_t i = 0; i < numCopy; ++i) {
 				copy.emplace_back(device.Get(), D3D12_COMMAND_LIST_TYPE_COPY);
+				copy.back().commandList->SetName(DEBUG_NAME(L"Copy#", i));
 			}
 
 			for(uint32_t i = 0; i < numCompute; ++i) {
 				compute.emplace_back(device.Get(), D3D12_COMMAND_LIST_TYPE_COMPUTE);
+				compute.back().commandList->SetName(DEBUG_NAME(L"Compute#", i));
 			}
 		}
 

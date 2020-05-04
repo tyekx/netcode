@@ -1,21 +1,28 @@
 #pragma once
 
 #include <memory>
+#include <Netcode/Animation/Blender.h>
 
 class AnimationSet;
 
 class AnimationController {
-public:
-	constexpr static uint32_t MAX_ACTIVE_STATE_COUNT = 8;
 private:
 	std::shared_ptr<AnimationSet> animationSet;
-	// states
-	// transitions
-	// active states
+
+	int32_t entryId;
+
 public:
 	AnimationController(std::shared_ptr<AnimationSet> animationSet);
 
-	void Update(float dt) { }
+	int32_t GetId() const {
+		return entryId;
+	}
+
+	std::shared_ptr<AnimationSet> GetAnimationSet() const {
+		return animationSet;
+	}
+
+	void Animate(const std::vector<Netcode::Animation::BlendItem> & blendPlan);
 
 	friend class AnimationSet;
 };

@@ -10,12 +10,11 @@ struct BoneAnimationKey {
 };
 
 struct AnimationInstance {
-	uint numStates;
-	uint3 __padding_AnimationInstance;
-	float weights[MAX_ACTIVE_STATE_COUNT];
-	float normalizedTimes[MAX_ACTIVE_STATE_COUNT];
-	uint animationIndices[MAX_ACTIVE_STATE_COUNT];
-	uint frameIndices[MAX_ACTIVE_STATE_COUNT * 2];
+	uint4 numStates;
+	float4 weights[MAX_ACTIVE_STATE_COUNT / 4];
+	float4 normalizedTimes[MAX_ACTIVE_STATE_COUNT / 4];
+	uint4 animationIndices[MAX_ACTIVE_STATE_COUNT / 4];
+	uint4 frameIndices[MAX_ACTIVE_STATE_COUNT / 2];
 };
 
 uint GetIntermediateOffset(uint instanceId, uint stateId) {
@@ -26,4 +25,4 @@ uint GetResultOffset(uint instanceId) {
 	return 2 * MAX_BONE_COUNT * instanceId;
 }
 
-#define SKINNING_PASS_ROOT_SIGNATURE "CBV(b0), DescriptorTable(UAV(u0)), CBV(b1), DescriptorTable(SRV(t0), UAV(u1))"
+#define SKINNING_PASS_ROOT_SIGNATURE "CBV(b0), CBV(b1), DescriptorTable(SRV(t0), UAV(u0), UAV(u1))"

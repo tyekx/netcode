@@ -59,6 +59,10 @@ namespace Netcode::Graphics::DX12 {
 
 		}
 
+		virtual const std::wstring & GetFileReference() const override {
+			return desc.sourceFile;
+		}
+
 		const ShaderVariantDesc & GetDesc() const {
 			return desc;
 		}

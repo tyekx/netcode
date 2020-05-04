@@ -11,6 +11,7 @@
 #include <Netcode/PhysXWrapper.h>
 #include "Mesh.h"
 #include "Material.h"
+#include "AnimationController.h"
 
 #include <Netcode/Animation/Blackboard.h>
 
@@ -147,16 +148,10 @@ struct ShadedMesh {
 
 COMPONENT_ALIGN class Model {
 public:
-
 	PerObjectData perObjectData;
-	std::unique_ptr<BoneData> boneData;
+	Netcode::ResourceViewsRef boneData;
+	int32_t boneDataOffset;
 	std::vector<ShadedMesh> meshes;
-
-	Model() : perObjectData{ }, boneData{ nullptr }, meshes{ } { }
-	~Model() = default;
-
-	Model(Model &&) noexcept = default;
-	Model & operator=(Model && m) noexcept = default;
 
 	ShadedMesh & AddShadedMesh(std::shared_ptr<Mesh> m, std::shared_ptr<Material> mat) {
 		return meshes.emplace_back(std::move(m), std::move(mat));
@@ -188,7 +183,9 @@ public:
 
 COMPONENT_ALIGN class Animation {
 public:
+	std::shared_ptr<AnimationController> controller;
 	std::shared_ptr<Netcode::Animation::BlackboardBase> blackboard;
+	std::unique_ptr<BoneData> debugBoneData;
 	Netcode::ArrayView<Netcode::Asset::Bone> bones;
 	Netcode::ArrayView<Netcode::Asset::Animation> clips;
 

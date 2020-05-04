@@ -331,9 +331,14 @@ namespace Netcode::Graphics::DX12 {
 
 	void GraphicsContext::SetShaderResources(int slot, ResourceViewsRef resourceView)
 	{
+		SetShaderResources(slot, resourceView, 0);
+	}
+
+	void GraphicsContext::SetShaderResources(int slot, ResourceViewsRef resourceView, int descriptorOffset)
+	{
 		DX12ResourceViewsRef srv = std::dynamic_pointer_cast<DX12ResourceViews>(resourceView);
-		
-		commandList->SetGraphicsRootDescriptorTable(slot, srv->GetGpuHandle(0));
+
+		commandList->SetGraphicsRootDescriptorTable(slot, srv->GetGpuHandle(descriptorOffset));
 	}
 	
 	void GraphicsContext::SetRootConstants(int slot, const void * srcData, uint32_t numConstants) {
@@ -342,7 +347,9 @@ namespace Netcode::Graphics::DX12 {
 
 	void GraphicsContext::SetConstantBuffer(int slot, GpuResourceRef cbufferHandle)
 	{
-		Log::Warn("SetConstantBuffer(int slot, uint64_t cbufferHandle) not implemneted");
+		DX12ResourceRef rr = std::dynamic_pointer_cast<DX12Resource>(cbufferHandle);
+
+		commandList->SetGraphicsRootConstantBufferView(slot, rr->resource->GetGPUVirtualAddress());
 	}
 
 	void GraphicsContext::SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes)
@@ -351,6 +358,19 @@ namespace Netcode::Graphics::DX12 {
 		cbuffers->CopyData(handle, srcData, srcDataSizeInBytes);
 
 		commandList->SetGraphicsRootConstantBufferView(slot, cbuffers->GetNativeHandle(handle));
+	}
+
+	void GraphicsContext::CopyBufferRegion(GpuResourceRef dstResource, GpuResourceRef srcResource, size_t sizeInBytes)
+	{
+		CopyBufferRegion(dstResource, 0, srcResource, 0, sizeInBytes);
+	}
+
+	void GraphicsContext::CopyBufferRegion(GpuResourceRef dstResource, size_t dstOffset, GpuResourceRef srcResource, size_t srcOffset, size_t sizeInBytes)
+	{
+		DX12ResourceRef rr0 = std::dynamic_pointer_cast<DX12Resource>(dstResource);
+		DX12ResourceRef rr1 = std::dynamic_pointer_cast<DX12Resource>(srcResource);
+
+		commandList->CopyBufferRegion(rr0->resource.Get(), dstOffset, rr1->resource.Get(), srcOffset, sizeInBytes);
 	}
 
 	void GraphicsContext::BeginPass()
@@ -406,6 +426,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void ComputeContext::Dispatch(uint32_t threadGroupX, uint32_t threadGroupY, uint32_t threadGroupZ)
 	{
+		commandList->Dispatch(threadGroupX, threadGroupY, threadGroupZ);
 	}
 
 	void ComputeContext::SetPrimitiveTopology(PrimitiveTopology topology)
@@ -550,14 +571,21 @@ namespace Netcode::Graphics::DX12 {
 
 	void ComputeContext::SetShaderResources(int slot, ResourceViewsRef resourceView)
 	{
+		SetShaderResources(slot, resourceView, 0);
+	}
+
+	void ComputeContext::SetShaderResources(int slot, ResourceViewsRef resourceView, int descriptorOffset)
+	{
 		DX12ResourceViewsRef srv = std::dynamic_pointer_cast<DX12ResourceViews>(resourceView);
 
-		commandList->SetComputeRootDescriptorTable(slot, srv->GetGpuHandle(0));
+		commandList->SetComputeRootDescriptorTable(slot, srv->GetGpuHandle(descriptorOffset));
 	}
 
 	void ComputeContext::SetConstantBuffer(int slot, GpuResourceRef cbufferHandle)
 	{
-		Log::Warn("SetConstantBuffer(int slot, uint64_t cbufferHandle) not implemneted");
+		DX12ResourceRef rr = std::dynamic_pointer_cast<DX12Resource>(cbufferHandle);
+
+		commandList->SetComputeRootConstantBufferView(slot, rr->resource->GetGPUVirtualAddress());
 	}
 
 	void ComputeContext::SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes)
@@ -566,6 +594,19 @@ namespace Netcode::Graphics::DX12 {
 		cbuffers->CopyData(handle, srcData, srcDataSizeInBytes);
 
 		commandList->SetComputeRootConstantBufferView(slot, cbuffers->GetNativeHandle(handle));
+	}
+
+	void ComputeContext::CopyBufferRegion(GpuResourceRef dstResource, GpuResourceRef srcResource, size_t sizeInBytes)
+	{
+		CopyBufferRegion(dstResource, 0, srcResource, 0, sizeInBytes);
+	}
+
+	void ComputeContext::CopyBufferRegion(GpuResourceRef dstResource, size_t dstOffset, GpuResourceRef srcResource, size_t srcOffset, size_t sizeInBytes)
+	{
+		DX12ResourceRef rr0 = std::dynamic_pointer_cast<DX12Resource>(dstResource);
+		DX12ResourceRef rr1 = std::dynamic_pointer_cast<DX12Resource>(srcResource);
+
+		commandList->CopyBufferRegion(rr0->resource.Get(), dstOffset, rr1->resource.Get(), srcOffset, sizeInBytes);
 	}
 
 	void ComputeContext::BeginPass()

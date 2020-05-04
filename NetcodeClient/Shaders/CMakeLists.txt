@@ -26,7 +26,7 @@ set(NETCODE_DS "")
 
 set(NETCODE_CS 
 	"skinningPassBlend_Compute.hlsl"
-	"skinningPassInterpolate_Compute.hlsl"
+	"skinningPassInterpolate_Compute.hlsl" 
 )
 
 

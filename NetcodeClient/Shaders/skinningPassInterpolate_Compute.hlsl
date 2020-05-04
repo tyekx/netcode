@@ -3,19 +3,16 @@
 
 StructuredBuffer<BoneAnimationKey> animations : register(t0);
 RWStructuredBuffer<BoneAnimationKey> intermediate : register(u0);
-
+ 
 cbuffer AnimationInstanceData : register(b0) {
-	uint numInstances;
-	uint3 __padding_AnimationInstanceData;
+	uint4 numInstances;
 	AnimationInstance instances[MAX_INSTANCE_COUNT];
 }
 
 cbuffer StaticConstants : register(b1) {
-	uint numBones;
-	uint numAnimations;
-	uint2 __padding_StaticConstants;
-	uint startIndices[MAX_ANIMATION_COUNT];
-	int parentIndices[MAX_BONE_COUNT];
+	uint4 constants;
+	uint4 startIndices[MAX_ANIMATION_COUNT / 4];
+	int4 parentIndices[MAX_BONE_COUNT / 4];
 	float4x4 offsetMatrices[MAX_BONE_COUNT];
 }
 
@@ -30,18 +27,35 @@ BoneAnimationKey Interpolate(BoneAnimationKey k0, BoneAnimationKey k1, float t) 
 	return key;
 }
 
-uint GetKeyIndex(uint startIndex, uint frameIndex, uint boneId) {
-	return startIndex + numBones * frameIndex + boneId;
+uint GetKeyIndex(uint numBones, uint startIndex, uint frameIndex, uint boneId) {
+	return startIndex * numBones + frameIndex * numBones + boneId;
+}
+
+uint GetStartIndex(uint clipId) {
+	return startIndices[clipId / 4][clipId % 4];
+}
+
+uint GetFrameIndex(uint iid, uint idx) {
+	return instances[iid].frameIndices[idx / 4][idx % 4];
+}
+
+uint GetAnimationIndex(uint iid, uint idx) {
+	return instances[iid].animationIndices[idx / 4][idx % 4];
+}
+
+float GetNormalizedTime(uint iid, uint idx) {
+	return instances[iid].normalizedTimes[idx / 4][idx % 4];
 }
 
 [RootSignature(SKINNING_PASS_ROOT_SIGNATURE)]
 [numthreads(MAX_BONE_COUNT, 1, 1)]
-void main(uint3 groupId : SV_GroupID, uint3 threadId : SV_GroupThreadID) {
+void main(uint3 groupId : SV_GroupID, uint threadId : SV_GroupIndex) {
 	uint stateId = groupId.x;
 	uint instanceId = groupId.y;
-	uint boneId = threadId.x;
+	uint boneId = threadId;
+	const uint numBones = constants.x;
 
-	if(instances[instanceId].numStates <= stateId) {
+	if(instances[instanceId].numStates.x <= stateId) {
 		return;
 	}
 
@@ -49,19 +63,19 @@ void main(uint3 groupId : SV_GroupID, uint3 threadId : SV_GroupThreadID) {
 		return;
 	}
 
-	uint animationIndex = instances[instanceId].animationIndices[stateId];
-	uint frameIdxA = instances[instanceId].frameIndices[2 * stateId];
-	uint frameIdxB = instances[instanceId].frameIndices[2 * stateId + 1];
+	uint animationIndex = GetAnimationIndex(instanceId, stateId);
+	uint frameIdxA = GetFrameIndex(instanceId, 2 * stateId);
+	uint frameIdxB = GetFrameIndex(instanceId, 2 * stateId + 1);
 
-	uint startIndex = startIndices[animationIndex];
+	uint startIndex = GetStartIndex(animationIndex);
 
-	uint keyIdxA = GetKeyIndex(startIndex, frameIdxA, boneId);
-	uint keyIdxB = GetKeyIndex(startIndex, frameIdxB, boneId);
+	uint keyIdxA = GetKeyIndex(numBones, startIndex, frameIdxA, boneId);
+	uint keyIdxB = GetKeyIndex(numBones, startIndex, frameIdxB, boneId);
 
 	BoneAnimationKey boneFrameA = animations[keyIdxA];
 	BoneAnimationKey boneFrameB = animations[keyIdxB];
 
-	float alpha = instances[instanceId].normalizedTimes[stateId];
+	float alpha = GetNormalizedTime(instanceId, stateId);
 
 	BoneAnimationKey interpolated = Interpolate(boneFrameA, boneFrameB, alpha);
 

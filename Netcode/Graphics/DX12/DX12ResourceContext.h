@@ -25,6 +25,9 @@ namespace Netcode::Graphics::DX12 {
 		virtual void UseComputeContext() override;
 		virtual void UseGraphicsContext() override;
 
+		virtual void Writes(uint64_t virtualDependency) override;
+		virtual void Reads(uint64_t virtualDependency) override;
+
 		virtual void Writes(GpuResourceRef resourceHandle) override;
 		virtual void Reads(GpuResourceRef resourceHandle) override;
 
@@ -75,7 +78,7 @@ namespace Netcode::Graphics::DX12 {
 		virtual GpuResourceRef CreateConstantBuffer(size_t size) override;
 
 		virtual void Readback(GpuResourceRef readbackResource, void * dstData, size_t dstDataSizeInBytes) override;
-		virtual void Readback(GpuResourceRef readbackResource, void * dstData, size_t dstDataSizeInBytes, size_t dstOffsetInBytes) override;
+		virtual void Readback(GpuResourceRef readbackResource, void * dstData, size_t dstDataSizeInBytes, size_t srcOffsetInBytes) override;
 
 		virtual void CopyConstants(GpuResourceRef uploadResource, const void * srcData, size_t srcDataSizeInBytes) override;
 		virtual void CopyConstants(GpuResourceRef uploadResource, const void * srcData, size_t srcDataSizeInBytes, size_t dstOffsetInBytes) override;

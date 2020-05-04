@@ -30,6 +30,9 @@ namespace Netcode::Graphics {
 		virtual void Writes(GpuResourceRef resourceHandle) = 0;
 		virtual void Reads(GpuResourceRef resourceHandle) = 0;
 
+		virtual void Writes(uint64_t virtualDependency) = 0;
+		virtual void Reads(uint64_t virtualDependency) = 0;
+
 		virtual void SetRenderPass(std::shared_ptr<RenderPass> renderPass) = 0;
 		virtual void ClearRenderPass() = 0;
 
@@ -89,7 +92,7 @@ namespace Netcode::Graphics {
 		virtual void CopyConstants(GpuResourceRef uploadResource, const void * srcData, size_t srcDataSizeInBytes, size_t dstOffsetInBytes) = 0;
 
 		virtual void Readback(GpuResourceRef readbackResource, void * dstData, size_t dstDataSizeInBytes) = 0;
-		virtual void Readback(GpuResourceRef readbackResource, void * dstData, size_t dstDataSizeInBytes, size_t dstOffsetInBytes) = 0;
+		virtual void Readback(GpuResourceRef readbackResource, void * dstData, size_t dstDataSizeInBytes, size_t srcOffsetInBytes) = 0;
 
 		virtual GpuResourceRef CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState) = 0;
 		virtual GpuResourceRef CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
@@ -156,6 +159,9 @@ namespace Netcode::Graphics {
 		virtual void SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) = 0;
 		virtual void SetShaderResources(int slot, std::initializer_list<GpuResourceRef> shaderResourceHandles) = 0;
 		virtual void SetShaderResources(int slot, ResourceViewsRef resourceView) = 0;
+		virtual void SetShaderResources(int slot, ResourceViewsRef resourceView, int descriptorOffset) = 0;
+		virtual void CopyBufferRegion(GpuResourceRef dstResource, GpuResourceRef srcResource, size_t sizeInBytes) = 0;
+		virtual void CopyBufferRegion(GpuResourceRef dstResource, size_t dstOffset, GpuResourceRef srcResource, size_t srcOffset, size_t sizeInBytes) = 0;
 
 		virtual void ResourceBarrier(GpuResourceRef handle, ResourceState before, ResourceState after) = 0;
 

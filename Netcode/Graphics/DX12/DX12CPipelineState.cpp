@@ -11,7 +11,7 @@ namespace Netcode::Graphics::DX12 {
 		cpsd.CS = GetNativeBytecode(CS);
 		cpsd.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
 		cpsd.NodeMask = 0;
-		cpsd.pRootSignature = static_cast<Netcode::Graphics::DX12::RootSignature *>(rootSignature->GetImplDetail())->GetNativeRootSignature();
+		cpsd.pRootSignature = std::dynamic_pointer_cast<DX12RootSignature>(rootSignature)->GetNativeRootSignature();
 	}
 
 	bool CPipelineStateDesc::operator==(const CPipelineStateDesc & rhs) const

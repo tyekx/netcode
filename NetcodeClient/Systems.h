@@ -86,10 +86,12 @@ public:
 		DirectX::XMStoreFloat4x4A(&model->perObjectData.InvModel, DirectX::XMMatrixTranspose(invModelMat));
 
 		for(const auto & i : model->meshes) {
-			if(model->boneData.get() != nullptr) {
-				renderer.skinnedGbufferPass_Input.Produced(RenderItem(i, &model->perObjectData, model->boneData.get()));
+			if(model->boneData != nullptr) {
+
+				renderer.skinnedGbufferPass_Input.Produced(RenderItem(i, &model->perObjectData, model->boneData, model->boneDataOffset,
+					gameObject->GetComponent<Animation>()->debugBoneData.get()));
 			} else {
-				renderer.gbufferPass_Input.Produced(RenderItem(i, &model->perObjectData, model->boneData.get()));
+				renderer.gbufferPass_Input.Produced(RenderItem(i, &model->perObjectData, nullptr, 0, nullptr));
 			}
 		}
 	}
@@ -100,6 +102,7 @@ class AnimationSystem {
 	std::shared_ptr<Netcode::Animation::Blender> blender;
 public:
 	void Run(GameObject * gameObject, float dt);
+	GraphicsEngine * renderer;
 
 	AnimationSystem() {
 		blender = std::make_shared<Netcode::Animation::Blender>();
@@ -110,18 +113,30 @@ public:
 	}
 
 	void operator()(GameObject * gameObject, Model * model, Animation* anim, float dt) {
-		if(model->boneData != nullptr && movementController != nullptr) {
+		if(anim->controller != nullptr && movementController != nullptr) {
 			movementController->Update();
 
 			anim->blackboard->Update(dt);
 
 			blender->UpdatePlan(anim->clips, anim->blackboard->GetActiveStates());
-			blender->Blend(anim->bones, anim->clips, model->boneData->ToRootTransform, model->boneData->BindTransform);
 
-			/*
-			anim->blackboard.Update(dt, movementController);
-			anim->blackboard.CopyBoneDataInto(model->boneData->BindTransform);
-			anim->blackboard.CopyToRootDataInto(model->boneData->ToRootTransform);*/
+			if(anim->debugBoneData == nullptr) {
+				anim->debugBoneData = std::make_unique<BoneData>();
+			}
+			blender->Blend(anim->bones, anim->clips, anim->debugBoneData->ToRootTransform, anim->debugBoneData->BindTransform);
+			anim->controller->Animate(blender->GetPlan());
+			int32_t id = anim->controller->GetId();
+
+			auto animSet = anim->controller->GetAnimationSet();
+
+			model->boneData = animSet->GetResultsView();
+			model->boneDataOffset = id;
+
+			if(id == 0) {
+				renderer->skinningPass_Input.Produced(animSet);
+			}
+
+			//blender->Blend(anim->bones, anim->clips, model->boneData->ToRootTransform, model->boneData->BindTransform);
 		}
 	}
 };
@@ -131,7 +146,7 @@ class PhysXSystem {
 		if(shape->userData == nullptr) {
 			return;
 		}
-
+		/*
 		const ColliderShape & c = *(reinterpret_cast<ColliderShape *>(shape->userData));
 
 		DirectX::XMMATRIX toRoot = DirectX::XMLoadFloat4x4A(&model->boneData->ToRootTransform[c.boneReference]);
@@ -158,7 +173,7 @@ class PhysXSystem {
 		DirectX::XMStoreFloat4(&rot, rotQ);
 
 		physx::PxTransform pxT{ ToPxVec3(tr), ToPxQuat(rot) };
-		shape->setLocalPose(pxT);
+		shape->setLocalPose(pxT);*/
 	}
 
 	void UpdateBoneAttachedShapes(Model * model, Collider * collider) {

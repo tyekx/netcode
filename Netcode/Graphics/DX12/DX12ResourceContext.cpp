@@ -17,6 +17,20 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 
+	void ResourceContext::Writes(uint64_t virtualDependency)
+	{
+		if(activeRenderPass != nullptr) {
+			activeRenderPass->WritesResource(virtualDependency);
+		}
+	}
+
+	void ResourceContext::Reads(uint64_t virtualDependency)
+	{
+		if(activeRenderPass != nullptr) {
+			activeRenderPass->ReadsResource(virtualDependency);
+		}
+	}
+
 	void ResourceContext::Writes(GpuResourceRef resourceHandle)
 	{
 		if(activeRenderPass != nullptr) {
@@ -70,8 +84,19 @@ namespace Netcode::Graphics::DX12 {
 
 	GpuResourceRef ResourceContext::CreateStructuredBuffer(size_t size, uint32_t stride, ResourceType type, ResourceState initState, ResourceFlags flags)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
-		return nullptr;
+		ResourceDesc desc;
+		desc.depth = 1;
+		desc.dimension = ResourceDimension::BUFFER;
+		desc.width = size;
+		desc.mipLevels = 1;
+		desc.strideInBytes = stride;
+		desc.format = DXGI_FORMAT_UNKNOWN;
+		desc.flags = flags;
+		desc.type = type;
+		desc.sizeInBytes = desc.width;
+		desc.height = 1;
+		desc.state = initState;
+		return resources->CreateResource(desc);
 	}
 
 	GpuResourceRef ResourceContext::CreateTexture2D(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags)
@@ -299,12 +324,23 @@ namespace Netcode::Graphics::DX12 {
 
 	void ResourceContext::Readback(GpuResourceRef readbackResource, void * dstData, size_t dstDataSizeInBytes)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Readback(readbackResource, dstData, dstDataSizeInBytes, 0);
 	}
 
-	void ResourceContext::Readback(GpuResourceRef readbackResource, void * dstData, size_t dstDataSizeInBytes, size_t dstOffsetInBytes)
+	void ResourceContext::Readback(GpuResourceRef readbackResource, void * dstData, size_t dstDataSizeInBytes, size_t srcOffsetInBytes)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		ID3D12Resource * resource = std::dynamic_pointer_cast<DX12Resource>(readbackResource)->resource.Get();
+
+		uint8_t * mappedPtr;
+		const CD3DX12_RANGE writtenRange{ 0,0 };
+		const CD3DX12_RANGE readRange{ srcOffsetInBytes, dstDataSizeInBytes };
+
+		DX_API("Failed to map ptr")
+			resource->Map(0, &readRange, reinterpret_cast<void **>(&mappedPtr));
+
+		memcpy(dstData, mappedPtr + srcOffsetInBytes, dstDataSizeInBytes);
+
+		resource->Unmap(0, &writtenRange);
 	}
 
 	void ResourceContext::CopyConstants(GpuResourceRef uploadResource, const void * srcData, size_t srcDataSizeInBytes)

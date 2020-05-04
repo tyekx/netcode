@@ -274,6 +274,7 @@ namespace Netcode {
 		virtual ~ShaderBytecode() = default;
 		virtual uint8_t * GetBufferPointer() = 0;
 		virtual size_t GetBufferSize() = 0;
+		virtual const std::wstring & GetFileReference() const = 0;
 	};
 
 	using ShaderBytecodeRef = std::shared_ptr<ShaderBytecode>;
@@ -431,6 +432,7 @@ namespace Netcode {
 	public:
 		virtual ~ResourceViews() = default;
 		virtual void CreateSRV(uint32_t idx, GpuResourceRef resourceHandle) = 0;
+		virtual void CreateSRV(uint32_t idx, GpuResourceRef resourceHandle, uint32_t firstElement, uint32_t numElements) = 0;
 		virtual void CreateRTV(uint32_t idx, GpuResourceRef resourceHandle) = 0;
 		virtual void CreateDSV(GpuResourceRef resourceHandle) = 0;
 		virtual void CreateUAV(uint32_t idx, GpuResourceRef resourceHandle) = 0;

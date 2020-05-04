@@ -60,7 +60,9 @@ PUBLIC
 	UIServerRow.h
 	UISpinner.h
 	UITextBox.h
+	AnimationSet.h
 	AnimationSet.cpp
+	AnimationController.h
 	AnimationController.cpp
 )
 

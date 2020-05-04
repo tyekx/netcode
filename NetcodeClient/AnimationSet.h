@@ -20,109 +20,58 @@ public:
 private:
 	Netcode::GpuResourceRef resultBuffer;
 	Netcode::GpuResourceRef resultReadbackBuffer;
+	Netcode::GpuResourceRef instanceCbuffer;
 	Netcode::GpuResourceRef animationStaticCbuffer;
 	Netcode::GpuResourceRef animationKeysBuffer;
 	Netcode::GpuResourceRef intermediateBuffer;
 
+	Netcode::ResourceViewsRef ctrlView;
 	Netcode::ResourceViewsRef animKeysView;
 	
+	uint32_t numInstances;
 	uint32_t numActiveControllers;
 	std::vector<std::unique_ptr<AnimationController>> freedControllers;
 
-	void FreeController(AnimationController * rawPtr) {
-		std::unique_ptr<AnimationController> wrappedPtr{ rawPtr };
-		wrappedPtr->animationSet.reset();
-		freedControllers.emplace_back(std::move(wrappedPtr));
-	}
+	AnimInstanceConstants instanceData;
 
-	std::shared_ptr<AnimationController> MakeNewController() {
-		if(numActiveControllers >= MAX_INSTANCE_COUNT) {
-			return nullptr;
-		}
-		++numActiveControllers;
+	void FreeController(AnimationController * rawPtr);
 
-		return std::shared_ptr<AnimationController>(
-			new AnimationController(shared_from_this()),
-			std::bind(&AnimationSet::FreeController, this, std::placeholders::_1));
-	}
+	std::shared_ptr<AnimationController> MakeNewController();
 
-	std::shared_ptr<AnimationController> ReuseController() {
-		std::unique_ptr<AnimationController> ctrl = std::move(freedControllers.back());
-		freedControllers.pop_back();
-		AnimationController * rawPtr = ctrl.release();
-		rawPtr->animationSet = shared_from_this();
-		return std::shared_ptr<AnimationController>(rawPtr,
-			std::bind(&AnimationSet::FreeController, this, std::placeholders::_1));
-	}
+	std::shared_ptr<AnimationController> ReuseController();
+
+	AnimationSet() = default;
 
 public:
-	AnimationSet(Netcode::Module::IGraphicsModule* graphics, Netcode::ArrayView<Netcode::Asset::Animation> animations, Netcode::ArrayView<Netcode::Asset::Bone> bones) {
-		animationStaticCbuffer = graphics->resources->CreateConstantBuffer(sizeof(AnimationStaticConstants));
-		
-		AnimationStaticConstants cbufferData;
-		cbufferData.numAnimations = static_cast<uint32_t>(animations.Size());
-		cbufferData.numBones = static_cast<uint32_t>(bones.Size());
 
-		for(size_t i = 0; i < bones.Size(); ++i) {
-			cbufferData.parentIndices[i] = bones[i].parentId;
-			cbufferData.offsetMatrices[i] = bones[i].transform;
-		}
+	void Clear(Netcode::Graphics::IRenderContext * context);
 
-		uint32_t sumKeys = 0;
-		for(size_t i = 0; i < animations.Size(); ++i) {
-			cbufferData.startIndices[i] = sumKeys;
-			sumKeys += animations[i].keysLength;
-		}
+	uint32_t GetNumInstances() const;
 
-		graphics->resources->CopyConstants(animationStaticCbuffer, &cbufferData, sizeof(AnimationStaticConstants));
-
-		resultBuffer = graphics->resources->CreateStructuredBuffer(BoneData::MAX_BONE_COUNT * MAX_INSTANCE_COUNT * sizeof(DirectX::XMFLOAT4X4),
-			sizeof(DirectX::XMFLOAT4X4),
-			Netcode::Graphics::ResourceType::PERMANENT_DEFAULT,
-			Netcode::Graphics::ResourceState::UNORDERED_ACCESS,
-			Netcode::Graphics::ResourceFlags::ALLOW_UNORDERED_ACCESS);
-
-		resultReadbackBuffer = graphics->resources->CreateReadbackBuffer(BoneData::MAX_BONE_COUNT * MAX_INSTANCE_COUNT * sizeof(DirectX::XMFLOAT4X4),
-			Netcode::Graphics::ResourceType::PERMANENT_READBACK,
-			Netcode::Graphics::ResourceFlags::DENY_SHADER_RESOURCE);
-
-		intermediateBuffer = graphics->resources->CreateStructuredBuffer(BoneData::MAX_BONE_COUNT * MAX_STATE_COUNT * MAX_INSTANCE_COUNT * sizeof(Netcode::Asset::AnimationKey),
-			sizeof(Netcode::Asset::AnimationKey),
-			Netcode::Graphics::ResourceType::PERMANENT_DEFAULT,
-			Netcode::Graphics::ResourceState::UNORDERED_ACCESS,
-			Netcode::Graphics::ResourceFlags::ALLOW_UNORDERED_ACCESS);
-
-		animationKeysBuffer = graphics->resources->CreateStructuredBuffer(sumKeys * sizeof(Netcode::Asset::AnimationKey),
-			sizeof(Netcode::Asset::AnimationKey),
-			Netcode::Graphics::ResourceType::PERMANENT_DEFAULT,
-			Netcode::Graphics::ResourceState::COPY_DEST,
-			Netcode::Graphics::ResourceFlags::NONE);
-
-		animKeysView = graphics->resources->CreateShaderResourceViews(3);
-		animKeysView->CreateSRV(0, animationKeysBuffer);
-		animKeysView->CreateUAV(1, intermediateBuffer);
-		animKeysView->CreateUAV(2, resultBuffer);
-
-		Netcode::Graphics::UploadBatch uploadBatch;
-		
-		size_t offset = 0;
-		for(Netcode::Asset::Animation & anim : animations) {
-			size_t itemSize = anim.keysLength * sizeof(Netcode::Asset::AnimationKey);
-			uploadBatch.Upload(animationKeysBuffer, anim.keys, itemSize, offset);
-			offset += itemSize;
-		}
-
-		uploadBatch.ResourceBarrier(animationKeysBuffer,
-			Netcode::Graphics::ResourceState::COPY_DEST,
-			Netcode::Graphics::ResourceState::NON_PIXEL_SHADER_RESOURCE);
-		graphics->frame->SyncUpload(uploadBatch);
+	Netcode::ResourceViewsRef GetResultsView() const {
+		return ctrlView;
 	}
 
-	std::shared_ptr<AnimationController> CreateController() {
-		if(freedControllers.empty()) {
-			return MakeNewController();
-		} else {
-			return ReuseController();
+	void CopyResults(Netcode::Graphics::IRenderContext * context) {
+		context->ResourceBarrier(resultBuffer, Netcode::Graphics::ResourceState::UNORDERED_ACCESS, Netcode::Graphics::ResourceState::NON_PIXEL_SHADER_RESOURCE | Netcode::Graphics::ResourceState::COPY_SOURCE);
+		context->FlushResourceBarriers();
+		size_t resultSize = BoneData::MAX_BONE_COUNT * numActiveControllers * 2 * sizeof(DirectX::XMFLOAT4X4);
+		if(resultSize > 0) {
+			context->CopyBufferRegion(resultReadbackBuffer, resultBuffer, resultSize);
 		}
 	}
+
+	Netcode::GpuResourceRef GetResultReadbackBuffer() const {
+		return resultReadbackBuffer;
+	}
+
+	void UploadConstants(Netcode::Graphics::IResourceContext * context);
+
+	void BindResources(Netcode::Graphics::IRenderContext * context);
+
+	int32_t Activate(const std::vector<Netcode::Animation::BlendItem> & blendPlan);
+
+	AnimationSet(Netcode::Module::IGraphicsModule * graphics, Netcode::ArrayView<Netcode::Asset::Animation> animations, Netcode::ArrayView<Netcode::Asset::Bone> bones);
+
+	std::shared_ptr<AnimationController> CreateController();
 };

@@ -63,7 +63,6 @@ PUBLIC
 	PhysXWrapper.cpp
 	PhysXWrapper.h
 	ProgramArgs.h
-	Prototyping.h
 	Service.hpp
 	Shared.h
 	Stopwatch.cpp

@@ -81,43 +81,55 @@ namespace Netcode::Graphics::DX12 {
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC GetShaderResourceViewDesc(const ResourceDesc & resource)
 	{
-		ASSERT(resource.dimension == ResourceDimension::TEXTURE2D, "only texture2d-s are supported");
+		ASSERT(resource.dimension == ResourceDimension::TEXTURE2D ||
+			   resource.dimension == ResourceDimension::BUFFER, "Dimension not supported");
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvd;
 		srvd.Format = resource.format;
-
-		if(resource.depth == 6) {
-			srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-			srvd.TextureCube.MipLevels = resource.mipLevels;
-			srvd.TextureCube.MostDetailedMip = 0;
-			srvd.TextureCube.ResourceMinLODClamp = 0.0f;
-		} else {
-			srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-			srvd.Texture2D.MipLevels = resource.mipLevels;
-			srvd.Texture2D.MostDetailedMip = 0;
-			srvd.Texture2D.PlaneSlice = 0;
-			srvd.Texture2D.ResourceMinLODClamp = 0.0f;
-		}
-
-		switch(srvd.Format) {
-			case DXGI_FORMAT_D32_FLOAT:
-				srvd.Format = DXGI_FORMAT_R32_FLOAT;
-				break;
-			case DXGI_FORMAT_D16_UNORM:
-				srvd.Format = DXGI_FORMAT_R16_UNORM;
-				break;
-			case DXGI_FORMAT_D24_UNORM_S8_UINT:
-				srvd.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-				break;
-			case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
-				srvd.Format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
-				break;
-			default:
-				srvd.Format = DXGI_FORMAT_UNKNOWN;
-				break;
-		}
-
 		srvd.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+		if(resource.dimension == ResourceDimension::BUFFER) {
+			srvd.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+			srvd.Buffer.FirstElement = 0;
+			srvd.Buffer.NumElements = resource.sizeInBytes / resource.strideInBytes;
+			srvd.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+			if(srvd.Format == DXGI_FORMAT_UNKNOWN) {
+				srvd.Buffer.StructureByteStride = resource.strideInBytes;
+			} else {
+				srvd.Buffer.StructureByteStride = 0;
+			}
+		}
+
+		if(resource.dimension == ResourceDimension::TEXTURE2D) {
+			if(resource.depth == 6) {
+				srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+				srvd.TextureCube.MipLevels = resource.mipLevels;
+				srvd.TextureCube.MostDetailedMip = 0;
+				srvd.TextureCube.ResourceMinLODClamp = 0.0f;
+			} else {
+				srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+				srvd.Texture2D.MipLevels = resource.mipLevels;
+				srvd.Texture2D.MostDetailedMip = 0;
+				srvd.Texture2D.PlaneSlice = 0;
+				srvd.Texture2D.ResourceMinLODClamp = 0.0f;
+			}
+
+			switch(srvd.Format) {
+				case DXGI_FORMAT_D32_FLOAT:
+					srvd.Format = DXGI_FORMAT_R32_FLOAT;
+					break;
+				case DXGI_FORMAT_D16_UNORM:
+					srvd.Format = DXGI_FORMAT_R16_UNORM;
+					break;
+				case DXGI_FORMAT_D24_UNORM_S8_UINT:
+					srvd.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+					break;
+				case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+					srvd.Format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+					break;
+				default:break;
+			}
+		}
 
 		return srvd;
 	}

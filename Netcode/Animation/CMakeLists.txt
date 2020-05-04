@@ -11,4 +11,6 @@ target_sources(Netcode PUBLIC
 	StateGroup.cpp
 	Transition.h
 	Transition.cpp
+	IK.h
+	IK.cpp
 )

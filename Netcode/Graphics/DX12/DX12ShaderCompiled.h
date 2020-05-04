@@ -14,7 +14,7 @@ namespace Netcode::Graphics::DX12 {
 		virtual uint8_t * GetBufferPointer() override;
 		virtual size_t GetBufferSize() override;
 
-		const std::wstring & GetFileReference() const {
+		virtual const std::wstring & GetFileReference() const override {
 			return sourceFileRef;
 		}
 
