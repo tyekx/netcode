@@ -197,11 +197,13 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void Prepare() override;
 
-		virtual void Render() override;
-
 		virtual void Present() override;
 
 		virtual void Start(Module::AApp * app) override;
+
+		virtual void DeviceSync() override;
+
+		virtual void CompleteFrame() override;
 
 		virtual void Shutdown() override;
 
@@ -215,7 +217,7 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SyncUpload(const UploadBatch & upload) override;
 
-		virtual void Run(FrameGraphRef frameGraph) override;
+		virtual void Run(FrameGraphRef frameGraph, FrameGraphCullMode cullMode) override;
 
 		virtual DirectX::XMUINT2 GetBackbufferSize() const override;
 

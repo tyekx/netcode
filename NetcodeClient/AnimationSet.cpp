@@ -27,7 +27,7 @@ std::shared_ptr<AnimationController> AnimationSet::ReuseController() {
 		std::bind(&AnimationSet::FreeController, this, std::placeholders::_1));
 }
 
-void AnimationSet::Clear(Netcode::Graphics::IRenderContext * context) {
+void AnimationSet::Clear() {
 	numInstances = 0;
 }
 

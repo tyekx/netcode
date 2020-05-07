@@ -24,6 +24,7 @@
 
 using Netcode::Graphics::ResourceType;
 using Netcode::Graphics::ResourceState;
+using Netcode::Graphics::FrameGraphCullMode;
 
 class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler {
 	Netcode::Stopwatch stopwatch;
@@ -59,8 +60,26 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	}
 
 	void Render() {
+
 		graphics->frame->Prepare();
-		
+
+		auto cfgBuilder = graphics->CreateFrameGraphBuilder();
+		renderSystem.renderer.CreateComputeFrameGraph(cfgBuilder);
+		graphics->frame->Run(cfgBuilder->Build(), FrameGraphCullMode::NONE);
+
+		uiScene->Update();
+		uiSystem.Raycast();
+
+		uiScene->Foreach([this](UIObject * uiObject) -> void {
+			uiTransformSystem.Run(uiObject);
+			uiSystem.Run(uiObject);
+			uiSpriteSystem.Run(uiObject);
+			uiTextSystem.Run(uiObject);
+		});
+
+		graphics->frame->DeviceSync();
+
+		renderSystem.renderer.ReadbackComputeResults();
 		renderSystem.renderer.perFrameData = &gameScene->perFrameData;
 		renderSystem.renderer.ssaoData = &gameScene->ssaoData;
 
@@ -74,30 +93,15 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 		gameScene->UpdatePerFrameCb();
 
-		uiScene->Update();
-		uiSystem.Raycast();
-		/*
-		uiScene->Foreach([this](UIObject * uiObject) -> void {
-			uiTransformSystem.Run(uiObject);
-			uiSystem.Run(uiObject);
-			uiSpriteSystem.Run(uiObject);
-			uiTextSystem.Run(uiObject);
-		});*/
-
 		auto builder = graphics->CreateFrameGraphBuilder();
 		renderSystem.renderer.CreateFrameGraph(builder);
 
-		graphics->frame->Run(builder->Build());
-		graphics->frame->Render();
+		graphics->frame->Run(builder->Build(), FrameGraphCullMode::ANY);
 		graphics->frame->Present();
+		graphics->frame->DeviceSync();
+		graphics->frame->CompleteFrame();
 		
-		renderSystem.renderer.Reset();/*
-		DirectX::XMFLOAT4X4 toRoot[256];
-
-		ZeroMemory(toRoot, sizeof(toRoot));
-		auto readbackBuffer = ybotAnimationSet->GetResultReadbackBuffer();
-
-		graphics->resources->Readback(readbackBuffer, toRoot, sizeof(toRoot));*/
+		renderSystem.renderer.Reset();
 	}
 
 	void Simulate(float dt) {

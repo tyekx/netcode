@@ -226,11 +226,6 @@ namespace Netcode::Graphics::DX12 {
 		resourceContext.backbufferExtents = scissorRect;
 	}
 
-	void DX12GraphicsModule::Render() {
-
-
-	}
-
 	void DX12GraphicsModule::Present() {
 		DX_API("Failed to present swap chain")
 			swapChain->Present(0, (displayMode != DisplayMode::FULLSCREEN) ? DXGI_PRESENT_ALLOW_TEARING : 0);
@@ -240,22 +235,7 @@ namespace Netcode::Graphics::DX12 {
 		DX_API("Failed to signal fence")
 			commandQueue->Signal(mainFence->GetFence(), mainFence->GetValue());
 
-		// command lists can be reset while they are being executed
-		for(auto & i : inFlightCommandLists) {
-			i.ResetCommandList();
-		}
-
-		mainFence->HostWait();
-
 		presentedBackbufferIndex = backbufferIndex;
-
-		NextBackBufferIndex();
-
-		cbufferPool.Clear();
-		dheaps.Reset();
-
-
-		inFlightCommandLists.clear();
 	}
 
 	void DX12GraphicsModule::Start(Module::AApp * app)  {
@@ -308,6 +288,26 @@ namespace Netcode::Graphics::DX12 {
 		CreateLibraries();
 
 		CreateSwapChainResources();
+	}
+
+	void DX12GraphicsModule::DeviceSync()
+	{
+		// command lists can be reset while they are being executed
+		for(auto & i : inFlightCommandLists) {
+			i.ResetCommandList();
+		}
+
+		mainFence->HostWait();
+
+		inFlightCommandLists.clear();
+	}
+
+	void DX12GraphicsModule::CompleteFrame()
+	{
+		NextBackBufferIndex();
+
+		cbufferPool.Clear();
+		dheaps.Reset();
 	}
 
 	void DX12GraphicsModule::Shutdown() {
@@ -569,9 +569,11 @@ namespace Netcode::Graphics::DX12 {
 		executor.Execute(frameGraph);
 	}
 
-	void DX12GraphicsModule::Run(FrameGraphRef frameGraph)
+	void DX12GraphicsModule::Run(FrameGraphRef frameGraph, FrameGraphCullMode cullMode)
 	{
-		CullFrameGraph(frameGraph);
+		if(cullMode == FrameGraphCullMode::ANY) {
+			CullFrameGraph(frameGraph);
+		}
 		ExecuteFrameGraph(frameGraph);
 	}
 

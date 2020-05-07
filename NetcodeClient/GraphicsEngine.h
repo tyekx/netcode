@@ -540,14 +540,13 @@ private:
 		frameGraphBuilder->CreateRenderPass("Skinning",
 			[&](IResourceContext * context) -> void {
 			
-			context->UseComputeContext();
-			context->Writes(1);
+				context->UseComputeContext();
 
-			for(std::shared_ptr<AnimationSet> & animSet : skinningPass_Input) {
-				animSet->UploadConstants(context);
-			}
+				for(std::shared_ptr<AnimationSet> & animSet : skinningPass_Input) {
+					animSet->UploadConstants(context);
+				}
 
-		},
+			},
 			[&](IRenderContext * context) -> void {
 
 			context->SetRootSignature(skinningPass_RootSignature);
@@ -565,7 +564,6 @@ private:
 				context->Dispatch(1, animSet->GetNumInstances(), 1);
 
 				animSet->CopyResults(context);
-				animSet->Clear(context);
 			}
 
 		});
@@ -575,7 +573,6 @@ private:
 		frameGraphBuilder->CreateRenderPass("Skinned Gbuffer",
 		[&](IResourceContext * context) -> void {
 
-			context->Reads(1);
 			context->Writes(3);
 
 			context->Writes(gbufferPass_ColorRenderTarget);
@@ -966,7 +963,6 @@ public:
 	}
 
 	void CreateFrameGraph(Netcode::FrameGraphBuilderRef builder) {
-		CreateSkinningPass(builder);
 		CreateSkinnedGbufferPass(builder);
 		CreateGbufferPass(builder);
 		CreateSSAOOcclusionPass(builder);
@@ -974,7 +970,17 @@ public:
 		CreateLightingPass(builder);
 		CreateBackgroundPass(builder);
 		CreateUIPass(builder);
-		//CreatePostProcessPass(builder);
+	}
+
+	void CreateComputeFrameGraph(Netcode::FrameGraphBuilderRef builder) {
+		CreateSkinningPass(builder);
+	}
+
+	void ReadbackComputeResults() {
+		for(auto & animSet : skinningPass_Input) {
+			graphics->resources->Readback(animSet->GetResultReadbackBuffer(), animSet->GetData()->BindTransform, animSet->GetNumInstances() * sizeof(BoneData));
+			animSet->Clear();
+		}
 	}
 
 };

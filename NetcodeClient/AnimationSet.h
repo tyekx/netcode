@@ -34,6 +34,8 @@ private:
 
 	AnimInstanceConstants instanceData;
 
+	BoneData results[MAX_INSTANCE_COUNT];
+
 	void FreeController(AnimationController * rawPtr);
 
 	std::shared_ptr<AnimationController> MakeNewController();
@@ -48,7 +50,7 @@ public:
 		return intermediateBuffer;
 	}
 
-	void Clear(Netcode::Graphics::IRenderContext * context);
+	void Clear();
 
 	uint32_t GetNumInstances() const;
 
@@ -67,6 +69,10 @@ public:
 
 	Netcode::GpuResourceRef GetResultReadbackBuffer() const {
 		return resultReadbackBuffer;
+	}
+
+	BoneData * GetData() {
+		return results;
 	}
 
 	void UploadConstants(Netcode::Graphics::IResourceContext * context);

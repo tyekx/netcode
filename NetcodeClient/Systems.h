@@ -143,14 +143,16 @@ public:
 };
 
 class PhysXSystem {
-	void UpdateShapeLocalPose(physx::PxShape* shape, Model* model) {
+	void UpdateShapeLocalPose(physx::PxShape* shape, Model* model, Animation * anim) {
 		if(shape->userData == nullptr) {
 			return;
 		}
-		/*
+
 		const ColliderShape & c = *(reinterpret_cast<ColliderShape *>(shape->userData));
 
-		DirectX::XMMATRIX toRoot = DirectX::XMLoadFloat4x4A(&model->boneData->ToRootTransform[c.boneReference]);
+		BoneData * bd = anim->controller->GetAnimationSet()->GetData() + model->boneDataOffset;
+
+		DirectX::XMMATRIX toRoot = DirectX::XMLoadFloat4x4A(&bd->ToRootTransform[c.boneReference]);
 		DirectX::XMVECTOR rotQ = DirectX::XMLoadFloat4(&c.localRotation);
 
 		DirectX::FXMMATRIX T = DirectX::XMMatrixTranslation(c.localPosition.x, c.localPosition.y, c.localPosition.z);
@@ -174,11 +176,10 @@ class PhysXSystem {
 		DirectX::XMStoreFloat4(&rot, rotQ);
 
 		physx::PxTransform pxT{ ToPxVec3(tr), ToPxQuat(rot) };
-		shape->setLocalPose(pxT);*/
+		shape->setLocalPose(pxT);
 	}
 
-	void UpdateBoneAttachedShapes(Model * model, Collider * collider) {
-
+	void UpdateBoneAttachedShapes(Model * model, Collider * collider, Animation * anim) {
 		if(auto * rigidBody = collider->actorRef->is<physx::PxRigidDynamic>()) {
 			constexpr static uint32_t SHAPES_BUFFER_SIZE = 8;
 
@@ -190,7 +191,7 @@ class PhysXSystem {
 				uint32_t written = rigidBody->getShapes(shapes, SHAPES_BUFFER_SIZE, idx);
 
 				for(uint32_t i = 0; i < written; ++i) {
-					UpdateShapeLocalPose(shapes[i], model);
+					UpdateShapeLocalPose(shapes[i], model, anim);
 				}
 
 				idx += written;
@@ -211,12 +212,11 @@ public:
 		}
 
 		if(model->boneData != nullptr) {
-			UpdateBoneAttachedShapes(model, collider);
+			if(gameObject->HasComponent<Animation>()) {
+				UpdateBoneAttachedShapes(model, collider, gameObject->GetComponent<Animation>());
+			}
 		}
-
-
 	}
-	
 };
 
 

@@ -5,6 +5,10 @@
 
 namespace Netcode::Graphics {
 
+	enum class FrameGraphCullMode : uint32_t {
+		NONE, ANY
+	};
+
 	enum class ResourceState : unsigned {
 		COMMON = 0,
 		VERTEX_AND_CONSTANT_BUFFER = 0x1,

@@ -183,11 +183,11 @@ namespace Netcode::Graphics {
 
 		virtual void SyncUpload(const UploadBatch & upload) = 0;
 
-		virtual void Run(std::shared_ptr<FrameGraph> frameGraph) = 0;
-
 		virtual void Prepare() = 0;
-		virtual void Render() = 0;
+		virtual void Run(std::shared_ptr<FrameGraph> frameGraph, FrameGraphCullMode cullMode) = 0;
+		virtual void DeviceSync() = 0;
 		virtual void Present() = 0;
+		virtual void CompleteFrame() = 0;
 	};
 
 }
