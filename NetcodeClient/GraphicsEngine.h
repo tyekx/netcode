@@ -764,6 +764,7 @@ private:
 			context->Reads(gbufferPass_DepthBuffer);
 			context->Reads(gbufferPass_NormalsRenderTarget);
 
+			context->Writes(2);
 			context->Writes(nullptr);
 
 		}, [&](IRenderContext * context) -> void {
