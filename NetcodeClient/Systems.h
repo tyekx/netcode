@@ -87,7 +87,6 @@ public:
 
 		for(const auto & i : model->meshes) {
 			if(model->boneData != nullptr) {
-
 				renderer.skinnedGbufferPass_Input.Produced(RenderItem(i, &model->perObjectData, model->boneData, model->boneDataOffset,
 					gameObject->GetComponent<Animation>()->debugBoneData.get()));
 			} else {
@@ -120,10 +119,14 @@ public:
 
 			blender->UpdatePlan(anim->clips, anim->blackboard->GetActiveStates());
 
+			/*
 			if(anim->debugBoneData == nullptr) {
 				anim->debugBoneData = std::make_unique<BoneData>();
 			}
+
 			blender->Blend(anim->bones, anim->clips, anim->debugBoneData->ToRootTransform, anim->debugBoneData->BindTransform);
+			*/
+
 			anim->controller->Animate(blender->GetPlan());
 			int32_t id = anim->controller->GetId();
 
@@ -135,8 +138,6 @@ public:
 			if(id == 0) {
 				renderer->skinningPass_Input.Produced(animSet);
 			}
-
-			//blender->Blend(anim->bones, anim->clips, model->boneData->ToRootTransform, model->boneData->BindTransform);
 		}
 	}
 };

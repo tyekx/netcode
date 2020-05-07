@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.8)
 target_sources(Netcode PUBLIC
 	d3dx12.h
 	DX12Builders.h
+	DX12CommandListPool.cpp
 	DX12CommandListPool.h
 	DX12Common.cpp
 	DX12Common.h

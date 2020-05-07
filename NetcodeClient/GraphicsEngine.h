@@ -148,6 +148,17 @@ class GraphicsEngine {
 	Netcode::PipelineStateRef ssaoBlurPass_PipelineState;
 
 	Netcode::SpriteBatchRef uiPass_SpriteBatch;
+
+	uint64_t perFrameCbuffer;
+
+	void SetPerFrameCb(IRenderContext * context, int slot) {
+		if(perFrameCbuffer == 0) {
+			perFrameCbuffer = context->SetConstants(slot, *perFrameData);
+		} else {
+			context->SetConstants(slot, perFrameCbuffer);
+		}
+	}
+
 public:
 
 	PerFrameData * perFrameData;
@@ -540,13 +551,19 @@ private:
 			[&](IRenderContext * context) -> void {
 
 			context->SetRootSignature(skinningPass_RootSignature);
-			context->SetPipelineState(skinningInterpolatePass_PipelineState);
 
 			for(std::shared_ptr<AnimationSet> & animSet : skinningPass_Input) {
 				animSet->BindResources(context);
+
+				context->SetPipelineState(skinningInterpolatePass_PipelineState);
 				context->Dispatch(8, animSet->GetNumInstances(), 1);
+				
+				context->UnorderedAccessBarrier(animSet->GetIntermediateResource());
+				context->FlushResourceBarriers();
+				
 				context->SetPipelineState(skinningBlendPass_PipelineState);
 				context->Dispatch(1, animSet->GetNumInstances(), 1);
+
 				animSet->CopyResults(context);
 				animSet->Clear(context);
 			}
@@ -588,7 +605,7 @@ private:
 			for(RenderItem & item : skinnedGbufferPass_Input) {
 				skinnedGbufferPass_Input.begin()->material->Apply(context);
 				context->SetConstants(1, *item.objectData);
-				context->SetConstants(2, *perFrameData);
+				SetPerFrameCb(context, 2);
 				//context->SetConstants(3, *item.debugBoneData);
 				context->SetShaderResources(3, item.boneData, item.boneDataOffset);
 				context->SetVertexBuffer(item.gbuffer.vertexBuffer);
@@ -630,7 +647,7 @@ private:
 				}
 
 				if(!isBound) {
-					context->SetConstants(2, *perFrameData);
+					SetPerFrameCb(context, 2);
 					isBound = true;
 				}
 
@@ -641,7 +658,7 @@ private:
 			/*
 			gbufferPass_Input.begin()->material->Apply(context);
 			context->SetConstants(1, *(gbufferPass_Input.begin()->objectData));
-			context->SetConstants(2, *perFrameData);
+			SetPerFrameCb(context, 2);
 			context->SetVertexBuffer(fsQuad.vertexBuffer);
 			context->Draw(fsQuad.vertexCount);*/
 			context->ResourceBarrier(gbufferPass_ColorRenderTarget, ResourceState::RENDER_TARGET, ResourceState::PIXEL_SHADER_RESOURCE);
@@ -672,7 +689,7 @@ private:
 			context->SetRenderTargets(ssaoPass_OcclusionRenderTarget, 0);
 			context->ClearRenderTarget(0);
 
-			context->SetConstants(0, *perFrameData);
+			SetPerFrameCb(context, 0);
 			context->SetConstants(1, *ssaoData);
 			context->SetShaderResources(2, { gbufferPass_NormalsRenderTarget, gbufferPass_DepthBuffer, ssaoPass_RandomVectorTexture });
 
@@ -724,7 +741,8 @@ private:
 
 				context->SetShaderResources(0, { sourceTexture, gbufferPass_NormalsRenderTarget, gbufferPass_DepthBuffer });
 				context->SetConstants(1, *ssaoData);
-				context->SetConstants(2, *perFrameData);
+
+				SetPerFrameCb(context, 2);
 				context->SetRootConstants(3, &isHorizontal, 1);
 				context->SetVertexBuffer(fsQuad.vertexBuffer);
 				context->Draw(fsQuad.vertexCount);
@@ -759,7 +777,7 @@ private:
 			context->SetViewport();
 			context->SetStencilReference(0xFF);
 			context->SetRenderTargets(nullptr, gbufferPass_DepthStencilView);
-			context->SetConstants(0, *perFrameData);
+			SetPerFrameCb(context, 0);
 			context->SetShaderResources(1, lightingPass_ShaderResourceViews);
 
 			// @TODO: set light data
@@ -904,7 +922,7 @@ public:
 			ctx->SetRootSignature(envmapPass_RootSignature);
 			ctx->SetPipelineState(envmapPass_PipelineState);
 
-			ctx->SetConstants(0, *perFrameData);
+			SetPerFrameCb(ctx, 0);
 			ctx->SetShaderResources(1, cloudynoonView);
 
 			ctx->SetVertexBuffer(fsQuad.vertexBuffer);
@@ -917,6 +935,7 @@ public:
 		skinnedGbufferPass_Input.Clear();
 		gbufferPass_Input.Clear();
 		uiPass_Input.Clear();
+		perFrameCbuffer = 0;
 	}
 
 	void OnResize(int x, int y) {

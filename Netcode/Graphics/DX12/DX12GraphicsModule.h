@@ -140,7 +140,7 @@ namespace Netcode::Graphics::DX12 {
 		DX12FenceRef mainFence;
 		DX12FenceRef uploadFence;
 
-		CommandListPool commandListStorage;
+		DX12CommandListPoolRef commandListPool;
 
 		DX12HeapManagerRef heapManager;
 

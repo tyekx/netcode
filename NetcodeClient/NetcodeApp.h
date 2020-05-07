@@ -91,8 +91,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		graphics->frame->Render();
 		graphics->frame->Present();
 		
-		renderSystem.renderer.Reset();
-		/*
+		renderSystem.renderer.Reset();/*
 		DirectX::XMFLOAT4X4 toRoot[256];
 
 		ZeroMemory(toRoot, sizeof(toRoot));

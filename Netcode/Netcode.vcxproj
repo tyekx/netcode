@@ -44,10 +44,13 @@
     <Lib />
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AnimationBlender.h" />
-    <ClInclude Include="AnimationState.h" />
+    <ClInclude Include="Animation\Blackboard.h" />
+    <ClInclude Include="Animation\Blender.h" />
+    <ClInclude Include="Animation\IK.h" />
+    <ClInclude Include="Animation\State.h" />
+    <ClInclude Include="Animation\StateGroup.h" />
+    <ClInclude Include="Animation\Transition.h" />
     <ClInclude Include="BinaryReader.h" />
-    <ClInclude Include="Blackboard.h" />
     <ClInclude Include="BasicGeometry.h" />
     <ClInclude Include="BulkAllocator.hpp" />
     <ClInclude Include="BulkVector.hpp" />
@@ -58,6 +61,7 @@
     <ClInclude Include="DebugPhysxRaycast.h" />
     <ClInclude Include="DefaultModuleFactory.h" />
     <ClInclude Include="DestructiveCopyConstructible.hpp" />
+    <ClInclude Include="Functions.h" />
     <ClInclude Include="Graphics\Config.h" />
     <ClInclude Include="Graphics\DX12\d3dx12.h" />
     <ClInclude Include="Graphics\DX12\DX12Builders.h" />
@@ -142,21 +146,25 @@
     <ClInclude Include="ProgramArgs.h" />
     <ClInclude Include="Service.hpp" />
     <ClInclude Include="Stopwatch.h" />
-    <ClInclude Include="Transition.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="WinapiWindowModule.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AnimationBlender.cpp" />
-    <ClCompile Include="AnimationState.cpp" />
+    <ClCompile Include="Animation\Blackboard.cpp" />
+    <ClCompile Include="Animation\Blender.cpp" />
+    <ClCompile Include="Animation\IK.cpp" />
+    <ClCompile Include="Animation\State.cpp" />
+    <ClCompile Include="Animation\StateGroup.cpp" />
+    <ClCompile Include="Animation\Transition.cpp" />
     <ClCompile Include="BinaryReader.cpp" />
-    <ClCompile Include="Blackboard.cpp" />
     <ClCompile Include="BasicGeometry.cpp" />
     <ClCompile Include="ConsoleModule.cpp" />
     <ClCompile Include="DebugPhysx.cpp" />
     <ClCompile Include="DebugPhysxActor.cpp" />
     <ClCompile Include="DefaultModuleFactory.cpp" />
+    <ClCompile Include="Functions.cpp" />
+    <ClCompile Include="Graphics\DX12\DX12CommandListPool.cpp" />
     <ClCompile Include="Graphics\DX12\DX12Common.cpp" />
     <ClCompile Include="Graphics\DX12\DX12ConstantBufferPool.cpp" />
     <ClCompile Include="Graphics\DX12\DX12CPipelineState.cpp" />
@@ -220,7 +228,6 @@
     <ClCompile Include="Path.cpp" />
     <ClCompile Include="PhysXWrapper.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
-    <ClCompile Include="Transition.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="WinapiWindowModule.cpp" />
   </ItemGroup>

@@ -156,13 +156,15 @@ namespace Netcode::Graphics {
 		// for frame-constant constant buffers only that are allocated with CreateConstantBuffer
 		virtual void SetRootConstants(int slot, const void * srcData, uint32_t numConstants) = 0;
 		virtual void SetConstantBuffer(int slot, GpuResourceRef cbufferHandle) = 0;
-		virtual void SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) = 0;
+		virtual void SetConstants(int slot, uint64_t constantHandle) = 0;
+		virtual uint64_t SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) = 0;
 		virtual void SetShaderResources(int slot, std::initializer_list<GpuResourceRef> shaderResourceHandles) = 0;
 		virtual void SetShaderResources(int slot, ResourceViewsRef resourceView) = 0;
 		virtual void SetShaderResources(int slot, ResourceViewsRef resourceView, int descriptorOffset) = 0;
 		virtual void CopyBufferRegion(GpuResourceRef dstResource, GpuResourceRef srcResource, size_t sizeInBytes) = 0;
 		virtual void CopyBufferRegion(GpuResourceRef dstResource, size_t dstOffset, GpuResourceRef srcResource, size_t srcOffset, size_t sizeInBytes) = 0;
 
+		virtual void UnorderedAccessBarrier(GpuResourceRef handle) = 0;
 		virtual void ResourceBarrier(GpuResourceRef handle, ResourceState before, ResourceState after) = 0;
 
 		virtual void FlushResourceBarriers() = 0;
@@ -170,11 +172,9 @@ namespace Netcode::Graphics {
 		virtual void EndPass() = 0;
 
 		template<typename T>
-		inline void SetConstants(int slot, const T & srcData) {
-			SetConstants(slot, reinterpret_cast<const void *>(&srcData), sizeof(T));
+		inline uint64_t SetConstants(int slot, const T & srcData) {
+			return SetConstants(slot, reinterpret_cast<const void *>(&srcData), sizeof(T));
 		}
-
-
 	};
 
 	class IFrameContext {

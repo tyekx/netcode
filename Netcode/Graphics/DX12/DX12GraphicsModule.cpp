@@ -240,6 +240,11 @@ namespace Netcode::Graphics::DX12 {
 		DX_API("Failed to signal fence")
 			commandQueue->Signal(mainFence->GetFence(), mainFence->GetValue());
 
+		// command lists can be reset while they are being executed
+		for(auto & i : inFlightCommandLists) {
+			i.ResetCommandList();
+		}
+
 		mainFence->HostWait();
 
 		presentedBackbufferIndex = backbufferIndex;
@@ -249,9 +254,6 @@ namespace Netcode::Graphics::DX12 {
 		cbufferPool.Clear();
 		dheaps.Reset();
 
-		for(auto & i : inFlightCommandLists) {
-			commandListStorage.Return(std::move(i));
-		}
 
 		inFlightCommandLists.clear();
 	}
@@ -292,7 +294,7 @@ namespace Netcode::Graphics::DX12 {
 
 		CreateFences();
 
-		commandListStorage.SetDevice(device);
+		commandListPool = std::make_shared<DX12CommandListPool>(device);
 
 		CreateContexts();
 
@@ -422,7 +424,7 @@ namespace Netcode::Graphics::DX12 {
 	{
 		com_ptr<ID3D12Resource> uploadResource;
 
-		CommandList directCl = commandListStorage.GetDirect();
+		CommandList directCl = commandListPool->GetDirect();
 
 		std::vector<D3D12_RESOURCE_BARRIER> barriers;
 		barriers.reserve(upload.BarrierTasks().size());
@@ -482,13 +484,13 @@ namespace Netcode::Graphics::DX12 {
 
 						uploadResource->Unmap(0, &nullRange);
 
-						directCl.commandList->CopyBufferRegion(resource->resource.Get(), task.bufferTask.dstDataOffsetInBytes, uploadResource.Get(), offset, task.bufferTask.srcDataSizeInBytes);
+						directCl.GetCommandList()->CopyBufferRegion(resource->resource.Get(), task.bufferTask.dstDataOffsetInBytes, uploadResource.Get(), offset, task.bufferTask.srcDataSizeInBytes);
 					} else {
 						D3D12_SUBRESOURCE_DATA data;
 						data.RowPitch = (resource->desc.dimension == ResourceDimension::BUFFER) ? task.bufferTask.srcDataSizeInBytes : (resource->desc.strideInBytes * resource->desc.width);
 						data.SlicePitch = task.bufferTask.srcDataSizeInBytes;
 						data.pData = task.bufferTask.srcData;
-						UpdateSubresources(directCl.commandList.Get(), resource->resource.Get(), uploadResource.Get(), offset, 0u, 1u, &data);
+						UpdateSubresources(directCl.GetCommandList(), resource->resource.Get(), uploadResource.Get(), offset, 0u, 1u, &data);
 					}
 
 					offset += Utility::Align64K<size_t>(task.bufferTask.srcDataSizeInBytes);
@@ -511,7 +513,7 @@ namespace Netcode::Graphics::DX12 {
 						sum += imgR->slicePitch;
 					}
 
-					UpdateSubresources(directCl.commandList.Get(), resource->resource.Get(), uploadResource.Get(), offset, 0u, imgCount, subResData.get());
+					UpdateSubresources(directCl.GetCommandList(), resource->resource.Get(), uploadResource.Get(), offset, 0u, imgCount, subResData.get());
 
 					offset += Utility::Align64K<size_t>(sum);
 				}
@@ -519,21 +521,19 @@ namespace Netcode::Graphics::DX12 {
 		}
 
 		if(!barriers.empty()) {
-			directCl.commandList->ResourceBarrier(static_cast<uint32_t>(barriers.size()), barriers.data());
+			directCl.GetCommandList()->ResourceBarrier(static_cast<uint32_t>(barriers.size()), barriers.data());
 		}
 
 		DX_API("Failed to close command list")
-			directCl.commandList->Close();
+			directCl.GetCommandList()->Close();
 
-		ID3D12CommandList * cls[] = { directCl.commandList.Get() };
+		ID3D12CommandList * cls[] = { directCl.GetCommandList() };
 
 		commandQueue->ExecuteCommandLists(ARRAYSIZE(cls), cls);
 		
 		uploadFence->Signal(commandQueue.Get());
 
 		uploadFence->HostWait();
-
-		commandListStorage.Return(std::move(directCl));
 	}
 
 	void DX12GraphicsModule::CullFrameGraph(FrameGraphRef frameGraph)
@@ -549,7 +549,7 @@ namespace Netcode::Graphics::DX12 {
 	void DX12GraphicsModule::ExecuteFrameGraph(FrameGraphRef frameGraph)
 	{
 		FrameGraphExecutor executor{
-			&commandListStorage,
+			commandListPool.get(),
 			heapManager.get(),
 			&resourcePool,
 			&dheaps,

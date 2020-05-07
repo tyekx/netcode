@@ -44,6 +44,10 @@ private:
 
 public:
 
+	Netcode::GpuResourceRef GetIntermediateResource() const {
+		return intermediateBuffer;
+	}
+
 	void Clear(Netcode::Graphics::IRenderContext * context);
 
 	uint32_t GetNumInstances() const;

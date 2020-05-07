@@ -4,10 +4,22 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	BaseRenderContext::BaseRenderContext(ResourcePool * resourcePool, ConstantBufferPool * cbufferPool, DynamicDescriptorHeap * dHeaps, com_ptr<ID3D12GraphicsCommandList> cl) :
+	BaseRenderContext::BaseRenderContext(ResourcePool * resourcePool, ConstantBufferPool * cbufferPool, DynamicDescriptorHeap * dHeaps, ID3D12GraphicsCommandList * cl) :
 		resources{ resourcePool }, cbuffers{ cbufferPool }, descHeaps{ dHeaps }, commandList{ std::move(cl) }, barriers{}
 	{
 
+	}
+
+	void BaseRenderContext::UnorderedAccessBarrier(GpuResourceRef handle)
+	{
+		ID3D12Resource * res = std::dynamic_pointer_cast<DX12Resource>(handle)->resource.Get();
+
+		D3D12_RESOURCE_BARRIER barrier;
+		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barrier.UAV.pResource = res;
+
+		barriers.push_back(barrier);
 	}
 
 	void BaseRenderContext::ResourceBarrier(GpuResourceRef handle, ResourceState before, ResourceState after)
@@ -39,7 +51,7 @@ namespace Netcode::Graphics::DX12 {
 		ResourcePool * resourcePool,
 		ConstantBufferPool * cbpool,
 		DynamicDescriptorHeap * dheaps,
-		com_ptr<ID3D12GraphicsCommandList> commandListRef,
+		ID3D12GraphicsCommandList * commandListRef,
 		const D3D12_CPU_DESCRIPTOR_HANDLE & backbuffer,
 		const D3D12_CPU_DESCRIPTOR_HANDLE & backbufferDepth,
 		const D3D12_VIEWPORT & viewPort,
@@ -352,12 +364,19 @@ namespace Netcode::Graphics::DX12 {
 		commandList->SetGraphicsRootConstantBufferView(slot, rr->resource->GetGPUVirtualAddress());
 	}
 
-	void GraphicsContext::SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes)
+	void GraphicsContext::SetConstants(int slot, uint64_t constantHandle)
+	{
+		commandList->SetGraphicsRootConstantBufferView(slot, cbuffers->GetNativeHandle(constantHandle));
+	}
+
+	uint64_t GraphicsContext::SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes)
 	{
 		uint64_t handle = cbuffers->CreateConstantBuffer(srcDataSizeInBytes);
 		cbuffers->CopyData(handle, srcData, srcDataSizeInBytes);
 
 		commandList->SetGraphicsRootConstantBufferView(slot, cbuffers->GetNativeHandle(handle));
+
+		return handle;
 	}
 
 	void GraphicsContext::CopyBufferRegion(GpuResourceRef dstResource, GpuResourceRef srcResource, size_t sizeInBytes)
@@ -375,7 +394,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void GraphicsContext::BeginPass()
 	{
-		descHeaps->SetDescriptorHeaps(commandList.Get());
+		descHeaps->SetDescriptorHeaps(commandList);
 	}
 
 	void GraphicsContext::EndPass()
@@ -588,12 +607,19 @@ namespace Netcode::Graphics::DX12 {
 		commandList->SetComputeRootConstantBufferView(slot, rr->resource->GetGPUVirtualAddress());
 	}
 
-	void ComputeContext::SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes)
+	void ComputeContext::SetConstants(int slot, uint64_t constantHandle)
+	{
+		commandList->SetComputeRootConstantBufferView(slot, cbuffers->GetNativeHandle(constantHandle));
+	}
+
+	uint64_t ComputeContext::SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes)
 	{
 		uint64_t handle = cbuffers->CreateConstantBuffer(srcDataSizeInBytes);
 		cbuffers->CopyData(handle, srcData, srcDataSizeInBytes);
 
 		commandList->SetComputeRootConstantBufferView(slot, cbuffers->GetNativeHandle(handle));
+
+		return handle;
 	}
 
 	void ComputeContext::CopyBufferRegion(GpuResourceRef dstResource, GpuResourceRef srcResource, size_t sizeInBytes)
@@ -611,7 +637,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void ComputeContext::BeginPass()
 	{
-		descHeaps->SetDescriptorHeaps(commandList.Get());
+		descHeaps->SetDescriptorHeaps(commandList);
 	}
 
 	void ComputeContext::EndPass()

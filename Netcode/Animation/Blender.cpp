@@ -1,4 +1,6 @@
 #include "Blender.h"
+#include <algorithm>
+#include <Netcode/Logger.h>
 
 namespace Netcode::Animation {
 	void Blender::FillFrameData(Asset::Animation & clip, const StateBase & state, BlendItem & item) {
@@ -22,6 +24,7 @@ namespace Netcode::Animation {
 		}
 
 	}
+
 	void Blender::UpdatePlan(ArrayView<Asset::Animation> clips, ArrayView<StateBase> activeStates) {
 		items.clear();
 		for(StateBase & state : activeStates) {
@@ -30,6 +33,7 @@ namespace Netcode::Animation {
 			item.weight = state.weight;
 			item.mask = state.boneMask;
 			FillFrameData(clips[item.clipId], state, item);
+
 			items.push_back(item);
 		}
 	}
@@ -103,11 +107,7 @@ namespace Netcode::Animation {
 				DirectX::XMVectorScale(q1, sinTOmega)), 1.0f / sinOmega));
 	}
 
-	void Blender::Blend(ArrayView<Asset::Bone> bones, ArrayView<Asset::Animation> clips, DirectX::XMFLOAT4X4A * toRootMatrices, DirectX::XMFLOAT4X4A * bindMatrices) {
-		if(items.empty()) {
-			return;
-		}
-
+	static Blender::BoneSRT BlendFrames(Netcode::Asset::AnimationKey * lhs, Netcode::Asset::AnimationKey * rhs, float t) {
 		DirectX::XMVECTOR stPos;
 		DirectX::XMVECTOR endPos;
 
@@ -117,54 +117,66 @@ namespace Netcode::Animation {
 		DirectX::XMVECTOR stScale;
 		DirectX::XMVECTOR endScale;
 
+		stPos = DirectX::XMLoadFloat4(&lhs->position);
+		stQuat = DirectX::XMLoadFloat4(&lhs->rotation);
+		stScale = DirectX::XMLoadFloat4(&lhs->scale);
+
+		endPos = DirectX::XMLoadFloat4(&rhs->position);
+		endQuat = DirectX::XMLoadFloat4(&rhs->rotation);
+		endScale = DirectX::XMLoadFloat4(&rhs->scale);
+
+		stPos = DirectX::XMVectorLerp(stPos, endPos, t);
+		stQuat = MySlerp(stQuat, endQuat, t);
+		stScale = DirectX::XMVectorLerp(stScale, endScale, t);
+
+		Blender::BoneSRT srt;
+		srt.translation = stPos;
+		srt.rotation = stQuat;
+		srt.scale = stScale;
+		return srt;
+	}
+
+	void Blender::BlendState(uint32_t stateId, ArrayView<Asset::Animation> clips)
+	{
+		const BlendItem & item = items.at(stateId);
+
+		float weight = item.weight;
+		float t = item.normalizedTime;
+		const Asset::Animation * a = clips.Data() + item.clipId;
+		uint32_t idx0 = item.beginFrameIndex;
+		uint32_t idx1 = item.endFrameIndex;
+		auto * startKey = (a->keys + idx0 * a->bonesLength);
+		auto * endKey = (a->keys + idx1 * a->bonesLength);
+
+		for(unsigned int i = 0; i < a->bonesLength; ++i) {
+			BoneSRT res = BlendFrames(startKey + i, endKey + i, t);
+
+			float nw = weight / (weight + wSum);
+
+			buffer[i].translation = DirectX::XMVectorLerp(buffer[i].translation, res.translation, nw);
+			buffer[i].rotation = MySlerp(buffer[i].rotation, res.rotation, nw);
+			buffer[i].scale = DirectX::XMVectorLerp(buffer[i].scale, res.scale, nw);
+		}
+
+		wSum += weight;
+	}
+
+	void Blender::Blend(ArrayView<Asset::Bone> bones, ArrayView<Asset::Animation> clips, DirectX::XMFLOAT4X4A * toRootMatrices, DirectX::XMFLOAT4X4A * bindMatrices) {
+		if(items.empty()) {
+			return;
+		}
+
+		wSum = 0.0f;
+
 		DirectX::XMMATRIX bindTrans;
 		DirectX::XMMATRIX toRoot[128];
-		float wSum = 0.0f;
+		
+
+		for(size_t stateI = 0; stateI < items.size(); ++stateI) {
+			BlendState(stateI, clips);
+		}
 
 		int parentId;
-
-
-		for(const BlendItem & item : items) {
-			float weight = item.weight;
-			float t = item.normalizedTime;
-			const Asset::Animation * a = clips.Data() + item.clipId;
-			uint32_t idx0 = item.beginFrameIndex;
-			uint32_t idx1 = item.endFrameIndex;
-
-			auto * startKey = (a->keys + idx0 * a->bonesLength);
-			auto * endKey = (a->keys + idx1 * a->bonesLength);
-
-			const float wInc = wSum + weight;
-
-			for(unsigned int i = 0; i < a->bonesLength; ++i) {
-
-				stPos = DirectX::XMLoadFloat4(&startKey[i].position);
-				stQuat = DirectX::XMLoadFloat4(&startKey[i].rotation);
-				stScale = DirectX::XMLoadFloat4(&startKey[i].scale);
-
-				endPos = DirectX::XMLoadFloat4(&endKey[i].position);
-				endQuat = DirectX::XMLoadFloat4(&endKey[i].rotation);
-				endScale = DirectX::XMLoadFloat4(&endKey[i].scale);
-
-				stPos = DirectX::XMVectorLerp(stPos, endPos, t);
-				stQuat = MySlerp(stQuat, endQuat, t);
-				stScale = DirectX::XMVectorLerp(stScale, endScale, t);
-
-
-				float nw;
-				if(wInc == 0.0f) {
-					nw = 0.0f;
-				} else {
-					nw = weight / wInc;
-				}
-
-				buffer[i].translation = DirectX::XMVectorLerp(buffer[i].translation, stPos, nw);
-				buffer[i].rotation = MySlerp(buffer[i].rotation, stQuat, nw);
-				buffer[i].scale = DirectX::XMVectorLerp(buffer[i].scale, stScale, nw);
-			}
-
-			wSum = wInc;
-		}
 
 		for(size_t i = 0; i < bones.Size(); ++i) {
 			// A matrix
@@ -176,7 +188,7 @@ namespace Netcode::Animation {
 				DirectX::XMMatrixMultiply(sc, rot), tr
 			);
 
-			//toRoot[i] = DirectX::XMMatrixAffineTransformation(buffer[i].scale, DirectX::XMQuaternionIdentity(), buffer[i].rotation, buffer[i].translation);
+			toRoot[i] = DirectX::XMMatrixAffineTransformation(buffer[i].scale, DirectX::XMQuaternionIdentity(), buffer[i].rotation, buffer[i].translation);
 
 			parentId = bones[i].parentId;
 			if(parentId > -1) {

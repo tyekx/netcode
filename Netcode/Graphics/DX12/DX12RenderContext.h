@@ -13,21 +13,19 @@ namespace Netcode::Graphics::DX12 {
 		ResourcePool * resources;
 		ConstantBufferPool * cbuffers;
 		DynamicDescriptorHeap * descHeaps;
-		com_ptr<ID3D12GraphicsCommandList> commandList;
+		ID3D12GraphicsCommandList* commandList;
 		std::vector<D3D12_RESOURCE_BARRIER> barriers;
 	public:
 
-		BaseRenderContext(ResourcePool * resourcePool, ConstantBufferPool * cbufferPool, DynamicDescriptorHeap * dHeaps, com_ptr<ID3D12GraphicsCommandList> cl);
+		BaseRenderContext(ResourcePool * resourcePool, ConstantBufferPool * cbufferPool, DynamicDescriptorHeap * dHeaps, ID3D12GraphicsCommandList * cl);
 
 		virtual ~BaseRenderContext() = default;
 
+		virtual void UnorderedAccessBarrier(GpuResourceRef handle) override;
 		virtual void ResourceBarrier(GpuResourceRef handle, ResourceState before, ResourceState after) override;
 
 		virtual void FlushResourceBarriers() override;
 
-		com_ptr<ID3D12GraphicsCommandList> GetCommandListRef() const {
-			return commandList;
-		}
 
 	};
 
@@ -106,7 +104,9 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetConstantBuffer(int slot, GpuResourceRef cbufferHandle) override;
 
-		virtual void SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) override;
+		virtual void SetConstants(int slot, uint64_t constantHandle) override;
+
+		virtual uint64_t SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) override;
 
 		virtual void SetShaderResources(int slot, std::initializer_list<GpuResourceRef> shaderResourceHandles) override;
 
@@ -138,7 +138,7 @@ namespace Netcode::Graphics::DX12 {
 			ResourcePool * resourcePool,
 			ConstantBufferPool * cbpool,
 			DynamicDescriptorHeap * dheaps,
-			com_ptr<ID3D12GraphicsCommandList> directCommandList,
+			ID3D12GraphicsCommandList * directCommandList,
 			const D3D12_CPU_DESCRIPTOR_HANDLE & backbuffer,
 			const D3D12_CPU_DESCRIPTOR_HANDLE & backbufferDepth,
 			const D3D12_VIEWPORT & viewPort,
@@ -208,7 +208,10 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetRootConstants(int slot, const void * srcData, uint32_t numConstants) override;
 		virtual void SetConstantBuffer(int slot, GpuResourceRef cbufferHandle) override;
-		virtual void SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) override;
+
+		virtual void SetConstants(int slot, uint64_t constantHandle) override;
+
+		virtual uint64_t SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) override;
 
 		virtual void CopyBufferRegion(GpuResourceRef dstResource, GpuResourceRef srcResource, size_t sizeInBytes) override;
 

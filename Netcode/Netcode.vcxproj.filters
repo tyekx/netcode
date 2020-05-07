@@ -106,18 +106,6 @@
     <ClInclude Include="ModulesConfig.h">
       <Filter>Modules</Filter>
     </ClInclude>
-    <ClInclude Include="Transition.h">
-      <Filter>Animation</Filter>
-    </ClInclude>
-    <ClInclude Include="Blackboard.h">
-      <Filter>Animation</Filter>
-    </ClInclude>
-    <ClInclude Include="AnimationState.h">
-      <Filter>Animation</Filter>
-    </ClInclude>
-    <ClInclude Include="AnimationBlender.h">
-      <Filter>Animation</Filter>
-    </ClInclude>
     <ClInclude Include="BasicGeometry.h">
       <Filter>Utility</Filter>
     </ClInclude>
@@ -355,6 +343,27 @@
     <ClInclude Include="Graphics\DX12\DX12Resource.h">
       <Filter>Graphics\DX12</Filter>
     </ClInclude>
+    <ClInclude Include="Animation\Blackboard.h">
+      <Filter>Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Animation\Blender.h">
+      <Filter>Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Animation\IK.h">
+      <Filter>Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Animation\State.h">
+      <Filter>Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Animation\StateGroup.h">
+      <Filter>Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Animation\Transition.h">
+      <Filter>Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Functions.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Path.cpp">
@@ -390,18 +399,6 @@
     </ClCompile>
     <ClCompile Include="DebugPhysxActor.cpp">
       <Filter>Legacy</Filter>
-    </ClCompile>
-    <ClCompile Include="Transition.cpp">
-      <Filter>Animation</Filter>
-    </ClCompile>
-    <ClCompile Include="Blackboard.cpp">
-      <Filter>Animation</Filter>
-    </ClCompile>
-    <ClCompile Include="AnimationState.cpp">
-      <Filter>Animation</Filter>
-    </ClCompile>
-    <ClCompile Include="AnimationBlender.cpp">
-      <Filter>Animation</Filter>
     </ClCompile>
     <ClCompile Include="BasicGeometry.cpp">
       <Filter>Utility</Filter>
@@ -578,6 +575,30 @@
       <Filter>Graphics\DX12</Filter>
     </ClCompile>
     <ClCompile Include="Graphics\DX12\DX12Resource.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Animation\Blackboard.cpp">
+      <Filter>Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Animation\Blender.cpp">
+      <Filter>Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Animation\IK.cpp">
+      <Filter>Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Animation\State.cpp">
+      <Filter>Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Animation\StateGroup.cpp">
+      <Filter>Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Animation\Transition.cpp">
+      <Filter>Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Functions.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12CommandListPool.cpp">
       <Filter>Graphics\DX12</Filter>
     </ClCompile>
   </ItemGroup>
