@@ -8,8 +8,10 @@
 #include "PhysxHelpers.h"
 #include <Netcode/MovementController.h>
 #include <Netcode/Animation/Blender.h>
+#include <Netcode/Animation/IK.h>
 
 class TransformSystem {
+	float debugY;
 public:
 	static inline DirectX::XMVECTOR GetWorldRotation(Transform * transform, Transform * parentTransform) {
 		DirectX::XMVECTOR worldRotation = DirectX::XMLoadFloat4(&transform->rotation);
@@ -21,6 +23,8 @@ public:
 
 		return worldRotation;
 	}
+
+	TransformSystem() : debugY{ 150.0f } { }
 
 	static inline DirectX::XMVECTOR GetWorldPosition(Transform * transform, Transform * parentTransform) {
 		DirectX::XMVECTOR worldPosition = DirectX::XMLoadFloat3(&transform->position);
@@ -53,6 +57,17 @@ public:
 
 		DirectX::XMStoreFloat3(&transform->worldPosition, worldPos);
 		DirectX::XMStoreFloat4(&transform->worldRotation, worldRot);
+
+		if(gameObject->HasComponent<Animation>()) {
+			Animation * anim = gameObject->GetComponent<Animation>();
+			BoneData * res = anim->debugBoneData.get();
+
+			for(const Netcode::Animation::IKEffector & effector : anim->effectors) {
+				Netcode::Animation::BackwardBounceCCD::Run(effector, anim->bones, anim->blender->GetBoneTransforms());
+			}
+
+			anim->blender->UpdateMatrices(anim->bones, res->ToRootTransform, res->BindTransform);
+		}
 	}
 };
 
@@ -85,8 +100,15 @@ public:
 		DirectX::XMStoreFloat4x4A(&model->perObjectData.Model, DirectX::XMMatrixTranspose(modelMat));
 		DirectX::XMStoreFloat4x4A(&model->perObjectData.InvModel, DirectX::XMMatrixTranspose(invModelMat));
 
+
+		bool hasDebugData = false;
+		if(gameObject->HasComponent<Animation>()) {
+			hasDebugData = gameObject->GetComponent<Animation>()->debugBoneData != nullptr;
+		}
+
 		for(const auto & i : model->meshes) {
-			if(model->boneData != nullptr) {
+
+			if(model->boneData != nullptr || hasDebugData) {
 				renderer.skinnedGbufferPass_Input.Produced(RenderItem(i, &model->perObjectData, model->boneData, model->boneDataOffset,
 					gameObject->GetComponent<Animation>()->debugBoneData.get()));
 			} else {
@@ -98,14 +120,10 @@ public:
 
 class AnimationSystem {
 	Netcode::MovementController * movementController;
-	std::shared_ptr<Netcode::Animation::Blender> blender;
 public:
 	void Run(GameObject * gameObject, float dt);
-	GraphicsEngine * renderer;
 
-	AnimationSystem() {
-		blender = std::make_shared<Netcode::Animation::Blender>();
-	}
+	GraphicsEngine * renderer;
 
 	void SetMovementController(Netcode::MovementController * movCtrl) {
 		movementController = movCtrl;
@@ -117,15 +135,21 @@ public:
 
 			anim->blackboard->Update(dt);
 
-			blender->UpdatePlan(anim->clips, anim->blackboard->GetActiveStates());
+			anim->blender->UpdatePlan(anim->clips, anim->blackboard->GetActiveStates());
 
-			/*
 			if(anim->debugBoneData == nullptr) {
 				anim->debugBoneData = std::make_unique<BoneData>();
 			}
 
-			blender->Blend(anim->bones, anim->clips, anim->debugBoneData->ToRootTransform, anim->debugBoneData->BindTransform);
-			*/
+			for(const auto & eff : anim->effectors) {
+				const auto & p = eff.position;
+				renderer->DrawDebugPoint(DirectX::XMFLOAT3{ p.x, p.y, p.z }, 10.0f);
+			}
+
+			anim->blender->Blend(anim->clips);
+
+			/*
+			
 
 			anim->controller->Animate(blender->GetPlan());
 			int32_t id = anim->controller->GetId();
@@ -137,7 +161,7 @@ public:
 
 			if(id == 0) {
 				renderer->skinningPass_Input.Produced(animSet);
-			}
+			}*/
 		}
 	}
 };

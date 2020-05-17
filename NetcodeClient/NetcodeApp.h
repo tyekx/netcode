@@ -16,6 +16,8 @@
 #include "Scene.h"
 #include "DevCameraScript.h"
 #include "PlayerBehavior.h"
+#include "GunScript.h"
+#include "DebugScript.h"
 #include "Snippets.h"
 #include "PhysxHelpers.h"
 #include "Services.h"
@@ -66,7 +68,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		auto cfgBuilder = graphics->CreateFrameGraphBuilder();
 		renderSystem.renderer.CreateComputeFrameGraph(cfgBuilder);
 		graphics->frame->Run(cfgBuilder->Build(), FrameGraphCullMode::NONE);
-
+		/*
 		uiScene->Update();
 		uiSystem.Raycast();
 
@@ -75,7 +77,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			uiSystem.Run(uiObject);
 			uiSpriteSystem.Run(uiObject);
 			uiTextSystem.Run(uiObject);
-		});
+		});*/
 
 		graphics->frame->DeviceSync();
 
@@ -119,7 +121,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		gameScene->Foreach([this, dt](GameObject * gameObject)->void {
 			if(gameObject->IsActive()) {
 				scriptSystem.Run(gameObject, dt);
-				animSystem.Run(gameObject, dt);
+				animSystem.Run(gameObject, 0);
 			}
 		});
 	}
@@ -178,6 +180,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		
 		LoadComponents(assetManager->Import(L"testbox.ncasset"), testbox);
 
+
 		gameScene->Spawn(testbox);
 	}
 
@@ -193,6 +196,13 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			ybotAnimationSet = std::make_shared<AnimationSet>(graphics.get(), avatarModel->animations, avatarModel->bones);
 		}
 
+		GameObject * gunObj = gameScene->Create();
+		LoadComponents(assetManager->Import(L"gun.ncasset"), gunObj);
+
+		Transform * gunTransform = gunObj->GetComponent<Transform>();
+
+		gunTransform->scale = DirectX::XMFLOAT3{ 18.0f, 18.0f, 18.0f };
+
 		LoadComponents(avatarModel, avatarHitboxes);
 		Animation* anim = avatarHitboxes->AddComponent<Animation>();
 		CreateYbotAnimationComponent(avatarModel, anim);
@@ -202,11 +212,36 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		physx::PxController * pxController = gameScene->CreateController();
 		avatarController->AddComponent<Transform>();
 		avatarHitboxes->Parent(avatarController);
+		gunObj->Parent(avatarController);
 
 		avatarController->AddComponent<Script>()->SetBehavior(std::make_unique<RemoteAvatarScript>(pxController));
 
+		DirectX::XMFLOAT4 gunRotation;
+		DirectX::XMStoreFloat4(&gunRotation, DirectX::XMQuaternionRotationRollPitchYaw(-DirectX::XM_PIDIV2, -DirectX::XM_PIDIV2, 0.0f));
+
+		Script * gunScript = gunObj->AddComponent<Script>();
+
+		auto behav = std::make_unique<GunBehavior>(avatarHitboxes, DirectX::XMFLOAT4{ -29.0f, -1.0f, 4.0f, 1.0f },
+			gunRotation, 28);
+
+		GameObject * debugObj = gameScene->Create();
+		Script * debugScript = debugObj->AddComponent<Script>();
+		debugScript->SetBehavior(std::make_unique<DebugBehavior>(
+				//&behav->localPosition.x, &behav->localPosition.y, &behav->localPosition.z
+			&anim->effectors[0].position.x, &anim->effectors[0].position.y, &anim->effectors[0].position.z
+			));
+		debugScript->Setup(debugObj);
+
+
+		gunScript->SetBehavior(
+			std::move(behav)
+		);
+		gunScript->Setup(gunObj);
+
 		gameScene->Spawn(avatarController);
 		gameScene->Spawn(avatarHitboxes);
+		gameScene->Spawn(gunObj);
+		gameScene->Spawn(debugObj);
 	}
 
 	void CreateLocalAvatar() {
@@ -219,7 +254,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		avatarCamTransform->position.y = 180.0f;
 
 		Camera * fpsCam = avatarCamera->AddComponent<Camera>();
-		fpsCam->ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
+		fpsCam->ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
 		fpsCam->aspect = graphics->GetAspectRatio();
 		fpsCam->farPlane = 10000.0f;
 		fpsCam->nearPlane = 1.0f;
@@ -228,6 +263,8 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		physx::PxController * pxController = gameScene->CreateController();
 
 		Transform * act = avatarController->AddComponent<Transform>();
+		act->position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 200.0f };
+
 		Script* scriptComponent = avatarController->AddComponent<Script>();
 		scriptComponent->SetBehavior(std::make_unique<PlayerBehavior>(pxController, fpsCam));
 		scriptComponent->Setup(avatarController);

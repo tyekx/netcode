@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GameObject.h"
+#include <Netcode/GramSchmidt.h>
 
 class PlayerBehavior : public IBehavior {
 	Transform * transform;
@@ -18,7 +19,7 @@ class PlayerBehavior : public IBehavior {
 		DirectX::XMINT2 mouseDelta = Netcode::Input::GetMouseDelta();
 
 		DirectX::XMFLOAT2A normalizedMouseDelta{ -(float)(mouseDelta.x), -(float)(mouseDelta.y) };
-		cameraPitch += mouseSpeed * normalizedMouseDelta.y * dt;
+		cameraPitch -= mouseSpeed * normalizedMouseDelta.y * dt;
 		cameraPitch = std::clamp(cameraPitch, -(DirectX::XM_PIDIV2 - 0.0001f), (DirectX::XM_PIDIV2 - 0.0001f));
 		cameraYaw += mouseSpeed * normalizedMouseDelta.x * dt;
 
@@ -47,8 +48,8 @@ public:
 	PlayerBehavior(physx::PxController * ctrl, Camera * cam) {
 		camera = cam;
 		controller = ctrl;
-		cameraPitch = 0.0f;
-		cameraYaw = 0.0f;
+		cameraPitch = 0.6f;
+		cameraYaw = 3.14f;
 		mouseSpeed = 1.0f;
 		avatarSpeed = 250.0f;
 		DirectX::XMFLOAT3 g{ 0.0f, -981.0f, 0.0f };
@@ -58,6 +59,7 @@ public:
 
 	virtual void Setup(GameObject * owner) override {
 		transform = owner->GetComponent<Transform>();
+		controller->setPosition(physx::PxExtendedVec3{ transform->position.x, transform->position.y, transform->position.z });
 		collider = owner->GetComponent<Collider>();
 	}
 
@@ -65,7 +67,7 @@ public:
 		UpdateLookDirection(dt);
 
 		DirectX::XMFLOAT3 minusUnitZ{ 0.0f, 0.0f, 1.0f };
-		DirectX::XMVECTOR cameraQuat = DirectX::XMQuaternionRotationRollPitchYaw(-cameraPitch, cameraYaw, 0.0f);
+		DirectX::XMVECTOR cameraQuat = DirectX::XMQuaternionRotationRollPitchYaw(cameraPitch, cameraYaw, 0.0f);
 		DirectX::XMVECTOR aheadStart = DirectX::XMLoadFloat3(&minusUnitZ);
 		DirectX::XMStoreFloat3(&camera->ahead, DirectX::XMVector3Normalize(DirectX::XMVector3Rotate(aheadStart, cameraQuat)));
 

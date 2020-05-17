@@ -39,19 +39,20 @@ cbuffer FrameData : register(b2) {
 	float fov;
 };
 
-StructuredBuffer<float4x4> bindTransforms : register(t0);
-
 /*
+StructuredBuffer<float4x4> bindTransforms : register(t0);
+*/
 cbuffer BoneData : register(b3) {
 	float4x4 bindTransforms[128];
 	float4x4 toRootTransforms[128];
-}*/
+}
 
 #define SKINNING_PASS_ROOT_SIG "RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT ), " \
 "CBV(b0), " \
 "CBV(b1), " \
 "CBV(b2), " \
-"DescriptorTable(SRV(t0))"
+"CBV(b3)"
+//"DescriptorTable(SRV(t0))"
 
 
 

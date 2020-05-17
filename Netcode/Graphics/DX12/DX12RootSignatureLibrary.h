@@ -28,6 +28,8 @@ namespace Netcode::Graphics::DX12 {
 		void SetDevice(com_ptr<ID3D12Device> dev);
 
 		RootSignatureRef GetRootSignature(ShaderBytecodeRef blobWithRootSig);
+
+		RootSignatureRef GetRootSignature(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & desc);
 	};
 
 	using DX12RootSignatureLibrary = Netcode::Graphics::DX12::RootSignatureLibrary;

@@ -75,7 +75,9 @@ PUBLIC
 	ConsoleModule.h
 	ConsoleModule.cpp
 	"Functions.h"
-	"Functions.cpp")
+	"Functions.cpp"
+	"GramSchmidt.h"
+	"GramSchmidt.cpp")
 
 add_subdirectory(Shaders)
 add_subdirectory(Animation)

@@ -107,7 +107,7 @@ namespace Netcode::Animation {
 				DirectX::XMVectorScale(q1, sinTOmega)), 1.0f / sinOmega));
 	}
 
-	static Blender::BoneSRT BlendFrames(Netcode::Asset::AnimationKey * lhs, Netcode::Asset::AnimationKey * rhs, float t) {
+	static BoneTransform BlendFrames(Netcode::Asset::AnimationKey * lhs, Netcode::Asset::AnimationKey * rhs, float t) {
 		DirectX::XMVECTOR stPos;
 		DirectX::XMVECTOR endPos;
 
@@ -129,7 +129,7 @@ namespace Netcode::Animation {
 		stQuat = MySlerp(stQuat, endQuat, t);
 		stScale = DirectX::XMVectorLerp(stScale, endScale, t);
 
-		Blender::BoneSRT srt;
+		BoneTransform srt;
 		srt.translation = stPos;
 		srt.rotation = stQuat;
 		srt.scale = stScale;
@@ -149,7 +149,7 @@ namespace Netcode::Animation {
 		auto * endKey = (a->keys + idx1 * a->bonesLength);
 
 		for(unsigned int i = 0; i < a->bonesLength; ++i) {
-			BoneSRT res = BlendFrames(startKey + i, endKey + i, t);
+			BoneTransform res = BlendFrames(startKey + i, endKey + i, t);
 
 			float nw = weight / (weight + wSum);
 
@@ -161,20 +161,28 @@ namespace Netcode::Animation {
 		wSum += weight;
 	}
 
-	void Blender::Blend(ArrayView<Asset::Bone> bones, ArrayView<Asset::Animation> clips, DirectX::XMFLOAT4X4A * toRootMatrices, DirectX::XMFLOAT4X4A * bindMatrices) {
+	void Blender::Blend(ArrayView<Asset::Animation> clips) {
 		if(items.empty()) {
 			return;
 		}
 
 		wSum = 0.0f;
-
-		DirectX::XMMATRIX bindTrans;
-		DirectX::XMMATRIX toRoot[128];
 		
 
 		for(size_t stateI = 0; stateI < items.size(); ++stateI) {
 			BlendState(stateI, clips);
 		}
+	}
+
+	ArrayView<BoneTransform> Blender::GetBoneTransforms()
+	{
+		return ArrayView<BoneTransform>(buffer, 128);
+	}
+
+	void Blender::UpdateMatrices(ArrayView<Asset::Bone> bones, DirectX::XMFLOAT4X4A * toRootMatrices, DirectX::XMFLOAT4X4A * bindMatrices)
+	{
+		DirectX::XMMATRIX bindTrans;
+		DirectX::XMMATRIX toRoot[128];
 
 		int parentId;
 
@@ -195,7 +203,6 @@ namespace Netcode::Animation {
 				// foreach parent A matrix * parent A matrix
 				toRoot[i] = DirectX::XMMatrixMultiply(toRoot[i], toRoot[bones[i].parentId]);
 			}
-
 
 			DirectX::XMStoreFloat4x4A(toRootMatrices + i, DirectX::XMMatrixTranspose(toRoot[i]));
 

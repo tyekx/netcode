@@ -28,6 +28,18 @@ void CreateYbotAnimationComponent(Netcode::Asset::Model * model, Animation * ani
 
 	anim->bones = model->bones;
 	anim->clips = model->animations;
+	anim->blender = std::make_shared<Netcode::Animation::Blender>();
+
+
+	Netcode::Animation::IKEffector effector;
+	effector.position = DirectX::XMFLOAT4{ 0.0f, 150.0f, -20.0f, 1.0f };
+	effector.offset = DirectX::XMFLOAT4{ 0.0f, 5.0f, 0.0f, 1.0f };
+	effector.parentId = 5;
+	effector.chainLength = 5;
+
+	anim->effectors = {
+		effector
+	};
 	
 	anim->blackboard = std::shared_ptr<Blackboard<CtrlType>>(new Blackboard<CtrlType>(
 		{ // Group List

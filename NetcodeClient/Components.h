@@ -13,7 +13,9 @@
 #include "Material.h"
 #include "AnimationController.h"
 
+#include <Netcode/Animation/IK.h>
 #include <Netcode/Animation/Blackboard.h>
+#include <Netcode/Animation/Blender.h>
 
 using ColliderShape = Netcode::Asset::Collider;
 
@@ -183,8 +185,10 @@ public:
 
 COMPONENT_ALIGN class Animation {
 public:
+	std::vector<Netcode::Animation::IKEffector> effectors;
 	std::shared_ptr<AnimationController> controller;
 	std::shared_ptr<Netcode::Animation::BlackboardBase> blackboard;
+	std::shared_ptr<Netcode::Animation::Blender> blender;
 	std::unique_ptr<BoneData> debugBoneData;
 	Netcode::ArrayView<Netcode::Asset::Bone> bones;
 	Netcode::ArrayView<Netcode::Asset::Animation> clips;

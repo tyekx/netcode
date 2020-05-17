@@ -31,6 +31,9 @@ namespace Netcode::Graphics::DX12 {
 	};
 
 	class CommandListPool {
+		uint32_t numCls[4];
+		uint32_t numAlloc[4];
+
 		com_ptr<ID3D12Device> device;
 
 		struct PairedCommandList {

@@ -7,6 +7,7 @@ set(NETCODE_VS
 	"skinningPass_Vertex.hlsl"
 	"sprite_Vertex.hlsl"
 	"ssaoPass_Vertex.hlsl"
+	"debugPrimPass_Vertex.hlsl"
 )
 
 set(NETCODE_PS
@@ -16,6 +17,7 @@ set(NETCODE_PS
 	"sprite_Pixel.hlsl"
 	"ssaoBlurPass_Pixel.hlsl"
 	"ssaoOcclusionPass_Pixel.hlsl"
+	"debugPrimPass_Pixel.hlsl"
 )
 
 set(NETCODE_GS "")

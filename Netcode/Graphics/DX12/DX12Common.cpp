@@ -34,6 +34,13 @@ namespace Netcode::Graphics::DX12 {
 		return woss.str();
 	}
 
+	std::wstring IndexedDebugName(const char * prefix, uint32_t idx)
+	{
+		std::wostringstream woss;
+		woss << prefix << L'(' << idx << L')';
+		return woss.str();
+	}
+
 	const char * RootSignatureVersionToString(D3D_ROOT_SIGNATURE_VERSION version)
 	{
 		switch(version) {
@@ -67,6 +74,27 @@ namespace Netcode::Graphics::DX12 {
 		case D3D_FEATURE_LEVEL_12_0: return "Feature level 12.0";
 		case D3D_FEATURE_LEVEL_12_1: return "Feature level 12.1";
 		default: return "Unknown feature level";
+		}
+	}
+
+	const char * CommandListTypeToString(D3D12_COMMAND_LIST_TYPE type) {
+		switch(type) {
+			case D3D12_COMMAND_LIST_TYPE_DIRECT: return "Direct Command List";
+			case D3D12_COMMAND_LIST_TYPE_BUNDLE: return "Bundle Command List";
+			case D3D12_COMMAND_LIST_TYPE_COMPUTE: return "Compute Command List";
+			case D3D12_COMMAND_LIST_TYPE_COPY: return "Copy Command List";
+			case D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE: return "Video Decode Command List";
+			case D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS: return "Video Process Command List";
+			default: return "Unknown Command List";
+		}
+	}
+
+	const char * GetBlobDataAsString(com_ptr<ID3DBlob> blob)
+	{
+		if(blob != nullptr) {
+			return static_cast<const char *>(blob->GetBufferPointer());
+		} else {
+			return "Blob was null";
 		}
 	}
 

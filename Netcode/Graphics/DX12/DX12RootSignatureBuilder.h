@@ -14,6 +14,8 @@ namespace Netcode::Graphics::DX12 {
 		virtual RootSignatureRef Build() override;
 
 		virtual RootSignatureRef BuildFromShader(ShaderBytecodeRef rootSigContainingBytecode) override;
+
+		virtual RootSignatureRef BuildEmpty() override;
 	};
 
 	using DX12RootSignatureBuilder = Netcode::Graphics::DX12::RootSignatureBuilder;

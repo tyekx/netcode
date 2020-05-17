@@ -362,6 +362,7 @@ namespace Netcode {
 		virtual ~RootSignatureBuilder() = default;
 		virtual RootSignatureRef Build() = 0;
 		virtual RootSignatureRef BuildFromShader(ShaderBytecodeRef rootSigContainingBytecode) = 0;
+		virtual RootSignatureRef BuildEmpty() = 0;
 	};
 
 	using RootSignatureBuilderRef = std::shared_ptr<RootSignatureBuilder>;

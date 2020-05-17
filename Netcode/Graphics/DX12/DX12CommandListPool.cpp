@@ -6,15 +6,33 @@ namespace Netcode::Graphics::DX12 {
 
 	com_ptr<ID3D12CommandAllocator> CommandListPool::CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE type) {
 		com_ptr<ID3D12CommandAllocator> alloc;
+
+		uint32_t typeInt = static_cast<uint32_t>(type);
+
 		DX_API("Failed to create command allocator")
 			device->CreateCommandAllocator(type, IID_PPV_ARGS(alloc.GetAddressOf()));
+
+		DX_API("Failed to set debug name")
+			alloc->SetName(IndexedDebugName(CommandListTypeToString(type), numAlloc[typeInt]).c_str());
+
+		numAlloc[typeInt] += 1;
+
 		return alloc;
 	}
 
 	com_ptr<CommandListType> CommandListPool::CreateCommandList(D3D12_COMMAND_LIST_TYPE type, ID3D12CommandAllocator * ca) {
 		com_ptr<CommandListType> cl;
+
+		uint32_t typeInt = static_cast<uint32_t>(type);
+
 		DX_API("Failed to create command list")
 			device->CreateCommandList(0, type, ca, nullptr, IID_PPV_ARGS(cl.GetAddressOf()));
+		
+		DX_API("Failed to set debug name")
+			cl->SetName(IndexedDebugName(CommandListTypeToString(type), numCls[typeInt]).c_str());
+
+		numCls[typeInt] += 1;
+
 		return cl;
 	}
 
@@ -112,7 +130,10 @@ namespace Netcode::Graphics::DX12 {
 		return CreateBindings(type, std::move(pcl));
 	}
 
-	CommandListPool::CommandListPool(com_ptr<ID3D12Device> device) :device{ std::move(device) },
+	CommandListPool::CommandListPool(com_ptr<ID3D12Device> device) :
+		numCls{},
+		numAlloc{},
+		device{ std::move(device) },
 		directAllocators{}, computeAllocators{}, copyAllocators{},
 		directPairs{}, computePairs{}, copyPairs{} {
 

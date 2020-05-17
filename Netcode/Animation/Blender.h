@@ -4,6 +4,7 @@
 #include <NetcodeFoundation/ArrayView.hpp>
 #include <NetcodeAssetLib/Animation.h>
 #include <NetcodeAssetLib/Bone.h>
+#include "BoneTransform.h"
 #include <tuple>
 #include "State.h"
 
@@ -19,15 +20,8 @@ namespace Netcode::Animation {
 	};
 
 	class Blender {
-	public:
-		struct BoneSRT {
-			DirectX::XMVECTOR translation;
-			DirectX::XMVECTOR rotation;
-			DirectX::XMVECTOR scale;
-		};
-
 		std::vector<BlendItem> items;
-		BoneSRT buffer[128];
+		BoneTransform buffer[128];
 		float wSum;
 		void FillFrameData(Asset::Animation & clip, const StateBase & state, BlendItem & item);
 
@@ -37,10 +31,11 @@ namespace Netcode::Animation {
 
 		const std::vector<BlendItem> & GetPlan() const;
 
-		void Blend( ArrayView<Asset::Bone> bones,
-					ArrayView<Asset::Animation> clips,
-					DirectX::XMFLOAT4X4A * toRootMatrices,
-					DirectX::XMFLOAT4X4A * bindMatrices );
+		void Blend(ArrayView<Asset::Animation> clips);
+
+		ArrayView<BoneTransform> GetBoneTransforms();
+
+		void UpdateMatrices(ArrayView<Asset::Bone> bones, DirectX::XMFLOAT4X4A * toRootMatrices, DirectX::XMFLOAT4X4A * bindMatrices);
 	};
 
 }

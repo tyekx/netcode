@@ -2,6 +2,7 @@
 #include "Input.h"
 #include <io.h>
 #include <fcntl.h>
+#include <iostream>
 
 using Netcode::Graphics::DisplayMode;
 
@@ -39,6 +40,19 @@ namespace Netcode::Module {
 		*stderr = *fptr;
 		setvbuf(stderr, NULL, _IONBF, 0);
 
+		std::ios::sync_with_stdio();
+
+		HWND cWnd = GetConsoleWindow();
+
+		DWORD consoleMode;
+		GetConsoleMode(cWnd, &consoleMode);
+
+		SetConsoleMode(cWnd, consoleMode | ENABLE_WINDOW_INPUT);
+		/*
+		wchar_t buff[256];
+		DWORD len;
+		
+		ReadConsoleW(GetStdHandle(STD_INPUT_HANDLE), buff, 256, &len, nullptr);*/
 	}
 
 	void SizingTimerProc(_In_ HWND hwnd, _In_ UINT wmTimer, _In_ UINT_PTR timerPtr, _In_ DWORD timeSinceEpochMs) {
@@ -207,7 +221,7 @@ namespace Netcode::Module {
 
 	void WinapiWindowModule::Start(AApp * app) {
 		displayMode = DisplayMode::WINDOWED;
-		const char * windowClassName = "EggClass";
+		const char * windowClassName = "NetcodeWndClass";
 		windowedStyle = WS_OVERLAPPEDWINDOW;
 
 		graphics = app->graphics.get();

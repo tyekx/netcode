@@ -111,7 +111,8 @@ class GraphicsEngine {
 	GpuResourceRef ssaoPass_OcclusionRenderTarget;
 	GpuResourceRef ssaoPass_RandomVectorTexture;
 
-	GpuResourceRef skinningPass_IntermediateResource;
+	GpuResourceRef debugPrimPass_VertexBuffer;
+	std::vector<Netcode::PC_Vertex> debugPrimPass_Vertices;
 
 	GBuffer fsQuad;
 
@@ -146,6 +147,9 @@ class GraphicsEngine {
 
 	Netcode::RootSignatureRef ssaoBlurPass_RootSignature;
 	Netcode::PipelineStateRef ssaoBlurPass_PipelineState;
+
+	Netcode::RootSignatureRef debugPrimPass_Signature;
+	Netcode::PipelineStateRef debugPrimPass_PipelineState;
 
 	Netcode::SpriteBatchRef uiPass_SpriteBatch;
 
@@ -266,7 +270,43 @@ private:
 		spriteBatchBuilder->SetPipelineState(std::move(pipelineState));
 		spriteBatchBuilder->SetRootSignature(std::move(rootSignature));
 		uiPass_SpriteBatch = spriteBatchBuilder->Build();
+	}
 
+	void CreateDebugPrimPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
+		auto ilBuilder = g->CreateInputLayoutBuilder();
+		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
+		ilBuilder->AddInputElement("COLOR", DXGI_FORMAT_R32G32B32_FLOAT);
+		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
+
+		auto shaderBuilder = g->CreateShaderBuilder();
+		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"debugPrimPass_Vertex.cso");
+		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"debugPrimPass_Pixel.cso");
+
+		auto rsBuilder = g->CreateRootSignatureBuilder();
+		debugPrimPass_Signature = rsBuilder->BuildFromShader(vs);
+
+		Netcode::DepthStencilDesc depthStencilDesc;
+		depthStencilDesc.depthEnable = false;
+		depthStencilDesc.stencilEnable = false;
+
+		auto psoBuilder = g->CreateGPipelineStateBuilder();
+		psoBuilder->SetRootSignature(debugPrimPass_Signature);
+		psoBuilder->SetInputLayout(inputLayout);
+		psoBuilder->SetVertexShader(vs);
+		psoBuilder->SetPixelShader(ps);
+		psoBuilder->SetDepthStencilFormat(gbufferPass_DepthStencilFormat);
+		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
+		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::LINE);
+		psoBuilder->SetDepthStencilState(depthStencilDesc);
+		debugPrimPass_PipelineState = psoBuilder->Build();
+
+		debugPrimPass_Vertices.reserve(2048);
+		debugPrimPass_VertexBuffer = g->resources->CreateVertexBuffer(
+				sizeof(Netcode::PC_Vertex) * 2048,
+				sizeof(Netcode::PC_Vertex),
+				ResourceType::PERMANENT_UPLOAD,
+				ResourceState::ANY_READ
+			);
 	}
 
 	void CreateSkinnedGbufferPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
@@ -603,8 +643,8 @@ private:
 				skinnedGbufferPass_Input.begin()->material->Apply(context);
 				context->SetConstants(1, *item.objectData);
 				SetPerFrameCb(context, 2);
-				//context->SetConstants(3, *item.debugBoneData);
-				context->SetShaderResources(3, item.boneData, item.boneDataOffset);
+				context->SetConstants(3, *item.debugBoneData);
+				//context->SetShaderResources(3, item.boneData, item.boneDataOffset);
 				context->SetVertexBuffer(item.gbuffer.vertexBuffer);
 				context->SetIndexBuffer(item.gbuffer.indexBuffer);
 				context->DrawIndexed(item.gbuffer.indexCount);
@@ -827,7 +867,7 @@ private:
 
 
 		},
-			[&](IRenderContext * context) -> void {
+		[&](IRenderContext * context) -> void {
 
 			//context->SetRenderTargets(0, 0);
 
@@ -928,12 +968,37 @@ public:
 		});
 	}
 
+	void CreateDebugPrimPass(Netcode::FrameGraphBuilderRef builder) {
+		if(debugPrimPass_Vertices.empty()) {
+			return;
+		}
+		builder->CreateRenderPass("Debug Primitives", [this](IResourceContext * ctx) ->void {
+			ctx->Reads(2);
+			ctx->Writes(nullptr);
+			ctx->CopyConstants(debugPrimPass_VertexBuffer, debugPrimPass_Vertices.data(), debugPrimPass_Vertices.size() *sizeof(Netcode::PC_Vertex));
+		},
+		[this](IRenderContext * ctx) -> void {
+			ctx->SetRenderTargets(nullptr, nullptr);
+			ctx->SetScissorRect();
+			ctx->SetViewport();
+			ctx->SetPrimitiveTopology(PrimitiveTopology::LINELIST);
+
+			ctx->SetRootSignature(debugPrimPass_Signature);
+			ctx->SetPipelineState(debugPrimPass_PipelineState);
+
+			SetPerFrameCb(ctx, 0);
+			ctx->SetVertexBuffer(debugPrimPass_VertexBuffer);
+			ctx->Draw(static_cast<uint32_t>(debugPrimPass_Vertices.size()));
+		});
+	}
+
 	void Reset() {
 		skinningPass_Input.Clear();
 		skinnedGbufferPass_Input.Clear();
 		gbufferPass_Input.Clear();
 		uiPass_Input.Clear();
 		perFrameCbuffer = 0;
+		debugPrimPass_Vertices.clear();
 	}
 
 	void OnResize(int x, int y) {
@@ -952,6 +1017,7 @@ public:
 	void CreatePermanentResources(Netcode::Module::IGraphicsModule * g) {
 		graphics = g;
 		backbufferSize = g->GetBackbufferSize();
+		CreateDebugPrimPassPermanentResources(g);
 		CreateGbufferPassPermanentResources(g);
 		CreateSkinningPassPermanentResources(g);
 		CreateSkinnedGbufferPassPermanentResources(g);
@@ -970,6 +1036,7 @@ public:
 		CreateSSAOBlurPass(builder);
 		CreateLightingPass(builder);
 		CreateBackgroundPass(builder);
+		CreateDebugPrimPass(builder);
 		CreateUIPass(builder);
 	}
 
@@ -983,5 +1050,52 @@ public:
 			animSet->Clear();
 		}
 	}
+
+	void DrawDebugPoint(const DirectX::XMFLOAT3 & point, float extents) {
+		DirectX::XMVECTOR p = DirectX::XMLoadFloat3(&point);
+		DirectX::XMVECTOR ext = DirectX::XMVectorReplicate(extents);
+
+		DirectX::XMVECTOR ext_X = DirectX::XMVectorSelect(DirectX::XMVectorZero(), ext, DirectX::g_XMMaskX);
+		DirectX::XMVECTOR ext_Y = DirectX::XMVectorSelect(DirectX::XMVectorZero(), ext, DirectX::g_XMMaskY);
+		DirectX::XMVECTOR ext_Z = DirectX::XMVectorSelect(DirectX::XMVectorZero(), ext, DirectX::g_XMMaskZ);
+
+		Netcode::PC_Vertex v0, v1, v2, v3, v4, v5;
+		v0.color = v1.color = DirectX::XMFLOAT3{ 1.0f, 0.0f, 0.0f };
+		v2.color = v3.color = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
+		v4.color = v5.color = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+
+		DirectX::XMStoreFloat3(&v0.position, DirectX::XMVectorAdd(p, ext_X));
+		DirectX::XMStoreFloat3(&v1.position, DirectX::XMVectorAdd(p, DirectX::XMVectorNegate(ext_X)));
+
+		DirectX::XMStoreFloat3(&v2.position, DirectX::XMVectorAdd(p, ext_Y));
+		DirectX::XMStoreFloat3(&v3.position, DirectX::XMVectorAdd(p, DirectX::XMVectorNegate(ext_Y)));
+
+		DirectX::XMStoreFloat3(&v4.position, DirectX::XMVectorAdd(p, ext_Z));
+		DirectX::XMStoreFloat3(&v5.position, DirectX::XMVectorAdd(p, DirectX::XMVectorNegate(ext_Z)));
+
+		debugPrimPass_Vertices.push_back(v0);
+		debugPrimPass_Vertices.push_back(v1);
+		debugPrimPass_Vertices.push_back(v2);
+		debugPrimPass_Vertices.push_back(v3);
+		debugPrimPass_Vertices.push_back(v4);
+		debugPrimPass_Vertices.push_back(v5);
+	}
+
+	void DrawDebugVector(const DirectX::XMFLOAT3 & startAt, const DirectX::XMFLOAT3 & dir, float length, const DirectX::XMFLOAT3 & color) {
+		DirectX::XMVECTOR st = DirectX::XMLoadFloat3(&startAt);
+		DirectX::XMVECTOR d = DirectX::XMLoadFloat3(&dir);
+
+		Netcode::PC_Vertex vert0;
+		vert0.position = startAt;
+		vert0.color = color;
+
+		Netcode::PC_Vertex vert1;
+		vert1.color = color;
+		DirectX::XMStoreFloat3(&vert1.position, DirectX::XMVectorAdd(st, DirectX::XMVectorScale(d, length)));
+
+		debugPrimPass_Vertices.push_back(vert0);
+		debugPrimPass_Vertices.push_back(vert1);
+	}
+
 
 };

@@ -292,9 +292,10 @@ namespace Netcode::Module {
 			editorFrameGraph.CreateFrameGraph(builder);
 			FrameGraphRef graph = builder->Build();
 
-			graphics->frame->Run(graph);
-			graphics->frame->Render();
+			graphics->frame->Run(graph, Netcode::Graphics::FrameGraphCullMode::NONE);
 			graphics->frame->Present();
+			graphics->frame->DeviceSync();
+			graphics->frame->CompleteFrame();
 		}
 
 		/*

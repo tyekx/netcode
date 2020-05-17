@@ -87,9 +87,9 @@ void main(uint3 groupId : SV_GroupID, uint threadId : SV_GroupIndex) {
 	const uint instanceId = groupId.y;
 	const uint boneId = threadId;
 	const uint numBones = constants.x;
+	const uint destIndex = GetIntermediateOffset(instanceId, 0) + boneId;
 
 	if(boneId < numBones) {
-		const uint destIndex = GetIntermediateOffset(instanceId, 0) + boneId;
 
 		uint numStates = instances[instanceId].numStates.x;
 		float weightSum = GetWeight(instanceId, 0);
@@ -119,6 +119,7 @@ void main(uint3 groupId : SV_GroupID, uint threadId : SV_GroupIndex) {
 	uint resultOffset = GetResultOffset(instanceId);
 	uint bindTransformDestIdx = resultOffset + boneId;
 	uint toRootDestIdx = resultOffset + MAX_BONE_COUNT + boneId;
+	uint testIdx = resultOffset + MAX_BONE_COUNT + 64 + boneId;
 
 	int parentIdx = GetParentIndex(boneId);
 	float4x4 toRoot = animationMatrices[boneId];
@@ -130,6 +131,10 @@ void main(uint3 groupId : SV_GroupID, uint threadId : SV_GroupIndex) {
 
 	result[bindTransformDestIdx] = mul(offsetMatrices[boneId], toRoot);
 	result[toRootDestIdx] = toRoot;
+
+	BoneAnimationKey ak = intermediate[destIndex];
+	result[testIdx] = transpose(float4x4(ak.position, ak.rotation, ak.scale, 0, 0, 0, 0));
+
 }
 
 
