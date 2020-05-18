@@ -1081,6 +1081,19 @@ public:
 		debugPrimPass_Vertices.push_back(v5);
 	}
 
+	void DrawDebugVector(const DirectX::XMFLOAT3 & p0, const DirectX::XMFLOAT3 & p1, const DirectX::XMFLOAT3 & color) {
+		Netcode::PC_Vertex vert0;
+		vert0.position = p0;
+		vert0.color = color;
+
+		Netcode::PC_Vertex vert1;
+		vert1.position = p1;
+		vert1.color = color;
+
+		debugPrimPass_Vertices.push_back(vert0);
+		debugPrimPass_Vertices.push_back(vert1);
+	}
+
 	void DrawDebugVector(const DirectX::XMFLOAT3 & startAt, const DirectX::XMFLOAT3 & dir, float length, const DirectX::XMFLOAT3 & color) {
 		DirectX::XMVECTOR st = DirectX::XMLoadFloat3(&startAt);
 		DirectX::XMVECTOR d = DirectX::XMLoadFloat3(&dir);

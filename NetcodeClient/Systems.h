@@ -11,7 +11,6 @@
 #include <Netcode/Animation/IK.h>
 
 class TransformSystem {
-	float debugY;
 public:
 	static inline DirectX::XMVECTOR GetWorldRotation(Transform * transform, Transform * parentTransform) {
 		DirectX::XMVECTOR worldRotation = DirectX::XMLoadFloat4(&transform->rotation);
@@ -24,14 +23,14 @@ public:
 		return worldRotation;
 	}
 
-	TransformSystem() : debugY{ 150.0f } { }
-
 	static inline DirectX::XMVECTOR GetWorldPosition(Transform * transform, Transform * parentTransform) {
 		DirectX::XMVECTOR worldPosition = DirectX::XMLoadFloat3(&transform->position);
 
 		if(parentTransform != nullptr) {
+			DirectX::XMVECTOR parentWorldRotation = DirectX::XMLoadFloat4(&parentTransform->worldRotation);
 			DirectX::XMVECTOR parentWorldPosition = DirectX::XMLoadFloat3(&parentTransform->worldPosition);
 
+			worldPosition = DirectX::XMVector3Rotate(worldPosition, parentWorldRotation);
 			worldPosition = DirectX::XMVectorAdd(worldPosition, parentWorldPosition);
 		}
 
@@ -57,17 +56,6 @@ public:
 
 		DirectX::XMStoreFloat3(&transform->worldPosition, worldPos);
 		DirectX::XMStoreFloat4(&transform->worldRotation, worldRot);
-
-		if(gameObject->HasComponent<Animation>()) {
-			Animation * anim = gameObject->GetComponent<Animation>();
-			BoneData * res = anim->debugBoneData.get();
-
-			for(const Netcode::Animation::IKEffector & effector : anim->effectors) {
-				Netcode::Animation::BackwardBounceCCD::Run(effector, anim->bones, anim->blender->GetBoneTransforms());
-			}
-
-			anim->blender->UpdateMatrices(anim->bones, res->ToRootTransform, res->BindTransform);
-		}
 	}
 };
 
@@ -141,12 +129,40 @@ public:
 				anim->debugBoneData = std::make_unique<BoneData>();
 			}
 
-			for(const auto & eff : anim->effectors) {
-				const auto & p = eff.position;
+			anim->blender->Blend(anim->clips);
+
+			BoneData * res = anim->debugBoneData.get();
+
+			for(const Netcode::Animation::IKEffector & effector : anim->effectors) {
+				Netcode::Animation::BackwardBounceCCD::Run(effector, anim->bones, anim->blender->GetBoneTransforms());
+			} 
+
+			for(const Netcode::Animation::IKEffector & effector : anim->effectors) {
+				const auto & p = effector.position;
+				Netcode::Animation::IKEffector ike = effector;
+				ike.chainLength += 1;
+
+				int32_t bid = ike.parentId;
+				while(bid >= 0) {
+					auto wrt = Netcode::Animation::BackwardBounceCCD::GetWorldRT(bid, anim->bones, anim->blender->GetBoneTransforms());
+					DirectX::XMFLOAT3 pcp;
+					DirectX::XMStoreFloat3(&pcp, wrt.translation);
+					renderer->DrawDebugPoint(DirectX::XMFLOAT3{ pcp.x, pcp.y, pcp.z }, 2.0f);
+					bid = anim->bones[bid].parentId;
+				}
+
+				DirectX::XMVECTOR pe = Netcode::Animation::BackwardBounceCCD::GetP_e(ike, anim->bones, anim->blender->GetBoneTransforms());
+				DirectX::XMVECTOR st = Netcode::Animation::BackwardBounceCCD::GetP_c(ike, 0, anim->bones, anim->blender->GetBoneTransforms());
+				DirectX::XMFLOAT3 startAt;
+				DirectX::XMFLOAT3 p1;
+				DirectX::XMStoreFloat3(&startAt, st);
+				DirectX::XMStoreFloat3(&p1, pe);
+				
+				renderer->DrawDebugVector(startAt, p1, DirectX::XMFLOAT3{ 1.0f, 0.5f, 0.2f });
 				renderer->DrawDebugPoint(DirectX::XMFLOAT3{ p.x, p.y, p.z }, 10.0f);
 			}
 
-			anim->blender->Blend(anim->clips);
+			anim->blender->UpdateMatrices(anim->bones, res->ToRootTransform, res->BindTransform);
 
 			/*
 			

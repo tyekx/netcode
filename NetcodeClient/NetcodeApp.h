@@ -121,7 +121,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		gameScene->Foreach([this, dt](GameObject * gameObject)->void {
 			if(gameObject->IsActive()) {
 				scriptSystem.Run(gameObject, dt);
-				animSystem.Run(gameObject, 0);
+				animSystem.Run(gameObject, dt);
 			}
 		});
 	}
@@ -196,11 +196,14 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			ybotAnimationSet = std::make_shared<AnimationSet>(graphics.get(), avatarModel->animations, avatarModel->bones);
 		}
 
+		GameObject * gunRootObj = gameScene->Create();
 		GameObject * gunObj = gameScene->Create();
 		LoadComponents(assetManager->Import(L"gun.ncasset"), gunObj);
 
+		Transform * gunRootTransform = gunRootObj->AddComponent<Transform>();
 		Transform * gunTransform = gunObj->GetComponent<Transform>();
 
+		gunRootTransform->position = DirectX::XMFLOAT3{ 0.0f, 140.0f, 0.0f };
 		gunTransform->scale = DirectX::XMFLOAT3{ 18.0f, 18.0f, 18.0f };
 
 		LoadComponents(avatarModel, avatarHitboxes);
@@ -212,7 +215,8 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		physx::PxController * pxController = gameScene->CreateController();
 		avatarController->AddComponent<Transform>();
 		avatarHitboxes->Parent(avatarController);
-		gunObj->Parent(avatarController);
+		gunRootObj->Parent(avatarController);
+		gunObj->Parent(gunRootObj);
 
 		avatarController->AddComponent<Script>()->SetBehavior(std::make_unique<RemoteAvatarScript>(pxController));
 
@@ -221,7 +225,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 		Script * gunScript = gunObj->AddComponent<Script>();
 
-		auto behav = std::make_unique<GunBehavior>(avatarHitboxes, DirectX::XMFLOAT4{ -29.0f, -1.0f, 4.0f, 1.0f },
+		auto behav = std::make_unique<GunBehavior>(avatarHitboxes, gunRootObj, DirectX::XMFLOAT4{ 0.0f, 0.0f, 40.0f, 0.0f },
 			gunRotation, 28);
 
 		GameObject * debugObj = gameScene->Create();
@@ -240,6 +244,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 		gameScene->Spawn(avatarController);
 		gameScene->Spawn(avatarHitboxes);
+		gameScene->Spawn(gunRootObj);
 		gameScene->Spawn(gunObj);
 		gameScene->Spawn(debugObj);
 	}

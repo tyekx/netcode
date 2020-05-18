@@ -19,8 +19,8 @@ class PlayerBehavior : public IBehavior {
 		DirectX::XMINT2 mouseDelta = Netcode::Input::GetMouseDelta();
 
 		DirectX::XMFLOAT2A normalizedMouseDelta{ -(float)(mouseDelta.x), -(float)(mouseDelta.y) };
-		cameraPitch -= mouseSpeed * normalizedMouseDelta.y * dt;
-		cameraPitch = std::clamp(cameraPitch, -(DirectX::XM_PIDIV2 - 0.0001f), (DirectX::XM_PIDIV2 - 0.0001f));
+		//cameraPitch -= mouseSpeed * normalizedMouseDelta.y * dt;
+		//cameraPitch = std::clamp(cameraPitch, -(DirectX::XM_PIDIV2 - 0.0001f), (DirectX::XM_PIDIV2 - 0.0001f));
 		cameraYaw += mouseSpeed * normalizedMouseDelta.x * dt;
 
 		if(cameraYaw < (-DirectX::XM_PI)) {

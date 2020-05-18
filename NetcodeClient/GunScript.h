@@ -1,40 +1,50 @@
 #pragma once
 
 #include "GameObject.h"
+#include <Netcode/Input.h>
 
 class GunBehavior : public IBehavior {
 
 public:
 	Animation * animComponent;
 	Transform * selfTransform;
+	Transform * rootTransform;
 	DirectX::XMFLOAT4 localPosition;
 	DirectX::XMFLOAT4 localRotation;
 	int socketId;
+	float cameraPitch;
 
-	GunBehavior(GameObject * avatarObject, const DirectX::XMFLOAT4 & lp, const DirectX::XMFLOAT4 & lq, int socket) {
+	GunBehavior(GameObject * avatarObject, GameObject * gunRootObj, const DirectX::XMFLOAT4 & lp, const DirectX::XMFLOAT4 & lq, int socket) {
 		localPosition = lp;
 		localRotation = lq;
 		animComponent = avatarObject->GetComponent<Animation>();
 		socketId = socket;
+		cameraPitch = 0.6f;
+		rootTransform = gunRootObj->GetComponent<Transform>();
 	}
 
 	virtual void Setup(GameObject * owner) override {
 		selfTransform = owner->GetComponent<Transform>();
+		selfTransform->rotation = localRotation;
+		selfTransform->position = DirectX::XMFLOAT3{ localPosition.x, localPosition.y, localPosition.z };
 	}
 
 	virtual void Update(float dt) override {
+		DirectX::XMINT2 mouseDelta = Netcode::Input::GetMouseDelta();
+
+		DirectX::XMFLOAT2A normalizedMouseDelta{ -(float)(mouseDelta.x), -(float)(mouseDelta.y) };
+		cameraPitch -= normalizedMouseDelta.y * dt;
+		cameraPitch = std::clamp(cameraPitch, -(DirectX::XM_PIDIV2 - 0.0001f), (DirectX::XM_PIDIV2 - 0.0001f));
+
+		DirectX::XMStoreFloat4(&rootTransform->rotation, DirectX::XMQuaternionRotationRollPitchYaw(cameraPitch, 0.0f, 0.0f));
+
+		/*
 		DirectX::XMMATRIX toRoot = DirectX::XMLoadFloat4x4A(&animComponent->debugBoneData->ToRootTransform[socketId]);
-		DirectX::XMVECTOR lp = DirectX::XMLoadFloat4(&localPosition);
-		DirectX::XMVECTOR lq = DirectX::XMLoadFloat4(&localRotation);
+		DirectX::XMVECTOR lp = DirectX::XMLoadFloat4(&gunOffset);
 		DirectX::XMFLOAT4 socketedPos;
 		DirectX::XMStoreFloat4(&socketedPos, DirectX::XMVector4Transform(lp, DirectX::XMMatrixTranspose(toRoot)));
+		*/
 
-		selfTransform->position = DirectX::XMFLOAT3{
-			socketedPos.x / socketedPos.w,
-			socketedPos.y / socketedPos.w,
-			socketedPos.z / socketedPos.w,
-		};
-
-		DirectX::XMStoreFloat4(&selfTransform->rotation, lq);
+		//DirectX::XMStoreFloat4(&selfTransform->rotation, lq);
 	}
 };
