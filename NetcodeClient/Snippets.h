@@ -33,9 +33,16 @@ void CreateYbotAnimationComponent(Netcode::Asset::Model * model, Animation * ani
 
 	Netcode::Animation::IKEffector effector;
 	effector.position = DirectX::XMFLOAT4{ 0.0f, 150.0f, -20.0f, 1.0f };
-	effector.offset = DirectX::XMFLOAT4{ 0.0f, 0.0f, 40.0f, 0.0f };
+	effector.offset = DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 0.0f };
 	effector.parentId = 5;
 	effector.chainLength = 5;
+	effector.limits = {
+		{ DirectX::XMFLOAT3{0.0f, 1.0f, 0.0f}, 0.3f },
+		{ DirectX::XMFLOAT3{0.0f, 1.0f, 0.0f}, 0.3f },
+		{ DirectX::XMFLOAT3{0.0f, 1.0f, 0.0f}, 0.3f },
+		{ DirectX::XMFLOAT3{0.0f, 1.0f, 0.0f}, 0.3f },
+		{ DirectX::XMFLOAT3{0.0f, 1.0f, 0.0f}, 0.3f }
+	};
 
 	anim->effectors = {
 		effector

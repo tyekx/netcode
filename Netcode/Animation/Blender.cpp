@@ -150,11 +150,17 @@ namespace Netcode::Animation {
 
 		for(unsigned int i = 0; i < a->bonesLength; ++i) {
 			BoneTransform res = BlendFrames(startKey + i, endKey + i, t);
+			DirectX::XMFLOAT4 q;
+			DirectX::XMStoreFloat4(&q, res.rotation);
 
+			float w = weight + wSum;
 			float nw = weight / (weight + wSum);
+			if(w < 0.0001f) {
+				nw = 0.0f;
+			}
 
 			buffer[i].translation = DirectX::XMVectorLerp(buffer[i].translation, res.translation, nw);
-			buffer[i].rotation = MySlerp(buffer[i].rotation, res.rotation, nw);
+			buffer[i].rotation = DirectX::XMQuaternionSlerp(buffer[i].rotation, res.rotation, nw);
 			buffer[i].scale = DirectX::XMVectorLerp(buffer[i].scale, res.scale, nw);
 		}
 
@@ -167,7 +173,6 @@ namespace Netcode::Animation {
 		}
 
 		wSum = 0.0f;
-		
 
 		for(size_t stateI = 0; stateI < items.size(); ++stateI) {
 			BlendState(stateI, clips);

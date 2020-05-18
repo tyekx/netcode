@@ -10,4 +10,10 @@ namespace Netcode::Animation {
 		DirectX::XMVECTOR scale;
 	};
 
+	struct BoneAngularLimit {
+		DirectX::XMFLOAT3 axis;
+		// the bone will be able to move between -limit; +limit angles around the axis
+		float angleLimitInRadians;
+	};
+
 }

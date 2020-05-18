@@ -5,6 +5,7 @@
 #include <NetcodeFoundation/ArrayView.hpp>
 #include <NetcodeAssetLib/Bone.h>
 
+#include <algorithm>
 #include <vector>
 #include <cstdint>
 #include <DirectXMath.h>
@@ -16,6 +17,7 @@ namespace Netcode::Animation {
 		uint32_t chainLength;
 		DirectX::XMFLOAT4 position;
 		DirectX::XMFLOAT4 offset;
+		std::vector<BoneAngularLimit> limits;
 	};
 
 	class BackwardBounceCCD {
@@ -39,23 +41,6 @@ namespace Netcode::Animation {
 			bt.translation = wPos;
 			bt.rotation = wRot;
 			return bt;
-		}
-
-		static DirectX::XMMATRIX GetToRoot(uint32_t boneId, ArrayView<Asset::Bone> bones, ArrayView<BoneTransform> boneTransforms) {
-			DirectX::XMMATRIX mats = DirectX::XMMatrixIdentity();
-
-			int32_t bid = static_cast<int32_t>(boneId);
-
-			while(bid >= 0) {
-				DirectX::XMMATRIX anim = DirectX::XMMatrixAffineTransformation(boneTransforms[boneId].scale,
-					DirectX::XMQuaternionIdentity(),
-					boneTransforms[boneId].rotation,
-					boneTransforms[boneId].translation);
-				mats = DirectX::XMMatrixMultiply(mats, anim);
-				bid = bones[bid].parentId;
-			}
-
-			return mats;
 		}
 
 		static DirectX::XMVECTOR GetP_e(const IKEffector& eff, ArrayView<Asset::Bone> bones, ArrayView<BoneTransform> boneTransforms) {
@@ -82,11 +67,9 @@ namespace Netcode::Animation {
 			DirectX::XMVECTOR target = DirectX::XMLoadFloat4(&effector.position);
 
 			int32_t numLinks = static_cast<int32_t>(effector.chainLength);
-
 			for(int32_t k = 0; k < maxIterations; ++k) {
-
 				int32_t boneId = effector.parentId;
-				for(int32_t i =  0; i < numLinks; ++i) {
+				for(int32_t i = 0; i < numLinks; ++i) {
 					// current effector "world" position
 					DirectX::XMVECTOR Pe = GetP_e(effector, bones, boneTransforms);
 					// link "world" position at index i
@@ -94,20 +77,20 @@ namespace Netcode::Animation {
 					// effector target "world" position
 					DirectX::XMVECTOR Pt = target;
 
-					DirectX::XMVECTOR ecDiffLengthV = DirectX::XMVector3Length(DirectX::XMVectorSubtract(Pc, Pe));
-					float ecDiffLength;
-					DirectX::XMStoreFloat(&ecDiffLength, ecDiffLengthV);
-
-					if(ecDiffLength < 0.001f) {
-						continue;
-					}
-
 					DirectX::XMVECTOR diffLenV = DirectX::XMVector4Length(DirectX::XMVectorSubtract(Pt, Pe));
 					float diffLen;
 					DirectX::XMStoreFloat(&diffLen, diffLenV);
 
 					if(diffLen < 0.5f) {
 						return;
+					}
+
+					DirectX::XMVECTOR ecDiffLengthV = DirectX::XMVector3Length(DirectX::XMVectorSubtract(Pc, Pe));
+					float ecDiffLength;
+					DirectX::XMStoreFloat(&ecDiffLength, ecDiffLengthV);
+
+					if(ecDiffLength < 0.001f) {
+						continue;
 					}
 
 					DirectX::XMVECTOR u = DirectX::XMVectorSubtract(Pe, Pc);
@@ -119,12 +102,27 @@ namespace Netcode::Animation {
 					DirectX::XMVECTOR cosThetaV = DirectX::XMVector3Dot(u, v);
 					float cosTheta;
 					DirectX::XMStoreFloat(&cosTheta, cosThetaV);
+					float theta = acosf(std::clamp(cosTheta, -1.0f, 1.0f));
 
 					DirectX::XMVECTOR rotationAxis = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(u, v));
 
 					boneTransforms[boneId].rotation =
 						DirectX::XMQuaternionMultiply(boneTransforms[boneId].rotation,
-						DirectX::XMQuaternionRotationAxis(rotationAxis, acosf(cosTheta)));
+						DirectX::XMQuaternionRotationAxis(rotationAxis, theta));
+
+					DirectX::XMVECTOR limitAxis = DirectX::XMLoadFloat3(&effector.limits[i].axis);
+					float angularLimit = effector.limits[i].angleLimitInRadians;
+					DirectX::XMVECTOR limitQuat = DirectX::XMQuaternionRotationAxis(limitAxis, 0.0f);
+
+					DirectX::XMVECTOR limitRotDotV = DirectX::XMVector4Dot(boneTransforms[boneId].rotation, limitQuat);
+					float angleDialation;
+					DirectX::XMStoreFloat(&angleDialation, limitRotDotV);
+					angleDialation = std::abs(angleDialation);
+
+					if(angularLimit < angleDialation) {
+						boneTransforms[boneId].rotation = 
+							DirectX::XMQuaternionSlerp(limitQuat, boneTransforms[boneId].rotation, angularLimit / angleDialation);
+					}
 
 					boneId = bones[boneId].parentId;
 				}
