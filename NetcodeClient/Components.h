@@ -1,5 +1,7 @@
 #pragma once
 
+#include <NetcodeFoundation/Math.h>
+
 #include <functional>
 #include <string>
 #include "ConstantBufferTypes.h"
@@ -117,11 +119,11 @@ public:
 
 COMPONENT_ALIGN class Transform {
 public:
-	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT4 rotation;
-	DirectX::XMFLOAT3 scale;
-	DirectX::XMFLOAT3 worldPosition;
-	DirectX::XMFLOAT4 worldRotation;
+	Netcode::Float3 position;
+	Netcode::Float4 rotation;
+	Netcode::Float3 scale;
+	Netcode::Float3 worldPosition;
+	Netcode::Float4 worldRotation;
 
 	Transform() : position{ 0.0f, 0.0f, 0.0f }, rotation{ 0.0f, 0.0f, 0.0f, 1.0f }, scale{ 1.0f, 1.0f, 1.0f }, worldPosition{ position }, worldRotation{ rotation } {
 

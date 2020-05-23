@@ -325,8 +325,8 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			Netcode::Asset::Material * mat = model->materials.Data() + model->meshes[meshIdx].materialId;
 			Netcode::Asset::Mesh * mesh = model->meshes.Data() + meshIdx;
 
-			DirectX::XMStoreFloat4x4A(&modelComponent->perObjectData.Model, DirectX::XMMatrixIdentity());
-			DirectX::XMStoreFloat4x4A(&modelComponent->perObjectData.InvModel, DirectX::XMMatrixIdentity());
+			DirectX::XMStoreFloat4x4(&modelComponent->perObjectData.Model, DirectX::XMMatrixIdentity());
+			DirectX::XMStoreFloat4x4(&modelComponent->perObjectData.InvModel, DirectX::XMMatrixIdentity());
 
 			Netcode::InputLayoutBuilderRef inputLayoutBuilder = graphics->CreateInputLayoutBuilder();
 

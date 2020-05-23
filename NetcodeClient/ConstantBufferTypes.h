@@ -1,18 +1,19 @@
 #pragma once
 
-#include <DirectXMath.h>
+#include <NetcodeFoundation/Math.h>
+
 #include "Light.h"
 
 struct PerFrameData {
-	DirectX::XMFLOAT4X4A ViewProj;
-	DirectX::XMFLOAT4X4A ViewProjInv;
-	DirectX::XMFLOAT4X4A View;
-	DirectX::XMFLOAT4X4A Proj;
-	DirectX::XMFLOAT4X4A ViewInv;
-	DirectX::XMFLOAT4X4A ProjInv;
-	DirectX::XMFLOAT4X4A ProjTex;
-	DirectX::XMFLOAT4X4A RayDir;
-	DirectX::XMFLOAT4A eyePos;
+	Netcode::Float4x4 ViewProj;
+	Netcode::Float4x4 ViewProjInv;
+	Netcode::Float4x4 View;
+	Netcode::Float4x4 Proj;
+	Netcode::Float4x4 ViewInv;
+	Netcode::Float4x4 ProjInv;
+	Netcode::Float4x4 ProjTex;
+	Netcode::Float4x4 RayDir;
+	Netcode::Float4 eyePos;
 	float nearZ;
 	float farZ;
 	float aspectRatio;
@@ -21,8 +22,8 @@ struct PerFrameData {
 
 struct BoneData {
 	constexpr static int MAX_BONE_COUNT = 128;
-	DirectX::XMFLOAT4X4A BindTransform[MAX_BONE_COUNT];
-	DirectX::XMFLOAT4X4A ToRootTransform[MAX_BONE_COUNT];
+	Netcode::Float4x4 BindTransform[MAX_BONE_COUNT];
+	Netcode::Float4x4 ToRootTransform[MAX_BONE_COUNT];
 };
 
 struct AnimationStaticConstants {
@@ -33,7 +34,7 @@ struct AnimationStaticConstants {
 	DirectX::XMUINT2 __padding_StaticConstants;
 	uint32_t startIndices[MAX_ANIMATION_COUNT];
 	int32_t parentIndices[BoneData::MAX_BONE_COUNT];
-	DirectX::XMFLOAT4X4 offsetMatrices[BoneData::MAX_BONE_COUNT];
+	Netcode::Float4x4 offsetMatrices[BoneData::MAX_BONE_COUNT];
 };
 
 struct AnimInstanceData {
@@ -54,28 +55,28 @@ struct AnimInstanceConstants {
 struct SsaoData {
 	constexpr static int SAMPLE_COUNT = 14;
 
-	DirectX::XMFLOAT4A Offsets[SAMPLE_COUNT];
+	Netcode::Float4 Offsets[SAMPLE_COUNT];
 	float occlusionRadius;
 	float occlusionFadeStart;
 	float occlusionFadeEnd;
 	float surfaceEpsilon;
-	DirectX::XMFLOAT4A weights[3];
-	DirectX::XMFLOAT2 invRenderTargetSize;
+	Netcode::Float4 weights[3];
+	Netcode::Float2 invRenderTargetSize;
 };
 
 
 struct PerObjectData {
-	DirectX::XMFLOAT4X4A Model;
-	DirectX::XMFLOAT4X4A InvModel;
+	Netcode::Float4x4 Model;
+	Netcode::Float4x4 InvModel;
 };
 
 struct MaterialData {
-	DirectX::XMFLOAT4A diffuseColor;
-	DirectX::XMFLOAT3 fresnelR0;
+	Netcode::Float4 diffuseColor;
+	Netcode::Float3 fresnelR0;
 	float shininess;
 };
 
 struct DebugPhysxShapeData {
-	DirectX::XMFLOAT4X4A local;
-	DirectX::XMFLOAT4X4A offset;
+	Netcode::Float4x4 local;
+	Netcode::Float4x4 offset;
 };

@@ -11,24 +11,20 @@
 
 class TransformSystem {
 public:
-	static inline DirectX::XMVECTOR GetWorldRotation(Transform * transform, Transform * parentTransform) {
-		DirectX::XMVECTOR worldRotation = DirectX::XMLoadFloat4(&transform->rotation);
+	static inline Netcode::Quaternion GetWorldRotation(Transform * transform, Transform * parentTransform) {
+		Netcode::Quaternion worldRotation{ transform->rotation };
 		if(parentTransform != nullptr) {
-			DirectX::XMVECTOR parentWorldRotation = DirectX::XMLoadFloat4(&parentTransform->worldRotation);
-
-			worldRotation = DirectX::XMQuaternionMultiply(worldRotation, parentWorldRotation);
+			worldRotation = worldRotation * parentTransform->worldRotation;
 		}
 
 		return worldRotation;
 	}
 
-	static inline DirectX::XMVECTOR GetWorldPosition(Transform * transform, Transform * parentTransform) {
-		DirectX::XMVECTOR worldPosition = DirectX::XMLoadFloat3(&transform->position);
+	static inline Netcode::Vector3 GetWorldPosition(Transform * transform, Transform * parentTransform) {
+		Netcode::Vector3 worldPosition{ transform->position };
 
 		if(parentTransform != nullptr) {
-			DirectX::XMVECTOR parentWorldPosition = DirectX::XMLoadFloat3(&parentTransform->worldPosition);
-
-			worldPosition = DirectX::XMVectorAdd(worldPosition, parentWorldPosition);
+			worldPosition = worldPosition + parentTransform->worldPosition;
 		}
 
 		return worldPosition;
@@ -37,8 +33,8 @@ public:
 	void Run(GameObject * gameObject);
 
 	void operator()(GameObject * gameObject, Transform * transform) {
-		DirectX::XMVECTOR worldPos;
-		DirectX::XMVECTOR worldRot;
+		Netcode::Vector3 worldPos;
+		Netcode::Quaternion worldRot;
 
 		GameObject * parent = gameObject->Parent();
 
@@ -51,8 +47,8 @@ public:
 			worldRot = GetWorldRotation(transform, nullptr);
 		}
 
-		DirectX::XMStoreFloat3(&transform->worldPosition, worldPos);
-		DirectX::XMStoreFloat4(&transform->worldRotation, worldRot);
+		transform->worldPosition = worldPos;
+		transform->worldRotation = worldRot;
 	}
 };
 
@@ -76,14 +72,15 @@ public:
 	void Run(GameObject * gameObject);
 
 	void operator()(GameObject * gameObject, Transform * transform, Model * model) {
-		DirectX::XMVECTOR worldPos = DirectX::XMLoadFloat3(&transform->worldPosition);
-		DirectX::XMVECTOR worldRot = DirectX::XMLoadFloat4(&transform->worldRotation);
-		DirectX::XMVECTOR scaleVector = DirectX::XMLoadFloat3(&transform->scale);
-		DirectX::XMMATRIX modelMat = DirectX::XMMatrixAffineTransformation(scaleVector, DirectX::XMQuaternionIdentity(), worldRot, worldPos);
-		DirectX::XMVECTOR determinant = DirectX::XMMatrixDeterminant(modelMat);
-		DirectX::XMMATRIX invModelMat = DirectX::XMMatrixInverse(&determinant, modelMat);
-		DirectX::XMStoreFloat4x4A(&model->perObjectData.Model, DirectX::XMMatrixTranspose(modelMat));
-		DirectX::XMStoreFloat4x4A(&model->perObjectData.InvModel, DirectX::XMMatrixTranspose(invModelMat));
+		Netcode::Vector3 worldPos = transform->worldPosition;
+		Netcode::Vector3 scaleV = transform->scale;
+		Netcode::Quaternion worldRot = transform->worldRotation;
+
+		Netcode::Matrix modelMat = Netcode::AffineTransformation(scaleV, worldRot, worldPos);
+		Netcode::Matrix invModelMat = modelMat.Invert();
+
+		model->perObjectData.Model = modelMat.Transpose();
+		model->perObjectData.InvModel = invModelMat.Transpose();
 
 		for(const auto & i : model->meshes) {
 			if(model->boneData != nullptr) {
@@ -152,30 +149,25 @@ class PhysXSystem {
 
 		BoneData * bd = anim->controller->GetAnimationSet()->GetData() + model->boneDataOffset;
 
-		DirectX::XMMATRIX toRoot = DirectX::XMLoadFloat4x4A(&bd->ToRootTransform[c.boneReference]);
-		DirectX::XMVECTOR rotQ = DirectX::XMLoadFloat4(&c.localRotation);
+		Netcode::Matrix toRoot = bd->ToRootTransform[c.boneReference];
+		Netcode::Quaternion rotQ = c.localRotation;
 
-		DirectX::FXMMATRIX T = DirectX::XMMatrixTranslation(c.localPosition.x, c.localPosition.y, c.localPosition.z);
-		DirectX::FXMMATRIX R = DirectX::XMMatrixRotationQuaternion(rotQ);
+		Netcode::Matrix T = Netcode::TranslationMatrix(c.localPosition);
+		Netcode::Matrix R = (Netcode::Matrix)rotQ;
 
-		toRoot = DirectX::XMMatrixMultiply(DirectX::XMMatrixMultiply(R, T), DirectX::XMMatrixTranspose(toRoot));
+		toRoot = R * T * toRoot.Transpose();
 
-		DirectX::XMFLOAT4X4 res;
-		DirectX::XMStoreFloat4x4(&res, toRoot);
+		Netcode::Float4x4 res = toRoot;
 
-		DirectX::XMFLOAT3 tr{
+		Netcode::Float3 tr{
 			res._41,
 			res._42,
 			res._43
 		};
 
-		toRoot = DirectX::XMLoadFloat4x4(&res);
+		rotQ = Netcode::DecomposeRotation(toRoot);
 
-		rotQ = DirectX::XMQuaternionRotationMatrix(toRoot);
-		DirectX::XMFLOAT4 rot;
-		DirectX::XMStoreFloat4(&rot, rotQ);
-
-		physx::PxTransform pxT{ ToPxVec3(tr), ToPxQuat(rot) };
+		physx::PxTransform pxT{ ToPxVec3(tr), ToPxQuat(rotQ) };
 		shape->setLocalPose(pxT);
 	}
 
@@ -407,11 +399,8 @@ public:
 
 		uiObject->IsActive(uiObject->GetActivityFlag() && isParentActive);
 
-		DirectX::FXMVECTOR worldPos = TransformSystem::GetWorldPosition(transform, parentTransform);
-		DirectX::FXMVECTOR worldRot = TransformSystem::GetWorldRotation(transform, parentTransform);
-
-		DirectX::XMStoreFloat3(&transform->worldPosition, worldPos);
-		DirectX::XMStoreFloat4(&transform->worldRotation, worldRot);
+		transform->worldPosition = TransformSystem::GetWorldPosition(transform, parentTransform);
+		transform->worldRotation = TransformSystem::GetWorldRotation(transform, parentTransform);
 	}
 };
 

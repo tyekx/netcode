@@ -18,17 +18,6 @@ public:
 	DirectX::XMUINT2 screenSize;
 	bool lmbHeld;
 
-	DirectX::XMMATRIX GetView(Transform * transform, Camera * camera) {
-		DirectX::XMVECTOR eyePos = DirectX::XMLoadFloat3(&transform->position);
-		DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&camera->up);
-		DirectX::XMVECTOR ahead = DirectX::XMLoadFloat3(&camera->ahead);
-		return DirectX::XMMatrixLookToRH(eyePos, ahead, up);
-	}
-
-	DirectX::XMMATRIX GetProj(Camera * c) {
-		return DirectX::XMMatrixOrthographicRH(static_cast<float>(screenSize.x), static_cast<float>(screenSize.y), c->nearPlane, c->farPlane);
-	}
-
 	UIScene() = default;
 
 public:
@@ -166,48 +155,41 @@ public:
 		Transform * transform = cameraRef->GetComponent<Transform>();
 		Camera * camComponent = cameraRef->GetComponent<Camera>();
 
-		const DirectX::XMMATRIX view = GetView(transform, camComponent);
-		const DirectX::XMMATRIX proj = GetProj(camComponent);
+		const Netcode::Vector3 eyePos = transform->worldPosition;
 
-		const DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(view, proj);
-		DirectX::XMVECTOR vpDet = DirectX::XMMatrixDeterminant(vp);
-		const DirectX::XMMATRIX invVp = DirectX::XMMatrixInverse(&vpDet, vp);
+		const Netcode::Matrix view = Netcode::LookToMatrix(eyePos, camComponent->ahead, camComponent->up);
+		const Netcode::Matrix proj = Netcode::OrtographicMatrix(static_cast<float>(screenSize.x), static_cast<float>(screenSize.y), camComponent->nearPlane, camComponent->farPlane);
 
-		const DirectX::XMMATRIX tex{ 0.5f,  0.0f, 0.0f, 0.0f,
-									  0.0f, -0.5f, 0.0f, 0.0f,
-									  0.0f,  0.0f, 1.0f, 0.0f,
-									  0.5f,  0.5f, 0.0f, 1.0f };
+		const Netcode::Matrix vp = view * proj;
+		const Netcode::Matrix invVp = vp.Invert();
 
-		DirectX::XMVECTOR lookToV = DirectX::XMLoadFloat3(&camComponent->ahead);
-		DirectX::XMVECTOR upV = DirectX::XMLoadFloat3(&camComponent->up);
+		const Netcode::Matrix tex = Netcode::Float4x4{ 0.5f,  0.0f, 0.0f, 0.0f,
+													  0.0f, -0.5f, 0.0f, 0.0f,
+													  0.0f,  0.0f, 1.0f, 0.0f,
+													  0.5f,  0.5f, 0.0f, 1.0f };
 
-		DirectX::XMMATRIX viewFromOrigo = DirectX::XMMatrixLookToRH(DirectX::g_XMZero, lookToV, upV);
-		DirectX::XMMATRIX rayDir = DirectX::XMMatrixMultiply(viewFromOrigo, proj);
-
-		DirectX::XMVECTOR rayDirDet = DirectX::XMMatrixDeterminant(rayDir);
-		rayDir = DirectX::XMMatrixInverse(&rayDirDet, rayDir);
-
-		DirectX::XMStoreFloat4x4A(&perFrameData.RayDir, DirectX::XMMatrixTranspose(rayDir));
+		Netcode::Matrix rayDir = Netcode::LookToMatrix(Netcode::Float3{ }, camComponent->ahead, camComponent->up) * proj;
+		rayDir = rayDir.Invert();
 
 		perFrameData.farZ = camComponent->farPlane;
 		perFrameData.nearZ = camComponent->nearPlane;
 		perFrameData.fov = camComponent->fov;
 		perFrameData.aspectRatio = camComponent->aspect;
 
-		DirectX::XMStoreFloat4x4A(&perFrameData.View, DirectX::XMMatrixTranspose(view));
-		DirectX::XMStoreFloat4x4A(&perFrameData.Proj, DirectX::XMMatrixTranspose(proj));
+		perFrameData.RayDir = rayDir.Transpose();
+		perFrameData.View = view.Transpose();
+		perFrameData.Proj = proj.Transpose();
+		perFrameData.ViewProj = vp.Transpose();
+		perFrameData.ViewProjInv = invVp.Transpose();
 
-		DirectX::XMStoreFloat4x4A(&perFrameData.ViewProj, DirectX::XMMatrixTranspose(vp));
-		DirectX::XMStoreFloat4x4A(&perFrameData.ViewProjInv, DirectX::XMMatrixTranspose(invVp));
+		perFrameData.eyePos = eyePos.XYZ1();
 
-		const DirectX::XMFLOAT4 eyePos{ transform->position.x, transform->position.y, transform->position.z, 1.0f };
+		Netcode::Matrix projInv = invVp * view;
+		Netcode::Matrix viewInv = proj * invVp;
 
-		DirectX::XMStoreFloat4A(&perFrameData.eyePos, DirectX::XMLoadFloat4(&eyePos));
-
-		DirectX::XMStoreFloat4x4A(&perFrameData.ViewInv, DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(proj, invVp)));
-		DirectX::XMStoreFloat4x4A(&perFrameData.ProjInv, DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(invVp, view)));
-
-		DirectX::XMStoreFloat4x4A(&perFrameData.ProjTex, DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(proj, tex)));
+		perFrameData.ViewInv = viewInv.Transpose();
+		perFrameData.ProjInv = projInv.Transpose();
+		perFrameData.ProjTex = (proj * tex).Transpose();
 	}
 
 
