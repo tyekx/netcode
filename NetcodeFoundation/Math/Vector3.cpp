@@ -25,7 +25,7 @@ namespace Netcode {
 		return DirectX::XMVector3Cross(v, rhs.v);
 	}
 
-	float Vector3::Dot(const Vector3 & rhs) const noexcept {
+	float Vector3::Dot(Vector3 rhs) const noexcept {
 		float f;
 		DirectX::XMStoreFloat(&f, DirectX::XMVector3Dot(v, rhs.v));
 		return f;

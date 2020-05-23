@@ -6,6 +6,8 @@ target_sources(NetcodeFoundation PUBLIC
 	"Matrix.cpp"
 	"Quaternion.h"
 	"Quaternion.cpp"
+	"Vector2.h"
+	"Vector2.cpp"
 	"Vector3.h"
 	"Vector3.cpp"
 	"Vector4.h"

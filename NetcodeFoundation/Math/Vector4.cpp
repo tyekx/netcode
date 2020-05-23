@@ -10,11 +10,19 @@ namespace Netcode {
 		return *this;
 	}
 
-	Vector4 Vector4::Transform(const Matrix & rhs) const noexcept {
+	Vector4 Vector4::Transform(Matrix rhs) const noexcept {
 		return Vector4 { DirectX::XMVector4Transform(v, rhs.mat) };
 	}
 
-	float Vector4::Dot(const Vector4 & rhs) const noexcept
+	float NC_MATH_CALLCONV Vector4::Length() const noexcept {
+		return sqrtf(LengthSq());
+	}
+
+	float NC_MATH_CALLCONV Vector4::LengthSq() const noexcept {
+		return Dot(*this);
+	}
+
+	float Vector4::Dot(Vector4 rhs) const noexcept
 	{
 		float f;
 		DirectX::XMStoreFloat(&f, DirectX::XMVector4Dot(v, rhs.v));

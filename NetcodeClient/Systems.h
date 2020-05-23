@@ -216,15 +216,15 @@ class UISystem {
 	physx::PxPhysics * px;
 	physx::PxScene * pxScene;
 	physx::PxMaterial * dummyMaterial;
-	DirectX::XMINT2 screenSize;
+	Netcode::Int2 screenSize;
 	PerFrameData * perFrameData;
 	std::list<Button *> raycastHits;
 	bool lmbHeld;
 public:
 	GraphicsEngine * gEngine;
 
-	void SetScreenSize(const DirectX::XMUINT2 & dim) {
-		screenSize = DirectX::XMINT2{ static_cast<int32_t>(dim.x), static_cast<int32_t>(dim.y) };
+	void SetScreenSize(const Netcode::UInt2 & dim) {
+		screenSize = Netcode::Int2{ static_cast<int32_t>(dim.x), static_cast<int32_t>(dim.y) };
 	}
 
 	void CreateResources(physx::PxScene * pxS, PerFrameData* pfd) {
@@ -236,7 +236,7 @@ public:
 
 	void Raycast() {
 		float lmb = Netcode::Input::GetAxis("Fire");
-		DirectX::XMINT2 mousePos = Netcode::Input::GetMousePos();
+		Netcode::Int2 mousePos = Netcode::Input::GetMousePos();
 
 		bool isClicked = false;
 
@@ -249,21 +249,15 @@ public:
 			lmbHeld = false;
 		}
 
-		DirectX::XMFLOAT4 ndcMousePos{
+		Netcode::Float3 raycastRayStart{
 			static_cast<float>(mousePos.x),
 			static_cast<float>(mousePos.y),
-			0.0f,
-			1.0f
+			0.0f
 		};
 
-		DirectX::XMVECTOR ndcMousePosV = DirectX::XMLoadFloat4(&ndcMousePos);
-		DirectX::XMVECTOR rayDirVector = DirectX::g_XMIdentityR2;
-
-		DirectX::XMFLOAT3 raycastRayDir;
-		DirectX::XMFLOAT3 raycastRayStart;
-
-		DirectX::XMStoreFloat3(&raycastRayStart, ndcMousePosV);
-		DirectX::XMStoreFloat3(&raycastRayDir, rayDirVector);
+		Netcode::Float3 raycastRayDir{
+			0.0f, 0.0f, 1.0f
+		};
 
 		physx::PxVec3 pxRayStart = ToPxVec3(raycastRayStart);
 		physx::PxVec3 pxRayDir = ToPxVec3(raycastRayDir);
@@ -411,7 +405,7 @@ public:
 	void Run(UIObject * uiObject);
 
 	void operator()(UIObject * uiObject, Transform * transform, UIElement * uiElement, Sprite * sprite) {
-		DirectX::XMFLOAT4 clr = sprite->diffuseColor;
+		Netcode::Float4 clr = sprite->diffuseColor;
 
 		if(!uiObject->IsActive()) {
 			return;
@@ -440,10 +434,10 @@ public:
 		gEngine->uiPass_Input.Produced(UISpriteRenderItem(
 			sprite->texture,
 			sprite->textureSize,
-			DirectX::XMFLOAT2{ static_cast<float>(uiElement->width), static_cast<float>(uiElement->height) },
+			Netcode::Float2{ static_cast<float>(uiElement->width), static_cast<float>(uiElement->height) },
 			clr,
-			DirectX::XMFLOAT2{ transform->worldPosition.x, transform->worldPosition.y },
-			DirectX::XMFLOAT2 { uiElement->origin },
+			Netcode::Float2{ transform->worldPosition.x, transform->worldPosition.y },
+			Netcode::Float2{ uiElement->origin },
 			uiElement->rotationZ
 		));
 	}
@@ -470,7 +464,7 @@ public:
 		if(uiObject->IsActive()) {
 
 			std::wstring displayString = text->text;
-			DirectX::XMFLOAT4 displayColor = text->color;
+			Netcode::Float4 displayColor = text->color;
 
 			if(uiObject->HasComponent<TextBox>()) {
 				TextBox * tb = uiObject->GetComponent<TextBox>();
@@ -487,7 +481,7 @@ public:
 				UITextRenderItem(
 					text->font,
 					std::move(displayString),
-					DirectX::XMFLOAT2{ transform->worldPosition.x, transform->worldPosition.y },
+					Netcode::Float2 { transform->worldPosition.x, transform->worldPosition.y },
 					displayColor
 				));
 		}

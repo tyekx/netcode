@@ -48,7 +48,7 @@ COMPONENT_ALIGN struct UIScript {
 
 COMPONENT_ALIGN struct Sprite {
 	Netcode::ResourceViewsRef texture;
-	DirectX::XMUINT2 textureSize;
+	Netcode::UInt2 textureSize;
 	Netcode::Float4 diffuseColor;
 	Netcode::Float4 hoverColor;
 };

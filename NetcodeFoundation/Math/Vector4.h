@@ -13,13 +13,14 @@ namespace Netcode {
 		inline Vector4(const DirectX::XMVECTOR & v) : v{ v } { }
 
 		Vector4(const Float4 & rhs) noexcept;
+
 		Vector4 & NC_MATH_CALLCONV operator=(const Float4 & rhs) noexcept;
 
-		Vector4 NC_MATH_CALLCONV Transform(const Matrix & rhs) const noexcept;
+		Vector4 NC_MATH_CALLCONV Transform(Matrix rhs) const noexcept;
 
-		float NC_MATH_CALLCONV Dot(const Vector4 & rhs) const noexcept;
+		float NC_MATH_CALLCONV Dot(Vector4 rhs) const noexcept;
 
-		Vector4 NC_MATH_CALLCONV operator*(const Vector4 & rhs) const noexcept {
+		Vector4 NC_MATH_CALLCONV operator*(Vector4 rhs) const noexcept {
 			return DirectX::XMVectorMultiply(v, rhs.v);
 		}
 
@@ -35,7 +36,7 @@ namespace Netcode {
 			return DirectX::XMVectorScale(v, 1.0f / scale);
 		}
 
-		Vector4 & NC_MATH_CALLCONV operator*=(const Vector4 & rhs) noexcept {
+		Vector4 & NC_MATH_CALLCONV operator*=(Vector4 rhs) noexcept {
 			v = DirectX::XMVectorMultiply(v, rhs.v);
 			return *this;
 		}
@@ -55,27 +56,27 @@ namespace Netcode {
 			return *this;
 		}
 
-		Vector4 NC_MATH_CALLCONV operator+(const Vector4 & rhs) const noexcept {
+		Vector4 NC_MATH_CALLCONV operator+(Vector4 rhs) const noexcept {
 			return DirectX::XMVectorAdd(v, rhs.v);
 		}
 
-		Vector4 & NC_MATH_CALLCONV operator+=(const Vector4 & rhs) noexcept {
+		Vector4 & NC_MATH_CALLCONV operator+=(Vector4 rhs) noexcept {
 			v = DirectX::XMVectorAdd(v, rhs.v);
 			return *this;
 		}
 
-		Vector4 NC_MATH_CALLCONV operator-(const Vector4 & rhs) const noexcept {
+		Vector4 NC_MATH_CALLCONV operator-(Vector4 rhs) const noexcept {
 			return DirectX::XMVectorSubtract(v, rhs.v);
 		}
 
-		Vector4 & NC_MATH_CALLCONV operator-=(const Vector4 & rhs) noexcept {
+		Vector4 & NC_MATH_CALLCONV operator-=(Vector4 rhs) noexcept {
 			v = DirectX::XMVectorSubtract(v, rhs.v);
 			return *this;
 		}
 
-		float NC_MATH_CALLCONV LengthSq() const noexcept {
-			return Dot(*this);
-		}
+		float NC_MATH_CALLCONV Length() const noexcept;
+
+		float NC_MATH_CALLCONV LengthSq() const noexcept;
 
 		bool NC_MATH_CALLCONV AnyZero() const noexcept;
 

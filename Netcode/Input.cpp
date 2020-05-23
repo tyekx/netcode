@@ -11,8 +11,8 @@ namespace Netcode {
 	bool Input::keysHeld[256] = { false };
 
 	bool Input::isFocused{ false };
-	DirectX::XMINT2 Input::mousePos{};
-	DirectX::XMINT2 Input::mouseDelta{};
+	Netcode::Int2 Input::mousePos{};
+	Netcode::Int2 Input::mouseDelta{};
 	std::map<std::string, Input::Axis> Input::axisMap{ };
 
 	Event<uint32_t, uint32_t> Input::OnKeyPressed{};
@@ -37,7 +37,7 @@ namespace Netcode {
 		RAWINPUT * raw = (RAWINPUT *)inputBuffer;
 
 		if(raw->header.dwType == RIM_TYPEMOUSE) {
-			Input::MouseMove(DirectX::XMINT2{ raw->data.mouse.lLastX, raw->data.mouse.lLastY });
+			Input::MouseMove(Netcode::Int2{ raw->data.mouse.lLastX, raw->data.mouse.lLastY });
 			if(raw->data.mouse.ulButtons != 0) {
 				Netcode::Utility::Debugf("%d\r\n", raw->data.mouse.ulButtons);
 
@@ -57,7 +57,7 @@ namespace Netcode {
 		}
 	}
 
-	void Input::SetMousePos(const DirectX::XMINT2 & pos)
+	void Input::SetMousePos(const Netcode::Int2 & pos)
 	{
 		mousePos = pos;
 	}
@@ -192,15 +192,15 @@ namespace Netcode {
 		axisMap[name] = Axis{ posKey, negKey };
 	}
 
-	void Input::MouseMove(const DirectX::XMINT2 & xy) {
-		mouseDelta = DirectX::XMINT2{ mouseDelta.x + xy.x, mouseDelta.y + xy.y };
+	void Input::MouseMove(const Netcode::Int2 & xy) {
+		mouseDelta = Netcode::Int2{ mouseDelta.x + xy.x, mouseDelta.y + xy.y };
 	}
 
-	DirectX::XMINT2 Input::GetMouseDelta() {
+	Netcode::Int2 Input::GetMouseDelta() {
 		return mouseDelta;
 	}
 
-	DirectX::XMINT2 Input::GetMousePos()
+	Netcode::Int2 Input::GetMousePos()
 	{
 		return mousePos;
 	}
@@ -222,7 +222,7 @@ namespace Netcode {
 		//if(IsFocused) {
 			//SetCursorPos(960, 540);
 		//}
-		mouseDelta = DirectX::XMINT2{ 0,0 };
+		mouseDelta = Netcode::Int2{ 0,0 };
 	}
 
 }

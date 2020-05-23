@@ -13,6 +13,7 @@ PUBLIC
 	"Sal.h"
 	"Generated_Version.cpp"
 	"Exceptions.h"
-	"Math.h" "Exception/NotSupportedException.h" "Math.cpp")
+	"Math.h"
+	"Math.cpp")
 
 add_subdirectory(Math)
