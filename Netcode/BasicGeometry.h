@@ -1,6 +1,6 @@
 #pragma once
 
-#include <DirectXMath.h>
+#include <NetcodeFoundation/Math.h>
 #include "Common.h"
 
 namespace Netcode::Graphics {
@@ -23,7 +23,7 @@ namespace Netcode::Graphics {
 		Designed to work with linelist primitive topology
 		writes 24 vertices
 		*/
-		static void CreateBoxWireframe(_Out_writes_(24 * stride) void * dstData, unsigned int stride, const DirectX::XMFLOAT3 & halfExtents, unsigned int positionDataOffset = 0);
+		static void CreateBoxWireframe(_Out_writes_(24 * stride) void * dstData, unsigned int stride, const Netcode::Float3 & halfExtents, unsigned int positionDataOffset = 0);
 
 		/*
 		Fills a vertices data buffer's position values. Creates a grid
@@ -35,7 +35,7 @@ namespace Netcode::Graphics {
 		Fills a vertices data buffer's position values. Creates a capsule with the given arguments
 		Designed to work with linelist primitive topology
 		*/
-		static void CreateCapsuleWireframe(_Out_writes_(108 * stride) void * dstData, unsigned int stride, const DirectX::XMFLOAT2 & args, unsigned int positionDataOffset = 0);
+		static void CreateCapsuleWireframe(_Out_writes_(108 * stride) void * dstData, unsigned int stride, const Netcode::Float2 & args, unsigned int positionDataOffset = 0);
 
 		static void CreateSphereWireFrame(void * dstData, uint32_t stride, float radius, uint32_t positionDataOffset = 0);
 

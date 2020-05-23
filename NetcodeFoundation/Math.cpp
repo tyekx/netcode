@@ -15,6 +15,16 @@ namespace Netcode {
 		return DirectX::XMMatrixTranslationFromVector(translation.v);
 	}
 
+	Matrix NC_MATH_CALLCONV ScaleMatrix(Vector3 scaling)
+	{
+		return DirectX::XMMatrixScalingFromVector(scaling.v);
+	}
+
+	Matrix NC_MATH_CALLCONV RotationMatrix(Quaternion rotation)
+	{
+		return DirectX::XMMatrixRotationQuaternion(rotation.q);
+	}
+
 	Matrix NC_MATH_CALLCONV LookToMatrix(Vector3 eyePos, Vector3 lookDir, Vector3 upVector) {
 		return DirectX::XMMatrixLookToRH(eyePos.v, lookDir.v, upVector.v);
 	}

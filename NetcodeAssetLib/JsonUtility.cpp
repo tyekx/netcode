@@ -13,41 +13,41 @@ namespace Netcode::Asset {
 		return static_cast<float>(x);
 	}
 
-	DirectX::XMFLOAT2 LoadFloat2(const json11::Json & obj) {
+	Netcode::Float2 LoadFloat2(const json11::Json & obj) {
 		if(!obj.is_array() || obj.array_items().size() < 2 ||
 			!obj.array_items().at(0).is_number() ||
 			!obj.array_items().at(1).is_number()) {
-			return DirectX::XMFLOAT2{ };
+			return Netcode::Float2{ };
 		}
 
 		double x = obj.array_items().at(0).number_value();
 		double y = obj.array_items().at(1).number_value();
 
-		return DirectX::XMFLOAT2{ static_cast<float>(x), static_cast<float>(y) };
+		return Netcode::Float2{ static_cast<float>(x), static_cast<float>(y) };
 	}
 
-	DirectX::XMFLOAT3 LoadFloat3(const json11::Json & obj) {
+	Netcode::Float3 LoadFloat3(const json11::Json & obj) {
 		if(!obj.is_array() || obj.array_items().size() < 3 ||
 			!obj.array_items().at(0).is_number() ||
 			!obj.array_items().at(1).is_number() ||
 			!obj.array_items().at(2).is_number()) {
-			return DirectX::XMFLOAT3{ };
+			return Netcode::Float3{ };
 		}
 
 		double x = obj.array_items().at(0).number_value();
 		double y = obj.array_items().at(1).number_value();
 		double z = obj.array_items().at(2).number_value();
 
-		return DirectX::XMFLOAT3{ static_cast<float>(x), static_cast<float>(y), static_cast<float>(z) };
+		return Netcode::Float3{ static_cast<float>(x), static_cast<float>(y), static_cast<float>(z) };
 	}
 
-	DirectX::XMFLOAT4 LoadFloat4(const json11::Json & obj) {
+	Netcode::Float4 LoadFloat4(const json11::Json & obj) {
 		if(!obj.is_array() || obj.array_items().size() < 4 ||
 			!obj.array_items().at(0).is_number() ||
 			!obj.array_items().at(1).is_number() ||
 			!obj.array_items().at(2).is_number() ||
 			!obj.array_items().at(3).is_number()) {
-			return DirectX::XMFLOAT4{ };
+			return Netcode::Float4{ };
 		}
 
 		double x = obj.array_items().at(0).number_value();
@@ -55,17 +55,17 @@ namespace Netcode::Asset {
 		double z = obj.array_items().at(2).number_value();
 		double w = obj.array_items().at(3).number_value();
 
-		return DirectX::XMFLOAT4{ static_cast<float>(x), static_cast<float>(y), static_cast<float>(z), static_cast<float>(w) };
+		return Netcode::Float4{ static_cast<float>(x), static_cast<float>(y), static_cast<float>(z), static_cast<float>(w) };
 	}
 
-	json11::Json StoreFloat2(const DirectX::XMFLOAT2 & f2) {
+	json11::Json StoreFloat2(const Netcode::Float2 & f2) {
 		json11::Json::array arr;
 		arr.push_back(f2.x);
 		arr.push_back(f2.y);
 		return arr;
 	}
 
-	json11::Json StoreFloat3(const DirectX::XMFLOAT3 & f3) {
+	json11::Json StoreFloat3(const Netcode::Float3 & f3) {
 		json11::Json::array arr;
 		arr.push_back(f3.x);
 		arr.push_back(f3.y);
@@ -73,7 +73,7 @@ namespace Netcode::Asset {
 		return arr;
 	}
 
-	json11::Json StoreFloat4(const DirectX::XMFLOAT4 & f4) {
+	json11::Json StoreFloat4(const Netcode::Float4 & f4) {
 		json11::Json::array arr;
 		arr.push_back(f4.x);
 		arr.push_back(f4.y);

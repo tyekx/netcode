@@ -158,7 +158,7 @@ namespace Netcode::Graphics::DX12 {
 
 		std::vector<CommandList> inFlightCommandLists;
 
-		ResourceContext resourceContext;
+		DX12ResourceContextRef resourceContext;
 
 		DX12ResourceViewsRef renderTargetViews;
 		DX12ResourceViewsRef depthStencilView;
@@ -245,7 +245,7 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual TextureBuilderRef CreateTextureBuilder() const override;
 
-		virtual FrameGraphBuilderRef CreateFrameGraphBuilder() override;
+		virtual FrameGraphBuilderRef CreateFrameGraphBuilder() const override;
 
 	};
 

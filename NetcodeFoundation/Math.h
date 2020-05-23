@@ -13,6 +13,10 @@ namespace Netcode {
 
 	Matrix NC_MATH_CALLCONV TranslationMatrix(Vector3 translation);
 
+	Matrix NC_MATH_CALLCONV ScaleMatrix(Vector3 scaling);
+
+	Matrix NC_MATH_CALLCONV RotationMatrix(Quaternion rotation);
+
 	Matrix NC_MATH_CALLCONV LookToMatrix(Vector3 eyePos, Vector3 lookDir, Vector3 upVector);
 
 	Matrix NC_MATH_CALLCONV PerspectiveFovMatrix(float horizontalFovInRadians, float aspect, float nearPlane, float farPlane);

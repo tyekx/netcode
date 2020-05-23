@@ -86,4 +86,7 @@ namespace Netcode::Graphics::DX12 {
 		virtual void SetDebugName(GpuResourceRef resourceHandle, const wchar_t * name) override;
 	};
 
+	using DX12ResourceContext = Netcode::Graphics::DX12::ResourceContext;
+	using DX12ResourceContextRef = std::shared_ptr<DX12ResourceContext>;
+
 }

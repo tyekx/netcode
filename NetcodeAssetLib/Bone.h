@@ -1,6 +1,6 @@
 #pragma once
 
-#include <DirectXMath.h>
+#include <NetcodeFoundation/Math.h>
 
 namespace Netcode::Asset {
 
@@ -8,7 +8,7 @@ namespace Netcode::Asset {
 
 		char name[64];
 		int parentId;
-		DirectX::XMFLOAT4X4 transform;
+		Netcode::Float4x4 transform;
 
 	};
 

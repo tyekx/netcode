@@ -28,6 +28,10 @@ namespace Netcode {
 
 		float NC_MATH_CALLCONV Dot(const Vector3 & rhs) const noexcept;
 
+		static Vector3 NC_MATH_CALLCONV Lerp(Vector3 lhs, Vector3 rhs, float t) noexcept {
+			return DirectX::XMVectorLerp(lhs.v, rhs.v, t);
+		}
+
 		Vector3 NC_MATH_CALLCONV operator*(Vector3 rhs) const noexcept {
 			return DirectX::XMVectorMultiply(v, rhs.v);
 		}

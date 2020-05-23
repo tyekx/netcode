@@ -34,26 +34,16 @@ void DevCameraScript::Update(float dt) {
 		cameraYaw -= DirectX::XM_2PI;
 	}
 
-	DirectX::XMVECTOR cameraYawQuat = DirectX::XMQuaternionRotationRollPitchYaw(0.0f, cameraYaw, 0.0f);
+	Netcode::Quaternion cameraYawQuat{ 0.0f, cameraYaw, 0.0f };
 
-	DirectX::XMFLOAT3A devCam = { devCamX, devCamY, devCamZ };
-	DirectX::XMVECTOR devCamVec = DirectX::XMLoadFloat3A(&devCam);
+	Netcode::Vector3 devCamVec = Netcode::Float3{ devCamX, devCamY, devCamZ };
+	devCamVec = devCamVec.Rotate(cameraYawQuat);
 
-	devCamVec = DirectX::XMVector3Rotate(devCamVec, cameraYawQuat);
+	Netcode::Vector3 devCamPos = transform->position;
+	transform->position = devCamPos + devCamVec * cameraSpeed * dt;
 
-	DirectX::XMVECTOR devCamPos = DirectX::XMLoadFloat3(&transform->position);
-	devCamVec = DirectX::XMVectorScale(devCamVec, cameraSpeed * dt);
-	devCamPos = DirectX::XMVectorAdd(devCamVec, devCamPos);
-	DirectX::XMStoreFloat3(&transform->position, devCamPos);
+	Netcode::Vector3 aheadStart = Netcode::Float3{ 0.0f, 0.0f, -1.0f };
+	Netcode::Quaternion cameraQuat = DirectX::XMQuaternionRotationRollPitchYaw(cameraPitch, cameraYaw, 0.0f);
 
-	DirectX::XMFLOAT3 minusUnitZ{ 0.0f, 0.0f, -1.0f };
-	DirectX::XMVECTOR cameraQuat = DirectX::XMQuaternionRotationRollPitchYaw(cameraPitch, cameraYaw, 0.0f);
-	DirectX::XMVECTOR aheadStart = DirectX::XMLoadFloat3(&minusUnitZ);
-	//DirectX::XMVECTOR camUp = DirectX::XMLoadFloat3(&camera->up);
-
-	DirectX::XMStoreFloat3(&camera->ahead, DirectX::XMVector3Normalize(DirectX::XMVector3Rotate(aheadStart, cameraQuat)));
-
-	//DirectX::XMMATRIX view = DirectX::XMLoadFloat4x4A(.GetViewMatrix());
-	//DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4A(&baseCam.GetProjMatrix());
-	//DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(view, proj);
+	camera->ahead = aheadStart.Rotate(cameraQuat).Normalize();
 }

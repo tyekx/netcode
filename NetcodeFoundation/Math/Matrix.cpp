@@ -8,11 +8,11 @@ namespace Netcode {
 	}
 
 	Matrix NC_MATH_CALLCONV Matrix::Invert() const {
-		DirectX::XMVECTOR det = DirectX::XMMatrixDeterminant(mat);
+		Netcode::Vector4 det = DirectX::XMMatrixDeterminant(mat);
 
-		NotNullVector<Vector4> notNullCheck{ Vector4{ det }	};
+		NotNullVector<Vector4> notNullCheck{ det };
 
-		return DirectX::XMMatrixInverse(&det, mat);
+		return DirectX::XMMatrixInverse(&det.v, mat);
 	}
 
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <DirectXMath.h>
+#include <NetcodeFoundation/Math.h>
 
 namespace Netcode {
 	/*
@@ -9,9 +9,9 @@ namespace Netcode {
 	struct PNT_Vertex {
 		constexpr static int type = 0;
 
-		DirectX::XMFLOAT3 position;
-		DirectX::XMFLOAT3 normal;
-		DirectX::XMFLOAT2 tex;
+		Netcode::Float3 position;
+		Netcode::Float3 normal;
+		Netcode::Float2 tex;
 	};
 
 	/*
@@ -20,11 +20,11 @@ namespace Netcode {
 	struct PNTTB_Vertex {
 		constexpr static int type = 1;
 
-		DirectX::XMFLOAT3 position;
-		DirectX::XMFLOAT3 normal;
-		DirectX::XMFLOAT2 tex;
-		DirectX::XMFLOAT3 tangent;
-		DirectX::XMFLOAT3 binormal;
+		Netcode::Float3 position;
+		Netcode::Float3 normal;
+		Netcode::Float2 tex;
+		Netcode::Float3 tangent;
+		Netcode::Float3 binormal;
 	};
 
 	/*
@@ -33,10 +33,10 @@ namespace Netcode {
 	struct PNTWB_Vertex {
 		constexpr static int type = 2;
 
-		DirectX::XMFLOAT3 position;
-		DirectX::XMFLOAT3 normal;
-		DirectX::XMFLOAT2 tex;
-		DirectX::XMFLOAT3 weights;
+		Netcode::Float3 position;
+		Netcode::Float3 normal;
+		Netcode::Float2 tex;
+		Netcode::Float3 weights;
 		uint32_t boneIds; // 4 bytes, each byte is an id, 0xFF means no bone was referred
 	};
 
@@ -47,21 +47,21 @@ namespace Netcode {
 	struct PNTWBTB_Vertex {
 		constexpr static int type = 3;
 
-		DirectX::XMFLOAT3 position;
-		DirectX::XMFLOAT3 normal;
-		DirectX::XMFLOAT2 tex;
-		DirectX::XMFLOAT3 weights;
+		Netcode::Float3 position;
+		Netcode::Float3 normal;
+		Netcode::Float2 tex;
+		Netcode::Float3 weights;
 		uint32_t boneIds; // 4 bytes, each byte is an id, 0xFF means no bone was referred
-		DirectX::XMFLOAT3 tangent;
-		DirectX::XMFLOAT3 binormal;
+		Netcode::Float3 tangent;
+		Netcode::Float3 binormal;
 	};
 
 	struct PCT_Vertex {
 		constexpr static int type = 4;
 
-		DirectX::XMFLOAT3 position;
-		DirectX::XMFLOAT4 color;
-		DirectX::XMFLOAT2 textureCoordinate;
+		Netcode::Float3 position;
+		Netcode::Float4 color;
+		Netcode::Float2 textureCoordinate;
 	};
 
 }

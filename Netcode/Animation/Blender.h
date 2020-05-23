@@ -1,6 +1,6 @@
 #pragma once
 
-#include <DirectXMath.h>
+#include <NetcodeFoundation/Math.h>
 #include <NetcodeFoundation/ArrayView.hpp>
 #include <NetcodeAssetLib/Animation.h>
 #include <NetcodeAssetLib/Bone.h>
@@ -21,15 +21,15 @@ namespace Netcode::Animation {
 	class Blender {
 	public:
 		struct BoneSRT {
-			DirectX::XMVECTOR translation;
-			DirectX::XMVECTOR rotation;
-			DirectX::XMVECTOR scale;
+			Netcode::Vector3 translation;
+			Netcode::Quaternion rotation;
+			Netcode::Vector3 scale;
 		};
 
 		std::vector<BlendItem> items;
 		BoneSRT buffer[128];
 		float wSum;
-		void FillFrameData(Asset::Animation & clip, const StateBase & state, BlendItem & item);
+		void FillFrameData(const Asset::Animation & clip, const StateBase & state, BlendItem & item);
 
 		void BlendState(uint32_t stateId, ArrayView<Asset::Animation> clips);
 	public:
@@ -39,8 +39,8 @@ namespace Netcode::Animation {
 
 		void Blend( ArrayView<Asset::Bone> bones,
 					ArrayView<Asset::Animation> clips,
-					DirectX::XMFLOAT4X4A * toRootMatrices,
-					DirectX::XMFLOAT4X4A * bindMatrices );
+					Netcode::Float4x4 * toRootMatrices,
+					Netcode::Float4x4 * bindMatrices );
 	};
 
 }

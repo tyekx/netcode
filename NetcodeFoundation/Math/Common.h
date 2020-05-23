@@ -30,4 +30,14 @@ namespace Netcode {
 	using Float4 = DirectX::XMFLOAT4;
 	using Float4x4 = DirectX::XMFLOAT4X4;
 
+	using Int = int32_t;
+	using Int2 = DirectX::XMINT2;
+	using Int3 = DirectX::XMINT3;
+	using Int4 = DirectX::XMINT4;
+
+	using UInt = uint32_t;
+	using UInt2 = DirectX::XMUINT2;
+	using UInt3 = DirectX::XMUINT3;
+	using UInt4 = DirectX::XMUINT4;
+
 }

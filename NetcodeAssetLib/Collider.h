@@ -1,6 +1,6 @@
 #pragma once
 
-#include <DirectXMath.h>
+#include <NetcodeFoundation/Math.h>
 
 namespace Netcode::Asset {
 
@@ -11,13 +11,13 @@ namespace Netcode::Asset {
 	struct Collider {
 		ColliderType type;
 		union {
-			DirectX::XMFLOAT3 boxArgs;
-			DirectX::XMFLOAT3 planeArgs;
-			DirectX::XMFLOAT2 capsuleArgs;
+			Netcode::Float3 boxArgs;
+			Netcode::Float3 planeArgs;
+			Netcode::Float2 capsuleArgs;
 			float sphereArgs;
 		};
-		DirectX::XMFLOAT3 localPosition;
-		DirectX::XMFLOAT4 localRotation;
+		Netcode::Float3 localPosition;
+		Netcode::Float4 localRotation;
 		int32_t boneReference;
 	};
 
