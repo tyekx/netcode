@@ -1,11 +1,13 @@
 #pragma once
 
+#include <NetcodeFoundation/Math.h>
+
 #include <string>
 #include <map>
 #include "Utility.h"
 #include "Event.hpp"
 
-#include <DirectXMath.h>
+
 #include <functional>
 
 namespace Netcode {
@@ -81,8 +83,8 @@ namespace Netcode {
 			Axis(uint32_t posK, uint32_t negK);
 		};
 
-		static DirectX::XMINT2 mousePos;
-		static DirectX::XMINT2 mouseDelta;
+		static Netcode::Int2 mousePos;
+		static Netcode::Int2 mouseDelta;
 		static bool isFocused;
 		static std::map<std::string, Axis> axisMap;
 		static bool keysHeld[256];
@@ -91,7 +93,7 @@ namespace Netcode {
 	public:
 		static void CreateResources();
 		static void ReadRawMouse(unsigned long long wParam, unsigned long long lParam);
-		static void SetMousePos(const DirectX::XMINT2 & pos);
+		static void SetMousePos(const Netcode::Int2 & pos);
 
 		static void KeyPressed(uint32_t keyCode);
 		static void KeyReleased(uint32_t keyCode);
@@ -101,10 +103,10 @@ namespace Netcode {
 		static float GetAxis(const std::string & axis);
 		static void SetAxis(const std::string & name, uint32_t posKey, uint32_t negKey);
 
-		static void MouseMove(const DirectX::XMINT2 & xy);
-		static DirectX::XMINT2 GetMouseDelta();
-
-		static DirectX::XMINT2 GetMousePos();
+		static void MouseMove(const Netcode::Int2 & xy);
+		
+		static Netcode::Int2 GetMouseDelta();
+		static Netcode::Int2 GetMousePos();
 
 		static void Blur();
 

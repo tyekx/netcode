@@ -1,5 +1,7 @@
 #pragma once
 
+#include <NetcodeFoundation/Math.h>
+
 #include <functional>
 #include <string>
 #include "ConstantBufferTypes.h"
@@ -32,12 +34,12 @@ enum class VerticalAnchor : uint32_t {
 COMPONENT_ALIGN struct UIElement {
 	VerticalAnchor verticalAlignment;
 	HorizontalAnchor horizontalAlignment;
-	DirectX::XMFLOAT4 margin;
-	DirectX::XMFLOAT4 padding;
+	Netcode::Float4 margin;
+	Netcode::Float4 padding;
 	float width;
 	float height;
 	float rotationZ;
-	DirectX::XMFLOAT2 origin;
+	Netcode::Float2 origin;
 };
 
 class UIObject;
@@ -48,9 +50,9 @@ COMPONENT_ALIGN struct UIScript {
 
 COMPONENT_ALIGN struct Sprite {
 	Netcode::ResourceViewsRef texture;
-	DirectX::XMUINT2 textureSize;
-	DirectX::XMFLOAT4 diffuseColor;
-	DirectX::XMFLOAT4 hoverColor;
+	Netcode::UInt2 textureSize;
+	Netcode::Float4 diffuseColor;
+	Netcode::Float4 hoverColor;
 };
 
 COMPONENT_ALIGN struct Button {
@@ -77,7 +79,7 @@ COMPONENT_ALIGN struct TextBox {
 	Netcode::EventToken keyPressedToken;
 	std::function<void(const std::wstring&)> contentChanged;
 	std::wstring placeholder;
-	DirectX::XMFLOAT4 placeholderColor;
+	Netcode::Float4 placeholderColor;
 	uint32_t maxCharacters;
 	bool isPassword;
 
@@ -87,7 +89,7 @@ COMPONENT_ALIGN struct TextBox {
 
 COMPONENT_ALIGN struct Text {
 public:
-	DirectX::XMFLOAT4 color;
+	Netcode::Float4 color;
 	Netcode::SpriteFontRef font;
 	std::wstring text;
 	HorizontalAnchor horizontalAlignment;
@@ -119,11 +121,11 @@ public:
 
 COMPONENT_ALIGN class Transform {
 public:
-	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT4 rotation;
-	DirectX::XMFLOAT3 scale;
-	DirectX::XMFLOAT3 worldPosition;
-	DirectX::XMFLOAT4 worldRotation;
+	Netcode::Float3 position;
+	Netcode::Float4 rotation;
+	Netcode::Float3 scale;
+	Netcode::Float3 worldPosition;
+	Netcode::Float4 worldRotation;
 
 	Transform() : position{ 0.0f, 0.0f, 0.0f }, rotation{ 0.0f, 0.0f, 0.0f, 1.0f }, scale{ 1.0f, 1.0f, 1.0f }, worldPosition{ position }, worldRotation{ rotation } {
 
@@ -163,8 +165,8 @@ public:
 
 COMPONENT_ALIGN class Camera {
 public:
-	DirectX::XMFLOAT3 ahead;
-	DirectX::XMFLOAT3 up;
+	Netcode::Float3 ahead;
+	Netcode::Float3 up;
 
 	float fov;
 	float aspect;
@@ -192,7 +194,7 @@ public:
 	std::unique_ptr<BoneData> debugBoneData;
 	Netcode::ArrayView<Netcode::Asset::Bone> bones;
 	Netcode::ArrayView<Netcode::Asset::Animation> clips;
-	DirectX::XMVECTOR headRotation;
+	Netcode::Quaternion headRotation;
 
 	Animation() = default;
 	Animation(Animation &&) noexcept = default;

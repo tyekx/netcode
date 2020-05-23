@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.8)
 
-add_library(NetcodeFoundation STATIC
+add_library(NetcodeFoundation STATIC "")
+
+target_sources(NetcodeFoundation
+PUBLIC
 	"ArrayView.hpp"
 	"Formats.h"
 	"Foundation.h"
@@ -8,4 +11,9 @@ add_library(NetcodeFoundation STATIC
 	"MemoryFunctions.cpp"
 	"Platform.h"
 	"Sal.h"
-	"Generated_Version.cpp")
+	"Generated_Version.cpp"
+	"Exceptions.h"
+	"Math.h"
+	"Math.cpp")
+
+add_subdirectory(Math)

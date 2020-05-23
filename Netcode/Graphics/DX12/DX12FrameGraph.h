@@ -81,10 +81,10 @@ namespace Netcode::Graphics::DX12 {
 
 	class FrameGraphBuilder : public Netcode::FrameGraphBuilder {
 		std::vector<DX12RenderPassRef> renderPasses;
-		IResourceContext * resourceContext;
+		std::shared_ptr<IResourceContext> resourceContext;
 
 	public:
-		FrameGraphBuilder(IResourceContext * resourceContext) : renderPasses{}, resourceContext{ resourceContext } {
+		FrameGraphBuilder(std::shared_ptr<IResourceContext> resourceContext) : renderPasses{}, resourceContext{ std::move( resourceContext ) } {
 
 		}
 
@@ -97,7 +97,7 @@ namespace Netcode::Graphics::DX12 {
 		virtual FrameGraphRef Build() override {
 			for(auto & renderPass : renderPasses) {
 				resourceContext->SetRenderPass(renderPass);
-				renderPass->Setup(resourceContext);
+				renderPass->Setup(resourceContext.get());
 			}
 			resourceContext->ClearRenderPass();
 

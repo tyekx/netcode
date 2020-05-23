@@ -190,10 +190,10 @@ namespace Netcode::Graphics::DX12 {
 
 		resourcePool.SetHeapManager(heapManager);
 
-		resourceContext.descHeaps = &dheaps;
-		resourceContext.SetResourcePool(&resourcePool);
-		resourceContext.SetDevice(device);
-		resourceContext.backbufferExtents = scissorRect;
+		resourceContext->descHeaps = &dheaps;
+		resourceContext->SetResourcePool(&resourcePool);
+		resourceContext->SetDevice(device);
+		resourceContext->backbufferExtents = scissorRect;
 
 		cbufferPool.SetHeapManager(heapManager);
 
@@ -201,7 +201,8 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 	void DX12GraphicsModule::CreateContexts() {
-		Netcode::Module::IGraphicsModule::resources = &resourceContext;
+		resourceContext = std::make_shared<DX12ResourceContext>();
+		Netcode::Module::IGraphicsModule::resources = resourceContext.get();
 		Netcode::Module::IGraphicsModule::frame = this;
 	}
 
@@ -223,7 +224,7 @@ namespace Netcode::Graphics::DX12 {
 	void DX12GraphicsModule::Prepare() {
 		dheaps.Prepare();
 
-		resourceContext.backbufferExtents = scissorRect;
+		resourceContext->backbufferExtents = scissorRect;
 	}
 
 	void DX12GraphicsModule::Present() {
@@ -607,7 +608,7 @@ namespace Netcode::Graphics::DX12 {
 		}
 
 		UpdateViewport();
-		resourceContext.backbufferExtents = scissorRect;
+		resourceContext->backbufferExtents = scissorRect;
 
 		depthStencil.reset();
 		depthStencil = resources->CreateDepthStencil(depthStencilFormat, ResourceType::PERMANENT_DEFAULT);
@@ -676,9 +677,9 @@ namespace Netcode::Graphics::DX12 {
 		return std::make_shared<DX12TextureBuilder>();
 	}
 
-	FrameGraphBuilderRef DX12GraphicsModule::CreateFrameGraphBuilder() 
+	FrameGraphBuilderRef DX12GraphicsModule::CreateFrameGraphBuilder() const
 	{
-		return std::make_shared<DX12FrameGraphBuilder>(&resourceContext);
+		return std::make_shared<DX12FrameGraphBuilder>(resourceContext);
 	}
 
 }

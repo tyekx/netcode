@@ -12,36 +12,33 @@
 
 class TransformSystem {
 public:
-	static inline DirectX::XMVECTOR GetWorldRotation(Transform * transform, Transform * parentTransform) {
-		DirectX::XMVECTOR worldRotation = DirectX::XMLoadFloat4(&transform->rotation);
+	static inline Netcode::Quaternion GetWorldRotation(Transform * transform, Transform * parentTransform) {
+		Netcode::Quaternion worldRotation{ transform->rotation };
 		if(parentTransform != nullptr) {
-			DirectX::XMVECTOR parentWorldRotation = DirectX::XMLoadFloat4(&parentTransform->worldRotation);
-
-			worldRotation = DirectX::XMQuaternionMultiply(worldRotation, parentWorldRotation);
+			worldRotation = worldRotation * parentTransform->worldRotation;
 		}
 
 		return worldRotation;
 	}
 
-	static inline DirectX::XMVECTOR GetWorldPosition(Transform * transform, Transform * parentTransform) {
-		DirectX::XMVECTOR worldPosition = DirectX::XMLoadFloat3(&transform->position);
+	static inline Netcode::Vector3 GetWorldPosition(Transform * transform, Transform * parentTransform) {
+		Netcode::Vector3 localPosition{ transform->position };
 
 		if(parentTransform != nullptr) {
-			DirectX::XMVECTOR parentWorldRotation = DirectX::XMLoadFloat4(&parentTransform->worldRotation);
-			DirectX::XMVECTOR parentWorldPosition = DirectX::XMLoadFloat3(&parentTransform->worldPosition);
+			Netcode::Quaternion parentWorldRotation = parentTransform->worldRotation;
+			Netcode::Vector3 parentWorldPosition = parentTransform->worldPosition;
 
-			worldPosition = DirectX::XMVector3Rotate(worldPosition, parentWorldRotation);
-			worldPosition = DirectX::XMVectorAdd(worldPosition, parentWorldPosition);
+			return localPosition.Rotate(parentWorldRotation) + parentWorldPosition;
 		}
 
-		return worldPosition;
+		return localPosition;
 	}
 
 	void Run(GameObject * gameObject);
 
 	void operator()(GameObject * gameObject, Transform * transform) {
-		DirectX::XMVECTOR worldPos;
-		DirectX::XMVECTOR worldRot;
+		Netcode::Vector3 worldPos;
+		Netcode::Quaternion worldRot;
 
 		GameObject * parent = gameObject->Parent();
 
@@ -54,8 +51,8 @@ public:
 			worldRot = GetWorldRotation(transform, nullptr);
 		}
 
-		DirectX::XMStoreFloat3(&transform->worldPosition, worldPos);
-		DirectX::XMStoreFloat4(&transform->worldRotation, worldRot);
+		transform->worldPosition = worldPos;
+		transform->worldRotation = worldRot;
 	}
 };
 
@@ -79,14 +76,15 @@ public:
 	void Run(GameObject * gameObject);
 
 	void operator()(GameObject * gameObject, Transform * transform, Model * model) {
-		DirectX::XMVECTOR worldPos = DirectX::XMLoadFloat3(&transform->worldPosition);
-		DirectX::XMVECTOR worldRot = DirectX::XMLoadFloat4(&transform->worldRotation);
-		DirectX::XMVECTOR scaleVector = DirectX::XMLoadFloat3(&transform->scale);
-		DirectX::XMMATRIX modelMat = DirectX::XMMatrixAffineTransformation(scaleVector, DirectX::XMQuaternionIdentity(), worldRot, worldPos);
-		DirectX::XMVECTOR determinant = DirectX::XMMatrixDeterminant(modelMat);
-		DirectX::XMMATRIX invModelMat = DirectX::XMMatrixInverse(&determinant, modelMat);
-		DirectX::XMStoreFloat4x4A(&model->perObjectData.Model, DirectX::XMMatrixTranspose(modelMat));
-		DirectX::XMStoreFloat4x4A(&model->perObjectData.InvModel, DirectX::XMMatrixTranspose(invModelMat));
+		Netcode::Vector3 worldPos = transform->worldPosition;
+		Netcode::Vector3 scaleV = transform->scale;
+		Netcode::Quaternion worldRot = transform->worldRotation;
+
+		Netcode::Matrix modelMat = Netcode::AffineTransformation(scaleV, worldRot, worldPos);
+		Netcode::Matrix invModelMat = modelMat.Invert();
+
+		model->perObjectData.Model = modelMat.Transpose();
+		model->perObjectData.InvModel = invModelMat.Transpose();
 
 
 		bool hasDebugData = false;
@@ -139,11 +137,9 @@ public:
 				Netcode::Animation::FABRIK::Run(effector, anim->bones, boneTransforms);
 			}
 
-			DirectX::XMVECTOR h = anim->headRotation;
+			Netcode::Quaternion h = anim->headRotation;
 			for(uint32_t i = 0; i < 5; ++i) {
-				DirectX::XMVECTOR wr = boneTransforms[i].rotation;
-				wr = DirectX::XMQuaternionConjugate(wr);
-				h = DirectX::XMQuaternionMultiply(h, wr);
+				h = h * boneTransforms[i].rotation.Conjugate();
 			}
 
 			boneTransforms[5].rotation = h;
@@ -156,21 +152,15 @@ public:
 				int32_t bid = ike.parentId;
 				while(bid >= 0) {
 					auto wrt = Netcode::Animation::BackwardBounceCCD::GetWorldRT(bid, anim->bones, boneTransforms);
-					DirectX::XMFLOAT3 pcp;
-					DirectX::XMStoreFloat3(&pcp, wrt.translation);
-					renderer->DrawDebugPoint(DirectX::XMFLOAT3{ pcp.x, pcp.y, pcp.z }, 2.0f);
+					renderer->DrawDebugPoint(wrt.translation, 2.0f);
 					bid = anim->bones[bid].parentId;
 				}
 
-				DirectX::XMVECTOR pe = Netcode::Animation::BackwardBounceCCD::GetP_e(ike, anim->bones, boneTransforms);
-				DirectX::XMVECTOR st = Netcode::Animation::BackwardBounceCCD::GetP_c(ike, 0, anim->bones, boneTransforms);
-				DirectX::XMFLOAT3 startAt;
-				DirectX::XMFLOAT3 p1;
-				DirectX::XMStoreFloat3(&startAt, st);
-				DirectX::XMStoreFloat3(&p1, pe);
+				Netcode::Float3 startAt = Netcode::Animation::BackwardBounceCCD::GetP_c(ike, 0, anim->bones, boneTransforms);
+				Netcode::Float3 p1 = Netcode::Animation::BackwardBounceCCD::GetP_e(ike, anim->bones, boneTransforms);
 				
-				renderer->DrawDebugVector(startAt, p1, DirectX::XMFLOAT3{ 1.0f, 0.5f, 0.2f });
-				renderer->DrawDebugPoint(DirectX::XMFLOAT3{ p.x, p.y, p.z }, 10.0f);
+				renderer->DrawDebugVector(startAt, p1, Netcode::Float3{ 1.0f, 0.5f, 0.2f });
+				renderer->DrawDebugPoint(Netcode::Float3{ p.x, p.y, p.z }, 10.0f);
 			}
 
 			anim->blender->UpdateMatrices(anim->bones, res->ToRootTransform, res->BindTransform);
@@ -203,30 +193,25 @@ class PhysXSystem {
 
 		BoneData * bd = anim->controller->GetAnimationSet()->GetData() + model->boneDataOffset;
 
-		DirectX::XMMATRIX toRoot = DirectX::XMLoadFloat4x4A(&bd->ToRootTransform[c.boneReference]);
-		DirectX::XMVECTOR rotQ = DirectX::XMLoadFloat4(&c.localRotation);
+		Netcode::Matrix toRoot = bd->ToRootTransform[c.boneReference];
+		Netcode::Quaternion rotQ = c.localRotation;
 
-		DirectX::FXMMATRIX T = DirectX::XMMatrixTranslation(c.localPosition.x, c.localPosition.y, c.localPosition.z);
-		DirectX::FXMMATRIX R = DirectX::XMMatrixRotationQuaternion(rotQ);
+		Netcode::Matrix T = Netcode::TranslationMatrix(c.localPosition);
+		Netcode::Matrix R = (Netcode::Matrix)rotQ;
 
-		toRoot = DirectX::XMMatrixMultiply(DirectX::XMMatrixMultiply(R, T), DirectX::XMMatrixTranspose(toRoot));
+		toRoot = R * T * toRoot.Transpose();
 
-		DirectX::XMFLOAT4X4 res;
-		DirectX::XMStoreFloat4x4(&res, toRoot);
+		Netcode::Float4x4 res = toRoot;
 
-		DirectX::XMFLOAT3 tr{
+		Netcode::Float3 tr{
 			res._41,
 			res._42,
 			res._43
 		};
 
-		toRoot = DirectX::XMLoadFloat4x4(&res);
+		rotQ = Netcode::DecomposeRotation(toRoot);
 
-		rotQ = DirectX::XMQuaternionRotationMatrix(toRoot);
-		DirectX::XMFLOAT4 rot;
-		DirectX::XMStoreFloat4(&rot, rotQ);
-
-		physx::PxTransform pxT{ ToPxVec3(tr), ToPxQuat(rot) };
+		physx::PxTransform pxT{ ToPxVec3(tr), ToPxQuat(rotQ) };
 		shape->setLocalPose(pxT);
 	}
 
@@ -275,15 +260,15 @@ class UISystem {
 	physx::PxPhysics * px;
 	physx::PxScene * pxScene;
 	physx::PxMaterial * dummyMaterial;
-	DirectX::XMINT2 screenSize;
+	Netcode::Int2 screenSize;
 	PerFrameData * perFrameData;
 	std::list<Button *> raycastHits;
 	bool lmbHeld;
 public:
 	GraphicsEngine * gEngine;
 
-	void SetScreenSize(const DirectX::XMUINT2 & dim) {
-		screenSize = DirectX::XMINT2{ static_cast<int32_t>(dim.x), static_cast<int32_t>(dim.y) };
+	void SetScreenSize(const Netcode::UInt2 & dim) {
+		screenSize = Netcode::Int2{ static_cast<int32_t>(dim.x), static_cast<int32_t>(dim.y) };
 	}
 
 	void CreateResources(physx::PxScene * pxS, PerFrameData* pfd) {
@@ -295,7 +280,7 @@ public:
 
 	void Raycast() {
 		float lmb = Netcode::Input::GetAxis("Fire");
-		DirectX::XMINT2 mousePos = Netcode::Input::GetMousePos();
+		Netcode::Int2 mousePos = Netcode::Input::GetMousePos();
 
 		bool isClicked = false;
 
@@ -308,21 +293,15 @@ public:
 			lmbHeld = false;
 		}
 
-		DirectX::XMFLOAT4 ndcMousePos{
+		Netcode::Float3 raycastRayStart{
 			static_cast<float>(mousePos.x),
 			static_cast<float>(mousePos.y),
-			0.0f,
-			1.0f
+			0.0f
 		};
 
-		DirectX::XMVECTOR ndcMousePosV = DirectX::XMLoadFloat4(&ndcMousePos);
-		DirectX::XMVECTOR rayDirVector = DirectX::g_XMIdentityR2;
-
-		DirectX::XMFLOAT3 raycastRayDir;
-		DirectX::XMFLOAT3 raycastRayStart;
-
-		DirectX::XMStoreFloat3(&raycastRayStart, ndcMousePosV);
-		DirectX::XMStoreFloat3(&raycastRayDir, rayDirVector);
+		Netcode::Float3 raycastRayDir{
+			0.0f, 0.0f, 1.0f
+		};
 
 		physx::PxVec3 pxRayStart = ToPxVec3(raycastRayStart);
 		physx::PxVec3 pxRayDir = ToPxVec3(raycastRayDir);
@@ -458,11 +437,8 @@ public:
 
 		uiObject->IsActive(uiObject->GetActivityFlag() && isParentActive);
 
-		DirectX::FXMVECTOR worldPos = TransformSystem::GetWorldPosition(transform, parentTransform);
-		DirectX::FXMVECTOR worldRot = TransformSystem::GetWorldRotation(transform, parentTransform);
-
-		DirectX::XMStoreFloat3(&transform->worldPosition, worldPos);
-		DirectX::XMStoreFloat4(&transform->worldRotation, worldRot);
+		transform->worldPosition = TransformSystem::GetWorldPosition(transform, parentTransform);
+		transform->worldRotation = TransformSystem::GetWorldRotation(transform, parentTransform);
 	}
 };
 
@@ -473,7 +449,7 @@ public:
 	void Run(UIObject * uiObject);
 
 	void operator()(UIObject * uiObject, Transform * transform, UIElement * uiElement, Sprite * sprite) {
-		DirectX::XMFLOAT4 clr = sprite->diffuseColor;
+		Netcode::Float4 clr = sprite->diffuseColor;
 
 		if(!uiObject->IsActive()) {
 			return;
@@ -502,10 +478,10 @@ public:
 		gEngine->uiPass_Input.Produced(UISpriteRenderItem(
 			sprite->texture,
 			sprite->textureSize,
-			DirectX::XMFLOAT2{ static_cast<float>(uiElement->width), static_cast<float>(uiElement->height) },
+			Netcode::Float2{ static_cast<float>(uiElement->width), static_cast<float>(uiElement->height) },
 			clr,
-			DirectX::XMFLOAT2{ transform->worldPosition.x, transform->worldPosition.y },
-			DirectX::XMFLOAT2 { uiElement->origin },
+			Netcode::Float2{ transform->worldPosition.x, transform->worldPosition.y },
+			Netcode::Float2{ uiElement->origin },
 			uiElement->rotationZ
 		));
 	}
@@ -532,7 +508,7 @@ public:
 		if(uiObject->IsActive()) {
 
 			std::wstring displayString = text->text;
-			DirectX::XMFLOAT4 displayColor = text->color;
+			Netcode::Float4 displayColor = text->color;
 
 			if(uiObject->HasComponent<TextBox>()) {
 				TextBox * tb = uiObject->GetComponent<TextBox>();
@@ -549,7 +525,7 @@ public:
 				UITextRenderItem(
 					text->font,
 					std::move(displayString),
-					DirectX::XMFLOAT2{ transform->worldPosition.x, transform->worldPosition.y },
+					Netcode::Float2 { transform->worldPosition.x, transform->worldPosition.y },
 					displayColor
 				));
 		}

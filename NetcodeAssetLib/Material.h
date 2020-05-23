@@ -1,13 +1,13 @@
 #pragma once
 
-#include <DirectXMath.h>
+#include <NetcodeFoundation/Math.h>
 
 namespace Netcode::Asset {
 
 	struct Material {
-		DirectX::XMFLOAT4 diffuseColor;
-		DirectX::XMFLOAT3 ambientColor;
-		DirectX::XMFLOAT3 specularColor;
+		Netcode::Float4 diffuseColor;
+		Netcode::Float3 ambientColor;
+		Netcode::Float3 specularColor;
 		float shininess;
 
 		char diffuseTexture[256];

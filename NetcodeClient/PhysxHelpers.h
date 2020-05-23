@@ -33,7 +33,7 @@ physx::PxFilterFlags SimulationFilterShader(
 	physx::PxFilterObjectAttributes attributes1, physx::PxFilterData filterData1,
 	physx::PxPairFlags & pairFlags, const void * constantBlock, physx::PxU32 constantBlockSize);
 
-physx::PxShape * CreatePrimitiveShapeFromAsset(ColliderShape & cShape, physx::PxPhysics * px, physx::PxMaterial * mat, physx::PxShapeFlags flags, bool isExclusive = true);
+physx::PxShape * CreatePrimitiveShapeFromAsset(const ColliderShape & cShape, physx::PxPhysics * px, physx::PxMaterial * mat, physx::PxShapeFlags flags, bool isExclusive = true);
 
-physx::PxShape * CreateHitboxShapeFromAsset(ColliderShape & cShape, physx::PxPhysics * px);
+physx::PxShape * CreateHitboxShapeFromAsset(const ColliderShape & cShape, physx::PxPhysics * px);
 

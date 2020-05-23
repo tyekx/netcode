@@ -1,17 +1,17 @@
 #pragma once
 
-#include <DirectXMath.h>
+#include <NetcodeFoundation/Math.h>
 
 namespace Netcode::Animation {
 
 	struct BoneTransform {
-		DirectX::XMVECTOR translation;
-		DirectX::XMVECTOR rotation;
-		DirectX::XMVECTOR scale;
+		Netcode::Vector3 translation;
+		Netcode::Quaternion rotation;
+		Netcode::Vector3 scale;
 	};
 
 	struct BoneAngularLimit {
-		DirectX::XMFLOAT3 axis;
+		Netcode::Float3 axis;
 		// the bone will be able to move between -limit; +limit angles around the axis
 		float angleLimitInRadians;
 	};

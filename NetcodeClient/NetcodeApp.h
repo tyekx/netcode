@@ -311,7 +311,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		netcodeShapes.reserve(model->colliders.Size());
 
 		for(size_t i = 0; i < model->colliders.Size(); ++i) {
-			Netcode::Asset::Collider * netcodeCollider = model->colliders.Data() + i;
+			const Netcode::Asset::Collider * netcodeCollider = model->colliders.Data() + i;
 			netcodeShapes.push_back(*netcodeCollider);
 			physx::PxShape * shape = nullptr;
 			physx::PxShapeFlags shapeFlags;
@@ -364,11 +364,11 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 	void LoadModelComponent(Netcode::Asset::Model * model, Model * modelComponent) {
 		for(size_t meshIdx = 0; meshIdx < model->meshes.Size(); ++meshIdx) {
-			Netcode::Asset::Material * mat = model->materials.Data() + model->meshes[meshIdx].materialId;
-			Netcode::Asset::Mesh * mesh = model->meshes.Data() + meshIdx;
+			const Netcode::Asset::Material * mat = model->materials.Data() + model->meshes[meshIdx].materialId;
+			const Netcode::Asset::Mesh * mesh = model->meshes.Data() + meshIdx;
 
-			DirectX::XMStoreFloat4x4A(&modelComponent->perObjectData.Model, DirectX::XMMatrixIdentity());
-			DirectX::XMStoreFloat4x4A(&modelComponent->perObjectData.InvModel, DirectX::XMMatrixIdentity());
+			DirectX::XMStoreFloat4x4(&modelComponent->perObjectData.Model, DirectX::XMMatrixIdentity());
+			DirectX::XMStoreFloat4x4(&modelComponent->perObjectData.InvModel, DirectX::XMMatrixIdentity());
 
 			Netcode::InputLayoutBuilderRef inputLayoutBuilder = graphics->CreateInputLayoutBuilder();
 

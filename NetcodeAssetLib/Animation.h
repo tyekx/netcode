@@ -1,6 +1,6 @@
 #pragma once
 
-#include <DirectXMath.h>
+#include <NetcodeFoundation/Math.h>
 
 namespace Netcode::Asset {
 
@@ -12,9 +12,9 @@ namespace Netcode::Asset {
 	};
 
 	struct AnimationKey {
-		DirectX::XMFLOAT4 position;
-		DirectX::XMFLOAT4 rotation;
-		DirectX::XMFLOAT4 scale;
+		Netcode::Float4 position;
+		Netcode::Float4 rotation;
+		Netcode::Float4 scale;
 	};
 
 	struct Animation {

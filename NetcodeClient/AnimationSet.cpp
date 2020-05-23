@@ -134,7 +134,7 @@ AnimationSet::AnimationSet(Netcode::Module::IGraphicsModule * graphics, Netcode:
 	Netcode::Graphics::UploadBatch uploadBatch;
 
 	size_t offset = 0;
-	for(Netcode::Asset::Animation & anim : animations) {
+	for(const Netcode::Asset::Animation & anim : animations) {
 		size_t itemSize = anim.keysLength * anim.bonesLength * sizeof(Netcode::Asset::AnimationKey);
 		uploadBatch.Upload(animationKeysBuffer, anim.keys, itemSize, offset);
 		offset += itemSize;

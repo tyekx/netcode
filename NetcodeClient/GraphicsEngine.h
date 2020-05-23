@@ -43,11 +43,11 @@ struct RenderItem {
 
 struct UISpriteRenderItem {
 	Netcode::ResourceViewsRef texture;
-	DirectX::XMUINT2 textureSize;
-	DirectX::XMFLOAT2 destSizeInPixels;
-	DirectX::XMFLOAT4 color;
-	DirectX::XMFLOAT2 position;
-	DirectX::XMFLOAT2 rotationOrigin;
+	Netcode::UInt2 textureSize;
+	Netcode::Float2 destSizeInPixels;
+	Netcode::Float4 color;
+	Netcode::Float2 position;
+	Netcode::Float2 rotationOrigin;
 	float rotationZ;
 
 	~UISpriteRenderItem() = default;
@@ -58,11 +58,11 @@ struct UISpriteRenderItem {
 	UISpriteRenderItem & operator=(UISpriteRenderItem &&) noexcept = default;
 
 	UISpriteRenderItem(Netcode::ResourceViewsRef tex,
-		const DirectX::XMUINT2 & tSize,
-		const DirectX::XMFLOAT2 & destSize,
-		const DirectX::XMFLOAT4 & color,
-		const DirectX::XMFLOAT2 & pos,
-		const DirectX::XMFLOAT2 & rotationOrigin,
+		const Netcode::UInt2 & tSize,
+		const Netcode::Float2 & destSize,
+		const Netcode::Float4 & color,
+		const Netcode::Float2 & pos,
+		const Netcode::Float2 & rotationOrigin,
 		float rotationZ) :
 		texture{ std::move(tex) },
 		textureSize{ tSize },
@@ -76,8 +76,8 @@ struct UISpriteRenderItem {
 struct UITextRenderItem {
 	Netcode::SpriteFontRef font;
 	std::wstring text;
-	DirectX::XMFLOAT2 position;
-	DirectX::XMFLOAT4 fontColor;
+	Netcode::Float2 position;
+	Netcode::Float4 fontColor;
 
 	~UITextRenderItem() = default;
 	UITextRenderItem() = default;
@@ -88,8 +88,8 @@ struct UITextRenderItem {
 
 	UITextRenderItem(Netcode::SpriteFontRef font,
 		std::wstring text,
-		const DirectX::XMFLOAT2 & position,
-		const DirectX::XMFLOAT4 & color) :
+		const Netcode::Float2 & position,
+		const Netcode::Float4 & color) :
 		font{ std::move(font) },
 		text{ std::move(text) },
 		position{ position },
@@ -118,8 +118,8 @@ class GraphicsEngine {
 
 	DXGI_FORMAT gbufferPass_DepthStencilFormat;
 
-	DirectX::XMUINT2 backbufferSize;
-	DirectX::XMUINT2 ssaoRenderTargetSize;
+	Netcode::UInt2 backbufferSize;
+	Netcode::UInt2 ssaoRenderTargetSize;
 
 	Netcode::Module::IGraphicsModule * graphics;
 
@@ -178,8 +178,8 @@ private:
 
 	void CreateFSQuad(Netcode::Module::IGraphicsModule * g) {
 		struct PT_Vert {
-			DirectX::XMFLOAT3 position;
-			DirectX::XMFLOAT2 texCoord;
+			Netcode::Float3 position;
+			Netcode::Float2 texCoord;
 		};
 
 		PT_Vert vData[6] = {
@@ -500,7 +500,7 @@ private:
 		{
 			for(int j = 0; j < 256; ++j)
 			{
-				DirectX::XMFLOAT3 v(RandomFloat(), RandomFloat(), RandomFloat());
+				Netcode::Float3 v(RandomFloat(), RandomFloat(), RandomFloat());
 
 				colors[i * 256 + j] = DirectX::PackedVector::XMCOLOR(v.z, v.y, v.x, 0.0f);
 			}
@@ -515,7 +515,7 @@ private:
 	}
 
 	void CreateSSAOOcclusionPassSizeDependentResources() {
-		ssaoRenderTargetSize = DirectX::XMUINT2{ backbufferSize.x / 2, backbufferSize.y / 2 };
+		ssaoRenderTargetSize = Netcode::UInt2{ backbufferSize.x / 2, backbufferSize.y / 2 };
 
 		ssaoRenderTargetSize.x = (ssaoRenderTargetSize.x == 0) ? 1 : ssaoRenderTargetSize.x;
 		ssaoRenderTargetSize.y = (ssaoRenderTargetSize.y == 0) ? 1 : ssaoRenderTargetSize.y;
@@ -755,7 +755,7 @@ private:
 			context->SetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
 
 
-			ssaoData->invRenderTargetSize = DirectX::XMFLOAT2{
+			ssaoData->invRenderTargetSize = Netcode::Float2{
 				1.0f / static_cast<float>(ssaoRenderTargetSize.x),
 				1.0f / static_cast<float>(ssaoRenderTargetSize.y)
 			};
@@ -878,7 +878,7 @@ private:
 	Netcode::ResourceViewsRef cloudynoonView;
 
 public:
-	DirectX::XMFLOAT4X4 uiPass_viewProjInv;
+	Netcode::Float4x4 uiPass_viewProjInv;
 
 	void CreateBackgroundPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
 		Netcode::TextureBuilderRef textureBuilder = graphics->CreateTextureBuilder();
@@ -1002,7 +1002,7 @@ public:
 	}
 
 	void OnResize(int x, int y) {
-		DirectX::XMUINT2 newSize{ static_cast<uint32_t>(x), static_cast<uint32_t>(y) };
+		Netcode::UInt2 newSize{ static_cast<uint32_t>(x), static_cast<uint32_t>(y) };
 
 		if(newSize.x != backbufferSize.x || newSize.y != backbufferSize.y) {
 			backbufferSize = newSize;

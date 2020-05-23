@@ -18,14 +18,14 @@ namespace Netcode::Graphics {
 
 		}
 
-		uint32_t Add(const DirectX::XMFLOAT3 & v) {
+		uint32_t Add(const Netcode::Float3 & v) {
 			uint32_t idx = inserted++;
 			(*this)[idx] = v;
 			return idx;
 		}
 
-		DirectX::XMFLOAT3 & operator[](unsigned int index) {
-			return *(reinterpret_cast<DirectX::XMFLOAT3*>(data + stride * index + positionDataOffset));
+		Netcode::Float3 & operator[](unsigned int index) {
+			return *(reinterpret_cast<Netcode::Float3*>(data + stride * index + positionDataOffset));
 		}
 	};
 
@@ -33,69 +33,69 @@ namespace Netcode::Graphics {
 		VertexDataIterator vertices(dstData, stride, positionDataOffset);
 
 		for(unsigned int i = 0; i < 2; ++i) {
-			vertices[i] = DirectX::XMFLOAT3{ 0, 0, static_cast<float>(i) };
+			vertices[i] = Netcode::Float3{ 0, 0, static_cast<float>(i) };
 		}
 	}
 
 
-	void BasicGeometry::CreateBoxWireframe(_Out_writes_(24 * stride) void * dstData, unsigned int stride, const DirectX::XMFLOAT3 & he, unsigned int positionDataOffset) {
+	void BasicGeometry::CreateBoxWireframe(_Out_writes_(24 * stride) void * dstData, unsigned int stride, const Netcode::Float3 & he, unsigned int positionDataOffset) {
 		VertexDataIterator vertices(dstData, stride, positionDataOffset);
 
 		unsigned int t = 0;
-		vertices[t + 0] = DirectX::XMFLOAT3{ -he.x, -he.y, -he.z };
-		vertices[t + 1] = DirectX::XMFLOAT3{ -he.x,  he.y, -he.z };
+		vertices[t + 0] = Netcode::Float3{ -he.x, -he.y, -he.z };
+		vertices[t + 1] = Netcode::Float3{ -he.x,  he.y, -he.z };
 
-		vertices[t + 2] = DirectX::XMFLOAT3{ he.x, -he.y, -he.z };
-		vertices[t + 3] = DirectX::XMFLOAT3{ he.x,  he.y, -he.z };
+		vertices[t + 2] = Netcode::Float3{ he.x, -he.y, -he.z };
+		vertices[t + 3] = Netcode::Float3{ he.x,  he.y, -he.z };
 
-		vertices[t + 4] = DirectX::XMFLOAT3{ -he.x, -he.y, he.z };
-		vertices[t + 5] = DirectX::XMFLOAT3{ -he.x,  he.y, he.z };
+		vertices[t + 4] = Netcode::Float3{ -he.x, -he.y, he.z };
+		vertices[t + 5] = Netcode::Float3{ -he.x,  he.y, he.z };
 
-		vertices[t + 6] = DirectX::XMFLOAT3{ he.x, -he.y, he.z };
-		vertices[t + 7] = DirectX::XMFLOAT3{ he.x,  he.y, he.z };
-
-		t += 8;
-
-		vertices[t + 0] = DirectX::XMFLOAT3{ -he.x, -he.y, -he.z };
-		vertices[t + 1] = DirectX::XMFLOAT3{ he.x, -he.y, -he.z };
-
-		vertices[t + 2] = DirectX::XMFLOAT3{ he.x, -he.y, he.z };
-		vertices[t + 3] = DirectX::XMFLOAT3{ he.x, -he.y, -he.z };
-
-		vertices[t + 4] = DirectX::XMFLOAT3{ -he.x, -he.y, he.z };
-		vertices[t + 5] = DirectX::XMFLOAT3{ he.x, -he.y, he.z };
-
-		vertices[t + 6] = DirectX::XMFLOAT3{ -he.x, -he.y, -he.z };
-		vertices[t + 7] = DirectX::XMFLOAT3{ -he.x, -he.y, he.z };
+		vertices[t + 6] = Netcode::Float3{ he.x, -he.y, he.z };
+		vertices[t + 7] = Netcode::Float3{ he.x,  he.y, he.z };
 
 		t += 8;
 
-		vertices[t + 0] = DirectX::XMFLOAT3{ -he.x, he.y, -he.z };
-		vertices[t + 1] = DirectX::XMFLOAT3{ he.x,  he.y, -he.z };
+		vertices[t + 0] = Netcode::Float3{ -he.x, -he.y, -he.z };
+		vertices[t + 1] = Netcode::Float3{ he.x, -he.y, -he.z };
 
-		vertices[t + 2] = DirectX::XMFLOAT3{ -he.x,  he.y, he.z };
-		vertices[t + 3] = DirectX::XMFLOAT3{ -he.x,  he.y, -he.z };
+		vertices[t + 2] = Netcode::Float3{ he.x, -he.y, he.z };
+		vertices[t + 3] = Netcode::Float3{ he.x, -he.y, -he.z };
 
-		vertices[t + 4] = DirectX::XMFLOAT3{ -he.x, he.y, he.z };
-		vertices[t + 5] = DirectX::XMFLOAT3{ he.x,  he.y, he.z };
+		vertices[t + 4] = Netcode::Float3{ -he.x, -he.y, he.z };
+		vertices[t + 5] = Netcode::Float3{ he.x, -he.y, he.z };
 
-		vertices[t + 6] = DirectX::XMFLOAT3{ he.x,  he.y, -he.z };
-		vertices[t + 7] = DirectX::XMFLOAT3{ he.x,  he.y, he.z };
+		vertices[t + 6] = Netcode::Float3{ -he.x, -he.y, -he.z };
+		vertices[t + 7] = Netcode::Float3{ -he.x, -he.y, he.z };
+
+		t += 8;
+
+		vertices[t + 0] = Netcode::Float3{ -he.x, he.y, -he.z };
+		vertices[t + 1] = Netcode::Float3{ he.x,  he.y, -he.z };
+
+		vertices[t + 2] = Netcode::Float3{ -he.x,  he.y, he.z };
+		vertices[t + 3] = Netcode::Float3{ -he.x,  he.y, -he.z };
+
+		vertices[t + 4] = Netcode::Float3{ -he.x, he.y, he.z };
+		vertices[t + 5] = Netcode::Float3{ he.x,  he.y, he.z };
+
+		vertices[t + 6] = Netcode::Float3{ he.x,  he.y, -he.z };
+		vertices[t + 7] = Netcode::Float3{ he.x,  he.y, he.z };
 	}
 
 	void BasicGeometry::CreatePlaneWireframe(_Out_writes_(4 * (gridSectionCount + 1) * stride) void * dstData, unsigned int stride, unsigned int gridSectionCount, unsigned int positionDataOffset) {
 		VertexDataIterator vertices(dstData, stride, positionDataOffset);
 		const float g = static_cast<float>(gridSectionCount);
 		for(unsigned int i = 0; i <= gridSectionCount; ++i) {
-			vertices[2 * i] = DirectX::XMFLOAT3{ 0, static_cast<float>(i) / g - 0.5f, -0.5f };
-			vertices[2 * i + 1] = DirectX::XMFLOAT3{ 0,  static_cast<float>(i) / g - 0.5f, 0.5f };
+			vertices[2 * i] = Netcode::Float3{ 0, static_cast<float>(i) / g - 0.5f, -0.5f };
+			vertices[2 * i + 1] = Netcode::Float3{ 0,  static_cast<float>(i) / g - 0.5f, 0.5f };
 
-			vertices[2 * i + (2 * gridSectionCount + 2)] = DirectX::XMFLOAT3{ 0, -0.5f,  static_cast<float>(i) / g - 0.5f };
-			vertices[2 * i + (2 * gridSectionCount + 2) + 1] = DirectX::XMFLOAT3{ 0, 0.5f,  static_cast<float>(i) / g - 0.5f };
+			vertices[2 * i + (2 * gridSectionCount + 2)] = Netcode::Float3{ 0, -0.5f,  static_cast<float>(i) / g - 0.5f };
+			vertices[2 * i + (2 * gridSectionCount + 2) + 1] = Netcode::Float3{ 0, 0.5f,  static_cast<float>(i) / g - 0.5f };
 		}
 	}
 
-	void BasicGeometry::CreateCapsuleWireframe(_Out_writes_(108 * stride) void * dstData, unsigned int stride, const DirectX::XMFLOAT2 & args, unsigned int positionDataOffset)
+	void BasicGeometry::CreateCapsuleWireframe(_Out_writes_(108 * stride) void * dstData, unsigned int stride, const Netcode::Float2 & args, unsigned int positionDataOffset)
 	{
 		VertexDataIterator vertices(dstData, stride, positionDataOffset);
 
@@ -108,11 +108,11 @@ namespace Netcode::Graphics {
 			float arg = float(i) * PI2 / 12.0f;
 			float argEnd = float(i + 1) * PI2 / 12.0f;
 
-			vertices[2 * i] = DirectX::XMFLOAT3 { h / 2.0f, r * cosf(arg), r * sinf(arg) };
-			vertices[2 * i + 1] = DirectX::XMFLOAT3 { h / 2.0f, r * cosf(argEnd), r * sinf(argEnd) };
+			vertices[2 * i] = Netcode::Float3 { h / 2.0f, r * cosf(arg), r * sinf(arg) };
+			vertices[2 * i + 1] = Netcode::Float3 { h / 2.0f, r * cosf(argEnd), r * sinf(argEnd) };
 
-			vertices[2 * i + 26] = DirectX::XMFLOAT3{ -h / 2.0f, r * cosf(arg), r * sinf(arg) };
-			vertices[2 * i + 27] = DirectX::XMFLOAT3{ -h / 2.0f, r * cosf(argEnd), r * sinf(argEnd) };
+			vertices[2 * i + 26] = Netcode::Float3{ -h / 2.0f, r * cosf(arg), r * sinf(arg) };
+			vertices[2 * i + 27] = Netcode::Float3{ -h / 2.0f, r * cosf(argEnd), r * sinf(argEnd) };
 		}
 
 		vertices[24] = vertices[23];
@@ -125,38 +125,38 @@ namespace Netcode::Graphics {
 			float arg = float(i) * PI / 6.0f;
 			float argEnd = float(i + 1) * PI / 6.0f;
 
-			vertices[2 * i + 52] = DirectX::XMFLOAT3 { (h / 2.0f) + r * sinf(arg), 0,  r * cosf(arg) };;
-			vertices[2 * i + 53] = DirectX::XMFLOAT3 { (h / 2.0f) + r * sinf(argEnd), 0, r * cosf(argEnd) };
+			vertices[2 * i + 52] = Netcode::Float3 { (h / 2.0f) + r * sinf(arg), 0,  r * cosf(arg) };;
+			vertices[2 * i + 53] = Netcode::Float3 { (h / 2.0f) + r * sinf(argEnd), 0, r * cosf(argEnd) };
 
-			vertices[2 * i + 64] = DirectX::XMFLOAT3{ (-h / 2.0f) - r * sinf(arg), 0, r * cosf(arg) };
-			vertices[2 * i + 65] = DirectX::XMFLOAT3{ (-h / 2.0f) - r * sinf(argEnd), 0, r * cosf(argEnd) };
+			vertices[2 * i + 64] = Netcode::Float3{ (-h / 2.0f) - r * sinf(arg), 0, r * cosf(arg) };
+			vertices[2 * i + 65] = Netcode::Float3{ (-h / 2.0f) - r * sinf(argEnd), 0, r * cosf(argEnd) };
 
-			vertices[2 * i + 76] = DirectX::XMFLOAT3{ (h / 2.0f) + r * sinf(arg), r * cosf(arg),  0 };
-			vertices[2 * i + 77] = DirectX::XMFLOAT3{ (h / 2.0f) + r * sinf(argEnd), r * cosf(argEnd),0 };
+			vertices[2 * i + 76] = Netcode::Float3{ (h / 2.0f) + r * sinf(arg), r * cosf(arg),  0 };
+			vertices[2 * i + 77] = Netcode::Float3{ (h / 2.0f) + r * sinf(argEnd), r * cosf(argEnd),0 };
 
-			vertices[2 * i + 88] = DirectX::XMFLOAT3{ (-h / 2.0f) - r * sinf(arg), r * cosf(arg), 0 };
-			vertices[2 * i + 89] = DirectX::XMFLOAT3{ (-h / 2.0f) - r * sinf(argEnd),r * cosf(argEnd),  0 };
+			vertices[2 * i + 88] = Netcode::Float3{ (-h / 2.0f) - r * sinf(arg), r * cosf(arg), 0 };
+			vertices[2 * i + 89] = Netcode::Float3{ (-h / 2.0f) - r * sinf(argEnd),r * cosf(argEnd),  0 };
 		}
 
-		vertices[100] = DirectX::XMFLOAT3 { h / 2.0f, r, 0 };
-		vertices[101] = DirectX::XMFLOAT3 { -h / 2.0f, r, 0 };
+		vertices[100] = Netcode::Float3 { h / 2.0f, r, 0 };
+		vertices[101] = Netcode::Float3 { -h / 2.0f, r, 0 };
 
-		vertices[102] = DirectX::XMFLOAT3{ h / 2.0f, -r, 0 };
-		vertices[103] = DirectX::XMFLOAT3{ -h / 2.0f , -r,0 };
+		vertices[102] = Netcode::Float3{ h / 2.0f, -r, 0 };
+		vertices[103] = Netcode::Float3{ -h / 2.0f , -r,0 };
 
-		vertices[104] = DirectX::XMFLOAT3{ h / 2.0f, 0,  r };
-		vertices[105] = DirectX::XMFLOAT3{ -h / 2.0f, 0,  r };
+		vertices[104] = Netcode::Float3{ h / 2.0f, 0,  r };
+		vertices[105] = Netcode::Float3{ -h / 2.0f, 0,  r };
 
-		vertices[106] = DirectX::XMFLOAT3{ h / 2.0f, 0, -r };
-		vertices[107] = DirectX::XMFLOAT3{ -h / 2.0f, 0, -r };
+		vertices[106] = Netcode::Float3{ h / 2.0f, 0, -r };
+		vertices[107] = Netcode::Float3{ -h / 2.0f, 0, -r };
 	}
 
 	static std::map<uint64_t, uint32_t> middlePointIndexCache;
 
-	static uint32_t AddVertex(VertexDataIterator & vIter, const DirectX::XMFLOAT3 & position) {
+	static uint32_t AddVertex(VertexDataIterator & vIter, const Netcode::Float3 & position) {
 		DirectX::XMVECTOR middleV = DirectX::XMLoadFloat3(&position);
 		middleV = DirectX::XMVector3Normalize(middleV);
-		DirectX::XMFLOAT3 pos;
+		Netcode::Float3 pos;
 		DirectX::XMStoreFloat3(&pos, middleV);
 
 		return vIter.Add(pos);
@@ -177,9 +177,9 @@ namespace Netcode::Graphics {
 		}
 
 		// not in cache, calculate it
-		DirectX::XMFLOAT3 point1 = vIter[p1];
-		DirectX::XMFLOAT3 point2 = vIter[p2];
-		DirectX::XMFLOAT3 middle = DirectX::XMFLOAT3(
+		Netcode::Float3 point1 = vIter[p1];
+		Netcode::Float3 point2 = vIter[p2];
+		Netcode::Float3 middle = Netcode::Float3(
 			(point1.x + point2.x) / 2.0f,
 			(point1.y + point2.y) / 2.0f,
 			(point1.z + point2.z) / 2.0f);
@@ -194,9 +194,9 @@ namespace Netcode::Graphics {
 	void BasicGeometry::CreateSphereWireFrame(void * dstData, uint32_t stride, float radius, uint32_t positionDataOffset) {
 		float r = radius; middlePointIndexCache.clear();
 
-		std::unique_ptr<DirectX::XMFLOAT3[]> tempVertexData = std::make_unique<DirectX::XMFLOAT3[]>(162);
+		std::unique_ptr<Netcode::Float3[]> tempVertexData = std::make_unique<Netcode::Float3[]>(162);
 
-		VertexDataIterator tempVertexDataIter{ tempVertexData.get(), sizeof(DirectX::XMFLOAT3), 0 };
+		VertexDataIterator tempVertexDataIter{ tempVertexData.get(), sizeof(Netcode::Float3), 0 };
 
 		VertexDataIterator vDataIter{ dstData, stride, positionDataOffset };
 
@@ -211,20 +211,20 @@ namespace Netcode::Graphics {
 		// e 480
 
 
-		AddVertex(tempVertexDataIter, DirectX::XMFLOAT3(-1, t, 0));
-		AddVertex(tempVertexDataIter, DirectX::XMFLOAT3(1, t, 0));
-		AddVertex(tempVertexDataIter, DirectX::XMFLOAT3(-1, -t, 0));
-		AddVertex(tempVertexDataIter, DirectX::XMFLOAT3(1, -t, 0));
+		AddVertex(tempVertexDataIter, Netcode::Float3(-1, t, 0));
+		AddVertex(tempVertexDataIter, Netcode::Float3(1, t, 0));
+		AddVertex(tempVertexDataIter, Netcode::Float3(-1, -t, 0));
+		AddVertex(tempVertexDataIter, Netcode::Float3(1, -t, 0));
 
-		AddVertex(tempVertexDataIter, DirectX::XMFLOAT3(0, -1, t));
-		AddVertex(tempVertexDataIter, DirectX::XMFLOAT3(0, 1, t));
-		AddVertex(tempVertexDataIter, DirectX::XMFLOAT3(0, -1, -t));
-		AddVertex(tempVertexDataIter, DirectX::XMFLOAT3(0, 1, -t));
+		AddVertex(tempVertexDataIter, Netcode::Float3(0, -1, t));
+		AddVertex(tempVertexDataIter, Netcode::Float3(0, 1, t));
+		AddVertex(tempVertexDataIter, Netcode::Float3(0, -1, -t));
+		AddVertex(tempVertexDataIter, Netcode::Float3(0, 1, -t));
 
-		AddVertex(tempVertexDataIter, DirectX::XMFLOAT3(t, 0, -1));
-		AddVertex(tempVertexDataIter, DirectX::XMFLOAT3(t, 0, 1));
-		AddVertex(tempVertexDataIter, DirectX::XMFLOAT3(-t, 0, -1));
-		AddVertex(tempVertexDataIter, DirectX::XMFLOAT3(-t, 0, 1));
+		AddVertex(tempVertexDataIter, Netcode::Float3(t, 0, -1));
+		AddVertex(tempVertexDataIter, Netcode::Float3(t, 0, 1));
+		AddVertex(tempVertexDataIter, Netcode::Float3(-t, 0, -1));
+		AddVertex(tempVertexDataIter, Netcode::Float3(-t, 0, 1));
 
 		struct Face {
 			uint32_t idx0;
@@ -280,12 +280,12 @@ namespace Netcode::Graphics {
 		}
 
 		for(const Face & face : faces) {
-			DirectX::XMFLOAT3 p0 = tempVertexDataIter[face.idx0];
-			DirectX::XMFLOAT3 p1 = tempVertexDataIter[face.idx1];
-			DirectX::XMFLOAT3 p2 = tempVertexDataIter[face.idx2];
-			p0 = DirectX::XMFLOAT3{ r * p0.x, r * p0.y, r * p0.z };
-			p1 = DirectX::XMFLOAT3{ r * p1.x, r * p1.y, r * p1.z };
-			p2 = DirectX::XMFLOAT3{ r * p2.x, r * p2.y, r * p2.z };
+			Netcode::Float3 p0 = tempVertexDataIter[face.idx0];
+			Netcode::Float3 p1 = tempVertexDataIter[face.idx1];
+			Netcode::Float3 p2 = tempVertexDataIter[face.idx2];
+			p0 = Netcode::Float3{ r * p0.x, r * p0.y, r * p0.z };
+			p1 = Netcode::Float3{ r * p1.x, r * p1.y, r * p1.z };
+			p2 = Netcode::Float3{ r * p2.x, r * p2.y, r * p2.z };
 
 			vDataIter.Add(p0);
 			vDataIter.Add(p1);

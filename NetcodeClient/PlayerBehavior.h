@@ -12,13 +12,13 @@ class PlayerBehavior : public IBehavior {
 	float cameraYaw;
 	float mouseSpeed;
 	float avatarSpeed;
-	DirectX::XMFLOAT3 velocity;
-	DirectX::XMVECTOR gravity;
+	Netcode::Float3 velocity;
+	Netcode::Float3 gravity;
 
 	void UpdateLookDirection(float dt) {
-		DirectX::XMINT2 mouseDelta = Netcode::Input::GetMouseDelta();
+		Netcode::Int2 mouseDelta = Netcode::Input::GetMouseDelta();
 
-		DirectX::XMFLOAT2A normalizedMouseDelta{ -(float)(mouseDelta.x), -(float)(mouseDelta.y) };
+		Netcode::Float2 normalizedMouseDelta{ -(float)(mouseDelta.x), -(float)(mouseDelta.y) };
 		//cameraPitch -= mouseSpeed * normalizedMouseDelta.y * dt;
 		//cameraPitch = std::clamp(cameraPitch, -(DirectX::XM_PIDIV2 - 0.0001f), (DirectX::XM_PIDIV2 - 0.0001f));
 		cameraYaw += mouseSpeed * normalizedMouseDelta.x * dt;
@@ -32,15 +32,17 @@ class PlayerBehavior : public IBehavior {
 		}
 	}
 
-	DirectX::XMVECTOR GetDirectionalMovement() {
+	Netcode::Vector3 GetDirectionalMovement() {
 		float dx = Netcode::Input::GetAxis("Horizontal");
 		float dz = Netcode::Input::GetAxis("Vertical");
 
-		// 4th coord = 0 implies a vector value
-		const DirectX::XMFLOAT3 dxdz{ dx, 0.0f, dz };
-		DirectX::FXMVECTOR dxdzVec = DirectX::XMLoadFloat3(&dxdz);
+		Netcode::Vector3 dxdzVec = Netcode::Float3{ dx, 0.0f, dz };
 		
-		return DirectX::XMVector3Normalize(dxdzVec);
+		if(dxdzVec.AllZero()) {
+			return dxdzVec;
+		}
+
+		return dxdzVec.Normalize();
 	}
 
 public:
@@ -52,9 +54,8 @@ public:
 		cameraYaw = 3.14f;
 		mouseSpeed = 1.0f;
 		avatarSpeed = 250.0f;
-		DirectX::XMFLOAT3 g{ 0.0f, -981.0f, 0.0f };
-		gravity = DirectX::XMLoadFloat3(&g);
-		velocity = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+		gravity = Netcode::Float3{ 0.0f, -981.0f, 0.0f };
+		velocity = Netcode::Float3{ 0.0f, 0.0f, 0.0f };
 	}
 
 	virtual void Setup(GameObject * owner) override {
@@ -66,26 +67,22 @@ public:
 	virtual void Update(float dt) override {
 		UpdateLookDirection(dt);
 
-		DirectX::XMFLOAT3 minusUnitZ{ 0.0f, 0.0f, 1.0f };
-		DirectX::XMVECTOR cameraQuat = DirectX::XMQuaternionRotationRollPitchYaw(cameraPitch, cameraYaw, 0.0f);
-		DirectX::XMVECTOR aheadStart = DirectX::XMLoadFloat3(&minusUnitZ);
-		DirectX::XMStoreFloat3(&camera->ahead, DirectX::XMVector3Normalize(DirectX::XMVector3Rotate(aheadStart, cameraQuat)));
+		Netcode::Quaternion cameraQuat{ cameraPitch, cameraYaw, 0.0f };
+		Netcode::Vector3 aheadStart = Netcode::Float3{ 0.0f, 0.0f, 1.0f };
+		camera->ahead = aheadStart.Rotate(cameraQuat).Normalize();
 
-		DirectX::FXMVECTOR q = DirectX::XMQuaternionRotationRollPitchYaw(0.0f, cameraYaw, 0.0f);
-		DirectX::FXMVECTOR lDirectionalMovement = GetDirectionalMovement();
-		DirectX::FXMVECTOR movementDeltaWorldSpace = DirectX::XMVector3Rotate(lDirectionalMovement, q);
-		DirectX::XMVECTOR movementDeltaSpeedScaled = DirectX::XMVectorScale(movementDeltaWorldSpace, avatarSpeed * dt);
+		Netcode::Quaternion cameraYawQuat{ 0.0f, cameraYaw, 0.0f };
+		Netcode::Vector3 lDirectionalMovement = GetDirectionalMovement();
+		Netcode::Vector3 movementDeltaWorldSpace = lDirectionalMovement.Rotate(cameraYawQuat);
+		Netcode::Vector3 movementDeltaSpeedScaled = movementDeltaWorldSpace * avatarSpeed * dt;
 
-		DirectX::FXMVECTOR gravityDeltaVelocity = DirectX::XMVectorScale(gravity, dt);
+		Netcode::Vector3 gravityDeltaVelocity = Netcode::Vector3{ gravity } * dt;
 
-		DirectX::XMVECTOR velocityVector = DirectX::XMLoadFloat3(&velocity);
-		velocityVector = DirectX::XMVectorAdd(velocityVector, gravityDeltaVelocity);
-		DirectX::XMStoreFloat3(&velocity, velocityVector);
+		Netcode::Vector3 velocityVector = velocity;
 
-		movementDeltaSpeedScaled = DirectX::XMVectorAdd(DirectX::XMVectorScale(velocityVector, dt), movementDeltaSpeedScaled);
+		velocity = velocityVector + gravityDeltaVelocity;
 
-		DirectX::XMFLOAT3 movementDelta;
-		DirectX::XMStoreFloat3(&movementDelta, movementDeltaSpeedScaled);
+		Netcode::Float3 movementDelta = movementDeltaSpeedScaled + velocityVector * dt;
 		
 		const physx::PxControllerCollisionFlags moveResult = controller->move(ToPxVec3(movementDelta), 0.0f, dt, physx::PxControllerFilters{});
 
@@ -95,13 +92,13 @@ public:
 
 		auto p = controller->getPosition();
 
-		transform->position = DirectX::XMFLOAT3{
+		transform->position = Netcode::Float3 {
 			static_cast<float>(p.x),
 			static_cast<float>(p.y - 90.0),
 			static_cast<float>(p.z)
 		};
 
-		DirectX::XMStoreFloat4(&transform->rotation, q);
+		transform->rotation = cameraYawQuat;
 		
 		if(collider != nullptr) {
 			if(auto * rigidBody = collider->actorRef->is<physx::PxRigidDynamic>()) {

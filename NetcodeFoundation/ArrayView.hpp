@@ -1,43 +1,87 @@
 #pragma once
 
 namespace Netcode {
+
 	template<typename T>
-	class ArrayView {
+	class ArrayViewBase {
+	protected:
 		T * beginPtr;
-		size_t len;
+		size_t length;
+
 	public:
-		ArrayView(T * ptr, size_t arrayLength) : beginPtr{ ptr }, len{ arrayLength } { }
+		ArrayViewBase() noexcept = default;
+		ArrayViewBase(ArrayViewBase &&) noexcept = default;
+		ArrayViewBase(const ArrayViewBase &) noexcept = default;
+		~ArrayViewBase() noexcept = default;
+		ArrayViewBase(T * ptr, size_t length) noexcept : beginPtr { ptr }, length{ length } { }
 
-		ArrayView() = default;
-		ArrayView(ArrayView &&) = default;
-		ArrayView(const ArrayView &) = default;
-		~ArrayView() = default;
+		ArrayViewBase & operator=(const ArrayViewBase &) noexcept = default;
+		ArrayViewBase & operator=(ArrayViewBase &&) noexcept = default;
+	};
 
-		ArrayView & operator=(const ArrayView &) = default;
-		ArrayView & operator=(ArrayView &&) = default;
+	template<typename T>
+	class MutableArrayView : public ArrayViewBase<T> {
+	public:
+		using ArrayViewBase<T>::ArrayViewBase;
 
 		const T & operator[](size_t idx) const {
-			return beginPtr[idx];
+			return this->beginPtr[idx];
+		}
+
+		const T * cbegin() const {
+			return this->beginPtr;
+		}
+
+		const T * cend() const {
+			return this->beginPtr + this->length;
 		}
 
 		T & operator[](size_t idx) {
-			return beginPtr[idx];
+			return this->beginPtr[idx];
 		}
 
 		T * begin() {
-			return beginPtr;
+			return this->beginPtr;
 		}
 
 		T * end() {
-			return beginPtr + len;
+			return this->beginPtr + this->length;
 		}
 
 		size_t Size() const {
-			return len;
+			return this->length;
 		}
 
 		T * Data() const {
-			return beginPtr;
+			return this->beginPtr;
+		}
+	};
+
+	template<typename T>
+	class ArrayView : public ArrayViewBase<const T> {
+	public:
+		using ArrayViewBase<const T>::ArrayViewBase;
+
+		ArrayView(const MutableArrayView<T> & mutableView) : ArrayViewBase<const T>(mutableView.Data(), mutableView.Size()) { }
+
+		const T & operator[](size_t idx) const {
+			return this->beginPtr[idx];
+		}
+
+		const T * begin() const {
+			return this->beginPtr;
+		}
+
+		const T * end() const {
+			return this->beginPtr + this->length;
+		}
+
+		size_t Size() const {
+			return this->length;
+		}
+
+		const T * Data() const {
+			return this->beginPtr;
 		}
 	};
 

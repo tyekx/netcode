@@ -27,7 +27,7 @@ physx::PxFilterFlags SimulationFilterShader(physx::PxFilterObjectAttributes attr
 	return physx::PxFilterFlag::eDEFAULT;
 }
 
-physx::PxShape * CreatePrimitiveShapeFromAsset(ColliderShape & cShape, physx::PxPhysics * px, physx::PxMaterial * mat, physx::PxShapeFlags flags, bool isExclusive) {
+physx::PxShape * CreatePrimitiveShapeFromAsset(const ColliderShape & cShape, physx::PxPhysics * px, physx::PxMaterial * mat, physx::PxShapeFlags flags, bool isExclusive) {
 	physx::PxShape * colliderShape = nullptr;
 	switch(cShape.type) {
 	case Netcode::Asset::ColliderType::CAPSULE:
@@ -51,7 +51,7 @@ physx::PxShape * CreatePrimitiveShapeFromAsset(ColliderShape & cShape, physx::Px
 	return colliderShape;
 }
 
-physx::PxShape * CreateHitboxShapeFromAsset(ColliderShape & cShape, physx::PxPhysics * px) {
+physx::PxShape * CreateHitboxShapeFromAsset(const ColliderShape & cShape, physx::PxPhysics * px) {
 	static physx::PxMaterial * dummyMaterial = px->createMaterial(0.1f, 0.1f, 0.1f);
 	const auto pxFlags = physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eTRIGGER_SHAPE | physx::PxShapeFlag::eVISUALIZATION;
 
@@ -64,7 +64,7 @@ physx::PxShape * CreateHitboxShapeFromAsset(ColliderShape & cShape, physx::PxPhy
 	hitboxFilterData.word1 = PHYSX_COLLIDER_TYPE_HITBOX;
 	colliderShape->setQueryFilterData(hitboxFilterData);
 	colliderShape->setSimulationFilterData(hitboxFilterData);
-	colliderShape->userData = &cShape;
+	colliderShape->userData = nullptr;
 
 	return colliderShape;
 }
