@@ -35,7 +35,7 @@ namespace Netcode::Animation {
 
 			DirectX::XMVECTOR wPos = DirectX::XMVectorAdd(DirectX::XMVector3Rotate(boneTransforms[boneId].translation, parent.rotation), parent.translation);
 			DirectX::XMVECTOR wRot = DirectX::XMQuaternionMultiply(boneTransforms[boneId].rotation, parent.rotation);
-		
+
 			BoneTransform bt;
 			bt.scale = DirectX::XMVectorReplicate(1.0f);
 			bt.translation = wPos;
@@ -43,7 +43,7 @@ namespace Netcode::Animation {
 			return bt;
 		}
 
-		static DirectX::XMVECTOR GetP_e(const IKEffector& eff, ArrayView<Asset::Bone> bones, ArrayView<BoneTransform> boneTransforms) {
+		static DirectX::XMVECTOR GetP_e(const IKEffector & eff, ArrayView<Asset::Bone> bones, ArrayView<BoneTransform> boneTransforms) {
 			DirectX::XMVECTOR offset = DirectX::XMLoadFloat4(&eff.offset);
 
 			auto wrt = GetWorldRT(eff.parentId, bones, boneTransforms);
@@ -53,7 +53,7 @@ namespace Netcode::Animation {
 
 		static DirectX::XMVECTOR GetP_c(const IKEffector & eff, uint32_t skip, ArrayView<Asset::Bone> bones, ArrayView<BoneTransform> boneTransforms) {
 			int32_t boneId = eff.parentId;
-			
+
 			for(uint32_t i = 0; i < skip; ++i) {
 				boneId = bones[boneId].parentId;
 			}
@@ -108,26 +108,71 @@ namespace Netcode::Animation {
 
 					boneTransforms[boneId].rotation =
 						DirectX::XMQuaternionMultiply(boneTransforms[boneId].rotation,
-						DirectX::XMQuaternionRotationAxis(rotationAxis, theta));
+							DirectX::XMQuaternionRotationAxis(rotationAxis, theta));
 
-					DirectX::XMVECTOR limitAxis = DirectX::XMLoadFloat3(&effector.limits[i].axis);
-					float angularLimit = effector.limits[i].angleLimitInRadians;
-					DirectX::XMVECTOR limitQuat = DirectX::XMQuaternionRotationAxis(limitAxis, 0.0f);
-
-					DirectX::XMVECTOR limitRotDotV = DirectX::XMVector4Dot(boneTransforms[boneId].rotation, limitQuat);
-					float angleDialation;
-					DirectX::XMStoreFloat(&angleDialation, limitRotDotV);
-					angleDialation = std::abs(angleDialation);
-
-					if(angularLimit < angleDialation) {
-						boneTransforms[boneId].rotation = 
-							DirectX::XMQuaternionSlerp(limitQuat, boneTransforms[boneId].rotation, angularLimit / angleDialation);
+					if(!effector.limits.empty()) {
+						DirectX::XMVECTOR quatAxis;
+						float quatAngle;
+						DirectX::XMQuaternionToAxisAngle(&quatAxis, &quatAngle, boneTransforms[boneId].rotation);
+						float angularLimit = effector.limits[i].angleLimitInRadians;
+						quatAngle = std::min(quatAngle, angularLimit);
+						boneTransforms[boneId].rotation = DirectX::XMQuaternionRotationAxis(quatAxis, quatAngle);
 					}
+
 
 					boneId = bones[boneId].parentId;
 				}
 			}
 		}
 	};
+
+	/*
+	Forward And Backward Reaching IK
+	*/
+	class FABRIK {
+	public:
+		static void Run(IKEffector effector, ArrayView<Asset::Bone> bones, ArrayView<BoneTransform> boneTransforms, int32_t maxIterations = 10) {
+			std::vector<BoneTransform> wt;
+			std::vector<float> d;
+			float sumLen = 0.0f;
+
+			int32_t boneId = effector.parentId;
+			for(uint32_t i = 0; i < effector.chainLength; ++i) {
+				wt.push_back(BackwardBounceCCD::GetWorldRT(boneId, bones, boneTransforms));
+				float len;
+				DirectX::XMStoreFloat(&len, DirectX::XMVector3Length(boneTransforms[boneId].translation));
+				sumLen += len;
+				d.push_back(len);
+				boneId = bones[boneId].parentId;
+			}
+
+			DirectX::FXMVECTOR t = DirectX::XMLoadFloat4(&effector.position);
+
+			float dist;
+			DirectX::XMStoreFloat(&dist, DirectX::XMVector3Length(DirectX::XMVectorSubtract(wt.back().translation, t)));
+			
+			// target is unreachable
+			if(dist > sumLen) {
+				for(uint32_t i = 1; i < effector.chainLength; ++i) {
+					float ri;
+					DirectX::XMStoreFloat(&ri, DirectX::XMVector3Length(DirectX::XMVectorSubtract(t, wt[i].translation)));
+					float lambdai = d[i] / ri;
+					DirectX::XMVECTOR pi1 = DirectX::XMVectorAdd(DirectX::XMVectorScale(wt[i].translation, 1.0f - lambdai),
+						DirectX::XMVectorScale(t, lambdai));
+
+					wt[i - 1].translation = pi1;
+				}
+			}
+			
+			wt.push_back(boneTransforms[0]);
+
+			for(int32_t i = 4; i >= 0; --i) {
+				//wt[i].translation
+			}
+
+			int32_t done;
+		}
+	};
+
 
 }

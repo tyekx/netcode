@@ -192,15 +192,6 @@ namespace Netcode::Animation {
 		int parentId;
 
 		for(size_t i = 0; i < bones.Size(); ++i) {
-			// A matrix
-			auto sc = MyScaleMat(buffer[i].scale);
-			auto rot = MyQuaternionToMatrix(buffer[i].rotation);
-			auto tr = MyTranslationMat(buffer[i].translation);
-
-			toRoot[i] = DirectX::XMMatrixMultiply(
-				DirectX::XMMatrixMultiply(sc, rot), tr
-			);
-
 			toRoot[i] = DirectX::XMMatrixAffineTransformation(buffer[i].scale, DirectX::XMQuaternionIdentity(), buffer[i].rotation, buffer[i].translation);
 
 			parentId = bones[i].parentId;

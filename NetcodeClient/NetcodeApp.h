@@ -77,8 +77,8 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			uiSystem.Run(uiObject);
 			uiSpriteSystem.Run(uiObject);
 			uiTextSystem.Run(uiObject);
-		});*/
-
+		});
+		*/
 		graphics->frame->DeviceSync();
 
 		renderSystem.renderer.ReadbackComputeResults();
@@ -203,7 +203,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		Transform * gunRootTransform = gunRootObj->AddComponent<Transform>();
 		Transform * gunTransform = gunObj->GetComponent<Transform>();
 
-		gunRootTransform->position = DirectX::XMFLOAT3{ 0.0f, 140.0f, 0.0f };
+		gunRootTransform->position = DirectX::XMFLOAT3{ 0.0f, 130.0f, 0.0f };
 		gunTransform->scale = DirectX::XMFLOAT3{ 18.0f, 18.0f, 18.0f };
 
 		LoadComponents(avatarModel, avatarHitboxes);

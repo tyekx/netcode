@@ -34,18 +34,23 @@ void CreateYbotAnimationComponent(Netcode::Asset::Model * model, Animation * ani
 	Netcode::Animation::IKEffector effector;
 	effector.position = DirectX::XMFLOAT4{ 0.0f, 150.0f, -20.0f, 1.0f };
 	effector.offset = DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 0.0f };
-	effector.parentId = 5;
-	effector.chainLength = 5;
+	effector.parentId = 4;
+	effector.chainLength = 4;
 	effector.limits = {
-		{ DirectX::XMFLOAT3{0.0f, 1.0f, 0.0f}, 0.3f },
-		{ DirectX::XMFLOAT3{0.0f, 1.0f, 0.0f}, 0.3f },
-		{ DirectX::XMFLOAT3{0.0f, 1.0f, 0.0f}, 0.3f },
-		{ DirectX::XMFLOAT3{0.0f, 1.0f, 0.0f}, 0.3f },
-		{ DirectX::XMFLOAT3{0.0f, 1.0f, 0.0f}, 0.3f }
+		{ DirectX::XMFLOAT3{0.0f, 1.0f, 0.0f}, 0.4f },
+		{ DirectX::XMFLOAT3{0.0f, 1.0f, 0.0f}, 0.4f },
+		{ DirectX::XMFLOAT3{0.0f, 1.0f, 0.0f}, 0.4f },
+		{ DirectX::XMFLOAT3{0.0f, 1.0f, 0.0f}, 0.4f }
 	};
 
+	Netcode::Animation::IKEffector lhe;
+	lhe.offset = DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 0.0f };
+	lhe.parentId = 9;
+	lhe.chainLength = 4;
+
 	anim->effectors = {
-		effector
+		effector,
+		lhe
 	};
 	
 	anim->blackboard = std::shared_ptr<Blackboard<CtrlType>>(new Blackboard<CtrlType>(

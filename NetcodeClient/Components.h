@@ -192,6 +192,7 @@ public:
 	std::unique_ptr<BoneData> debugBoneData;
 	Netcode::ArrayView<Netcode::Asset::Bone> bones;
 	Netcode::ArrayView<Netcode::Asset::Animation> clips;
+	DirectX::XMVECTOR headRotation;
 
 	Animation() = default;
 	Animation(Animation &&) noexcept = default;
