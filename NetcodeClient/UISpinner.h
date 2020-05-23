@@ -22,7 +22,6 @@ public:
 	void SetSize(const DirectX::XMFLOAT2 & size) {
 		Transform * lTrans = root->GetComponent<Transform>();
 		UIElement * lElem = root->GetComponent<UIElement>();
-		Sprite * sprite = root->GetComponent<Sprite>();
 
 		lElem->width = size.x;
 		lElem->height = size.y;
@@ -48,7 +47,7 @@ public:
 	}
 
 	UISpinner(UIObject* obj) : root { obj } {
-		Transform * lTrans = root->AddComponent<Transform>();
+		root->AddComponent<Transform>();
 		UIElement * lElem = root->AddComponent<UIElement>();
 		Sprite * sprite = root->AddComponent<Sprite>();
 		sprite->diffuseColor = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };

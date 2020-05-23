@@ -46,13 +46,13 @@ public:
 	UILabel(UIObject * bg, UIObject * tx) : backgroundObject{ bg }, textObject{ tx } {
 		textObject->Parent(backgroundObject);
 
-		Transform * bgTransform = backgroundObject->AddComponent<Transform>();
+		backgroundObject->AddComponent<Transform>();
 		UIElement * bgElem = backgroundObject->AddComponent<UIElement>();
 		bgElem->width = 0.0f;
 		bgElem->height = 0.0f;
 
-		Transform * textTransform = textObject->AddComponent<Transform>();
-		UIElement * textElem = textObject->AddComponent<UIElement>();
+		textObject->AddComponent<Transform>();
+		textObject->AddComponent<UIElement>();
 		Text * txt = textObject->AddComponent<Text>();
 		txt->horizontalAlignment = HorizontalAnchor::LEFT;
 		txt->verticalAlignment = VerticalAnchor::TOP;

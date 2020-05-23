@@ -152,8 +152,6 @@ namespace Netcode::Animation {
 			for(int32_t i = 4; i >= 0; --i) {
 				//wt[i].translation
 			}
-
-			int32_t done;
 		}
 	};
 

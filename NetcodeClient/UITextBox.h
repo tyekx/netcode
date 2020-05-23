@@ -73,7 +73,7 @@ public:
 		Button* btn = backgroundObject->AddComponent<Button>();
 
 		textObject->AddComponent<Transform>();
-		UIElement * uiElem = textObject->AddComponent<UIElement>();
+		textObject->AddComponent<UIElement>();
 		Text * textComponent = textObject->AddComponent<Text>();
 		textComponent->text = L"";
 		textComponent->color = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };

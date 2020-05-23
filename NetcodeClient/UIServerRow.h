@@ -98,7 +98,7 @@ public:
 				Transform * transform = rootObject->AddComponent<Transform>();
 				UIElement * uiElem = rootObject->AddComponent<UIElement>();
 				Sprite * sprite = rootObject->AddComponent<Sprite>();
-				Button* btn = rootObject->AddComponent<Button>();
+				rootObject->AddComponent<Button>();
 
 				transform->position = DirectX::XMFLOAT3{ 8.0f, 0.0f, 0.0f };
 				uiElem->width = 752.0f;

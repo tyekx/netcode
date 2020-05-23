@@ -37,12 +37,12 @@ struct TupleKeepComponentsImpl;
 
 template<bool Any, typename ALL_COMPONENTS_T, typename ACC>
 struct TupleKeepComponentsImpl<Any, ALL_COMPONENTS_T, ACC, std::tuple<>> {
-	using type = typename ACC;
+	using type = ACC;
 };
 
 template<typename ALL_COMPONENTS_T, typename ACC, typename HEAD, typename ... TAIL>
 struct TupleKeepComponentsImpl <false, ALL_COMPONENTS_T, ACC, std::tuple<HEAD, TAIL...> > {
-	using type = typename ACC;
+	using type = ACC;
 };
 
 template<typename ALL_COMPONENTS_T, typename ACC, typename HEAD, typename ... TAIL>

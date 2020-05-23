@@ -16,12 +16,12 @@ class HitscanQueryFilter : physx::PxQueryFilterCallback {
 		const physx::PxRigidActor * actor,
 		physx::PxHitFlags & queryFlags) override
 	{
-
+		return physx::PxQueryHitType::Enum::eNONE;
 	}
 
 	virtual physx::PxQueryHitType::Enum postFilter(const physx::PxFilterData & filterData, const physx::PxQueryHit & hit) override
 	{
-
+		return physx::PxQueryHitType::Enum::eNONE;
 	}
 };
 

@@ -65,7 +65,7 @@ public:
 		bgElem->width = 192.0f;
 		bgElem->height = 48.0f;
 
-		Button * bgBtn = background->AddComponent<Button>();
+		background->AddComponent<Button>();
 
 		Sprite * sprite = background->AddComponent<Sprite>();
 		sprite->textureSize = DirectX::XMUINT2{ 0,0 };
@@ -73,9 +73,9 @@ public:
 		sprite->diffuseColor = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };
 		sprite->hoverColor = DirectX::XMFLOAT4{ 0.5f, 0.5f, 0.5f, 1.0f };
 
-		Transform * bgTransform = background->AddComponent<Transform>();
-		Transform * textTransform = textObject->AddComponent<Transform>();
-		UIElement * textElem = textObject->AddComponent<UIElement>();
+		background->AddComponent<Transform>();
+		textObject->AddComponent<Transform>();
+		textObject->AddComponent<UIElement>();
 
 		Text * txt = textObject->AddComponent<Text>();
 		txt->horizontalAlignment = HorizontalAnchor::CENTER;

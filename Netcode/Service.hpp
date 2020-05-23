@@ -45,5 +45,10 @@ namespace Netcode {
 
 	};
 
+	template<typename TUPLE_T>
+	SignatureType Service<TUPLE_T>::signature{};
+
+	template<typename TUPLE_T>
+	uint8_t Service<TUPLE_T>::data[TupleSizeofSum<TUPLE_T>::value] = {};
 
 }
