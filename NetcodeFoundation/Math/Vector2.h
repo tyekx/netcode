@@ -23,11 +23,11 @@ namespace Netcode {
 			return DirectX::XMVectorScale(v, scale);
 		}
 
-		Vector2 NC_MATH_CALLCONV operator/(NonZero<Vector2> rhs) const NETCODE_DEP_NOEXCEPT {
+		Vector2 NC_MATH_CALLCONV operator/(NonZero<Vector2> rhs) const NETCODE_MATH_DEP_NOEXCEPT {
 			return DirectX::XMVectorDivide(v, static_cast<Vector2>(rhs).v);
 		}
 
-		Vector2 NC_MATH_CALLCONV operator/(NonZero<float> scale) const NETCODE_DEP_NOEXCEPT {
+		Vector2 NC_MATH_CALLCONV operator/(NonZero<float> scale) const NETCODE_MATH_DEP_NOEXCEPT {
 			return DirectX::XMVectorScale(v, 1.0f / scale);
 		}
 
@@ -41,7 +41,7 @@ namespace Netcode {
 			return *this;
 		}
 
-		Vector2 & NC_MATH_CALLCONV operator/=(NonZero<Vector2> rhs) NETCODE_DEP_NOEXCEPT {
+		Vector2 & NC_MATH_CALLCONV operator/=(NonZero<Vector2> rhs) NETCODE_MATH_DEP_NOEXCEPT {
 			v = DirectX::XMVectorDivide(v, static_cast<Vector2>(rhs).v);
 			return *this;
 		}

@@ -9,6 +9,7 @@
 #endif
 
 #include "Logger.h"
+#include "..\NetcodeFoundation\Memory\Common.h"
 
 namespace Netcode::Internal {
 

@@ -14,6 +14,8 @@ PUBLIC
 	"Generated_Version.cpp"
 	"Exceptions.h"
 	"Math.h"
-	"Math.cpp")
+	"Math.cpp" "Memory.h")
 
 add_subdirectory(Math)
+add_subdirectory(Exception)
+add_subdirectory(Memory)

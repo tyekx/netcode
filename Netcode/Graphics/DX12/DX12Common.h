@@ -15,6 +15,8 @@ using com_ptr = Microsoft::WRL::ComPtr<T>;
 
 namespace Netcode::Graphics::DX12 {
 
+	void DebugDestruction(IUnknown * pUnknown);
+
 	const char * RootSignatureVersionToString(D3D_ROOT_SIGNATURE_VERSION version);
 
 	/*
@@ -42,6 +44,8 @@ namespace Netcode::Graphics::DX12 {
 }
 
 namespace Netcode::Internal {
+
+	void DebugDestructionCallback(void * pData);
 
 	class HResultTester {
 	public:

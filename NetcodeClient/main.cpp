@@ -6,11 +6,12 @@
 #include <Netcode/Path.h>
 #include <shellapi.h>
 #include <Netcode/DefaultModuleFactory.h>
+#include <NetcodeFoundation/Memory.h>
 /*
 */
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR command, _In_ INT nShowCmd) {
-	 
+
 	int argc;
 	wchar_t ** args = CommandLineToArgvW(command, &argc);
 	

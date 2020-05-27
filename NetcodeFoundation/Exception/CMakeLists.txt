@@ -5,4 +5,6 @@ target_sources(NetcodeFoundation PUBLIC
 	"ArithmeticException.h"
 	"IOException.h"
 	"NotSupportedException.h"
+	"OutOfRangeException.h"
+	"UndefinedBehaviourException.h"
 )

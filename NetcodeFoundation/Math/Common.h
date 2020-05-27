@@ -16,10 +16,10 @@ type & operator=(type && rhs) noexcept = default
 #endif
 
 #if defined(NETCODE_USE_MATH_EXCEPTIONS)
-#define NETCODE_DEP_NOEXCEPT
+#define NETCODE_MATH_DEP_NOEXCEPT
 #else
 // dependent noexcept
-#define NETCODE_DEP_NOEXCEPT noexcept
+#define NETCODE_MATH_DEP_NOEXCEPT noexcept
 #endif
 
 namespace Netcode {

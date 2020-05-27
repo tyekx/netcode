@@ -41,6 +41,18 @@ namespace Netcode::Graphics::DX12 {
 		return woss.str();
 	}
 
+	void DebugDestruction(IUnknown * pUnknown)
+	{
+		ID3DDestructionNotifier * notifier = nullptr;
+
+		DX_API("Failed to query notifier interface")
+			pUnknown->QueryInterface(&notifier);
+
+		notifier->RegisterDestructionCallback(&Netcode::Internal::DebugDestructionCallback, pUnknown, nullptr);
+
+		notifier->Release();
+	}
+
 	const char * RootSignatureVersionToString(D3D_ROOT_SIGNATURE_VERSION version)
 	{
 		switch(version) {
@@ -129,4 +141,9 @@ void Netcode::Internal::HResultTester::operator<<(HRESULT hr) {
 		exit(-1);
 	}
 	va_end(args);
+}
+
+void Netcode::Internal::DebugDestructionCallback(void * pData)
+{
+	DebugBreak();
 }
