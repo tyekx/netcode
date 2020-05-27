@@ -71,6 +71,13 @@ namespace Netcode::Memory {
 		}
 
 		void Deallocate(void * p, size_t s) { }
+
+		/*
+		Cheap but dangerous call, resets all allocations, does not invoke destructors
+		*/
+		void Reset() {
+			resource->offset = 0;
+		}
 	};
 
 

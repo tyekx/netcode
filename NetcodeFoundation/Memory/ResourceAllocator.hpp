@@ -17,9 +17,15 @@ namespace Netcode::Memory {
 
 		template<typename T>
 		MemoryBlock Allocate(size_t n) {
-			assert(n == 1);
-			(*headSize) = Align<size_t>(n * sizeof(T), alignment);
-			return AlignedMalloc((*headSize) + totalSize, alignment);
+			Detail::UndefinedBehaviourAssertion(n == 1);
+
+			(*headSize) = Align<size_t>(sizeof(T), alignment);
+
+			void * p = AlignedMalloc((*headSize) + totalSize, alignment);
+
+			Detail::OutOfMemoryAssertion(p != nullptr);
+
+			return p;
 		}
 
 		static void Deallocate(void * ptr, size_t n) {

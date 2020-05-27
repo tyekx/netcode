@@ -5,6 +5,12 @@ namespace Netcode::Memory {
 
 	namespace Detail {
 
+		void OutOfMemoryAssertion(bool isValidPtr) {
+			if(!isValidPtr) {
+				throw OutOfMemoryException{ "Out of memory" };
+			}
+		}
+
 		void OutOfRangeAssertion(bool isInRange)
 		{
 			if(!isInRange) {

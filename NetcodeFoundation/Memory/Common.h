@@ -11,6 +11,8 @@ namespace Netcode::Memory {
 
 	namespace Detail {
 
+		void OutOfMemoryAssertion(bool isValidPtr);
+
 		void OutOfRangeAssertion(bool isInRange);
 
 		void UndefinedBehaviourAssertion(bool isDefinedBehaviour);

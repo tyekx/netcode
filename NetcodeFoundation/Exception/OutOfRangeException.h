@@ -8,5 +8,10 @@ namespace Netcode {
 		using BaseException::BaseException;
 	};
 
+	class OutOfMemoryException : public BaseException {
+	public:
+		using BaseException::BaseException;
+	};
+
 
 }

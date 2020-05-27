@@ -7,18 +7,75 @@
 
 namespace Netcode::Memory {
 
+	namespace Detail {
+
+		template<size_t TYPE_SIZE>
+		struct FreeListSelectIntType {
+			using type = void;
+		};
+
+		template<>
+		struct FreeListSelectIntType<4> {
+			using type = uint32_t;
+		};
+
+		template<>
+		struct FreeListSelectIntType<2> {
+			using type = uint16_t;
+		};
+
+		template<>
+		struct FreeListSelectIntType<1> {
+			using type = uint8_t;
+		};
+
+		template<size_t X, size_t Y>
+		struct FreeListCondition {
+			constexpr static bool value = X <= Y;
+		};
+
+		template<typename T>
+		struct FreeListNullValue {
+			constexpr static T value = std::numeric_limits<T>::max();
+		};
+
+		template<typename T>
+		struct FreeListNullValue<T *> {
+			constexpr static T * value = nullptr;
+		};
+
+		template<typename T, typename U>
+		struct FreeListContentType {
+			using type = typename std::conditional< FreeListCondition<sizeof(U *), sizeof(U)>::value, T *, typename FreeListSelectIntType<sizeof(U)>::type >::type;
+		};
+
+	}
+
+	/*
+	Allocator type for allocating T-s. Has a specialization for std::shared_ptr allocations.
+	Only allocates a single contiguous memory block with the given alignment 
+	Can deallocate items, the deallocated items will be chained into a freelist.
+	If sizeof(T) is less than sizeof(void*) then the maximum allocated size can only be
+	sizeof(T) bytes of integer's max value - 1. Eg: sizeof(short) then the maximum pool size can
+	only be std::numeric_limits<uint16_t>::max()
+	*/
 	template<typename T>
 	class PoolAllocator {
 	private:
 		struct FreeListItem {
-			FreeListItem * next;
+			using ContentType = typename Detail::FreeListContentType<FreeListItem, T>::type;
+			constexpr static ContentType NullValue = Detail::FreeListNullValue<ContentType>::value;
 
-			FreeListItem(FreeListItem * n) : next{ n } { }
+			ContentType next;
+
+			FreeListItem(ContentType n) : next{ n } { }
 
 			~FreeListItem() noexcept {
-				next = nullptr;
+				next = static_cast<ContentType>(0);
 			}
 		};
+
+		using FreeListItemRef = typename FreeListItem::ContentType;
 
 		struct Resource {
 			uint8_t * ptr;
@@ -26,10 +83,30 @@ namespace Netcode::Memory {
 			size_t stride;
 			size_t numBytes;
 			size_t alignment;
-			FreeListItem * head;
+			FreeListItemRef head;
 
 			Resource() noexcept = default;
 		};
+
+		inline FreeListItem * PointerOf(FreeListItemRef index) {
+			if constexpr(std::is_integral<FreeListItemRef>::value) {
+				// if its an integral type, then we need to do an indirection
+				return reinterpret_cast<FreeListItem *>(reinterpret_cast<FreeListItemRef *>(resource->ptr) + index);
+			} else {
+				static_assert(std::is_same<FreeListItem *, FreeListItemRef>::value, "Type mismatch");
+				return index;
+			}
+		}
+
+		inline FreeListItemRef IndexOf(FreeListItem * ptr) {
+			if constexpr(std::is_integral<FreeListItemRef>::value) {
+				// if its an integral type, then we need to do an indirection
+				return static_cast<FreeListItemRef>(reinterpret_cast<FreeListItemRef *>(ptr) - reinterpret_cast<FreeListItemRef *>(resource->ptr));
+			} else {
+				static_assert(std::is_same<FreeListItem *, FreeListItemRef>::value, "Type mismatch");
+				return ptr;
+			}
+		}
 
 		std::shared_ptr<Resource> resource;
 
@@ -38,9 +115,11 @@ namespace Netcode::Memory {
 		MemoryBlock Allocate(size_t numElements) {
 			// changing stride for a pool allocator is a hard no
 			Detail::UndefinedBehaviourAssertion(resource->stride == sizeof(T));
+			// no support for arrays yet
+			Detail::UndefinedBehaviourAssertion(numElements == 1);
 
-			if(resource->head != nullptr) {
-				FreeListItem * freeListItem = resource->head;
+			if(resource->head != FreeListItem::NullValue) {
+				FreeListItem * freeListItem = PointerOf(resource->head);
 				resource->head = freeListItem->next;
 				freeListItem->~FreeListItem();
 
@@ -55,6 +134,7 @@ namespace Netcode::Memory {
 				return tPtr;
 			}
 		}
+
 	public:
 		using AllocType = typename PoolAllocator<T>;
 
@@ -63,6 +143,13 @@ namespace Netcode::Memory {
 			size_t poolSizeInBytes = -1;
 
 			using SpyType = SpyAllocator<AllocType>;
+
+
+			static_assert(sizeof(T) >= sizeof(FreeListItem), "FreeListItem is bigger than T");
+
+			if constexpr(std::is_integral<FreeListItemRef>::value) {
+				Detail::UndefinedBehaviourAssertion(poolSize < FreeListItem::NullValue);
+			}
 
 			/*
 			For future me: in case of a T being a form of shared_ptr<U>, we are forced to somehow figure out the stride prior to
@@ -73,7 +160,7 @@ namespace Netcode::Memory {
 
 			if constexpr(is_shared_ptr<T>::value) {
 				try {
-					T sPtr = std::allocate_shared<T::element_type, StdAllocatorProxy<T::element_type, SpyType>>(*this);
+					T sPtr = std::allocate_shared<typename T::element_type, StdAllocatorProxy<typename T::element_type, SpyType>>(*this);
 
 					// always undefined behaviour if the previous call does not throw
 					Detail::UndefinedBehaviourAssertion(false);
@@ -96,6 +183,7 @@ namespace Netcode::Memory {
 			resource->numBytes = poolSizeInBytes;
 			resource->stride = stride;
 			resource->alignment = alignment;
+			resource->head = FreeListItem::NullValue;
 		}
 
 		/*
@@ -106,7 +194,7 @@ namespace Netcode::Memory {
 			using Proxy = StdAllocatorProxy< T, AllocType >;
 			// since T is a shared_ptr<W>, it'll have a T::element_type
 			if constexpr(is_shared_ptr<T>::value) {
-				return std::allocate_shared< T::element_type, Proxy, U...>(
+				return std::allocate_shared<typename T::element_type, Proxy, U...>(
 					Proxy{ *this },
 					std::forward<U>(args)...
 					);
@@ -116,9 +204,24 @@ namespace Netcode::Memory {
 		}
 
 		void Deallocate(void * p, size_t s) {
+			Detail::UndefinedBehaviourAssertion(s == 1);
+
 			FreeListItem * ptr = reinterpret_cast<FreeListItem *>(p);
 			new (ptr) FreeListItem(resource->head);
-			resource->head = ptr;
+			resource->head = IndexOf(ptr);
+		}
+
+		/*
+		Cheap but dangerous call, resets all allocations, does not invoke destructors
+		Because of this, it is only allowed when T is trivially destructible
+		*/
+		void Reset() {
+			if constexpr(!is_shared_ptr<T>::value) {
+				resource->offset = 0;
+				resource->head = nullptr;
+			} else {
+				Detail::UndefinedBehaviourAssertion(false);
+			}
 		}
 	};
 }
