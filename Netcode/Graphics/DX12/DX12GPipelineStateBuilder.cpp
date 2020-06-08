@@ -3,7 +3,7 @@
 namespace Netcode::Graphics::DX12 {
 
 	GPipelineStateBuilder::GPipelineStateBuilder(DX12GPipelineStateLibraryRef libRef) : desc{}, libraryRef{ libRef } {
-
+		
 	}
 
 	void GPipelineStateBuilder::SetRootSignature(RootSignatureRef rootSignature) {

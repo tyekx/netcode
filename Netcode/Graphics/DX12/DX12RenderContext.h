@@ -1,5 +1,7 @@
 #pragma once
 
+#include <NetcodeFoundation/Math.h>
+
 #include "../GraphicsContexts.h"
 #include "DX12Common.h"
 #include "DX12ResourcePool.h"
@@ -34,6 +36,11 @@ namespace Netcode::Graphics::DX12 {
 	public:
 		using BaseRenderContext::BaseRenderContext;
 
+		virtual void DebugDrawPoint(const Netcode::Float3 & worldPos, float extents) override;
+		virtual void DebugDrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd) override;
+		virtual void DebugDrawSphere(const Netcode::Float3 & worldPosOrigin, float radius) override;
+		virtual void DebugDrawBoundingBox(const Netcode::Float3 & worldPosOrigin, const Netcode::Float3 & extents) override;
+		virtual void DrawDebugPrimitives(const Netcode::Float4x4 & viewProjMatrix, bool depthEnabled) override;
 
 		// Inherited via BaseRenderContext
 		virtual void SetRootSignature(RootSignatureRef rs) override;
@@ -144,6 +151,12 @@ namespace Netcode::Graphics::DX12 {
 			const D3D12_VIEWPORT & viewPort,
 			const D3D12_RECT & scissorRect
 		);
+
+		virtual void DebugDrawPoint(const Netcode::Float3 & worldPos, float extents) override;
+		virtual void DebugDrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd) override;
+		virtual void DebugDrawSphere(const Netcode::Float3 & worldPosOrigin, float radius) override;
+		virtual void DebugDrawBoundingBox(const Netcode::Float3 & worldPosOrigin, const Netcode::Float3 & extents) override;
+		virtual void DrawDebugPrimitives(const Netcode::Float4x4 & viewProjMatrix, bool depthEnabled) override;
 
 		virtual void SetStencilReference(uint8_t stencilValue) override;
 

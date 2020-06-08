@@ -7,7 +7,8 @@
 #include <vector>
 #include <future>
 
-#include <DirectXMath.h>
+#include <NetcodeFoundation/Math.h>
+
 #include <DirectXCollision.h>
 
 #include "Graphics/GraphicsContexts.h"
@@ -158,7 +159,7 @@ namespace Netcode::Module {
 		virtual ~IGraphicsModule() = default;
 
 		virtual float GetAspectRatio() const = 0;
-		virtual DirectX::XMUINT2 GetBackbufferSize() const = 0;
+		virtual Netcode::UInt2 GetBackbufferSize() const = 0;
 		virtual RECT GetDisplayRect() const = 0;
 		virtual void * GetSwapChain() const = 0;
 

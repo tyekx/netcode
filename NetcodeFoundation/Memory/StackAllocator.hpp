@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Common.h"
-#include "StdAllocatorProxy.hpp"
+#include "StdAllocatorAdapter.hpp"
 #include "ResourceAllocator.hpp"
 
 namespace Netcode::Memory {
@@ -19,16 +19,16 @@ namespace Netcode::Memory {
 
 		std::shared_ptr<Resource> resource;
 	public:
-		StackAllocator(size_t stackSize, size_t alignment = 16) : resource{ } {
+		StackAllocator(size_t stackSize = 65536, size_t alignment = 16) : resource{ } {
 			size_t headSize;
-			StdAllocatorProxy<Resource, ResourceAllocator> resourceAlloc{ stackSize, alignment, &headSize };
+			StdAllocatorAdapter<Resource, ResourceAllocator> resourceAlloc{ stackSize, alignment, &headSize };
 			resource = std::allocate_shared<Resource>(resourceAlloc);
 			resource->data = reinterpret_cast<uint8_t *>(resource.get()) + headSize;
 			resource->stackSize = stackSize;
 			resource->alignment = alignment;
 		}
 
-		using AllocType = typename StackAllocator;
+		using AllocType = StackAllocator;
 
 		template<typename V>
 		using DeleterType = AllocatorDeleter<V, AllocType>;
@@ -44,7 +44,7 @@ namespace Netcode::Memory {
 
 		template<typename T, typename ... U>
 		inline std::shared_ptr<T> MakeShared(U && ... args) {
-			return std::allocate_shared<T, StdAllocatorProxy<T, AllocType>>(*this, std::forward<U>(args)...);
+			return std::allocate_shared<T, StdAllocatorAdapter<T, AllocType>>(*this, std::forward<U>(args)...);
 		}
 
 		template<typename T, typename ... U>

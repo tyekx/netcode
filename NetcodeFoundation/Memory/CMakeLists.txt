@@ -7,4 +7,6 @@ target_sources(NetcodeFoundation PUBLIC
 	"ResourceAllocator.hpp"
 	"SpyAllocator.hpp"
 	"PoolAllocator.hpp"
+	"ObjectAllocator.hpp"
+	"StdAllocatorAdapter.hpp"
 )

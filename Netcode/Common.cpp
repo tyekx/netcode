@@ -9,9 +9,9 @@
 #endif
 
 #include "Logger.h"
-#include "..\NetcodeFoundation\Memory\Common.h"
+#include <NetcodeFoundation/Exceptions.h>
 
-namespace Netcode::Internal {
+namespace Netcode::Detail {
 
 	static void LogString(const char * str) {
 #if defined(EGG_OS_WINDOWS)
@@ -25,6 +25,11 @@ namespace Netcode::Internal {
 			__debugbreak();
 		}
 #endif
+	}
+
+	void NotImplementedAssertion()
+	{
+		throw Netcode::NotImplementedException("Not implemented");
 	}
 
 	void Assert(bool trueMeansOk, const char * msgOnFail, ...) {

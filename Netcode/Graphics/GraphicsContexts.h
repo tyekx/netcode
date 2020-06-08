@@ -1,5 +1,7 @@
 #pragma once
 
+#include <NetcodeFoundation/Math.h>
+
 #include "../Common.h"
 #include "../HandleTypes.h"
 #include "ResourceEnums.h"
@@ -104,6 +106,12 @@ namespace Netcode::Graphics {
 	class IRenderContext {
 	public:
 		virtual ~IRenderContext() = default;
+
+		virtual void DebugDrawPoint(const Netcode::Float3 & worldPos, float extents) = 0;
+		virtual void DebugDrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd) = 0;
+		virtual void DebugDrawSphere(const Netcode::Float3 & worldPosOrigin, float radius) = 0;
+		virtual void DebugDrawBoundingBox(const Netcode::Float3 & worldPosOrigin, const Netcode::Float3 & extents) = 0;
+		virtual void DrawDebugPrimitives(const Netcode::Float4x4 & viewProjMatrix, bool depthEnabled = true) = 0;
 
 		virtual void SetRootSignature(RootSignatureRef rs) = 0;
 		virtual void SetPipelineState(PipelineStateRef pso) = 0;

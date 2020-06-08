@@ -68,6 +68,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		auto cfgBuilder = graphics->CreateFrameGraphBuilder();
 		renderSystem.renderer.CreateComputeFrameGraph(cfgBuilder);
 		graphics->frame->Run(cfgBuilder->Build(), FrameGraphCullMode::NONE);
+		
 		/*
 		uiScene->Update();
 		uiSystem.Raycast();

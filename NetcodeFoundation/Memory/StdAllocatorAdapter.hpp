@@ -5,7 +5,7 @@
 namespace Netcode::Memory {
 
 	template<typename T, typename NC_ALLOC_T>
-	class StdAllocatorProxy : public NC_ALLOC_T {
+	class StdAllocatorAdapter : public NC_ALLOC_T {
 	public:
 		using value_type = T;
 		using pointer = T *;
@@ -13,7 +13,7 @@ namespace Netcode::Memory {
 
 		using NC_ALLOC_T::NC_ALLOC_T;
 
-		StdAllocatorProxy(const NC_ALLOC_T & rhs) : NC_ALLOC_T{ rhs } { }
+		StdAllocatorAdapter(const NC_ALLOC_T & rhs) : NC_ALLOC_T{ rhs } { }
 
 		pointer allocate(size_t n) {
 			return static_cast<pointer>(NC_ALLOC_T::template Allocate<T>(n).Data());
@@ -34,7 +34,7 @@ namespace Netcode::Memory {
 
 		template<typename U>
 		struct rebind {
-			using other = StdAllocatorProxy<U, NC_ALLOC_T>;
+			using other = StdAllocatorAdapter<U, NC_ALLOC_T>;
 		};
 	};
 

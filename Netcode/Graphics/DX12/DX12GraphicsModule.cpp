@@ -142,8 +142,10 @@ namespace Netcode::Graphics::DX12 {
 
 	void DX12GraphicsModule::CreateFences()
 	{
-		mainFence = std::make_shared<DX12Fence>(device.Get(), 0);
-		uploadFence = std::make_shared<DX12Fence>(device.Get(), 0);
+		mainFence = stackAllocator.MakeShared<DX12Fence>(device.Get(), 0);
+		//std::make_shared<DX12Fence>(device.Get(), 0);
+		uploadFence = stackAllocator.MakeShared<DX12Fence>(device.Get(), 0);
+		//std::make_shared<DX12Fence>(device.Get(), 0);
 	}
 	
 	void DX12GraphicsModule::QuerySyncSupport() {
@@ -163,29 +165,30 @@ namespace Netcode::Graphics::DX12 {
 
 	void DX12GraphicsModule::CreateLibraries()
 	{
-		shaderLibrary = std::make_shared<DX12ShaderLibrary>();
+		shaderLibrary = stackAllocator.MakeShared<DX12ShaderLibrary>();
+		//std::make_shared<DX12ShaderLibrary>();
 
-		rootSigLibrary = std::make_shared<DX12RootSignatureLibrary>();
+		rootSigLibrary = stackAllocator.MakeShared<DX12RootSignatureLibrary>();
 		rootSigLibrary->SetDevice(device);
 
-		streamOutputLibrary = std::make_shared<DX12StreamOutputLibrary>();
+		streamOutputLibrary = stackAllocator.MakeShared<DX12StreamOutputLibrary>();
 
-		inputLayoutLibrary = std::make_shared<DX12InputLayoutLibrary>();
+		inputLayoutLibrary = stackAllocator.MakeShared<DX12InputLayoutLibrary>();
 
-		gPipelineLibrary = std::make_shared<DX12GPipelineStateLibrary>();
+		gPipelineLibrary = stackAllocator.MakeShared<DX12GPipelineStateLibrary>();
 		gPipelineLibrary->SetDevice(device);
 
-		cPipelineLibrary = std::make_shared<DX12CPipelineStateLibrary>();
+		cPipelineLibrary = stackAllocator.MakeShared<DX12CPipelineStateLibrary>();
 		cPipelineLibrary->SetDevice(device);
 
-		spriteFontLibrary = std::make_shared<DX12SpriteFontLibrary>();
+		spriteFontLibrary = stackAllocator.MakeShared<DX12SpriteFontLibrary>();
 		spriteFontLibrary->frameCtx = frame;
 		spriteFontLibrary->resourceCtx = resources;
 	}
 
 	void DX12GraphicsModule::SetContextReferences()
 	{
-		heapManager = std::make_shared<DX12HeapManager>();
+		heapManager = stackAllocator.MakeShared<DX12HeapManager>();
 		heapManager->SetDevice(device);
 
 		resourcePool.SetHeapManager(heapManager);
@@ -201,7 +204,7 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 	void DX12GraphicsModule::CreateContexts() {
-		resourceContext = std::make_shared<DX12ResourceContext>();
+		resourceContext = stackAllocator.MakeShared<DX12ResourceContext>();
 		Netcode::Module::IGraphicsModule::resources = resourceContext.get();
 		Netcode::Module::IGraphicsModule::frame = this;
 	}
@@ -275,7 +278,7 @@ namespace Netcode::Graphics::DX12 {
 
 		CreateFences();
 
-		commandListPool = std::make_shared<DX12CommandListPool>(device);
+		commandListPool = stackAllocator.MakeShared<DX12CommandListPool>(device);
 
 		CreateContexts();
 

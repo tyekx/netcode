@@ -15,6 +15,8 @@ target_sources(Netcode PUBLIC
 	DX12CPipelineStateBuilder.h
 	DX12CPipelineStateLibrary.cpp
 	DX12CPipelineStateLibrary.h
+	DX12DebugContext.h
+	DX12DebugContext.cpp
 	DX12DynamicDescriptorHeap.cpp
 	DX12DynamicDescriptorHeap.h
 	DX12Fence.cpp

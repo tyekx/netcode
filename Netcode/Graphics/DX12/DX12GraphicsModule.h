@@ -1,5 +1,7 @@
 #pragma once
 
+#include <NetcodeFoundation/Memory.h>
+
 #include "../../Utility.h"
 #include "../../Modules.h"
 #include "../../BulkAllocator.hpp"
@@ -91,17 +93,20 @@ namespace Netcode::Graphics::DX12 {
 		}
 	};
 
-	class DX12GraphicsModule : public Netcode::Module::IGraphicsModule, Netcode::Graphics::IFrameContext {
+	class DX12GraphicsModule : public Module::IGraphicsModule, Graphics::IFrameContext {
 	private:
 		void CullFrameGraph(FrameGraphRef frameGraph);
 		void ExecuteFrameGraph(FrameGraphRef frameGraph);
 
 	protected:
-		Netcode::Module::AppEventSystem * eventSystem;
+		Module::AppEventSystem * eventSystem;
 		HWND hwnd;
 		com_ptr<ID3D12Debug3> debugController;
 
 		com_ptr<IDXGIFactory5> dxgiFactory;
+
+		Memory::StackAllocator stackAllocator;
+		Memory::ObjectAllocator objectAllocator;
 
 		com_ptr<IDXGISwapChain4> swapChain;
 		UINT swapChainFlags;

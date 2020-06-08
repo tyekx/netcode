@@ -34,6 +34,24 @@ namespace Netcode::Memory {
 		return ptr;
 	}
 
+	template<typename FROM, typename TO, typename ... U>
+	TO * Reconstruct(FROM ** ppData, U && ... args) {
+		if constexpr(!std::is_same<FROM, void>::value) {
+			(*ppData)->~FROM();
+		}
+		TO * pRawMem = reinterpret_cast<TO *>(*ppData);
+		*ppData = nullptr;
+		return new (pRawMem) TO{ std::forward<U>(args)... };
+	}
+
+	template<typename T>
+	T * Relocate(T * srcPtr, size_t numBytes) {
+		T * dstPtr = reinterpret_cast<T *>(reinterpret_cast<uint8_t *>(srcPtr) + numBytes);
+		new (dstPtr) T{ static_cast<const T &>(*srcPtr) };
+		srcPtr->~T();
+		return dstPtr;
+	}
+
 	class MemoryBlock {
 		void * ptr;
 	public:
@@ -47,8 +65,16 @@ namespace Netcode::Memory {
 		template<typename T, typename ... U>
 		inline T * Construct(U && ... args) {
 			T * typedPtr = static_cast<T *>(ptr);
-			new (typedPtr) T(std::forward<T>(args)...);
+			new (typedPtr) T ( std::forward<U>(args)... );
 			return typedPtr;
+		}
+
+		bool operator!=(std::nullptr_t) const {
+			return !operator==(nullptr);
+		}
+
+		bool operator==(std::nullptr_t) const {
+			return ptr == nullptr;
 		}
 	};
 

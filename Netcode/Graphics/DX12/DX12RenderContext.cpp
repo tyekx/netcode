@@ -1,3 +1,6 @@
+
+#include "../../Common.h"
+
 #include "DX12RenderContext.h"
 #include "DX12SpriteFont.h"
 #include "DX12Resource.h"
@@ -67,6 +70,26 @@ namespace Netcode::Graphics::DX12 {
 	{
 	}
 
+	void GraphicsContext::DebugDrawPoint(const Netcode::Float3 & worldPos, float extents)
+	{
+	}
+
+	void GraphicsContext::DebugDrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd)
+	{
+	}
+
+	void GraphicsContext::DebugDrawSphere(const Netcode::Float3 & worldPosOrigin, float radius)
+	{
+	}
+
+	void GraphicsContext::DebugDrawBoundingBox(const Netcode::Float3 & worldPosOrigin, const Netcode::Float3 & extents)
+	{
+	}
+
+	void GraphicsContext::DrawDebugPrimitives(const Netcode::Float4x4 & viewProjMatrix, bool depthEnabled)
+	{
+	}
+
 	void GraphicsContext::SetStencilReference(uint8_t stencilValue) {
 		commandList->OMSetStencilRef(stencilValue);
 	}
@@ -117,7 +140,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void GraphicsContext::Dispatch(uint32_t threadGroupX, uint32_t threadGroupY, uint32_t threadGroupZ)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void GraphicsContext::SetRootSignature(RootSignatureRef rs) {
@@ -403,6 +426,31 @@ namespace Netcode::Graphics::DX12 {
 		ResetStreamOutput();
 	}
 
+	void ComputeContext::DebugDrawPoint(const Netcode::Float3 & worldPos, float extents)
+	{
+		Netcode::Detail::NotImplementedAssertion();
+	}
+
+	void ComputeContext::DebugDrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd)
+	{
+		Netcode::Detail::NotImplementedAssertion();
+	}
+
+	void ComputeContext::DebugDrawSphere(const Netcode::Float3 & worldPosOrigin, float radius)
+	{
+		Netcode::Detail::NotImplementedAssertion();
+	}
+
+	void ComputeContext::DebugDrawBoundingBox(const Netcode::Float3 & worldPosOrigin, const Netcode::Float3 & extents)
+	{
+		Netcode::Detail::NotImplementedAssertion();
+	}
+
+	void ComputeContext::DrawDebugPrimitives(const Netcode::Float4x4 & viewProjMatrix, bool depthEnabled)
+	{
+		Netcode::Detail::NotImplementedAssertion();
+	}
+
 	void ComputeContext::SetRootSignature(RootSignatureRef rs)
 	{
 		commandList->SetComputeRootSignature(reinterpret_cast<ID3D12RootSignature *>(rs->GetImplDetail()));
@@ -415,32 +463,32 @@ namespace Netcode::Graphics::DX12 {
 
 	void ComputeContext::SetVertexBuffer(GpuResourceRef handle)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetIndexBuffer(GpuResourceRef handle)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::DrawIndexed(uint32_t indexCount)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::DrawIndexed(uint32_t indexCount, uint32_t vertexOffset)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::Draw(uint32_t vertexCount)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::Draw(uint32_t vertexCount, uint32_t vertexOffset)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::Dispatch(uint32_t threadGroupX, uint32_t threadGroupY, uint32_t threadGroupZ)
@@ -450,123 +498,127 @@ namespace Netcode::Graphics::DX12 {
 
 	void ComputeContext::SetPrimitiveTopology(PrimitiveTopology topology)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::ClearUnorderedAccessViewUint(GpuResourceRef handle, const DirectX::XMUINT4 & values)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::ClearRenderTarget(uint8_t idx)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::ClearRenderTarget(uint8_t idx, const float * clearColor)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::ClearDepthOnly()
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::ClearStencilOnly()
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::ClearDepthStencil()
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetStreamOutput(GpuResourceRef handle)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetStreamOutputFilledSize(GpuResourceRef handle, uint64_t byteOffset)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::ResetStreamOutput()
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetRenderTargets(std::initializer_list<GpuResourceRef> handles, GpuResourceRef depthStencil)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetStencilReference(uint8_t stencilValue)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetViewport(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetViewport(uint32_t width, uint32_t height)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetViewport()
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetScissorRect(uint32_t width, uint32_t height)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetScissorRect()
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetRenderTargets(GpuResourceRef renderTarget, GpuResourceRef depthStencil)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetRenderTargets(std::nullptr_t rt, std::nullptr_t ds)
 	{
-
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetRenderTargets(std::nullptr_t rt, ResourceViewsRef ds)
 	{
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetRenderTargets(ResourceViewsRef rt, std::nullptr_t ds)
 	{
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetRenderTargets(std::nullptr_t rt, GpuResourceRef ds)
 	{
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetRenderTargets(GpuResourceRef rt, std::nullptr_t ds)
 	{
+		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetRootConstants(int slot, const void * srcData, uint32_t numConstants)

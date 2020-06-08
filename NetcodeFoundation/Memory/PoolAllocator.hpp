@@ -3,7 +3,7 @@
 #include "Common.h"
 #include "ResourceAllocator.hpp"
 #include "SpyAllocator.hpp"
-#include "StdAllocatorProxy.hpp"
+#include "StdAllocatorAdapter.hpp"
 
 namespace Netcode::Memory {
 
@@ -111,11 +111,12 @@ namespace Netcode::Memory {
 		std::shared_ptr<Resource> resource;
 
 	protected:
-		template<typename T>
+
+		template<typename U>
 		MemoryBlock Allocate(size_t numElements) {
 			// changing stride for a pool allocator is a hard no
-			Detail::UndefinedBehaviourAssertion(resource->stride == sizeof(T));
-			// no support for arrays yet
+			Detail::UndefinedBehaviourAssertion(resource->stride == sizeof(U));
+			// no support for arrays
 			Detail::UndefinedBehaviourAssertion(numElements == 1);
 
 			if(resource->head != FreeListItem::NullValue) {
@@ -123,29 +124,26 @@ namespace Netcode::Memory {
 				resource->head = freeListItem->next;
 				freeListItem->~FreeListItem();
 
-				T * tPtr = reinterpret_cast<T *>(freeListItem);
+				U * tPtr = reinterpret_cast<U *>(freeListItem);
 				return tPtr;
 			} else {
 				// ran out of pre-allocated memory
-				Detail::OutOfRangeAssertion((resource->offset + sizeof(T) * numElements) <= resource->numBytes);
+				Detail::OutOfRangeAssertion((resource->offset + sizeof(U) * numElements) <= resource->numBytes);
 
-				T * tPtr = reinterpret_cast<T *>(resource->ptr + resource->offset);
-				resource->offset += sizeof(T) * numElements;
+				U * tPtr = reinterpret_cast<U *>(resource->ptr + resource->offset);
+				resource->offset += sizeof(U) * numElements;
 				return tPtr;
 			}
 		}
 
 	public:
-		using AllocType = typename PoolAllocator<T>;
+		using AllocType = PoolAllocator<T>;
 
 		PoolAllocator(size_t poolSize, size_t alignment) {
 			size_t stride = -1;
 			size_t poolSizeInBytes = -1;
 
 			using SpyType = SpyAllocator<AllocType>;
-
-
-			static_assert(sizeof(T) >= sizeof(FreeListItem), "FreeListItem is bigger than T");
 
 			if constexpr(std::is_integral<FreeListItemRef>::value) {
 				Detail::UndefinedBehaviourAssertion(poolSize < FreeListItem::NullValue);
@@ -178,7 +176,7 @@ namespace Netcode::Memory {
 
 			size_t headSize;
 			ResourceAllocator poolAlloc{ poolSizeInBytes, alignment, &headSize };
-			resource = std::allocate_shared<Resource, StdAllocatorProxy<Resource, ResourceAllocator>>(poolAlloc);
+			resource = std::allocate_shared<Resource, StdAllocatorAdapter<Resource, ResourceAllocator>>(poolAlloc);
 			resource->ptr = reinterpret_cast<uint8_t *>(resource.get()) + headSize;
 			resource->numBytes = poolSizeInBytes;
 			resource->stride = stride;
@@ -191,7 +189,7 @@ namespace Netcode::Memory {
 		*/
 		template<typename ... U>
 		typename std::conditional<is_shared_ptr<T>::value, T, T *>::type Construct(U && ... args) {
-			using Proxy = StdAllocatorProxy< T, AllocType >;
+			using Proxy = StdAllocatorAdapter<T, AllocType>;
 			// since T is a shared_ptr<W>, it'll have a T::element_type
 			if constexpr(is_shared_ptr<T>::value) {
 				return std::allocate_shared<typename T::element_type, Proxy, U...>(

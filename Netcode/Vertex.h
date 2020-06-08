@@ -67,8 +67,8 @@ namespace Netcode {
 	struct PC_Vertex {
 		constexpr static int type = 5;
 
-		DirectX::XMFLOAT3 position;
-		DirectX::XMFLOAT3 color;
+		Netcode::Float3 position;
+		Netcode::Float3 color;
 	};
 
 }
