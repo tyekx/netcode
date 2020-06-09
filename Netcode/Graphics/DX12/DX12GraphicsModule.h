@@ -226,6 +226,10 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual DirectX::XMUINT2 GetBackbufferSize() const override;
 
+		virtual DXGI_FORMAT GetBackbufferFormat() const override;
+
+		virtual DXGI_FORMAT GetDepthStencilFormat() const override;
+
 		void ReleaseSwapChainResources();
 
 		void CreateSwapChainResources();

@@ -588,6 +588,14 @@ namespace Netcode::Graphics::DX12 {
 		return DirectX::XMUINT2{ width, height };
 	}
 
+	DXGI_FORMAT DX12GraphicsModule::GetBackbufferFormat() const {
+		return renderTargetFormat;
+	}
+
+	DXGI_FORMAT DX12GraphicsModule::GetDepthStencilFormat() const {
+		return depthStencilFormat;
+	}
+
 	void DX12GraphicsModule::ReleaseSwapChainResources() {
 		Log::Debug("Releasing Swap Chain resources");
 
