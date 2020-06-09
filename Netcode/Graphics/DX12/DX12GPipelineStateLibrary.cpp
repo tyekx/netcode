@@ -1,9 +1,10 @@
 #include "DX12GPipelineStateLibrary.h"
 
 namespace Netcode::Graphics::DX12 {
-	
-	void GPipelineStateLibrary::SetDevice(com_ptr<ID3D12Device> dev) {
-		device = std::move(dev);
+
+	GPipelineStateLibrary::GPipelineStateLibrary(Memory::ObjectAllocator allocator, com_ptr<ID3D12Device> device) : objectAllocator{ allocator }, gpsos { BuilderAllocator<DX12GPipelineStateRef>{ allocator} }, device{ std::move(device) }
+	{
+		gpsos.reserve(16);
 	}
 
 	PipelineStateRef Netcode::Graphics::DX12::GPipelineStateLibrary::GetGraphicsPipelineState(GPipelineStateDesc && gDesc) {
@@ -12,7 +13,12 @@ namespace Netcode::Graphics::DX12 {
 				return i;
 			}
 		}
-		return gpsos.emplace_back(std::make_shared<DX12GPipelineState>(device.Get(), std::move(gDesc)));
+
+		auto pso = objectAllocator.MakeShared<DX12GPipelineState>(device.Get(), std::move(gDesc));
+
+		gpsos.emplace_back(pso);
+
+		return pso;
 	}
 
 }

@@ -28,7 +28,8 @@ namespace Netcode::Memory {
 			return p;
 		}
 
-		static void Deallocate(void * ptr, size_t n) {
+		template<typename T>
+		static void Deallocate(T * ptr, size_t n) {
 			AlignedFree(ptr);
 		}
 	};

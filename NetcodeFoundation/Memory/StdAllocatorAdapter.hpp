@@ -11,16 +11,16 @@ namespace Netcode::Memory {
 		using pointer = T *;
 		using const_pointer = const T *;
 
-		using NC_ALLOC_T::NC_ALLOC_T;
-
 		StdAllocatorAdapter(const NC_ALLOC_T & rhs) : NC_ALLOC_T{ rhs } { }
+		StdAllocatorAdapter(StdAllocatorAdapter &&) noexcept = default;
+		StdAllocatorAdapter(const StdAllocatorAdapter &) = default;
 
 		pointer allocate(size_t n) {
 			return static_cast<pointer>(NC_ALLOC_T::template Allocate<T>(n).Data());
 		}
 
-		void deallocate(void * p, size_t s) {
-			NC_ALLOC_T::Deallocate(p, s);
+		void deallocate(T * p, size_t s) {
+			NC_ALLOC_T::template Deallocate<T>(p, s);
 		}
 
 		template<typename ... U>

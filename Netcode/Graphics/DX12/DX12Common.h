@@ -1,8 +1,6 @@
 #pragma once
 
-#if !defined(NOMINMAX)
-#define NOMINMAX
-#endif
+#include <NetcodeFoundation/Memory.h>
 
 #include <d3d12.h>
 #include <d3dcompiler.h>
@@ -14,6 +12,12 @@ template<typename T>
 using com_ptr = Microsoft::WRL::ComPtr<T>;
 
 namespace Netcode::Graphics::DX12 {
+
+	template<typename T>
+	using BuilderAllocator = Memory::StdAllocatorAdapter<T, Memory::ObjectAllocator>;
+
+	template<typename T>
+	using BuilderContainer = std::vector<T, BuilderAllocator<T>>;
 
 	void DebugDestruction(IUnknown * pUnknown);
 
@@ -41,11 +45,11 @@ namespace Netcode::Graphics::DX12 {
 	std::wstring RootSigDebugName(const std::wstring & fileReference);
 
 	std::wstring IndexedDebugName(const char * prefix, uint32_t idx);
-}
-
-namespace Netcode::Internal {
 
 	void DebugDestructionCallback(void * pData);
+}
+
+namespace Netcode::Detail {
 
 	class HResultTester {
 	public:
@@ -61,4 +65,4 @@ namespace Netcode::Internal {
 
 }
 
-#define DX_API(msg, ...) Netcode::Internal::HResultTester(msg, __FILE__, __LINE__, __VA_ARGS__) <<
+#define DX_API(msg, ...) Netcode::Detail::HResultTester(msg, __FILE__, __LINE__, __VA_ARGS__) <<

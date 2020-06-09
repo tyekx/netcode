@@ -5,10 +5,11 @@
 namespace Netcode::Graphics::DX12 {
 
 	class CPipelineStateLibrary {
-		std::vector<DX12CPipelineStateRef> cpsos;
+		Memory::ObjectAllocator objectAllocator;
+		BuilderContainer<DX12CPipelineStateRef> cpsos;
 		com_ptr<ID3D12Device> device;
 	public:
-		void SetDevice(com_ptr<ID3D12Device> dev);
+		CPipelineStateLibrary(Memory::ObjectAllocator allocator, com_ptr<ID3D12Device> device);
 
 		PipelineStateRef GetComputePipelineState(CPipelineStateDesc && cDesc);
 	};

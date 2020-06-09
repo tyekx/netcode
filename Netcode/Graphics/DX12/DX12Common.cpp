@@ -48,7 +48,7 @@ namespace Netcode::Graphics::DX12 {
 		DX_API("Failed to query notifier interface")
 			pUnknown->QueryInterface(&notifier);
 
-		notifier->RegisterDestructionCallback(&Netcode::Internal::DebugDestructionCallback, pUnknown, nullptr);
+		notifier->RegisterDestructionCallback(&DebugDestructionCallback, pUnknown, nullptr);
 
 		notifier->Release();
 	}
@@ -110,40 +110,44 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 
-}
-
-Netcode::Internal::HResultTester::HResultTester(const char * msg, const char * file, int line, ...) :
-	message{ msg }, file{ file }, line{ line } {
-	va_list l;
-	va_start(l, line);
-	va_copy(args, l);
-	va_end(l);
-}
-
-void Netcode::Internal::HResultTester::operator<<(HRESULT hr) {
-	if(FAILED(hr)) {
-		std::ostringstream oss;
-		oss << file << "(" << line << "): " << message;
-		std::string buffer;
-		buffer.resize(1024);
-
-		vsprintf_s(&(buffer.at(0)), 1024, oss.str().c_str(), args);
-		va_end(args);
-
-		Log::Error(buffer.c_str());
-
-		_com_error err(hr);
-		Log::Info(err.ErrorMessage());
-
-		if(IsDebuggerPresent()) {
-			DebugBreak();
-		}
-		exit(-1);
+	void DebugDestructionCallback(void * pData)
+	{
+		DebugBreak();
 	}
-	va_end(args);
+
 }
 
-void Netcode::Internal::DebugDestructionCallback(void * pData)
-{
-	DebugBreak();
+namespace Netcode::Detail{
+
+	HResultTester::HResultTester(const char * msg, const char * file, int line, ...) :
+		message{ msg }, file{ file }, line{ line } {
+		va_list l;
+		va_start(l, line);
+		va_copy(args, l);
+		va_end(l);
+	}
+
+	void HResultTester::operator<<(HRESULT hr) {
+		if(FAILED(hr)) {
+			std::ostringstream oss;
+			oss << file << "(" << line << "): " << message;
+			std::string buffer;
+			buffer.resize(1024);
+
+			vsprintf_s(&(buffer.at(0)), 1024, oss.str().c_str(), args);
+			va_end(args);
+
+			Log::Error(buffer.c_str());
+
+			_com_error err(hr);
+			Log::Info(err.ErrorMessage());
+
+			if(IsDebuggerPresent()) {
+				DebugBreak();
+			}
+			exit(-1);
+		}
+		va_end(args);
+	}
+
 }

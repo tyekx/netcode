@@ -4,12 +4,15 @@
 
 namespace Netcode::Graphics::DX12 {
 	class InputLayoutLibrary {
-		std::vector<DX12InputLayoutRef> inputLayouts;
+		BuilderContainer<DX12InputLayoutRef> inputLayouts;
+		Memory::ObjectAllocator objectAllocator;
 
 	public:
-		InputLayoutRef Insert(std::vector<D3D12_INPUT_ELEMENT_DESC> inputElements);
+		InputLayoutLibrary(Memory::ObjectAllocator allocator);
 
-		InputLayoutRef GetInputLayout(const std::vector<D3D12_INPUT_ELEMENT_DESC> & desc);
+		InputLayoutRef Insert(BuilderContainer<D3D12_INPUT_ELEMENT_DESC> inputElements);
+
+		InputLayoutRef GetInputLayout(const BuilderContainer<D3D12_INPUT_ELEMENT_DESC> & desc);
 	};
 
 	using DX12InputLayoutLibrary = Netcode::Graphics::DX12::InputLayoutLibrary;

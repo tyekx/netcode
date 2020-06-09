@@ -2,6 +2,11 @@
 #include <algorithm>
 
 namespace Netcode::Graphics::DX12 {
+	StreamOutputLibrary::StreamOutputLibrary(Memory::ObjectAllocator allocator) : objectAllocator{ allocator },
+		streamOutputs{ BuilderAllocator<DX12StreamOutputRef>{ allocator } }
+	{
+		streamOutputs.reserve(8);
+	}
 
 	void StreamOutputLibrary::Insert(DX12StreamOutputRef soRef) {
 		streamOutputs.push_back(std::move(soRef));

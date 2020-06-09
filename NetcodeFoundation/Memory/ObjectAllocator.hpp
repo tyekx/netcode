@@ -89,6 +89,23 @@ namespace Netcode::Memory {
                 defragRight = head;
             }
 
+            void RemoveIgnoreCache(FreeListItem * item) {
+                if(item->prev != nullptr) {
+                    item->prev->next = item->next;
+                } else {
+                    head = item->next;
+                }
+
+                if(item->next != nullptr) {
+                    item->next->prev = item->prev;
+                } else {
+                    tail = item->prev;
+                }
+
+                item->next = nullptr;
+                item->prev = nullptr;
+            }
+
         public:
             FreeList() : head{ nullptr }, tail{ nullptr }, defragLeft{ nullptr }, defragRight{ nullptr } { }
 
@@ -117,7 +134,7 @@ namespace Netcode::Memory {
                     if((rightPtr + defragRight->numBytes) == pagePtr) {
                         pagePtr -= defragRight->numBytes;
                         pageHeader.offset -= defragRight->numBytes;
-                        Remove(defragRight);
+                        RemoveIgnoreCache(defragRight);
                         Destroy(defragRight);
                         ResetDefragPointers();
                         continue;
@@ -125,7 +142,7 @@ namespace Netcode::Memory {
 
                     if((leftPtr + defragLeft->numBytes) == rightPtr) {
                         defragLeft->numBytes += defragRight->numBytes;
-                        Remove(defragRight);
+                        RemoveIgnoreCache(defragRight);
                         Destroy(defragRight);
                         ResetDefragPointers();
                         continue;
@@ -144,9 +161,6 @@ namespace Netcode::Memory {
 
             // sorted insertion
             void Insert(FreeListItem * item) {
-                defragLeft = nullptr;
-                defragRight = nullptr;
-
                 if(head == nullptr) {
                     head = item;
                     tail = item;
@@ -189,20 +203,15 @@ namespace Netcode::Memory {
             }
 
             void Remove(FreeListItem * item) {
-                if(item->prev != nullptr) {
-                    item->prev->next = item->next;
-                } else {
-                    head = item->next;
+                if(defragRight == item) {
+                    defragRight = item->next;
                 }
 
-                if(item->next != nullptr) {
-                    item->next->prev = item->prev;
-                } else {
-                    tail = item->prev;
+                if(defragLeft == item) {
+                    defragLeft = item->next;
                 }
 
-                item->next = nullptr;
-                item->prev = nullptr;
+                RemoveIgnoreCache(item);
             }
 
             FreeListItem * Head() {
@@ -262,7 +271,7 @@ namespace Netcode::Memory {
                 constexpr size_t headSize = sizeof(AllocMetaData);
 
                 for(FreeListItem * iter = freeList.Head(); iter != nullptr; iter = iter->next) {
-                    size_t alignmentCorrection = iter->GetCorrectionSize(headSize, alignment);
+                    size_t alignmentCorrection = GetAlignmentCorrection(iter->AddressOf(), headSize, alignment);
                     size_t totalSizeInBytes = iter->GetTotalAllocationSize(headSize, requestedMemory, alignment, alignmentCorrection);
 
                     if(iter->CanFit(totalSizeInBytes)) {
@@ -307,9 +316,6 @@ namespace Netcode::Memory {
                     mData->numElements = n;
 
                     header.offset += totalSize;
-
-
-                    Detail::UndefinedBehaviourAssertion(iter->numBytes >= totalSizeInBytes);
 
                     return MemoryBlock{ static_cast<void *>(mData + 1) };
                 }
@@ -377,19 +383,25 @@ namespace Netcode::Memory {
             resource = std::make_shared<Resource>(defaultPageSize, defaultAlignment);
         }
 
+        ObjectAllocator(const ObjectAllocator &) = default;
+
+        // having a move constructor disallows us to deallocate in some situations
+        ObjectAllocator(ObjectAllocator &&) noexcept = delete;
+
+
         template<typename T>
-        MemoryBlock Allocate(size_t numElements, size_t alignment = 16) {
+        MemoryBlock Allocate(size_t numElements) {
             for(auto & i : resource->pages) {
-                MemoryBlock b = i->Allocate<T>(numElements, alignment);
+                MemoryBlock b = i->Allocate<T>(numElements, resource->defaultAlignment);
 
                 if(b != nullptr) {
                     return b;
                 }
             }
 
-            size_t approxSize = numElements * sizeof(T) + alignment;
+            size_t approxSize = numElements * sizeof(T) + resource->defaultAlignment;
 
-            MemoryBlock blk = resource->CreatePage(std::max(approxSize, defaultAlignment), defaultAlignment)->Allocate<T>(numElements, alignment);
+            MemoryBlock blk = resource->CreatePage(std::max(approxSize, resource->defaultPageSize), resource->defaultAlignment)->Allocate<T>(numElements, resource->defaultAlignment);
 
             Detail::UndefinedBehaviourAssertion(blk != nullptr);
 
@@ -410,9 +422,7 @@ namespace Netcode::Memory {
 
         template<typename T, typename ... U>
         std::shared_ptr<T> MakeShared(U && ... args) {
-            StdAllocatorAdapter<T, ObjectAllocator> alloc{ *this };
-
-            return std::allocate_shared<T>(alloc, std::forward<U>(args)...);
+           return std::allocate_shared<T>(StdAllocatorAdapter<T, ObjectAllocator>{ *this }, std::forward<U>(args)...);
         }
 
         void Defragment(uint64_t maxSteps = std::numeric_limits<uint64_t>::max()) {

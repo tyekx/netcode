@@ -2,9 +2,12 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	void CPipelineStateLibrary::SetDevice(com_ptr<ID3D12Device> dev)
+	CPipelineStateLibrary::CPipelineStateLibrary(Memory::ObjectAllocator allocator, com_ptr<ID3D12Device> device) :
+		objectAllocator{ allocator },
+		cpsos{ BuilderAllocator<DX12CPipelineStateRef>(allocator) },
+		device { std::move(device) }
 	{
-		device = std::move(dev);
+		cpsos.reserve(8);
 	}
 
 	PipelineStateRef CPipelineStateLibrary::GetComputePipelineState(CPipelineStateDesc && cDesc)
@@ -14,7 +17,12 @@ namespace Netcode::Graphics::DX12 {
 				return i;
 			}
 		}
-		return cpsos.emplace_back(std::make_shared<DX12CPipelineState>(device.Get(), std::move(cDesc)));
+
+		auto cpso = objectAllocator.MakeShared<DX12CPipelineState>(device.Get(), std::move(cDesc));
+
+		cpsos.emplace_back(cpso);
+
+		return cpso;
 	}
 
 }

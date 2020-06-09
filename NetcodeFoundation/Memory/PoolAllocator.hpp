@@ -158,7 +158,7 @@ namespace Netcode::Memory {
 
 			if constexpr(is_shared_ptr<T>::value) {
 				try {
-					T sPtr = std::allocate_shared<typename T::element_type, StdAllocatorProxy<typename T::element_type, SpyType>>(*this);
+					T sPtr = std::allocate_shared<typename T::element_type, StdAllocatorAdapter<typename T::element_type, SpyType>>(*this);
 
 					// always undefined behaviour if the previous call does not throw
 					Detail::UndefinedBehaviourAssertion(false);
@@ -189,11 +189,11 @@ namespace Netcode::Memory {
 		*/
 		template<typename ... U>
 		typename std::conditional<is_shared_ptr<T>::value, T, T *>::type Construct(U && ... args) {
-			using Proxy = StdAllocatorAdapter<T, AllocType>;
+			using Adapter = StdAllocatorAdapter<T, AllocType>;
 			// since T is a shared_ptr<W>, it'll have a T::element_type
 			if constexpr(is_shared_ptr<T>::value) {
-				return std::allocate_shared<typename T::element_type, Proxy, U...>(
-					Proxy{ *this },
+				return std::allocate_shared<typename T::element_type, Adapter, U...>(
+					Adapter{ *this },
 					std::forward<U>(args)...
 					);
 			} else {
@@ -201,7 +201,8 @@ namespace Netcode::Memory {
 			}
 		}
 
-		void Deallocate(void * p, size_t s) {
+		template<typename U>
+		void Deallocate(U * p, size_t s) {
 			Detail::UndefinedBehaviourAssertion(s == 1);
 
 			FreeListItem * ptr = reinterpret_cast<FreeListItem *>(p);

@@ -5,8 +5,9 @@
 namespace Netcode::Graphics::DX12 {
 
 	class RootSignatureLibrary {
+		Memory::ObjectAllocator objectAllocator;
+		BuilderContainer<DX12RootSignatureRef> rootSigs;
 		com_ptr<ID3D12Device> device;
-		std::vector<DX12RootSignatureRef> rootSigs;
 
 		static bool IsCompatible(const D3D12_ROOT_SIGNATURE_DESC & lhs, const D3D12_ROOT_SIGNATURE_DESC & rhs);
 
@@ -25,7 +26,7 @@ namespace Netcode::Graphics::DX12 {
 		// does LHS provide a compatible interface for RHS
 		static bool IsCompatible(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & lhs, const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & rhs);
 	public:
-		void SetDevice(com_ptr<ID3D12Device> dev);
+		RootSignatureLibrary(Memory::ObjectAllocator allocator, com_ptr<ID3D12Device> device);
 
 		RootSignatureRef GetRootSignature(ShaderBytecodeRef blobWithRootSig);
 

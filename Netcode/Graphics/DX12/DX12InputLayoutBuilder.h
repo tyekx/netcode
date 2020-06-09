@@ -6,11 +6,11 @@
 namespace Netcode::Graphics::DX12 {
 
 	class InputLayoutBuilder : public Netcode::InputLayoutBuilder {
-		std::vector<D3D12_INPUT_ELEMENT_DESC> inputElements;
+		BuilderContainer<D3D12_INPUT_ELEMENT_DESC> inputElements;
 		DX12InputLayoutLibraryRef inputLayoutLibrary;
 	public:
 
-		InputLayoutBuilder(DX12InputLayoutLibraryRef libRef);
+		InputLayoutBuilder(Memory::ObjectAllocator allocator, DX12InputLayoutLibraryRef libRef);
 
 		virtual void AddInputElement(const char * semanticName, DXGI_FORMAT format) override;
 

@@ -61,7 +61,6 @@ namespace Netcode::Memory {
 			return ptr;
 		}
 
-		// @TODO: add noexcept conditional
 		template<typename T, typename ... U>
 		inline T * Construct(U && ... args) {
 			T * typedPtr = static_cast<T *>(ptr);

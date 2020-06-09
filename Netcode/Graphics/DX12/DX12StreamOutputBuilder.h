@@ -6,13 +6,14 @@
 namespace Netcode::Graphics::DX12 {
 
 	class StreamOutputBuilder : public Netcode::StreamOutputBuilder {
-		std::vector<D3D12_SO_DECLARATION_ENTRY> declarations;
-		std::vector<UINT> strides;
+		Memory::ObjectAllocator objectAllocator;
+		BuilderContainer<D3D12_SO_DECLARATION_ENTRY> declarations;
+		BuilderContainer<UINT> strides;
 		UINT rasterizedStream;
 		DX12StreamOutputLibraryRef streamOutputLibrary;
 	public:
 
-		StreamOutputBuilder(DX12StreamOutputLibraryRef streamOutputLib);
+		StreamOutputBuilder(Memory::ObjectAllocator alloc, DX12StreamOutputLibraryRef streamOutputLib);
 
 		virtual void AddStreamOutputEntry(const char * semanticName, uint8_t componentCount, uint8_t outputSlot, uint8_t startComponent, uint32_t stream) override;
 

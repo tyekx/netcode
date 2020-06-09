@@ -3,14 +3,16 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	InputLayout::InputLayout(const D3D12_INPUT_LAYOUT_DESC & il, std::vector<D3D12_INPUT_ELEMENT_DESC> && elements) : inputLayout{ il }, elements{ std::move(elements) } { }
+	InputLayout::InputLayout(BuilderContainer<D3D12_INPUT_ELEMENT_DESC> elements) : inputLayout{ }, elements{ std::move(elements) } {
+		inputLayout.NumElements = this->elements.size();
+		inputLayout.pInputElementDescs = this->elements.data();
+	}
 
 	const D3D12_INPUT_LAYOUT_DESC & InputLayout::GetNativeInputLayout() const {
 		return inputLayout;
 	}
 
-	// @TODO: handle the automatically aligned version
-	bool InputLayout::operator==(const std::vector<D3D12_INPUT_ELEMENT_DESC> & rhs) const {
+	bool InputLayout::operator==(const BuilderContainer<D3D12_INPUT_ELEMENT_DESC> & rhs) const {
 		if(elements.size() != rhs.size()) {
 			return false;
 		}

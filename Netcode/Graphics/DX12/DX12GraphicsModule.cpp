@@ -168,20 +168,17 @@ namespace Netcode::Graphics::DX12 {
 		shaderLibrary = stackAllocator.MakeShared<DX12ShaderLibrary>();
 		//std::make_shared<DX12ShaderLibrary>();
 
-		rootSigLibrary = stackAllocator.MakeShared<DX12RootSignatureLibrary>();
-		rootSigLibrary->SetDevice(device);
+		rootSigLibrary = stackAllocator.MakeShared<DX12RootSignatureLibrary>(objectAllocator, device);
 
-		streamOutputLibrary = stackAllocator.MakeShared<DX12StreamOutputLibrary>();
+		streamOutputLibrary = stackAllocator.MakeShared<DX12StreamOutputLibrary>(objectAllocator);
 
-		inputLayoutLibrary = stackAllocator.MakeShared<DX12InputLayoutLibrary>();
+		inputLayoutLibrary = stackAllocator.MakeShared<DX12InputLayoutLibrary>(objectAllocator);
 
-		gPipelineLibrary = stackAllocator.MakeShared<DX12GPipelineStateLibrary>();
-		gPipelineLibrary->SetDevice(device);
+		gPipelineLibrary = stackAllocator.MakeShared<DX12GPipelineStateLibrary>(objectAllocator, device);
 
-		cPipelineLibrary = stackAllocator.MakeShared<DX12CPipelineStateLibrary>();
-		cPipelineLibrary->SetDevice(device);
+		cPipelineLibrary = stackAllocator.MakeShared<DX12CPipelineStateLibrary>(objectAllocator, device);
 
-		spriteFontLibrary = stackAllocator.MakeShared<DX12SpriteFontLibrary>();
+		spriteFontLibrary = stackAllocator.MakeShared<DX12SpriteFontLibrary>(objectAllocator);
 		spriteFontLibrary->frameCtx = frame;
 		spriteFontLibrary->resourceCtx = resources;
 	}
@@ -243,6 +240,10 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 	void DX12GraphicsModule::Start(Module::AApp * app)  {
+		objectAllocator.SetDefaultAlignment(8);
+		objectAllocator.SetDefaultPageSize(1<<18);
+		objectAllocator.ReserveFirstPage();
+
 		eventSystem = app->events.get();
 		if(app->window != nullptr) {
 			hwnd = reinterpret_cast<HWND>(app->window->GetUnderlyingPointer());
@@ -579,6 +580,8 @@ namespace Netcode::Graphics::DX12 {
 			CullFrameGraph(frameGraph);
 		}
 		ExecuteFrameGraph(frameGraph);
+
+		objectAllocator.Defragment(16);
 	}
 
 	DirectX::XMUINT2 DX12GraphicsModule::GetBackbufferSize() const {
@@ -637,52 +640,52 @@ namespace Netcode::Graphics::DX12 {
 		backbufferIndex = swapChain->GetCurrentBackBufferIndex();
 	}
 
-	FenceRef DX12GraphicsModule::CreateFence(uint64_t initialValue) const
+	FenceRef DX12GraphicsModule::CreateFence(uint64_t initialValue)
 	{
-		return std::make_shared<DX12Fence>(device.Get(), initialValue);
+		return objectAllocator.MakeShared<DX12Fence>(device.Get(), initialValue);
 	}
 	
-	ShaderBuilderRef DX12GraphicsModule::CreateShaderBuilder() const {
-		return std::make_shared<DX12ShaderBuilder>(shaderLibrary);
+	ShaderBuilderRef DX12GraphicsModule::CreateShaderBuilder() {
+		return objectAllocator.MakeShared<DX12ShaderBuilder>(shaderLibrary);
 	}
 
-	GPipelineStateBuilderRef DX12GraphicsModule::CreateGPipelineStateBuilder() const {
-		return std::make_shared<DX12GPipelineStateBuilder>(gPipelineLibrary);
+	GPipelineStateBuilderRef DX12GraphicsModule::CreateGPipelineStateBuilder() {
+		return objectAllocator.MakeShared<DX12GPipelineStateBuilder>(gPipelineLibrary);
 	}
 
-	CPipelineStateBuilderRef DX12GraphicsModule::CreateCPipelineStateBuilder() const
+	CPipelineStateBuilderRef DX12GraphicsModule::CreateCPipelineStateBuilder()
 	{
-		return std::make_shared<DX12CPipelineStateBuilder>(cPipelineLibrary);
+		return objectAllocator.MakeShared<DX12CPipelineStateBuilder>(cPipelineLibrary);
 	}
 
-	InputLayoutBuilderRef DX12GraphicsModule::CreateInputLayoutBuilder() const {
-		return std::make_shared<DX12InputLayoutBuilder>(inputLayoutLibrary);
+	InputLayoutBuilderRef DX12GraphicsModule::CreateInputLayoutBuilder() {
+		return objectAllocator.MakeShared<DX12InputLayoutBuilder>(objectAllocator, inputLayoutLibrary);
 	}
 
-	StreamOutputBuilderRef DX12GraphicsModule::CreateStreamOutputBuilder() const {
-		return std::make_shared<DX12StreamOutputBuilder>(streamOutputLibrary);
+	StreamOutputBuilderRef DX12GraphicsModule::CreateStreamOutputBuilder() {
+		return objectAllocator.MakeShared<DX12StreamOutputBuilder>(objectAllocator, streamOutputLibrary);
 	}
 
-	RootSignatureBuilderRef DX12GraphicsModule::CreateRootSignatureBuilder() const {
-		return std::make_shared<DX12RootSignatureBuilder>(rootSigLibrary);
+	RootSignatureBuilderRef DX12GraphicsModule::CreateRootSignatureBuilder() {
+		return objectAllocator.MakeShared<DX12RootSignatureBuilder>(rootSigLibrary);
 	}
 
-	SpriteFontBuilderRef DX12GraphicsModule::CreateSpriteFontBuilder() const {
-		return std::make_shared<DX12SpriteFontBuilder>(spriteFontLibrary);
+	SpriteFontBuilderRef DX12GraphicsModule::CreateSpriteFontBuilder() {
+		return objectAllocator.MakeShared<DX12SpriteFontBuilder>(spriteFontLibrary);
 	}
 
-	SpriteBatchBuilderRef DX12GraphicsModule::CreateSpriteBatchBuilder() const
+	SpriteBatchBuilderRef DX12GraphicsModule::CreateSpriteBatchBuilder()
 	{
-		return std::make_shared<DX12SpriteBatchBuilder>(this);
+		return objectAllocator.MakeShared<DX12SpriteBatchBuilder>(this);
 	}
 
-	TextureBuilderRef DX12GraphicsModule::CreateTextureBuilder() const {
-		return std::make_shared<DX12TextureBuilder>();
+	TextureBuilderRef DX12GraphicsModule::CreateTextureBuilder() {
+		return objectAllocator.MakeShared<DX12TextureBuilder>();
 	}
 
-	FrameGraphBuilderRef DX12GraphicsModule::CreateFrameGraphBuilder() const
+	FrameGraphBuilderRef DX12GraphicsModule::CreateFrameGraphBuilder()
 	{
-		return std::make_shared<DX12FrameGraphBuilder>(resourceContext);
+		return objectAllocator.MakeShared<DX12FrameGraphBuilder>(resourceContext);
 	}
 
 }

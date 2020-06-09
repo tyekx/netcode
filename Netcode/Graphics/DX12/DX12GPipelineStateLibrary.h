@@ -7,10 +7,11 @@
 namespace Netcode::Graphics::DX12 {
 
 	class GPipelineStateLibrary {
-		std::vector<DX12GPipelineStateRef> gpsos;
+		Memory::ObjectAllocator objectAllocator;
+		BuilderContainer<DX12GPipelineStateRef> gpsos;
 		com_ptr<ID3D12Device> device;
 	public:
-		void SetDevice(com_ptr<ID3D12Device> dev);
+		GPipelineStateLibrary(Memory::ObjectAllocator allocator, com_ptr<ID3D12Device> device);
 
 		PipelineStateRef GetGraphicsPipelineState(GPipelineStateDesc && gDesc);
 	};

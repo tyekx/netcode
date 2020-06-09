@@ -2,7 +2,7 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	StreamOutput::StreamOutput(const D3D12_STREAM_OUTPUT_DESC & so, std::vector<D3D12_SO_DECLARATION_ENTRY> && soDecl, std::vector<UINT> && strides) :
+	StreamOutput::StreamOutput(const D3D12_STREAM_OUTPUT_DESC & so, BuilderContainer<D3D12_SO_DECLARATION_ENTRY> soDecl, BuilderContainer<UINT> strides) :
 		streamOutput{ so }, declarations{ std::move(soDecl) }, strides{ std::move(strides) } { }
 
 	const D3D12_STREAM_OUTPUT_DESC & StreamOutput::GetNativeStreamOutput() const {

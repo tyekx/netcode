@@ -168,8 +168,12 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 
-	void RootSignatureLibrary::SetDevice(com_ptr<ID3D12Device> dev) {
-		device = std::move(dev);
+	RootSignatureLibrary::RootSignatureLibrary(Memory::ObjectAllocator allocator, com_ptr<ID3D12Device> device) :
+		objectAllocator{ allocator },
+		rootSigs{ allocator },
+		device { std::move(device) }
+	{
+
 	}
 
 	RootSignatureRef RootSignatureLibrary::GetRootSignature(ShaderBytecodeRef blobWithRootSig) {

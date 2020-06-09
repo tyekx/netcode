@@ -230,27 +230,27 @@ namespace Netcode::Graphics::DX12 {
 
 		void CreateSwapChainResources();
 
-		virtual FenceRef CreateFence(uint64_t initialValue) const override;
+		virtual FenceRef CreateFence(uint64_t initialValue) override;
 
-		virtual ShaderBuilderRef CreateShaderBuilder() const override;
+		virtual ShaderBuilderRef CreateShaderBuilder() override;
 
-		virtual GPipelineStateBuilderRef CreateGPipelineStateBuilder() const override;
+		virtual GPipelineStateBuilderRef CreateGPipelineStateBuilder() override;
 
-		virtual CPipelineStateBuilderRef CreateCPipelineStateBuilder() const override;
+		virtual CPipelineStateBuilderRef CreateCPipelineStateBuilder() override;
 
-		virtual InputLayoutBuilderRef CreateInputLayoutBuilder() const override;
+		virtual InputLayoutBuilderRef CreateInputLayoutBuilder() override;
 
-		virtual StreamOutputBuilderRef CreateStreamOutputBuilder() const override;
+		virtual StreamOutputBuilderRef CreateStreamOutputBuilder() override;
 
-		virtual RootSignatureBuilderRef CreateRootSignatureBuilder() const override;
+		virtual RootSignatureBuilderRef CreateRootSignatureBuilder() override;
 
-		virtual SpriteFontBuilderRef CreateSpriteFontBuilder() const override;
+		virtual SpriteFontBuilderRef CreateSpriteFontBuilder() override;
 
-		virtual SpriteBatchBuilderRef CreateSpriteBatchBuilder() const override;
+		virtual SpriteBatchBuilderRef CreateSpriteBatchBuilder() override;
 
-		virtual TextureBuilderRef CreateTextureBuilder() const override;
+		virtual TextureBuilderRef CreateTextureBuilder() override;
 
-		virtual FrameGraphBuilderRef CreateFrameGraphBuilder() const override;
+		virtual FrameGraphBuilderRef CreateFrameGraphBuilder() override;
 
 	};
 

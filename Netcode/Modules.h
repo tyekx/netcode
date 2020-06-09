@@ -163,18 +163,17 @@ namespace Netcode::Module {
 		virtual RECT GetDisplayRect() const = 0;
 		virtual void * GetSwapChain() const = 0;
 
-		virtual FenceRef CreateFence(uint64_t initialValue) const = 0;
-
-		virtual ShaderBuilderRef CreateShaderBuilder() const = 0;
-		virtual GPipelineStateBuilderRef CreateGPipelineStateBuilder() const = 0;
-		virtual CPipelineStateBuilderRef CreateCPipelineStateBuilder() const = 0;
-		virtual InputLayoutBuilderRef CreateInputLayoutBuilder() const = 0;
-		virtual StreamOutputBuilderRef CreateStreamOutputBuilder() const = 0;
-		virtual RootSignatureBuilderRef CreateRootSignatureBuilder() const = 0;
-		virtual SpriteFontBuilderRef CreateSpriteFontBuilder() const = 0;
-		virtual SpriteBatchBuilderRef CreateSpriteBatchBuilder() const = 0;
-		virtual TextureBuilderRef CreateTextureBuilder() const = 0;
-		virtual FrameGraphBuilderRef CreateFrameGraphBuilder() const = 0;
+		virtual FenceRef CreateFence(uint64_t initialValue) = 0;
+		virtual ShaderBuilderRef CreateShaderBuilder() = 0;
+		virtual GPipelineStateBuilderRef CreateGPipelineStateBuilder() = 0;
+		virtual CPipelineStateBuilderRef CreateCPipelineStateBuilder() = 0;
+		virtual InputLayoutBuilderRef CreateInputLayoutBuilder() = 0;
+		virtual StreamOutputBuilderRef CreateStreamOutputBuilder() = 0;
+		virtual RootSignatureBuilderRef CreateRootSignatureBuilder() = 0;
+		virtual SpriteFontBuilderRef CreateSpriteFontBuilder() = 0;
+		virtual SpriteBatchBuilderRef CreateSpriteBatchBuilder() = 0;
+		virtual TextureBuilderRef CreateTextureBuilder() = 0;
+		virtual FrameGraphBuilderRef CreateFrameGraphBuilder() = 0;
 	};
 
 	class IAudioModule : public IModule {

@@ -21,7 +21,7 @@ namespace Netcode::Memory {
 	public:
 		StackAllocator(size_t stackSize = 65536, size_t alignment = 16) : resource{ } {
 			size_t headSize;
-			StdAllocatorAdapter<Resource, ResourceAllocator> resourceAlloc{ stackSize, alignment, &headSize };
+			StdAllocatorAdapter<Resource, ResourceAllocator> resourceAlloc{ ResourceAllocator{ stackSize, alignment, &headSize } };
 			resource = std::allocate_shared<Resource>(resourceAlloc);
 			resource->data = reinterpret_cast<uint8_t *>(resource.get()) + headSize;
 			resource->stackSize = stackSize;
@@ -70,7 +70,8 @@ namespace Netcode::Memory {
 			return Allocate<T>(1).Construct<U...>(std::forward<U>(args)...);
 		}
 
-		void Deallocate(void * p, size_t s) { }
+		template<typename T>
+		void Deallocate(T * p, size_t s) { }
 
 		/*
 		Cheap but dangerous call, resets all allocations, does not invoke destructors

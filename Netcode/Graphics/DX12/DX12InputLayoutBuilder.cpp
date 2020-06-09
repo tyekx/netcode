@@ -2,7 +2,9 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	InputLayoutBuilder::InputLayoutBuilder(DX12InputLayoutLibraryRef libRef) : inputLayoutLibrary{ libRef } { }
+	InputLayoutBuilder::InputLayoutBuilder(Memory::ObjectAllocator allocator, DX12InputLayoutLibraryRef libRef) : inputElements{ BuilderAllocator<D3D12_INPUT_ELEMENT_DESC>{ allocator } }, inputLayoutLibrary{ libRef } {
+		inputElements.reserve(8);
+	}
 	
 	void InputLayoutBuilder::AddInputElement(const char * semanticName, DXGI_FORMAT format) {
 		AddInputElement(semanticName, 0, format, D3D12_APPEND_ALIGNED_ELEMENT);

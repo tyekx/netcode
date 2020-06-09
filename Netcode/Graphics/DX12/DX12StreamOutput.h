@@ -8,11 +8,11 @@ namespace Netcode::Graphics::DX12 {
 
 	class StreamOutput : public Netcode::StreamOutput {
 		D3D12_STREAM_OUTPUT_DESC streamOutput;
-		std::vector<D3D12_SO_DECLARATION_ENTRY> declarations;
-		std::vector<UINT> strides;
+		BuilderContainer<D3D12_SO_DECLARATION_ENTRY> declarations;
+		BuilderContainer<UINT> strides;
 	public:
 
-		StreamOutput(const D3D12_STREAM_OUTPUT_DESC & so, std::vector<D3D12_SO_DECLARATION_ENTRY> && soDecl, std::vector<UINT> && strides);
+		StreamOutput(const D3D12_STREAM_OUTPUT_DESC & so, BuilderContainer<D3D12_SO_DECLARATION_ENTRY> soDecl, BuilderContainer<UINT> strides);
 
 		const D3D12_STREAM_OUTPUT_DESC & GetNativeStreamOutput() const;
 

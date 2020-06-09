@@ -5,8 +5,11 @@
 namespace Netcode::Graphics::DX12 {
 
 	class StreamOutputLibrary {
-		std::vector<DX12StreamOutputRef> streamOutputs;
+		Memory::ObjectAllocator objectAllocator;
+		BuilderContainer<DX12StreamOutputRef> streamOutputs;
 	public:
+
+		StreamOutputLibrary(Memory::ObjectAllocator allocator);
 
 		void Insert(DX12StreamOutputRef soRef);
 
