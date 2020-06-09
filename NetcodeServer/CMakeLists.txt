@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.8)
 
 add_executable(NetcodeServer "")
 
+find_package(protobuf CONFIG REQUIRED)
+
 target_sources(NetcodeServer
 PRIVATE
 	main.cpp
@@ -17,7 +19,6 @@ target_include_directories(NetcodeServer PRIVATE
 target_include_directories(NetcodeServer SYSTEM
 PRIVATE 
 	"${BOOST_INCLUDE}"
-	"${PROTOBUF_INCLUDE}"
 )
 
 target_link_directories(NetcodeServer
@@ -28,10 +29,9 @@ PUBLIC
 	"${DXTEX_LIB}"
 	"${BOOST_LIB}"
 	"${MYSQLCONN_LIB}"
-	"${PROTOBUF_LIB}"
 )
 
-target_link_libraries(NetcodeServer Netcode NetcodeProtocol
+target_link_libraries(NetcodeServer Netcode NetcodeProtocol protobuf::libprotobuf
 	"${ASSIMP_LINK}"
 	"${DXTEX_LINK}"
 	"${BOOST_LINK}"
@@ -39,7 +39,6 @@ target_link_libraries(NetcodeServer Netcode NetcodeProtocol
 	"${PHYSX_LINK}"
 	"${JSON11_LINK}"
 	"${DX12_LINK}"
-	"${PROTOBUF_LINK}"
 )
 
 netcode_add_cp_command("config.cfg" "${CMAKE_CURRENT_BINARY_DIR}/config.cfg")

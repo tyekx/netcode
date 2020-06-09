@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.8)
 
 add_library(Netcode STATIC "")
 
+find_package(spdlog CONFIG REQUIRED)
+
 target_include_directories(Netcode
 PUBLIC 
 	"${PROJECT_SOURCE_DIR}"
@@ -14,12 +16,10 @@ PUBLIC
 	"${DXTEX_INCLUDE}"
 	"${LUA_INCLUDE}"
 	"${JSON11_INCLUDE}"
-	"${SPDLOG_INCLUDE}"
-	"${PROTOBUF_INCLUDE}"
 	"${MYSQLCONN_INCLUDE}"
 )
 
-target_link_libraries(Netcode NetcodeFoundation)
+target_link_libraries(Netcode NetcodeFoundation spdlog::spdlog)
 
 target_sources(Netcode
 PUBLIC

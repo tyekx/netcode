@@ -4,13 +4,18 @@
       "name": "x64-Debug-clang",
       "generator": "Ninja",
       "configurationType": "Debug",
-      "inheritEnvironments": [ "clang_cl_x64" ],
+      "inheritEnvironments": [ "clang_cl_x64_x64" ],
       "buildRoot": "${projectDir}\\Build\\${name}",
       "installRoot": "${projectDir}\\Bin\\${name}",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
-      "variables": []
+      "variables": [
+        {
+          "name": "CMAKE_TOOLCHAIN_FILE",
+          "value": "C:\\work\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake"
+        }
+      ]
     },
     {
       "name": "x64-Debug-msvc",
@@ -22,7 +27,12 @@
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "msvc_x64_x64" ],
-      "variables": []
+      "variables": [
+        {
+          "name": "CMAKE_TOOLCHAIN_FILE",
+          "value": "C:\\work\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake"
+        }
+      ]
     }
   ]
 }

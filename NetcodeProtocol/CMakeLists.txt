@@ -2,17 +2,9 @@ cmake_minimum_required(VERSION 3.8)
 
 add_library(NetcodeProtocol STATIC "")
 
-target_include_directories(NetcodeProtocol SYSTEM
-PUBLIC
-	"${PROTOBUF_INCLUDE}"
-)
+find_package(protobuf CONFIG REQUIRED)
 
-target_link_directories(NetcodeProtocol
-PUBLIC
-	"${PROTOBUF_LIB}"
-)
-
-target_link_libraries(NetcodeProtocol "${PROTOBUF_LINK}")
+target_link_libraries(NetcodeProtocol protobuf::libprotobuf)
 
 set(PROTO_SRC
 	client.proto

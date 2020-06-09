@@ -10,7 +10,7 @@ include(CMakeSDK.txt)
 # c++ compiler settings
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-microsoft-include -Wno-unused-private-field -Wno-unknown-pragmas")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-microsoft-include -Wno-unused-private-field -Wno-unknown-pragmas /EHa")
 
 if(DEFINED NETCODE_NO_WINAPI)
 	add_definitions(-DNETCODE_NO_WINAPI)
@@ -37,7 +37,7 @@ if(NOT FXC)
 	message(FATAL_ERROR "Shader compiler was not found")
 endif()
 
-find_program(PROTOC protoc PATHS "${PROTOBUF_LIB}")
+find_program(PROTOC protoc PATHS "C:\\work\\vcpkg\\packages\\protobuf_x64-windows\\tools\\protobuf")
 
 if(NOT PROTOC)
 	message(FATAL_ERROR "Protobuf compiler was not found")
