@@ -38,7 +38,6 @@ PRIVATE
 
 target_include_directories(NetcodeClient SYSTEM
 PRIVATE
-	"${MYSQLCONN_INCLUDE}"
 	"${PHYSX_INCLUDE_DIR}"
 	"${DIRECTXTEX_INCLUDE_DIR}"
 )
@@ -91,11 +90,6 @@ PRIVATE
 	AnimationController.cpp
 )
 
-target_link_directories(NetcodeClient
-PRIVATE
-	"${MYSQLCONN_LIB}"
-)
-
 target_link_libraries(NetcodeClient
 PRIVATE 
 	NetcodeFoundation
@@ -109,8 +103,7 @@ PRIVATE
 	"${JSON11_LIBRARY}"
 	"${PHYSX_LIBRARIES}"
 	"${DIRECTXTEX_LIBRARY}"
-	"${DX12_LIBRARIES}"
-	"${MYSQLCONN_LINK}")
+	"${DX12_LIBRARIES}")
 
 add_subdirectory(Shaders)
 

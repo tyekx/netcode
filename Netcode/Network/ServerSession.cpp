@@ -1,4 +1,3 @@
-#include <mysqlx/xdevapi.h>
 #include <boost/asio.hpp>
 #include <NetcodeFoundation/Version.h>
 

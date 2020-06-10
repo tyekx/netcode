@@ -5,7 +5,7 @@
 namespace Netcode::Network {
 	ErrorCode MysqlSession::QueryUserByHash(const std::string & hash, UserRow & output) {
 		std::scoped_lock<std::mutex> lock{ mutex };
-
+		/*
 		try {
 			queryUserByHash->bind(hash);
 			mysqlx::SqlResult results = queryUserByHash->execute();
@@ -27,11 +27,13 @@ namespace Netcode::Network {
 			Log::Error("[MySQL] QueryUserByHash exception: {0}", error.what());
 			return Errc::make_error_code(Errc::host_unreachable);
 		}
-
+		*/
 		return Errc::make_error_code(Errc::success);
 	}
 	ErrorCode MysqlSession::RegisterServer(const ServerConfig & config) {
 		std::scoped_lock<std::mutex> lock{ mutex };
+
+		/*
 		try {
 			// (owner_id, max_players, interval, status, server_ip, control_port, game_port, created_at, major, minor, build)
 			insertServer->bind(config.ownerId,
@@ -56,6 +58,7 @@ namespace Netcode::Network {
 			Log::Error("[MySQL] RegisterServer exception: {0}", error.what());
 			return Errc::make_error_code(Errc::invalid_argument);
 		}
+		*/
 		return Errc::make_error_code(Errc::success);
 	}
 	ErrorCode MysqlSession::CloseServer() {
@@ -64,6 +67,7 @@ namespace Netcode::Network {
 			return Errc::make_error_code(Errc::invalid_argument);
 		}
 
+		/*
 		try {
 			time_t currentTime = time(NULL);
 
@@ -80,6 +84,7 @@ namespace Netcode::Network {
 			Log::Error("[MySQL] CloseServer exception: {0}", error.what());
 			return Errc::make_error_code(Errc::invalid_argument);
 		}
+		*/
 		return Errc::make_error_code(Errc::success);
 	}
 	ErrorCode MysqlSession::CreateGameSession(int playerId) {
@@ -89,6 +94,7 @@ namespace Netcode::Network {
 			return Errc::make_error_code(Errc::invalid_argument);
 		}
 
+		/*
 		try {
 			// (user_id, game_server_id, joined_at)
 			insertGameSession->bind(playerId, serverId, time(NULL));
@@ -101,6 +107,7 @@ namespace Netcode::Network {
 			Log::Error("[MySQL] CreateGameSession exception: {0}", error.what());
 			return Errc::make_error_code(Errc::invalid_argument);
 		}
+		*/
 		return Errc::make_error_code(Errc::success);
 	}
 	ErrorCode MysqlSession::CloseGameSession(int playerId) {
@@ -108,6 +115,7 @@ namespace Netcode::Network {
 			return Errc::make_error_code(Errc::invalid_argument);
 		}
 
+		/*
 		try {
 			// UPDATE game_sessions SET left_at = ? WHERE user_id = ? and left_at IS NULL and game_server_id = ?
 			modifyGameSession->bind(time(NULL), playerId, serverId);
@@ -120,9 +128,12 @@ namespace Netcode::Network {
 			Log::Error("[MySQL] CloseGameSession exception: {0}", error.what());
 			return Errc::make_error_code(Errc::invalid_argument);
 		}
+		*/
 		return Errc::make_error_code(Errc::success);
 	}
 	ErrorCode MysqlSession::Connect(const DatabaseConfig & config) {
+
+		/*
 		try {
 			mysqlx::SessionSettings settings(
 				mysqlx::SessionOption::USER, config.username,
@@ -165,7 +176,7 @@ namespace Netcode::Network {
 			Log::Error("[MySQL] exception: {0}", error.what());
 			return Errc::make_error_code(Errc::host_unreachable);
 		}
-
+		*/
 		return Errc::make_error_code(Errc::success);
 	}
 

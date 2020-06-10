@@ -4,15 +4,13 @@ cmake_minimum_required(VERSION 3.8)
 set(CMAKE_POLICY_DEFAULT_CMP0076 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0079 NEW)
 
-# include sdk paths
-include(CMakeSDK.txt)
-
 set(DX12_LIBRARIES "dxgi.lib d3d12.lib d3dcompiler.lib dwrite.lib d2d1.lib d3d11.lib")
+
+add_compile_options("-Wno-microsoft-include" "-Wno-unused-private-field" "-Wno-unknown-pragmas" "/EHa")
 
 # c++ compiler settings
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-microsoft-include -Wno-unused-private-field -Wno-unknown-pragmas /EHa")
 
 if(DEFINED NETCODE_NO_WINAPI)
 	add_definitions(-DNETCODE_NO_WINAPI)

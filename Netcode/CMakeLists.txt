@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 
 add_library(Netcode STATIC "")
 
+find_package(sqlite3 CONFIG REQUIRED)
 find_package(json11 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS date_time program_options system)
@@ -18,7 +19,6 @@ PRIVATE
 
 target_include_directories(Netcode SYSTEM
 PRIVATE
-	"${MYSQLCONN_INCLUDE}"
 	"${PHYSX_INCLUDE_DIR}"
 )
 
@@ -29,6 +29,7 @@ PRIVATE
 	Boost::program_options
 	Boost::system
 	Boost::date_time
+	sqlite3
 	"${DXTEX_LINK}"
 )
 
