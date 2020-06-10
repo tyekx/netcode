@@ -4,7 +4,10 @@ add_library(NetcodeProtocol STATIC "")
 
 find_package(protobuf CONFIG REQUIRED)
 
-target_link_libraries(NetcodeProtocol protobuf::libprotobuf)
+target_link_libraries(NetcodeProtocol
+PRIVATE
+	protobuf::libprotobuf
+)
 
 set(PROTO_SRC
 	client.proto

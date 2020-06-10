@@ -7,6 +7,8 @@ set(CMAKE_POLICY_DEFAULT_CMP0079 NEW)
 # include sdk paths
 include(CMakeSDK.txt)
 
+set(DX12_LIBRARIES "dxgi.lib d3d12.lib d3dcompiler.lib dwrite.lib d2d1.lib d3d11.lib")
+
 # c++ compiler settings
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED)

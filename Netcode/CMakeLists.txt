@@ -2,24 +2,35 @@ cmake_minimum_required(VERSION 3.8)
 
 add_library(Netcode STATIC "")
 
+find_package(json11 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(Boost REQUIRED COMPONENTS date_time program_options system)
+
+find_path(PHYSX_INCLUDE_DIR physx/PxScene.h)
+
+find_path(DIRECTXTEX_INCLUDE_DIR DirectXTex.h)
+find_library(DIRECTXTEX_LIBRARY DirectXTex)
 
 target_include_directories(Netcode
-PUBLIC 
+PRIVATE 
 	"${PROJECT_SOURCE_DIR}"
 )
 
 target_include_directories(Netcode SYSTEM
-PUBLIC
-	"${PHYSX_INCLUDE}"
-	"${BOOST_INCLUDE}"
-	"${DXTEX_INCLUDE}"
-	"${LUA_INCLUDE}"
-	"${JSON11_INCLUDE}"
+PRIVATE
 	"${MYSQLCONN_INCLUDE}"
+	"${PHYSX_INCLUDE_DIR}"
 )
 
-target_link_libraries(Netcode NetcodeFoundation spdlog::spdlog)
+target_link_libraries(Netcode
+PRIVATE
+	NetcodeFoundation
+	spdlog::spdlog
+	Boost::program_options
+	Boost::system
+	Boost::date_time
+	"${DXTEX_LINK}"
+)
 
 target_sources(Netcode
 PUBLIC

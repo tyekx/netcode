@@ -1,7 +1,7 @@
 #pragma once
 
 #include <NetcodeFoundation/Math.h>
-#include <json11/json11.hpp>
+#include <json11.hpp>
 #include "Collider.h"
 
 /*

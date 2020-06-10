@@ -1,12 +1,7 @@
 #include "Importer.h"
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-
+#include <string>
 #include <cstdio>
-
-#include <DirectXTex/DirectXTex.h>
 
 namespace  Netcode::Asset { 
 

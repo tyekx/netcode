@@ -20,4 +20,4 @@ PUBLIC
 	MysqlSession.cpp
 )
 
-target_link_libraries(Netcode NetcodeProtocol)
+target_link_libraries(Netcode PRIVATE NetcodeProtocol)
