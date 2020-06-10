@@ -3,6 +3,8 @@
 #include "Config.h"
 #include "NetworkCommon.h"
 
+#include <mysqlx/xdevapi.h>
+
 namespace Netcode::Network {
 
 	class DefaultMysqlCompletionHandler {
@@ -13,15 +15,15 @@ namespace Netcode::Network {
 	/*
 	wrapper for all the mysql statements that will be used during the lifetime of a server
 	*/
-	class MysqlSession {
-		uint64_t serverId;/*
+	class MysqlSession  {
+		uint64_t serverId;
 		std::unique_ptr<mysqlx::Session> session;
 		std::unique_ptr<mysqlx::SqlStatement> queryUserByHash;
 		std::unique_ptr<mysqlx::SqlStatement> insertServer;
 		std::unique_ptr<mysqlx::SqlStatement> modifyServer;
 		std::unique_ptr<mysqlx::SqlStatement> insertGameSession;
 		std::unique_ptr<mysqlx::SqlStatement> modifyGameSession;
-		std::unique_ptr<mysqlx::SqlStatement> closeRemainingGameSessions;*/
+		std::unique_ptr<mysqlx::SqlStatement> closeRemainingGameSessions;
 		std::mutex mutex;
 	public:
 		MysqlSession() = default;

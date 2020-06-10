@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.8)
 
 add_library(Netcode STATIC "")
 
-find_package(sqlite3 CONFIG REQUIRED)
 find_package(json11 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS date_time program_options system)
@@ -12,6 +11,9 @@ find_path(PHYSX_INCLUDE_DIR physx/PxScene.h)
 find_path(DIRECTXTEX_INCLUDE_DIR DirectXTex.h)
 find_library(DIRECTXTEX_LIBRARY DirectXTex)
 
+find_path(MYSQL_INCLUDE_DIR mysqlx/xdevapi.h)
+find_library(MYSQL_LIBRARY mysqlcppconn8)
+
 target_include_directories(Netcode
 PRIVATE 
 	"${PROJECT_SOURCE_DIR}"
@@ -20,6 +22,7 @@ PRIVATE
 target_include_directories(Netcode SYSTEM
 PRIVATE
 	"${PHYSX_INCLUDE_DIR}"
+	"${MYSQL_INCLUDE_DIR}"
 )
 
 target_link_libraries(Netcode
@@ -29,8 +32,8 @@ PRIVATE
 	Boost::program_options
 	Boost::system
 	Boost::date_time
-	sqlite3
-	"${DXTEX_LINK}"
+	"${MYSQL_LIBRARY}"
+	"${DIRECTXTEX_LIBRARY}"
 )
 
 target_sources(Netcode
