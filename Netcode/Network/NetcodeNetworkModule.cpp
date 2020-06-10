@@ -2,7 +2,7 @@
 #include "ClientSession.h"
 #include "ServerSession.h"
 #include "../Utility.h"
-#include <json11/json11.hpp>
+#include <json11.hpp>
 
 namespace Netcode::Module {
 

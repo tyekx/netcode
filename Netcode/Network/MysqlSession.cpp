@@ -2,10 +2,10 @@
 #include "../Logger.h"
 #include <NetcodeFoundation/Version.h>
 
+
 namespace Netcode::Network {
 	ErrorCode MysqlSession::QueryUserByHash(const std::string & hash, UserRow & output) {
 		std::scoped_lock<std::mutex> lock{ mutex };
-
 		try {
 			queryUserByHash->bind(hash);
 			mysqlx::SqlResult results = queryUserByHash->execute();
@@ -27,11 +27,11 @@ namespace Netcode::Network {
 			Log::Error("[MySQL] QueryUserByHash exception: {0}", error.what());
 			return Errc::make_error_code(Errc::host_unreachable);
 		}
-
 		return Errc::make_error_code(Errc::success);
 	}
 	ErrorCode MysqlSession::RegisterServer(const ServerConfig & config) {
 		std::scoped_lock<std::mutex> lock{ mutex };
+
 		try {
 			// (owner_id, max_players, interval, status, server_ip, control_port, game_port, created_at, major, minor, build)
 			insertServer->bind(config.ownerId,
@@ -165,7 +165,6 @@ namespace Netcode::Network {
 			Log::Error("[MySQL] exception: {0}", error.what());
 			return Errc::make_error_code(Errc::host_unreachable);
 		}
-
 		return Errc::make_error_code(Errc::success);
 	}
 

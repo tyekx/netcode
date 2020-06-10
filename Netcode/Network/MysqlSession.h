@@ -1,8 +1,9 @@
 #include <memory>
 
-#include <mysqlx/xdevapi.h>
 #include "Config.h"
 #include "NetworkCommon.h"
+
+#include <mysqlx/xdevapi.h>
 
 namespace Netcode::Network {
 
@@ -14,7 +15,7 @@ namespace Netcode::Network {
 	/*
 	wrapper for all the mysql statements that will be used during the lifetime of a server
 	*/
-	class MysqlSession {
+	class MysqlSession  {
 		uint64_t serverId;
 		std::unique_ptr<mysqlx::Session> session;
 		std::unique_ptr<mysqlx::SqlStatement> queryUserByHash;

@@ -1,0 +1,3 @@
+Source: mysqlconnectorcpp
+Version: 8.0.20
+Description: Self ported mysql connector cpp library

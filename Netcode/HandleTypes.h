@@ -5,7 +5,7 @@
 #include "Common.h"
 
 #if defined(EGG_OS_WINDOWS)
-#include <DirectXTex/DirectXTex.h>
+#include <DirectXTex.h>
 #endif
 
 #include <boost/beast/http.hpp>

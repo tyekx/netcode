@@ -4,9 +4,6 @@
 #include "DX12ResourceDesc.h"
 #include "DX12HeapManager.h"
 
-#include <DirectXTex/DirectXTex.h>
-
-
 namespace Netcode::Graphics::DX12 {
 
 	class ResourcePool {

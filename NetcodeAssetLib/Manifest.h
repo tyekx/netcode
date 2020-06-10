@@ -1,7 +1,7 @@
 #pragma once
 
 #include <DirectXMath.h>
-#include <json11/json11.hpp>
+#include <json11.hpp>
 #include <vector>
 #include <algorithm>
 #include "JsonUtility.h"

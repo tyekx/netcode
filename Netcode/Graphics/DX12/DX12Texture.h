@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../../HandleTypes.h"
-#include <DirectXTex/DirectXTex.h>
 
 namespace Netcode::Graphics::DX12 {
 

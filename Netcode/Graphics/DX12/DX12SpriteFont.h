@@ -8,7 +8,7 @@
 #include "DX12Common.h"
 #include "DX12SpriteBatch.h"
 #include <DirectXColors.h>
-#include <DirectXTex/DirectXTex.h>
+#include <DirectXTex.h>
 #include "DX12ResourceViews.h"
 #include "DX12Texture.h"
 
