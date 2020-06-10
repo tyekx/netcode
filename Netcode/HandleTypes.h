@@ -4,7 +4,7 @@
 #include "Graphics/ResourceDesc.h"
 #include "Common.h"
 
-#if defined(EGG_OS_WINDOWS)
+#if defined(NETCODE_OS_WINDOWS)
 #include <DirectXTex.h>
 #endif
 
@@ -27,7 +27,7 @@ This also heavily favors the DirectX ecosystem, but thats an issue for possible 
 
 namespace Netcode {
 
-#if !defined(EGG_OS_WINDOWS)
+#if !defined(NETCODE_OS_WINDOWS)
 
 	struct Image
 	{

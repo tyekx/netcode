@@ -2,17 +2,13 @@
 
 #include "Platform.h"
 
-#if defined(EGG_OS_WINDOWS)
+#if defined(NETCODE_OS_WINDOWS)
 
 #include <dxgiformat.h>
 
-#if defined(DOMAIN)
-#undef DOMAIN
 #endif
 
-#endif
-
-#if defined(EGG_OS_LINUX) && !defined(DXGI_FORMAT_DEFINED)
+#if defined(NETCODE_OS_LINUX) && !defined(DXGI_FORMAT_DEFINED)
 
 typedef enum DXGI_FORMAT
 {

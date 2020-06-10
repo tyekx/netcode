@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <cstdarg>
 
-#if defined(EGG_OS_WINDOWS)
+#if defined(NETCODE_OS_WINDOWS)
 #include <Windows.h>
 #endif
 
@@ -14,13 +14,11 @@
 namespace Netcode::Detail {
 
 	static void LogString(const char * str) {
-#if defined(EGG_OS_WINDOWS)
 		Log::Error(str);
-#endif
 	}
 
 	static void DebugBreak() {
-#if defined(EGG_OS_WINDOWS)
+#if defined(NETCODE_OS_WINDOWS)
 		if(IsDebuggerPresent()) {
 			__debugbreak();
 		}

@@ -11,10 +11,10 @@ PUBLIC
 	"MemoryFunctions.cpp"
 	"Platform.h"
 	"Sal.h"
-	"Generated_Version.cpp"
 	"Exceptions.h"
 	"Math.h"
-	"Math.cpp" "Memory.h")
+	"Math.cpp"
+	"Memory.h")
 
 add_subdirectory(Math)
 add_subdirectory(Exception)

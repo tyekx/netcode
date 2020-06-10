@@ -10,6 +10,6 @@ TextBox::TextBox() : id{ idGenerator++ }, keyPressedToken{ 0 }, contentChanged{}
 }
 
 TextBox::~TextBox() {
-	Netcode::Input::OnKeyPressed -= keyPressedToken;
+	Netcode::Input::OnKeyPressed.Erase(keyPressedToken);
 }
 

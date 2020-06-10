@@ -29,7 +29,7 @@ namespace Netcode::Graphics::DX12 {
 	{
 		ID3D12Resource * res = std::dynamic_pointer_cast<DX12Resource>(handle)->resource.Get();
 
-#if defined(EGG_DEBUG)
+#if defined(NETCODE_DEBUG)
 		const auto it = std::find_if(std::begin(barriers), std::end(barriers), [res](const D3D12_RESOURCE_BARRIER & barrier) ->bool {
 			return (barrier.Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION) && res == barrier.Transition.pResource;
 		});
@@ -67,26 +67,6 @@ namespace Netcode::Graphics::DX12 {
 		backbufferDepth{ backbufferDepth },
 		defaultViewport { viewPort },
 		defaultScissorRect { scissorRect }
-	{
-	}
-
-	void GraphicsContext::DebugDrawPoint(const Netcode::Float3 & worldPos, float extents)
-	{
-	}
-
-	void GraphicsContext::DebugDrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd)
-	{
-	}
-
-	void GraphicsContext::DebugDrawSphere(const Netcode::Float3 & worldPosOrigin, float radius)
-	{
-	}
-
-	void GraphicsContext::DebugDrawBoundingBox(const Netcode::Float3 & worldPosOrigin, const Netcode::Float3 & extents)
-	{
-	}
-
-	void GraphicsContext::DrawDebugPrimitives(const Netcode::Float4x4 & viewProjMatrix, bool depthEnabled)
 	{
 	}
 
@@ -424,31 +404,6 @@ namespace Netcode::Graphics::DX12 {
 	{
 		FlushResourceBarriers();
 		ResetStreamOutput();
-	}
-
-	void ComputeContext::DebugDrawPoint(const Netcode::Float3 & worldPos, float extents)
-	{
-		Netcode::Detail::NotImplementedAssertion();
-	}
-
-	void ComputeContext::DebugDrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd)
-	{
-		Netcode::Detail::NotImplementedAssertion();
-	}
-
-	void ComputeContext::DebugDrawSphere(const Netcode::Float3 & worldPosOrigin, float radius)
-	{
-		Netcode::Detail::NotImplementedAssertion();
-	}
-
-	void ComputeContext::DebugDrawBoundingBox(const Netcode::Float3 & worldPosOrigin, const Netcode::Float3 & extents)
-	{
-		Netcode::Detail::NotImplementedAssertion();
-	}
-
-	void ComputeContext::DrawDebugPrimitives(const Netcode::Float4x4 & viewProjMatrix, bool depthEnabled)
-	{
-		Netcode::Detail::NotImplementedAssertion();
 	}
 
 	void ComputeContext::SetRootSignature(RootSignatureRef rs)

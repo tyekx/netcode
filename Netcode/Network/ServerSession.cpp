@@ -1,5 +1,4 @@
 #include <boost/asio.hpp>
-#include <NetcodeFoundation/Version.h>
 
 #include "../Logger.h"
 #include "ServerSession.h"
@@ -66,7 +65,7 @@ namespace Netcode::Network {
 
 	bool ServerSession::CheckVersion(const Netcode::Protocol::Version & version)
 	{
-		return version.major() == Netcode::GetMajorVersion() && version.minor() == Netcode::GetMinorVersion() && version.build() == Netcode::GetBuildVersion();
+		return version.major() == 0 && version.minor() == 0 && version.build() == 0;
 	}
 
 	void ServerSession::Receive(std::vector<Protocol::Message> & control, std::vector<Protocol::Message> & game)

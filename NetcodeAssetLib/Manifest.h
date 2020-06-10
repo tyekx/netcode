@@ -1,10 +1,7 @@
 #pragma once
 
-#include <DirectXMath.h>
 #include <json11.hpp>
 #include <vector>
-#include <algorithm>
-#include "JsonUtility.h"
 #include "Collider.h"
 
 namespace Netcode::Asset {

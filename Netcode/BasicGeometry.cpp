@@ -29,7 +29,7 @@ namespace Netcode::Graphics {
 		}
 	};
 
-	void BasicGeometry::CreateLine(void * dstData, unsigned int stride, unsigned int positionDataOffset) {
+	uint32_t BasicGeometry::CreateLine(void * dstData, unsigned int stride, unsigned int positionDataOffset) {
 		VertexDataIterator vertices(dstData, stride, positionDataOffset);
 
 		for(unsigned int i = 0; i < 2; ++i) {
@@ -38,7 +38,7 @@ namespace Netcode::Graphics {
 	}
 
 
-	void BasicGeometry::CreateBoxWireframe(_Out_writes_(24 * stride) void * dstData, unsigned int stride, const Netcode::Float3 & he, unsigned int positionDataOffset) {
+	uint32_t BasicGeometry::CreateBoxWireframe(void * dstData, unsigned int stride, const Netcode::Float3 & he, unsigned int positionDataOffset) {
 		VertexDataIterator vertices(dstData, stride, positionDataOffset);
 
 		unsigned int t = 0;
@@ -83,7 +83,7 @@ namespace Netcode::Graphics {
 		vertices[t + 7] = Netcode::Float3{ he.x,  he.y, he.z };
 	}
 
-	void BasicGeometry::CreatePlaneWireframe(_Out_writes_(4 * (gridSectionCount + 1) * stride) void * dstData, unsigned int stride, unsigned int gridSectionCount, unsigned int positionDataOffset) {
+	uint32_t BasicGeometry::CreatePlaneWireframe(void * dstData, unsigned int stride, unsigned int gridSectionCount, unsigned int positionDataOffset) {
 		VertexDataIterator vertices(dstData, stride, positionDataOffset);
 		const float g = static_cast<float>(gridSectionCount);
 		for(unsigned int i = 0; i <= gridSectionCount; ++i) {
@@ -95,7 +95,7 @@ namespace Netcode::Graphics {
 		}
 	}
 
-	void BasicGeometry::CreateCapsuleWireframe(_Out_writes_(108 * stride) void * dstData, unsigned int stride, const Netcode::Float2 & args, unsigned int positionDataOffset)
+	uint32_t BasicGeometry::CreateCapsuleWireframe(void * dstData, unsigned int stride, const Netcode::Float2 & args, unsigned int positionDataOffset)
 	{
 		VertexDataIterator vertices(dstData, stride, positionDataOffset);
 
@@ -149,6 +149,8 @@ namespace Netcode::Graphics {
 
 		vertices[106] = Netcode::Float3{ h / 2.0f, 0, -r };
 		vertices[107] = Netcode::Float3{ -h / 2.0f, 0, -r };
+
+		return 108;
 	}
 
 	static std::map<uint64_t, uint32_t> middlePointIndexCache;
@@ -191,7 +193,7 @@ namespace Netcode::Graphics {
 	}
 
 
-	void BasicGeometry::CreateSphereWireFrame(void * dstData, uint32_t stride, float radius, uint32_t positionDataOffset) {
+	uint32_t BasicGeometry::CreateGeoSphereWireframe(void * dstData, uint32_t stride, float radius, uint32_t positionDataOffset) {
 		float r = radius; middlePointIndexCache.clear();
 
 		std::unique_ptr<Netcode::Float3[]> tempVertexData = std::make_unique<Netcode::Float3[]>(162);
@@ -296,6 +298,11 @@ namespace Netcode::Graphics {
 			vDataIter.Add(p2);
 			vDataIter.Add(p0);
 		}
+
+	}
+
+	uint32_t BasicGeometry::CreateSphereWireframe(void * dstData, uint32_t stride, float radius, uint32_t positionDataOffset)
+	{
 
 	}
 }

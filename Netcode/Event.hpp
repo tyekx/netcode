@@ -18,13 +18,13 @@ namespace Netcode {
 
 
 	public:
-		EventToken operator+=(std::function<void(T...)> callback) {
+		EventToken Subscribe(std::function<void(T...)> callback) {
 			EventToken t = tokenGenerator++;
 			callbacks[t] = callback;
 			return t;
 		}
 
-		void operator-=(EventToken token) {
+		void Erase(EventToken token) {
 			callbacks.erase(token);
 		}
 

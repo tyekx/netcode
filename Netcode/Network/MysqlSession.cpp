@@ -1,6 +1,5 @@
 #include "MysqlSession.h"
 #include "../Logger.h"
-#include <NetcodeFoundation/Version.h>
 
 
 namespace Netcode::Network {
@@ -42,9 +41,7 @@ namespace Netcode::Network {
 							config.controlPort,
 							config.gamePort,
 							time(NULL),
-							Netcode::GetMajorVersion(),
-							Netcode::GetMinorVersion(),
-							Netcode::GetBuildVersion());
+							0, 0, 0);
 			mysqlx::SqlResult res = insertServer->execute();
 
 			if(res.getAffectedItemsCount() != 1) {

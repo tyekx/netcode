@@ -16,7 +16,7 @@ public:
 	}
 
 	virtual void Setup(GameObject * owner) override {
-		token = Netcode::Input::OnKeyPressed += [this](uint32_t keyCode, uint32_t modifiers) -> void {
+		token = Netcode::Input::OnKeyPressed.Subscribe([this](uint32_t keyCode, uint32_t modifiers) -> void {
 			uint32_t idx = keyCode - static_cast<uint32_t>('0');
 			if(idx < 4) {
 				curr = refs[idx];
@@ -44,7 +44,7 @@ public:
 				}
 			}
 
-		};
+		});
 	}
 
 	virtual void Update(float dt) override {

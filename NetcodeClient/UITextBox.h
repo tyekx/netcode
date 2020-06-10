@@ -100,7 +100,7 @@ public:
 			Log::Debug("[TextBox({0})] onClick, now selected", textBoxComponent->id);
 		};
 
-		textBoxComponent->keyPressedToken = Netcode::Input::OnKeyPressed += [textBoxComponent, textComponent](uint32_t key, uint32_t modifiers) -> void {
+		textBoxComponent->keyPressedToken = Netcode::Input::OnKeyPressed.Subscribe([textBoxComponent, textComponent](uint32_t key, uint32_t modifiers) -> void {
 			if(textBoxComponent->id == TextBox::selectedId) {
 				Log::Debug("[TextBox({0})] key pressed: {1}", textBoxComponent->id, key);
 				if(key == VK_BACK) {
@@ -137,6 +137,6 @@ public:
 					Log::Debug("[TextBox({0})] char added: {1}", textBoxComponent->id, key);
 				}
 			}
-		};
+		});
 	}
 };

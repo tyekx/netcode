@@ -15,7 +15,7 @@ namespace Netcode::Graphics {
 		Designed to work with linelist primitive topology
 		writes 2 vertices, 12 bytes (3 floats, x,y,z)
 		*/
-		static void CreateLine(_Out_writes_(2 * stride) void * dstData, unsigned int stride, unsigned int positionDataOffset = 0);
+		static uint32_t CreateLine(void * dstData, uint32_t stride, uint32_t positionDataOffset = 0);
 
 
 		/*
@@ -23,21 +23,23 @@ namespace Netcode::Graphics {
 		Designed to work with linelist primitive topology
 		writes 24 vertices
 		*/
-		static void CreateBoxWireframe(_Out_writes_(24 * stride) void * dstData, unsigned int stride, const Netcode::Float3 & halfExtents, unsigned int positionDataOffset = 0);
+		static uint32_t CreateBoxWireframe(void * dstData, uint32_t stride, const Netcode::Float3 & halfExtents, uint32_t positionDataOffset = 0);
 
 		/*
 		Fills a vertices data buffer's position values. Creates a grid
 		Designed to work with linelist primitive topology
 		*/
-		static void CreatePlaneWireframe(_Out_writes_(4 * (gridSectionCount + 1) * stride) void * dstData, unsigned int stride, unsigned int gridSectionCount, unsigned int positionDataOffset = 0);
+		static uint32_t CreatePlaneWireframe(void * dstData, uint32_t stride, uint32_t gridSectionCount, uint32_t positionDataOffset = 0);
 
 		/*
 		Fills a vertices data buffer's position values. Creates a capsule with the given arguments
 		Designed to work with linelist primitive topology
 		*/
-		static void CreateCapsuleWireframe(_Out_writes_(108 * stride) void * dstData, unsigned int stride, const Netcode::Float2 & args, unsigned int positionDataOffset = 0);
+		static uint32_t CreateCapsuleWireframe(void * dstData, uint32_t stride, const Netcode::Float2 & args, uint32_t positionDataOffset = 0);
 
-		static void CreateSphereWireFrame(void * dstData, uint32_t stride, float radius, uint32_t positionDataOffset = 0);
+		static uint32_t CreateGeoSphereWireframe(void * dstData, uint32_t stride, float radius, uint32_t positionDataOffset = 0);
+		
+		static uint32_t CreateSphereWireframe(void * dstData, uint32_t stride, float radius, uint32_t positionDataOffset = 0);
 
 	};
 

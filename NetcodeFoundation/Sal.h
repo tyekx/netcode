@@ -2,11 +2,11 @@
 
 #include "Platform.h"
 
-#if defined(EGG_OS_WINDOWS)
+#if defined(NETCODE_OS_WINDOWS)
 #include <sal.h>
 #endif
 
-#if defined(EGG_OS_LINUX)
+#if defined(NETCODE_OS_LINUX)
 
 	#if !defined(_In_)
 		#define _In_

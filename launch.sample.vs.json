@@ -13,7 +13,7 @@
         "--shaderPath=${cmake.buildRoot}\\Shaders"
       ],
       "env": {
-        "PATH": "${env.Path};C:/sdk2/PhysX/4.1/Win/x64/Debug/v142.mdd;C:/sdk2/assimp/5.0.0/Win/x64/Debug/v142.mdd;C:/sdk2/mysqlconn/8.0.19/Win/x64/Debug/v142.mdd"
+        "PATH": "${env.Path}"
       }
     }
   ]

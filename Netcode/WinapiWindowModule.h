@@ -1,13 +1,7 @@
 #pragma once
 
-
-#if defined(EGG_OS_WINDOWS)
-#include <Windows.h>
-#endif
-
 #include "Modules.h"
 #include "Common.h"
-
 
 namespace Netcode::Module {
 

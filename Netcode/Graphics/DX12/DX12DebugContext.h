@@ -4,8 +4,28 @@
 #include "DX12Common.h"
 
 namespace Netcode::Graphics::DX12 {
+	/*
+	class IDebugContext {
+	public:
+		virtual ~IDebugContext() = default;
 
-	class DebugContext {
+		virtual void DrawPoint(const Netcode::Float3 & worldPos, float extents) = 0;
+		virtual void DrawPoint(const Netcode::Float3 & worldPos, float extents, bool depthEnabled) = 0;
+
+		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd) = 0;
+		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, bool depthEnabled) = 0;
+
+		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius) = 0;
+		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius, bool depthEnabled) = 0;
+
+		virtual void DrawBoundingBox(const Netcode::Float3 & worldPosOrigin, const Netcode::Float3 & extents) = 0;
+		virtual void DrawBoundingBox(const Netcode::Float3 & worldPosOrigin, const Netcode::Float3 & extents, bool depthEnabled) = 0;
+
+		virtual void UploadResources(IResourceContext * context) = 0;
+		virtual void Draw(IRenderContext * context, const Netcode::Float4x4 & viewProjMatrix) = 0;
+	};*/
+
+	class DebugContext : public IDebugContext {
 		Netcode::Float4x4 viewProj;
 		size_t bufferSize;
 		size_t numNoDepthVertices;
@@ -81,9 +101,7 @@ namespace Netcode::Graphics::DX12 {
 			vertices.resize(bufferSize);
 		}
 
-		void PrepareDrawing(IResourceContext * context, const Netcode::Float4x4 & vpMat) {
-			viewProj = vpMat;
-
+		virtual void UploadResources(IResourceContext * context) override {
 			if(numDepthVertices > 0) {
 				context->CopyConstants(uploadBuffer, vertices.data(), numDepthVertices * sizeof(PC_Vertex), 0);
 			}
@@ -93,10 +111,12 @@ namespace Netcode::Graphics::DX12 {
 			}
 		}
 
-		void DrawDebugPrimitives(IRenderContext * context) {
+		virtual void Draw(IRenderContext * context, const Netcode::Float4x4 & viewProjMatrix) override {
 			if(numDepthVertices == 0 && numNoDepthVertices == 0) {
 				return;
 			}
+
+			viewProj = viewProjMatrix;
 
 			context->SetRootSignature(rootSignature);
 			context->SetRootConstants(0, &viewProj, 16);
@@ -113,7 +133,11 @@ namespace Netcode::Graphics::DX12 {
 			}
 		}
 
-		void DrawDebugPoint(const Netcode::Float3 & point, float extent, bool depthEnabled = true) {
+		virtual void DrawPoint(const Netcode::Float3 & point, float extent) override {
+			DrawPoint(point, extent, true);
+		}
+
+		virtual void DrawPoint(const Netcode::Float3 & point, float extent, bool depthEnabled) override {
 			Netcode::PC_Vertex v0, v1, v2, v3, v4, v5;
 			v0.color = v1.color = DirectX::XMFLOAT3{ 1.0f, 0.0f, 0.0f };
 			v2.color = v3.color = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
@@ -136,18 +160,35 @@ namespace Netcode::Graphics::DX12 {
 			PushVertex(v5, depthEnabled);
 		}
 
-		void DrawDebugLine(const Netcode::Float3 & p0, const Netcode::Float3 & p1, const Netcode::Float3 & color, bool depthEnabled = true) {
+		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd) override {
+			DrawLine(worldPosStart, worldPosEnd, true);
+		}
+
+		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, bool depthEnabled) override {
+			DrawLine(worldPosStart, worldPosEnd, Netcode::Float3{ 0.7f, 0.7f, 0.7f }, depthEnabled);
+		}
+
+		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, const Netcode::Float3 & color) override {
+			DrawLine(worldPosStart, worldPosEnd, color, true);
+		}
+		
+		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, const Netcode::Float3 & color, bool depthEnabled) override {
 			Netcode::PC_Vertex vert0;
-			vert0.position = p0;
+			vert0.position = worldPosStart;
 			vert0.color = color;
 
 			Netcode::PC_Vertex vert1;
-			vert1.position = p1;
+			vert1.position = worldPosEnd;
 			vert1.color = color;
 
 			PushVertex(vert0, depthEnabled);
 			PushVertex(vert1, depthEnabled);
 		}
+
+		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius) override;
+		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius, bool depthEnabled) override;
+		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius, const Netcode::Float3 & color) override;
+		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius, const Netcode::Float3 & color, bool depthEnabled) override;
 
 		void DrawDebugVector(const Netcode::Float3 & startAt, const Netcode::Float3 & dir, float length, const Netcode::Float3 & color, bool depthEnabled = true) {
 			Netcode::Vector3 st = startAt;

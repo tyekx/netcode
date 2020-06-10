@@ -13,8 +13,8 @@ namespace Netcode::Detail {
 
 }
 
-#if defined(EGG_DEBUG)
+#if defined(NETCODE_DEBUG)
 #define ASSERT(trueMeansOk, msgOnFail, ...) Netcode::Detail::Assert(trueMeansOk, msgOnFail, __VA_ARGS__)
 #else 
-#define ASSERT(trueMeansOk, msgOnFail, ...)
+#define ASSERT(trueMeansOk, msgOnFail, ...) { trueMeansOk; }
 #endif

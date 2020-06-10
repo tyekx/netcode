@@ -1,15 +1,15 @@
 #pragma once
 
 #if defined(_WIN32)
-#define EGG_OS_WINDOWS
+#define NETCODE_OS_WINDOWS
 #include <sdkddkver.h>
 #endif
 
 #if defined(__linux__)
-#define EGG_OS_LINUX
+#define NETCODE_OS_LINUX
 #endif
 
 #if defined(_DEBUG)
-#define EGG_DEBUG
+#define NETCODE_DEBUG
 #endif
 

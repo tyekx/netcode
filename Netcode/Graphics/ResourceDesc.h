@@ -5,10 +5,6 @@
 
 #include <cstdint>
 
-#if defined(EGG_OS_WINDOWS)
-#include <dxgiformat.h>
-#endif
-
 namespace Netcode::Graphics {
 
 	struct ClearValue {

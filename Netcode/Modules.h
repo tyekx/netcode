@@ -153,6 +153,7 @@ namespace Netcode::Module {
 
 	class IGraphicsModule : public IModule {
 	public:
+		Netcode::Graphics::IDebugContext * debug;
 		Netcode::Graphics::IResourceContext * resources;
 		Netcode::Graphics::IFrameContext * frame;
 

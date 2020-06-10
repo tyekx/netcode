@@ -103,15 +103,10 @@ namespace Netcode::Graphics {
 		virtual GpuResourceRef CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
 	};
 
+
 	class IRenderContext {
 	public:
 		virtual ~IRenderContext() = default;
-
-		virtual void DebugDrawPoint(const Netcode::Float3 & worldPos, float extents) = 0;
-		virtual void DebugDrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd) = 0;
-		virtual void DebugDrawSphere(const Netcode::Float3 & worldPosOrigin, float radius) = 0;
-		virtual void DebugDrawBoundingBox(const Netcode::Float3 & worldPosOrigin, const Netcode::Float3 & extents) = 0;
-		virtual void DrawDebugPrimitives(const Netcode::Float4x4 & viewProjMatrix, bool depthEnabled = true) = 0;
 
 		virtual void SetRootSignature(RootSignatureRef rs) = 0;
 		virtual void SetPipelineState(PipelineStateRef pso) = 0;
@@ -183,6 +178,30 @@ namespace Netcode::Graphics {
 		inline uint64_t SetConstants(int slot, const T & srcData) {
 			return SetConstants(slot, reinterpret_cast<const void *>(&srcData), sizeof(T));
 		}
+	};
+
+	class IDebugContext {
+	public:
+		virtual ~IDebugContext() = default;
+
+		virtual void DrawPoint(const Netcode::Float3 & worldPos, float extents) = 0;
+		virtual void DrawPoint(const Netcode::Float3 & worldPos, float extents, bool depthEnabled) = 0;
+
+		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd) = 0;
+		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, bool depthEnabled) = 0;
+		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, const Netcode::Float3& color) = 0;
+		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, const Netcode::Float3& color, bool depthEnabled) = 0;
+
+		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius) = 0;
+		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius, bool depthEnabled) = 0;
+		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius, const Netcode::Float3 & color) = 0;
+		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius, const Netcode::Float3 & color, bool depthEnabled) = 0;
+
+		virtual void DrawBoundingBox(const Netcode::Float3 & worldPosOrigin, const Netcode::Float3 & extents) = 0;
+		virtual void DrawBoundingBox(const Netcode::Float3 & worldPosOrigin, const Netcode::Float3 & extents, bool depthEnabled) = 0;
+
+		virtual void UploadResources(IResourceContext * context) = 0;
+		virtual void Draw(IRenderContext* context, const Netcode::Float4x4 & viewProjMatrix) = 0;
 	};
 
 	class IFrameContext {

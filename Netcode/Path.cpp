@@ -2,7 +2,7 @@
 #include "Common.h"
 #include <algorithm>
 
-#if defined(EGG_OS_WINDOWS)
+#if defined(NETCODE_OS_WINDOWS)
 #include <Windows.h>
 #endif
 

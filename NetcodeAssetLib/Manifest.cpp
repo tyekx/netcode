@@ -1,4 +1,6 @@
 #include "Manifest.h"
+#include <algorithm>
+#include "JsonUtility.h"
 
 
 namespace Netcode::Asset {
@@ -190,9 +192,9 @@ namespace Netcode::Asset {
 	json11::Json Manifest::Animation::Store() const {
 		return json11::Json::object{
 			{ "source", source.Store() },
-		{ "name", name },
-		{ "editor_playback_speed", editorPlaybackSpeed },
-		{ "editor_playback_loop", editorPlaybackLoop }
+			{ "name", name },
+			{ "editor_playback_speed", editorPlaybackSpeed },
+			{ "editor_playback_loop", editorPlaybackLoop }
 		};
 	}
 
