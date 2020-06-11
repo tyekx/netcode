@@ -31,15 +31,11 @@ namespace Netcode::Graphics {
 		*/
 		static uint32_t CreatePlaneWireframe(void * dstData, uint32_t stride, uint32_t gridSectionCount, uint32_t positionDataOffset = 0);
 
-		/*
-		Fills a vertices data buffer's position values. Creates a capsule with the given arguments
-		Designed to work with linelist primitive topology
-		*/
-		static uint32_t CreateCapsuleWireframe(void * dstData, uint32_t stride, const Netcode::Float2 & args, uint32_t positionDataOffset = 0);
-
-		static uint32_t CreateGeoSphereWireframe(void * dstData, uint32_t stride, float radius, uint32_t positionDataOffset = 0);
+		static uint32_t GetCapsuleWireframeSize(uint32_t numSlices);
+		static uint32_t CreateCapsuleWireframe(void * dstData, uint32_t stride, uint32_t numSlices, float radius, float halfHeight, uint32_t positionDataOffset = 0);
 		
-		static uint32_t CreateSphereWireframe(void * dstData, uint32_t stride, float radius, uint32_t positionDataOffset = 0);
+		static uint32_t GetSphereWireframeSize(uint32_t numSlices);
+		static uint32_t CreateSphereWireframe(void * dstData, uint32_t stride, float radius, uint32_t numSlices, uint32_t positionDataOffset = 0);
 
 	};
 

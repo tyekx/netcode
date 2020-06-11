@@ -4,8 +4,8 @@
 namespace Netcode::Graphics::DX12 {
 
 
-	InputLayoutLibrary::InputLayoutLibrary(Memory::ObjectAllocator allocator) : inputLayouts{ 
-		BuilderAllocator<DX12InputLayoutRef>{ allocator } }, objectAllocator{ allocator } {
+	InputLayoutLibrary::InputLayoutLibrary(Memory::ObjectAllocator allocator) :objectAllocator{ allocator }, inputLayouts{
+		BuilderAllocator<DX12InputLayoutRef>{ allocator } } {
 		inputLayouts.reserve(8);
 	}
 

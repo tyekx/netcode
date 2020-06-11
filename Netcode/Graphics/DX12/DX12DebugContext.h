@@ -4,42 +4,22 @@
 #include "DX12Common.h"
 
 namespace Netcode::Graphics::DX12 {
-	/*
-	class IDebugContext {
-	public:
-		virtual ~IDebugContext() = default;
-
-		virtual void DrawPoint(const Netcode::Float3 & worldPos, float extents) = 0;
-		virtual void DrawPoint(const Netcode::Float3 & worldPos, float extents, bool depthEnabled) = 0;
-
-		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd) = 0;
-		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, bool depthEnabled) = 0;
-
-		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius) = 0;
-		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius, bool depthEnabled) = 0;
-
-		virtual void DrawBoundingBox(const Netcode::Float3 & worldPosOrigin, const Netcode::Float3 & extents) = 0;
-		virtual void DrawBoundingBox(const Netcode::Float3 & worldPosOrigin, const Netcode::Float3 & extents, bool depthEnabled) = 0;
-
-		virtual void UploadResources(IResourceContext * context) = 0;
-		virtual void Draw(IRenderContext * context, const Netcode::Float4x4 & viewProjMatrix) = 0;
-	};*/
 
 	class DebugContext : public IDebugContext {
-		Netcode::Float4x4 viewProj;
+		Float4x4 viewProj;
 		size_t bufferSize;
 		size_t numNoDepthVertices;
 		size_t numDepthVertices;
 		std::vector<PC_Vertex> vertices;
 
-		Netcode::GpuResourceRef uploadBuffer;
+		GpuResourceRef uploadBuffer;
 
-		Netcode::PipelineStateRef depthPso;
-		Netcode::PipelineStateRef noDepthPso;
-		Netcode::RootSignatureRef rootSignature;
+		PipelineStateRef depthPso;
+		PipelineStateRef noDepthPso;
+		RootSignatureRef rootSignature;
 
 		inline void PushVertex(const PC_Vertex & vertex, bool depthEnabled) {
-			// assert: bufferSize >= (numNoDepthVertices + numDepthVertices)
+			// assert: bufferSize > (numNoDepthVertices + numDepthVertices)
 			if(depthEnabled) {
 				vertices[numDepthVertices++] = vertex;
 			} else {
@@ -47,165 +27,53 @@ namespace Netcode::Graphics::DX12 {
 			}
 		}
 
+		inline PC_Vertex * GetBufferForVertices(size_t numVertices, bool depthEnabled) {
+			// assert: bufferSize >= (numNoDepthVertices + numDepthVertices + numVertices)
+			PC_Vertex * tmp;
+			if(depthEnabled) {
+				tmp = vertices.data() + numDepthVertices;
+				numDepthVertices += numVertices;
+			} else {
+				tmp = vertices.data() + (bufferSize - numNoDepthVertices - numVertices);
+				numNoDepthVertices += numVertices;
+			}
+			return tmp;
+		}
+
 	public:
-		void CreateResources(Module::IGraphicsModule * graphics) {
-			Netcode::InputLayoutBuilderRef ilBuilder = graphics->CreateInputLayoutBuilder();
-			ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
-			ilBuilder->AddInputElement("COLOR", DXGI_FORMAT_R32G32B32_FLOAT);
-			Netcode::InputLayoutRef il = ilBuilder->Build();
+		void CreateResources(Module::IGraphicsModule * graphics);
 
-			Netcode::DepthStencilDesc depthStencilDesc;
-			Netcode::RasterizerDesc rasterizerDesc;
-			rasterizerDesc.antialiasedLineEnable = true;
+		virtual void UploadResources(IResourceContext * context) override;
 
-			Netcode::ShaderBuilderRef shaderBuilder = graphics->CreateShaderBuilder();
-			Netcode::ShaderBytecodeRef vertexShader = shaderBuilder->LoadBytecode(L"Netcode_DebugPrimVS.hlsl");
-			Netcode::ShaderBytecodeRef pixelShader = shaderBuilder->LoadBytecode(L"Netcode_DebugPrimPS.hlsl");
+		virtual void Draw(IRenderContext * context, const Float4x4 & viewProjMatrix) override;
 
-			Netcode::RootSignatureBuilderRef rootSigBuilder = graphics->CreateRootSignatureBuilder();
-			rootSignature = rootSigBuilder->BuildFromShader(vertexShader);
+		virtual void DrawPoint(const Float3 & point, float extent) override;
+		virtual void DrawPoint(const Float3 & point, float extent, bool depthEnabled) override;
 
-			Netcode::GPipelineStateBuilderRef gpsoBuilder = graphics->CreateGPipelineStateBuilder();
-			gpsoBuilder->SetNumRenderTargets(1);
-			gpsoBuilder->SetRenderTargetFormat(0, graphics->GetBackbufferFormat());
-			gpsoBuilder->SetDepthStencilFormat(graphics->GetDepthStencilFormat());
-			gpsoBuilder->SetInputLayout(il);
-			gpsoBuilder->SetPrimitiveTopologyType(PrimitiveTopologyType::LINE);
-			gpsoBuilder->SetRasterizerState(rasterizerDesc);
-			gpsoBuilder->SetDepthStencilState(depthStencilDesc);
-			gpsoBuilder->SetVertexShader(vertexShader);
-			gpsoBuilder->SetPixelShader(pixelShader);
-			gpsoBuilder->SetRootSignature(rootSignature);
-			depthPso = gpsoBuilder->Build();
+		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd) override;
+		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, bool depthEnabled) override;
+		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, const Float3 & color) override;
+		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, const Float3 & color, bool depthEnabled) override;
 
-			depthStencilDesc.depthEnable = false;
+		virtual void DrawSphere(Vector3 worldPosOrigin, float radius) override;
+		virtual void DrawSphere(Vector3 worldPosOrigin, float radius, bool depthEnabled) override;
+		virtual void DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color) override;
+		virtual void DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color, bool depthEnabled) override;
 
-			gpsoBuilder->SetNumRenderTargets(1);
-			gpsoBuilder->SetRenderTargetFormat(0, graphics->GetBackbufferFormat());
-			gpsoBuilder->SetDepthStencilFormat(graphics->GetDepthStencilFormat());
-			gpsoBuilder->SetInputLayout(il);
-			gpsoBuilder->SetPrimitiveTopologyType(PrimitiveTopologyType::LINE);
-			gpsoBuilder->SetRasterizerState(rasterizerDesc);
-			gpsoBuilder->SetDepthStencilState(depthStencilDesc);
-			gpsoBuilder->SetVertexShader(vertexShader);
-			gpsoBuilder->SetPixelShader(pixelShader);
-			gpsoBuilder->SetRootSignature(rootSignature);
-			noDepthPso = gpsoBuilder->Build();
+		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents) override;
+		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, bool depthEnabled) override;
+		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color) override;
+		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, bool depthEnabled) override;
 
-			uploadBuffer = graphics->resources->CreateVertexBuffer(65536 * sizeof(PC_Vertex),
-																   sizeof(PC_Vertex),
-																   ResourceType::PERMANENT_UPLOAD,
-																   ResourceState::ANY_READ);
-
-			bufferSize = 65536;
-			vertices.resize(bufferSize);
-		}
-
-		virtual void UploadResources(IResourceContext * context) override {
-			if(numDepthVertices > 0) {
-				context->CopyConstants(uploadBuffer, vertices.data(), numDepthVertices * sizeof(PC_Vertex), 0);
-			}
-
-			if(numNoDepthVertices > 0) {
-				context->CopyConstants(uploadBuffer, vertices.data() + numDepthVertices, numNoDepthVertices * sizeof(PC_Vertex), numDepthVertices * sizeof(PC_Vertex));
-			}
-		}
-
-		virtual void Draw(IRenderContext * context, const Netcode::Float4x4 & viewProjMatrix) override {
-			if(numDepthVertices == 0 && numNoDepthVertices == 0) {
-				return;
-			}
-
-			viewProj = viewProjMatrix;
-
-			context->SetRootSignature(rootSignature);
-			context->SetRootConstants(0, &viewProj, 16);
-			context->SetVertexBuffer(uploadBuffer);
-
-			if(numDepthVertices > 0) {
-				context->SetPipelineState(depthPso);
-				context->Draw(numDepthVertices);
-			}
-
-			if(numNoDepthVertices > 0) {
-				context->SetPipelineState(noDepthPso);
-				context->Draw(numNoDepthVertices, numDepthVertices);
-			}
-		}
-
-		virtual void DrawPoint(const Netcode::Float3 & point, float extent) override {
-			DrawPoint(point, extent, true);
-		}
-
-		virtual void DrawPoint(const Netcode::Float3 & point, float extent, bool depthEnabled) override {
-			Netcode::PC_Vertex v0, v1, v2, v3, v4, v5;
-			v0.color = v1.color = DirectX::XMFLOAT3{ 1.0f, 0.0f, 0.0f };
-			v2.color = v3.color = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
-			v4.color = v5.color = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
-
-			v0.position = Netcode::Float3(point.x - extent, point.y, point.z);
-			v1.position = Netcode::Float3(point.x + extent, point.y, point.z);
-
-			v0.position = Netcode::Float3(point.x, point.y - extent, point.z);
-			v1.position = Netcode::Float3(point.x, point.y + extent, point.z);
-
-			v0.position = Netcode::Float3(point.x, point.y, point.z - extent);
-			v1.position = Netcode::Float3(point.x, point.y, point.z + extent);
-
-			PushVertex(v0, depthEnabled);
-			PushVertex(v1, depthEnabled);
-			PushVertex(v2, depthEnabled);
-			PushVertex(v3, depthEnabled);
-			PushVertex(v4, depthEnabled);
-			PushVertex(v5, depthEnabled);
-		}
-
-		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd) override {
-			DrawLine(worldPosStart, worldPosEnd, true);
-		}
-
-		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, bool depthEnabled) override {
-			DrawLine(worldPosStart, worldPosEnd, Netcode::Float3{ 0.7f, 0.7f, 0.7f }, depthEnabled);
-		}
-
-		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, const Netcode::Float3 & color) override {
-			DrawLine(worldPosStart, worldPosEnd, color, true);
-		}
-		
-		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, const Netcode::Float3 & color, bool depthEnabled) override {
-			Netcode::PC_Vertex vert0;
-			vert0.position = worldPosStart;
-			vert0.color = color;
-
-			Netcode::PC_Vertex vert1;
-			vert1.position = worldPosEnd;
-			vert1.color = color;
-
-			PushVertex(vert0, depthEnabled);
-			PushVertex(vert1, depthEnabled);
-		}
-
-		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius) override;
-		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius, bool depthEnabled) override;
-		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius, const Netcode::Float3 & color) override;
-		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius, const Netcode::Float3 & color, bool depthEnabled) override;
-
-		void DrawDebugVector(const Netcode::Float3 & startAt, const Netcode::Float3 & dir, float length, const Netcode::Float3 & color, bool depthEnabled = true) {
-			Netcode::Vector3 st = startAt;
-			Netcode::Vector3 d = dir;
-
-			Netcode::PC_Vertex vert0;
-			vert0.position = startAt;
-			vert0.color = color;
-
-			Netcode::PC_Vertex vert1;
-			vert1.color = color;
-			vert1.position = st + d * length;
-
-			PushVertex(vert0, depthEnabled);
-			PushVertex(vert1, depthEnabled);
-		}
-
+		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents) override;
+		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, bool depthEnabled) override;
+		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color) override;
+		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, bool depthEnabled) override;
+	
+		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight) override;
+		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, bool depthEnabled) override;
+		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color) override;
+		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, bool depthEnabled) override;
 	};
 
 	using DX12DebugContext = Netcode::Graphics::DX12::DebugContext;

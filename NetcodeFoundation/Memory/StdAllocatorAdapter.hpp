@@ -11,9 +11,15 @@ namespace Netcode::Memory {
 		using pointer = T *;
 		using const_pointer = const T *;
 
+		StdAllocatorAdapter() : NC_ALLOC_T{} { }
 		StdAllocatorAdapter(const NC_ALLOC_T & rhs) : NC_ALLOC_T{ rhs } { }
+		StdAllocatorAdapter(NC_ALLOC_T && rhs) noexcept : NC_ALLOC_T{ std::move(rhs) } { }
 		StdAllocatorAdapter(StdAllocatorAdapter &&) noexcept = default;
 		StdAllocatorAdapter(const StdAllocatorAdapter &) = default;
+
+		bool operator==(const StdAllocatorAdapter<T, NC_ALLOC_T> & rhs) const {
+			return NC_ALLOC_T::operator==(static_cast<const NC_ALLOC_T&>(rhs));
+		}
 
 		pointer allocate(size_t n) {
 			return static_cast<pointer>(NC_ALLOC_T::template Allocate<T>(n).Data());

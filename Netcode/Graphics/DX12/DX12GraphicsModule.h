@@ -26,6 +26,7 @@
 #include "DX12GPipelineStateLibrary.h"
 #include "DX12CPipelineStateLibrary.h"
 #include "DX12CommandListPool.h"
+#include "DX12DebugContext.h"
 
 
 
@@ -163,6 +164,8 @@ namespace Netcode::Graphics::DX12 {
 
 		std::vector<CommandList> inFlightCommandLists;
 
+		DX12DebugContextRef debugContext;
+
 		DX12ResourceContextRef resourceContext;
 
 		DX12ResourceViewsRef renderTargetViews;
@@ -195,6 +198,8 @@ namespace Netcode::Graphics::DX12 {
 		void CreateContexts();
 
 		void UpdateViewport();
+
+		void CreateDebugContext();
 
 	public:
 

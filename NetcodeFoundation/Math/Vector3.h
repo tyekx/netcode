@@ -32,6 +32,10 @@ namespace Netcode {
 			return DirectX::XMVectorLerp(lhs.v, rhs.v, t);
 		}
 
+		Vector3 NC_MATH_CALLCONV operator-() const noexcept {
+			return DirectX::XMVectorNegate(v);
+		}
+
 		Vector3 NC_MATH_CALLCONV operator*(Vector3 rhs) const noexcept {
 			return DirectX::XMVectorMultiply(v, rhs.v);
 		}
@@ -108,6 +112,33 @@ namespace Netcode {
 			Float3 f;
 			DirectX::XMStoreFloat3(&f, v);
 			return f;
+		}
+
+		/*
+		Permutes between 2 Vector3-s to create a new Vector3.
+		Components can be indexed: [0,5] inclusive.
+		From [0,2] inclusive, the first vector's components are selected
+		From [3,5] inclusive, the second vector's components are selected
+		*/
+		template<uint32_t COMPONENT0, uint32_t COMPONENT1, uint32_t COMPONENT2>
+		Vector3 NC_MATH_CALLCONV Permute(Vector3 rhs) const noexcept {
+			static_assert(COMPONENT0 < 6 && COMPONENT1 < 6 && COMPONENT2 < 6, "Out of range");
+			constexpr uint32_t c0 = (COMPONENT0 / 3) * 4 + (COMPONENT0 % 3);
+			constexpr uint32_t c1 = (COMPONENT1 / 3) * 4 + (COMPONENT1 % 3);
+			constexpr uint32_t c2 = (COMPONENT2 / 3) * 4 + (COMPONENT2 % 3);
+			return DirectX::XMVectorPermute<c0, c1, c2, 3>(v, rhs.v);
+		}
+
+		template<uint32_t COMPONENT0, uint32_t COMPONENT1, uint32_t COMPONENT2>
+		Vector3 NC_MATH_CALLCONV Swizzle() const noexcept {
+			static_assert(COMPONENT0 < 3 && COMPONENT1 < 3 && COMPONENT2 < 3, "Out of range");
+			return DirectX::XMVectorSwizzle<COMPONENT0, COMPONENT1, COMPONENT2, 3>(v);
+		}
+
+		template<uint32_t COMPONENT0, uint32_t COMPONENT1, uint32_t COMPONENT2, uint32_t COMPONENT3>
+		Vector4 NC_MATH_CALLCONV Swizzle() const noexcept {
+			static_assert(COMPONENT0 <= 3 && COMPONENT1 <= 3 && COMPONENT2 <= 3, "Out of range");
+			return DirectX::XMVectorSwizzle<COMPONENT0, COMPONENT1, COMPONENT2, COMPONENT3>(v);
 		}
 
 		Vector4 XYZ1() const noexcept;

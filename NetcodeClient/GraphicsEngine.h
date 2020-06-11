@@ -102,7 +102,7 @@ using UIRenderItemTypeTuple = std::tuple<UISpriteRenderItem, UITextRenderItem>;
 using UIRenderItem = typename TupleRename<std::variant, UIRenderItemTypeTuple>::type;
 
 class GraphicsEngine {
-
+public:
 	GpuResourceRef gbufferPass_DepthBuffer;
 	GpuResourceRef gbufferPass_ColorRenderTarget;
 	GpuResourceRef gbufferPass_NormalsRenderTarget;
@@ -925,6 +925,17 @@ public:
 		});
 	}
 
+	void CreateDebugPrimPass(Netcode::FrameGraphBuilderRef builder) {
+		builder->CreateRenderPass("Debug", [this](IResourceContext * ctx) ->void {
+			ctx->Reads(2);
+			ctx->Writes(nullptr);
+			graphics->debug->UploadResources(ctx);
+		},
+		[this](IRenderContext * ctx) -> void {
+			graphics->debug->Draw(ctx, perFrameData->ViewProj);
+		});
+	}
+
 	void Reset() {
 		skinningPass_Input.Clear();
 		skinnedGbufferPass_Input.Clear();
@@ -968,6 +979,7 @@ public:
 		CreateLightingPass(builder);
 		CreateBackgroundPass(builder);
 		CreateUIPass(builder);
+		CreateDebugPrimPass(builder);
 	}
 
 	void CreateComputeFrameGraph(Netcode::FrameGraphBuilderRef builder) {

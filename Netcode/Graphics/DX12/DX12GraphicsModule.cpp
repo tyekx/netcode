@@ -196,7 +196,6 @@ namespace Netcode::Graphics::DX12 {
 		resourceContext->backbufferExtents = scissorRect;
 
 		cbufferPool.SetHeapManager(heapManager);
-
 		dheaps.CreateResources(device);
 	}
 
@@ -293,6 +292,12 @@ namespace Netcode::Graphics::DX12 {
 		CreateLibraries();
 
 		CreateSwapChainResources();
+
+#if defined(NETCODE_DEBUG)
+		debugContext = objectAllocator.MakeShared<DX12DebugContext>();
+		debugContext->CreateResources(this);
+		debug = debugContext.get();
+#endif
 	}
 
 	void DX12GraphicsModule::DeviceSync()

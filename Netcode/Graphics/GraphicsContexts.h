@@ -184,24 +184,36 @@ namespace Netcode::Graphics {
 	public:
 		virtual ~IDebugContext() = default;
 
-		virtual void DrawPoint(const Netcode::Float3 & worldPos, float extents) = 0;
-		virtual void DrawPoint(const Netcode::Float3 & worldPos, float extents, bool depthEnabled) = 0;
+		virtual void DrawPoint(const Float3 & worldPos, float extents) = 0;
+		virtual void DrawPoint(const Float3 & worldPos, float extents, bool depthEnabled) = 0;
 
-		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd) = 0;
-		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, bool depthEnabled) = 0;
-		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, const Netcode::Float3& color) = 0;
-		virtual void DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, const Netcode::Float3& color, bool depthEnabled) = 0;
+		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd) = 0;
+		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, bool depthEnabled) = 0;
+		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, const Float3 & color) = 0;
+		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, const Float3 & color, bool depthEnabled) = 0;
 
-		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius) = 0;
-		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius, bool depthEnabled) = 0;
-		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius, const Netcode::Float3 & color) = 0;
-		virtual void DrawSphere(const Netcode::Float3 & worldPosOrigin, float radius, const Netcode::Float3 & color, bool depthEnabled) = 0;
+		virtual void DrawSphere(Vector3 worldPosOrigin, float radius) = 0;
+		virtual void DrawSphere(Vector3 worldPosOrigin, float radius, bool depthEnabled) = 0;
+		virtual void DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color) = 0;
+		virtual void DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color, bool depthEnabled) = 0;
 
-		virtual void DrawBoundingBox(const Netcode::Float3 & worldPosOrigin, const Netcode::Float3 & extents) = 0;
-		virtual void DrawBoundingBox(const Netcode::Float3 & worldPosOrigin, const Netcode::Float3 & extents, bool depthEnabled) = 0;
+		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents) = 0;
+		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, bool depthEnabled) = 0;
+		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color) = 0;
+		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, bool depthEnabled) = 0;
+
+		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents) = 0;
+		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, bool depthEnabled) = 0;
+		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color) = 0;
+		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, bool depthEnabled) = 0;
+
+		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight) = 0;
+		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, bool depthEnabled) = 0;
+		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color) = 0;
+		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, bool depthEnabled) = 0;
 
 		virtual void UploadResources(IResourceContext * context) = 0;
-		virtual void Draw(IRenderContext* context, const Netcode::Float4x4 & viewProjMatrix) = 0;
+		virtual void Draw(IRenderContext* context, const Float4x4 & viewProjMatrix) = 0;
 	};
 
 	class IFrameContext {

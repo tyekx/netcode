@@ -371,6 +371,10 @@ namespace Netcode::Memory {
             }
         }
 
+        bool operator==(const ObjectAllocator & rhs) const {
+            return resource.get() == rhs.resource.get();
+        }
+
         void SetDefaultPageSize(size_t size) {
             resource->defaultPageSize = size;
         }
@@ -379,15 +383,13 @@ namespace Netcode::Memory {
             resource->defaultAlignment = alignment;
         }
 
-        ObjectAllocator(size_t defaultPageSize = 65536, size_t defaultAlignment = 16) : resource{ } {
+        ObjectAllocator(size_t defaultPageSize = 65536, size_t defaultAlignment = sizeof(void*)) : resource{ nullptr } {
             resource = std::make_shared<Resource>(defaultPageSize, defaultAlignment);
         }
 
         ObjectAllocator(const ObjectAllocator &) = default;
 
-        // having a move constructor disallows us to deallocate in some situations
         ObjectAllocator(ObjectAllocator &&) noexcept = delete;
-
 
         template<typename T>
         MemoryBlock Allocate(size_t numElements) {

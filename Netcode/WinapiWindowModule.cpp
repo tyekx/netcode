@@ -8,6 +8,14 @@ using Netcode::Graphics::DisplayMode;
 
 namespace Netcode::Module {
 
+	BOOL MonitorEnumProc(HMONITOR hMonitor, HDC hdc, LPRECT rect, LPARAM userData) {
+		 auto * p = reinterpret_cast<std::vector<HMONITOR> *>(userData);
+
+		 p->push_back(hMonitor);
+
+		 return TRUE;
+	}
+
 	void SetupConsole() {
 
 		CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
@@ -48,11 +56,22 @@ namespace Netcode::Module {
 		GetConsoleMode(cWnd, &consoleMode);
 
 		SetConsoleMode(cWnd, consoleMode | ENABLE_WINDOW_INPUT);
-		/*
-		wchar_t buff[256];
-		DWORD len;
+
+		std::vector<HMONITOR> hMons;
+		hMons.reserve(4);
+		EnumDisplayMonitors(NULL, NULL, &MonitorEnumProc, reinterpret_cast<LPARAM>(&hMons));
 		
-		ReadConsoleW(GetStdHandle(STD_INPUT_HANDLE), buff, 256, &len, nullptr);*/
+		// @TODO: move this to configuration
+		int selectedMonitor = 1;
+
+		MONITORINFOEX monitorInfoEx = {};
+		monitorInfoEx.cbSize = sizeof(MONITORINFOEX);
+
+		GetMonitorInfoA(hMons[selectedMonitor], &monitorInfoEx);
+
+		SetWindowPos(cWnd, nullptr, monitorInfoEx.rcMonitor.left, monitorInfoEx.rcMonitor.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+
+		ShowWindow(cWnd, SW_MAXIMIZE);
 	}
 
 	void SizingTimerProc(_In_ HWND hwnd, _In_ UINT wmTimer, _In_ UINT_PTR timerPtr, _In_ DWORD timeSinceEpochMs) {

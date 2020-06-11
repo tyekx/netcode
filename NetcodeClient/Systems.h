@@ -152,15 +152,15 @@ public:
 				int32_t bid = ike.parentId;
 				while(bid >= 0) {
 					auto wrt = Netcode::Animation::BackwardBounceCCD::GetWorldRT(bid, anim->bones, boneTransforms);
-					//renderer->DrawDebugPoint(wrt.translation, 2.0f);
+					renderer->graphics->debug->DrawPoint(wrt.translation, 2.0f);
 					bid = anim->bones[bid].parentId;
 				}
 
 				Netcode::Float3 startAt = Netcode::Animation::BackwardBounceCCD::GetP_c(ike, 0, anim->bones, boneTransforms);
 				Netcode::Float3 p1 = Netcode::Animation::BackwardBounceCCD::GetP_e(ike, anim->bones, boneTransforms);
 				
-				//renderer->DrawDebugVector(startAt, p1, Netcode::Float3{ 1.0f, 0.5f, 0.2f });
-				//renderer->DrawDebugPoint(Netcode::Float3{ p.x, p.y, p.z }, 10.0f);
+				renderer->graphics->debug->DrawLine(startAt, p1, Netcode::Float3{ 1.0f, 0.5f, 0.2f });
+				renderer->graphics->debug->DrawPoint(Netcode::Float3{ p.x, p.y, p.z }, 5.0f);
 			}
 
 			anim->blender->UpdateMatrices(anim->bones, res->ToRootTransform, res->BindTransform);

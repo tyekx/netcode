@@ -20,6 +20,10 @@ namespace Netcode {
 
 		float NC_MATH_CALLCONV Dot(Vector4 rhs) const noexcept;
 
+		Vector4 NC_MATH_CALLCONV operator-() const noexcept {
+			return DirectX::XMVectorNegate(v);
+		}
+
 		Vector4 NC_MATH_CALLCONV operator*(Vector4 rhs) const noexcept {
 			return DirectX::XMVectorMultiply(v, rhs.v);
 		}
