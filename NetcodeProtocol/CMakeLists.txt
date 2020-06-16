@@ -1,25 +1,25 @@
 cmake_minimum_required(VERSION 3.8)
 
-add_library(NetcodeProtocol STATIC "")
+netcode_add_static_library(NetcodeProtocol)
 
 find_package(protobuf CONFIG REQUIRED)
 
 target_link_libraries(NetcodeProtocol
-PRIVATE
+PUBLIC
 	protobuf::libprotobuf
 )
 
-set(PROTO_SRC
-	client.proto
-	control.proto
-	netcode.proto
-	server.proto
-	shared.proto
+set(PROTO_SRC shared.proto control.proto client.proto server.proto netcode.proto)
+
+netcode_compile_proto(GENERATED_HEADERS GENERATED_SOURCE "${PROTO_SRC}")
+
+target_sources(NetcodeProtocol
+PUBLIC
+	${GENERATED_HEADERS}
+
+PRIVATE
+	${GENERATED_SOURCE}
 )
-
-netcode_compile_proto(GENERATED_FILES "${PROTO_SRC}")
-
-target_sources(NetcodeProtocol PUBLIC ${GENERATED_FILES})
 
 add_custom_target(NetcodeProtocolProtobuf DEPENDS ${GENERATED_FILES})
 

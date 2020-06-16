@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 
-add_executable(NetcodeClient WIN32 "")
+netcode_add_executable(NetcodeClient WIN32 "")
 
 find_package(spdlog CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
@@ -20,90 +20,93 @@ find_library(PHYSX_COOKING_LIB PhysXCooking_64)
 find_library(PHYSX_PVD_LIB PhysXPvdSDK_static_64)
 
 set(PHYSX_LIBRARIES
-	"${PHYSX_LIB}"
-	"${PHYSX_COMMON_LIB}"
-	"${PHYSX_FOUNDATION_LIB}"
-	"${PHYSX_CKINEMATIC_LIB}"
-	"${PHYSX_EXT_LIB}"
-	"${PHYSX_COOKING_LIB}"
-	"${PHYSX_PVD_LIB}")
+	${PHYSX_LIB}
+	${PHYSX_COMMON_LIB}
+	${PHYSX_FOUNDATION_LIB}
+	${PHYSX_CKINEMATIC_LIB}
+	${PHYSX_EXT_LIB}
+	${PHYSX_COOKING_LIB}
+	${PHYSX_PVD_LIB})
 
 find_library(DIRECTXTEX_LIBRARY DirectXTex)
 find_library(JSON11_LIBRARY json11)
 
 target_include_directories(NetcodeClient 
 PRIVATE
-	"${PROJECT_SOURCE_DIR}"
+	${PROJECT_SOURCE_DIR}
 )
 
-target_include_directories(NetcodeClient SYSTEM
+target_include_directories(NetcodeClient	SYSTEM
 PRIVATE
-	"${PHYSX_INCLUDE_DIR}"
-	"${DIRECTXTEX_INCLUDE_DIR}"
+	${PHYSX_INCLUDE_DIR}
+	${DIRECTXTEX_INCLUDE_DIR}
 )
 
 target_sources(NetcodeClient
 PRIVATE
-	Asset.h
-	AssetManager.h
-	Components.cpp
-	Components.h
-	ComponentStorage.hpp
-	ConstantBufferTypes.h
-	DevCameraScript.cpp
-	DevCameraScript.h
-	NetcodeApp.h
-	GameObject.cpp
-	GameObject.h
-	GameScene.cpp
-	GameScene.h
-	GraphicsEngine.h
-	Layer.h
-	Light.h
-	main.cpp
-	Material.h
-	Mesh.h
-	PhysxHelpers.cpp
-	PhysxHelpers.h
-	PlayerBehavior.h
-	RemoteAvatarScript.cpp
-	RemoteAvatarScript.h
-	Scene.cpp
-	Scene.h
-	Services.cpp
-	Services.h
-	Snippets.h
-	Systems.cpp
-	Systems.h
-	UIButtonPrefab.h
-	UIControl.h
-	UILabel.h
-	UIObject.h
-	UIPagePrefab.h
-	UIScene.h
-	UIServerRow.h
-	UISpinner.h
-	UITextBox.h
-	AnimationSet.h
-	AnimationSet.cpp
-	AnimationController.h
-	AnimationController.cpp
+	"Asset.h"
+	"AssetManager.h"
+	"Components.cpp"
+	"Components.h"
+	"ComponentStorage.hpp"
+	"ConstantBufferTypes.h"
+	"DevCameraScript.cpp"
+	"DevCameraScript.h"
+	"NetcodeApp.h"
+	"GameObject.cpp"
+	"GameObject.h"
+	"GameScene.cpp"
+	"GameScene.h"
+	"GraphicsEngine.h"
+	"Layer.h"
+	"Light.h"
+	"main.cpp"
+	"Material.h"
+	"Mesh.h"
+	"PhysxHelpers.cpp"
+	"PhysxHelpers.h"
+	"PlayerBehavior.h"
+	"RemoteAvatarScript.cpp"
+	"RemoteAvatarScript.h"
+	"Scene.cpp"
+	"Scene.h"
+	"Services.cpp"
+	"Services.h"
+	"Snippets.h"
+	"Systems.cpp"
+	"Systems.h"
+	"UIButtonPrefab.h"
+	"UIControl.h"
+	"UILabel.h"
+	"UIObject.h"
+	"UIPagePrefab.h"
+	"UIScene.h"
+	"UIServerRow.h"
+	"UISpinner.h"
+	"UITextBox.h"
+	"AnimationSet.h"
+	"AnimationSet.cpp"
+	"AnimationController.h"
+	"AnimationController.cpp"
+	"ProgramOptions.h"
+	"ProgramOptions.cpp"
 )
 
 target_link_libraries(NetcodeClient
-PRIVATE 
+PRIVATE
 	NetcodeFoundation
 	NetcodeAssetLib
+	NetcodeProtocol
 	Netcode
 	assimp::assimp
 	Boost::system
 	Boost::date_time
 	Boost::program_options
 	protobuf::libprotobuf
-	"${JSON11_LIBRARY}"
-	"${PHYSX_LIBRARIES}"
-	"${DIRECTXTEX_LIBRARY}"
-	"${DX12_LIBRARIES}")
+	${JSON11_LIBRARY}
+	${PHYSX_LIBRARIES}
+	${DIRECTXTEX_LIBRARY}
+	${DX12_LIBRARIES})
 
 add_subdirectory(Shaders)
 

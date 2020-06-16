@@ -1,23 +1,23 @@
 cmake_minimum_required(VERSION 3.8)
 
 target_sources(Netcode 
-PUBLIC
-	GameSession.cpp
-	GameSession.h
-	ClientSession.h
-	ClientSession.cpp
-	NetcodeNetworkModule.h
-	NetcodeNetworkModule.cpp
-	NetworkCommon.h
-	NetworkCommon.cpp
-	Cookie.h
-	Cookie.cpp
-	HttpSession.h
-	HttpSession.cpp
-	ServerSession.h
-	ServerSession.cpp
-	MysqlSession.h
-	MysqlSession.cpp
-)
+PRIVATE
+	"GameSession.h"
+	"ClientSession.h"
+	"NetcodeNetworkModule.h"
+	"NetworkCommon.h"
+	"Cookie.h"
+	"HttpSession.h"
+	"ServerSession.h"
+	"MysqlSession.h"
 
-target_link_libraries(Netcode PRIVATE NetcodeProtocol)
+PUBLIC
+	"GameSession.cpp"
+	"ClientSession.cpp"
+	"NetcodeNetworkModule.cpp"
+	"NetworkCommon.cpp"
+	"Cookie.cpp"
+	"HttpSession.cpp"
+	"ServerSession.cpp"
+	"MysqlSession.cpp"
+)

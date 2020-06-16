@@ -25,13 +25,19 @@ void InitProgramOptions(po::options_description & root, Netcode::Network::Config
 		("srv.slots", po::value<uint32_t>(&config.server.playerSlots)->default_value(8), "Player slots")
 		("srv.threads", po::value<uint32_t>(&config.server.workerThreadCount)->default_value(1), "The number of worker threads");
 
+	po::options_description web("Web options");
+	web.add_options()
+		("web.host", po::value<std::string>(&config.web.hostAddress)->default_value("http://netcode.webs"), "The hostname of the web host")
+		("web.port", po::value<uint16_t>(&config.web.hostPort)->default_value(80), "The port of the web host");
+
 	po::options_description protocol("Protocol options");
 	protocol.add_options()
 		("proto.grace_period", po::value<uint32_t>(&config.protocol.gracePeriodMs)->default_value(5000), "Protocol ACK grace period")
 		("proto.resend", po::value<uint32_t>(&config.protocol.resendTimeoutMs)->default_value(800), "Protocol resend timeout")
-		("proto.pps", po::value<uint32_t>(&config.protocol.maximumAllowedClientPPS)->default_value(120), "max. packets per second");
+		("proto.max_pps", po::value<uint32_t>(&config.protocol.maximumAllowedClientPPS)->default_value(120), "max. packets per second");
 
 	root.add(protocol);
 	root.add(database);
+	root.add(web);
 	root.add(server);
 }

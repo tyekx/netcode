@@ -7,13 +7,10 @@
 #include <vector>
 #include <future>
 
-#include <NetcodeFoundation/Math.h>
-
-#include <DirectXCollision.h>
+#include "ModulesConfig.h"
 
 #include "Graphics/GraphicsContexts.h"
 #include "Network/GameSession.h"
-#include "Network/Config.h"
 #include "Network/Cookie.h"
 
 namespace Netcode::Module {
@@ -47,7 +44,7 @@ namespace Netcode::Module {
 	struct AppEvent {
 		EAppEventType type;
 		union {
-			DirectX::XMINT2 resizeArgs;
+			Netcode::Int2 resizeArgs;
 			Netcode::Graphics::DisplayMode displayMode;
 		};
 	};

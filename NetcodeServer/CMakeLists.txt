@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 
-add_executable(NetcodeServer "")
+netcode_add_executable(NetcodeServer "")
 
 find_package(json11 CONFIG REQUIRED)
 find_package(protobuf CONFIG REQUIRED)
@@ -18,13 +18,13 @@ find_library(PHYSX_COOKING_LIB PhysXCooking_64)
 find_library(PHYSX_PVD_LIB PhysXPvdSDK_static_64)
 
 set(PHYSX_LIBRARIES
-	"${PHYSX_LIB}"
-	"${PHYSX_COMMON_LIB}"
-	"${PHYSX_FOUNDATION_LIB}"
-	"${PHYSX_CKINEMATIC_LIB}"
-	"${PHYSX_EXT_LIB}"
-	"${PHYSX_COOKING_LIB}"
-	"${PHYSX_PVD_LIB}")
+	${PHYSX_LIB}
+	${PHYSX_COMMON_LIB}
+	${PHYSX_FOUNDATION_LIB}
+	${PHYSX_CKINEMATIC_LIB}
+	${PHYSX_EXT_LIB}
+	${PHYSX_COOKING_LIB}
+	${PHYSX_PVD_LIB})
 
 find_library(DIRECTXTEX_LIBRARY DirectXTex)
 
@@ -32,25 +32,25 @@ find_library(JSON11_LIBRARY json11)
 
 target_sources(NetcodeServer
 PRIVATE
-	main.cpp
-	ServerApp.h
-	ProgramOptions.cpp
-	ProgramOptions.h
+	"main.cpp"
+	"ServerApp.h"
+	"ProgramOptions.cpp"
+	"ProgramOptions.h"
 )
 
 target_include_directories(NetcodeServer PRIVATE
-	"${CMAKE_PROJECT_DIR}"
+	${CMAKE_PROJECT_DIR}
 )
 
 target_include_directories(NetcodeServer SYSTEM
 PRIVATE 
-	"${MYSQLCONN_INCLUDE}"
-	"${DIRECTXTEX_INCLUDE_DIR}"
+	${MYSQLCONN_INCLUDE}
+	${DIRECTXTEX_INCLUDE_DIR}
 )
 
 target_link_directories(NetcodeServer
 PRIVATE
-	"${MYSQLCONN_LIB}"
+	${MYSQLCONN_LIB}
 )
 
 target_link_libraries(NetcodeServer
@@ -61,11 +61,11 @@ PRIVATE
 	Boost::date_time
 	Boost::system
 	Boost::program_options
-	"${JSON11_LIBRARY}"
-	"${DIRECTXTEX_LIBRARY}"
-	"${PHYSX_LIBRARIES}"
-	"${MYSQLCONN_LINK}"
-	"${DX12_LINK}"
+	${JSON11_LIBRARY}
+	${DIRECTXTEX_LIBRARY}
+	${PHYSX_LIBRARIES}
+	${MYSQLCONN_LINK}
+	${DX12_LINK}
 )
 
 netcode_add_cp_command("config.cfg" "${CMAKE_CURRENT_BINARY_DIR}/config.cfg")

@@ -1,6 +1,12 @@
 #pragma once
 
+#include <rapidjson/document.h>
+
 #include "Common.h"
+
+#include "Graphics/Config.h"
+#include "Network/Config.h"
+#include "Window/Config.h"
 
 /*
 with build time definitions you can control the compiled modules. By default every buildable module is included in the build.
@@ -30,3 +36,34 @@ Not having any built module for a specific type of modules is not considered to 
 
 #endif
 
+namespace Netcode {
+
+	struct Config {
+
+		Network::Config network;
+		Graphics::Config graphics;
+		Window::Config window;
+
+		void Store(rapidjson::Value & parentObject, rapidjson::Document & doc) {
+			rapidjson::Value networkObj{ rapidjson::kObjectType };
+			rapidjson::Value graphicsObj{ rapidjson::kObjectType };
+			rapidjson::Value windowObj{ rapidjson::kObjectType };
+
+			network.Store(networkObj, doc);
+			graphics.Store(graphicsObj, doc);
+			window.Store(windowObj, doc);
+
+			parentObject.AddMember("network", networkObj, doc.GetAllocator());
+			parentObject.AddMember("graphics", graphicsObj, doc.GetAllocator());
+			parentObject.AddMember("window", windowObj, doc.GetAllocator());
+		}
+
+		void Load(const rapidjson::Value & object) {
+			network.Load(object["network"]);
+			graphics.Load(object["graphics"]);
+			window.Load(object["window"]);
+		}
+
+	};
+
+}

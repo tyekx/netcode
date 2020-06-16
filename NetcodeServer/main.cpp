@@ -1,12 +1,10 @@
 #include <Netcode/DefaultModuleFactory.h>
-#include <NetcodeFoundation/Version.h>
 
 #include "ProgramOptions.h"
 #include "ServerApp.h"
 
 int main(int argc, char * argv[]) {
 	Log::Setup(true);
-	Log::Info("Build: {0}.{1}.{2}", Netcode::GetMajorVersion(), Netcode::GetMinorVersion(), Netcode::GetBuildVersion());
 	boost::asio::io_context ioc;
 
 	Netcode::Network::Config config;
