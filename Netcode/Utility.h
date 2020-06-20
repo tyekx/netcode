@@ -61,37 +61,14 @@ namespace Netcode {
 		*/
 		void Debugf(const char * format, ...);
 
-		/*
-		Loads a file into a string
-		*/
-		bool SlurpFile(std::string & dstBuffer, const std::wstring & filepath);
-
 		std::string ToNarrowString(const std::wstring & wideString);
 
 		std::wstring ToWideString(const std::string & narrowString);
 
 		/*
-std::vector<std::string_view> Split(std::string_view str, std::string_view delims = " ")
-{
-	std::vector<std::string_view> output;
-
-	for(auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last; first = second + 1) {
-		second = std::find_first_of(first, last, std::cbegin(delims), std::cend(delims));
-
-		if(first != second)
-			output.emplace_back(first, second - first);
-	}
-
-	return output;
-}*/
-
-		/*
 		prints the WinAPI event to VS output window, use the filter argument to not print those messages
 		*/
 		void DebugEvent(unsigned int msg, std::initializer_list<unsigned int> filter = {});
-
-
-
 	}
 
 }

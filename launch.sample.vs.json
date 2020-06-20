@@ -9,8 +9,8 @@
       "projectTarget": "NetcodeClient.exe (NetcodeClient\\NetcodeClient.exe)",
       "name": "NetcodeClient",
       "args": [
-        "--mediaPath=${workspaceRoot}\\Media",
-        "--shaderPath=${cmake.buildRoot}\\Shaders"
+        "--media_root=${workspaceRoot}\\Media",
+        "--shader_root=${cmake.buildRoot}\\Shaders"
       ],
       "env": {
         "PATH": "${env.Path}"

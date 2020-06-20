@@ -9,9 +9,7 @@ protected:
 			return;
 		}
 
-		
-
-		DirectX::XMFLOAT2 strSize;
+		Netcode::Float2 strSize;
 		
 		if(text->text.empty()) {
 			strSize = text->font->MeasureString(L"a");
@@ -50,7 +48,7 @@ public:
 
 	virtual ~UIControl() = default;
 
-	virtual void SetPosition(const DirectX::XMFLOAT2 & pos) {
+	virtual void SetPosition(const Netcode::Float2 & pos) {
 		UIObject * root = GetRoot();
 
 		if(root->HasComponent<Transform>()) {

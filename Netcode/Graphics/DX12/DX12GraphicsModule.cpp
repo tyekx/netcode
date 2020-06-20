@@ -589,8 +589,8 @@ namespace Netcode::Graphics::DX12 {
 		objectAllocator.Defragment(16);
 	}
 
-	DirectX::XMUINT2 DX12GraphicsModule::GetBackbufferSize() const {
-		return DirectX::XMUINT2{ width, height };
+	Netcode::UInt2 DX12GraphicsModule::GetBackbufferSize() const {
+		return Netcode::UInt2{ width, height };
 	}
 
 	DXGI_FORMAT DX12GraphicsModule::GetBackbufferFormat() const {

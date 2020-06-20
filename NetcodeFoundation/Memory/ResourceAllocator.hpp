@@ -17,13 +17,13 @@ namespace Netcode::Memory {
 
 		template<typename T>
 		MemoryBlock Allocate(size_t n) {
-			Detail::UndefinedBehaviourAssertion(n == 1);
+			UndefinedBehaviourAssertion(n == 1);
 
 			(*headSize) = Align<size_t>(sizeof(T), alignment);
 
 			void * p = AlignedMalloc((*headSize) + totalSize, alignment);
 
-			Detail::OutOfMemoryAssertion(p != nullptr);
+			OutOfMemoryAssertion(p != nullptr);
 
 			return p;
 		}

@@ -23,10 +23,10 @@ class MainMenuLayer : public Layer {
 	UIPagePrefab mainPage;
 	UIPagePrefab playPage;
 
-	DirectX::XMFLOAT2 loadPageSize;
-	DirectX::XMFLOAT2 loginPageSize;
-	DirectX::XMFLOAT2 mainPageSize;
-	DirectX::XMFLOAT2 playPageSize;
+	Netcode::Float2 loadPageSize;
+	Netcode::Float2 loginPageSize;
+	Netcode::Float2 mainPageSize;
+	Netcode::Float2 playPageSize;
 
 	UITextBox usernameTextBox;
 	UITextBox passwordTextBox;
@@ -42,15 +42,15 @@ class MainMenuLayer : public Layer {
 	Netcode::GpuResourceRef serverRowTexHandle;
 
 	Netcode::ResourceViewsRef loadIconView;
-	DirectX::XMUINT2 loadIconTextureSize;
+	Netcode::UInt2 loadIconTextureSize;
 	Netcode::ResourceViewsRef btnBackgroundView;
-	DirectX::XMUINT2 btnBackgroundTextureSize;
+	Netcode::UInt2 btnBackgroundTextureSize;
 	Netcode::ResourceViewsRef textBoxBackgroundView;
-	DirectX::XMUINT2 textBoxBackgroundTextureSize;
+	Netcode::UInt2 textBoxBackgroundTextureSize;
 	Netcode::ResourceViewsRef serversPanelBackgroundView;
-	DirectX::XMUINT2 serversPanelBackgroundSize;
+	Netcode::UInt2 serversPanelBackgroundSize;
 	Netcode::ResourceViewsRef serverRowBackgroundView;
-	DirectX::XMUINT2 serverRowBackgroundSize;
+	Netcode::UInt2 serverRowBackgroundSize;
 	Netcode::SpriteFontRef font18;
 	Netcode::SpriteFontRef font24;
 	Netcode::SpriteFontRef font48;
@@ -100,7 +100,7 @@ public:
 
 		{
 			const Netcode::Image * loadingIconImg = loadingIconTexture->GetImage(0, 0, 0);
-			loadIconTextureSize = DirectX::XMUINT2{ static_cast<uint32_t>(loadingIconImg->width), static_cast<uint32_t>(loadingIconImg->height) };
+			loadIconTextureSize = Netcode::UInt2{ static_cast<uint32_t>(loadingIconImg->width), static_cast<uint32_t>(loadingIconImg->height) };
 			loadingIconTextureHandle = app->graphics->resources->CreateTexture2D(loadingIconImg);
 			uploadBatch.Upload(loadingIconTextureHandle, loadingIconTexture);
 			uploadBatch.ResourceBarrier(loadingIconTextureHandle, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
@@ -109,7 +109,7 @@ public:
 
 		{
 			const Netcode::Image * textBoxBackgroundImg = textBoxBackgroundTexture->GetImage(0, 0, 0);
-			textBoxBackgroundTextureSize = DirectX::XMUINT2{ static_cast<uint32_t>(textBoxBackgroundImg->width), static_cast<uint32_t>(textBoxBackgroundImg->height) };
+			textBoxBackgroundTextureSize = Netcode::UInt2{ static_cast<uint32_t>(textBoxBackgroundImg->width), static_cast<uint32_t>(textBoxBackgroundImg->height) };
 			textBoxBackgroundTextureHandle = app->graphics->resources->CreateTexture2D(textBoxBackgroundImg);
 			uploadBatch.Upload(textBoxBackgroundTextureHandle, textBoxBackgroundTexture);
 			uploadBatch.ResourceBarrier(textBoxBackgroundTextureHandle, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
@@ -118,7 +118,7 @@ public:
 
 		{
 			const Netcode::Image * btnBackgroundImg = btnBackgroundTexture->GetImage(0, 0, 0);
-			btnBackgroundTextureSize = DirectX::XMUINT2{ static_cast<uint32_t>(btnBackgroundImg->width), static_cast<uint32_t>(btnBackgroundImg->height) };
+			btnBackgroundTextureSize = Netcode::UInt2{ static_cast<uint32_t>(btnBackgroundImg->width), static_cast<uint32_t>(btnBackgroundImg->height) };
 			btnBackgroundTextureHandle = app->graphics->resources->CreateTexture2D(btnBackgroundImg);
 			uploadBatch.Upload(btnBackgroundTextureHandle, btnBackgroundTexture);
 			uploadBatch.ResourceBarrier(btnBackgroundTextureHandle, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
@@ -127,7 +127,7 @@ public:
 
 		{
 			const Netcode::Image * serversBackgroundImg = serverPanelBackgroundTexture->GetImage(0, 0, 0);
-			serversPanelBackgroundSize = DirectX::XMUINT2{ static_cast<uint32_t>(serversBackgroundImg->width), static_cast<uint32_t>(serversBackgroundImg->height) };
+			serversPanelBackgroundSize = Netcode::UInt2{ static_cast<uint32_t>(serversBackgroundImg->width), static_cast<uint32_t>(serversBackgroundImg->height) };
 			serverPanelTextureHandle = app->graphics->resources->CreateTexture2D(serversBackgroundImg);
 			uploadBatch.Upload(serverPanelTextureHandle, serverPanelBackgroundTexture);
 			uploadBatch.ResourceBarrier(serverPanelTextureHandle, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
@@ -136,7 +136,7 @@ public:
 
 		{
 			const Netcode::Image * serverRowBackgroundImg = serverRowBackgroundTexture->GetImage(0, 0, 0);
-			serverRowBackgroundSize = DirectX::XMUINT2{ static_cast<uint32_t>(serverRowBackgroundImg->width), static_cast<uint32_t>(serverRowBackgroundImg->height) };
+			serverRowBackgroundSize = Netcode::UInt2{ static_cast<uint32_t>(serverRowBackgroundImg->width), static_cast<uint32_t>(serverRowBackgroundImg->height) };
 			serverRowTexHandle = app->graphics->resources->CreateTexture2D(serverRowBackgroundImg);
 			uploadBatch.Upload(serverRowTexHandle, serverRowBackgroundTexture);
 			uploadBatch.ResourceBarrier(serverRowTexHandle, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
@@ -152,12 +152,12 @@ public:
 
 		spinner = scene->CreateSpinner();
 		spinner.SetIcon(loadIconView, loadIconTextureSize);
-		spinner.SetSize(DirectX::XMFLOAT2{ 128.0f, 128.0f });
-		spinner.SetPosition(DirectX::XMFLOAT2{ 100.0f, 0.0f });
+		spinner.SetSize(Netcode::Float2{ 128.0f, 128.0f });
+		spinner.SetPosition(Netcode::Float2{ 100.0f, 0.0f });
 
-		loadingLabel = scene->CreateLabel(L"Connecting...", font24, DirectX::XMFLOAT2{ 0.0f, 0.0f });
-		loadingLabel.SetPosition(DirectX::XMFLOAT2{ 0.0f, 148.0f });
-		loadingLabel.SetSize(DirectX::XMFLOAT2{ 328.0f, 48.0f });
+		loadingLabel = scene->CreateLabel(L"Connecting...", font24, Netcode::Float2{ 0.0f, 0.0f });
+		loadingLabel.SetPosition(Netcode::Float2{ 0.0f, 148.0f });
+		loadingLabel.SetSize(Netcode::Float2{ 328.0f, 48.0f });
 		loadingLabel.SetTextAlignment(HorizontalAnchor::CENTER);
 
 		loadPage.AddControl(spinner);
@@ -168,15 +168,15 @@ public:
 		loadPage.Hide();
 
 		UIButtonPrefab loginBtn = scene->CreateButton(L"Login",
-			DirectX::XMFLOAT2{ 192.0f, 48.0f },
-			DirectX::XMFLOAT2{ 198.0f, 112.0f + 100.0f },
+			Netcode::Float2{ 192.0f, 48.0f },
+			Netcode::Float2{ 198.0f, 112.0f + 100.0f },
 			0.0f, font24, btnBackgroundView, btnBackgroundTextureSize);
 
 		Netcode::Module::INetworkModule * network = app->network.get();
 
 		UIButtonPrefab exitBtn = scene->CreateButton(L"Exit",
-			DirectX::XMFLOAT2{ 192.0f, 48.0f },
-			DirectX::XMFLOAT2{ 0.0f, 112.0f + 100.0f },
+			Netcode::Float2{ 192.0f, 48.0f },
+			Netcode::Float2{ 0.0f, 112.0f + 100.0f },
 			0.0f, font24, btnBackgroundView, btnBackgroundTextureSize);
 
 		exitBtn.OnClick([app]() -> void {
@@ -188,9 +188,9 @@ public:
 		loginScriptObject->AddComponent<Transform>();
 		scene->Spawn(loginScriptObject);
 
-		usernameTextBox = scene->CreateTextBox(DirectX::XMFLOAT2{ 390.0f, 48.0f }, DirectX::XMFLOAT2{ 0.0f, 0.0f + 100.0f }, font24, textBoxBackgroundView, textBoxBackgroundTextureSize);
+		usernameTextBox = scene->CreateTextBox(Netcode::Float2{ 390.0f, 48.0f }, Netcode::Float2{ 0.0f, 0.0f + 100.0f }, font24, textBoxBackgroundView, textBoxBackgroundTextureSize);
 		usernameTextBox.SetPlaceholder(L"username");
-		passwordTextBox = scene->CreateTextBox(DirectX::XMFLOAT2{ 390.0f, 48.0f }, DirectX::XMFLOAT2{ 0.0f, 54.0f + 100.0f }, font24, textBoxBackgroundView, textBoxBackgroundTextureSize);
+		passwordTextBox = scene->CreateTextBox(Netcode::Float2{ 390.0f, 48.0f }, Netcode::Float2{ 0.0f, 54.0f + 100.0f }, font24, textBoxBackgroundView, textBoxBackgroundTextureSize);
 		passwordTextBox.SetPasswordFlag();
 		passwordTextBox.SetPlaceholder(L"password");
 
@@ -231,8 +231,8 @@ public:
 			}
 		});
 
-		UILabel netcodeLabel = scene->CreateLabel(L"Netcode", font48, DirectX::XMFLOAT2{ 0.0f, 0.0f });
-		netcodeLabel.SetSize(DirectX::XMFLOAT2{ 390.0f, 64.0f });
+		UILabel netcodeLabel = scene->CreateLabel(L"Netcode", font48, Netcode::Float2{ 0.0f, 0.0f });
+		netcodeLabel.SetSize(Netcode::Float2{ 390.0f, 64.0f });
 		netcodeLabel.SetTextAlignment(HorizontalAnchor::CENTER);
 
 		loginPage.AddControl(loginBtn);
@@ -244,50 +244,50 @@ public:
 		loginPageSize.y = 360.0f;
 		loginPage.SetSize(loginPageSize.x, loginPageSize.y);
 
-		UILabel menuLabel = scene->CreateLabel(L"Menu", font48, DirectX::XMFLOAT2{ 0.0f, 0.0f });
-		menuLabel.SetSize(DirectX::XMFLOAT2{ 256.0f, 64.0f });
+		UILabel menuLabel = scene->CreateLabel(L"Menu", font48, Netcode::Float2{ 0.0f, 0.0f });
+		menuLabel.SetSize(Netcode::Float2{ 256.0f, 64.0f });
 		menuLabel.SetTextAlignment(HorizontalAnchor::CENTER);
 
 		UIButtonPrefab playBtn = scene->CreateButton(L"Play",
-			DirectX::XMFLOAT2{ 256.0f, 64.0f },
-			DirectX::XMFLOAT2{ 0, 100.0f },
+			Netcode::Float2{ 256.0f, 64.0f },
+			Netcode::Float2{ 0, 100.0f },
 			0.0f, font24, btnBackgroundView, btnBackgroundTextureSize);
 
 		UIButtonPrefab optionsBtn = scene->CreateButton(L"Options",
-			DirectX::XMFLOAT2{ 256.0f, 64.0f },
-			DirectX::XMFLOAT2{ 0, 64.0f + 108.0f },
+			Netcode::Float2{ 256.0f, 64.0f },
+			Netcode::Float2{ 0, 64.0f + 108.0f },
 			0.0f, font24, btnBackgroundView, btnBackgroundTextureSize);
 
 		UIButtonPrefab mainExitBtn = scene->CreateButton(L"Exit",
-			DirectX::XMFLOAT2{ 256.0f, 64.0f },
-			DirectX::XMFLOAT2{ 0.0f, 128.0f + 116.0f },
+			Netcode::Float2{ 256.0f, 64.0f },
+			Netcode::Float2{ 0.0f, 128.0f + 116.0f },
 			0.0f, font24, btnBackgroundView, btnBackgroundTextureSize);
 
 		mainExitBtn.OnClick([app]() -> void {
 			app->window->Shutdown();
 		});
 
-		UILabel playLabel = scene->CreateLabel(L"Play", font48, DirectX::XMFLOAT2{ 0.0f, 0.0f });
-		playLabel.SetSize(DirectX::XMFLOAT2{ 768.0f, 100.0f });
+		UILabel playLabel = scene->CreateLabel(L"Play", font48, Netcode::Float2{ 0.0f, 0.0f });
+		playLabel.SetSize(Netcode::Float2{ 768.0f, 100.0f });
 		playLabel.SetTextAlignment(HorizontalAnchor::CENTER);
 
 		UIButtonPrefab playBackBtn = scene->CreateButton(L"Back",
-				DirectX::XMFLOAT2{ 192.0f, 48.0f },
-				DirectX::XMFLOAT2{ 178.0f, 483.0f },
+			Netcode::Float2{ 192.0f, 48.0f },
+			Netcode::Float2{ 178.0f, 483.0f },
 				0.0f, font24, btnBackgroundView, btnBackgroundTextureSize);
 
 		UIButtonPrefab playRefreshBtn = scene->CreateButton(L"Refresh",
-			DirectX::XMFLOAT2{ 192.0f, 48.0f },
-			DirectX::XMFLOAT2{ 376.0f, 483.0f },
+			Netcode::Float2{ 192.0f, 48.0f },
+			Netcode::Float2{ 376.0f, 483.0f },
 			0.0f, font24, btnBackgroundView, btnBackgroundTextureSize);
 
 		UIButtonPrefab playJoinBtn = scene->CreateButton(L"Join",
-			DirectX::XMFLOAT2{ 192.0f, 48.0f },
-			DirectX::XMFLOAT2{ 576.0f, 483.0f },
+			Netcode::Float2{ 192.0f, 48.0f },
+			Netcode::Float2{ 576.0f, 483.0f },
 			0.0f, font24, btnBackgroundView, btnBackgroundTextureSize);
 
 		UIObject * panelTest=  scene->Create();
-		panelTest->AddComponent<Transform>()->position = DirectX::XMFLOAT3{ 0.0f, 100.0f, 0.0f };
+		panelTest->AddComponent<Transform>()->position = Netcode::Float3{ 0.0f, 100.0f, 0.0f };
 
 		UIElement * uiEl = panelTest->AddComponent<UIElement>();
 		uiEl->width = 768.0f;
@@ -296,7 +296,7 @@ public:
 		Sprite * sp = panelTest->AddComponent<Sprite>();
 		sp->texture = serversPanelBackgroundView;
 		sp->textureSize = serversPanelBackgroundSize;
-		sp->diffuseColor = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };
+		sp->diffuseColor = Netcode::Float4::One;
 
 		panelTest->SetActivityFlag(true);
 		scene->Spawn(panelTest);
@@ -313,14 +313,14 @@ public:
 		UIServerRow testRow = scene->CreateServerRow();
 		testRow.SetFont(font18);
 		testRow.SetBackground(serverRowBackgroundView, serverRowBackgroundSize);
-		testRow.SetPosition(DirectX::XMFLOAT2{ 8.0f, 8.0f });
+		testRow.SetPosition(Netcode::Float2{ 8.0f, 8.0f });
 		
 		UIServerRow tr2 = scene->CreateServerRow();
 		tr2.SetFont(font18);
 		tr2.SetBackground(serverRowBackgroundView, serverRowBackgroundSize);
 		tr2.SetSlots(L"8/8");
 		tr2.SetOwnerName(L"LongestNameApple");
-		tr2.SetPosition(DirectX::XMFLOAT2{ 8.0f, 56.0f });
+		tr2.SetPosition(Netcode::Float2{ 8.0f, 56.0f });
 
 		testRow.GetRoot()->Parent(panelTest);
 		tr2.GetRoot()->Parent(panelTest);
@@ -341,24 +341,24 @@ public:
 	}
 
 	virtual void OnResized(int width, int height) override {
-		DirectX::XMFLOAT2 wh{ static_cast<float>(width), static_cast<float>(height) };
+		Netcode::Float2 wh{ static_cast<float>(width), static_cast<float>(height) };
 
-		loginPage.SetPosition(DirectX::XMFLOAT2{
+		loginPage.SetPosition(Netcode::Float2{
 			(wh.x - loginPageSize.x) / 2.0f,
 			(wh.y - loginPageSize.y) / 2.0f
 		});
 
-		loadPage.SetPosition(DirectX::XMFLOAT2{
+		loadPage.SetPosition(Netcode::Float2{
 			(wh.x - loadPageSize.x) / 2.0f,
 			(wh.y - loadPageSize.y) / 2.0f
 		});
 
-		mainPage.SetPosition(DirectX::XMFLOAT2{
+		mainPage.SetPosition(Netcode::Float2{
 			(wh.x - mainPageSize.x) / 2.0f,
 			(wh.y - mainPageSize.y) / 2.0f
 		});
 
-		playPage.SetPosition(DirectX::XMFLOAT2{
+		playPage.SetPosition(Netcode::Float2{
 			(wh.x - playPageSize.x) / 2.0f,
 			0.0f
 		});

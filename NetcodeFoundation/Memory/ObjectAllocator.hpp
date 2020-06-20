@@ -199,7 +199,7 @@ namespace Netcode::Memory {
                     }
                 }
 
-                Detail::UndefinedBehaviourAssertion(false);
+                UndefinedBehaviourAssertion(false);
             }
 
             void Remove(FreeListItem * item) {
@@ -263,8 +263,8 @@ namespace Netcode::Memory {
             MemoryBlock Allocate(size_t n, uint64_t alignment = 16) {
 
                 // assert alignment is pow2
-                Detail::OutOfRangeAssertion(((alignment - 1) & (alignment)) == 0);
-                Detail::OutOfRangeAssertion(alignment <= 128);
+                OutOfRangeAssertion(((alignment - 1) & (alignment)) == 0);
+                OutOfRangeAssertion(alignment <= 128);
 
                 // this alignment is for the end of the allocation
                 const size_t requestedMemory = Align<size_t>(sizeof(T) * n, BACK_ALIGNMENT);
@@ -277,7 +277,7 @@ namespace Netcode::Memory {
                     if(iter->CanFit(totalSizeInBytes)) {
                         freeList.Remove(iter);
 
-                        Detail::UndefinedBehaviourAssertion(iter->numBytes >= totalSizeInBytes);
+                        UndefinedBehaviourAssertion(iter->numBytes >= totalSizeInBytes);
 
                         uint8_t * pData = reinterpret_cast<uint8_t *>(iter->AddressOf());
                         size_t remainingSpace = iter->numBytes - totalSizeInBytes;
@@ -335,7 +335,7 @@ namespace Netcode::Memory {
             Page * CreatePage(size_t numBytes, size_t alignment) {
                 void * p = AlignedMalloc(numBytes + sizeof(Page), alignment);
 
-                Detail::OutOfMemoryAssertion(p != nullptr);
+                OutOfMemoryAssertion(p != nullptr);
 
                 uint8_t * pData = reinterpret_cast<uint8_t *>(p) + sizeof(Page);
 
@@ -405,7 +405,7 @@ namespace Netcode::Memory {
 
             MemoryBlock blk = resource->CreatePage(std::max(approxSize, resource->defaultPageSize), resource->defaultAlignment)->Allocate<T>(numElements, resource->defaultAlignment);
 
-            Detail::UndefinedBehaviourAssertion(blk != nullptr);
+            UndefinedBehaviourAssertion(blk != nullptr);
 
             return blk;
         }
@@ -419,7 +419,7 @@ namespace Netcode::Memory {
                 }
             }
 
-            Detail::UndefinedBehaviourAssertion(false);
+            UndefinedBehaviourAssertion(false);
         }
 
         template<typename T, typename ... U>

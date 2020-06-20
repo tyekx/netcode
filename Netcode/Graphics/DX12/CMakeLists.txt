@@ -86,6 +86,8 @@ PRIVATE
 	"DX12RootSignatureBuilder.cpp"
 	"DX12RootSignatureLibrary.cpp"
 	"DX12ShaderBuilder.cpp"
+	"DX12ShaderLibrary.cpp"
+	"DX12ShaderSourceLibrary.cpp"
 	"DX12ShaderCompiled.cpp"
 	"DX12ShaderCompiler.cpp"
 	"DX12ShaderVariant.cpp"

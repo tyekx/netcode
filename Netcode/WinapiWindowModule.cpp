@@ -93,7 +93,7 @@ namespace Netcode::Module {
 			{
 				int x = LOWORD(lParam);
 				int y = HIWORD(lParam);
-				Netcode::Input::SetMousePos(DirectX::XMINT2{ x, y });
+				Netcode::Input::SetMousePos(Netcode::Int2{ x, y });
 			}
 			break;
 

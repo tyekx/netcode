@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../../HandleTypes.h"
-#include "../../Path.h"
 #include "DX12Common.h"
 #include "DX12SpriteFont.h"
 #include <algorithm>
@@ -31,17 +30,15 @@ namespace Netcode::Graphics::DX12 {
 		}
 
 		DX12SpriteFontRef Get(const std::wstring & mediaPath) {
-			Netcode::MediaPath fontPath{ mediaPath };
-
 			auto it = std::find_if(std::begin(items), std::end(items), [&mediaPath](const Item & item) -> bool {
 				return item.path == mediaPath;
 			});
 
 			if(it == std::end(items)) {
 
-				auto spriteFont = objectAllocator.MakeShared<DX12SpriteFont>(resourceCtx, frameCtx, fontPath.GetAbsolutePath().c_str());
+				auto spriteFont = objectAllocator.MakeShared<DX12SpriteFont>(resourceCtx, frameCtx, mediaPath);
 
-				items.emplace_back(Item{ spriteFont, fontPath.GetAbsolutePath() });
+				items.emplace_back(Item{ spriteFont, mediaPath });
 
 				return spriteFont;
 			}

@@ -3,10 +3,8 @@
 #include "Model.h"
 
 namespace Netcode::Asset {
-	
 
-	void ImportModel(const char* filePath, Model & model);
-
+	void ImportModel(MutableArrayView<uint8_t> buffer, Model & model);
 
 }
 

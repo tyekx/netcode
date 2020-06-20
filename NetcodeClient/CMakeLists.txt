@@ -111,3 +111,9 @@ PRIVATE
 add_subdirectory(Shaders)
 
 add_dependencies(NetcodeClient NetcodeClientShaders)
+
+netcode_add_cp_command("config.json" "${CMAKE_CURRENT_BINARY_DIR}/config.json")
+
+add_custom_target(NetcodeClientConfig DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/config.json")
+
+add_dependencies(NetcodeClient NetcodeClientConfig)

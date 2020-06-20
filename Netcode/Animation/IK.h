@@ -15,7 +15,7 @@ namespace Netcode::Animation {
 	struct IKEffector {
 		int32_t parentId;
 		uint32_t chainLength;
-		Float4 position;
+		Float3 position;
 		Float4 offset;
 		std::vector<BoneAngularLimit> limits;
 	};

@@ -42,14 +42,14 @@ PRIVATE
 target_sources(Netcode
 PUBLIC
 	"BasicGeometry.h"
-	"BinaryReader.h"
+	
 	"Common.h"
 	"DebugPhysx.h"
 	"DebugPhysxActor.h"
 	"DebugPhysxRaycast.h"
 	"DefaultModuleFactory.h"
 	"NetcodeMath.h"
-	"File.h"
+	
 	"HandleTypes.h"
 	"Input.h"
 	"LinearAllocator.h"
@@ -59,8 +59,6 @@ PUBLIC
 	"ModulesConfig.h"
 	"MovementController.h"
 	"PhysXWrapper.h"
-	"ProgramArgs.h"
-	"Path.h"
 	"BulkVector.hpp"
 	"DestructiveCopyConstructible.hpp"
 	"NetcodeMpl.hpp"
@@ -77,7 +75,7 @@ PUBLIC
 
 PRIVATE
 	"BasicGeometry.cpp"
-	"BinaryReader.cpp"
+	
 	"BulkAllocator.hpp"
 	"Common.cpp"
 	"DebugPhysx.cpp"
@@ -88,7 +86,6 @@ PRIVATE
 	"LinearClassifier.cpp"
 	"Logger.cpp"
 	"Modules.cpp"
-	"Path.cpp"
 	"PhysXWrapper.cpp"
 	"Stopwatch.cpp"
 	"Utility.cpp"
@@ -102,5 +99,6 @@ add_subdirectory(Animation)
 add_subdirectory(Graphics)
 add_subdirectory(Network)
 add_subdirectory(Window)
+add_subdirectory(IO)
 
 add_dependencies(Netcode NetcodeShaders NetcodeFoundation NetcodeAssetLib NetcodeProtocol)

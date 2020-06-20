@@ -1,0 +1,27 @@
+{
+  "window": {
+    "size": 10.5
+  },
+  "graphics": {
+    "dx12": {
+
+    }
+  },
+  "log": {
+
+  },
+  "network": {
+    "client": {
+
+    },
+    "database": {
+
+    },
+    "server": {
+
+    },
+    "protocol": {
+
+    }
+  }
+}

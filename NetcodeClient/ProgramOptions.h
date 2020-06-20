@@ -6,4 +6,10 @@
 
 namespace po = boost::program_options;
 
-void InitProgramOptions(po::options_description & root, Netcode::Config & config);
+struct MainConfig {
+	std::wstring shaderRoot;
+	std::wstring mediaRoot;
+	std::wstring configFile;
+};
+
+void InitProgramOptions(po::options_description & root, MainConfig & config);

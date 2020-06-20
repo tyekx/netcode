@@ -115,9 +115,9 @@ namespace Netcode::Memory {
 		template<typename U>
 		MemoryBlock Allocate(size_t numElements) {
 			// changing stride for a pool allocator is a hard no
-			Detail::UndefinedBehaviourAssertion(resource->stride == sizeof(U));
+			UndefinedBehaviourAssertion(resource->stride == sizeof(U));
 			// no support for arrays
-			Detail::UndefinedBehaviourAssertion(numElements == 1);
+			UndefinedBehaviourAssertion(numElements == 1);
 
 			if(resource->head != FreeListItem::NullValue) {
 				FreeListItem * freeListItem = PointerOf(resource->head);
@@ -128,7 +128,7 @@ namespace Netcode::Memory {
 				return tPtr;
 			} else {
 				// ran out of pre-allocated memory
-				Detail::OutOfRangeAssertion((resource->offset + sizeof(U) * numElements) <= resource->numBytes);
+				OutOfRangeAssertion((resource->offset + sizeof(U) * numElements) <= resource->numBytes);
 
 				U * tPtr = reinterpret_cast<U *>(resource->ptr + resource->offset);
 				resource->offset += sizeof(U) * numElements;
@@ -146,7 +146,7 @@ namespace Netcode::Memory {
 			using SpyType = SpyAllocator<AllocType>;
 
 			if constexpr(std::is_integral<FreeListItemRef>::value) {
-				Detail::UndefinedBehaviourAssertion(poolSize < FreeListItem::NullValue);
+				UndefinedBehaviourAssertion(poolSize < FreeListItem::NullValue);
 			}
 
 			/*
@@ -161,7 +161,7 @@ namespace Netcode::Memory {
 					T sPtr = std::allocate_shared<typename T::element_type, StdAllocatorAdapter<typename T::element_type, SpyType>>(*this);
 
 					// always undefined behaviour if the previous call does not throw
-					Detail::UndefinedBehaviourAssertion(false);
+					UndefinedBehaviourAssertion(false);
 				} catch(size_t s) {
 					stride = s;
 				}
@@ -172,7 +172,7 @@ namespace Netcode::Memory {
 				poolSizeInBytes = Align<size_t>(poolSize * stride, alignment);
 			}
 
-			Detail::UndefinedBehaviourAssertion(stride % alignment == 0);
+			UndefinedBehaviourAssertion(stride % alignment == 0);
 
 			size_t headSize;
 			ResourceAllocator poolAlloc{ poolSizeInBytes, alignment, &headSize };
@@ -203,7 +203,7 @@ namespace Netcode::Memory {
 
 		template<typename U>
 		void Deallocate(U * p, size_t s) {
-			Detail::UndefinedBehaviourAssertion(s == 1);
+			UndefinedBehaviourAssertion(s == 1);
 
 			FreeListItem * ptr = reinterpret_cast<FreeListItem *>(p);
 			new (ptr) FreeListItem(resource->head);
@@ -219,7 +219,7 @@ namespace Netcode::Memory {
 				resource->offset = 0;
 				resource->head = nullptr;
 			} else {
-				Detail::UndefinedBehaviourAssertion(false);
+				UndefinedBehaviourAssertion(false);
 			}
 		}
 	};

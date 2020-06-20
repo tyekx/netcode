@@ -10,6 +10,7 @@ target_sources(NetcodeFoundation PUBLIC
 	"NonZero.hpp"
 
 PRIVATE
+	"Common.cpp"
 	"Matrix.cpp"
 	"Quaternion.cpp"
 	"Vector2.cpp"

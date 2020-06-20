@@ -2,10 +2,13 @@
 #include <vector>
 #include "DX12SpriteFont.h"
 
+#include "../../IO/File.h"
+#include "../../IO/Path.h"
+
 static const char spriteFontMagic[] = "DXTKfont";
 
 namespace Netcode::Graphics::DX12 {
-	const DirectX::XMFLOAT2 SpriteFont::Float2Zero{ 0.0f, 0.0f };
+	const Netcode::Float2 SpriteFont::Float2Zero{ 0.0f, 0.0f };
 
 	const wchar_t * SpriteFont::ConvertUTF8(const char * text) const
 	{
@@ -33,7 +36,7 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 
-	void SpriteFont::Construct(BinaryReader * reader, IResourceContext * resourceContext, IFrameContext * frameContext) {
+	void SpriteFont::Construct(IO::BinaryReader * reader, IResourceContext * resourceContext, IFrameContext * frameContext) {
 		for(char const * magic = spriteFontMagic; *magic; magic++)
 		{
 			ASSERT(reader->Read<uint8_t>() == *magic, "ERROR: SpriteFont provided with an invalid .spritefont file\r\n");
@@ -44,7 +47,7 @@ namespace Netcode::Graphics::DX12 {
 
 		auto glyphData = reader->ReadArray<Glyph>(glyphCount);
 
-		glyphs.assign(glyphData, glyphData + glyphCount);
+		glyphs.assign(glyphData.Data(), glyphData.Data() + glyphCount);
 
 		// Read font properties.
 		lineSpacing = reader->Read<float>();
@@ -58,12 +61,12 @@ namespace Netcode::Graphics::DX12 {
 		auto textureStride = reader->Read<uint32_t>();
 		auto textureRows = reader->Read<uint32_t>();
 		auto textureData = reader->ReadArray<uint8_t>(size_t(textureStride) * size_t(textureRows));
-		textureSize = DirectX::XMUINT2(textureWidth, textureHeight);
+		textureSize = Netcode::UInt2(textureWidth, textureHeight);
 
 		DX_API("Failed to initialize texture2d")
 			imageData.Initialize2D(textureFormat, textureWidth, textureHeight, 1, 1);
 
-		memcpy(imageData.GetImage(0, 0, 0)->pixels, textureData, imageData.GetImage(0, 0, 0)->slicePitch);
+		memcpy(imageData.GetImage(0, 0, 0)->pixels, textureData.Data(), imageData.GetImage(0, 0, 0)->slicePitch);
 
 		textureResource = resourceContext->CreateTexture2D(textureWidth, textureHeight, textureFormat, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST, ResourceFlags::NONE);
 		shaderResourceView = std::dynamic_pointer_cast<DX12ResourceViews>(resourceContext->CreateShaderResourceViews(1));
@@ -79,8 +82,9 @@ namespace Netcode::Graphics::DX12 {
 		imageData.Release();
 	}
 
-	SpriteFont::SpriteFont(IResourceContext * resourceContext, IFrameContext * frameContext, wchar_t const * fileName) {
-		BinaryReader reader(fileName);
+	SpriteFont::SpriteFont(IResourceContext * resourceContext, IFrameContext * frameContext, const std::wstring & fileName) {
+		IO::File spriteFontFile{ IO::Path::MediaRoot(), fileName };
+		IO::BinaryReader reader{ spriteFontFile };
 
 		Construct(&reader, resourceContext, frameContext);
 	}
@@ -89,63 +93,20 @@ namespace Netcode::Graphics::DX12 {
 		return shaderResourceView;
 	}
 
-	void SpriteFont::DrawString(Netcode::SpriteBatchRef spriteBatch, const wchar_t * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const {
-		DrawString(spriteBatch, text, position, color, 0, DirectX::XMFLOAT2{ 0,0 }, 1.0f, 0);
+	void SpriteFont::DrawString(Netcode::SpriteBatchRef spriteBatch, const wchar_t * text, const Netcode::Float2 & position, const Netcode::Float4 & color) const {
+		DrawString(spriteBatch, text, position, color, 0, Netcode::Float2{ 0,0 }, 1.0f, 0);
 	}
 
-	void SpriteFont::DrawString(Netcode::SpriteBatchRef spriteBatch, const char * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const {
-		DrawString(spriteBatch, ConvertUTF8(text), position, color, 0, DirectX::XMFLOAT2{ 0,0 }, 1.0f, 0);
+	void SpriteFont::DrawString(Netcode::SpriteBatchRef spriteBatch, const char * text, const Netcode::Float2 & position, const Netcode::Float4 & color) const {
+		DrawString(spriteBatch, ConvertUTF8(text), position, color, 0, Netcode::Float2{ 0,0 }, 1.0f, 0);
 	}
-	/*
-	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ const char * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, float scale, SpriteEffects effects, float layerDepth) const
-	{
-		DrawString(spriteBatch, ConvertUTF8(text), XMLoadFloat2(&position), color, rotation, DirectX::XMLoadFloat2(&origin), DirectX::XMVectorReplicate(scale), effects, layerDepth);
-	}
-
-
-	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ char const * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, DirectX::XMFLOAT2 const & scale, SpriteEffects effects, float layerDepth) const
-	{
-		DrawString(spriteBatch, ConvertUTF8(text), DirectX::XMLoadFloat2(&position), color, rotation, DirectX::XMLoadFloat2(&origin), DirectX::XMLoadFloat2(&scale), effects, layerDepth);
-	}
-
-
-	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ char const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, float scale, SpriteEffects effects, float layerDepth) const
-	{
-		DrawString(spriteBatch, ConvertUTF8(text), position, color, rotation, origin, DirectX::XMVectorReplicate(scale), effects, layerDepth);
-	}
-
-
-	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ char const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, DirectX::GXMVECTOR scale, SpriteEffects effects, float layerDepth) const
-	{
-		DrawString(spriteBatch, ConvertUTF8(text), position, color, rotation, origin, scale, effects, layerDepth);
-	}
-
-	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::XMFLOAT2 const & position, DirectX::XMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, float scale, SpriteEffects effects, float layerDepth) const
-	{
-		DirectX::XMVECTOR posV = DirectX::XMLoadFloat2(&position);
-		DirectX::XMVECTOR originV = DirectX::XMLoadFloat2(&origin);
-		DirectX::XMVECTOR scaleV = DirectX::XMVectorReplicate(scale);
-		DrawString(spriteBatch, text, posV, color, rotation, originV, scaleV, effects, layerDepth);
-	}
-
-
-	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, DirectX::XMFLOAT2 const & scale, SpriteEffects effects, float layerDepth) const
-	{
-		DrawString(spriteBatch, text, DirectX::XMLoadFloat2(&position), color, rotation, DirectX::XMLoadFloat2(&origin), DirectX::XMLoadFloat2(&scale), effects, layerDepth);
-	}
-
-
-	void SpriteFont::DrawString(_In_ SpriteBatch * spriteBatch, _In_z_ wchar_t const * text, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, float scale, SpriteEffects effects, float layerDepth) const
-	{
-		DrawString(spriteBatch, text, position, color, rotation, origin, DirectX::XMVectorReplicate(scale), effects, layerDepth);
-	}*/
 
 	void SpriteFont::DrawString(Netcode::SpriteBatchRef spriteBatch,
 		const wchar_t * text,
-		const DirectX::XMFLOAT2 & position,
-		const DirectX::XMFLOAT4 & color,
+		const Netcode::Float2 & position,
+		const Netcode::Float4 & color,
 		float rotation,
-		const DirectX::XMFLOAT2 & origin,
+		const Netcode::Float2 & origin,
 		float scale,
 		float layerDepth) const
 	{
@@ -196,7 +157,7 @@ namespace Netcode::Graphics::DX12 {
 				offset = XMVectorMultiplyAdd(glyphRect, axisIsMirroredTable[effects & 3], offset);
 			}
 
-			DirectX::XMFLOAT2 offsetValue;
+			Netcode::Float2 offsetValue;
 			DirectX::XMStoreFloat2(&offsetValue, offset);
 
 			spriteBatch->DrawSprite(shaderResourceView, textureSize, position, &glyph->Subrect, color, rotation, offsetValue, scale, layerDepth);
@@ -204,7 +165,7 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 
-	DirectX::XMVECTOR SpriteFont::MeasureString_Impl(wchar_t const * text) const
+	DirectX::XMVECTOR SpriteFont::MeasureString_Impl(const wchar_t * text) const
 	{
 		DirectX::XMVECTOR result = DirectX::XMVectorZero();
 
@@ -252,32 +213,28 @@ namespace Netcode::Graphics::DX12 {
 		return nullptr;
 	}
 
-	DirectX::XMUINT2 SpriteFont::GetSpriteSheetSize() const
+	Netcode::UInt2 SpriteFont::GetSpriteSheetSize() const
 	{
 		return textureSize;
 	}
 
 
-	DirectX::XMVECTOR SpriteFont::MeasureString_Impl(char const * text) const
+	DirectX::XMVECTOR SpriteFont::MeasureString_Impl(const char * text) const
 	{
 		return MeasureString_Impl(ConvertUTF8(text));
 	}
 
-	DirectX::XMFLOAT2 SpriteFont::MeasureString(const char * str) const {
-		DirectX::XMFLOAT2 res;
-		DirectX::XMVECTOR v = MeasureString_Impl(str);
-		DirectX::XMStoreFloat2(&res, v);
-		return res;
+	Netcode::Float2 SpriteFont::MeasureString(const char * str) const {
+		Netcode::Vector2 v = MeasureString_Impl(str);
+		return v;
 	}
 
-	DirectX::XMFLOAT2 SpriteFont::MeasureString(const wchar_t * str) const {
-		DirectX::XMFLOAT2 res;
-		DirectX::XMVECTOR v = MeasureString_Impl(str);
-		DirectX::XMStoreFloat2(&res, v);
-		return res;
+	Netcode::Float2 SpriteFont::MeasureString(const wchar_t * str) const {
+		Netcode::Vector2 v = MeasureString_Impl(str);
+		return v;
 	}
 
-	RECT SpriteFont::MeasureDrawBounds(wchar_t const * text, DirectX::XMFLOAT2 const & position) const
+	RECT SpriteFont::MeasureDrawBounds(const wchar_t * text, const Netcode::Float2 & position) const
 	{
 		RECT result = { LONG_MAX, LONG_MAX, 0, 0 };
 
@@ -315,23 +272,23 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 
-	RECT SpriteFont::MeasureDrawBounds(wchar_t const * text, DirectX::FXMVECTOR position) const
+	RECT SpriteFont::MeasureDrawBounds(const wchar_t * text, DirectX::FXMVECTOR position) const
 	{
-		DirectX::XMFLOAT2 pos;
+		Netcode::Float2 pos;
 		DirectX::XMStoreFloat2(&pos, position);
 
 		return MeasureDrawBounds(text, pos);
 	}
 
-	RECT SpriteFont::MeasureDrawBounds(char const * text, DirectX::XMFLOAT2 const & position) const
+	RECT SpriteFont::MeasureDrawBounds(const char * text, const Netcode::Float2 & position) const
 	{
 		return MeasureDrawBounds(ConvertUTF8(text), position);
 	}
 
 
-	RECT SpriteFont::MeasureDrawBounds(char const * text, DirectX::FXMVECTOR position) const
+	RECT SpriteFont::MeasureDrawBounds(const char * text, DirectX::FXMVECTOR position) const
 	{
-		DirectX::XMFLOAT2 pos;
+		Netcode::Float2 pos;
 		XMStoreFloat2(&pos, position);
 
 		return MeasureDrawBounds(ConvertUTF8(text), pos);

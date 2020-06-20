@@ -43,22 +43,22 @@ public:
 		Transform* transform = cameraRef->AddComponent<Transform>();
 		Camera *camera = cameraRef->AddComponent<Camera>();
 
-		transform->position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+		transform->position = Netcode::Float3{ 0.0f, 0.0f, 0.0f };
 
-		camera->ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+		camera->ahead = Netcode::Float3{ 0.0f, 0.0f, 1.0f };
 		camera->aspect = 1.0f;
 		camera->farPlane = 1.0f;
 		camera->nearPlane = 0.0f;
-		camera->fov = DirectX::XM_PI / 3.0f;
+		camera->fov = Netcode::C_PI / 3.0f;
 	}
 
-	void SetScreenSize(const DirectX::XMUINT2 & dim) {
+	void SetScreenSize(const Netcode::UInt2 & dim) {
 		screenSize = dim;
 		cameraRef->GetComponent<Camera>()->aspect = static_cast<float>(dim.x) / static_cast<float>(dim.y);
-		cameraRef->GetComponent<Transform>()->position = DirectX::XMFLOAT3{ static_cast<float>(dim.x) / 2.0f ,static_cast<float>(dim.y) / 2.0f, 0.0f };
+		cameraRef->GetComponent<Transform>()->position = Netcode::Float3{ static_cast<float>(dim.x) / 2.0f ,static_cast<float>(dim.y) / 2.0f, 0.0f };
 	}
 
-	UIButtonPrefab CreateButton(std::wstring text, const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT2 & pos, float zIndex, Netcode::SpriteFontRef font, Netcode::ResourceViewsRef bgTex, const DirectX::XMUINT2 & texSize) {
+	UIButtonPrefab CreateButton(std::wstring text, const Netcode::Float2 & size, const Netcode::Float2 & pos, float zIndex, Netcode::SpriteFontRef font, Netcode::ResourceViewsRef bgTex, const Netcode::UInt2 & texSize) {
 		UIObject * background = Create();
 		UIObject * textObject = Create();
 
@@ -113,7 +113,7 @@ public:
 		return UILabel(root, txt);
 	}
 
-	UILabel CreateLabel(std::wstring text, Netcode::SpriteFontRef font, const DirectX::XMFLOAT2 & pos) {
+	UILabel CreateLabel(std::wstring text, Netcode::SpriteFontRef font, const Netcode::Float2 & pos) {
 		UILabel label = CreateLabel();
 
 		label.SetPosition(pos);
@@ -123,7 +123,7 @@ public:
 		return label;
 	}
 
-	UITextBox CreateTextBox(const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT2 & pos, Netcode::SpriteFontRef font, Netcode::ResourceViewsRef bgTex, const DirectX::XMUINT2 & texSize) {
+	UITextBox CreateTextBox(const Netcode::Float2 & size, const Netcode::Float2 & pos, Netcode::SpriteFontRef font, Netcode::ResourceViewsRef bgTex, const Netcode::UInt2 & texSize) {
 		UITextBox tb = CreateTextBox();
 		tb.SetPosition(pos);
 		tb.SetBackgroundImage(bgTex, texSize);

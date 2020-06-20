@@ -14,13 +14,11 @@ namespace Netcode::Graphics::DX12 {
 		virtual uint8_t * GetBufferPointer() override;
 		virtual size_t GetBufferSize() override;
 
-		virtual const std::wstring & GetFileReference() const override {
-			return sourceFileRef;
-		}
+		virtual const std::wstring & GetFileReference() const override;
 
-		ShaderCompiled(const std::wstring & sourceFile, const void * srcData, size_t size);
+		ShaderCompiled(std::wstring sourceFile, const void * srcData, size_t size);
 		
-		ShaderCompiled(const std::wstring & sourceFile, com_ptr<ID3DBlob> blob);
+		ShaderCompiled(std::wstring sourceFile, com_ptr<ID3DBlob> blob);
 	};
 	
 	using ShaderCompiledRef = std::shared_ptr<ShaderCompiled>;

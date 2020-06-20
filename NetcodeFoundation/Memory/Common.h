@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../Exceptions.h"
+
 #include <cstdint>
 #include <memory>
 
@@ -8,16 +10,6 @@ template<typename T> struct is_shared_ptr : std::false_type {};
 template<typename T> struct is_shared_ptr<std::shared_ptr<T>> : std::true_type {};
 
 namespace Netcode::Memory {
-
-	namespace Detail {
-
-		void OutOfMemoryAssertion(bool isValidPtr);
-
-		void OutOfRangeAssertion(bool isInRange);
-
-		void UndefinedBehaviourAssertion(bool isDefinedBehaviour);
-
-	}
 
 	void * AlignedMalloc(std::size_t numBytes, std::size_t alignment);
 	void AlignedFree(void * alignedPtr);

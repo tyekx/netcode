@@ -1,31 +1,38 @@
 #include "Importer.h"
 
-#include <string>
+#include <type_traits>
 #include <cstdio>
 
 namespace  Netcode::Asset { 
 
-	void ImportModel(const char * filePath, Asset::Model & m) {
-		std::string path = filePath;
-
-		FILE * file;
-		errno_t r = fopen_s(&file, path.c_str(), "rb");
-
-		if(file == nullptr) {
-			return;
+	namespace Detail {
+		template<typename T>
+		void ReadArray(T * dst, uint32_t numElements, uint8_t ** data) {
+			static_assert(std::is_pod<T>::value, "Must be plain old data type");
+			memcpy(dst, *data, sizeof(T) * numElements);
+			*data += numElements * sizeof(T);
 		}
 
+		template<typename T>
+		void Read(T * dst, uint8_t ** data) {
+			ReadArray<T>(dst, 1, data);
+		}
+	}
+
+	void ImportModel(MutableArrayView<uint8_t> buffer, Asset::Model & m) {
 		uint32_t meshesSize;
 		uint32_t materialsSize;
 		uint32_t animDataSize;
 		uint32_t colliderDataSize;
 		uint32_t boneDataSize;
 
-		fread(&meshesSize, sizeof(uint32_t), 1, file);
-		fread(&animDataSize, sizeof(uint32_t), 1, file);
-		fread(&materialsSize, sizeof(uint32_t), 1, file);
-		fread(&boneDataSize, sizeof(uint32_t), 1, file);
-		fread(&colliderDataSize, sizeof(uint32_t), 1, file);
+		uint8_t * it = buffer.begin();
+
+		Detail::Read<uint32_t>(&meshesSize, &it);
+		Detail::Read<uint32_t>(&animDataSize, &it);
+		Detail::Read<uint32_t>(&materialsSize, &it);
+		Detail::Read<uint32_t>(&boneDataSize, &it);
+		Detail::Read<uint32_t>(&colliderDataSize, &it);
 
 		void * meshesData = nullptr;
 		void * materialsData = nullptr;
@@ -35,27 +42,27 @@ namespace  Netcode::Asset {
 
 		if(meshesSize > 0) {
 			meshesData = std::malloc(meshesSize);
-			fread(meshesData, 1, meshesSize, file);
+			Detail::ReadArray<uint8_t>(static_cast<uint8_t *>(meshesData), meshesSize, &it);
 		}
 
 		if(animDataSize > 0) {
 			animData = std::malloc(animDataSize);
-			fread(animData, 1, animDataSize, file);
+			Detail::ReadArray<uint8_t>(static_cast<uint8_t *>(animData), animDataSize, &it);
 		}
 
 		if(materialsSize > 0) {
 			materialsData = std::malloc(materialsSize);
-			fread(materialsData, 1, materialsSize, file);
+			Detail::ReadArray<uint8_t>(static_cast<uint8_t *>(materialsData), materialsSize, &it);
 		}
 
 		if(boneDataSize > 0) {
 			boneData = std::malloc(boneDataSize);
-			fread(boneData, 1, boneDataSize, file);
+			Detail::ReadArray<uint8_t>(static_cast<uint8_t *>(boneData), boneDataSize, &it);
 		}
 
 		if(colliderDataSize > 0) {
 			colliderData = std::malloc(colliderDataSize);
-			fread(colliderData, 1, colliderDataSize, file);
+			Detail::ReadArray<uint8_t>(static_cast<uint8_t *>(colliderData), colliderDataSize, &it);
 		}
 
 		m.SetMeshes(meshesData);
@@ -63,7 +70,5 @@ namespace  Netcode::Asset {
 		m.SetAnimData(animData);
 		m.SetColliderData(colliderData);
 		m.SetBoneData(boneData);
-
-		fclose(file);
 	}
 }

@@ -73,23 +73,6 @@ std::wstring Netcode::Utility::ToWideString(const std::string & narrowString) {
 	return ws;
 }
 
-bool Netcode::Utility::SlurpFile(std::string & dstBuffer, const std::wstring & filepath) {
-	std::ifstream ifs{ filepath };
-
-	if(!ifs.is_open()) {
-		return false;
-	}
-
-	ifs.seekg(0, std::ios::end);
-	dstBuffer.reserve(ifs.tellg());
-	ifs.seekg(0, std::ios::beg);
-
-	dstBuffer.assign((std::istreambuf_iterator<char>(ifs)),
-					  std::istreambuf_iterator<char>());
-
-	return true;
-}
-
 void Netcode::Utility::DebugEvent(unsigned int msg, std::initializer_list<unsigned int> filter) {
 	static std::multimap<int, const char *> wmTranslation = {
 		{0, "WM_NULL" },

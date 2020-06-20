@@ -204,8 +204,8 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		Transform * gunRootTransform = gunRootObj->AddComponent<Transform>();
 		Transform * gunTransform = gunObj->GetComponent<Transform>();
 
-		gunRootTransform->position = DirectX::XMFLOAT3{ 0.0f, 130.0f, 0.0f };
-		gunTransform->scale = DirectX::XMFLOAT3{ 18.0f, 18.0f, 18.0f };
+		gunRootTransform->position = Netcode::Float3{ 0.0f, 130.0f, 0.0f };
+		gunTransform->scale = Netcode::Float3{ 18.0f, 18.0f, 18.0f };
 
 		LoadComponents(avatarModel, avatarHitboxes);
 		Animation* anim = avatarHitboxes->AddComponent<Animation>();
@@ -221,13 +221,11 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 		avatarController->AddComponent<Script>()->SetBehavior(std::make_unique<RemoteAvatarScript>(pxController));
 
-		DirectX::XMFLOAT4 gunRotation;
-		DirectX::XMStoreFloat4(&gunRotation, DirectX::XMQuaternionRotationRollPitchYaw(-DirectX::XM_PIDIV2, -DirectX::XM_PIDIV2, 0.0f));
+		Netcode::Quaternion gunRotation{ -Netcode::C_PIDIV2, -Netcode::C_PIDIV2, 0.0f };
 
 		Script * gunScript = gunObj->AddComponent<Script>();
 
-		auto behav = std::make_unique<GunBehavior>(avatarHitboxes, gunRootObj, DirectX::XMFLOAT4{ 0.0f, 0.0f, 40.0f, 0.0f },
-			gunRotation, 28);
+		auto behav = std::make_unique<GunBehavior>(avatarHitboxes, gunRootObj, Netcode::Float4{ 0.0f, 0.0f, 40.0f, 0.0f }, gunRotation, 28);
 
 		GameObject * debugObj = gameScene->Create();
 		Script * debugScript = debugObj->AddComponent<Script>();
@@ -260,16 +258,16 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		avatarCamTransform->position.y = 180.0f;
 
 		Camera * fpsCam = avatarCamera->AddComponent<Camera>();
-		fpsCam->ahead = DirectX::XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+		fpsCam->ahead = Netcode::Float3{ 0.0f, 0.0f, 1.0f };
 		fpsCam->aspect = graphics->GetAspectRatio();
 		fpsCam->farPlane = 10000.0f;
 		fpsCam->nearPlane = 1.0f;
-		fpsCam->up = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
+		fpsCam->up = Netcode::Float3{ 0.0f, 1.0f, 0.0f };
 
 		physx::PxController * pxController = gameScene->CreateController();
 
 		Transform * act = avatarController->AddComponent<Transform>();
-		act->position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 200.0f };
+		act->position = Netcode::Float3{ 0.0f, 0.0f, 200.0f };
 
 		Script* scriptComponent = avatarController->AddComponent<Script>();
 		scriptComponent->SetBehavior(std::make_unique<PlayerBehavior>(pxController, fpsCam));
@@ -424,8 +422,8 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 			auto material = std::make_shared<TestMaterial>();
 
-			material->data.diffuseColor = DirectX::XMFLOAT4A{ mat->diffuseColor.x, mat->diffuseColor.y,mat->diffuseColor.z, 1.0f };
-			material->data.fresnelR0 = DirectX::XMFLOAT3{ 0.05f, 0.05f, 0.05f };
+			material->data.diffuseColor = Netcode::Float4{ mat->diffuseColor.x, mat->diffuseColor.y,mat->diffuseColor.z, 1.0f };
+			material->data.fresnelR0 = Netcode::Float3{ 0.05f, 0.05f, 0.05f };
 			material->data.shininess = mat->shininess;
 
 			graphics->frame->SyncUpload(batch);
@@ -441,8 +439,8 @@ public:
 		float asp = graphics->GetAspectRatio();
 		gameScene->GetCamera()->GetComponent<Camera>()->aspect = asp;
 		renderSystem.renderer.OnResize(w, h);
-		uiSystem.SetScreenSize(DirectX::XMUINT2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
-		uiScene->SetScreenSize(DirectX::XMUINT2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
+		uiSystem.SetScreenSize(Netcode::UInt2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
+		uiScene->SetScreenSize(Netcode::UInt2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
 		menuLayer->OnResized(w, h);
 	}
 

@@ -41,8 +41,7 @@ namespace Netcode::Graphics::DX12 {
 
 	ShaderBytecodeRef ShaderBuilder::LoadBytecode(const std::wstring & precompiledShaderPath) {
 		SetState(BuilderState::PRECOMPILED);
-		ShaderPath path{ precompiledShaderPath };
-		auto shader = shaderLibrary->LoadShader(path.GetAbsolutePath());
+		auto shader = shaderLibrary->LoadShader(precompiledShaderPath);
 		Clear();
 		return shader;
 	}

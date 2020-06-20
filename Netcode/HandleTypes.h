@@ -1,5 +1,7 @@
 #pragma once
 
+#include <NetcodeFoundation/Math.h>
+
 #include "Graphics/ResourceEnums.h"
 #include "Graphics/ResourceDesc.h"
 #include "Common.h"
@@ -445,34 +447,34 @@ namespace Netcode {
 	class SpriteBatch {
 	public:
 		virtual ~SpriteBatch() = default;
-		virtual void BeginRecord(void* renderContext, DirectX::XMFLOAT4X4 viewProj) = 0;
+		virtual void BeginRecord(void* renderContext, Netcode::Float4x4 viewProj) = 0;
 
 		virtual void SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) = 0;
 		virtual void SetScissorRect(const RECT & rect) = 0;
 		virtual void SetScissorRect() = 0;
 
-		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position) = 0;
-		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size) = 0;
-		virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT4 & color) = 0;
+		virtual void DrawSprite(ResourceViewsRef texture, const Netcode::UInt2 & textureSize, const Netcode::Float2 & position) = 0;
+		virtual void DrawSprite(ResourceViewsRef texture, const Netcode::UInt2 & textureSize, const Netcode::Float2 & position, const Netcode::Float2 & size) = 0;
+		virtual void DrawSprite(ResourceViewsRef texture, const Netcode::UInt2 & textureSize, const Netcode::Float2 & position, const Netcode::Float2 & size, const Netcode::Float4 & color) = 0;
 
 		virtual void DrawSprite(ResourceViewsRef texture,
-			const DirectX::XMUINT2 & textureSize,
-			const DirectX::XMFLOAT2 & position,
+			const Netcode::UInt2 & textureSize,
+			const Netcode::Float2 & position,
 			const RECT * sourceRectangle,
-			const DirectX::XMFLOAT4 & color,
+			const Netcode::Float4 & color,
 			float rotation,
-			const DirectX::XMFLOAT2 & origin,
+			const Netcode::Float2 & origin,
 			float scale,
 			float layerDepth) = 0;
 
 		virtual void DrawSprite(ResourceViewsRef texture,
-								const DirectX::XMUINT2 & textureSize,
-								const DirectX::XMFLOAT2 & destPosition,
-								const DirectX::XMFLOAT2 & destSize,
+								const Netcode::UInt2 & textureSize,
+								const Netcode::Float2  & destPosition,
+								const Netcode::Float2 & destSize,
 								const RECT * sourceRectangle,
-								const DirectX::XMFLOAT4 & color,
+								const Netcode::Float4 & color,
 								float rotation,
-								const DirectX::XMFLOAT2 & origin,
+								const Netcode::Float2 & origin,
 								float layerDepth) = 0;
 
 		virtual void EndRecord() = 0;
@@ -495,12 +497,12 @@ namespace Netcode {
 	public:
 		virtual ~SpriteFont() = default;
 		virtual ResourceViewsRef GetResourceView() const = 0;
-		virtual DirectX::XMFLOAT2 MeasureString(const char * str) const = 0;
-		virtual DirectX::XMFLOAT2 MeasureString(const wchar_t * str) const = 0;
+		virtual Netcode::Float2 MeasureString(const char * str) const = 0;
+		virtual Netcode::Float2 MeasureString(const wchar_t * str) const = 0;
 
-		virtual void DrawString(Netcode::SpriteBatchRef spriteBatch, const wchar_t * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const = 0;
+		virtual void DrawString(Netcode::SpriteBatchRef spriteBatch, const wchar_t * text, const Netcode::Float2 & position, const Netcode::Float4 & color) const = 0;
 		
-		virtual void DrawString(Netcode::SpriteBatchRef spriteBatch, const char * text, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT4 & color) const = 0;
+		virtual void DrawString(Netcode::SpriteBatchRef spriteBatch, const char * text, const Netcode::Float2 & position, const Netcode::Float4 & color) const = 0;
 	};
 
 	using SpriteFontRef = std::shared_ptr<SpriteFont>;

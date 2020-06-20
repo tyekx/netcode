@@ -36,13 +36,13 @@ public:
 		AlignText(textComponent, textObject->GetComponent<Transform>(), backgroundObject->GetComponent<UIElement>());
 	}
 
-	void SetSize(const DirectX::XMFLOAT2 & size) {
+	void SetSize(const Netcode::Float2 & size) {
 		UIElement * bgElem = backgroundObject->AddComponent<UIElement>();
 		bgElem->width = size.x;
 		bgElem->height = size.y;
 	}
 
-	void SetBackgroundImage(Netcode::ResourceViewsRef resourceView, const DirectX::XMUINT2 & textureSize) {
+	void SetBackgroundImage(Netcode::ResourceViewsRef resourceView, const Netcode::UInt2 & textureSize) {
 		Sprite * sprite = nullptr;
 		if(!backgroundObject->HasComponent<Sprite>()) {
 			sprite = backgroundObject->AddComponent<Sprite>();
@@ -52,7 +52,7 @@ public:
 
 		sprite->texture = resourceView;
 		sprite->textureSize = textureSize;
-		sprite->diffuseColor = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };
+		sprite->diffuseColor = Netcode::Float4::One;
 	}
 
 	void SetPasswordFlag() {
@@ -67,8 +67,8 @@ public:
 
 		backgroundObject->AddComponent<Transform>();
 		UIElement * bgElem = backgroundObject->AddComponent<UIElement>();
-		SetSize(DirectX::XMFLOAT2{ 390.0f, 48.0f });
-		bgElem->padding = DirectX::XMFLOAT4{ 15.0f, 0.0f, 15.0f, 0.0f };
+		SetSize(Netcode::Float2{ 390.0f, 48.0f });
+		bgElem->padding = Netcode::Float4{ 15.0f, 0.0f, 15.0f, 0.0f };
 
 		Button* btn = backgroundObject->AddComponent<Button>();
 
@@ -76,13 +76,13 @@ public:
 		textObject->AddComponent<UIElement>();
 		Text * textComponent = textObject->AddComponent<Text>();
 		textComponent->text = L"";
-		textComponent->color = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };
+		textComponent->color = Netcode::Float4::One;
 		textComponent->verticalAlignment = VerticalAnchor::MIDDLE;
 		textComponent->horizontalAlignment = HorizontalAnchor::LEFT;
 
 		TextBox* textBoxComponent = textObject->AddComponent<TextBox>();
 		textBoxComponent->placeholder = L"empty";
-		textBoxComponent->placeholderColor = DirectX::XMFLOAT4{ 0.4f, 0.4f, 0.4f, 0.7f };
+		textBoxComponent->placeholderColor = Netcode::Float4{ 0.4f, 0.4f, 0.4f, 0.7f };
 		textBoxComponent->maxCharacters = 24;
 		textBoxComponent->caretPosition = 0;
 		textBoxComponent->selectionEndIndex = -1;

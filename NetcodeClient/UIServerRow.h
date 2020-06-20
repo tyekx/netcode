@@ -83,7 +83,7 @@ public:
 		ServerRowAlignText(t2, 652.0f, tr2, slotsObject->GetComponent<UIElement>());
 	}
 
-	void SetBackground(Netcode::ResourceViewsRef res, const DirectX::XMUINT2 & texSize) {
+	void SetBackground(Netcode::ResourceViewsRef res, const Netcode::UInt2 & texSize) {
 		Sprite * sprite = rootObject->GetComponent<Sprite>();
 		sprite->texture = std::move(res);
 		sprite->textureSize = texSize;
@@ -100,29 +100,29 @@ public:
 				Sprite * sprite = rootObject->AddComponent<Sprite>();
 				rootObject->AddComponent<Button>();
 
-				transform->position = DirectX::XMFLOAT3{ 8.0f, 0.0f, 0.0f };
+				transform->position = Netcode::Float3{ 8.0f, 0.0f, 0.0f };
 				uiElem->width = 752.0f;
 				uiElem->height = 48.0f;
-				sprite->hoverColor = DirectX::XMFLOAT4{ 0.5f, 0.5f, 0.5f, 1.0f };
-				sprite->diffuseColor = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };
+				sprite->hoverColor = Netcode::Float4{ 0.5f, 0.5f, 0.5f, 1.0f };
+				sprite->diffuseColor = Netcode::Float4::One;
 			}
 
 			{
 				Transform * transform = ipObject->AddComponent<Transform>();
-				transform->position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+				transform->position = Netcode::Float3::Zero;
 				UIElement * uiElem = ipObject->AddComponent<UIElement>();
 				uiElem->width = 452.0f;
 				uiElem->height = 42.0f;
 				Text * text = ipObject->AddComponent<Text>();
 				text->text = L"2a01:36d:120:4ee3:ad5b:fed3:c49b:344e";
 				text->horizontalAlignment = HorizontalAnchor::LEFT;
-				text->color = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };
+				text->color = Netcode::Float4::One;
 				text->verticalAlignment = VerticalAnchor::MIDDLE;
 			}
 
 			{
 				Transform * transform = creatorObject->AddComponent<Transform>();
-				transform->position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+				transform->position = Netcode::Float3::Zero;
 				UIElement * uiElem = creatorObject->AddComponent<UIElement>();
 
 				uiElem->width = 200.0f;
@@ -131,20 +131,20 @@ public:
 				Text * text = creatorObject->AddComponent<Text>();
 				text->text = L"Tyekx";
 				text->horizontalAlignment = HorizontalAnchor::RIGHT;
-				text->color = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };
+				text->color = Netcode::Float4::One;
 				text->verticalAlignment = VerticalAnchor::MIDDLE;
 			}
 
 			{
 				Transform * transform = slotsObject->AddComponent<Transform>();
-				transform->position = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+				transform->position = Netcode::Float3::Zero;
 				UIElement * uiElem = slotsObject->AddComponent<UIElement>();
 				uiElem->width = 100.0f;
 				uiElem->height = 42.0f;
 				Text * text = slotsObject->AddComponent<Text>();
 				text->text = L"0/12";
 				text->horizontalAlignment = HorizontalAnchor::RIGHT;
-				text->color = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };
+				text->color = Netcode::Float4::One;
 				text->verticalAlignment = VerticalAnchor::MIDDLE;
 			}
 

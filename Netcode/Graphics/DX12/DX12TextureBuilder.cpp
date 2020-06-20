@@ -1,14 +1,16 @@
-#include "../../Path.h"
 #include "DX12TextureBuilder.h"
 #include "DX12Common.h"
+
+#include "../../IO/Path.h"
 
 namespace Netcode::Graphics::DX12 {
 
 	void TextureBuilder::LoadTexture2D(const std::wstring & mediaPath) {
-		MediaPath media{ mediaPath };
+		std::wstring cpy{ mediaPath };
+		cpy.insert(0, IO::Path::MediaRoot());
 
-		DX_API("Failed to load image: %S", mediaPath.c_str())
-			DirectX::LoadFromWICFile(media.GetAbsolutePath().c_str(), 0, &metaData, scratchImage);
+		DX_API("Failed to load image: %S", cpy.c_str())
+			DirectX::LoadFromWICFile(cpy.c_str(), 0, &metaData, scratchImage);
 	}
 	
 	void TextureBuilder::LoadTexture3D(const std::wstring & mediaPath) {
@@ -16,10 +18,11 @@ namespace Netcode::Graphics::DX12 {
 	}
 	
 	void TextureBuilder::LoadTextureCube(const std::wstring & mediaPath) {
-		MediaPath media{ mediaPath };
+		std::wstring cpy{ mediaPath };
+		cpy.insert(0, IO::Path::MediaRoot());
 
-		DX_API("Failed to load image: %S", mediaPath.c_str())
-			DirectX::LoadFromDDSFile(media.GetAbsolutePath().c_str(), 0, &metaData, scratchImage);
+		DX_API("Failed to load image: %S", cpy.c_str())
+			DirectX::LoadFromDDSFile(cpy.c_str(), 0, &metaData, scratchImage);
 	}
 	
 	uint16_t TextureBuilder::GetCurrentMipLevelCount() {

@@ -16,7 +16,7 @@ public:
 		AlignText(textObject->GetComponent<Text>(), textObject->GetComponent<Transform>(), bgElem);
 	}
 
-	void SetBackgroundImage(Netcode::ResourceViewsRef resourceView, const DirectX::XMUINT2 & dimensions) {
+	void SetBackgroundImage(Netcode::ResourceViewsRef resourceView, const Netcode::UInt2 & dimensions) {
 		Sprite * sprite = backgroundObject->AddComponent<Sprite>();
 		sprite->texture = std::move(resourceView);
 		sprite->textureSize = dimensions;
@@ -68,10 +68,10 @@ public:
 		background->AddComponent<Button>();
 
 		Sprite * sprite = background->AddComponent<Sprite>();
-		sprite->textureSize = DirectX::XMUINT2{ 0,0 };
+		sprite->textureSize = Netcode::UInt2::Zero;
 		sprite->texture = nullptr;
-		sprite->diffuseColor = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };
-		sprite->hoverColor = DirectX::XMFLOAT4{ 0.5f, 0.5f, 0.5f, 1.0f };
+		sprite->diffuseColor = Netcode::Float4::One;
+		sprite->hoverColor = Netcode::Float4{ 0.5f, 0.5f, 0.5f, 1.0f };
 
 		background->AddComponent<Transform>();
 		textObject->AddComponent<Transform>();
@@ -80,6 +80,6 @@ public:
 		Text * txt = textObject->AddComponent<Text>();
 		txt->horizontalAlignment = HorizontalAnchor::CENTER;
 		txt->verticalAlignment = VerticalAnchor::MIDDLE;
-		txt->color = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };
+		txt->color = Netcode::Float4::One;
 	}
 };

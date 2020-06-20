@@ -31,6 +31,12 @@ namespace Netcode {
 			DirectX::XMStoreFloat4x4(&a, mat);
 			return a;
 		}
+
+		NC_MATH_CALLCONV operator DirectX::XMFLOAT4X4A() const noexcept {
+			DirectX::XMFLOAT4X4A a;
+			DirectX::XMStoreFloat4x4A(&a, mat);
+			return a;
+		}
 	};
 
 }

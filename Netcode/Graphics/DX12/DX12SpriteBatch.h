@@ -145,7 +145,7 @@ namespace Netcode::Graphics::DX12
         std::vector<SpriteInfo const *> mSortedSprites;
 
         SpriteSortMode mSortMode;
-        DirectX::XMMATRIX mTransformMatrix;
+        Netcode::Matrix mTransformMatrix;
 
         D3D12_GPU_VIRTUAL_ADDRESS cbufferAddr;
         SpriteCbuffer cbuffer;
@@ -183,12 +183,12 @@ namespace Netcode::Graphics::DX12
         virtual ~SpriteBatch() = default;
 
         // Begin/End a batch of sprite drawing operations.
-        void Begin(SpriteSortMode sortMode = SpriteSortMode_Deferred, DirectX::FXMMATRIX transformMatrix = MatrixIdentity);
+        void Begin(SpriteSortMode sortMode = SpriteSortMode_Deferred, Netcode::Matrix transformMatrix = MatrixIdentity);
         void End();
 
-        virtual void BeginRecord(void * ctx, DirectX::XMFLOAT4X4 viewProj) override {
+        virtual void BeginRecord(void * ctx, Netcode::Float4x4 viewProj) override {
             renderContext = static_cast<Netcode::Graphics::IRenderContext *>(ctx);
-            DirectX::FXMMATRIX tMat = DirectX::XMLoadFloat4x4(&viewProj);
+            Netcode::Matrix tMat = viewProj;
             Begin(SpriteSortMode_Deferred, tMat);
         }
 
@@ -200,30 +200,30 @@ namespace Netcode::Graphics::DX12
         virtual void SetScissorRect(const RECT & rect)  override;
         virtual void SetScissorRect()  override;
 
-        virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position) override;
+        virtual void DrawSprite(ResourceViewsRef texture, const Netcode::UInt2 & textureSize, const Netcode::Float2 & position) override;
 
-        virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size)  override;
+        virtual void DrawSprite(ResourceViewsRef texture, const Netcode::UInt2 & textureSize, const Netcode::Float2 & position, const Netcode::Float2 & size)  override;
 
-        virtual void DrawSprite(ResourceViewsRef texture, const DirectX::XMUINT2 & textureSize, const DirectX::XMFLOAT2 & position, const DirectX::XMFLOAT2 & size, const DirectX::XMFLOAT4 & color)  override;
+        virtual void DrawSprite(ResourceViewsRef texture, const Netcode::UInt2 & textureSize, const Netcode::Float2 & position, const Netcode::Float2 & size, const Netcode::Float4 & color)  override;
 
         virtual void DrawSprite(ResourceViewsRef texture,
-            const DirectX::XMUINT2 & textureSize,
-            const DirectX::XMFLOAT2 & position,
+            const Netcode::UInt2 & textureSize,
+            const Netcode::Float2 & position,
             const RECT * sourceRectangle,
-            const DirectX::XMFLOAT4 & color,
+            const Netcode::Float4 & color,
             float rotation,
-            const DirectX::XMFLOAT2 & origin,
+            const Netcode::Float2 & origin,
             float scale,
             float layerDepth) override;
 
         virtual void DrawSprite(ResourceViewsRef texture,
-            const DirectX::XMUINT2 & textureSize,
-            const DirectX::XMFLOAT2 & destPosition,
-            const DirectX::XMFLOAT2 & destSize,
+            const Netcode::UInt2 & textureSize,
+            const Netcode::Float2 & destPosition,
+            const Netcode::Float2 & destSize,
             const RECT * sourceRectangle,
-            const DirectX::XMFLOAT4 & color,
+            const Netcode::Float4 & color,
             float rotation,
-            const DirectX::XMFLOAT2 & origin,
+            const Netcode::Float2 & origin,
             float layerDepth) override;
         /*
         // Draw overloads specifying position, origin and scale as XMFLOAT2.

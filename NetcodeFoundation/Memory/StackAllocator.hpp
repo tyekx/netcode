@@ -56,7 +56,7 @@ namespace Netcode::Memory {
 		MemoryBlock Allocate(size_t numElements) {
 			std::size_t allocBytes = Align<size_t>(numElements * sizeof(T), resource->alignment);
 
-			Detail::OutOfRangeAssertion((resource->offset + allocBytes) <= resource->stackSize);
+			OutOfRangeAssertion((resource->offset + allocBytes) <= resource->stackSize);
 
 			void * p = resource->data + resource->offset;
 

@@ -229,7 +229,7 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void Run(FrameGraphRef frameGraph, FrameGraphCullMode cullMode) override;
 
-		virtual DirectX::XMUINT2 GetBackbufferSize() const override;
+		virtual Netcode::UInt2 GetBackbufferSize() const override;
 
 		virtual DXGI_FORMAT GetBackbufferFormat() const override;
 

@@ -56,7 +56,7 @@ public:
 		Text * txt = textObject->AddComponent<Text>();
 		txt->horizontalAlignment = HorizontalAnchor::LEFT;
 		txt->verticalAlignment = VerticalAnchor::TOP;
-		txt->color = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };
+		txt->color = Netcode::Float4::One;
 	}
 };
 
