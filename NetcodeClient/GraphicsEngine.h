@@ -5,7 +5,7 @@
 #include <Netcode/Graphics/ResourceDesc.h>
 #include <Netcode/Vertex.h>
 #include <DirectXPackedVector.h>
-#include <Netcode/NetcodeMath.h>
+#include <Netcode/MathExt.h>
 #include <variant>
 #include "GameObject.h"
 #include "AnimationSet.h"
@@ -457,7 +457,7 @@ private:
 		{
 			for(int j = 0; j < 256; ++j)
 			{
-				Netcode::Float3 v(RandomFloat(), RandomFloat(), RandomFloat());
+				Netcode::Float3 v(Netcode::RandomFloat(), Netcode::RandomFloat(), Netcode::RandomFloat());
 
 				colors[i * 256 + j] = DirectX::PackedVector::XMCOLOR(v.z, v.y, v.x, 0.0f);
 			}

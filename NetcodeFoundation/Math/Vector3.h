@@ -147,4 +147,8 @@ namespace Netcode {
 
 	};
 
+	inline Vector3 NC_MATH_CALLCONV operator*(float lhs, const Vector3 & rhs) {
+		return rhs.operator*(lhs);
+	}
+
 }

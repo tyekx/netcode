@@ -1,27 +1,75 @@
 {
   "window": {
-    "size": 10.5
-  },
-  "graphics": {
-    "dx12": {
-
+    "size": [ 1280, 720 ],
+    "position": [ 60, 60 ],
+    "refreshRate": [ 144, 1 ],
+    "fullscreen": false,
+    "displayIndex": 0,
+    "log": {
+      "logLevel": 1,
+      "enabled": true
+    },
+    "debugConsole": {
+      "enabled": true,
+      "maximized": true,
+      "displayIndex": 1,
+      "position": [ 0, 0 ],
+      "size": [ 800, 600 ]
     }
   },
-  "log": {
-
+  "graphics": {
+    "backbufferFormat": 28,
+    "depthStencilFormat": 20,
+    "adapterIndex": 0,
+    "displayIndex": 0,
+    "targetFps": 300.0,
+    "log": {
+      "logLevel": 1,
+      "enabled": true
+    },
+    "debug": {
+      "enabled": true,
+      "primitiveBufferDepth": 65536,
+      "capsuleSlices": 8,
+      "sphereSlices": 8,
+      "defaultColor": [ 0.7, 0.7, 0.7, 1.0 ]
+    },
+    "dx12": {
+      "log": {
+        "logLevel": 1,
+        "enabled": true
+      },
+      "frameGraphCulling": true,
+      "smallHeapSize": 524288,
+      "mediumHeapSize": 4194304,
+      "largeHeapSize": 67108864
+    }
   },
   "network": {
     "client": {
-
+      "log": {
+        "logLevel": 1,
+        "enabled": true
+      }
     },
     "database": {
-
+      "log": {
+        "logLevel": 1,
+        "enabled": true
+      },
+      "credentials": "db.json"
     },
     "server": {
-
+      "log": {
+        "logLevel": 1,
+        "enabled": true
+      }
     },
     "protocol": {
-
+      "log": {
+        "logLevel": 1,
+        "enabled": true
+      }
     }
   }
 }

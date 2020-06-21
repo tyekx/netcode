@@ -5,7 +5,7 @@
 #include <Netcode/Input.h>
 #include <Netcode/BasicGeometry.h>
 #include <Netcode/DebugPhysx.h>
-#include <Netcode/NetcodeMath.h>
+#include <Netcode/MathExt.h>
 #include <Netcode/Modules.h>
 #include <Netcode/Stopwatch.h>
 #include <Netcode/Service.hpp>
@@ -453,7 +453,7 @@ public:
 	/*
 	Initialize modules
 	*/
-	virtual void Setup(Netcode::Module::IModuleFactory * factory) override {
+	virtual void Setup(Netcode::Module::IModuleFactory * factory, const Netcode::Config & config) override {
 		events = std::make_unique<Netcode::Module::AppEventSystem>();
 
 		window = factory->CreateWindowModule(this, 0);

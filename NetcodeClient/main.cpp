@@ -18,9 +18,6 @@ std::wstring QueryWorkingDirectory() {
 	pwd.resize(len);
 	GetCurrentDirectoryW(static_cast<DWORD>(pwd.size()), pwd.data());
 	pwd.resize(len - 1);
-
-	Netcode::IO::Path::FixDirectoryPath(pwd);
-
 	return pwd;
 }
 
@@ -69,14 +66,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	rapidjson::Document doc{ };
 	rapidjson::MemoryStream ms{ static_cast<char*>(buffer), numBytes };
 	doc.ParseStream(ms);
-
 	std::free(buffer);
+
+	Netcode::Config configuration;
+	configuration.Load(doc);
 
 	Netcode::Input::CreateResources();
 
 	Netcode::Module::DefaultModuleFactory defModuleFactory;
 	std::unique_ptr<Netcode::Module::AApp> app = std::make_unique<GameApp>();
-	app->Setup(&defModuleFactory);
+	app->Setup(&defModuleFactory, configuration);
 
 	Log::Info("Initialization successful");
 

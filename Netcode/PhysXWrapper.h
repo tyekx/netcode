@@ -19,7 +19,7 @@ namespace Netcode::Physics {
 		physx::PxDefaultCpuDispatcher * dispatcher;
 		physx::PxCooking * cooking;
 
-		void UpdateDebugCamera(const DirectX::XMFLOAT3 & pos, const DirectX::XMFLOAT3 & up, const DirectX::XMFLOAT3 & lookAt);
+		void UpdateDebugCamera(const Float3 & pos, const Float3 & up, const Float3 & lookAt);
 
 		void CreateResources();
 

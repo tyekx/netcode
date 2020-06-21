@@ -1,7 +1,6 @@
 #pragma once
 
 #include "GameObject.h"
-#include <Netcode/GramSchmidt.h>
 
 class PlayerBehavior : public IBehavior {
 	Transform * transform;

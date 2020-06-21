@@ -42,14 +42,12 @@ PRIVATE
 target_sources(Netcode
 PUBLIC
 	"BasicGeometry.h"
-	
 	"Common.h"
 	"DebugPhysx.h"
 	"DebugPhysxActor.h"
 	"DebugPhysxRaycast.h"
 	"DefaultModuleFactory.h"
-	"NetcodeMath.h"
-	
+	"MathExt.h"
 	"HandleTypes.h"
 	"Input.h"
 	"LinearAllocator.h"
@@ -71,17 +69,16 @@ PUBLIC
 	"Vertex.h"
 	"WinapiWindowModule.h"
 	"ConsoleModule.h"
-	"GramSchmidt.h"
+	"../NetcodeFoundation/Math/GramSchmidt.h"
 
 PRIVATE
 	"BasicGeometry.cpp"
-	
 	"BulkAllocator.hpp"
 	"Common.cpp"
 	"DebugPhysx.cpp"
 	"DebugPhysxActor.cpp"
 	"DefaultModuleFactory.cpp"
-	"NetcodeMath.cpp"
+	"MathExt.cpp"
 	"Input.cpp"
 	"LinearClassifier.cpp"
 	"Logger.cpp"
@@ -92,7 +89,7 @@ PRIVATE
 	"WinapiWindowModule.cpp"
 	"ConsoleModule.cpp"
 	"Functions.cpp"
-	"GramSchmidt.cpp")
+	"../NetcodeFoundation/Math/GramSchmidt.cpp")
 
 add_subdirectory(Shaders)
 add_subdirectory(Animation)

@@ -1,10 +1,10 @@
 #include "PhysXWrapper.h"
 #include "Utility.h"
-#include "NetcodeMath.h"
+#include "MathExt.h"
 
 namespace Netcode::Physics {
 
-	void PhysX::UpdateDebugCamera(const DirectX::XMFLOAT3 & pos, const DirectX::XMFLOAT3 & up, const DirectX::XMFLOAT3 & lookAt)
+	void PhysX::UpdateDebugCamera(const Float3 & pos, const Float3 & up, const Float3 & lookAt)
 	{/*
 		physx::PxPvdSceneClient * pvdClient = scene->getScenePvdClient();
 		if(pvdClient) {

@@ -6,7 +6,7 @@ ISBN: 978-1942270065
 */
 
 #include <Netcode/PhysXWrapper.h>
-#include <Netcode/NetcodeMath.h>
+#include <Netcode/MathExt.h>
 #include "GameObject.h"
 #include "Scene.h"
 #include "PhysxHelpers.h"
@@ -104,7 +104,7 @@ public:
 
 		for(int i = 0; i < SsaoData::SAMPLE_COUNT; ++i)
 		{
-			float s = RandomFloat(0.3f, 1.0f);
+			float s = Netcode::RandomFloat(0.3f, 1.0f);
 			s *= s;
 
 			Netcode::Vector3 v = ssaoData.Offsets[i];

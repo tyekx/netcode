@@ -346,8 +346,8 @@ public:
 						button->isSpawned = true;
 					}
 
-					physx::PxVec3 pos = ToPxVec3(transform->worldPosition);
-					physx::PxQuat rot = ToPxQuat(transform->worldRotation);
+					physx::PxVec3 pos = Netcode::ToPxVec3(transform->worldPosition);
+					physx::PxQuat rot = Netcode::ToPxQuat(transform->worldRotation);
 
 					static_cast<physx::PxRigidDynamic *>(button->pxActor)->setGlobalPose(physx::PxTransform{ pos, rot });
 				}
@@ -367,8 +367,8 @@ public:
 
 			if(button != nullptr) {
 				if(button->pxActor == nullptr) {
-					physx::PxVec3 pos = ToPxVec3(transform->worldPosition);
-					physx::PxQuat rot = ToPxQuat(transform->worldRotation);
+					physx::PxVec3 pos = Netcode::ToPxVec3(transform->worldPosition);
+					physx::PxQuat rot = Netcode::ToPxQuat(transform->worldRotation);
 
 					physx::PxRigidDynamic * actor = px->createRigidDynamic(physx::PxTransform(pos, rot));
 					actor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, true);

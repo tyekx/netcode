@@ -8,6 +8,7 @@ target_sources(NetcodeFoundation PUBLIC
 	"Vector3.h"
 	"Vector4.h"
 	"NonZero.hpp"
+	"GramSchmidt.h"
 
 PRIVATE
 	"Common.cpp"
@@ -17,4 +18,5 @@ PRIVATE
 	"Vector3.cpp"
 	"Vector4.cpp"
 	"NonZero.cpp"
+	"GramSchmidt.cpp"
 )

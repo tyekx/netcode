@@ -117,7 +117,7 @@ namespace Netcode::Module {
 		/*
 		Initialize modules
 		*/
-		virtual void Setup(IModuleFactory * factory) = 0;
+		virtual void Setup(IModuleFactory * factory, const Netcode::Config & config) = 0;
 
 		/*
 		Advance simulation, update modules
