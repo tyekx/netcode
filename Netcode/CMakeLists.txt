@@ -69,7 +69,6 @@ PUBLIC
 	"Vertex.h"
 	"WinapiWindowModule.h"
 	"ConsoleModule.h"
-	"../NetcodeFoundation/Math/GramSchmidt.h"
 
 PRIVATE
 	"BasicGeometry.cpp"
@@ -88,8 +87,7 @@ PRIVATE
 	"Utility.cpp"
 	"WinapiWindowModule.cpp"
 	"ConsoleModule.cpp"
-	"Functions.cpp"
-	"../NetcodeFoundation/Math/GramSchmidt.cpp")
+	"Functions.cpp")
 
 add_subdirectory(Shaders)
 add_subdirectory(Animation)
