@@ -2,6 +2,23 @@
 
 namespace Netcode {
 
+	Netcode::Float2 LoadFloat2(const rapidjson::Value & value)
+	{
+		return Netcode::Float2{
+			value[0].GetFloat(),
+			value[1].GetFloat()
+		};
+	}
+
+	Netcode::Float3 LoadFloat3(const rapidjson::Value & value)
+	{
+		return Netcode::Float3{
+			value[0].GetFloat(),
+			value[1].GetFloat(),
+			value[2].GetFloat()
+		};
+	}
+
 	Netcode::Float4 LoadFloat4(const rapidjson::Value & value) {
 		return Netcode::Float4{
 			value[0].GetFloat(),
@@ -18,10 +35,48 @@ namespace Netcode {
 		};
 	}
 
+	Netcode::Int3 LoadInt3(const rapidjson::Value & value)
+	{
+		return Netcode::Int3{
+			value[0].GetInt(),
+			value[1].GetInt(),
+			value[2].GetInt()
+		};
+	}
+
+	Netcode::Int4 LoadInt4(const rapidjson::Value & value)
+	{
+		return Netcode::Int4{
+			value[0].GetInt(),
+			value[1].GetInt(),
+			value[2].GetInt(),
+			value[3].GetInt()
+		};
+	}
+
 	Netcode::UInt2 LoadUInt2(const rapidjson::Value & value) {
 		return Netcode::UInt2{
 			value[0].GetUint(),
 			value[1].GetUint()
+		};
+	}
+
+	Netcode::UInt3 LoadUInt3(const rapidjson::Value & value)
+	{
+		return Netcode::UInt3{
+			value[0].GetUint(),
+			value[1].GetUint(),
+			value[2].GetUint()
+		};
+	}
+
+	Netcode::UInt4 LoadUInt4(const rapidjson::Value & value)
+	{
+		return Netcode::UInt4{
+			value[0].GetUint(),
+			value[1].GetUint(),
+			value[2].GetUint(),
+			value[3].GetUint()
 		};
 	}
 

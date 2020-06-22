@@ -260,8 +260,13 @@ namespace Netcode::Graphics::DX12 {
 		DX_API("Failed to create debug layer")
 			D3D12GetDebugInterface(IID_PPV_ARGS(debugController.GetAddressOf()));
 
-		if(IsDebuggerPresent()) {
+		const bool debugEnabled = Config::Get<bool>("graphics.debug.enabled:bool");
+		if(IsDebuggerPresent() && debugEnabled) {
 			debugController->EnableDebugLayer();
+
+			if(Config::Get<bool>("graphics.debug.gpuBasedValidation:bool")) {
+				debugController->SetEnableGPUBasedValidation(TRUE);
+			}
 		}
 
 		// triple buffering is the max allowed
@@ -297,9 +302,11 @@ namespace Netcode::Graphics::DX12 {
 		CreateSwapChainResources();
 
 #if defined(NETCODE_DEBUG)
-		debugContext = objectAllocator.MakeShared<DX12DebugContext>();
-		debugContext->CreateResources(this);
-		debug = debugContext.get();
+		if(debugEnabled) {
+			debugContext = objectAllocator.MakeShared<DX12DebugContext>();
+			debugContext->CreateResources(this);
+			debug = debugContext.get();
+		}
 #endif
 	}
 

@@ -1,6 +1,7 @@
-#include "../../BasicGeometry.h"
-
 #include "DX12DebugContext.h"
+
+#include "../../Config.h"
+#include "../../BasicGeometry.h"
 
 namespace Netcode::Graphics::DX12 {
 	void DebugContext::CreateResources(Module::IGraphicsModule * graphics) {
@@ -47,12 +48,13 @@ namespace Netcode::Graphics::DX12 {
 		gpsoBuilder->SetRootSignature(rootSignature);
 		noDepthPso = gpsoBuilder->Build();
 
-		uploadBuffer = graphics->resources->CreateVertexBuffer(65536 * sizeof(PC_Vertex),
+		defaultColor = Config::Get<Float3>("graphics.debug.defaultColor:Float3");
+		bufferSize = Config::Get<uint32_t>("graphics.debug.primitiveBufferDepth:u32");
+		uploadBuffer = graphics->resources->CreateVertexBuffer(bufferSize * sizeof(PC_Vertex),
 			sizeof(PC_Vertex),
 			ResourceType::PERMANENT_UPLOAD,
 			ResourceState::ANY_READ);
 
-		bufferSize = 65536;
 		vertices.resize(bufferSize);
 	}
 	void DebugContext::UploadResources(IResourceContext * context) {
@@ -125,7 +127,7 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 	void DebugContext::DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, bool depthEnabled) {
-		DrawLine(worldPosStart, worldPosEnd, Netcode::Float3{ 0.7f, 0.7f, 0.7f }, depthEnabled);
+		DrawLine(worldPosStart, worldPosEnd, defaultColor, depthEnabled);
 	}
 
 	void DebugContext::DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, const Netcode::Float3 & color) {
@@ -147,12 +149,12 @@ namespace Netcode::Graphics::DX12 {
 
 	void DebugContext::DrawSphere(Vector3 worldPosOrigin, float radius)
 	{
-		DrawSphere(worldPosOrigin, radius, Float3{ 0.7f, 0.7f, 0.7f }, true);
+		DrawSphere(worldPosOrigin, radius, defaultColor, true);
 	}
 
 	void DebugContext::DrawSphere(Vector3 worldPosOrigin, float radius, bool depthEnabled)
 	{
-		DrawSphere(worldPosOrigin, radius, Float3{ 0.7f, 0.7f, 0.7f }, depthEnabled);
+		DrawSphere(worldPosOrigin, radius, defaultColor, depthEnabled);
 	}
 
 	void DebugContext::DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color)
@@ -162,7 +164,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void DebugContext::DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color, bool depthEnabled)
 	{
-		constexpr uint32_t numSlices = 8;
+		const uint32_t numSlices = Config::Get<uint32_t>("graphics.debug.sphereSlices:u32");
 
 		uint32_t numVertices = BasicGeometry::GetSphereWireframeSize(numSlices);
 
@@ -178,12 +180,12 @@ namespace Netcode::Graphics::DX12 {
 
 	void DebugContext::DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents)
 	{
-		DrawBoundingBox(worldPosOrigin, halfExtents, Float3{ 0.7f, 0.7f, 0.7f }, true);
+		DrawBoundingBox(worldPosOrigin, halfExtents, defaultColor, true);
 	}
 
 	void DebugContext::DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, bool depthEnabled)
 	{
-		DrawBoundingBox(worldPosOrigin, halfExtents, Float3{ 0.7f, 0.7f, 0.7f }, depthEnabled);
+		DrawBoundingBox(worldPosOrigin, halfExtents, defaultColor, depthEnabled);
 	}
 
 	void DebugContext::DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color)
@@ -198,12 +200,12 @@ namespace Netcode::Graphics::DX12 {
 
 	void DebugContext::DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents)
 	{
-		DrawBox(orientation, worldPosOrigin, halfExtents, Float3{ 0.7f, 0.7f, 0.7f }, true);
+		DrawBox(orientation, worldPosOrigin, halfExtents, defaultColor, true);
 	}
 
 	void DebugContext::DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, bool depthEnabled)
 	{
-		DrawBox(orientation, worldPosOrigin, halfExtents, Float3{ 0.7f, 0.7f, 0.7f }, depthEnabled);
+		DrawBox(orientation, worldPosOrigin, halfExtents, defaultColor, depthEnabled);
 	}
 
 	void DebugContext::DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color)
@@ -245,12 +247,12 @@ namespace Netcode::Graphics::DX12 {
 
 	void DebugContext::DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight)
 	{
-		DrawCapsule(rotation, position, radius, halfHeight, Float3{ 0.7f, 0.7f, 0.7f }, true);
+		DrawCapsule(rotation, position, radius, halfHeight, defaultColor, true);
 	}
 
 	void DebugContext::DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, bool depthEnabled)
 	{
-		DrawCapsule(rotation, position, radius, halfHeight, Float3{ 0.7f, 0.7f, 0.7f }, depthEnabled);
+		DrawCapsule(rotation, position, radius, halfHeight, defaultColor, depthEnabled);
 	}
 
 	void DebugContext::DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color)
@@ -260,7 +262,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void DebugContext::DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, bool depthEnabled)
 	{
-		constexpr uint32_t numSlices = 12;
+		const uint32_t numSlices = Config::Get<uint32_t>("graphics.debug.capsuleSlices:u32");
 
 		uint32_t numVertices = BasicGeometry::GetCapsuleWireframeSize(numSlices);
 

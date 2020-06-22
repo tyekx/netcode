@@ -6,6 +6,7 @@
 namespace Netcode::Graphics::DX12 {
 
 	class DebugContext : public IDebugContext {
+		Float3 defaultColor;
 		Float4x4 viewProj;
 		size_t bufferSize;
 		size_t numNoDepthVertices;

@@ -30,10 +30,11 @@
     },
     "debug": {
       "enabled:bool": true,
+      "gpuBasedValidation:bool": false,
       "primitiveBufferDepth:u32": 65536,
-      "capsuleSlices:u32": 8,
+      "capsuleSlices:u32": 12,
       "sphereSlices:u32": 8,
-      "defaultColor:Float4": [ 0.7, 0.7, 0.7, 1.0 ]
+      "defaultColor:Float3": [ 0.7, 0.7, 0.7 ]
     },
     "dx12": {
       "log": {

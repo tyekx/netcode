@@ -69,7 +69,6 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		renderSystem.renderer.CreateComputeFrameGraph(cfgBuilder);
 		graphics->frame->Run(cfgBuilder->Build(), FrameGraphCullMode::NONE);
 		
-		/*
 		uiScene->Update();
 		uiSystem.Raycast();
 
@@ -79,7 +78,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			uiSpriteSystem.Run(uiObject);
 			uiTextSystem.Run(uiObject);
 		});
-		*/
+
 		graphics->frame->DeviceSync();
 
 		renderSystem.renderer.ReadbackComputeResults();

@@ -39,9 +39,17 @@ if(valueType == strRep) { \
 	return; \
 }
 
+		CHECK_NC_MATH_TYPE("Float2", Float2, LoadFloat2(value));
+		CHECK_NC_MATH_TYPE("Float3", Float3, LoadFloat3(value));
 		CHECK_NC_MATH_TYPE("Float4", Float4, LoadFloat4(value));
+
 		CHECK_NC_MATH_TYPE("Int2", Int2, LoadInt2(value));
+		CHECK_NC_MATH_TYPE("Int3", Int3, LoadInt3(value));
+		CHECK_NC_MATH_TYPE("Int4", Int4, LoadInt4(value));
+
 		CHECK_NC_MATH_TYPE("UInt2", UInt2, LoadUInt2(value));
+		CHECK_NC_MATH_TYPE("UInt3", UInt3, LoadUInt3(value));
+		CHECK_NC_MATH_TYPE("UInt4", UInt4, LoadUInt4(value));
 		
 #undef CHECK_NC_MATH_TYPE
 	}
