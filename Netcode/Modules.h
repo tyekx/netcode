@@ -97,7 +97,7 @@ namespace Netcode::Module {
 	*/
 	class AApp {
 	protected:
-		void StartModule(IModule * m, Netcode::Config * config);
+		void StartModule(IModule * m);
 		void ShutdownModule(IModule * m);
 
 	public:
@@ -117,7 +117,7 @@ namespace Netcode::Module {
 		/*
 		Initialize modules
 		*/
-		virtual void Setup(IModuleFactory * factory, Netcode::Config * config) = 0;
+		virtual void Setup(IModuleFactory * factory) = 0;
 
 		/*
 		Advance simulation, update modules
@@ -133,7 +133,7 @@ namespace Netcode::Module {
 	class IModule : public TAppEventHandler {
 	public:
 		virtual ~IModule() = default;
-		virtual void Start(AApp * app, Netcode::Config * config) = 0;
+		virtual void Start(AApp * app) = 0;
 		virtual void Shutdown() = 0;
 	};
 

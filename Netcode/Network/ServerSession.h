@@ -2,7 +2,6 @@
 
 #include <boost/asio/deadline_timer.hpp>
 
-#include "../ModulesConfig.h"
 #include "NetworkCommon.h"
 #include "GameSession.h"
 #include "MysqlSession.h"
@@ -13,7 +12,6 @@ namespace Netcode::Network {
 	class ServerSession : public GameSession {
 		boost::asio::io_context & ioContext;
 		boost::asio::deadline_timer timer;
-		Netcode::Config * config;
 		MessageQueue<UdpPacket> controlQueue;
 		MessageQueue<UdpPacket> gameQueue;
 		std::shared_ptr<UdpStream> controlStream;
@@ -39,7 +37,7 @@ namespace Netcode::Network {
 	public:
 		virtual ~ServerSession() override;
 
-		ServerSession(boost::asio::io_context & ioc, Netcode::Config * config);
+		ServerSession(boost::asio::io_context & ioc);
 
 		virtual void Start() override;
 

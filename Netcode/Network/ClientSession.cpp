@@ -2,6 +2,8 @@
 #include "../Logger.h"
 #include "Macros.h"
 
+#include "../Config.h"
+
 namespace Netcode::Network {
 
 	void ClientSession::OnTimerExpired(const boost::system::error_code & ec)
@@ -21,7 +23,7 @@ namespace Netcode::Network {
 
 	void ClientSession::InitTimer()
 	{
-		timer.expires_from_now(boost::posix_time::milliseconds(config->network.client.tickIntervalMs));
+		timer.expires_from_now(boost::posix_time::milliseconds(Config::Get<uint32_t>("network.client.tickIntervalMs:u32")));
 		timer.async_wait(boost::bind(&ClientSession::OnTimerExpired, GetStrongRef(), boost::asio::placeholders::error));
 	}
 
@@ -57,17 +59,17 @@ namespace Netcode::Network {
 		});
 	}
 
-	ClientSession::ClientSession(boost::asio::io_context & ioc, Netcode::Config * config) :
-		ioContext{ ioc }, config{ std::move(config) }, queue{ }, gameQueue{ }, controlQueue{ }, storage{ }, controlStorage{ }, timer{ ioc }, protocolTimer{ ioc },
+	ClientSession::ClientSession(boost::asio::io_context & ioc) :
+		ioContext{ ioc }, queue{ }, gameQueue{ }, controlQueue{ }, storage{ }, controlStorage{ }, timer{ ioc }, protocolTimer{ ioc },
 		resolver{ boost::asio::make_strand(ioc) }, stream{ nullptr }, controlEndpoint{ },
 		updateEndpoint{ }, clientAck{ 0 }, serverAck{ 0 }, lastError{ }
 	{
 		ErrorCode ec;
 
-		std::string controlPortString = std::to_string(config->network.client.controlPort);
-		std::string gamePortString = std::to_string(config->network.client.gamePort);
+		std::string controlPortString = std::to_string(Config::Get<uint16_t>("network.client.controlPort:u16"));
+		std::string gamePortString = std::to_string(Config::Get<uint16_t>("network.client.gamePort:u16"));
 
-		auto controlResults = resolver.resolve(config->network.client.hostname, controlPortString, udp_resolver_t::address_configured, ec);
+		auto controlResults = resolver.resolve(Config::Get<std::string>("network.client.hostname:string"), controlPortString, udp_resolver_t::address_configured, ec);
 
 		RETURN_ON_ERROR(ec, "[Network] [Client] address resolution failed");
 
@@ -75,7 +77,7 @@ namespace Netcode::Network {
 
 		controlEndpoint = (*controlResults.begin());
 
-		auto gameResults = resolver.resolve(config->network.client.hostname, gamePortString, udp_resolver_t::address_configured, ec);
+		auto gameResults = resolver.resolve(Config::Get<std::string>("network.client.hostname:string"), gamePortString, udp_resolver_t::address_configured, ec);
 
 		RETURN_ON_ERROR(ec, "[Network] [Client] address resolution failed: {0}");
 
@@ -89,7 +91,7 @@ namespace Netcode::Network {
 		socket.open(updateEndpoint.protocol(), ec);
 		RETURN_ON_ERROR(ec, "[Network] [Client] failed to bind open: {0}");
 
-		socket.bind(udp_endpoint_t{ updateEndpoint.protocol(), config->network.client.localPort }, ec);
+		socket.bind(udp_endpoint_t{ updateEndpoint.protocol(), Config::Get<uint16_t>("network.client.localPort:u16") }, ec);
 		RETURN_ON_ERROR(ec, "[Network] [Client] failed to bind socket: {0}");
 
 		stream = std::make_shared<UdpStream>(std::move(socket));
@@ -122,7 +124,7 @@ namespace Netcode::Network {
 
 		InitTimer();
 
-		Log::Info("[Network] [Client] Started on port {0}", config->network.client.localPort);
+		Log::Info("[Network] [Client] Started on port {0}", Config::Get<uint16_t>("network.client.localPort:u16"));
 	}
 
 	bool ClientSession::CheckVersion(const Netcode::Protocol::Version & version)
@@ -203,7 +205,7 @@ namespace Netcode::Network {
 			}
 		}
 
-		controlStorage.CheckTimeouts(config->network.protocol.gracePeriodMs);
+		controlStorage.CheckTimeouts(Config::Get<uint32_t>("network.protocol.gracePeriodMs:u32"));
 
 		SendAll();
 	}
@@ -287,7 +289,7 @@ namespace Netcode::Network {
 				}
 			});
 
-		}, config->network.protocol.resendTimeoutMs);
+		}, Config::Get<uint32_t>("network.protocol.resendTimeoutMs:u32"));
 
 		std::vector<UdpPacket> outgoing;
 

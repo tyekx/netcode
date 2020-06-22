@@ -9,7 +9,6 @@ namespace Netcode::Network {
 
 	class ClientSession : public GameSession {
 		boost::asio::io_context & ioContext;
-		Netcode::Config * config;
 		MessageQueue<UdpPacket> queue;
 		MessageQueue<Netcode::Protocol::Message> gameQueue;
 		MessageQueue<Netcode::Protocol::Message> controlQueue;
@@ -41,7 +40,7 @@ namespace Netcode::Network {
 		}
 
 	public:
-		ClientSession(boost::asio::io_context & ioc, Netcode::Config * config);
+		ClientSession(boost::asio::io_context & ioc);
 		virtual ~ClientSession() = default;
 		void SendAck(int32_t ack);
 		virtual void Start() override;

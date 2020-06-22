@@ -69,6 +69,7 @@ PUBLIC
 	"Vertex.h"
 	"WinapiWindowModule.h"
 	"ConsoleModule.h"
+	"Config.h" 
 
 PRIVATE
 	"BasicGeometry.cpp"
@@ -87,7 +88,8 @@ PRIVATE
 	"Utility.cpp"
 	"WinapiWindowModule.cpp"
 	"ConsoleModule.cpp"
-	"Functions.cpp" "ConfigBase.h")
+	"Functions.cpp"
+	"Config.cpp")
 
 add_subdirectory(Shaders)
 add_subdirectory(Animation)

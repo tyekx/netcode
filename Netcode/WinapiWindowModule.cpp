@@ -238,7 +238,7 @@ namespace Netcode::Module {
 		KillTimer(windowHandle, 1);
 	}
 
-	void WinapiWindowModule::Start(AApp * app, Netcode::Config * config) {
+	void WinapiWindowModule::Start(AApp * app) {
 		displayMode = DisplayMode::WINDOWED;
 		const char * windowClassName = "NetcodeWndClass";
 		windowedStyle = WS_OVERLAPPEDWINDOW;

@@ -31,7 +31,7 @@ namespace Netcode::Module {
 		virtual void OnBlur() override;
 		virtual void OnModeChanged(Netcode::Graphics::DisplayMode mode) override;
 
-		virtual void Start(AApp * app, Netcode::Config * config) override;
+		virtual void Start(AApp * app) override;
 		virtual void Shutdown() override;
 		virtual void * GetUnderlyingPointer() override;
 		virtual void ProcessMessages() override;

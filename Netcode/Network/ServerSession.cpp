@@ -4,13 +4,14 @@
 #include "ServerSession.h"
 #include "Macros.h"
 
+#include "../Config.h"
+
 
 namespace Netcode::Network {
 
-	ServerSession::ServerSession(boost::asio::io_context & ioc, Netcode::Config * cfg) :
+	ServerSession::ServerSession(boost::asio::io_context & ioc) :
 		ioContext{ ioc },
 		timer{ ioc },
-		config{ cfg },
 		controlQueue{},
 		gameQueue{},
 		controlStream{},
@@ -22,11 +23,11 @@ namespace Netcode::Network {
 		udp_socket_t controlSocket{ ioc };
 		udp_socket_t gameSocket{ ioc };
 
-		const uint32_t controlPort = ServerSession::BindToPort(controlSocket, config->network.server.controlPort);
+		const uint32_t controlPort = ServerSession::BindToPort(controlSocket, Config::Get<uint16_t>("network.server.controlPort:u16"));
 
 		RETURN_IF(lastError);
 
-		const uint32_t gamePort = ServerSession::BindToPort(gameSocket, config->network.server.gamePort);
+		const uint32_t gamePort = ServerSession::BindToPort(gameSocket, Config::Get<uint16_t>("network.server.gamePort:u16"));
 
 		RETURN_IF(lastError);
 
@@ -36,8 +37,8 @@ namespace Netcode::Network {
 			return;
 		}
 
-		config->network.server.controlPort = controlPort;
-		config->network.server.gamePort = gamePort;
+		Config::Set<uint16_t>("network.server.controlPort:u16", controlPort);
+		Config::Set<uint16_t>("network.server.gamePort:u16", gamePort);
 
 		controlStream = std::make_shared<UdpStream>(std::move(controlSocket));
 		gameStream = std::make_shared<UdpStream>(std::move(gameSocket));
@@ -54,8 +55,9 @@ namespace Netcode::Network {
 
 		GameSocketReadInit();
 
-		Log::Info("[Network] [Server] Started on ports {0}, {1}",
-			config->network.server.controlPort, config->network.server.gamePort);
+		Log::Info("[Network] [Server] Started on ports {0}, {1}", 
+			Config::Get<uint16_t>("network.server.controlPort:u16"),
+			Config::Get<uint16_t>("network.server.gamePort:u16"));
 	}
 
 	void ServerSession::Stop()
@@ -79,7 +81,7 @@ namespace Netcode::Network {
 		ParseControlMessages(control, controlSockPackets);
 		ParseGameMessages(game, gameSockPackets);
 
-		controlStorage.CheckTimeouts(config->network.protocol.gracePeriodMs);
+		controlStorage.CheckTimeouts(Config::Get<uint32_t>("network.protocol.gracePeriodMs:u32"));
 	}
 
 	bool ServerSession::IsRunning() const {
@@ -103,7 +105,7 @@ namespace Netcode::Network {
 		const int32_t start = static_cast<int32_t>(portHint);
 		int32_t sign = 1;
 		
-		boost::asio::ip::address serverAddr = boost::asio::ip::address::from_string(config->network.server.selfAddress, ec);
+		boost::asio::ip::address serverAddr = boost::asio::ip::address::from_string(Config::Get<std::string>("network.server.selfAddress:string"), ec);
 
 		RETURN_VALUE_ON_ERROR(ec, "[Network] The supplied ip address (srv.address) is invalid: {0}", std::numeric_limits<uint32_t>::max());
 
@@ -177,7 +179,7 @@ namespace Netcode::Network {
 	void ServerSession::SendAll() {
 		controlStorage.ForeachExpired([this](UdpPacket & packet)-> void {
 			controlQueue.Send(packet);
-		}, config->network.protocol.resendTimeoutMs);
+		}, Config::Get<uint32_t>("network.protocol.resendTimeoutMs:u32"));
 
 		std::vector<UdpPacket> controlPackets;
 		std::vector<UdpPacket> gamePackets;
@@ -427,6 +429,7 @@ namespace Netcode::Network {
 	}
 
 	void ServerSession::ConnectToMysql() {
+		/*
 		DatabaseConfig cfg;
 
 		ErrorCode ec = db.Connect(cfg);
@@ -438,6 +441,7 @@ namespace Netcode::Network {
 		RETURN_ON_ERROR(ec, "[Network] [Server] Failed to register server, reason: {0}");
 
 		dbContext.Start(1);
+		*/
 	}
 
 }

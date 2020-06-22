@@ -3,6 +3,7 @@
 #include <string>
 #include <any>
 #include <boost/property_tree/ptree.hpp>
+#include <rapidjson/document.h>
 
 namespace Netcode {
 	class Property {
@@ -39,12 +40,25 @@ namespace Netcode {
 
 	using Ptree = boost::property_tree::basic_ptree<std::string, Property>;
 
-	class ConfigBase {
-	protected:
-		Ptree * node;
-
+	class Config {
 	public:
-		ConfigBase(Ptree & parentNode, const char * nodeName) : node{ &parentNode.add_child(nodeName, Ptree{}) } { }
+		static Ptree storage;
+
+		static void LoadReflectedValue(const std::string & path, std::string_view valueType, const rapidjson::Value & value);
+
+		static void LoadMembersRecursive(const std::string & prefix, const rapidjson::Value & value);
+
+		static void LoadJson(const rapidjson::Document & document);
+
+		template<typename T>
+		static inline const T & Get(const boost::property_tree::path & key) {
+			return storage.get<Property>(key).Get<T>();
+		}
+
+		template<typename T>
+		static inline void Set(const boost::property_tree::path & key, const T & value) {
+			storage.put<Property>(key, Property{ value });
+		}
 	};
 
 }

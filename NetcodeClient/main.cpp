@@ -4,10 +4,10 @@
 #include "NetcodeApp.h"
 #include <Netcode/IO/Path.h>
 #include <Netcode/IO/File.h>
-#include <shellapi.h>
+#include <Netcode/IO/Json.h>
 #include <Netcode/DefaultModuleFactory.h>
 #include <NetcodeFoundation/Memory.h>
-
+#include <Netcode/Config.h>
 #include "ProgramOptions.h"
 /*
 */
@@ -62,34 +62,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		return 1;
 	}
 
-	if(!configFile.Open(Netcode::IO::FileOpenMode::READ)) {
-		Log::Error("Failed to open config file");
-		return 1;
-	}
+	rapidjson::Document doc;
+	Netcode::IO::ParseJson(doc, configFile.GetFullPath());
 
-	size_t numBytes = configFile.GetSize();
-	void * buffer = std::malloc(numBytes);
-	configFile.Read(Netcode::MutableArrayView<uint8_t>(static_cast<uint8_t *>(buffer), numBytes));
-	configFile.Close();
+	Netcode::Config::LoadJson(doc);
 
-	rapidjson::Document doc{ };
-	rapidjson::MemoryStream ms{ static_cast<char*>(buffer), numBytes };
-	doc.ParseStream(ms);
-	std::free(buffer);
-
-	Netcode::Config configuration;
-	configuration.Load(doc);
-	
-	//Netcode::Config::Get<uint16_t>("network.server.port:u16") 
-	//Netcode::Config::Set<uint16_t>("network.server.gamePort:u16", 8888);
-
-	ListConfigEntries("", configuration.root);
+	ListConfigEntries("", Netcode::Config::storage);
 
 	Netcode::Input::CreateResources();
 
 	Netcode::Module::DefaultModuleFactory defModuleFactory;
 	std::unique_ptr<Netcode::Module::AApp> app = std::make_unique<GameApp>();
-	app->Setup(&defModuleFactory, &configuration);
+	app->Setup(&defModuleFactory);
 
 	Log::Info("Initialization successful");
 

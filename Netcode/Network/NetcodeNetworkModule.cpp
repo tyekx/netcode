@@ -4,28 +4,26 @@
 #include "../Utility.h"
 #include <json11.hpp>
 
+#include "../Config.h"
+
 namespace Netcode::Module {
 
-	void NetcodeNetworkModule::Start(AApp * app, Netcode::Config * config)
-	{
-		this->config = config;
+	void NetcodeNetworkModule::Start(AApp * app) {
 	}
 
-	void NetcodeNetworkModule::Shutdown()
-	{
-		this->config = nullptr;
+	void NetcodeNetworkModule::Shutdown() {
 	}
 
 	Network::GameSessionRef NetcodeNetworkModule::CreateServer()
 	{
-		context.Start(config->network.server.workerThreadCount);
-		return std::make_shared<Network::ServerSession>(context.GetImpl(), config);
+		context.Start(Config::Get<uint32_t>("network.server.workerThreadCount:u32"));
+		return std::make_shared<Network::ServerSession>(context.GetImpl());
 	}
 
 	Network::GameSessionRef NetcodeNetworkModule::CreateClient()
 	{
-		context.Start(config->network.server.workerThreadCount);
-		return std::make_shared<Network::ClientSession>(context.GetImpl(), config);
+		context.Start(Config::Get<uint32_t>("network.client.workerThreadCount:u32"));
+		return std::make_shared<Network::ClientSession>(context.GetImpl());
 	}
 
 	Network::Cookie NetcodeNetworkModule::GetCookie(const std::string & key)
@@ -67,7 +65,7 @@ namespace Netcode::Module {
 
 		std::string body = json.dump();
 
-		return httpSession->MakeRequest(config->network.web.hostname, std::to_string(config->network.web.port), "/api/login", Network::http::verb::post, cookiesCache, std::move(body));
+		return httpSession->MakeRequest(Config::Get<std::string>("network.web.hostname:string"), std::to_string(Config::Get<uint16_t>("network.web.port:u16")), "/api/login", Network::http::verb::post, cookiesCache, std::move(body));
 	}
 
 	std::future<Response> NetcodeNetworkModule::QueryServers()
@@ -76,7 +74,7 @@ namespace Netcode::Module {
 			httpSession = std::make_shared<Network::HttpSession>(context.GetImpl());
 		}
 
-		return httpSession->MakeRequest(config->network.web.hostname, std::to_string(config->network.web.port), "/api/list-sessions", Network::http::verb::post, cookiesCache, "");
+		return httpSession->MakeRequest(Config::Get<std::string>("network.web.hostname:string"), std::to_string(Config::Get<uint16_t>("network.web.port:u16")), "/api/list-sessions", Network::http::verb::post, cookiesCache, "");
 	}
 
 	std::future<Response> NetcodeNetworkModule::Status()
@@ -85,7 +83,7 @@ namespace Netcode::Module {
 			httpSession = std::make_shared<Network::HttpSession>(context.GetImpl());
 		}
 
-		return httpSession->MakeRequest(config->network.web.hostname, std::to_string(config->network.web.port), "/api/status", Network::http::verb::post, cookiesCache, "");
+		return httpSession->MakeRequest(Config::Get<std::string>("network.web.hostname:string"), std::to_string(Config::Get<uint16_t>("network.web.port:u16")), "/api/status", Network::http::verb::post, cookiesCache, "");
 	}
 
 }

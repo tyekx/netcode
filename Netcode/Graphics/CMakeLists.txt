@@ -7,7 +7,6 @@ PUBLIC
 	"ResourceDesc.h"
 	"ResourceEnums.h"
 	"UploadBatch.h"
-	"Config.h"
 
 PRIVATE
 	"FrameGraph.cpp"

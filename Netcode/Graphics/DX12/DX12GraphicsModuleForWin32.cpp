@@ -4,11 +4,11 @@ namespace Netcode::Graphics::DX12 {
 
 	
 
-	void DX12GraphicsModuleForWin32::Start(Netcode::Module::AApp * app, Netcode::Config * config) {
+	void DX12GraphicsModuleForWin32::Start(Netcode::Module::AApp * app) {
 		if(app->window != nullptr) {
 			hwnd = reinterpret_cast<HWND>(app->window->GetUnderlyingPointer());
 		}
-		DX12GraphicsModule::Start(app, config);
+		DX12GraphicsModule::Start(app);
 	}
 
 	void DX12GraphicsModuleForWin32::CreateSwapChain()

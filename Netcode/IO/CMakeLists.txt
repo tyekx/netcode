@@ -8,6 +8,7 @@ PUBLIC
 	"Path.h"
 	"BinaryReader.h"
 	"BinaryWriter.h"
+	"Json.h"
 
 PRIVATE
 	"File.cpp"
@@ -15,4 +16,5 @@ PRIVATE
 	"Path.cpp"
 	"BinaryReader.cpp"
 	"BinaryWriter.cpp"
+	"Json.cpp"
 )

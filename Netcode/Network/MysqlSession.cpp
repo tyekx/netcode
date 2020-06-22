@@ -1,6 +1,8 @@
 #include "MysqlSession.h"
 #include "../Logger.h"
 
+#include "../Config.h"
+
 
 namespace Netcode::Network {
 	ErrorCode MysqlSession::QueryUserByHash(const std::string & hash, UserRow & output) {
@@ -25,33 +27,6 @@ namespace Netcode::Network {
 		} catch(mysqlx::Error & error) {
 			Log::Error("[MySQL] QueryUserByHash exception: {0}", error.what());
 			return Errc::make_error_code(Errc::host_unreachable);
-		}
-		return Errc::make_error_code(Errc::success);
-	}
-	ErrorCode MysqlSession::RegisterServer(const ServerConfig & config) {
-		std::scoped_lock<std::mutex> lock{ mutex };
-
-		try {
-			// (owner_id, max_players, interval, status, server_ip, control_port, game_port, created_at, major, minor, build)
-			insertServer->bind(config.ownerId,
-							config.playerSlots,
-							config.tickIntervalMs,
-							1,
-							config.selfAddress,
-							config.controlPort,
-							config.gamePort,
-							time(NULL),
-							0, 0, 0);
-			mysqlx::SqlResult res = insertServer->execute();
-
-			if(res.getAffectedItemsCount() != 1) {
-				return Errc::make_error_code(Errc::result_out_of_range);
-			}
-
-			serverId = res.getAutoIncrementValue();
-		} catch(mysqlx::Error & error) {
-			Log::Error("[MySQL] RegisterServer exception: {0}", error.what());
-			return Errc::make_error_code(Errc::invalid_argument);
 		}
 		return Errc::make_error_code(Errc::success);
 	}
@@ -119,15 +94,46 @@ namespace Netcode::Network {
 		}
 		return Errc::make_error_code(Errc::success);
 	}
-	ErrorCode MysqlSession::Connect(const DatabaseConfig & config) {
+
+	ErrorCode MysqlSession::RegisterServer(int ownerId, uint8_t playerSlots, uint32_t tickIntervalMs, const std::string & serverIp, uint16_t controlPort, uint16_t gamePort)
+	{
+		std::scoped_lock<std::mutex> lock{ mutex };
+
+		try {
+			// (owner_id, max_players, interval, status, server_ip, control_port, game_port, created_at, major, minor, build)
+			insertServer->bind(ownerId,
+				playerSlots,
+				tickIntervalMs,
+				1,
+				serverIp,
+				controlPort,
+				gamePort,
+				time(NULL),
+				0, 0, 0);
+			mysqlx::SqlResult res = insertServer->execute();
+
+			if(res.getAffectedItemsCount() != 1) {
+				return Errc::make_error_code(Errc::result_out_of_range);
+			}
+
+			serverId = res.getAutoIncrementValue();
+		} catch(mysqlx::Error & error) {
+			Log::Error("[MySQL] RegisterServer exception: {0}", error.what());
+			return Errc::make_error_code(Errc::invalid_argument);
+		}
+		return Errc::make_error_code(Errc::success);
+	}
+
+	ErrorCode MysqlSession::Connect()
+	{
 		try {
 			mysqlx::SessionSettings settings(
-				mysqlx::SessionOption::USER, config.username,
-				mysqlx::SessionOption::PWD, config.password,
-				mysqlx::SessionOption::HOST, config.hostname,
-				mysqlx::SessionOption::PORT, config.port,
-				mysqlx::SessionOption::DB, config.schema,
-				mysqlx::SessionOption::CONNECT_TIMEOUT, std::chrono::seconds(10)
+				mysqlx::SessionOption::USER, Config::Get<std::string>("network.database.username:string"),
+				mysqlx::SessionOption::PWD, Config::Get<std::string>("network.database.password:string"),
+				mysqlx::SessionOption::HOST, Config::Get<std::string>("network.database.hostname:string"),
+				mysqlx::SessionOption::PORT, Config::Get<std::string>("network.database.port:u16"),
+				mysqlx::SessionOption::DB, Config::Get<std::string>("network.database.schema:string"),
+				mysqlx::SessionOption::CONNECT_TIMEOUT, std::chrono::seconds(Config::Get<uint32_t>("network.database.timeout:u32"))
 			);
 
 			session = std::make_unique<mysqlx::Session>(settings);
@@ -153,7 +159,7 @@ namespace Netcode::Network {
 					"INNER JOIN `sessions` ON `sessions`.`user_id` = `users`.`id` "
 					"LEFT JOIN `game_sessions` ON `game_sessions`.`user_id` = `users`.`id` "
 					"WHERE `sessions`.`hash` = ?"
-				    "GROUP BY allowed_to_join"));
+					"GROUP BY allowed_to_join"));
 
 			closeRemainingGameSessions = std::make_unique<mysqlx::SqlStatement>(
 				session->sql("UPDATE `game_sessions` SET `game_sessions`.`left_at` = ? WHERE `game_sessions`.`left_at` IS NULL AND `game_sessions`.`game_server_id` = ?"));

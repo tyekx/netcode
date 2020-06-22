@@ -1,97 +1,103 @@
 {
   "window": {
-    "size": [ 1280, 720 ],
-    "position": [ 60, 60 ],
-    "refreshRate": [ 144, 1 ],
-    "fullscreen": false,
-    "displayIndex": 0,
+    "size:Int2": [ 1280, 720 ],
+    "position:Int2": [ 60, 60 ],
+    "refreshRate:Int2": [ 144, 1 ],
+    "fullscreen:bool": false,
+    "displayIndex:u8": 0,
     "log": {
-      "logLevel": 1,
-      "enabled": true
+      "logLevel:u8": 1,
+      "enabled:bool": true
     },
     "debugConsole": {
-      "enabled": true,
-      "maximized": true,
-      "displayIndex": 1,
-      "position": [ 0, 0 ],
-      "size": [ 800, 600 ]
+      "enabled:bool": true,
+      "maximized:bool": true,
+      "displayIndex:u8": 1,
+      "position:Int2": [ 0, 0 ],
+      "size:Int2": [ 800, 600 ]
     }
   },
   "graphics": {
-    "backbufferFormat": 28,
-    "depthStencilFormat": 20,
-    "adapterIndex": 0,
-    "displayIndex": 0,
-    "targetFps": 300.0,
+    "clearColor:Float4": [ 0.1, 0.2, 0.4, 1.0 ],
+    "backbuffer:Format": 28,
+    "depthStencil:Format": 20,
+    "adapterIndex:u8": 0,
+    "displayIndex:u8": 0,
+    "targetFps:float": 300.0,
     "log": {
-      "logLevel": 1,
-      "enabled": true
+      "logLevel:u8": 1,
+      "enabled:bool": true
     },
     "debug": {
-      "enabled": true,
-      "primitiveBufferDepth": 65536,
-      "capsuleSlices": 8,
-      "sphereSlices": 8,
-      "defaultColor": [ 0.7, 0.7, 0.7, 1.0 ]
+      "enabled:bool": true,
+      "primitiveBufferDepth:u32": 65536,
+      "capsuleSlices:u32": 8,
+      "sphereSlices:u32": 8,
+      "defaultColor:Float4": [ 0.7, 0.7, 0.7, 1.0 ]
     },
     "dx12": {
       "log": {
-        "logLevel": 1,
-        "enabled": true
+        "logLevel:u8": 1,
+        "enabled:bool": true
       },
-      "frameGraphCulling": true,
-      "smallHeapSize": 524288,
-      "mediumHeapSize": 4194304,
-      "largeHeapSize": 67108864
+      "frameGraphCulling:bool": true,
+      "smallHeapSize:u64": 524288,
+      "mediumHeapSize:u64": 4194304,
+      "largeHeapSize:u64": 67108864
     }
   },
   "network": {
     "web": {
-      "hostname": "http://netcode.webs",
-      "port": 80
+      "hostname:string": "http://netcode.webs",
+      "port:u16": 80
     },
     "client": {
       "log": {
-        "logLevel": 1,
-        "enabled": true
+        "logLevel:u8": 1,
+        "enabled:bool": true
       },
-      "tickIntervalMs": 16,
-      "workerThreadCount": 1,
-      "hostname": "localhost",
-      "controlPort": 0,
-      "gamePort": 0,
-      "localPort": 8899
+      "tickIntervalMs:u32": 16,
+      "workerThreadCount:u32": 1,
+      "hostname:string": "localhost",
+      "controlPort:u16": 0,
+      "gamePort:u16": 0,
+      "localPort:u16": 8899
     },
     "database": {
       "log": {
-        "logLevel": 1,
-        "enabled": true
+        "logLevel:u8": 1,
+        "enabled:bool": true
       },
-      "credentials": "db.json"
+      "username:string": "root",
+      "password:string": "password",
+      "hostname:string": "localhost",
+      "schema:string": "netcode",
+      "port:u16": 3306,
+      "timeout:u32": 10
     },
     "server": {
       "log": {
-        "logLevel": 1,
-        "enabled": true
+        "logLevel:u8": 1,
+        "enabled:bool": true
       },
-      "tickIntervalMs": 16,
-      "workerThreadCount": 1,
-      "selfAddress": "0.0.0.0",
-      "hostname": "localhost",
-      "ownerId": 1,
-      "gracePeriodMs": 10000,
-      "controlPort": 8888,
-      "gamePort": 8889,
-      "playerSlots": 8
+      "tickIntervalMs:u32": 16,
+      "workerThreadCount:u32": 1,
+      "selfAddress:string": "0.0.0.0",
+      "hostname:string": "localhost",
+      "ownerId:i32": 1,
+      "gracePeriodMs:u32": 10000,
+      "controlPort:u16": 8888,
+      "gamePort:u16": 8889,
+      "playerSlots:u8": 8
     },
     "protocol": {
       "log": {
-        "logLevel": 1,
-        "enabled": true
+        "logLevel:u8": 1,
+        "enabled:bool": true
       },
-      "resendTimeoutMs": 1000,
-      "gracePeriodMs": 5000,
-      "maximumAllowedClientPPS": 256
+      "resendTimeoutMs:u32": 1000,
+      "gracePeriodMs:u32": 5000,
+      "maximumAllowedClientPPS:u32": 256
     }
   }
 }

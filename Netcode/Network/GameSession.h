@@ -2,7 +2,6 @@
 
 #include <NetcodeProtocol/netcode.pb.h>
 
-#include "Config.h"
 #include "NetworkCommon.h"
 
 namespace Netcode::Network {
@@ -25,17 +24,5 @@ namespace Netcode::Network {
 	};
 
 	using GameSessionRef = std::shared_ptr<GameSession>;
-	/*
-	class NetworkModule {
-		boost::asio::io_context ioc;
-		boost::asio::ip::udp::resolver udpResolver;
-		
-	public:
-		virtual void Start() = 0;
-		virtual void Shutdown() = 0;
-
-		virtual GameSessionRef CreateServer(SessionConfig config) = 0;
-		virtual GameSessionRef CreateClient(SessionConfig config) = 0;
-	};*/
 
 }

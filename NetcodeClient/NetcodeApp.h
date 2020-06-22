@@ -29,7 +29,6 @@ using Netcode::Graphics::ResourceState;
 using Netcode::Graphics::FrameGraphCullMode;
 
 class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler {
-	Netcode::Config* config;
 	Netcode::Stopwatch stopwatch;
 	Netcode::Physics::PhysX px;
 	physx::PxMaterial * defaultPhysxMaterial;
@@ -140,12 +139,6 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	}
 
 	void ConnectServer() {
-		config->network.web.hostname = "netcode.webs";
-		config->network.web.port = 80;
-
-		config->network.client.tickIntervalMs = 500;
-		config->network.client.localPort = 8887;
-
 		gameSession = network->CreateClient();
 	}
 
@@ -453,8 +446,7 @@ public:
 	/*
 	Initialize modules
 	*/
-	virtual void Setup(Netcode::Module::IModuleFactory * factory, Netcode::Config * cfg) override {
-		config = cfg;
+	virtual void Setup(Netcode::Module::IModuleFactory * factory) override {
 		events = std::make_unique<Netcode::Module::AppEventSystem>();
 
 		window = factory->CreateWindowModule(this, 0);
@@ -462,10 +454,10 @@ public:
 		audio = factory->CreateAudioModule(this, 0);
 		network = factory->CreateNetworkModule(this, 0);
 
-		StartModule(window.get(), cfg);
-		StartModule(graphics.get(), cfg);
-		StartModule(audio.get(), cfg);
-		StartModule(network.get(), cfg);
+		StartModule(window.get());
+		StartModule(graphics.get());
+		StartModule(audio.get());
+		StartModule(network.get());
 
 		if(window) {
 			window->ShowWindow();

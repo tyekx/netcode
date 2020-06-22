@@ -1,6 +1,5 @@
 #include <memory>
 
-#include "Config.h"
 #include "NetworkCommon.h"
 
 #include <mysqlx/xdevapi.h>
@@ -30,16 +29,15 @@ namespace Netcode::Network {
 
 		ErrorCode QueryUserByHash(const std::string & hash, UserRow & output);
 
-		ErrorCode RegisterServer(const ServerConfig & config);
-
 		ErrorCode CloseServer();
 
 		ErrorCode CreateGameSession(int playerId);
 
 		ErrorCode CloseGameSession(int playerId);
 
-		ErrorCode Connect(const DatabaseConfig & config);
+		ErrorCode RegisterServer(int ownerId, uint8_t playerSlots, uint32_t tickIntervalMs, const std::string & serverIp, uint16_t controlPort, uint16_t gamePort);
 
+		ErrorCode Connect();
 	};
 
 }

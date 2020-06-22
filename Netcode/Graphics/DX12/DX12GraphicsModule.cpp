@@ -4,6 +4,8 @@
 #include "DX12FrameGraphExecutor.h"
 #include <sstream>
 
+#include "../../Config.h"
+
 namespace Netcode::Graphics::DX12 {
 	void DX12GraphicsModule::NextBackBufferIndex() {
 		backbufferIndex = (backbufferIndex + 1) % backbufferDepth;
@@ -238,7 +240,7 @@ namespace Netcode::Graphics::DX12 {
 		presentedBackbufferIndex = backbufferIndex;
 	}
 
-	void DX12GraphicsModule::Start(Module::AApp * app, Netcode::Config * config)  {
+	void DX12GraphicsModule::Start(Module::AApp * app)  {
 		objectAllocator.SetDefaultAlignment(8);
 		objectAllocator.SetDefaultPageSize(1<<18);
 		objectAllocator.ReserveFirstPage();
@@ -248,11 +250,12 @@ namespace Netcode::Graphics::DX12 {
 			hwnd = reinterpret_cast<HWND>(app->window->GetUnderlyingPointer());
 		}
 		backbufferDepth = 2;
-		depthStencilFormat = config->graphics.depthStencilFormat;
-		clearColor.r = 0.1f;
-		clearColor.g = 0.2f;
-		clearColor.b = 0.4f;
-		clearColor.a = 1.0f;
+		depthStencilFormat = Config::Get<DXGI_FORMAT>("graphics.depthStencil:Format");;
+		Float4 cColor = Config::Get<Float4>("graphics.clearColor:Float4");
+		clearColor.r = cColor.x;
+		clearColor.g = cColor.y;
+		clearColor.b = cColor.z;
+		clearColor.a = cColor.w;
 
 		DX_API("Failed to create debug layer")
 			D3D12GetDebugInterface(IID_PPV_ARGS(debugController.GetAddressOf()));
@@ -264,7 +267,7 @@ namespace Netcode::Graphics::DX12 {
 		// triple buffering is the max allowed
 		frameResources.reserve(3);
 
-		renderTargetFormat = config->graphics.backbufferFormat;
+		renderTargetFormat = Config::Get<DXGI_FORMAT>("graphics.backbuffer:Format");
 
 		CreateFactory();
 
