@@ -3,9 +3,9 @@
 
 namespace Netcode::Module {
 
-	void AApp::StartModule(IModule * m) {
+	void AApp::StartModule(IModule * m, Netcode::Config * config) {
 		if(m) {
-			m->Start(this);
+			m->Start(this, config);
 		}
 	}
 

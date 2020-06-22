@@ -2,7 +2,7 @@
 
 namespace Netcode {
 
-	Netcode::Float4 LoadFloat4(rapidjson::Value & value) {
+	Netcode::Float4 LoadFloat4(const rapidjson::Value & value) {
 		return Netcode::Float4{
 			value[0].GetFloat(),
 			value[1].GetFloat(),
@@ -11,14 +11,14 @@ namespace Netcode {
 		};
 	}
 
-	Netcode::Int2 LoadInt2(rapidjson::Value & value) {
+	Netcode::Int2 LoadInt2(const rapidjson::Value & value) {
 		return Netcode::Int2{
 			value[0].GetInt(),
 			value[1].GetInt()
 		};
 	}
 
-	Netcode::UInt2 LoadUInt2(rapidjson::Value & value) {
+	Netcode::UInt2 LoadUInt2(const rapidjson::Value & value) {
 		return Netcode::UInt2{
 			value[0].GetUint(),
 			value[1].GetUint()

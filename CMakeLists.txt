@@ -14,6 +14,7 @@ set(NETCODE_COMPILE_OPTIONS
 	"-Wno-unknown-pragmas"
 	"-Wno-unknown-warning-option"
 	"-Wno-return-std-move"
+	"-Wno-return-type-c-linkage"
 	"/EHa")
 
 set(NETCODE_COMPILE_DEFINITIONS 

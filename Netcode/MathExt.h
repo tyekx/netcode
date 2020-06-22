@@ -6,12 +6,12 @@
 
 namespace Netcode {
 
-	Netcode::Float4 LoadFloat4(rapidjson::Value & value);
+	Netcode::Float4 LoadFloat4(const rapidjson::Value & value);
 
-	Netcode::Int2 LoadInt2(rapidjson::Value & value);
+	Netcode::Int2 LoadInt2(const rapidjson::Value & value);
 
-	Netcode::UInt2 LoadUInt2(rapidjson::Value & value);
-
+	Netcode::UInt2 LoadUInt2(const rapidjson::Value & value);
+	
 	physx::PxVec3 ToPxVec3(const Netcode::Float3 & v);
 
 	physx::PxVec3 ToPxVec3(const physx::PxExtendedVec3 & ev);

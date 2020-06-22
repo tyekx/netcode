@@ -209,7 +209,7 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void Present() override;
 
-		virtual void Start(Module::AApp * app) override;
+		virtual void Start(Module::AApp * app, Netcode::Config * config) override;
 
 		virtual void DeviceSync() override;
 

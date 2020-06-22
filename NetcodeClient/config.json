@@ -46,11 +46,21 @@
     }
   },
   "network": {
+    "web": {
+      "hostname": "http://netcode.webs",
+      "port": 80
+    },
     "client": {
       "log": {
         "logLevel": 1,
         "enabled": true
-      }
+      },
+      "tickIntervalMs": 16,
+      "workerThreadCount": 1,
+      "hostname": "localhost",
+      "controlPort": 0,
+      "gamePort": 0,
+      "localPort": 8899
     },
     "database": {
       "log": {
@@ -63,13 +73,25 @@
       "log": {
         "logLevel": 1,
         "enabled": true
-      }
+      },
+      "tickIntervalMs": 16,
+      "workerThreadCount": 1,
+      "selfAddress": "0.0.0.0",
+      "hostname": "localhost",
+      "ownerId": 1,
+      "gracePeriodMs": 10000,
+      "controlPort": 8888,
+      "gamePort": 8889,
+      "playerSlots": 8
     },
     "protocol": {
       "log": {
         "logLevel": 1,
         "enabled": true
-      }
+      },
+      "resendTimeoutMs": 1000,
+      "gracePeriodMs": 5000,
+      "maximumAllowedClientPPS": 256
     }
   }
 }

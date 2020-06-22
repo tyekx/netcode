@@ -97,7 +97,7 @@ namespace Netcode::Module {
 	*/
 	class AApp {
 	protected:
-		void StartModule(IModule * m);
+		void StartModule(IModule * m, Netcode::Config * config);
 		void ShutdownModule(IModule * m);
 
 	public:
@@ -117,7 +117,7 @@ namespace Netcode::Module {
 		/*
 		Initialize modules
 		*/
-		virtual void Setup(IModuleFactory * factory, const Netcode::Config & config) = 0;
+		virtual void Setup(IModuleFactory * factory, Netcode::Config * config) = 0;
 
 		/*
 		Advance simulation, update modules
@@ -133,7 +133,7 @@ namespace Netcode::Module {
 	class IModule : public TAppEventHandler {
 	public:
 		virtual ~IModule() = default;
-		virtual void Start(AApp * app) = 0;
+		virtual void Start(AApp * app, Netcode::Config * config) = 0;
 		virtual void Shutdown() = 0;
 	};
 
@@ -185,7 +185,6 @@ namespace Netcode::Module {
 	class INetworkModule : public IModule {
 	public:
 		virtual ~INetworkModule() = default;
-		virtual void Configure(Network::Config config) = 0;
 
 		virtual Network::Cookie GetCookie(const std::string & key) = 0;
 		virtual void SetCookie(const Network::Cookie & cookie) = 0;
@@ -194,8 +193,8 @@ namespace Netcode::Module {
 		virtual std::future<Response> QueryServers() = 0;
 		virtual std::future<Response> Status() = 0;
 
-		virtual Network::GameSessionRef CreateServer(Network::Config config) = 0;
-		virtual Network::GameSessionRef CreateClient(Network::Config config) = 0;
+		virtual Network::GameSessionRef CreateServer() = 0;
+		virtual Network::GameSessionRef CreateClient() = 0;
 	};
 
 	class IModuleFactory {

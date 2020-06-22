@@ -10,7 +10,7 @@ namespace Netcode::Module {
 		std::unique_ptr<std::thread> thread;
 		std::mutex mutex;
 	public:
-		virtual void Start(AApp * app) override;
+		virtual void Start(AApp * app, Netcode::Config * config) override;
 
 		virtual void Shutdown() override;
 

@@ -7,20 +7,19 @@
 namespace Netcode::Module {
 
 	class NetcodeNetworkModule : public INetworkModule {
+		Netcode::Config * config;
 		Network::NetworkContext context;
-		Network::Config config;
 		Network::HttpSessionRef httpSession;
 		std::map<std::string, Network::Cookie> cookieStorage;
 		std::string cookiesCache;
 
 	public:
-		virtual void Start(AApp * app) override;
+		virtual void Start(AApp * app, Netcode::Config * config) override;
 		virtual void Shutdown() override;
 
-		virtual Network::GameSessionRef CreateServer(Network::Config config) override;
-		virtual Network::GameSessionRef CreateClient(Network::Config config) override;
+		virtual Network::GameSessionRef CreateServer() override;
+		virtual Network::GameSessionRef CreateClient() override;
 
-		virtual void Configure(Network::Config config) override;
 		virtual Network::Cookie GetCookie(const std::string & key) override;
 		virtual void SetCookie(const Network::Cookie & cookie) override;
 

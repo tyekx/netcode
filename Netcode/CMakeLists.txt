@@ -87,7 +87,7 @@ PRIVATE
 	"Utility.cpp"
 	"WinapiWindowModule.cpp"
 	"ConsoleModule.cpp"
-	"Functions.cpp")
+	"Functions.cpp" "ConfigBase.h")
 
 add_subdirectory(Shaders)
 add_subdirectory(Animation)

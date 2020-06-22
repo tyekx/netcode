@@ -21,6 +21,15 @@ std::wstring QueryWorkingDirectory() {
 	return pwd;
 }
 
+void ListConfigEntries(const std::string & prefix, const Netcode::Ptree & tree) {
+	for(const auto & i : tree) {
+		std::string s = (!prefix.empty() ? prefix + "." : "") + i.first;
+		OutputDebugString(s.c_str());
+		OutputDebugString("\n");
+		ListConfigEntries(s, i.second);
+	}
+}
+
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR command, _In_ INT nShowCmd) {
 
 	std::vector<std::wstring> args = po::split_winmain(command);
@@ -70,12 +79,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	Netcode::Config configuration;
 	configuration.Load(doc);
+	
+	//Netcode::Config::Get<uint16_t>("network.server.port:u16") 
+	//Netcode::Config::Set<uint16_t>("network.server.gamePort:u16", 8888);
+
+	ListConfigEntries("", configuration.root);
 
 	Netcode::Input::CreateResources();
 
 	Netcode::Module::DefaultModuleFactory defModuleFactory;
 	std::unique_ptr<Netcode::Module::AApp> app = std::make_unique<GameApp>();
-	app->Setup(&defModuleFactory, configuration);
+	app->Setup(&defModuleFactory, &configuration);
 
 	Log::Info("Initialization successful");
 

@@ -238,7 +238,7 @@ namespace Netcode::Graphics::DX12 {
 		presentedBackbufferIndex = backbufferIndex;
 	}
 
-	void DX12GraphicsModule::Start(Module::AApp * app)  {
+	void DX12GraphicsModule::Start(Module::AApp * app, Netcode::Config * config)  {
 		objectAllocator.SetDefaultAlignment(8);
 		objectAllocator.SetDefaultPageSize(1<<18);
 		objectAllocator.ReserveFirstPage();
@@ -248,7 +248,7 @@ namespace Netcode::Graphics::DX12 {
 			hwnd = reinterpret_cast<HWND>(app->window->GetUnderlyingPointer());
 		}
 		backbufferDepth = 2;
-		depthStencilFormat = DXGI_FORMAT_D32_FLOAT;
+		depthStencilFormat = config->graphics.depthStencilFormat;
 		clearColor.r = 0.1f;
 		clearColor.g = 0.2f;
 		clearColor.b = 0.4f;
@@ -264,7 +264,7 @@ namespace Netcode::Graphics::DX12 {
 		// triple buffering is the max allowed
 		frameResources.reserve(3);
 
-		renderTargetFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+		renderTargetFormat = config->graphics.backbufferFormat;
 
 		CreateFactory();
 

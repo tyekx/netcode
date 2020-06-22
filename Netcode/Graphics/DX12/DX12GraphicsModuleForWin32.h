@@ -8,7 +8,7 @@ namespace Netcode::Graphics::DX12 {
 	protected:
 		HWND hwnd;
 	public:
-		virtual void Start(Netcode::Module::AApp * app) override;
+		virtual void Start(Netcode::Module::AApp * app, Netcode::Config * config) override;
 		virtual void CreateSwapChain() override;
 	};
 

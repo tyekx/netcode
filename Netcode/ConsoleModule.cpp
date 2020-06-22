@@ -2,7 +2,7 @@
 #include <iostream>
 
 namespace Netcode::Module {
-	void ConsoleModule::Start(AApp * app) {
+	void ConsoleModule::Start(AApp * app, Netcode::Config * config) {
 		keepRunning = true;
 		thread = std::make_unique<std::thread>([this]()-> void {
 			std::string line;

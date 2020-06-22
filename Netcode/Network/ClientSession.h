@@ -1,5 +1,6 @@
 #pragma once 
 
+#include "../ModulesConfig.h"
 #include "GameSession.h"
 #include "NetworkCommon.h"
 #include <boost/asio.hpp>
@@ -8,7 +9,7 @@ namespace Netcode::Network {
 
 	class ClientSession : public GameSession {
 		boost::asio::io_context & ioContext;
-		Network::Config config;
+		Netcode::Config * config;
 		MessageQueue<UdpPacket> queue;
 		MessageQueue<Netcode::Protocol::Message> gameQueue;
 		MessageQueue<Netcode::Protocol::Message> controlQueue;
@@ -40,7 +41,7 @@ namespace Netcode::Network {
 		}
 
 	public:
-		ClientSession(boost::asio::io_context & ioc, Network::Config config);
+		ClientSession(boost::asio::io_context & ioc, Netcode::Config * config);
 		virtual ~ClientSession() = default;
 		void SendAck(int32_t ack);
 		virtual void Start() override;
