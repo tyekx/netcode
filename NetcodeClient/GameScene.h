@@ -35,7 +35,7 @@ public:
 		sceneCallback = std::make_unique<GameSceneSimulationEventCallback>();
 		physx::PxSceneDesc sceneDesc{ px.physics->getTolerancesScale() };
 		sceneDesc.gravity = physx::PxVec3{ 0.0f, -981.0f, 0.0f };
-		sceneDesc.cpuDispatcher = px.dispatcher;
+		sceneDesc.cpuDispatcher = px.dispatcher.Get();
 		sceneDesc.filterShader = SimulationFilterShader;
 		sceneDesc.simulationEventCallback = sceneCallback.get();
 		controllerMaterial = px.physics->createMaterial(0.5f, 0.6f, 0.6f);

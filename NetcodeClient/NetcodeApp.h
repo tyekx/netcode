@@ -22,7 +22,7 @@
 #include "PhysxHelpers.h"
 #include "Services.h"
 #include "RemoteAvatarScript.h"
-#include "Layer.h"
+#include "UITest.h"
 
 using Netcode::Graphics::ResourceType;
 using Netcode::Graphics::ResourceState;
@@ -40,25 +40,17 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	RenderSystem renderSystem;
 	AnimationSystem animSystem;
 	PhysXSystem pxSystem;
-	UISystem uiSystem;
-	UISpriteSystem uiSpriteSystem;
-	UITransformSystem uiTransformSystem;
-	UITextSystem uiTextSystem;
-	UIAnimSystem uiAnimSystem;
 
 	GameScene * gameScene;
-	UIScene * uiScene;
 
-	std::unique_ptr<Layer> menuLayer;
 	std::shared_ptr<AnimationSet> ybotAnimationSet;
 	Netcode::Network::GameSessionRef gameSession;
+	std::shared_ptr<LoginPage> loginPage;
 
 	float totalTime;
 
 	void LoadSystems() {
-		uiSystem.CreateResources(uiScene->GetPhysXScene(), &uiScene->perFrameData);
-		uiTextSystem.gEngine = &renderSystem.renderer;
-		uiSpriteSystem.gEngine = &renderSystem.renderer;
+
 	}
 
 	void Render() {
@@ -69,15 +61,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		renderSystem.renderer.CreateComputeFrameGraph(cfgBuilder);
 		graphics->frame->Run(cfgBuilder->Build(), FrameGraphCullMode::NONE);
 		
-		uiScene->Update();
-		uiSystem.Raycast();
 
-		uiScene->Foreach([this](UIObject * uiObject) -> void {
-			uiTransformSystem.Run(uiObject);
-			uiSystem.Run(uiObject);
-			uiSpriteSystem.Run(uiObject);
-			uiTextSystem.Run(uiObject);
-		});
 
 		graphics->frame->DeviceSync();
 
@@ -112,11 +96,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		gameScene->GetPhysXScene()->simulate(dt);
 		gameScene->GetPhysXScene()->fetchResults(true);
 
-		uiScene->Foreach([this, dt](UIObject * uiObject) -> void {
-			if(uiObject->IsActive()) {
-				uiAnimSystem.Run(uiObject, dt);
-			}
-		});
+		// ui
 
 		gameScene->Foreach([this, dt](GameObject * gameObject)->void {
 			if(gameObject->IsActive()) {
@@ -127,12 +107,10 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	}
 
 	void LoadServices() {
-		Service::Init<AssetManager>();
+		Service::Init<AssetManager>(graphics.get());
 		Service::Init<GameScene>(px);
-		Service::Init<UIScene>(px);
 
 		gameScene = Service::Get<GameScene>();
-		uiScene = Service::Get<UIScene>();
 
 		gameScene->Setup();
 	}
@@ -143,12 +121,6 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 	void LoadAssets() {
 		AssetManager * assetManager = Service::Get<AssetManager>();
-
-		uiSystem.gEngine = &renderSystem.renderer;
-
-		menuLayer = std::make_unique<MainMenuLayer>(uiScene);
-		menuLayer->Construct(this);
-		menuLayer->Activate();
 
 		Netcode::Input::SetAxis("Vertical", 'W', 'S');
 		Netcode::Input::SetAxis("Horizontal", 'A', 'D');
@@ -168,6 +140,13 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			auto planeActor = physx::PxCreatePlane(*px.physics, physx::PxPlane{ 0.0f, 1.0f, 0.0f, 200.0f }, *defaultPhysxMaterial);
 			gameScene->SpawnPhysxActor(planeActor);
 		}
+
+		loginPage = std::make_shared<LoginPage>(px.physics.Get());
+		loginPage->InitializeComponents();
+		loginPage->ScreenSize(Netcode::UInt2{ 1280, 720 });
+		loginPage->UpdateSize();
+		loginPage->UpdateLayout();
+		renderSystem.renderer.ui_Input = loginPage;
 
 		GameObject * testbox = gameScene->Create();
 		
@@ -295,7 +274,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			return;
 		}
 
-		physx::PxPhysics * pxp = px.physics;
+		physx::PxPhysics * pxp = px.physics.Get();
 		physx::PxRigidDynamic * actor = pxp->createRigidDynamic(physx::PxTransform(physx::PxIdentity));
 		actor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, true);
 		std::vector<ColliderShape> netcodeShapes;
@@ -430,10 +409,8 @@ public:
 	virtual void OnResized(int w, int h) override {
 		float asp = graphics->GetAspectRatio();
 		gameScene->GetCamera()->GetComponent<Camera>()->aspect = asp;
+		loginPage->ScreenSize(Netcode::UInt2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
 		renderSystem.renderer.OnResize(w, h);
-		uiSystem.SetScreenSize(Netcode::UInt2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
-		uiScene->SetScreenSize(Netcode::UInt2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
-		menuLayer->OnResized(w, h);
 	}
 
 	virtual void AddAppEventHandlers(Netcode::Module::AppEventSystem * eventSystem) override {
@@ -495,6 +472,7 @@ public:
 	Properly shutdown the application
 	*/
 	virtual void Exit() override {
+		loginPage->Destruct();
 		Service::Clear();
 		px.ReleaseResources();
 		ShutdownModule(network.get());

@@ -424,6 +424,11 @@ namespace Netcode {
 		virtual void LoadTexture2D(const std::wstring & mediaPath) = 0;
 		virtual void LoadTexture3D(const std::wstring & mediaPath) = 0;
 		virtual void LoadTextureCube(const std::wstring & mediaPath) = 0;
+
+		virtual void LoadTexture2D(Netcode::ArrayView<uint8_t> data) = 0;
+		virtual void LoadTexture3D(Netcode::ArrayView<uint8_t> data) = 0;
+		virtual void LoadTextureCube(Netcode::ArrayView<uint8_t> data) = 0;
+
 		virtual uint16_t GetCurrentMipLevelCount() = 0;
 		virtual void GenerateMipLevels(uint16_t mipLevelCount) = 0;
 		virtual TextureRef Build() = 0;
@@ -497,11 +502,22 @@ namespace Netcode {
 	public:
 		virtual ~SpriteFont() = default;
 		virtual ResourceViewsRef GetResourceView() const = 0;
-		virtual Netcode::Float2 MeasureString(const char * str) const = 0;
-		virtual Netcode::Float2 MeasureString(const wchar_t * str) const = 0;
+		virtual Float2 MeasureString(const char * str) const = 0;
+		virtual Float2 MeasureString(const wchar_t * str) const = 0;
+
+		virtual float GetHighestCharHeight() const = 0;
+		virtual float GetWidestCharWidth() const = 0;
+		virtual wchar_t GetHighestChar() const = 0;
+		virtual wchar_t GetWidestChar() const = 0;
+		virtual Float2 GetMaxSizedStringOf(uint32_t stringMaxLength) const = 0;
+
+		virtual float GetWidestAlphaNumericCharWidth() const = 0;
+		virtual float GetHighestAlphaNumericCharHeight() const = 0;
+		virtual wchar_t GetWidestAlphaNumericChar() const = 0;
+		virtual wchar_t GetHeighestAlphaNumericChar() const = 0;
+		virtual Float2 GetMaxSizedAlphaNumericStringOf(uint32_t stringMaxLength) const = 0;
 
 		virtual void DrawString(Netcode::SpriteBatchRef spriteBatch, const wchar_t * text, const Netcode::Float2 & position, const Netcode::Float4 & color) const = 0;
-		
 		virtual void DrawString(Netcode::SpriteBatchRef spriteBatch, const char * text, const Netcode::Float2 & position, const Netcode::Float4 & color) const = 0;
 	};
 

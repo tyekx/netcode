@@ -7,26 +7,26 @@ namespace  Netcode::Asset {
 
 	namespace Detail {
 		template<typename T>
-		void ReadArray(T * dst, uint32_t numElements, uint8_t ** data) {
+		void ReadArray(T * dst, uint32_t numElements, const uint8_t ** data) {
 			static_assert(std::is_pod<T>::value, "Must be plain old data type");
 			memcpy(dst, *data, sizeof(T) * numElements);
 			*data += numElements * sizeof(T);
 		}
 
 		template<typename T>
-		void Read(T * dst, uint8_t ** data) {
+		void Read(T * dst, const uint8_t ** data) {
 			ReadArray<T>(dst, 1, data);
 		}
 	}
 
-	void ImportModel(MutableArrayView<uint8_t> buffer, Asset::Model & m) {
+	void ImportModel(ArrayView<uint8_t> buffer, Asset::Model & m) {
 		uint32_t meshesSize;
 		uint32_t materialsSize;
 		uint32_t animDataSize;
 		uint32_t colliderDataSize;
 		uint32_t boneDataSize;
 
-		uint8_t * it = buffer.begin();
+		const uint8_t * it = buffer.begin();
 
 		Detail::Read<uint32_t>(&meshesSize, &it);
 		Detail::Read<uint32_t>(&animDataSize, &it);

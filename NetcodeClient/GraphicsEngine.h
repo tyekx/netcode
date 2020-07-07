@@ -9,6 +9,7 @@
 #include <variant>
 #include "GameObject.h"
 #include "AnimationSet.h"
+#include "UI/Page.h"
 
 using Netcode::GpuResourceRef;
 
@@ -40,66 +41,6 @@ struct RenderItem {
 
 	}
 };
-
-struct UISpriteRenderItem {
-	Netcode::ResourceViewsRef texture;
-	Netcode::UInt2 textureSize;
-	Netcode::Float2 destSizeInPixels;
-	Netcode::Float4 color;
-	Netcode::Float2 position;
-	Netcode::Float2 rotationOrigin;
-	float rotationZ;
-
-	~UISpriteRenderItem() = default;
-	UISpriteRenderItem() = default;
-	UISpriteRenderItem(const UISpriteRenderItem &) = default;
-	UISpriteRenderItem & operator=(const UISpriteRenderItem &) = default;
-	UISpriteRenderItem(UISpriteRenderItem &&) noexcept = default;
-	UISpriteRenderItem & operator=(UISpriteRenderItem &&) noexcept = default;
-
-	UISpriteRenderItem(Netcode::ResourceViewsRef tex,
-		const Netcode::UInt2 & tSize,
-		const Netcode::Float2 & destSize,
-		const Netcode::Float4 & color,
-		const Netcode::Float2 & pos,
-		const Netcode::Float2 & rotationOrigin,
-		float rotationZ) :
-		texture{ std::move(tex) },
-		textureSize{ tSize },
-		destSizeInPixels{ destSize },
-		color{ color },
-		position{ pos },
-		rotationOrigin{ rotationOrigin },
-		rotationZ{ rotationZ }{ }
-};
-
-struct UITextRenderItem {
-	Netcode::SpriteFontRef font;
-	std::wstring text;
-	Netcode::Float2 position;
-	Netcode::Float4 fontColor;
-
-	~UITextRenderItem() = default;
-	UITextRenderItem() = default;
-	UITextRenderItem(const UITextRenderItem &) = default;
-	UITextRenderItem & operator=(const UITextRenderItem &) = default;
-	UITextRenderItem(UITextRenderItem &&) noexcept = default;
-	UITextRenderItem & operator=(UITextRenderItem &&) noexcept = default;
-
-	UITextRenderItem(Netcode::SpriteFontRef font,
-		std::wstring text,
-		const Netcode::Float2 & position,
-		const Netcode::Float4 & color) :
-		font{ std::move(font) },
-		text{ std::move(text) },
-		position{ position },
-		fontColor{ color } { }
-};
-
-// to extend possible render items add type here
-using UIRenderItemTypeTuple = std::tuple<UISpriteRenderItem, UITextRenderItem>;
-
-using UIRenderItem = typename TupleRename<std::variant, UIRenderItemTypeTuple>::type;
 
 class GraphicsEngine {
 public:
@@ -165,8 +106,7 @@ public:
 	Netcode::ScratchBuffer<std::shared_ptr<AnimationSet>> skinningPass_Input;
 	Netcode::ScratchBuffer<RenderItem> skinnedGbufferPass_Input;
 	Netcode::ScratchBuffer<RenderItem> gbufferPass_Input;
-	Netcode::ScratchBuffer<UIRenderItem> uiPass_Input;
-
+	std::shared_ptr<UI::Page> ui_Input;
 
 private:
 
@@ -195,75 +135,6 @@ private:
 		uploadBatch.ResourceBarrier(fsQuad.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
 
 		g->frame->SyncUpload(uploadBatch);
-	}
-
-	void CreateUIPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
-		auto ilBuilder = g->CreateInputLayoutBuilder();
-		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
-		ilBuilder->AddInputElement("COLOR", DXGI_FORMAT_R32G32B32A32_FLOAT);
-		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
-		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
-
-		auto shaderBuilder = g->CreateShaderBuilder();
-		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"sprite_Vertex.cso");
-		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"sprite_Pixel.cso");
-
-		auto rootSigBuilder = g->CreateRootSignatureBuilder();
-		auto rootSignature = rootSigBuilder->BuildFromShader(vs);
-
-		Netcode::BlendDesc blendState;
-		Netcode::RenderTargetBlendDesc rt0Blend;
-		rt0Blend.blendEnable = true;
-		rt0Blend.logicOpEnable = false;
-		rt0Blend.srcBlend = Netcode::BlendMode::SRC_ALPHA;
-		rt0Blend.destBlend = Netcode::BlendMode::INV_SRC_ALPHA;
-		rt0Blend.blendOp = Netcode::BlendOp::ADD;
-		rt0Blend.srcBlendAlpha = Netcode::BlendMode::ONE;
-		rt0Blend.destBlendAlpha = Netcode::BlendMode::INV_SRC_ALPHA;
-		rt0Blend.blendOpAlpha = Netcode::BlendOp::ADD;
-		rt0Blend.logicOp = Netcode::LogicOp::NOOP;
-		rt0Blend.renderTargetWriteMask = 0x0F;
-
-		blendState.alphaToCoverageEnabled = false;
-		blendState.independentAlphaEnabled = false;
-		blendState.rtBlend[0] = rt0Blend;
-
-		Netcode::RasterizerDesc rasterizerState;
-		rasterizerState.fillMode = Netcode::FillMode::SOLID;
-		rasterizerState.cullMode = Netcode::CullMode::NONE;
-		rasterizerState.frontCounterClockwise = false;
-		rasterizerState.depthBias = 0;
-		rasterizerState.depthBiasClamp = 0.0f;
-		rasterizerState.slopeScaledDepthBias = 0.0f;
-		rasterizerState.depthClipEnable = true;
-		rasterizerState.multisampleEnable = true;
-		rasterizerState.antialiasedLineEnable = false;
-		rasterizerState.forcedSampleCount = 0;
-		rasterizerState.conservativeRaster = false;
-
-		Netcode::DepthStencilDesc depthStencilDesc;
-		depthStencilDesc.depthEnable = false;
-		depthStencilDesc.stencilEnable = false;
-		depthStencilDesc.depthWriteMaskZero = true;
-
-		auto psoBuilder = g->CreateGPipelineStateBuilder();
-		psoBuilder->SetInputLayout(inputLayout);
-		psoBuilder->SetRootSignature(rootSignature);
-		psoBuilder->SetVertexShader(vs);
-		psoBuilder->SetPixelShader(ps);
-		psoBuilder->SetDepthStencilFormat(DXGI_FORMAT_D32_FLOAT);
-		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
-		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::TRIANGLE);
-		psoBuilder->SetBlendState(blendState);
-		psoBuilder->SetRasterizerState(rasterizerState);
-		psoBuilder->SetDepthStencilState(depthStencilDesc);
-
-		auto pipelineState = psoBuilder->Build();
-
-		Netcode::SpriteBatchBuilderRef spriteBatchBuilder = g->CreateSpriteBatchBuilder();
-		spriteBatchBuilder->SetPipelineState(std::move(pipelineState));
-		spriteBatchBuilder->SetRootSignature(std::move(rootSignature));
-		uiPass_SpriteBatch = spriteBatchBuilder->Build();
 	}
 
 	void CreateSkinnedGbufferPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
@@ -533,6 +404,76 @@ private:
 		lightingPass_ShaderResourceViews->CreateSRV(2, gbufferPass_DepthBuffer);
 	}
 
+	void CreateUIPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
+		auto ilBuilder = g->CreateInputLayoutBuilder();
+		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
+		ilBuilder->AddInputElement("COLOR", DXGI_FORMAT_R32G32B32A32_FLOAT);
+		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
+		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
+
+		auto shaderBuilder = g->CreateShaderBuilder();
+		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"sprite_Vertex.cso");
+		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"sprite_Pixel.cso");
+
+		auto rootSigBuilder = g->CreateRootSignatureBuilder();
+		auto rootSignature = rootSigBuilder->BuildFromShader(vs);
+
+		Netcode::BlendDesc blendState;
+		Netcode::RenderTargetBlendDesc rt0Blend;
+		rt0Blend.blendEnable = true;
+		rt0Blend.logicOpEnable = false;
+		rt0Blend.srcBlend = Netcode::BlendMode::SRC_ALPHA;
+		rt0Blend.destBlend = Netcode::BlendMode::INV_SRC_ALPHA;
+		rt0Blend.blendOp = Netcode::BlendOp::ADD;
+		rt0Blend.srcBlendAlpha = Netcode::BlendMode::ONE;
+		rt0Blend.destBlendAlpha = Netcode::BlendMode::INV_SRC_ALPHA;
+		rt0Blend.blendOpAlpha = Netcode::BlendOp::ADD;
+		rt0Blend.logicOp = Netcode::LogicOp::NOOP;
+		rt0Blend.renderTargetWriteMask = 0x0F;
+
+		blendState.alphaToCoverageEnabled = false;
+		blendState.independentAlphaEnabled = false;
+		blendState.rtBlend[0] = rt0Blend;
+
+		Netcode::RasterizerDesc rasterizerState;
+		rasterizerState.fillMode = Netcode::FillMode::SOLID;
+		rasterizerState.cullMode = Netcode::CullMode::NONE;
+		rasterizerState.frontCounterClockwise = false;
+		rasterizerState.depthBias = 0;
+		rasterizerState.depthBiasClamp = 0.0f;
+		rasterizerState.slopeScaledDepthBias = 0.0f;
+		rasterizerState.depthClipEnable = true;
+		rasterizerState.multisampleEnable = true;
+		rasterizerState.antialiasedLineEnable = false;
+		rasterizerState.forcedSampleCount = 0;
+		rasterizerState.conservativeRaster = false;
+
+		Netcode::DepthStencilDesc depthStencilDesc;
+		depthStencilDesc.depthEnable = false;
+		depthStencilDesc.stencilEnable = false;
+		depthStencilDesc.depthWriteMaskZero = true;
+
+		auto psoBuilder = g->CreateGPipelineStateBuilder();
+		psoBuilder->SetInputLayout(inputLayout);
+		psoBuilder->SetRootSignature(rootSignature);
+		psoBuilder->SetVertexShader(vs);
+		psoBuilder->SetPixelShader(ps);
+		psoBuilder->SetDepthStencilFormat(DXGI_FORMAT_D32_FLOAT);
+		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
+		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::TRIANGLE);
+		psoBuilder->SetBlendState(blendState);
+		psoBuilder->SetRasterizerState(rasterizerState);
+		psoBuilder->SetDepthStencilState(depthStencilDesc);
+
+		auto pipelineState = psoBuilder->Build();
+
+		Netcode::SpriteBatchBuilderRef spriteBatchBuilder = g->CreateSpriteBatchBuilder();
+		spriteBatchBuilder->SetPipelineState(std::move(pipelineState));
+		spriteBatchBuilder->SetRootSignature(std::move(rootSignature));
+		uiPass_SpriteBatch = spriteBatchBuilder->Build();
+	}
+
+
 	void CreateSkinningPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("Skinning",
 			[&](IResourceContext * context) -> void {
@@ -783,37 +724,27 @@ private:
 	}
 
 	void CreateUIPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
-		frameGraphBuilder->CreateRenderPass("UI",
-		[&](IResourceContext * context) -> void {
-
+		frameGraphBuilder->CreateRenderPass("uiPass", [&](IResourceContext * context) -> void {
+			
 			context->Reads(2);
 			context->Writes(nullptr);
 
 		},
-			[&](IRenderContext * context) -> void {
+		[&](IRenderContext * context) -> void {
 
-			if(uiPass_Input.Size() == 0) {
-				return;
-			}
+			Netcode::UInt2 ss = ui_Input->ScreenSize();
+			Netcode::Matrix vp = Netcode::OrtographicMatrix(static_cast<float>(ss.x), static_cast<float>(ss.y), 0.0f, 128.0f);
+			Netcode::Matrix tex = Netcode::Float4x4{
+				1.0f, 0.0f, 0.0f, 0.0f,
+				0.0f, -1.0f, 0.0f, 0.0f,
+				0.0f, 0.0f, 1.0f, 0.0f,
+				-1.0f, 1.0f, 0.0f, 1.0f
+			};
+
 
 			context->SetRenderTargets(0, 0);
-			uiPass_SpriteBatch->BeginRecord(context, uiPass_viewProjInv);
-			for(const UIRenderItem & i : uiPass_Input) {
-				switch(i.index()) {
-					case TupleIndexOf<UISpriteRenderItem, UIRenderItemTypeTuple>::value:
-					{
-						const auto & item = std::get<UISpriteRenderItem>(i);
-						uiPass_SpriteBatch->DrawSprite(item.texture, item.textureSize, item.position, item.destSizeInPixels, nullptr, item.color, item.rotationZ, item.rotationOrigin, 0.0f);
-					}
-					break;
-					case TupleIndexOf<UITextRenderItem, UIRenderItemTypeTuple>::value:
-					{
-						const auto & item = std::get<UITextRenderItem>(i);
-						item.font->DrawString(uiPass_SpriteBatch, item.text.c_str(), item.position, item.fontColor);
-					}
-					break;
-				}
-			}
+			uiPass_SpriteBatch->BeginRecord(context, (vp * tex).Transpose());
+			ui_Input->OnRender(uiPass_SpriteBatch);
 			uiPass_SpriteBatch->EndRecord();
 		});
 	}
@@ -835,7 +766,6 @@ private:
 	Netcode::ResourceViewsRef cloudynoonView;
 
 public:
-	Netcode::Float4x4 uiPass_viewProjInv;
 
 	void CreateBackgroundPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
 		Netcode::TextureBuilderRef textureBuilder = graphics->CreateTextureBuilder();
@@ -940,7 +870,6 @@ public:
 		skinningPass_Input.Clear();
 		skinnedGbufferPass_Input.Clear();
 		gbufferPass_Input.Clear();
-		uiPass_Input.Clear();
 		perFrameCbuffer = 0;
 	}
 
@@ -965,9 +894,9 @@ public:
 		CreateSkinnedGbufferPassPermanentResources(g);
 		CreateLightingPassPermanentResources(g);
 		CreateBackgroundPassPermanentResources(g);
-		CreateUIPassPermanentResources(g);
 		CreateSSAOBlurPassPermanentResources(g);
 		CreateSSAOOcclusionPassPermanentResources(g);
+		CreateUIPassPermanentResources(g);
 		CreateFSQuad(g);
 	}
 

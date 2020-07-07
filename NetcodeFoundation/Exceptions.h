@@ -14,4 +14,6 @@ namespace Netcode {
 
 	void UndefinedBehaviourAssertion(bool isDefinedBehaviour);
 
+	void NotImplementedAssertion(const char * text);
+
 }

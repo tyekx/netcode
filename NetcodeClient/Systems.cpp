@@ -113,27 +113,3 @@ void AnimationSystem::Run(GameObject * gameObject, float dt) {
 void PhysXSystem::Run(GameObject * gameObject) {
 	TryInvoke(gameObject, this);
 }
-
-void UISystem::Run(UIObject * object) {
-	TryInvoke(object, this);
-}
-
-void UITextSystem::Run(UIObject * object)
-{
-	TryInvoke(object, this);
-}
-
-void UITransformSystem::Run(UIObject * object)
-{
-	TryInvoke(object, this);
-}
-
-void UISpriteSystem::Run(UIObject * uiObject)
-{
-	TryInvoke(uiObject, this);
-}
-
-void UIAnimSystem::Run(UIObject * object, float dt)
-{
-	TryInvoke(object, this, dt);
-}

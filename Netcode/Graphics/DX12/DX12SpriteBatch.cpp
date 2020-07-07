@@ -267,16 +267,6 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 			DirectX::XMFLOAT2 texSize;
 			DirectX::XMStoreFloat2(&texSize, textureSize);
 
-			
-			Netcode::Float4x4 texTransform(-1.0f, 0.0f, 0.0f, 0.0f,
-				0.0f, -1.0f, 0.0f, 0.0f,
-				0.0f, 0.0f, 1.0f, 0.0f,
-				0.0f, 0.0f, 0.0f, 1.0f);
-
-			Netcode::Matrix transformMat = texTransform;
-
-			transformMat = transformMat * mTransformMatrix;
-
 			uint32_t spriteVertexTotalSize = sizeof(PCT_Vertex) * VerticesPerSprite;
 			resourceContext->CopyConstants(vertexBuffer, vertexData.get() + vertexOffset, batchSize * spriteVertexTotalSize, vertexOffset * sizeof(PCT_Vertex));
 
@@ -302,7 +292,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 				}
 			}
 
-			cbuffer.transform = transformMat;
+			cbuffer.transform = mTransformMatrix;
 			renderContext->SetConstants(1, cbuffer);
 			renderContext->SetVertexBuffer(vertexBuffer);
 			renderContext->DrawIndexed(indexCount, vertexOffset);

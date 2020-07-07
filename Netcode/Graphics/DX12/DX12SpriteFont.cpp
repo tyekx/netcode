@@ -8,7 +8,6 @@
 static const char spriteFontMagic[] = "DXTKfont";
 
 namespace Netcode::Graphics::DX12 {
-	const Netcode::Float2 SpriteFont::Float2Zero{ 0.0f, 0.0f };
 
 	const wchar_t * SpriteFont::ConvertUTF8(const char * text) const
 	{
@@ -49,6 +48,8 @@ namespace Netcode::Graphics::DX12 {
 
 		glyphs.assign(glyphData.Data(), glyphData.Data() + glyphCount);
 
+		UpdateLimits();
+
 		// Read font properties.
 		lineSpacing = reader->Read<float>();
 
@@ -62,6 +63,8 @@ namespace Netcode::Graphics::DX12 {
 		auto textureRows = reader->Read<uint32_t>();
 		auto textureData = reader->ReadArray<uint8_t>(size_t(textureStride) * size_t(textureRows));
 		textureSize = Netcode::UInt2(textureWidth, textureHeight);
+
+		DirectX::ScratchImage imageData;
 
 		DX_API("Failed to initialize texture2d")
 			imageData.Initialize2D(textureFormat, textureWidth, textureHeight, 1, 1);
@@ -82,6 +85,45 @@ namespace Netcode::Graphics::DX12 {
 		imageData.Release();
 	}
 
+	void SpriteFont::UpdateLimits()
+	{
+		float widest = 0.0f;
+		float highest = 0.0f;
+		float widestAlphaNum = 0.0f;
+		float highestAlphaNum = 0.0f;
+
+		for(const Glyph & g : glyphs) {
+			float w = static_cast<float>(g.Subrect.right - g.Subrect.left);
+			float h = static_cast<float>(g.Subrect.bottom - g.Subrect.top);
+			wchar_t c = static_cast<wchar_t>(g.Character);
+
+			if(widest < w) {
+				widest = w;
+				limits.widestGlyph = g;
+			}
+
+			if(highest < h) {
+				highest = h;
+				limits.highestGlyph = g;
+			}
+
+			if( (c >= L'a' && c <= L'z') ||
+				(c >= L'A' && c <= L'Z') ||
+				(c >= L'0' && c <= L'9')) {
+				
+				if(widestAlphaNum < w) {
+					widestAlphaNum = w;
+					limits.widestAlphaNumericGlyph = g;
+				}
+
+				if(highestAlphaNum < h) {
+					highestAlphaNum = h;
+					limits.highestAlphaNumericGlyph = g;
+				}
+			}
+ 		}
+	}
+
 	SpriteFont::SpriteFont(IResourceContext * resourceContext, IFrameContext * frameContext, const std::wstring & fileName) {
 		IO::File spriteFontFile{ IO::Path::MediaRoot(), fileName };
 		IO::BinaryReader reader{ spriteFontFile };
@@ -94,11 +136,11 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 	void SpriteFont::DrawString(Netcode::SpriteBatchRef spriteBatch, const wchar_t * text, const Netcode::Float2 & position, const Netcode::Float4 & color) const {
-		DrawString(spriteBatch, text, position, color, 0, Netcode::Float2{ 0,0 }, 1.0f, 0);
+		DrawString(spriteBatch, text, position, color, 0, Float2::Zero, 1.0f, 0);
 	}
 
 	void SpriteFont::DrawString(Netcode::SpriteBatchRef spriteBatch, const char * text, const Netcode::Float2 & position, const Netcode::Float4 & color) const {
-		DrawString(spriteBatch, ConvertUTF8(text), position, color, 0, Netcode::Float2{ 0,0 }, 1.0f, 0);
+		DrawString(spriteBatch, ConvertUTF8(text), position, color, 0, Float2::Zero, 1.0f, 0);
 	}
 
 	void SpriteFont::DrawString(Netcode::SpriteBatchRef spriteBatch,
@@ -232,6 +274,70 @@ namespace Netcode::Graphics::DX12 {
 	Netcode::Float2 SpriteFont::MeasureString(const wchar_t * str) const {
 		Netcode::Vector2 v = MeasureString_Impl(str);
 		return v;
+	}
+
+	float SpriteFont::GetHighestCharHeight() const
+	{
+		return static_cast<float>(limits.highestGlyph.Subrect.bottom - limits.highestGlyph.Subrect.top);
+	}
+
+	float SpriteFont::GetWidestCharWidth() const
+	{
+		return static_cast<float>(limits.widestGlyph.Subrect.right - limits.widestGlyph.Subrect.left);
+	}
+
+	wchar_t SpriteFont::GetHighestChar() const
+	{
+		return static_cast<wchar_t>(limits.highestGlyph.Character);
+	}
+
+	wchar_t SpriteFont::GetWidestChar() const
+	{
+		return static_cast<wchar_t>(limits.widestGlyph.Character);
+	}
+
+	Float2 SpriteFont::GetMaxSizedStringOf(uint32_t stringMaxLength) const
+	{
+		if(stringMaxLength == 0) {
+			return Float2::Zero;
+		}
+
+		return Float2{
+			GetWidestCharWidth() * static_cast<float>(stringMaxLength),
+			GetHighestCharHeight()
+		};
+	}
+
+	float SpriteFont::GetWidestAlphaNumericCharWidth() const
+	{
+		return static_cast<float>(limits.widestAlphaNumericGlyph.Subrect.right - limits.widestAlphaNumericGlyph.Subrect.left);
+	}
+
+	float SpriteFont::GetHighestAlphaNumericCharHeight() const
+	{
+		return static_cast<float>(limits.highestAlphaNumericGlyph.Subrect.bottom - limits.highestAlphaNumericGlyph.Subrect.top);
+	}
+
+	wchar_t SpriteFont::GetWidestAlphaNumericChar() const
+	{
+		return static_cast<wchar_t>(limits.widestAlphaNumericGlyph.Character);
+	}
+
+	wchar_t SpriteFont::GetHeighestAlphaNumericChar() const
+	{
+		return static_cast<wchar_t>(limits.highestAlphaNumericGlyph.Character);
+	}
+
+	Float2 SpriteFont::GetMaxSizedAlphaNumericStringOf(uint32_t stringMaxLength) const
+	{
+		if(stringMaxLength == 0) {
+			return Float2::Zero;
+		}
+
+		return Float2 {
+			GetWidestAlphaNumericChar() * static_cast<float>(stringMaxLength),
+			GetHighestAlphaNumericCharHeight()
+		};
 	}
 
 	RECT SpriteFont::MeasureDrawBounds(const wchar_t * text, const Netcode::Float2 & position) const

@@ -46,7 +46,7 @@ target_sources(NetcodeClient
 PRIVATE
 	"Asset.h"
 	"AssetManager.h"
-	"Components.cpp"
+	
 	"Components.h"
 	"ComponentStorage.hpp"
 	"ConstantBufferTypes.h"
@@ -58,7 +58,7 @@ PRIVATE
 	"GameScene.cpp"
 	"GameScene.h"
 	"GraphicsEngine.h"
-	"Layer.h"
+	
 	"Light.h"
 	"main.cpp"
 	"Material.h"
@@ -75,22 +75,13 @@ PRIVATE
 	"Snippets.h"
 	"Systems.cpp"
 	"Systems.h"
-	"UIButtonPrefab.h"
-	"UIControl.h"
-	"UILabel.h"
-	"UIObject.h"
-	"UIPagePrefab.h"
-	"UIScene.h"
-	"UIServerRow.h"
-	"UISpinner.h"
-	"UITextBox.h"
 	"AnimationSet.h"
 	"AnimationSet.cpp"
 	"AnimationController.h"
 	"AnimationController.cpp"
 	"ProgramOptions.h"
 	"ProgramOptions.cpp"
-)
+ "UITest.h")
 
 target_link_libraries(NetcodeClient
 PRIVATE
@@ -109,6 +100,7 @@ PRIVATE
 	${DX12_LIBRARIES})
 
 add_subdirectory(Shaders)
+add_subdirectory(UI)
 
 add_dependencies(NetcodeClient NetcodeClientShaders)
 

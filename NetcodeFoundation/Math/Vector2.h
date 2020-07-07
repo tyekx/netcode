@@ -64,9 +64,17 @@ namespace Netcode {
 			return DirectX::XMVectorSubtract(v, rhs.v);
 		}
 
+		Vector2 NC_MATH_CALLCONV operator-() const noexcept {
+			return DirectX::XMVectorNegate(v);
+		}
+
 		Vector2 & NC_MATH_CALLCONV operator-=(Vector2 rhs) noexcept {
 			v = DirectX::XMVectorSubtract(v, rhs.v);
 			return *this;
+		}
+
+		Vector2 RotateZ(float radians) const {
+			return DirectX::XMVector3Rotate(v, DirectX::XMQuaternionRotationRollPitchYaw(0.0f, 0.0f, radians));
 		}
 
 		bool NC_MATH_CALLCONV AnyZero() const noexcept;

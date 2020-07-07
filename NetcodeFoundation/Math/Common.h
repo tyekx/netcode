@@ -40,34 +40,34 @@ namespace Netcode {
 	struct Float2 : public DirectX::XMFLOAT2 {
 		using DirectX::XMFLOAT2::XMFLOAT2;
 
-		static Float2 Zero;
-		static Float2 One;
-		static Float2 UnitX;
-		static Float2 UnitY;
-		static Float2 Eps;
+		static const Float2 Zero;
+		static const Float2 One;
+		static const Float2 UnitX;
+		static const Float2 UnitY;
+		static const Float2 Eps;
 	};
 
 	struct Float3 : public DirectX::XMFLOAT3 {
 		using DirectX::XMFLOAT3::XMFLOAT3;
 
-		static Float3 Zero;
-		static Float3 One;
-		static Float3 UnitX;
-		static Float3 UnitY;
-		static Float3 UnitZ;
-		static Float3 Eps;
+		static const Float3 Zero;
+		static const Float3 One;
+		static const Float3 UnitX;
+		static const Float3 UnitY;
+		static const Float3 UnitZ;
+		static const Float3 Eps;
 	};
 
 	struct Float4 : public DirectX::XMFLOAT4 {
 		using DirectX::XMFLOAT4::XMFLOAT4;
 
-		static Float4 Zero;
-		static Float4 One;
-		static Float4 UnitX;
-		static Float4 UnitY;
-		static Float4 UnitZ;
-		static Float4 UnitW;
-		static Float4 Eps;
+		static const Float4 Zero;
+		static const Float4 One;
+		static const Float4 UnitX;
+		static const Float4 UnitY;
+		static const Float4 UnitZ;
+		static const Float4 UnitW;
+		static const Float4 Eps;
 	};
 
 	struct Float4x4 : public DirectX::XMFLOAT4X4 {
@@ -75,8 +75,8 @@ namespace Netcode {
 
 		Float4x4(const DirectX::XMFLOAT4X4 & rhs) noexcept : DirectX::XMFLOAT4X4::XMFLOAT4X4(rhs) { }
 
-		static Float4x4 Zero;
-		static Float4x4 Identity;
+		static const Float4x4 Zero;
+		static const Float4x4 Identity;
 	};
 
 	using Int = int32_t;
@@ -84,31 +84,31 @@ namespace Netcode {
 	struct Int2 : public DirectX::XMINT2 {
 		using DirectX::XMINT2::XMINT2;
 
-		static Int2 Zero;
-		static Int2 One;
-		static Int2 UnitX;
-		static Int2 UnitY;
+		static const Int2 Zero;
+		static const Int2 One;
+		static const Int2 UnitX;
+		static const Int2 UnitY;
 	};
 
 	struct Int3 : public DirectX::XMINT3 {
 		using DirectX::XMINT3::XMINT3;
 
-		static Int3 Zero;
-		static Int3 One;
-		static Int3 UnitX;
-		static Int3 UnitY;
-		static Int3 UnitZ;
+		static const Int3 Zero;
+		static const Int3 One;
+		static const Int3 UnitX;
+		static const Int3 UnitY;
+		static const Int3 UnitZ;
 	};
 
 	struct Int4 : public DirectX::XMINT4 {
 		using DirectX::XMINT4::XMINT4;
 
-		static Int4 Zero;
-		static Int4 One;
-		static Int4 UnitX;
-		static Int4 UnitY;
-		static Int4 UnitZ;
-		static Int4 UnitW;
+		static const Int4 Zero;
+		static const Int4 One;
+		static const Int4 UnitX;
+		static const Int4 UnitY;
+		static const Int4 UnitZ;
+		static const Int4 UnitW;
 	};
 
 	using UInt = uint32_t;
@@ -116,31 +116,31 @@ namespace Netcode {
 	struct UInt2 : public DirectX::XMUINT2 {
 		using DirectX::XMUINT2::XMUINT2;
 
-		static UInt2 Zero;
-		static UInt2 One;
-		static UInt2 UnitX;
-		static UInt2 UnitY;
+		static const UInt2 Zero;
+		static const UInt2 One;
+		static const UInt2 UnitX;
+		static const UInt2 UnitY;
 	};
 
 	struct UInt3 : public DirectX::XMUINT3 {
 		using DirectX::XMUINT3::XMUINT3;
 
-		static UInt3 Zero;
-		static UInt3 One;
-		static UInt3 UnitX;
-		static UInt3 UnitY;
-		static UInt3 UnitZ;
+		static const UInt3 Zero;
+		static const UInt3 One;
+		static const UInt3 UnitX;
+		static const UInt3 UnitY;
+		static const UInt3 UnitZ;
 	};
 
 	struct UInt4 : public DirectX::XMUINT4 {
 		using DirectX::XMUINT4::XMUINT4;
 
-		static UInt4 Zero;
-		static UInt4 One;
-		static UInt4 UnitX;
-		static UInt4 UnitY;
-		static UInt4 UnitZ;
-		static UInt4 UnitW;
+		static const UInt4 Zero;
+		static const UInt4 One;
+		static const UInt4 UnitX;
+		static const UInt4 UnitY;
+		static const UInt4 UnitZ;
+		static const UInt4 UnitW;
 	};
 
 }

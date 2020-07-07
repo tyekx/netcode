@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Netcode/Modules.h>
 #include <NetcodeAssetLib/Model.h>
 #include <map>
 #include <string>
@@ -9,9 +10,9 @@
 #include <Netcode/IO/File.h>
 #include <Netcode/IO/Path.h>
 
-__declspec(align(16))
 class AssetManager {
 
+	Netcode::Module::IGraphicsModule * graphics;
 	std::map<std::wstring, std::unique_ptr<Netcode::Asset::Model>> storage;
 
 	Netcode::Asset::Model * ImportFromFile(std::wstring str) {
@@ -36,6 +37,31 @@ class AssetManager {
 	}
 
 public:
+
+	AssetManager(Netcode::Module::IGraphicsModule * g) : graphics{ g }, storage{} {
+
+	}
+
+	Netcode::SpriteFontRef ImportFont(const std::wstring & relativeMediaPath) {
+		Netcode::SpriteFontBuilderRef spriteFontBuilder = graphics->CreateSpriteFontBuilder();
+		spriteFontBuilder->LoadFont(relativeMediaPath);
+		return spriteFontBuilder->Build();
+	}
+
+	Netcode::GpuResourceRef ImportTexture2D(const std::wstring & relativeMediaPath) {
+		Netcode::TextureBuilderRef builder = graphics->CreateTextureBuilder();
+		builder->LoadTexture2D(relativeMediaPath);
+		Netcode::TextureRef texture = builder->Build();
+
+		Netcode::GpuResourceRef texResource = graphics->resources->CreateTexture2D(texture->GetImage(0, 0, 0));
+
+		Netcode::Graphics::UploadBatch uploadBatch;
+		uploadBatch.Upload(texResource, texture);
+		uploadBatch.ResourceBarrier(texResource, Netcode::Graphics::ResourceState::COPY_DEST, Netcode::Graphics::ResourceState::ANY_READ);
+		graphics->frame->SyncUpload(uploadBatch);
+
+		return texResource;
+	}
 
 	Netcode::Asset::Model * Import(std::wstring relativeMediaPath) {
 		const auto it = storage.find(relativeMediaPath);

@@ -21,79 +21,13 @@
 
 using ColliderShape = Netcode::Asset::Collider;
 
-enum class HorizontalAnchor : uint32_t {
-	LEFT, CENTER, RIGHT
-};
-
-enum class VerticalAnchor : uint32_t {
-	TOP, MIDDLE, BOTTOM
-};
-
 #define COMPONENT_ALIGN __declspec(align(16))
-
-COMPONENT_ALIGN struct UIElement {
-	VerticalAnchor verticalAlignment;
-	HorizontalAnchor horizontalAlignment;
-	Netcode::Float4 margin;
-	Netcode::Float4 padding;
-	float width;
-	float height;
-	float rotationZ;
-	Netcode::Float2 origin;
-};
-
-class UIObject;
-
-COMPONENT_ALIGN struct UIScript {
-	std::function<void(UIObject *, float)> onUpdate;
-};
 
 COMPONENT_ALIGN struct Sprite {
 	Netcode::ResourceViewsRef texture;
 	Netcode::UInt2 textureSize;
 	Netcode::Float4 diffuseColor;
 	Netcode::Float4 hoverColor;
-};
-
-COMPONENT_ALIGN struct Button {
-public:
-	physx::PxActor * pxActor;
-	std::function<void()> onClick;
-	std::function<void()> onMouseEnter;
-	std::function<void()> onMouseLeave;
-	bool isMouseOver;
-	bool isSpawned;
-};
-
-COMPONENT_ALIGN struct TextBox {
-	static int idGenerator;
-	static int selectedId;
-
-	static void ClearSelection() {
-		selectedId = -1;
-	}
-
-	int id;
-	int caretPosition;
-	int selectionEndIndex;
-	Netcode::EventToken keyPressedToken;
-	std::function<void(const std::wstring&)> contentChanged;
-	std::wstring placeholder;
-	Netcode::Float4 placeholderColor;
-	uint32_t maxCharacters;
-	bool isPassword;
-
-	TextBox();
-	~TextBox();
-};
-
-COMPONENT_ALIGN struct Text {
-public:
-	Netcode::Float4 color;
-	Netcode::SpriteFontRef font;
-	std::wstring text;
-	HorizontalAnchor horizontalAlignment;
-	VerticalAnchor verticalAlignment;
 };
 
 class GameObject;

@@ -3,6 +3,8 @@
 
 #include "../../IO/Path.h"
 
+#include <NetcodeFoundation/Exceptions.h>
+
 namespace Netcode::Graphics::DX12 {
 
 	void TextureBuilder::LoadTexture2D(const std::wstring & mediaPath) {
@@ -14,7 +16,7 @@ namespace Netcode::Graphics::DX12 {
 	}
 	
 	void TextureBuilder::LoadTexture3D(const std::wstring & mediaPath) {
-		ASSERT(false, "Loading Texture3D is not supported yet");
+		NotImplementedAssertion("Loading Texture3D is not supported yet");
 	}
 	
 	void TextureBuilder::LoadTextureCube(const std::wstring & mediaPath) {
@@ -23,6 +25,23 @@ namespace Netcode::Graphics::DX12 {
 
 		DX_API("Failed to load image: %S", cpy.c_str())
 			DirectX::LoadFromDDSFile(cpy.c_str(), 0, &metaData, scratchImage);
+	}
+
+	void TextureBuilder::LoadTexture2D(Netcode::ArrayView<uint8_t> data)
+	{
+		DX_API("Failed to load image from memory")
+			DirectX::LoadFromWICMemory(data.Data(), data.Size(), 0, &metaData, scratchImage);
+	}
+
+	void TextureBuilder::LoadTexture3D(Netcode::ArrayView<uint8_t> data)
+	{
+		NotImplementedAssertion("Loading Texture3D is not supported yet");
+	}
+
+	void TextureBuilder::LoadTextureCube(Netcode::ArrayView<uint8_t> data)
+	{
+		DX_API("Failed to load DDS image from memory")
+			DirectX::LoadFromDDSMemory(data.Data(), data.Size(), 0, &metaData, scratchImage);
 	}
 	
 	uint16_t TextureBuilder::GetCurrentMipLevelCount() {

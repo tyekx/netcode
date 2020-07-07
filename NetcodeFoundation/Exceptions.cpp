@@ -21,4 +21,9 @@ namespace Netcode {
 		}
 	}
 
+	void NotImplementedAssertion(const char * text)
+	{
+		throw NotImplementedException{ text };
+	}
+
 }

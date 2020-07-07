@@ -13,8 +13,8 @@ namespace Netcode::Physics {
 	}
 
 	void PhysX::CreateResources() {
-		foundation = PxCreateFoundation(PX_PHYSICS_VERSION, allocator, errorCallback);
-		debugger = PxCreatePvd(*foundation);
+		foundation.Reset(PxCreateFoundation(PX_PHYSICS_VERSION, allocator, errorCallback));
+		debugger.Reset(PxCreatePvd(*foundation));
 		physx::PxPvdTransport * transport = physx::PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
 		bool isDebuggerConnected = debugger->connect(*transport, physx::PxPvdInstrumentationFlag::eALL);
 
@@ -24,7 +24,7 @@ namespace Netcode::Physics {
 			Netcode::Utility::Debugf("PVD Connected on socket 5425\r\n");
 		}
 
-		physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, physx::PxTolerancesScale{ }, true, debugger);
+		physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, physx::PxTolerancesScale{ }, true, debugger.Get());
 		dispatcher = physx::PxDefaultCpuDispatcherCreate(2);
 
 		physx::PxTolerancesScale defaultToleranceScale;
@@ -34,17 +34,17 @@ namespace Netcode::Physics {
 	}
 
 	void PhysX::ReleaseResources() {
-		PX_RELEASE(cooking);
-		PX_RELEASE(dispatcher);
-		PX_RELEASE(physics);
+		cooking.Reset();
+		dispatcher.Reset();
+		physics.Reset();
 
-		if(debugger) {
-			physx::PxPvdTransport * transport = debugger->getTransport();
-			debugger->release();
-			debugger = nullptr;
-			PX_RELEASE(transport);
+		if(debugger != nullptr) {
+			PxPtr<physx::PxPvdTransport> transport = debugger->getTransport();
+			debugger.Reset();
+			transport.Reset();
 		}
-		PX_RELEASE(foundation);
+
+		foundation.Reset();
 	}
 
 }
