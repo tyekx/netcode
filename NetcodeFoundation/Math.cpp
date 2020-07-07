@@ -29,6 +29,11 @@ namespace Netcode {
 		return DirectX::XMMatrixLookToRH(eyePos.v, lookDir.v, upVector.v);
 	}
 
+	Matrix NC_MATH_CALLCONV LookAtMatrix(Vector3 eyePos, Vector3 lookPos, Vector3 upVector)
+	{
+		return DirectX::XMMatrixLookAtRH(eyePos.v, lookPos.v, upVector.v);
+	}
+
 	Matrix NC_MATH_CALLCONV PerspectiveFovMatrix(float horizontalFovInRadians, float aspect, float nearPlane, float farPlane)
 	{
 		return DirectX::XMMatrixPerspectiveFovRH(horizontalFovInRadians, aspect, nearPlane, farPlane);

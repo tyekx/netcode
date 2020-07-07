@@ -8,8 +8,8 @@
 Generates a bounding box from a set of vertices
 */
 class BoundingBoxGenerator {
-	DirectX::XMFLOAT3 minPoint;
-	DirectX::XMFLOAT3 maxPoint;
+	Netcode::Float3 minPoint;
+	Netcode::Float3 maxPoint;
 
 public:
 	BoundingBoxGenerator() :
@@ -18,7 +18,7 @@ public:
 
 	}
 
-	void UpdateForPoint(const DirectX::XMFLOAT3 & p) {
+	void UpdateForPoint(const Netcode::Float3 & p) {
 		minPoint.x = std::min(minPoint.x, p.x);
 		minPoint.y = std::min(minPoint.y, p.y);
 		minPoint.z = std::min(minPoint.z, p.z);
@@ -29,13 +29,13 @@ public:
 	}
 
 	DirectX::BoundingBox GetBoundingBox() const {
-		DirectX::XMFLOAT3 extents = DirectX::XMFLOAT3{
+		Netcode::Float3 extents = Netcode::Float3{
 			(maxPoint.x - minPoint.x) / 2.0f,
 			(maxPoint.y - minPoint.y) / 2.0f,
 			(maxPoint.z - minPoint.z) / 2.0f
 		};
 
-		DirectX::XMFLOAT3 center = DirectX::XMFLOAT3{
+		Netcode::Float3 center = Netcode::Float3{
 			(maxPoint.x - extents.x),
 			(maxPoint.y - extents.y),
 			(maxPoint.z - extents.z)

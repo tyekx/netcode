@@ -39,7 +39,7 @@ namespace winrt::NetcodeAssetEditor::implementation
 
                 DirectX::XMVECTOR localRotationQuat = DirectX::XMQuaternionRotationRollPitchYaw(lRot.z, lRot.y, lRot.x);
 
-                collider.localPosition = DirectX::XMFLOAT3{ lPos.x, lPos.y, lPos.z };
+                collider.localPosition = Netcode::Float3{ lPos.x, lPos.y, lPos.z };
                 DirectX::XMStoreFloat4(&collider.localRotation, localRotationQuat);
 
                 Global::EditorApp->UpdateColliderData(Global::Model->colliders);
@@ -53,13 +53,13 @@ namespace winrt::NetcodeAssetEditor::implementation
                     case Netcode::Asset::ColliderType::BOX:
                     {
                         auto boxArgs = dcCollider.BoxArgs();
-                        collider.boxArgs = DirectX::XMFLOAT3{ boxArgs.x, boxArgs.y, boxArgs.z };
+                        collider.boxArgs = Netcode::Float3{ boxArgs.x, boxArgs.y, boxArgs.z };
                     }
                     break;
                     case Netcode::Asset::ColliderType::CAPSULE:
                     {
                         auto capsuleArgs = dcCollider.CapsuleArgs();
-                        collider.capsuleArgs = DirectX::XMFLOAT2{ capsuleArgs.x, capsuleArgs.y };
+                        collider.capsuleArgs = Netcode::Float2{ capsuleArgs.x, capsuleArgs.y };
                     }
                     break;
                     case Netcode::Asset::ColliderType::SPHERE:
@@ -200,10 +200,10 @@ namespace winrt::NetcodeAssetEditor::implementation
         if(Global::Model != nullptr) {
             Collider dCollider;
             dCollider.boneReference = 0xFF;
-            dCollider.boxArgs = DirectX::XMFLOAT3{ 10.0f, 10.0f, 10.0f };
+            dCollider.boxArgs = Netcode::Float3{ 10.0f, 10.0f, 10.0f };
             dCollider.type = ColliderType::BOX;
-            dCollider.localPosition = DirectX::XMFLOAT3{};
-            dCollider.localRotation = DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f };
+            dCollider.localPosition = Netcode::Float3{};
+            dCollider.localRotation = Netcode::Float4{ 0.0f, 0.0f, 0.0f, 1.0f };
             
             Global::Model->colliders.push_back(dCollider);
             colliders.Append(ConvertCollider(dCollider));

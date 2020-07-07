@@ -190,7 +190,7 @@ static std::vector<Mesh> ImportMeshes(const aiScene * scene) {
 			byteOffset = 0;
 
 			if(mesh->HasPositions()) {
-				DirectX::XMFLOAT3 * positionPtr = reinterpret_cast<DirectX::XMFLOAT3 *>(vPtr + byteOffset);
+				Netcode::Float3 * positionPtr = reinterpret_cast<Netcode::Float3 *>(vPtr + byteOffset);
 				positionPtr->x = mesh->mVertices[vertexIter].x;
 				positionPtr->y = mesh->mVertices[vertexIter].y;
 				positionPtr->z = mesh->mVertices[vertexIter].z;
@@ -201,12 +201,12 @@ static std::vector<Mesh> ImportMeshes(const aiScene * scene) {
 			}
 
 			if(mesh->HasNormals()) {
-				DirectX::XMFLOAT3 * normalPtr = reinterpret_cast<DirectX::XMFLOAT3 *>(vPtr + byteOffset);
+				Netcode::Float3 * normalPtr = reinterpret_cast<Netcode::Float3 *>(vPtr + byteOffset);
 				normalPtr->x = mesh->mNormals[vertexIter].x;
 				normalPtr->y = mesh->mNormals[vertexIter].y;
 				normalPtr->z = mesh->mNormals[vertexIter].z;
 
-				byteOffset += sizeof(DirectX::XMFLOAT3);
+				byteOffset += sizeof(Netcode::Float3);
 			}
 
 			for(int texCoordIter = 0; mesh->HasTextureCoords(texCoordIter); ++texCoordIter) {
@@ -244,7 +244,7 @@ static std::vector<Mesh> ImportMeshes(const aiScene * scene) {
 				*boneIdsPtr = 0xFFFFFFFF;
 
 				boneDataByteOffset = byteOffset;
-				byteOffset += sizeof(DirectX::XMFLOAT3);
+				byteOffset += sizeof(Netcode::Float3);
 				byteOffset += sizeof(uint32_t);
 			}
 
@@ -732,9 +732,9 @@ static double GetNextTimeKey(const std::vector<BoneAnimation> & boneData, double
 	return candidate;
 }
 
-static DirectX::XMFLOAT3 SamplePosition(const std::vector<PositionKey> & keys, double t) {
+static Netcode::Float3 SamplePosition(const std::vector<PositionKey> & keys, double t) {
 	if(keys.empty()) {
-		return DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+		return Netcode::Float3::Zero;
 	}
 
 	if(keys.size() == 1) {
@@ -763,20 +763,15 @@ static DirectX::XMFLOAT3 SamplePosition(const std::vector<PositionKey> & keys, d
 
 	float alphaF = static_cast<float>(alpha);
 
-	DirectX::XMVECTOR endV = DirectX::XMLoadFloat3(&keys.at(indexEnd).position);
-	DirectX::XMVECTOR startV = DirectX::XMLoadFloat3(&keys.at(indexEnd - 1).position);
+	Netcode::Vector3 endV = keys.at(indexEnd).position;
+	Netcode::Vector3 startV = keys.at(indexEnd - 1).position;
 
-	DirectX::XMVECTOR lerpedV = DirectX::XMVectorLerp(startV, endV, alphaF);
-
-	DirectX::XMFLOAT3 lerped;
-	DirectX::XMStoreFloat3(&lerped, lerpedV);
-
-	return lerped;
+	return Netcode::Vector3::Lerp(startV, endV, alphaF);
 }
 
-static DirectX::XMFLOAT4 SampleRotation(const std::vector<RotationKey> & keys, double t) {
+static Netcode::Float4 SampleRotation(const std::vector<RotationKey> & keys, double t) {
 	if(keys.empty()) {
-		return DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+		return Netcode::Float4(0.0f, 0.0f, 0.0f, 1.0f);
 	}
 
 	if(keys.size() == 1) {
@@ -805,20 +800,15 @@ static DirectX::XMFLOAT4 SampleRotation(const std::vector<RotationKey> & keys, d
 
 	float alphaF = static_cast<float>(alpha);
 
-	DirectX::XMVECTOR endV = DirectX::XMLoadFloat4(&keys.at(indexEnd).rotation);
-	DirectX::XMVECTOR startV = DirectX::XMLoadFloat4(&keys.at(indexEnd - 1).rotation);
+	const Netcode::Quaternion endV = keys.at(indexEnd).rotation;
+	const Netcode::Quaternion startV = keys.at(indexEnd - 1).rotation;
 
-	DirectX::XMVECTOR slerpedV = DirectX::XMQuaternionSlerp(startV, endV, alphaF);
-
-	DirectX::XMFLOAT4 slerped;
-	DirectX::XMStoreFloat4(&slerped, slerpedV);
-
-	return slerped;
+	return Netcode::Quaternion::Slerp(startV, endV, alphaF);
 }
 
-static DirectX::XMFLOAT3 SampleScale(const std::vector<ScaleKey> & keys, double t) {
+static Netcode::Float3 SampleScale(const std::vector<ScaleKey> & keys, double t) {
 	if(keys.empty()) {
-		return DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
+		return Netcode::Float3(1.0f, 1.0f, 1.0f);
 	}
 
 	if(keys.size() == 1) {
@@ -847,15 +837,10 @@ static DirectX::XMFLOAT3 SampleScale(const std::vector<ScaleKey> & keys, double 
 
 	float alphaF = static_cast<float>(alpha);
 
-	DirectX::XMVECTOR endV = DirectX::XMLoadFloat3(&keys.at(indexEnd).scale);
-	DirectX::XMVECTOR startV = DirectX::XMLoadFloat3(&keys.at(indexEnd - 1).scale);
+	const Netcode::Vector3 endV = keys.at(indexEnd).scale;
+	const Netcode::Vector3 startV = keys.at(indexEnd - 1).scale;
 
-	DirectX::XMVECTOR lerpedV = DirectX::XMVectorLerp(startV, endV, alphaF);
-
-	DirectX::XMFLOAT3 lerped;
-	DirectX::XMStoreFloat3(&lerped, lerpedV);
-
-	return lerped;
+	return Netcode::Vector3::Lerp(startV, endV, alphaF);
 }
 
 OptimizedAnimation FBXImporter::OptimizeAnimation(const Animation & anim, const Skeleton & skeleton) {
@@ -901,9 +886,9 @@ OptimizedAnimation FBXImporter::OptimizeAnimation(const Animation & anim, const 
 
 		// set defaults
 		for(size_t i = 0; i < skeleton.bones.size(); ++i) {
-			optBoneAnim.boneData[i].position = DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f };
-			optBoneAnim.boneData[i].rotation = DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f };
-			optBoneAnim.boneData[i].scale = DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 0.0f };
+			optBoneAnim.boneData[i].position = Netcode::Float4{ 0.0f, 0.0f, 0.0f, 1.0f };
+			optBoneAnim.boneData[i].rotation = Netcode::Float4{ 0.0f, 0.0f, 0.0f, 1.0f };
+			optBoneAnim.boneData[i].scale = Netcode::Float4{ 1.0f, 1.0f, 1.0f, 0.0f };
 		}
 
 		for(const BoneAnimation & bA : anim.boneAnimations) {
@@ -911,9 +896,9 @@ OptimizedAnimation FBXImporter::OptimizeAnimation(const Animation & anim, const 
 				DirectX::XMFLOAT3 posSample = SamplePosition(bA.positionKeys, t);
 				DirectX::XMFLOAT3 scaleSample = SampleScale(bA.scaleKeys, t);
 
-				optBoneAnim.boneData[bA.BoneId].position = DirectX::XMFLOAT4{ posSample.x, posSample.y, posSample.z, 1.0f };
+				optBoneAnim.boneData[bA.BoneId].position = Netcode::Float4{ posSample.x, posSample.y, posSample.z, 1.0f };
 				optBoneAnim.boneData[bA.BoneId].rotation = SampleRotation(bA.rotationKeys, t);
-				optBoneAnim.boneData[bA.BoneId].scale = DirectX::XMFLOAT4{ scaleSample.x, scaleSample.y, scaleSample.z, 0.0f };
+				optBoneAnim.boneData[bA.BoneId].scale = Netcode::Float4{ scaleSample.x, scaleSample.y, scaleSample.z, 0.0f };
 			}
 		}
 

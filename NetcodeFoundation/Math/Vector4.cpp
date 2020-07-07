@@ -10,6 +10,24 @@ namespace Netcode {
 		return *this;
 	}
 
+	Vector4 Vector4::operator/(NonZero<Vector4> rhs) const NETCODE_MATH_DEP_NOEXCEPT {
+		return DirectX::XMVectorDivide(v, static_cast<Vector4>(rhs).v);
+	}
+
+	Vector4 Vector4::operator/(NonZero<float> scale) const NETCODE_MATH_DEP_NOEXCEPT {
+		return DirectX::XMVectorScale(v, 1.0f / scale);
+	}
+
+	Vector4 & Vector4::operator/=(NonZero<Vector4> rhs) NETCODE_MATH_DEP_NOEXCEPT {
+		v = DirectX::XMVectorDivide(v, static_cast<Vector4>(rhs).v);
+		return *this;
+	}
+
+	Vector4 & Vector4::operator/=(NonZero<float> scale) NETCODE_MATH_DEP_NOEXCEPT {
+		v = DirectX::XMVectorScale(v, 1.0f / scale);
+		return *this;
+	}
+
 	Vector4 Vector4::Transform(Matrix rhs) const noexcept {
 		return Vector4 { DirectX::XMVector4Transform(v, rhs.mat) };
 	}

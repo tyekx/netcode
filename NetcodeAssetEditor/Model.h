@@ -55,8 +55,8 @@ struct Mesh {
 
 struct Material {
 	std::string name;
-	DirectX::XMFLOAT4 diffuseColor;
-	DirectX::XMFLOAT3 fresnelR0;
+	Netcode::Float4 diffuseColor;
+	Netcode::Float3 fresnelR0;
 	float shininess;
 	std::string diffuseMapReference;
 	std::string normalMapReference;
@@ -74,17 +74,17 @@ enum class AnimationEdge {
 
 
 struct PositionKey {
-	DirectX::XMFLOAT3 position;
+	Netcode::Float3 position;
 	double time;
 };
 
 struct RotationKey {
-	DirectX::XMFLOAT4 rotation;
+	Netcode::Float4 rotation;
 	double time;
 };
 
 struct ScaleKey {
-	DirectX::XMFLOAT3 scale;
+	Netcode::Float3 scale;
 	double time;
 };
 
@@ -122,7 +122,7 @@ struct OptimizedAnimation {
 };
 
 struct SkeletonBone {
-	DirectX::XMFLOAT4X4 transform;
+	Netcode::Float4x4 transform;
 	int parentIndex;
 	std::string boneName;
 };

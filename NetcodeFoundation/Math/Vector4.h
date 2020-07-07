@@ -32,13 +32,9 @@ namespace Netcode {
 			return DirectX::XMVectorScale(v, scale);
 		}
 
-		Vector4 NC_MATH_CALLCONV operator/(NonZero<Vector4> rhs) const NETCODE_MATH_DEP_NOEXCEPT {
-			return DirectX::XMVectorDivide(v, static_cast<Vector4>(rhs).v);
-		}
+		Vector4 NC_MATH_CALLCONV operator/(NonZero<Vector4> rhs) const NETCODE_MATH_DEP_NOEXCEPT;
 
-		Vector4 NC_MATH_CALLCONV operator/(NonZero<float> scale) const NETCODE_MATH_DEP_NOEXCEPT {
-			return DirectX::XMVectorScale(v, 1.0f / scale);
-		}
+		Vector4 NC_MATH_CALLCONV operator/(NonZero<float> scale) const NETCODE_MATH_DEP_NOEXCEPT;
 
 		Vector4 & NC_MATH_CALLCONV operator*=(Vector4 rhs) noexcept {
 			v = DirectX::XMVectorMultiply(v, rhs.v);
@@ -50,15 +46,9 @@ namespace Netcode {
 			return *this;
 		}
 
-		Vector4 & NC_MATH_CALLCONV operator/=(NonZero<Vector4> rhs) NETCODE_MATH_DEP_NOEXCEPT {
-			v = DirectX::XMVectorDivide(v, static_cast<Vector4>(rhs).v);
-			return *this;
-		}
+		Vector4 & NC_MATH_CALLCONV operator/=(NonZero<Vector4> rhs) NETCODE_MATH_DEP_NOEXCEPT;
 
-		Vector4 & NC_MATH_CALLCONV operator/=(NonZero<float> scale) noexcept {
-			v = DirectX::XMVectorScale(v, 1.0f / scale);
-			return *this;
-		}
+		Vector4 & NC_MATH_CALLCONV operator/=(NonZero<float> scale) NETCODE_MATH_DEP_NOEXCEPT;
 
 		Vector4 NC_MATH_CALLCONV operator+(Vector4 rhs) const noexcept {
 			return DirectX::XMVectorAdd(v, rhs.v);
@@ -76,6 +66,10 @@ namespace Netcode {
 		Vector4 & NC_MATH_CALLCONV operator-=(Vector4 rhs) noexcept {
 			v = DirectX::XMVectorSubtract(v, rhs.v);
 			return *this;
+		}
+
+		static Vector4 NC_MATH_CALLCONV Lerp(Vector4 lhs, Vector4 rhs, float alpha) noexcept {
+			return DirectX::XMVectorLerp(lhs.v, rhs.v, alpha);
 		}
 
 		float NC_MATH_CALLCONV Length() const noexcept;

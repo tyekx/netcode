@@ -20,6 +20,8 @@ namespace Netcode {
 
 	Matrix NC_MATH_CALLCONV LookToMatrix(Vector3 eyePos, Vector3 lookDir, Vector3 upVector);
 
+	Matrix NC_MATH_CALLCONV LookAtMatrix(Vector3 eyePos, Vector3 lookPos, Vector3 upVector);
+
 	Matrix NC_MATH_CALLCONV PerspectiveFovMatrix(float horizontalFovInRadians, float aspect, float nearPlane, float farPlane);
 
 	Matrix NC_MATH_CALLCONV OrtographicMatrix(float viewWidth, float viewHeight, float nearPlane, float farPlane);

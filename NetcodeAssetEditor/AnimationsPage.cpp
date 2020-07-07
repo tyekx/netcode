@@ -36,17 +36,17 @@ namespace winrt::NetcodeAssetEditor::implementation
     }
 
     static void UpdateAnimation(float t, const OptimizedAnimation & anim, const Skeleton & skeleton, BoneData* destBuffer) {
-        DirectX::XMVECTOR stPos;
-        DirectX::XMVECTOR endPos;
+        Netcode::Vector3 stPos;
+        Netcode::Vector3 endPos;
 
-        DirectX::XMVECTOR stQuat;
-        DirectX::XMVECTOR endQuat;
+        Netcode::Quaternion stQuat;
+        Netcode::Quaternion endQuat;
 
-        DirectX::XMVECTOR stScale;
-        DirectX::XMVECTOR endScale;
+        Netcode::Vector3 stScale;
+        Netcode::Vector3 endScale;
 
-        DirectX::XMMATRIX bindTrans;
-        DirectX::XMMATRIX toRoot[128];
+        Netcode::Matrix bindTrans;
+        Netcode::Matrix toRoot[128];
         int parentId;
 
         unsigned int idx;
@@ -63,32 +63,32 @@ namespace winrt::NetcodeAssetEditor::implementation
         size_t boneCount = skeleton.bones.size();
 
          for(unsigned int i = 0; i < boneCount; ++i) {
-            stPos = DirectX::XMLoadFloat4(&startKey[i].position);
-            stQuat = DirectX::XMLoadFloat4(&startKey[i].rotation);
-            stScale = DirectX::XMLoadFloat4(&startKey[i].scale);
+            stPos = startKey[i].position;
+            stQuat = startKey[i].rotation;
+            stScale = startKey[i].scale;
 
-            endPos = DirectX::XMLoadFloat4(&endKey[i].position);
-            endQuat = DirectX::XMLoadFloat4(&endKey[i].rotation);
-            endScale = DirectX::XMLoadFloat4(&endKey[i].scale);
+            endPos = endKey[i].position;
+            endQuat = endKey[i].rotation;
+            endScale = endKey[i].scale;
 
-            stPos = DirectX::XMVectorLerp(stPos, endPos, t);
-            stQuat = DirectX::XMQuaternionSlerp(stQuat, endQuat, t);
-            stScale = DirectX::XMVectorLerp(stScale, endScale, t);
+            stPos = Netcode::Vector3::Lerp(stPos, endPos, t);
+            stQuat = Netcode::Quaternion::Slerp(stQuat, endQuat, t);
+            stScale = Netcode::Vector3::Lerp(stScale, endScale, t);
 
-            toRoot[i] = DirectX::XMMatrixAffineTransformation(stScale, DirectX::XMQuaternionIdentity(), stQuat, stPos);
+            toRoot[i] = Netcode::AffineTransformation(stScale, stQuat, stPos);
          }
 
          for(unsigned int i = 0; i < boneCount; ++i) {
              int parentId = skeleton.bones[i].parentIndex;
              if(parentId > -1) {
-                 toRoot[i] = DirectX::XMMatrixMultiply(toRoot[i], toRoot[parentId]);
+                 toRoot[i] = toRoot[i] * toRoot[parentId];
              }
 
-             bindTrans = DirectX::XMLoadFloat4x4(&skeleton.bones[i].transform);
-             bindTrans = DirectX::XMMatrixMultiply(bindTrans, toRoot[i]);
+             bindTrans = skeleton.bones[i].transform;
+             bindTrans = bindTrans * toRoot[i];
 
-             DirectX::XMStoreFloat4x4A(&destBuffer->ToRootTransform[i], DirectX::XMMatrixTranspose(toRoot[i]));
-             DirectX::XMStoreFloat4x4A(&destBuffer->BindTransform[i], DirectX::XMMatrixTranspose(bindTrans));
+             destBuffer->ToRootTransform[i] = toRoot[i].Transpose();
+             destBuffer->BindTransform[i] = bindTrans.Transpose();
          }
     }
     

@@ -30,6 +30,13 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <VcpkgEnabled>true</VcpkgEnabled>
+    <VcpkgAutoLink>true</VcpkgAutoLink>
+    <VcpkgUserTriplet>x64-windows</VcpkgUserTriplet>
+    <VcpkgConfiguration>Debug</VcpkgConfiguration>
+    <VcpkgUseStatic>false</VcpkgUseStatic>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -50,11 +57,11 @@
     <ClInclude Include="Animation\State.h" />
     <ClInclude Include="Animation\StateGroup.h" />
     <ClInclude Include="Animation\Transition.h" />
-    <ClInclude Include="BinaryReader.h" />
     <ClInclude Include="BasicGeometry.h" />
     <ClInclude Include="BulkAllocator.hpp" />
     <ClInclude Include="BulkVector.hpp" />
     <ClInclude Include="Common.h" />
+    <ClInclude Include="Config.h" />
     <ClInclude Include="ConsoleModule.h" />
     <ClInclude Include="DebugPhysx.h" />
     <ClInclude Include="DebugPhysxActor.h" />
@@ -71,6 +78,7 @@
     <ClInclude Include="Graphics\DX12\DX12CPipelineState.h" />
     <ClInclude Include="Graphics\DX12\DX12CPipelineStateBuilder.h" />
     <ClInclude Include="Graphics\DX12\DX12CPipelineStateLibrary.h" />
+    <ClInclude Include="Graphics\DX12\DX12DebugContext.h" />
     <ClInclude Include="Graphics\DX12\DX12DynamicDescriptorHeap.h" />
     <ClInclude Include="Graphics\DX12\DX12Fence.h" />
     <ClInclude Include="Graphics\DX12\DX12FrameGraph.h" />
@@ -118,6 +126,14 @@
     <ClInclude Include="Graphics\ResourceDesc.h" />
     <ClInclude Include="Graphics\ResourceEnums.h" />
     <ClInclude Include="Graphics\UploadBatch.h" />
+    <ClInclude Include="IO\BinaryReader.h" />
+    <ClInclude Include="IO\BinaryWriter.h" />
+    <ClInclude Include="IO\Config.h" />
+    <ClInclude Include="IO\Directory.h" />
+    <ClInclude Include="IO\File.h" />
+    <ClInclude Include="IO\Json.h" />
+    <ClInclude Include="IO\Path.h" />
+    <ClInclude Include="MathExt.h" />
     <ClInclude Include="NetcodeMpl.hpp" />
     <ClInclude Include="Event.hpp" />
     <ClInclude Include="FancyIterators.hpp" />
@@ -127,7 +143,6 @@
     <ClInclude Include="LinearAllocator.h" />
     <ClInclude Include="LinearClassifier.h" />
     <ClInclude Include="Logger.h" />
-    <ClInclude Include="NetcodeMath.h" />
     <ClInclude Include="Modules.h" />
     <ClInclude Include="ModulesConfig.h" />
     <ClInclude Include="MovementController.h" />
@@ -141,7 +156,6 @@
     <ClInclude Include="Network\NetcodeNetworkModule.h" />
     <ClInclude Include="Network\NetworkCommon.h" />
     <ClInclude Include="Network\ServerSession.h" />
-    <ClInclude Include="Path.h" />
     <ClInclude Include="PhysXWrapper.h" />
     <ClInclude Include="ProgramArgs.h" />
     <ClInclude Include="Service.hpp" />
@@ -157,8 +171,8 @@
     <ClCompile Include="Animation\State.cpp" />
     <ClCompile Include="Animation\StateGroup.cpp" />
     <ClCompile Include="Animation\Transition.cpp" />
-    <ClCompile Include="BinaryReader.cpp" />
     <ClCompile Include="BasicGeometry.cpp" />
+    <ClCompile Include="Config.cpp" />
     <ClCompile Include="ConsoleModule.cpp" />
     <ClCompile Include="DebugPhysx.cpp" />
     <ClCompile Include="DebugPhysxActor.cpp" />
@@ -170,6 +184,7 @@
     <ClCompile Include="Graphics\DX12\DX12CPipelineState.cpp" />
     <ClCompile Include="Graphics\DX12\DX12CPipelineStateBuilder.cpp" />
     <ClCompile Include="Graphics\DX12\DX12CPipelineStateLibrary.cpp" />
+    <ClCompile Include="Graphics\DX12\DX12DebugContext.cpp" />
     <ClCompile Include="Graphics\DX12\DX12DynamicDescriptorHeap.cpp" />
     <ClCompile Include="Graphics\DX12\DX12Fence.cpp" />
     <ClCompile Include="Graphics\DX12\DX12FrameGraph.cpp" />
@@ -198,6 +213,8 @@
     <ClCompile Include="Graphics\DX12\DX12ShaderBuilder.cpp" />
     <ClCompile Include="Graphics\DX12\DX12ShaderCompiled.cpp" />
     <ClCompile Include="Graphics\DX12\DX12ShaderCompiler.cpp" />
+    <ClCompile Include="Graphics\DX12\DX12ShaderLibrary.cpp" />
+    <ClCompile Include="Graphics\DX12\DX12ShaderSourceLibrary.cpp" />
     <ClCompile Include="Graphics\DX12\DX12ShaderVariant.cpp" />
     <ClCompile Include="Graphics\DX12\DX12SpriteBatch.cpp" />
     <ClCompile Include="Graphics\DX12\DX12SpriteBatchBuilder.cpp" />
@@ -213,9 +230,15 @@
     <ClCompile Include="Graphics\UploadBatch.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Common.cpp" />
+    <ClCompile Include="IO\BinaryReader.cpp" />
+    <ClCompile Include="IO\BinaryWriter.cpp" />
+    <ClCompile Include="IO\Directory.cpp" />
+    <ClCompile Include="IO\File.cpp" />
+    <ClCompile Include="IO\Json.cpp" />
+    <ClCompile Include="IO\Path.cpp" />
     <ClCompile Include="LinearClassifier.cpp" />
     <ClCompile Include="Logger.cpp" />
-    <ClCompile Include="NetcodeMath.cpp" />
+    <ClCompile Include="MathExt.cpp" />
     <ClCompile Include="Modules.cpp" />
     <ClCompile Include="Network\ClientSession.cpp" />
     <ClCompile Include="Network\Cookie.cpp" />
@@ -225,54 +248,21 @@
     <ClCompile Include="Network\NetcodeNetworkModule.cpp" />
     <ClCompile Include="Network\NetworkCommon.cpp" />
     <ClCompile Include="Network\ServerSession.cpp" />
-    <ClCompile Include="Path.cpp" />
     <ClCompile Include="PhysXWrapper.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="WinapiWindowModule.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Shaders\AvatarVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-    </FxCompile>
-    <FxCompile Include="Shaders\AvatarPS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-    </FxCompile>
-    <FxCompile Include="Shaders\cbBasicVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-    </FxCompile>
-    <FxCompile Include="Shaders\DebugPhysxPS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-    </FxCompile>
-    <FxCompile Include="Shaders\DebugPhysxRayVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-    </FxCompile>
-    <FxCompile Include="Shaders\DebugPhysxVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-    </FxCompile>
-    <FxCompile Include="Shaders\DefaultPS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-    </FxCompile>
-    <Text Include="Shaders\RootSignatures.hlsli">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">RootSignature</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rootsig_1.0</ShaderModel>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">RootSignatureTest</EntryPointName>
-      <FileType>Document</FileType>
-    </Text>
-    <FxCompile Include="Shaders\DefaultVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-    </FxCompile>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="cpp.hint" />
-    <CustomBuild Include="Shaders\EggShaderLib.hlsli">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">xcopy %(FullPath) $(OutDir)Shaders /Y /F</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)Shaders\%(Filename)%(Extension)</Outputs>
-    </CustomBuild>
-    <None Include="Shaders\Lighting.hlsli" />
+    <FxCompile Include="Shaders\Netcode_DebugPrimPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\Netcode_DebugPrimVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

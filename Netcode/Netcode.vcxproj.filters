@@ -4,9 +4,6 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{f3cf27d1-9fc3-4b06-aa81-70867789ae4a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Lua">
-      <UniqueIdentifier>{ddad10d9-5d97-4b51-ba70-2e1fb599016c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Graphics">
       <UniqueIdentifier>{6c153833-f01b-4513-a021-dbcaf1d7a1d9}</UniqueIdentifier>
     </Filter>
@@ -15,9 +12,6 @@
     </Filter>
     <Filter Include="Asset">
       <UniqueIdentifier>{a15afac8-bda1-46db-8b99-9647baa28104}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Serialization">
-      <UniqueIdentifier>{d6e6d7cf-b81c-4c14-bf1b-5d8deda83c36}</UniqueIdentifier>
     </Filter>
     <Filter Include="Gameplay">
       <UniqueIdentifier>{bffaa71e-00d8-49ff-9929-3cb9b6726e3c}</UniqueIdentifier>
@@ -49,11 +43,11 @@
     <Filter Include="Network">
       <UniqueIdentifier>{4418faf0-e5a2-46c3-bffc-eebeb16298fb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="IO">
+      <UniqueIdentifier>{882c0f23-197a-4872-a3db-275fc2784287}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Path.h">
-      <Filter>Utility</Filter>
-    </ClInclude>
     <ClInclude Include="ProgramArgs.h">
       <Filter>Utility</Filter>
     </ClInclude>
@@ -69,15 +63,11 @@
     <ClInclude Include="File.h">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="NetcodeMath.h" />
     <ClInclude Include="Input.h">
       <Filter>Gameplay</Filter>
     </ClInclude>
     <ClInclude Include="MovementController.h">
       <Filter>Gameplay</Filter>
-    </ClInclude>
-    <ClInclude Include="BinaryReader.h">
-      <Filter>Serialization</Filter>
     </ClInclude>
     <ClInclude Include="DefaultModuleFactory.h">
       <Filter>Modules\Factory</Filter>
@@ -364,23 +354,42 @@
     <ClInclude Include="Functions.h">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12DebugContext.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\BinaryReader.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\BinaryWriter.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\Config.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\Directory.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\File.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\Json.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\Path.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="MathExt.h" />
+    <ClInclude Include="Config.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Path.cpp">
-      <Filter>Utility</Filter>
-    </ClCompile>
     <ClCompile Include="Stopwatch.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
     <ClCompile Include="Utility.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
-    <ClCompile Include="NetcodeMath.cpp" />
     <ClCompile Include="Input.cpp">
       <Filter>Gameplay</Filter>
-    </ClCompile>
-    <ClCompile Include="BinaryReader.cpp">
-      <Filter>Serialization</Filter>
     </ClCompile>
     <ClCompile Include="DefaultModuleFactory.cpp">
       <Filter>Modules\Factory</Filter>
@@ -601,47 +610,45 @@
     <ClCompile Include="Graphics\DX12\DX12CommandListPool.cpp">
       <Filter>Graphics\DX12</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="Shaders\DefaultPS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\DefaultVS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\cbBasicVS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\AvatarPS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\AvatarVS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\DebugPhysxVS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\DebugPhysxPS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\DebugPhysxRayVS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="Shaders\RootSignatures.hlsli">
-      <Filter>Shaders</Filter>
-    </Text>
+    <ClCompile Include="Graphics\DX12\DX12DebugContext.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12ShaderLibrary.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\BinaryWriter.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\Directory.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\File.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\Json.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\Path.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\BinaryReader.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
+    <ClCompile Include="MathExt.cpp" />
+    <ClCompile Include="Config.cpp" />
+    <ClCompile Include="Graphics\DX12\DX12ShaderSourceLibrary.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
-    <None Include="Shaders\Lighting.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="Shaders\EggShaderLib.hlsli">
+    <FxCompile Include="Shaders\Netcode_DebugPrimPS.hlsl">
       <Filter>Shaders</Filter>
-    </CustomBuild>
+    </FxCompile>
+    <FxCompile Include="Shaders\Netcode_DebugPrimVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

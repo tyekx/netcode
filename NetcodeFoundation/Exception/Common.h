@@ -1,4 +1,6 @@
 #pragma once
+
+#include <cassert>
 #include <stdexcept>
 
 namespace Netcode {

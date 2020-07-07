@@ -1,222 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
-  <PropertyGroup Label="UserMacros">
-    <NetcodeSDK>C:\sdk2</NetcodeSDK>
-    <NetcodeOS>Win</NetcodeOS>
-    <NetcodeRuntimeLibrary>mdd</NetcodeRuntimeLibrary>
-    <NetcodePlatform>$(PlatformTarget)</NetcodePlatform>
-    <NetcodeToolset>$(PlatformToolset)</NetcodeToolset>
-    <NetcodeBuildType>$(Configuration)</NetcodeBuildType>
-    <NetcodeBuildSelect>$(NetcodeOS)\$(NetcodePlatform)\$(NetcodeBuildType)\$(NetcodeToolSet).$(NetcodeRuntimeLibrary)</NetcodeBuildSelect>
-    <NetcodeD3DLibs>d3d12.lib;d3dcompiler.lib;dxgi.lib</NetcodeD3DLibs>
-    <NetcodePhysXVersion>4.1</NetcodePhysXVersion>
-    <NetcodePhysXBin>$(NetcodeSDK)\PhysX\$(NetcodePhysXVersion)\$(NetcodeBuildSelect)\</NetcodePhysXBin>
-    <NetcodePhysXInclude>$(NetcodeSDK)\PhysX\$(NetcodePhysXVersion)\include\</NetcodePhysXInclude>
-    <NetcodePhysXLibs>PhysX_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXCooking_64.lib</NetcodePhysXLibs>
-    <NetcodeAssimpVersion>5.0.0</NetcodeAssimpVersion>
-    <NetcodeAssimpInclude>$(NetcodeSDK)\assimp\$(NetcodeAssimpVersion)\include\</NetcodeAssimpInclude>
-    <NetcodeAssimpBin>$(NetcodeSDK)\assimp\$(NetcodeAssimpVersion)\$(NetcodeBuildSelect)\</NetcodeAssimpBin>
-    <NetcodeAssimpLibs>assimp.lib</NetcodeAssimpLibs>
-    <NetcodeLuaVersion>5.3.5</NetcodeLuaVersion>
-    <NetcodeLuaInclude>$(NetcodeSDK)\lua\$(NetcodeLuaVersion)\include\</NetcodeLuaInclude>
-    <NetcodeLuaBin>$(NetcodeSDK)\lua\$(NetcodeLuaVersion)\$(NetcodeBuildSelect)\</NetcodeLuaBin>
-    <NetcodeLuaLibs>lua.lib</NetcodeLuaLibs>
-    <NetcodeDXTexVersion>oct2019</NetcodeDXTexVersion>
-    <NetcodeDXTexInclude>$(NetcodeSDK)\DirectXTex\$(NetcodeDXTexVersion)\include</NetcodeDXTexInclude>
-    <NetcodeDXTexBin>$(NetcodeSDK)\DirectXTex\$(NetcodeDXTexVersion)\$(NetcodeBuildSelect)\</NetcodeDXTexBin>
-    <NetcodeDXTexLibs>DirectXTex.lib</NetcodeDXTexLibs>
-    <NetcodeSpdLogVersion>1.4.2</NetcodeSpdLogVersion>
-    <NetcodeSpdLogInclude>$(NetcodeSDK)\spdlog\$(NetcodeSpdLogVersion)\include</NetcodeSpdLogInclude>
-    <NetcodeSpdLogBin>$(NetcodeSDK)\spdlog\$(NetcodeSpdLogVersion)\$(NetcodeBuildSelect)\</NetcodeSpdLogBin>
-    <NetcodeSpdLogLibs>spdlog.lib</NetcodeSpdLogLibs>
-    <NetcodeJson11Version>1.0.0</NetcodeJson11Version>
-    <NetcodeJson11Include>$(NetcodeSDK)\json11\$(NetcodeJson11Version)\include</NetcodeJson11Include>
-    <NetcodeJson11Bin>$(NetcodeSDK)\json11\$(NetcodeJson11Version)\$(NetcodeBuildSelect).static\</NetcodeJson11Bin>
-    <NetcodeJson11Libs>json11.lib</NetcodeJson11Libs>
-    <NetcodeNetcodeVersion>0.0.0</NetcodeNetcodeVersion>
-    <NetcodeNetcodeInclude>C:\sdk\netcode</NetcodeNetcodeInclude>
-    <NetcodeNetcodeBin>C:\sdk\netcode\lib</NetcodeNetcodeBin>
-    <NetcodeNetcodeLibs>netcode-lib.lib;netcode-protocol.lib</NetcodeNetcodeLibs>
-    <NetcodeBoostVersion>1.72.0</NetcodeBoostVersion>
-    <NetcodeBoostInclude>$(NetcodeSDK)\boost\$(NetcodeBoostVersion)\include</NetcodeBoostInclude>
-    <NetcodeBoostBin>$(NetcodeSDK)\boost\$(NetcodeBoostVersion)\$(NetcodeBuildSelect)\</NetcodeBoostBin>
-    <NetcodeBoostLibs>libboost_system-vc-mt-gd-x64-1_72.lib;libboost_regex-vc-mt-gd-x64-1_72.lib;libboost_program_options-vc-mt-gd-x64-1_72.lib;libboost_coroutine-vc-mt-gd-x64-1_72.lib;libboost_date_time-vc-mt-gd-x64-1_72.lib;libboost_context-vc-mt-gd-x64-1_72.lib</NetcodeBoostLibs>
-    <NetcodeMysqlconnVersion>8.0.19</NetcodeMysqlconnVersion>
-    <NetcodeMysqlconnInclude>$(NetcodeSDK)\mysqlconn\$(NetcodeMysqlconnVersion)\include</NetcodeMysqlconnInclude>
-    <NetcodeMysqlconnBin>$(NetcodeSDK)\mysqlconn\$(NetcodeMysqlconnVersion)\$(NetcodeBuildSelect)\</NetcodeMysqlconnBin>
-    <NetcodeMysqlconnLibs>mysqlcppconn8.lib</NetcodeMysqlconnLibs>
-    <NetcodeProtobufVersion>3.11.4</NetcodeProtobufVersion>
-    <NetcodeProtobufInclude>$(NetcodeSDK)\protobuf\$(NetcodeProtobufVersion)\include</NetcodeProtobufInclude>
-    <NetcodeProtobufBin>$(NetcodeSDK)\protobuf\$(NetcodeProtobufVersion)\$(NetcodeBuildSelect)</NetcodeProtobufBin>
-    <NetcodeProtobufLibs>libprotobufd.lib</NetcodeProtobufLibs>
-    <NetcodeIncludes>$(NetcodePhysXInclude);$(NetcodeAssimpInclude);$(NetcodeLuaInclude);$(NetcodeDXTexInclude);$(NetcodeSpdLogInclude);$(NetcodeJson11Include);$(NetcodeNetcodeInclude);$(NetcodeBoostInclude);$(NetcodeMysqlconnInclude)</NetcodeIncludes>
-    <NetcodeBinaries>$(NetcodePhysXBin);$(NetcodeAssimpBin);$(NetcodeLuaBin);$(NetcodeDXTexBin);$(NetcodeSpdLogBin);$(NetcodeJson11Bin);$(NetcodeNetcodeBin);$(NetcodeBoostBin);$(NetcodeMysqlconnBin);$(NetcodeProtobufBin)</NetcodeBinaries>
-    <NetcodeLibraries>$(NetcodeD3DLibs);$(NetcodePhysXLibs);$(NetcodeLuaLibs);$(NetcodeAssimpLibs);$(NetcodeDXTexLibs);$(NetcodeSpdLogLibs);$(NetcodeJson11Libs);$(NetcodeNetcodeLibs);$(NetcodeBoostLibs);$(NetcodeMysqlconnLibs);$(NetcodeProtobufLibs)</NetcodeLibraries>
-    <NetcodeDlls>$(NetcodePhysXBin);$(NetcodeAssimpBin);$(NetcodeLuaBin);$(NetcodeMysqlconnBin)</NetcodeDlls>
-  </PropertyGroup>
+  <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <OutDir>$(SolutionDir)Bin\v142-msvc\</OutDir>
     <IntDir>$(SolutionDir)Build\v142-msvc\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(NetcodeIncludes);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;BOOST_ALL_NO_LIB;_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;BOOST_BIND_NO_PLACEHOLDERS;FMT_LOCALE;FMT_SHARED;SPDLOG_COMPILED_LIB;SPDLOG_FMT_EXTERNAL;_WIN32_WINNT=0x0A00;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING;PROTOBUF_USE_DLLS;RAPIDJSON_HAS_STDSTRING=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
+      <AssemblerListingLocation>$(IntDir)%(RelativeDir)</AssemblerListingLocation>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(NetcodeBinaries);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(NetcodeLibraries);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
       <ObjectFileOutput>$(OutDir)Shaders\%(Filename).cso</ObjectFileOutput>
     </FxCompile>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <BuildMacro Include="NetcodeSDK">
-      <Value>$(NetcodeSDK)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeOS">
-      <Value>$(NetcodeOS)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeRuntimeLibrary">
-      <Value>$(NetcodeRuntimeLibrary)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodePlatform">
-      <Value>$(NetcodePlatform)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeToolset">
-      <Value>$(NetcodeToolset)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeBuildType">
-      <Value>$(NetcodeBuildType)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeBuildSelect">
-      <Value>$(NetcodeBuildSelect)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeD3DLibs">
-      <Value>$(NetcodeD3DLibs)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodePhysXVersion">
-      <Value>$(NetcodePhysXVersion)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodePhysXBin">
-      <Value>$(NetcodePhysXBin)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodePhysXInclude">
-      <Value>$(NetcodePhysXInclude)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodePhysXLibs">
-      <Value>$(NetcodePhysXLibs)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeAssimpVersion">
-      <Value>$(NetcodeAssimpVersion)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeAssimpInclude">
-      <Value>$(NetcodeAssimpInclude)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeAssimpBin">
-      <Value>$(NetcodeAssimpBin)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeAssimpLibs">
-      <Value>$(NetcodeAssimpLibs)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeLuaVersion">
-      <Value>$(NetcodeLuaVersion)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeLuaInclude">
-      <Value>$(NetcodeLuaInclude)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeLuaBin">
-      <Value>$(NetcodeLuaBin)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeLuaLibs">
-      <Value>$(NetcodeLuaLibs)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeDXTexVersion">
-      <Value>$(NetcodeDXTexVersion)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeDXTexInclude">
-      <Value>$(NetcodeDXTexInclude)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeDXTexBin">
-      <Value>$(NetcodeDXTexBin)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeDXTexLibs">
-      <Value>$(NetcodeDXTexLibs)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeSpdLogVersion">
-      <Value>$(NetcodeSpdLogVersion)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeSpdLogInclude">
-      <Value>$(NetcodeSpdLogInclude)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeSpdLogBin">
-      <Value>$(NetcodeSpdLogBin)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeSpdLogLibs">
-      <Value>$(NetcodeSpdLogLibs)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeJson11Version">
-      <Value>$(NetcodeJson11Version)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeJson11Include">
-      <Value>$(NetcodeJson11Include)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeJson11Bin">
-      <Value>$(NetcodeJson11Bin)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeJson11Libs">
-      <Value>$(NetcodeJson11Libs)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeNetcodeVersion">
-      <Value>$(NetcodeNetcodeVersion)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeNetcodeInclude">
-      <Value>$(NetcodeNetcodeInclude)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeNetcodeBin">
-      <Value>$(NetcodeNetcodeBin)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeNetcodeLibs">
-      <Value>$(NetcodeNetcodeLibs)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeBoostVersion">
-      <Value>$(NetcodeBoostVersion)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeBoostInclude">
-      <Value>$(NetcodeBoostInclude)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeBoostBin">
-      <Value>$(NetcodeBoostBin)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeBoostLibs">
-      <Value>$(NetcodeBoostLibs)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeMysqlconnVersion">
-      <Value>$(NetcodeMysqlconnVersion)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeMysqlconnInclude">
-      <Value>$(NetcodeMysqlconnInclude)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeMysqlconnBin">
-      <Value>$(NetcodeMysqlconnBin)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeMysqlconnLibs">
-      <Value>$(NetcodeMysqlconnLibs)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeIncludes">
-      <Value>$(NetcodeIncludes)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeBinaries">
-      <Value>$(NetcodeBinaries)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeLibraries">
-      <Value>$(NetcodeLibraries)</Value>
-    </BuildMacro>
-    <BuildMacro Include="NetcodeDlls">
-      <Value>$(NetcodeDlls)</Value>
-    </BuildMacro>
-  </ItemGroup>
+  <ItemGroup />
 </Project>

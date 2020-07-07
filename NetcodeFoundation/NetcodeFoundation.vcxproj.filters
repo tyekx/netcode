@@ -1,45 +1,126 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="Memory">
+      <UniqueIdentifier>{08d6e309-8fcc-448a-bbf7-dd59090391fc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    <Filter Include="Exception">
+      <UniqueIdentifier>{cfd2b866-7d35-4dc8-993b-cf006325681a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Math">
+      <UniqueIdentifier>{8fdd8c5d-05bd-4e8e-9f24-8ffe518edf4c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ArrayView.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Memory\Common.h">
+      <Filter>Memory</Filter>
     </ClInclude>
-    <ClInclude Include="Formats.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Memory\ObjectAllocator.hpp">
+      <Filter>Memory</Filter>
     </ClInclude>
-    <ClInclude Include="Platform.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Memory\PoolAllocator.hpp">
+      <Filter>Memory</Filter>
     </ClInclude>
-    <ClInclude Include="Sal.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Memory\ResourceAllocator.hpp">
+      <Filter>Memory</Filter>
     </ClInclude>
-    <ClInclude Include="Foundation.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Memory\SpyAllocator.hpp">
+      <Filter>Memory</Filter>
     </ClInclude>
-    <ClInclude Include="MemoryFunctions.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Memory\StackAllocator.hpp">
+      <Filter>Memory</Filter>
     </ClInclude>
+    <ClInclude Include="Memory\StdAllocatorAdapter.hpp">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\AlignedMallocator.hpp">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception\ArithmeticException.h">
+      <Filter>Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception\Common.h">
+      <Filter>Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception\IOException.h">
+      <Filter>Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception\NotSupportedException.h">
+      <Filter>Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception\OutOfRangeException.h">
+      <Filter>Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception\UndefinedBehaviourException.h">
+      <Filter>Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Common.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\GramSchmidt.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Matrix.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\NonZero.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Quaternion.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Vector2.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Vector3.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Vector4.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="ArrayView.hpp" />
+    <ClInclude Include="Exceptions.h" />
+    <ClInclude Include="Formats.h" />
+    <ClInclude Include="Foundation.h" />
+    <ClInclude Include="Math.h" />
+    <ClInclude Include="Memory.h" />
+    <ClInclude Include="Platform.h" />
+    <ClInclude Include="Sal.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MemoryFunctions.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Memory\Common.cpp">
+      <Filter>Memory</Filter>
     </ClCompile>
-    <ClCompile Include="Generated_Version.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Math\GramSchmidt.cpp">
+      <Filter>Math</Filter>
     </ClCompile>
+    <ClCompile Include="Math\Matrix.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\NonZero.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Quaternion.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Vector2.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Vector3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Vector4.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Common.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Exceptions.cpp" />
+    <ClCompile Include="Math.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Math\README.md">
+      <Filter>Math</Filter>
+    </None>
   </ItemGroup>
 </Project>

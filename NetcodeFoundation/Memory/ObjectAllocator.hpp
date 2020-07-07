@@ -3,6 +3,7 @@
 #include "Common.h"
 #include "StdAllocatorAdapter.hpp"
 
+#include <algorithm>
 #include <vector>
 #include <memory>
 
@@ -229,7 +230,7 @@ namespace Netcode::Memory {
             bool Owns(const void * ptr) const {
                 ptrdiff_t diff = reinterpret_cast<const uint8_t *>(ptr) - static_cast<const uint8_t *>(header.data);
 
-                return diff >= 0 && diff < header.numBytes;
+                return diff >= 0 && static_cast<size_t>(diff) < header.numBytes;
             }
 
             uint64_t Defragment(uint64_t numSteps) {

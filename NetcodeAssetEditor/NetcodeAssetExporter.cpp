@@ -133,7 +133,7 @@ std::tuple<std::unique_ptr<uint8_t[]>, size_t> NetcodeAssetExporter::Export(cons
 	for(const auto & mat : model.materials) {
 		Netcode::Asset::Material NetcodeMat = {};
 		NetcodeMat.diffuseColor = mat.diffuseColor;
-		NetcodeMat.ambientColor = DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+		NetcodeMat.ambientColor = Netcode::Float3{ 0.0f, 0.0f, 0.0f };
 		
 		strcpy_s(NetcodeMat.diffuseTexture, mat.diffuseMapReference.c_str());
 		strcpy_s(NetcodeMat.normalTexture, mat.normalMapReference.c_str());

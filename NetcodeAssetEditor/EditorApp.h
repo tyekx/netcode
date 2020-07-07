@@ -1,12 +1,12 @@
 #pragma once
 
 #include <Netcode/Modules.h>
-#include <Netcode/Path.h>
 #include "EditorFrameGraph.h"
 #include <algorithm>
 #include "Model.h"
 #include "BoundingBoxHelpers.h"
 #include <Netcode/BasicGeometry.h>
+#include <Netcode/IO/Path.h>
 
 namespace Netcode::Module {
 
@@ -19,9 +19,9 @@ namespace Netcode::Module {
 
 		EditorFrameGraph editorFrameGraph;
 
-		DirectX::XMFLOAT3 cameraAhead;
-		DirectX::XMFLOAT3 cameraPosition;
-		DirectX::XMFLOAT3 cameraUp;
+		Netcode::Float3 cameraAhead;
+		Netcode::Float3 cameraPosition;
+		Netcode::Float3 cameraUp;
 
 		float cameraFov;
 		float cameraFarZ;
@@ -43,14 +43,12 @@ namespace Netcode::Module {
 
 			for(const Collider & c : colls) {
 				ColliderData cd;
-				cd.Color = DirectX::XMFLOAT4A{ 0.0f, 0.0f, 1.0f, 1.0f };
+				cd.Color = Netcode::Float4{ 0.0f, 0.0f, 1.0f, 1.0f };
 				cd.BoneReference = c.boneReference;
 
-				DirectX::XMVECTOR localRotationQuat = DirectX::XMLoadFloat4(&c.localRotation);
-				DirectX::XMMATRIX R = DirectX::XMMatrixRotationQuaternion(localRotationQuat);
-				DirectX::XMMATRIX T = DirectX::XMMatrixTranslation(c.localPosition.x, c.localPosition.y, c.localPosition.z);
-				DirectX::XMMATRIX RT = DirectX::XMMatrixMultiply(R, T);
-				DirectX::XMStoreFloat4x4A(&cd.LocalTransform, DirectX::XMMatrixTranspose(RT));
+				Netcode::Matrix R = Netcode::RotationMatrix(c.localRotation);
+				Netcode::Matrix T = Netcode::TranslationMatrix(c.localPosition);
+				cd.LocalTransform = (R * T).Transpose();
 
 				colliderData.push_back(cd);
 			}
@@ -62,7 +60,7 @@ namespace Netcode::Module {
 			UpdateColliderData(colls);
 
 			Netcode::Graphics::UploadBatch upload;
-			std::vector<std::unique_ptr<DirectX::XMFLOAT3[]>> data;
+			std::vector<std::unique_ptr<Netcode::Float3[]>> data;
 
 			for(const Collider & c : colls) {
 				GBuffer g;
@@ -70,7 +68,7 @@ namespace Netcode::Module {
 				switch(c.type) {
 					case ColliderType::BOX:
 					{
-						std::unique_ptr<DirectX::XMFLOAT3[]> boxVData = std::make_unique<DirectX::XMFLOAT3[]>(24);
+						std::unique_ptr<Netcode::Float3[]> boxVData = std::make_unique<Netcode::Float3[]>(24);
 						Netcode::Graphics::BasicGeometry::CreateBoxWireframe(boxVData.get(), sizeof(DirectX::XMFLOAT3), c.boxArgs);
 						g.vertexBuffer = graphics->resources->CreateVertexBuffer(24 * sizeof(DirectX::XMFLOAT3), sizeof(DirectX::XMFLOAT3), ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
 						g.vertexCount = 24;
@@ -81,11 +79,11 @@ namespace Netcode::Module {
 					break;
 					case ColliderType::CAPSULE:
 					{
-						uint32_t vCount = 108;
-						uint32_t stride = sizeof(DirectX::XMFLOAT3);
+						const uint32_t vCount = Netcode::Graphics::BasicGeometry::GetCapsuleWireframeSize(12);
+						constexpr uint32_t stride = sizeof(Netcode::Float3);
 						uint32_t sizeInBytes = vCount * stride;
-						std::unique_ptr<DirectX::XMFLOAT3[]> boxVData = std::make_unique<DirectX::XMFLOAT3[]>(vCount);
-						Netcode::Graphics::BasicGeometry::CreateCapsuleWireframe(boxVData.get(), stride, c.capsuleArgs);
+						std::unique_ptr<Netcode::Float3[]> boxVData = std::make_unique<Netcode::Float3[]>(vCount);
+						Netcode::Graphics::BasicGeometry::CreateCapsuleWireframe(boxVData.get(), stride, 12, c.capsuleArgs.x, c.capsuleArgs.y, 0);
 						g.vertexBuffer = graphics->resources->CreateVertexBuffer(sizeInBytes, stride, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
 						g.vertexCount = vCount;
 						upload.Upload(g.vertexBuffer, boxVData.get(), sizeInBytes);
@@ -95,13 +93,13 @@ namespace Netcode::Module {
 					break;
 					case ColliderType::SPHERE:
 					{
-						uint32_t vCount = 1920;
-						uint32_t stride = sizeof(DirectX::XMFLOAT3);
-						uint32_t sizeInBytes = vCount * stride;
-						std::unique_ptr<DirectX::XMFLOAT3[]> boxVData = std::make_unique<DirectX::XMFLOAT3[]>(vCount);
-						Netcode::Graphics::BasicGeometry::CreateSphereWireFrame(boxVData.get(), stride, c.sphereArgs);
+						const uint32_t numVertices = Netcode::Graphics::BasicGeometry::GetSphereWireframeSize(12);
+						constexpr uint32_t stride = sizeof(Netcode::Float3);
+						uint32_t sizeInBytes = numVertices * stride;
+						std::unique_ptr<Netcode::Float3[]> boxVData = std::make_unique<Netcode::Float3[]>(numVertices);
+						Netcode::Graphics::BasicGeometry::CreateSphereWireframe(boxVData.get(), stride, c.sphereArgs, 12, 0);
 						g.vertexBuffer = graphics->resources->CreateVertexBuffer(sizeInBytes, stride, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
-						g.vertexCount = vCount;
+						g.vertexCount = numVertices;
 						upload.Upload(g.vertexBuffer, boxVData.get(), sizeInBytes);
 						upload.ResourceBarrier(g.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
 						data.emplace_back(std::move(boxVData));
@@ -127,8 +125,8 @@ namespace Netcode::Module {
 			BoundingBoxGenerator boundingBoxGen;
 
 			for(const DirectX::BoundingBox & bb : boundingBoxes) {
-				boundingBoxGen.UpdateForPoint(DirectX::XMFLOAT3{ bb.Center.x - bb.Extents.x, bb.Center.y - bb.Extents.y, bb.Center.z - bb.Extents.z });
-				boundingBoxGen.UpdateForPoint(DirectX::XMFLOAT3{ bb.Center.x + bb.Extents.x, bb.Center.y + bb.Extents.y, bb.Center.z + bb.Extents.z });
+				boundingBoxGen.UpdateForPoint(Netcode::Float3{ bb.Center.x - bb.Extents.x, bb.Center.y - bb.Extents.y, bb.Center.z - bb.Extents.z });
+				boundingBoxGen.UpdateForPoint(Netcode::Float3{ bb.Center.x + bb.Extents.x, bb.Center.y + bb.Extents.y, bb.Center.z + bb.Extents.z });
 			}
 
 			DirectX::BoundingBox boundingBox = boundingBoxGen.GetBoundingBox();
@@ -143,12 +141,10 @@ namespace Netcode::Module {
 			DirectX::BoundingSphere bs{ boundingBox.Center, len };
 
 
-			DirectX::XMMATRIX modelMat = DirectX::XMMatrixTranslation(-bs.Center.x, -bs.Center.y, -bs.Center.z);
-			DirectX::XMVECTOR modelDet = DirectX::XMMatrixDeterminant(modelMat);
-			DirectX::XMMATRIX invModelMat = DirectX::XMMatrixInverse(&modelDet, modelMat);
+			Netcode::Matrix modelMat = Netcode::TranslationMatrix(Netcode::Float3{ -bs.Center.x, -bs.Center.y, -bs.Center.z });
 
-			DirectX::XMStoreFloat4x4A(&perObjectData.Model, DirectX::XMMatrixTranspose(modelMat));
-			DirectX::XMStoreFloat4x4A(&perObjectData.InvModel, DirectX::XMMatrixTranspose(invModelMat));
+			perObjectData.Model = modelMat.Transpose();
+			perObjectData.InvModel = modelMat.Invert().Transpose();
 
 			float worldDepthDistance = 3.0f * 1.25f * len;
 			cameraWorldDistance = 2.0f * len;
@@ -181,8 +177,8 @@ namespace Netcode::Module {
 		Initialize modules
 		*/
 		virtual void Setup(IModuleFactory * factory) override {
-			Path::SetMediaRoot(L"Media");
-			Path::SetShaderRoot(L"Shaders");
+			Netcode::IO::Path::SetMediaRoot(L"Media");
+			Netcode::IO::Path::SetShaderRoot(L"Shaders");
 
 			events = std::make_unique<Netcode::Module::AppEventSystem>();
 
@@ -191,8 +187,8 @@ namespace Netcode::Module {
 			StartModule(graphics.get());
 
 			for(uint32_t i = 0; i < 128; ++i) {
-				DirectX::XMStoreFloat4x4A(&boneData.BindTransform[i], DirectX::XMMatrixIdentity());
-				DirectX::XMStoreFloat4x4A(&boneData.ToRootTransform[i], DirectX::XMMatrixIdentity());
+				boneData.BindTransform[i] = Netcode::Float4x4::Identity;
+				boneData.ToRootTransform[i] = Netcode::Float4x4::Identity;
 			}
 
 			cameraNearZ = 1.0f;
@@ -201,9 +197,9 @@ namespace Netcode::Module {
 			cameraAspect = graphics->GetAspectRatio();
 
 			cameraWorldDistance = 1.0f;
-			cameraPosition = DirectX::XMFLOAT3{ 0.0f, 0.0f, 180.0f };
-			cameraAhead = DirectX::XMFLOAT3{ 0.0f, 0.0f, -1.0f };
-			cameraUp = DirectX::XMFLOAT3{ 0.0f, 1.0f, 0.0f };
+			cameraPosition = Netcode::Float3{ 0.0f, 0.0f, 180.0f };
+			cameraAhead = Netcode::Float3{ 0.0f, 0.0f, -1.0f };
+			cameraUp = Netcode::Float3{ 0.0f, 1.0f, 0.0f };
 
 			mouseSpeed = 0.0005f;
 
@@ -215,33 +211,18 @@ namespace Netcode::Module {
 		}
 
 		void UpdatePerFrameData() {
-			perFrameData.eyePos = DirectX::XMFLOAT4A{ cameraPosition.x, cameraPosition.y, cameraPosition.z, 1.0f };
+			perFrameData.eyePos = Netcode::Float4{ cameraPosition.x, cameraPosition.y, cameraPosition.z, 1.0f };
 
-			DirectX::XMMATRIX proj = DirectX::XMMatrixPerspectiveFovRH(cameraFov, cameraAspect, cameraNearZ, cameraFarZ);
+			Netcode::Matrix proj = Netcode::PerspectiveFovMatrix(cameraFov, cameraAspect, cameraNearZ, cameraFarZ);
+			Netcode::Vector3 ahead = cameraAhead;
+			
+			Netcode::Matrix view = Netcode::LookAtMatrix(ahead * cameraWorldDistance, Netcode::Float3::Zero, cameraUp);
+			Netcode::Matrix viewFromOrigo = Netcode::LookToMatrix(Netcode::Float3::Zero, -ahead, cameraUp);
 
-			DirectX::XMVECTOR aheadV = DirectX::XMLoadFloat3(&cameraAhead);
-			DirectX::XMVECTOR upV = DirectX::XMLoadFloat3(&cameraUp);
-			DirectX::XMVECTOR posV = DirectX::XMVectorScale(aheadV, cameraWorldDistance);
-			DirectX::XMVECTOR realAheadV = DirectX::XMVectorNegate(aheadV);
-
-			DirectX::XMMATRIX view = DirectX::XMMatrixLookAtRH(posV, DirectX::g_XMZero, upV);
-
-			DirectX::XMMATRIX viewProj = DirectX::XMMatrixMultiply(view, proj);
-
-			DirectX::XMMATRIX viewFromOrigo = DirectX::XMMatrixLookToRH(DirectX::g_XMZero, realAheadV, upV);
-			DirectX::XMMATRIX rayDir = DirectX::XMMatrixMultiply(viewFromOrigo, proj);
-			DirectX::XMVECTOR rayDirDet = DirectX::XMMatrixDeterminant(rayDir);
-			rayDir = DirectX::XMMatrixInverse(&rayDirDet, rayDir);
-
-			DirectX::XMStoreFloat4x4A(&perFrameData.Proj, DirectX::XMMatrixTranspose(proj));
-			DirectX::XMStoreFloat4x4A(&perFrameData.View, DirectX::XMMatrixTranspose(view));
-			DirectX::XMStoreFloat4x4A(&perFrameData.ViewProj, DirectX::XMMatrixTranspose(viewProj));
-			DirectX::XMStoreFloat4x4A(&perFrameData.RayDir, DirectX::XMMatrixTranspose(rayDir));
-
-			DirectX::XMStoreFloat4x4A(&perFrameData.ProjTex, DirectX::XMMatrixIdentity());
-			DirectX::XMStoreFloat4x4A(&perFrameData.ViewProjInv, DirectX::XMMatrixIdentity());
-			DirectX::XMStoreFloat4x4A(&perFrameData.ViewInv, DirectX::XMMatrixIdentity());
-			DirectX::XMStoreFloat4x4A(&perFrameData.ProjInv, DirectX::XMMatrixIdentity());
+			perFrameData.Proj = proj.Transpose();
+			perFrameData.View = view.Transpose();
+			perFrameData.ViewProj = (view * proj).Transpose();
+			perFrameData.RayDir = (viewFromOrigo * proj).Invert().Transpose();
 			perFrameData.nearZ = cameraNearZ;
 			perFrameData.farZ = cameraFarZ;
 			perFrameData.fov = cameraFov;
@@ -261,13 +242,10 @@ namespace Netcode::Module {
 				cameraYaw -= DirectX::XM_2PI;
 			}
 
-			DirectX::XMVECTOR cameraYawQuat = DirectX::XMQuaternionRotationRollPitchYaw(0.0f, cameraYaw, 0.0f);
-			
-			DirectX::XMFLOAT3 minusUnitZ{ 0.0f, 0.0f, -1.0f };
-			DirectX::XMVECTOR cameraQuat = DirectX::XMQuaternionRotationRollPitchYaw(cameraPitch, cameraYaw, 0.0f);
-			DirectX::XMVECTOR aheadStart = DirectX::XMLoadFloat3(&minusUnitZ);
+			Netcode::Quaternion cameraYawQuat{ 0.0f, cameraYaw, 0.0f };
+			Netcode::Vector3 minusUnitZ = Netcode::Float3{ 0.0f, 0.0f, -1.0f };
 
-			DirectX::XMStoreFloat3(&cameraAhead, DirectX::XMVector3Normalize(DirectX::XMVector3Rotate(aheadStart, cameraQuat)));
+			cameraAhead = minusUnitZ.Rotate(cameraYawQuat).Normalize();
 
 			UpdatePerFrameData();
 

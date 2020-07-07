@@ -25,7 +25,7 @@ namespace Netcode {
 	 */
 	template<typename ZeroCheckConcept>
 	class NonZero {
-		ZeroCheckConcept v;
+		const ZeroCheckConcept & v;
 
 	public:
 		NonZero(const ZeroCheckConcept & rhs) : v{ rhs } {

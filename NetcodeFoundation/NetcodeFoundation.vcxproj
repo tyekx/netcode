@@ -6,6 +6,54 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ArrayView.hpp" />
+    <ClInclude Include="Exceptions.h" />
+    <ClInclude Include="Exception\ArithmeticException.h" />
+    <ClInclude Include="Exception\Common.h" />
+    <ClInclude Include="Exception\IOException.h" />
+    <ClInclude Include="Exception\NotSupportedException.h" />
+    <ClInclude Include="Exception\OutOfRangeException.h" />
+    <ClInclude Include="Exception\UndefinedBehaviourException.h" />
+    <ClInclude Include="Formats.h" />
+    <ClInclude Include="Foundation.h" />
+    <ClInclude Include="Math.h" />
+    <ClInclude Include="Math\Common.h" />
+    <ClInclude Include="Math\GramSchmidt.h" />
+    <ClInclude Include="Math\Matrix.h" />
+    <ClInclude Include="Math\NonZero.hpp" />
+    <ClInclude Include="Math\Quaternion.h" />
+    <ClInclude Include="Math\Vector2.h" />
+    <ClInclude Include="Math\Vector3.h" />
+    <ClInclude Include="Math\Vector4.h" />
+    <ClInclude Include="Memory.h" />
+    <ClInclude Include="Memory\AlignedMallocator.hpp" />
+    <ClInclude Include="Memory\Common.h" />
+    <ClInclude Include="Memory\ObjectAllocator.hpp" />
+    <ClInclude Include="Memory\PoolAllocator.hpp" />
+    <ClInclude Include="Memory\ResourceAllocator.hpp" />
+    <ClInclude Include="Memory\SpyAllocator.hpp" />
+    <ClInclude Include="Memory\StackAllocator.hpp" />
+    <ClInclude Include="Memory\StdAllocatorAdapter.hpp" />
+    <ClInclude Include="Platform.h" />
+    <ClInclude Include="Sal.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Exceptions.cpp" />
+    <ClCompile Include="Math.cpp" />
+    <ClCompile Include="Math\Common.cpp" />
+    <ClCompile Include="Math\GramSchmidt.cpp" />
+    <ClCompile Include="Math\Matrix.cpp" />
+    <ClCompile Include="Math\NonZero.cpp" />
+    <ClCompile Include="Math\Quaternion.cpp" />
+    <ClCompile Include="Math\Vector2.cpp" />
+    <ClCompile Include="Math\Vector3.cpp" />
+    <ClCompile Include="Math\Vector4.cpp" />
+    <ClCompile Include="Memory\Common.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Math\README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{D968F35A-74B8-4107-853E-3608AE3B4F40}</ProjectGuid>
@@ -32,6 +80,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <VcpkgEnabled>true</VcpkgEnabled>
+    <VcpkgAutoLink>true</VcpkgAutoLink>
+    <VcpkgUserTriplet>x64-windows</VcpkgUserTriplet>
+    <VcpkgConfiguration>Debug</VcpkgConfiguration>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -45,18 +99,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="ArrayView.hpp" />
-    <ClInclude Include="Formats.h" />
-    <ClInclude Include="Foundation.h" />
-    <ClInclude Include="MemoryFunctions.h" />
-    <ClInclude Include="Platform.h" />
-    <ClInclude Include="Sal.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Generated_Version.cpp" />
-    <ClCompile Include="MemoryFunctions.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
