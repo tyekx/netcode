@@ -29,7 +29,7 @@ namespace Netcode::Graphics::DX12 {
 	struct Glyph
 	{
 		uint32_t Character;
-		RECT Subrect;
+		Rect Subrect;
 		float XOffset;
 		float YOffset;
 		float XAdvance;
@@ -88,8 +88,8 @@ namespace Netcode::Graphics::DX12 {
 			float scale,
 			float layerDepth) const;
 
-		RECT __cdecl MeasureDrawBounds(const wchar_t * text, const Netcode::Float2 & position) const;
-		RECT  MeasureDrawBounds(const wchar_t * text, DirectX::FXMVECTOR position) const;
+		Rect __cdecl MeasureDrawBounds(const wchar_t * text, const Netcode::Float2 & position) const;
+		Rect  MeasureDrawBounds(const wchar_t * text, DirectX::FXMVECTOR position) const;
 
 		Netcode::Float2 MeasureString(const char * str) const override;
 		Netcode::Float2 MeasureString(const wchar_t * str) const override;
@@ -106,8 +106,8 @@ namespace Netcode::Graphics::DX12 {
 		virtual wchar_t GetHeighestAlphaNumericChar() const override;
 		virtual Float2 GetMaxSizedAlphaNumericStringOf(uint32_t stringMaxLength) const override;
 
-		RECT __cdecl MeasureDrawBounds(const char * text, const Netcode::Float2 & position) const;
-		RECT  MeasureDrawBounds(const char * text, DirectX::FXMVECTOR position) const;
+		Rect __cdecl MeasureDrawBounds(const char * text, const Netcode::Float2 & position) const;
+		Rect  MeasureDrawBounds(const char * text, DirectX::FXMVECTOR position) const;
 
 		// Spacing properties
 		float __cdecl GetLineSpacing() const;

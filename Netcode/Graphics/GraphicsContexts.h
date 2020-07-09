@@ -142,6 +142,8 @@ namespace Netcode::Graphics {
 		// resets to default viewport size = backbuffer viewport
 		virtual void SetViewport() = 0;
 
+		virtual Float4 GetViewport() = 0;
+
 		virtual void SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) = 0;
 		virtual void SetScissorRect(uint32_t width, uint32_t height) = 0;
 		virtual void SetScissorRect() = 0;

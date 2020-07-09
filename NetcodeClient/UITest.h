@@ -52,15 +52,15 @@ public:
 
 		std::shared_ptr<UI::TextBox> usernameTextBox = std::make_shared<UI::TextBox>();
 		usernameTextBox->Sizing(UI::SizingType::FIXED);
-		usernameTextBox->Size(Netcode::Float2{ 280.0f, 100.0f });
+		usernameTextBox->Size(Netcode::Float2{ 500.0f, 100.0f });
 		usernameTextBox->Font(assets->ImportFont(L"titillium18.spritefont"));
 		usernameTextBox->VerticalContentAlignment(UI::VerticalAnchor::MIDDLE);
 		usernameTextBox->HorizontalContentAlignment(UI::HorizontalAnchor::LEFT);
 
-		usernameField->AddChild(usernameLabel);
+		//usernameField->AddChild(usernameLabel);
 		usernameField->AddChild(usernameTextBox);
 
-		inputWrapper->AddChild(titleLabel);
+		//inputWrapper->AddChild(titleLabel);
 		inputWrapper->AddChild(usernameField);
 
 		inputGroup->AddChild(inputWrapper);

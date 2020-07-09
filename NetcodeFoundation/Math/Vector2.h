@@ -77,6 +77,10 @@ namespace Netcode {
 			return DirectX::XMVector3Rotate(v, DirectX::XMQuaternionRotationRollPitchYaw(0.0f, 0.0f, radians));
 		}
 
+		Vector2 Reciprocal() const {
+			return DirectX::XMVectorReciprocal(v);
+		}
+
 		bool NC_MATH_CALLCONV AnyZero() const noexcept;
 
 		bool NC_MATH_CALLCONV AllZero() const noexcept;

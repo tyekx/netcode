@@ -41,16 +41,17 @@ namespace Netcode {
 		uint8_t * pixels;
 	};
 
-	struct RECT {
-		int left;
-		int top;
-		int right;
-		int bottom;
+	struct Rect {
+		int32_t left;
+		int32_t top;
+		int32_t right;
+		int32_t bottom;
 	};
 
 #else
 
 	using Image = DirectX::Image;
+	using Rect = RECT;
 
 #endif
 
@@ -222,6 +223,17 @@ namespace Netcode {
 		INVERT = 6,
 		INCR = 7,
 		DECR = 8
+	};
+
+	enum class BackgroundType : unsigned {
+		NONE = 0,
+		SOLID = 1,
+		TEXTURE = 2
+	};
+
+	enum class BorderType : unsigned {
+		NONE = 0,
+		SOLID = 1
 	};
 
 	struct StencilOpDesc {
@@ -449,38 +461,86 @@ namespace Netcode {
 
 	using ResourceViewsRef = std::shared_ptr<ResourceViews>;
 
+	struct SpriteDesc {
+		BackgroundType type;
+		Netcode::ResourceViewsRef texture;
+		Netcode::UInt2 textureSize;
+		Netcode::Float4 color;
+		Rect sourceRect;
+
+		SpriteDesc() :
+			type{ BackgroundType::NONE },
+			texture{ nullptr },
+			textureSize{ Netcode::UInt2::Zero },
+			color{ Netcode::Float4::Zero },
+			sourceRect{ 0, 0, 0, 0 } {
+
+		}
+
+		SpriteDesc(const Netcode::Float4 & color) :
+			type{ BackgroundType::SOLID },
+			texture{ nullptr },
+			textureSize{ Netcode::UInt2::Zero },
+			color{ color },
+			sourceRect{ 0, 0, 0, 0 } {
+
+		}
+
+		SpriteDesc(const Netcode::ResourceViewsRef & texture, const Netcode::UInt2 & textureSize) :
+			SpriteDesc(texture, textureSize, Netcode::Float4::One) { }
+
+		SpriteDesc(const Netcode::ResourceViewsRef & texture, const Netcode::UInt2 & textureSize, const Netcode::Float4 & albedoColor) :
+			SpriteDesc(texture, textureSize, Rect{ 0, 0, static_cast<int32_t>(textureSize.x), static_cast<int32_t>(textureSize.y) }, albedoColor) {
+
+		}
+		SpriteDesc(const Netcode::ResourceViewsRef & texture, const Netcode::UInt2 & textureSize, const Rect & sourceRect) :
+			SpriteDesc(texture, textureSize, sourceRect, Netcode::Float4::One) {
+
+		}
+
+		SpriteDesc(const Netcode::ResourceViewsRef & texture, const Netcode::UInt2 & textureSize, const Rect & sourceRect, const Netcode::Float4 & albedoColor) :
+			type{ BackgroundType::TEXTURE },
+			texture{ texture },
+			textureSize{ textureSize },
+			color{ albedoColor },
+			sourceRect{ sourceRect } {
+
+		}
+	};
+
+	struct BorderDesc {
+		BorderType type;
+		float borderWidth;
+		float borderRadius;
+		Netcode::Float4 color;
+
+		BorderDesc() : type{ BorderType::NONE }, borderWidth{ 0.0f }, borderRadius{ 0.0f }, color{ Netcode::Float4::Zero } { }
+		
+		BorderDesc(float width, float radius, const Netcode::Float4 & color) :
+			type{ BorderType::SOLID },
+			borderWidth{ width },
+			borderRadius{ radius },
+			color{ color } { }
+	};
+
 	class SpriteBatch {
 	public:
 		virtual ~SpriteBatch() = default;
-		virtual void BeginRecord(void* renderContext, Netcode::Float4x4 viewProj) = 0;
+		virtual void BeginRecord(void* renderContext, Float4x4 viewProj) = 0;
 
 		virtual void SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) = 0;
-		virtual void SetScissorRect(const RECT & rect) = 0;
+		virtual void SetScissorRect(const Rect & rect) = 0;
 		virtual void SetScissorRect() = 0;
 
-		virtual void DrawSprite(ResourceViewsRef texture, const Netcode::UInt2 & textureSize, const Netcode::Float2 & position) = 0;
-		virtual void DrawSprite(ResourceViewsRef texture, const Netcode::UInt2 & textureSize, const Netcode::Float2 & position, const Netcode::Float2 & size) = 0;
-		virtual void DrawSprite(ResourceViewsRef texture, const Netcode::UInt2 & textureSize, const Netcode::Float2 & position, const Netcode::Float2 & size, const Netcode::Float4 & color) = 0;
+		virtual void DrawSprite(const SpriteDesc & spriteDesc, const Float2 & position) = 0;
+		virtual void DrawSprite(const SpriteDesc & spriteDesc, const Float2 & position, const Float2 & size) = 0;
+		virtual void DrawSprite(const SpriteDesc & spriteDesc, const Float2 & position, const Float2 & size, const Float2 & rotationOrigin, float rotationZ) = 0;
+		virtual void DrawSprite(const SpriteDesc & spriteDesc, const Float2 & position, const Float2 & size, const Float2 & rotationOrigin, float rotationZ, float layerDepth) = 0;
 
-		virtual void DrawSprite(ResourceViewsRef texture,
-			const Netcode::UInt2 & textureSize,
-			const Netcode::Float2 & position,
-			const RECT * sourceRectangle,
-			const Netcode::Float4 & color,
-			float rotation,
-			const Netcode::Float2 & origin,
-			float scale,
-			float layerDepth) = 0;
-
-		virtual void DrawSprite(ResourceViewsRef texture,
-								const Netcode::UInt2 & textureSize,
-								const Netcode::Float2  & destPosition,
-								const Netcode::Float2 & destSize,
-								const RECT * sourceRectangle,
-								const Netcode::Float4 & color,
-								float rotation,
-								const Netcode::Float2 & origin,
-								float layerDepth) = 0;
+		virtual void DrawSprite(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, const Float2 & position) = 0;
+		virtual void DrawSprite(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, const Float2 & position, const Float2 & size) = 0;
+		virtual void DrawSprite(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, const Float2 & position, const Float2 & size, const Float2 & rotationOrigin, float rotationZ) = 0;
+		virtual void DrawSprite(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, const Float2 & position, const Float2 & size, const Float2 & rotationOrigin, float rotationZ, float layerDepth) = 0;
 
 		virtual void EndRecord() = 0;
 	};

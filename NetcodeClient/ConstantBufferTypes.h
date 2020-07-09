@@ -80,3 +80,12 @@ struct DebugPhysxShapeData {
 	Netcode::Float4x4 local;
 	Netcode::Float4x4 offset;
 };
+
+struct ControlDisplayData {
+	float borderRadius;
+	float borderWidth;
+	Netcode::Float2 spriteSize;
+	Netcode::Float2 screenSize;
+	Netcode::Float2 screenPosition;
+	Netcode::Float4 borderColor;
+};

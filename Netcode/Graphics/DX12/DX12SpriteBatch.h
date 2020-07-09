@@ -49,7 +49,7 @@ namespace Netcode::Graphics::DX12
                 (static_cast<uint64_t>(bottom) & mask);
         }
 
-        RectHash(const RECT & rect) : RectHash(rect.left, rect.right, rect.top, rect.bottom) {
+        RectHash(const Rect & rect) : RectHash(rect.left, rect.right, rect.top, rect.bottom) {
 
         }
 
@@ -68,22 +68,22 @@ namespace Netcode::Graphics::DX12
 
     class SpriteScissorRect {
         RectHash hash;
-        RECT rect;
+        Rect rect;
     public:
         SpriteScissorRect() = default;
 
-        SpriteScissorRect(const RECT & r) :hash{ r }, rect{ r } {}
+        SpriteScissorRect(const Rect & r) :hash{ r }, rect{ r } {}
 
         void Clear() {
-            rect = RECT{ 0,0,0,0 };
+            rect = Rect{ 0,0,0,0 };
         }
 
-        void SetRect(const RECT & r) {
+        void SetRect(const Rect & r) {
             rect = r;
             hash = RectHash(r);
         }
 
-        RECT GetRect() const {
+        Rect GetRect() const {
             return rect;
         }
 
@@ -102,18 +102,15 @@ namespace Netcode::Graphics::DX12
 
     class SpriteBatch : public Netcode::SpriteBatch {
         static GpuResourceWeakRef indexBuffer;
-        static const DirectX::XMMATRIX MatrixIdentity;
-        static const DirectX::XMFLOAT2 Float2Zero;
     public:
 
-        __declspec(align(16)) struct SpriteInfo
-        {
-            DirectX::XMFLOAT4A source;
-            DirectX::XMFLOAT4A destination;
-            DirectX::XMFLOAT4A color;
-            DirectX::XMFLOAT4A originRotationDepth;
-            ResourceViewsRef texture;
-            DirectX::XMVECTOR textureSize;
+        struct SpriteInfo {
+            SpriteDesc spriteDesc;
+            BorderDesc borderDesc;
+            Float4 source;
+            Float4 destination;
+            Float4 originRotationDepth;
+            Vector2 textureSize;
             SpriteScissorRect scissorRect;
             unsigned int flags;
 
@@ -183,13 +180,12 @@ namespace Netcode::Graphics::DX12
         virtual ~SpriteBatch() = default;
 
         // Begin/End a batch of sprite drawing operations.
-        void Begin(SpriteSortMode sortMode = SpriteSortMode_Deferred, Netcode::Matrix transformMatrix = MatrixIdentity);
+        void Begin(SpriteSortMode sortMode = SpriteSortMode_Deferred, Netcode::Matrix transformMatrix = Netcode::Matrix{});
         void End();
 
         virtual void BeginRecord(void * ctx, Netcode::Float4x4 viewProj) override {
             renderContext = static_cast<Netcode::Graphics::IRenderContext *>(ctx);
-            Netcode::Matrix tMat = viewProj;
-            Begin(SpriteSortMode_Deferred, tMat);
+            Begin(SpriteSortMode_Deferred, viewProj);
         }
 
         virtual void EndRecord() override {
@@ -197,49 +193,22 @@ namespace Netcode::Graphics::DX12
         }
 
         virtual void SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)  override;
-        virtual void SetScissorRect(const RECT & rect)  override;
+        virtual void SetScissorRect(const Rect & rect)  override;
         virtual void SetScissorRect()  override;
 
-        virtual void DrawSprite(ResourceViewsRef texture, const Netcode::UInt2 & textureSize, const Netcode::Float2 & position) override;
 
-        virtual void DrawSprite(ResourceViewsRef texture, const Netcode::UInt2 & textureSize, const Netcode::Float2 & position, const Netcode::Float2 & size)  override;
 
-        virtual void DrawSprite(ResourceViewsRef texture, const Netcode::UInt2 & textureSize, const Netcode::Float2 & position, const Netcode::Float2 & size, const Netcode::Float4 & color)  override;
+        virtual void DrawSprite(const SpriteDesc & spriteDesc, const Float2 & position) override;
+        virtual void DrawSprite(const SpriteDesc & spriteDesc, const Float2 & position, const Float2 & size) override;
+        virtual void DrawSprite(const SpriteDesc & spriteDesc, const Float2 & position, const Float2 & size, const Float2 & rotationOrigin, float rotationZ) override;
+        virtual void DrawSprite(const SpriteDesc & spriteDesc, const Float2 & position, const Float2 & size, const Float2 & rotationOrigin, float rotationZ, float layerDepth) override;
 
-        virtual void DrawSprite(ResourceViewsRef texture,
-            const Netcode::UInt2 & textureSize,
-            const Netcode::Float2 & position,
-            const RECT * sourceRectangle,
-            const Netcode::Float4 & color,
-            float rotation,
-            const Netcode::Float2 & origin,
-            float scale,
-            float layerDepth) override;
+        virtual void DrawSprite(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, const Float2 & position) override;
+        virtual void DrawSprite(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, const Float2 & position, const Float2 & size) override;
+        virtual void DrawSprite(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, const Float2 & position, const Float2 & size, const Float2 & rotationOrigin, float rotationZ) override;
+        virtual void DrawSprite(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, const Float2 & position, const Float2 & size, const Float2 & rotationOrigin, float rotationZ, float layerDepth) override;
 
-        virtual void DrawSprite(ResourceViewsRef texture,
-            const Netcode::UInt2 & textureSize,
-            const Netcode::Float2 & destPosition,
-            const Netcode::Float2 & destSize,
-            const RECT * sourceRectangle,
-            const Netcode::Float4 & color,
-            float rotation,
-            const Netcode::Float2 & origin,
-            float layerDepth) override;
-        /*
-        // Draw overloads specifying position, origin and scale as XMFLOAT2.
-        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, DirectX::FXMVECTOR color = DirectX::Colors::White);
-        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::XMFLOAT2 const & origin = Float2Zero, float scale = 1, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
-        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::XMFLOAT2 const & position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color, float rotation, DirectX::XMFLOAT2 const & origin, DirectX::XMFLOAT2 const & scale, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
 
-        // Draw overloads specifying position, origin and scale via the first two components of an XMVECTOR.
-        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, DirectX::FXMVECTOR color = DirectX::Colors::White);
-        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::FXMVECTOR origin = DirectX::g_XMZero, float scale = 1, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
-        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR position, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color, float rotation, DirectX::FXMVECTOR origin, DirectX::GXMVECTOR scale, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
-
-        // Draw overloads specifying position as a RECT.
-        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, RECT const & destinationRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White);
-        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, RECT const & destinationRectangle, _In_opt_ RECT const * sourceRectangle, DirectX::FXMVECTOR color = DirectX::Colors::White, float rotation = 0, DirectX::XMFLOAT2 const & origin = Float2Zero, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
-        */
     private:
         // Implementation helper methods.
         void GrowSpriteQueue();
@@ -248,15 +217,11 @@ namespace Netcode::Graphics::DX12
         void SortSprites();
         void GrowSortedSprites();
 
-        void RenderBatch(ResourceViewsRef texture, DirectX::XMVECTOR textureSize, SpriteInfo const * const * sprites, uint32_t count);
+        void NC_MATH_CALLCONV RenderBatch(ResourceViewsRef texture, Vector2 textureSize, const SpriteInfo * const * sprites, uint32_t count);
 
-        static void RenderSprite(SpriteInfo const * sprite,
-                                 PCT_Vertex * vertices,
-                                 DirectX::FXMVECTOR textureSize,
-                                 DirectX::FXMVECTOR inverseTextureSize);
+        static void NC_MATH_CALLCONV RenderSprite(const SpriteInfo * sprite, PCT_Vertex * vertices, Vector2 textureSize, Vector2 inverseTextureSize);
 
-        void Draw(ResourceViewsRef textureSRV, DirectX::XMUINT2 const & textureSize, DirectX::FXMVECTOR destination, RECT const * sourceRectangle, DirectX::FXMVECTOR color, DirectX::FXMVECTOR originRotationDepth, unsigned int flags);
-
+        void NC_MATH_CALLCONV Draw(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, Netcode::Vector4 destination, Netcode::Vector4 originRotationDepth, uint32_t flags);
     };
 
     using DX12SpriteBatch = Netcode::Graphics::DX12::SpriteBatch;

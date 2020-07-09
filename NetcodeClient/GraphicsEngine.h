@@ -412,8 +412,8 @@ private:
 		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
 
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"sprite_Vertex.cso");
-		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"sprite_Pixel.cso");
+		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"Netcode_SpriteVS.cso");
+		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"Netcode_SpritePS.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		auto rootSignature = rootSigBuilder->BuildFromShader(vs);

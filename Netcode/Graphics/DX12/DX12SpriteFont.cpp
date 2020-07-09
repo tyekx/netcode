@@ -199,10 +199,14 @@ namespace Netcode::Graphics::DX12 {
 				offset = XMVectorMultiplyAdd(glyphRect, axisIsMirroredTable[effects & 3], offset);
 			}
 
-			Netcode::Float2 offsetValue;
-			DirectX::XMStoreFloat2(&offsetValue, offset);
+			Netcode::Float2 offsetValue = Netcode::Vector2{ offset };
+			Netcode::Float2 size {
+				static_cast<float>(glyph->Subrect.right - glyph->Subrect.left),
+				static_cast<float>(glyph->Subrect.bottom - glyph->Subrect.top)
+			};
 
-			spriteBatch->DrawSprite(shaderResourceView, textureSize, position, &glyph->Subrect, color, rotation, offsetValue, scale, layerDepth);
+			spriteBatch->DrawSprite(SpriteDesc{ shaderResourceView, textureSize, glyph->Subrect, color }, 
+				position, size, offsetValue, rotation, layerDepth);
 		});
 	}
 
@@ -340,9 +344,9 @@ namespace Netcode::Graphics::DX12 {
 		};
 	}
 
-	RECT SpriteFont::MeasureDrawBounds(const wchar_t * text, const Netcode::Float2 & position) const
+	Rect SpriteFont::MeasureDrawBounds(const wchar_t * text, const Netcode::Float2 & position) const
 	{
-		RECT result = { LONG_MAX, LONG_MAX, 0, 0 };
+		Rect result = { LONG_MAX, LONG_MAX, 0, 0 };
 
 		ForEachGlyph(text, [&](Glyph const * glyph, float x, float y, float advance)
 		{
@@ -378,7 +382,7 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 
-	RECT SpriteFont::MeasureDrawBounds(const wchar_t * text, DirectX::FXMVECTOR position) const
+	Rect SpriteFont::MeasureDrawBounds(const wchar_t * text, DirectX::FXMVECTOR position) const
 	{
 		Netcode::Float2 pos;
 		DirectX::XMStoreFloat2(&pos, position);
@@ -386,13 +390,13 @@ namespace Netcode::Graphics::DX12 {
 		return MeasureDrawBounds(text, pos);
 	}
 
-	RECT SpriteFont::MeasureDrawBounds(const char * text, const Netcode::Float2 & position) const
+	Rect SpriteFont::MeasureDrawBounds(const char * text, const Netcode::Float2 & position) const
 	{
 		return MeasureDrawBounds(ConvertUTF8(text), position);
 	}
 
 
-	RECT SpriteFont::MeasureDrawBounds(const char * text, DirectX::FXMVECTOR position) const
+	Rect SpriteFont::MeasureDrawBounds(const char * text, DirectX::FXMVECTOR position) const
 	{
 		Netcode::Float2 pos;
 		XMStoreFloat2(&pos, position);

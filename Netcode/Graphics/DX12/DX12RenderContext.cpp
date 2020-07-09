@@ -62,6 +62,7 @@ namespace Netcode::Graphics::DX12 {
 	) : BaseRenderContext(resourcePool, cbpool, dheaps, std::move(commandListRef)),
 		currentlyBoundDepth{},
 		currentlyBoundRenderTargets{},
+		currentlyBoundViewport{},
 		streamOutput_FilledSizeLocation{},
 		backbuffer { backbuffer },
 		backbufferDepth{ backbufferDepth },
@@ -205,8 +206,8 @@ namespace Netcode::Graphics::DX12 {
 		vp.Height = static_cast<float>(bottom);
 		vp.MinDepth = 0.0f;
 		vp.MaxDepth = 1.0f;
-
 		commandList->RSSetViewports(1, &vp);
+		currentlyBoundViewport = vp;
 	}
 
 	void GraphicsContext::SetViewport(uint32_t width, uint32_t height)
@@ -217,6 +218,17 @@ namespace Netcode::Graphics::DX12 {
 	void GraphicsContext::SetViewport()
 	{
 		commandList->RSSetViewports(1, &defaultViewport);
+		currentlyBoundViewport = defaultViewport;
+	}
+
+	Float4 GraphicsContext::GetViewport()
+	{
+		return Float4{
+			currentlyBoundViewport.TopLeftX,
+			currentlyBoundViewport.TopLeftY,
+			currentlyBoundViewport.Width,
+			currentlyBoundViewport.Height
+		};
 	}
 
 	void GraphicsContext::SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
@@ -524,6 +536,12 @@ namespace Netcode::Graphics::DX12 {
 	void ComputeContext::SetViewport()
 	{
 		Netcode::Detail::NotImplementedAssertion();
+	}
+
+	Float4 ComputeContext::GetViewport()
+	{
+		Netcode::Detail::NotImplementedAssertion();
+		return Float4::Zero;
 	}
 
 	void ComputeContext::SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)

@@ -85,6 +85,8 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetViewport() override;
 
+		virtual Float4 GetViewport() override;
+
 		virtual void SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) override;
 
 		virtual void SetScissorRect(uint32_t width, uint32_t height) override;
@@ -129,6 +131,7 @@ namespace Netcode::Graphics::DX12 {
 		D3D12_CPU_DESCRIPTOR_HANDLE currentlyBoundDepth;
 		D3D12_CPU_DESCRIPTOR_HANDLE currentlyBoundRenderTargets[D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT];
 		D3D12_GPU_VIRTUAL_ADDRESS streamOutput_FilledSizeLocation;
+		D3D12_VIEWPORT currentlyBoundViewport;
 	public:
 		D3D12_CPU_DESCRIPTOR_HANDLE backbuffer;
 		D3D12_CPU_DESCRIPTOR_HANDLE backbufferDepth;
@@ -185,6 +188,8 @@ namespace Netcode::Graphics::DX12 {
 		virtual void SetViewport(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) override;
 		virtual void SetViewport(uint32_t width, uint32_t height) override;
 		virtual void SetViewport() override;
+
+		virtual Float4 GetViewport() override;
 
 		virtual void SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) override;
 		virtual void SetScissorRect(uint32_t width, uint32_t height) override;

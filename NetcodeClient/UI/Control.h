@@ -190,7 +190,7 @@ namespace UI {
 
         virtual void OnRender(Netcode::SpriteBatchRef batch) {
             if(backgroundImage != nullptr) {
-                batch->DrawSprite(backgroundImage, BackgroundImageSize(), ScreenPosition());
+                batch->DrawSprite(Netcode::SpriteDesc{ backgroundImage, BackgroundImageSize() }, ScreenPosition());
             }
 
             Control::OnRender(batch);
@@ -432,6 +432,13 @@ namespace UI {
 
         void IsPassword(bool isPw) {
             isPassword = isPw;
+        }
+
+        virtual void OnRender(Netcode::SpriteBatchRef batch) override {
+            batch->DrawSprite(Netcode::SpriteDesc{ Netcode::Float4{ 0.7f, 0.7f, 0.7f, 1.0f } },
+                Netcode::BorderDesc{ 3.0f, 10.0f, Netcode::Float4{ 0.5f, 0.2f, 0.2f, 1.0f } },
+                ScreenPosition(),
+                Size());
         }
 
 

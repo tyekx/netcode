@@ -5,7 +5,6 @@ set(NETCODE_VS
 	"gbufferPass_Vertex.hlsl"
 	"lightingPass_Vertex.hlsl"
 	"skinningPass_Vertex.hlsl"
-	"sprite_Vertex.hlsl"
 	"ssaoPass_Vertex.hlsl"
 	"debugPrimPass_Vertex.hlsl"
 )
@@ -14,7 +13,6 @@ set(NETCODE_PS
 	"envmapPass_Pixel.hlsl"
 	"gbufferPass_Pixel.hlsl"
 	"lightingPass_Pixel.hlsl"
-	"sprite_Pixel.hlsl"
 	"ssaoBlurPass_Pixel.hlsl"
 	"ssaoOcclusionPass_Pixel.hlsl"
 	"debugPrimPass_Pixel.hlsl"

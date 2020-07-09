@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.8)
 
-set(NETCODE_VS "Netcode_DebugPrimVS.hlsl")
+set(NETCODE_VS "Netcode_DebugPrimVS.hlsl" "Netcode_SpriteVS.hlsl")
 
-set(NETCODE_PS "Netcode_DebugPrimPS.hlsl")
+set(NETCODE_PS "Netcode_DebugPrimPS.hlsl" "Netcode_SpritePS.hlsl")
 
 set(NETCODE_GS "")
 
