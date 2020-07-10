@@ -63,6 +63,12 @@ public:
 		return texResource;
 	}
 
+	Netcode::ResourceViewsRef CreateTextureRV(Netcode::GpuResourceRef resourceRef) {
+		Netcode::ResourceViewsRef rv = graphics->resources->CreateShaderResourceViews(1);
+		rv->CreateSRV(0, resourceRef);
+		return rv;
+	}
+
 	Netcode::Asset::Model * Import(std::wstring relativeMediaPath) {
 		const auto it = storage.find(relativeMediaPath);
 

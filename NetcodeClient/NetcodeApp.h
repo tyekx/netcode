@@ -141,7 +141,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			gameScene->SpawnPhysxActor(planeActor);
 		}
 
-		loginPage = std::make_shared<LoginPage>(px.physics.Get());
+		loginPage = std::make_shared<LoginPage>(px);
 		loginPage->InitializeComponents();
 		loginPage->ScreenSize(Netcode::UInt2{ 1280, 720 });
 		loginPage->UpdateSize();
@@ -473,6 +473,8 @@ public:
 	*/
 	virtual void Exit() override {
 		loginPage->Destruct();
+		renderSystem.renderer.ui_Input.reset();
+		loginPage.reset();
 		Service::Clear();
 		px.ReleaseResources();
 		ShutdownModule(network.get());

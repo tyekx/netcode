@@ -468,6 +468,18 @@ namespace Netcode {
 		Netcode::Float4 color;
 		Rect sourceRect;
 
+		bool IsEmpty() const {
+			return type == BackgroundType::NONE;
+		}
+
+		bool operator==(const SpriteDesc & rhs) const {
+			return type == rhs.type && texture == rhs.texture;
+		}
+
+		bool operator!=(const SpriteDesc & rhs) const {
+			return !operator==(rhs);
+		}
+
 		SpriteDesc() :
 			type{ BackgroundType::NONE },
 			texture{ nullptr },
@@ -493,6 +505,7 @@ namespace Netcode {
 			SpriteDesc(texture, textureSize, Rect{ 0, 0, static_cast<int32_t>(textureSize.x), static_cast<int32_t>(textureSize.y) }, albedoColor) {
 
 		}
+
 		SpriteDesc(const Netcode::ResourceViewsRef & texture, const Netcode::UInt2 & textureSize, const Rect & sourceRect) :
 			SpriteDesc(texture, textureSize, sourceRect, Netcode::Float4::One) {
 
@@ -513,6 +526,18 @@ namespace Netcode {
 		float borderWidth;
 		float borderRadius;
 		Netcode::Float4 color;
+
+		bool IsEmpty() const {
+			return type == BorderType::NONE;
+		}
+
+		bool operator==(const BorderDesc & rhs) const {
+			return type == rhs.type && borderWidth == rhs.borderWidth && borderRadius == rhs.borderRadius;
+		}
+
+		bool operator!=(const BorderDesc & rhs) const {
+			return !operator==(rhs);
+		}
 
 		BorderDesc() : type{ BorderType::NONE }, borderWidth{ 0.0f }, borderRadius{ 0.0f }, color{ Netcode::Float4::Zero } { }
 		

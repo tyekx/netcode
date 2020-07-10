@@ -131,15 +131,97 @@ namespace UI {
 
     class Panel : public Control {
     protected:
+        Netcode::BorderType borderType;
+        float borderWidth;
+        float borderRadius;
+        Netcode::BackgroundType backgroundType;
         VerticalAnchor backgroundVerticalAlignment;
         HorizontalAnchor backgroundHorizontalAlignment;
         Netcode::ResourceViewsRef backgroundImage;
+        Netcode::Float2 backgroundSize;
         Netcode::UInt2 backgroundImageSize;
         Netcode::Float4 backgroundColor;
+        Netcode::Float4 borderColor;
+
+        Netcode::BorderType BorderType() const {
+            return borderType;
+        }
+
+        void BorderType(Netcode::BorderType type) {
+            borderType = type;
+        }
+
+        Netcode::BackgroundType BackgroundType() const {
+            return backgroundType;
+        }
+
+        void BackgroundType(Netcode::BackgroundType type) {
+            backgroundType = type;
+        }
+
+        void BackgroundImageSize(const Netcode::UInt2 & imgSize) {
+            backgroundImageSize = imgSize;
+        }
+
+        Netcode::SpriteDesc GetSpriteDesc() const {
+            if(BackgroundType() == Netcode::BackgroundType::TEXTURE) {
+                Netcode::Float2 bgSize = BackgroundSize();
+
+                if(bgSize.x == 0.0f || bgSize.y == 0.0f) {
+                    return Netcode::SpriteDesc{ BackgroundImage(), BackgroundImageSize(), BackgroundColor() };
+                } else {
+                    HorizontalAnchor ha = BackgroundHorizontalAlignment();
+                    VerticalAnchor va = BackgroundVerticalAlignment();
+
+                    Netcode::UInt2 imgSize = BackgroundImageSize();
+
+                    Netcode::Float2 imgSizeAsFloat = Netcode::Float2{
+                        static_cast<float>(imgSize.x),
+                        static_cast<float>(imgSize.y)
+                    };
+
+                    Netcode::Vector2 anchorOffset = CalculateAnchorOffset(ha, va, imgSizeAsFloat);
+                    Netcode::Vector2 anchorDiff = CalculateAnchorOffset(ha, va, bgSize);
+
+                    Netcode::Vector2 topLeftCorner = anchorOffset - anchorDiff;
+                    Netcode::Vector2 bottomRightCorner = topLeftCorner + imgSizeAsFloat;
+
+                    Netcode::Float2 tl = topLeftCorner;
+                    Netcode::Float2 br = bottomRightCorner;
+
+                    Netcode::Rect sourceRectangle{
+                        static_cast<int32_t>(tl.x),
+                        static_cast<int32_t>(tl.y),
+                        static_cast<int32_t>(br.x),
+                        static_cast<int32_t>(br.y)
+                    };
+
+                    return Netcode::SpriteDesc{ BackgroundImage(), BackgroundImageSize(), sourceRectangle, BackgroundColor() };
+                }
+            }
+
+            if(BackgroundType() == Netcode::BackgroundType::SOLID) {
+                return Netcode::SpriteDesc{ BackgroundColor() };
+            }
+
+            return Netcode::SpriteDesc{};
+        }
+
+        Netcode::BorderDesc GetBorderDesc() const {
+            if(BorderType() == Netcode::BorderType::SOLID) {
+                return Netcode::BorderDesc{ BorderWidth(), BorderRadius(), BorderColor() };
+            }
+
+            return Netcode::BorderDesc{};
+        }
 
     public:
-        Panel() : Control{}, backgroundVerticalAlignment{ VerticalAnchor::TOP }, backgroundHorizontalAlignment{ HorizontalAnchor::LEFT },
-            backgroundImage{ nullptr }, backgroundColor{ Netcode::Float4::Zero } { }
+        Netcode::UInt2 BackgroundImageSize() const {
+            return backgroundImageSize;
+        }
+
+        Panel() : Control{}, borderType{ Netcode::BorderType::NONE }, borderWidth{ 0.0f }, borderRadius{ 0.0f }, backgroundType{ Netcode::BackgroundType::NONE }, backgroundVerticalAlignment{ VerticalAnchor::TOP }, backgroundHorizontalAlignment{ HorizontalAnchor::LEFT },
+            backgroundImage{ nullptr }, backgroundSize{ Netcode::Float2::Zero }, backgroundImageSize{ Netcode::UInt2::Zero }, backgroundColor{ Netcode::Float4::Zero }, borderColor{ Netcode::Float4::Zero } { }
 
         virtual ~Panel() = default;
 
@@ -163,7 +245,62 @@ namespace UI {
             return backgroundColor;
         }
 
+        void ResetBackground() {
+            BackgroundImage(nullptr);
+            BackgroundColor(Netcode::Float4::Zero);
+            BackgroundSize(Netcode::Float2::Zero);
+            BackgroundType(Netcode::BackgroundType::NONE);
+        }
+
+        void ResetBorder() {
+            BorderRadius(0.0f);
+            BorderWidth(0.0f);
+            BorderColor(Netcode::Float4::Zero);
+            BorderType(Netcode::BorderType::NONE);
+        }
+
+        float BorderRadius() const {
+            return borderRadius;
+        }
+
+        void BorderRadius(float br) {
+            borderRadius = br;
+        }
+
+        void BorderWidth(float bw) {
+            BorderType(Netcode::BorderType::SOLID);
+            borderWidth = bw;
+        }
+
+        float BorderWidth() const {
+            return borderWidth;
+        }
+
+        void BorderColor(const Netcode::Float4 & c) {
+            borderColor = c;
+        }
+
+        Netcode::Float4 BorderColor() const {
+            return borderColor;
+        }
+
+        Netcode::Float2 BackgroundSize() const {
+            return backgroundSize;
+        }
+
+        void BackgroundSize(const Netcode::Float2 & bgSizeInPixels) {
+            backgroundSize = bgSizeInPixels;
+        }
+
         void BackgroundColor(const Netcode::Float4 & color) {
+            if(BackgroundType() == Netcode::BackgroundType::NONE) {
+                BackgroundType(Netcode::BackgroundType::SOLID);
+            }
+
+            if(color.w == 0.0f) {
+                BackgroundType(Netcode::BackgroundType::NONE);
+            }
+
             backgroundColor = color;
         }
 
@@ -171,26 +308,25 @@ namespace UI {
             return backgroundImage;
         }
 
-        Netcode::UInt2 BackgroundImageSize() const {
-            return backgroundImageSize;
-        }
-
-        void BackgroundImageSize(const Netcode::UInt2 & imgSize) {
-            backgroundImageSize = imgSize;
-        }
-
         void BackgroundImage(std::nullptr_t) {
             BackgroundImage(nullptr, Netcode::UInt2::Zero);
+            BackgroundType(Netcode::BackgroundType::SOLID);
         }
         
         void BackgroundImage(Netcode::ResourceViewsRef imageRef, const Netcode::UInt2 & imageSize) {
             backgroundImage = imageRef;
             BackgroundImageSize(imageSize);
+            if(imageRef != nullptr) {
+                BackgroundType(Netcode::BackgroundType::TEXTURE);
+            }
         }
 
         virtual void OnRender(Netcode::SpriteBatchRef batch) {
-            if(backgroundImage != nullptr) {
-                batch->DrawSprite(Netcode::SpriteDesc{ backgroundImage, BackgroundImageSize() }, ScreenPosition());
+            Netcode::SpriteDesc spriteDesc = GetSpriteDesc();
+            Netcode::BorderDesc borderDesc = GetBorderDesc();
+
+            if(!spriteDesc.IsEmpty() || !borderDesc.IsEmpty()) {
+                batch->DrawSprite(spriteDesc, borderDesc, ScreenPosition(), Size());
             }
 
             Control::OnRender(batch);
@@ -432,13 +568,6 @@ namespace UI {
 
         void IsPassword(bool isPw) {
             isPassword = isPw;
-        }
-
-        virtual void OnRender(Netcode::SpriteBatchRef batch) override {
-            batch->DrawSprite(Netcode::SpriteDesc{ Netcode::Float4{ 0.7f, 0.7f, 0.7f, 1.0f } },
-                Netcode::BorderDesc{ 3.0f, 10.0f, Netcode::Float4{ 0.5f, 0.2f, 0.2f, 1.0f } },
-                ScreenPosition(),
-                Size());
         }
 
 

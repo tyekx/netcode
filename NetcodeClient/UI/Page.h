@@ -16,7 +16,7 @@ namespace UI {
 		void ScreenSize(const Netcode::UInt2 & ss);
 		Netcode::UInt2 ScreenSize() const;
 
-		Page(physx::PxPhysics * pxPhysics);
+		Page(Netcode::Physics::PhysX & px);
 		
 		virtual void InitializeComponents() = 0;
 

@@ -183,14 +183,18 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 
 		// Walk through the sorted sprite list, looking for adjacent entries that share a texture.
 		ResourceViewsRef batchTexture;
-		Netcode::Vector2 batchTextureSize = {};
-		SpriteScissorRect batchSpr;
+		Vector2 batchTextureSize = {};
+		BorderDesc batchBorderDesc;
+		SpriteDesc batchSpriteDesc;
+		SpriteScissorRect batchSpr = Rect{};
 		uint32_t batchStart = 0;
 
 		for(uint32_t pos = 0; pos < mSpriteQueueCount; pos++)
 		{
 			ResourceViewsRef texture = mSortedSprites[pos]->spriteDesc.texture;
 			SpriteScissorRect spr = mSortedSprites[pos]->scissorRect;
+			BorderDesc borderDesc = mSortedSprites[pos]->borderDesc;
+			SpriteDesc spriteDesc = mSortedSprites[pos]->spriteDesc;
 
 			Netcode::Vector2 textureSize = Netcode::Float2::Zero;
 
@@ -202,9 +206,12 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 				textureSize = mSortedSprites[pos]->textureSize;
 			}
 
+			bool scDiff = spr != batchSpr;
+			bool borderDiff = batchBorderDesc != borderDesc;
+			bool spriteDiff = batchSpriteDesc != spriteDesc;
+
 			// Flush whenever the texture changes or when the scissor rect changes
-			if((texture != batchTexture) || (spr != batchSpr))
-			{
+			if(scDiff || borderDiff || spriteDiff) {
 				if(pos > batchStart)
 				{
 					RenderBatch(batchTexture, batchTextureSize, &mSortedSprites[batchStart], pos - batchStart);
@@ -214,6 +221,8 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 				batchTextureSize = textureSize;
 				batchStart = pos;
 				batchSpr = spr;
+				batchSpriteDesc = spriteDesc;
+				batchBorderDesc = borderDesc;
 			}
 		}
 

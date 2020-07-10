@@ -13,13 +13,18 @@ namespace UI {
 		return screenSize;
 	}
 
-	Page::Page(physx::PxPhysics * pxPhysics) {
+	Page::Page(Netcode::Physics::PhysX & px) {
 		Sizing(SizingType::WINDOW);
 		HorizontalContentAlignment(HorizontalAnchor::LEFT);
 		VerticalContentAlignment(VerticalAnchor::TOP);
 		Disable();
 
-		scene.Reset(pxPhysics->createScene(physx::PxSceneDesc{ physx::PxTolerancesScale{} }));
+		physx::PxSceneDesc sceneDesc{ px.physics->getTolerancesScale() };
+		sceneDesc.gravity = physx::PxVec3{ 0.0f, 0.0f, 0.0f };
+		sceneDesc.cpuDispatcher = px.dispatcher.Get();
+		sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
+
+		scene.Reset(px.physics->createScene(sceneDesc));
 	}
 
 	void Page::OnClick(MouseEventArgs & args) {
