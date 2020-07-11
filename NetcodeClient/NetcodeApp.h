@@ -93,6 +93,8 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	void Simulate(float dt) {
 		totalTime += dt;
 
+		loginPage->OnUpdate(dt);
+
 		gameScene->GetPhysXScene()->simulate(dt);
 		gameScene->GetPhysXScene()->fetchResults(true);
 

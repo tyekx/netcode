@@ -7,6 +7,12 @@ namespace Netcode::Function {
 	float EaseOut(float x) {
 		return 1.0f - x * x / (x * x + (1.0f - x) * (1.0f - x));
 	}
+
+	float EaseOutQuad(float x)
+	{
+		return 1.0f - (1.0f - x) * (1.0f - x);
+	}
+
 	float LerpIn(float x) {
 		return x;
 	}

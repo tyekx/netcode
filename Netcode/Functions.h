@@ -10,6 +10,8 @@ namespace Netcode::Function {
 
 	float EaseOut(float x);
 
+	float EaseOutQuad(float x);
+
 	float LerpIn(float x);
 
 	float LerpOut(float x);

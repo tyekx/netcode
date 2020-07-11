@@ -140,6 +140,16 @@ public:
 		rootPanel->AddChild(inputGroup);
 		this->AddChild(rootPanel);
 
+		std::unique_ptr<UI::Animation> positionAnim = UI::MakeAnimation<UI::Control, Netcode::Float2, UI::LerpAnimator<Netcode::Vector2>, UI::PlayOnceBehaviour>(
+			inputGroup.get(),
+			&UI::Control::Position,
+			&UI::Control::Position,
+			UI::LerpAnimator<Netcode::Vector2>{ Netcode::Float2{ -1000.0f, 0.0f }, Netcode::Float2{ 0.0f, 0.0f } },
+			UI::PlayOnceBehaviour{ },
+			&Netcode::Function::EaseOutQuad, 0.7f);
+
+		inputGroup->Animation(std::move(positionAnim));
+
 		OnInitialized();
 	}
 };

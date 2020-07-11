@@ -18,6 +18,10 @@ namespace Netcode {
 
 		Vector2(const Float2 & rhs) noexcept;
 
+		static Vector2 NC_MATH_CALLCONV Lerp(Vector2 lhs, Vector2 rhs, float t) noexcept {
+			return DirectX::XMVectorLerp(lhs.v, rhs.v, t);
+		}
+
 		Vector2 & NC_MATH_CALLCONV operator=(const Float2 & rhs) noexcept;
 
 		Vector2 NC_MATH_CALLCONV operator*(Vector2 rhs) const noexcept {

@@ -232,6 +232,21 @@ namespace UI {
         child->Parent(shared_from_this());
     }
 
+    void Control::OnUpdate(float dt)
+    {
+        if(animation != nullptr) {
+            animation->Run(dt);
+
+            if(animation->IsDone()) {
+                animation.reset();
+            }
+        }
+
+        for(auto & child : children) {
+            child->OnUpdate(dt);
+        }
+    }
+
     void Control::OnScreenResized(const Netcode::UInt2 & newSize)
     {
         for(auto & child : children) {
