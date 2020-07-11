@@ -473,7 +473,7 @@ namespace Netcode {
 		}
 
 		bool operator==(const SpriteDesc & rhs) const {
-			return type == rhs.type && texture == rhs.texture;
+			return rhs.type == type && texture == rhs.texture && textureSize.x == rhs.textureSize.y && textureSize.y == rhs.textureSize.y;
 		}
 
 		bool operator!=(const SpriteDesc & rhs) const {

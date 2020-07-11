@@ -5,6 +5,7 @@
 
 namespace Netcode {
 
+	class Vector2;
 	class Vector4;
 
 	class Vector3 {
@@ -12,6 +13,8 @@ namespace Netcode {
 		DirectX::XMVECTOR v;
 
 		DEFAULT_NOEXCEPT_ALL6(Vector3);
+
+		explicit Vector3(float xyzw) : v{ DirectX::XMVectorReplicate(xyzw) } { }
 
 		inline Vector3(const DirectX::XMVECTOR & v) : v{ v } { }
 
@@ -76,18 +79,34 @@ namespace Netcode {
 			return DirectX::XMVectorAdd(v, rhs.v);
 		}
 
+		inline Vector3 NC_MATH_CALLCONV operator+(float rhs) const noexcept {
+			return operator+(Vector3{ rhs });
+		}
+
 		Vector3 & NC_MATH_CALLCONV operator+=(Vector3 rhs) noexcept {
 			v = DirectX::XMVectorAdd(v, rhs.v);
 			return *this;
+		}
+
+		inline Vector3 & NC_MATH_CALLCONV operator+=(float rhs) noexcept {
+			return operator+=(Vector3{ rhs });
 		}
 
 		Vector3 NC_MATH_CALLCONV operator-(Vector3 rhs) const noexcept {
 			return DirectX::XMVectorSubtract(v, rhs.v);
 		}
 
+		inline Vector3 NC_MATH_CALLCONV operator-(float rhs) const noexcept {
+			return operator-(Vector3{ rhs });
+		}
+
 		Vector3& NC_MATH_CALLCONV operator-=(Vector3 rhs) noexcept {
 			v = DirectX::XMVectorSubtract(v, rhs.v);
 			return *this;
+		}
+
+		inline Vector3 & NC_MATH_CALLCONV operator-=(float rhs) noexcept {
+			return operator-=(Vector3{ rhs });
 		}
 
 		float NC_MATH_CALLCONV Length() const noexcept {
@@ -108,11 +127,37 @@ namespace Netcode {
 
 		bool NC_MATH_CALLCONV AllZero() const noexcept;
 
+		bool NC_MATH_CALLCONV operator==(Vector3 rhs) const noexcept {
+			return DirectX::XMVector3Equal(v, rhs.v);
+		}
+
+		inline bool NC_MATH_CALLCONV operator!=(Vector3 rhs) const noexcept {
+			return !operator==(rhs);
+		}
+
+		bool NC_MATH_CALLCONV NearEqual(Vector3 rhs) const noexcept {
+			return DirectX::XMVector3NearEqual(v, rhs.v, DirectX::g_XMEpsilon);
+		}
+
 		NC_MATH_CALLCONV operator Float3() const noexcept {
 			Float3 f;
 			DirectX::XMStoreFloat3(&f, v);
 			return f;
 		}
+
+		Vector3 NC_MATH_CALLCONV Max(Vector2 rhs) const noexcept;
+		Vector3 NC_MATH_CALLCONV Max(Vector3 rhs) const noexcept;
+		Vector4 NC_MATH_CALLCONV Max(Vector4 rhs) const noexcept;
+
+		Vector3 NC_MATH_CALLCONV Min(Vector2 rhs) const noexcept;
+		Vector3 NC_MATH_CALLCONV Min(Vector3 rhs) const noexcept;
+		Vector4 NC_MATH_CALLCONV Min(Vector4 rhs) const noexcept;
+
+		Vector4 NC_MATH_CALLCONV Extend(float w) const noexcept;
+
+		Vector2 NC_MATH_CALLCONV XY() const noexcept;
+		Vector4 NC_MATH_CALLCONV XYZ1() const noexcept;
+		Vector4 NC_MATH_CALLCONV XYZ0() const noexcept;
 
 		/*
 		Permutes between 2 Vector3-s to create a new Vector3.
@@ -131,24 +176,30 @@ namespace Netcode {
 
 		template<uint32_t COMPONENT0, uint32_t COMPONENT1, uint32_t COMPONENT2>
 		Vector3 NC_MATH_CALLCONV Swizzle() const noexcept {
-			static_assert(COMPONENT0 < 3 && COMPONENT1 < 3 && COMPONENT2 < 3, "Out of range");
 			return DirectX::XMVectorSwizzle<COMPONENT0, COMPONENT1, COMPONENT2, 3>(v);
 		}
 
+		template<uint32_t COMPONENT0, uint32_t COMPONENT1>
+		Vector2 NC_MATH_CALLCONV Swizzle() const noexcept;
+
 		template<uint32_t COMPONENT0, uint32_t COMPONENT1, uint32_t COMPONENT2, uint32_t COMPONENT3>
-		Vector4 NC_MATH_CALLCONV Swizzle() const noexcept {
-			static_assert(COMPONENT0 <= 3 && COMPONENT1 <= 3 && COMPONENT2 <= 3, "Out of range");
-			return DirectX::XMVectorSwizzle<COMPONENT0, COMPONENT1, COMPONENT2, COMPONENT3>(v);
-		}
-
-		Vector4 XYZ1() const noexcept;
-
-		Vector4 XYZ0() const noexcept;
-
+		Vector4 NC_MATH_CALLCONV Swizzle() const noexcept;
 	};
 
 	inline Vector3 NC_MATH_CALLCONV operator*(float lhs, const Vector3 & rhs) {
 		return rhs.operator*(lhs);
+	}
+
+	inline Vector3 NC_MATH_CALLCONV operator/(float lhs, const Vector3 & rhs) {
+		return Vector3{ lhs } / rhs;
+	}
+
+	inline Vector3 NC_MATH_CALLCONV operator+(float lhs, const Vector3 & rhs) {
+		return rhs.operator+(lhs);
+	}
+
+	inline Vector3 NC_MATH_CALLCONV operator-(float lhs, const Vector3 & rhs) {
+		return Vector3{ lhs } - rhs;
 	}
 
 }

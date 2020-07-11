@@ -191,27 +191,33 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 
 		for(uint32_t pos = 0; pos < mSpriteQueueCount; pos++)
 		{
-			ResourceViewsRef texture = mSortedSprites[pos]->spriteDesc.texture;
-			SpriteScissorRect spr = mSortedSprites[pos]->scissorRect;
-			BorderDesc borderDesc = mSortedSprites[pos]->borderDesc;
-			SpriteDesc spriteDesc = mSortedSprites[pos]->spriteDesc;
+			const SpriteInfo * sprite = mSortedSprites[pos];
 
-			Netcode::Vector2 textureSize = Netcode::Float2::Zero;
+			ResourceViewsRef texture = sprite->spriteDesc.texture;
+			SpriteScissorRect spr = sprite->scissorRect;
+			BorderDesc borderDesc = sprite->borderDesc;
+			SpriteDesc spriteDesc = sprite->spriteDesc;
 
-			if(mSortedSprites[pos]->spriteDesc.type == BackgroundType::SOLID) {
-				textureSize = Netcode::Float2{ mSortedSprites[pos]->destination.z, mSortedSprites[pos]->destination.w };
-			}
+			Vector2 textureSize = Netcode::Float2::Zero;
 
-			if(mSortedSprites[pos]->spriteDesc.type == BackgroundType::TEXTURE) {
-				textureSize = mSortedSprites[pos]->textureSize;
+			switch(mSortedSprites[pos]->spriteDesc.type) {
+				case BackgroundType::NONE: [[fallthrough]];
+				case BackgroundType::SOLID:
+					textureSize = Netcode::Float2{ sprite->destination.z, sprite->destination.w };
+					break;
+				case BackgroundType::TEXTURE:
+					textureSize = sprite->textureSize;
+					break;
+				default:break;
 			}
 
 			bool scDiff = spr != batchSpr;
 			bool borderDiff = batchBorderDesc != borderDesc;
 			bool spriteDiff = batchSpriteDesc != spriteDesc;
+			bool isNotTexture = sprite->spriteDesc.type != BackgroundType::TEXTURE;
 
 			// Flush whenever the texture changes or when the scissor rect changes
-			if(scDiff || borderDiff || spriteDiff) {
+			if(isNotTexture || scDiff || borderDiff || spriteDiff) {
 				if(pos > batchStart)
 				{
 					RenderBatch(batchTexture, batchTextureSize, &mSortedSprites[batchStart], pos - batchStart);
@@ -461,15 +467,15 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 		}
 
 		SpriteInfo * sprite = &mSpriteQueue[mSpriteQueueCount];
-		Netcode::Vector4 dest = destination.v;
+		Netcode::Vector4 dest = destination;
 		Netcode::Vector4 source = Netcode::Float4::Zero;
 
+		const Netcode::Float4 dst = destination;
+
 		switch(spriteDesc.type) {
+			case BackgroundType::NONE: [[fallthrough]];
 			case BackgroundType::SOLID:
-				{
-					Netcode::Float4 dst = destination;
-					source = Netcode::Float4{ 0.0f, 0.0f, dst.z, dst.w };
-				}
+				source = Netcode::Float4{ 0.0f, 0.0f, dst.z, dst.w };
 				break;
 			case BackgroundType::TEXTURE:
 				source = LoadRect(spriteDesc.sourceRect);
@@ -488,7 +494,11 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 
 		sprite->source = source;
 		sprite->borderDesc = borderDesc;
-		sprite->textureSize = DirectX::XMLoadUInt2(&spriteDesc.textureSize);
+		if(spriteDesc.IsEmpty()) {
+			sprite->textureSize = Netcode::Float2{ dst.z, dst.w };
+		} else {
+			sprite->textureSize = DirectX::XMLoadUInt2(&spriteDesc.textureSize);
+		}
 		sprite->destination = dest;
 		sprite->originRotationDepth = originRotationDepth;
 		sprite->spriteDesc = spriteDesc;

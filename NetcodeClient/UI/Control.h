@@ -75,6 +75,14 @@ namespace UI {
 
         Netcode::Float2 AnchorOffset() const;
 
+        Netcode::Float4 Margin() const;
+
+        void Margin(const Netcode::Float4 & leftTopRightBottom);
+
+        Netcode::Float4 Padding() const;
+
+        void Padding(const Netcode::Float4 & leftTopRightBottom);
+
         void Parent(std::shared_ptr<Control> newParent);
 
         std::shared_ptr<Control> Parent() const;
@@ -84,6 +92,10 @@ namespace UI {
         void RotationZ(float rotZ);
 
         float RotationZ() const;
+
+        virtual Netcode::Float2 BoxSize() const;
+        
+        virtual Netcode::Float2 CalculatedSize() const;
 
         virtual void UpdateSize();
 
@@ -224,6 +236,13 @@ namespace UI {
             backgroundImage{ nullptr }, backgroundSize{ Netcode::Float2::Zero }, backgroundImageSize{ Netcode::UInt2::Zero }, backgroundColor{ Netcode::Float4::Zero }, borderColor{ Netcode::Float4::Zero } { }
 
         virtual ~Panel() = default;
+        /*
+        virtual Netcode::Float2 CalculatedSize() const override {
+            Netcode::Vector2 f = Control::CalculatedSize();
+            float bw = BorderWidth();
+
+            return f + bw;
+        }*/
 
         VerticalAnchor BackgroundVerticalAlignment() const {
             return backgroundVerticalAlignment;
@@ -265,11 +284,12 @@ namespace UI {
 
         void BorderRadius(float br) {
             borderRadius = br;
+            BorderType(Netcode::BorderType::SOLID);
         }
 
         void BorderWidth(float bw) {
-            BorderType(Netcode::BorderType::SOLID);
             borderWidth = bw;
+            BorderType(Netcode::BorderType::SOLID);
         }
 
         float BorderWidth() const {
@@ -278,6 +298,7 @@ namespace UI {
 
         void BorderColor(const Netcode::Float4 & c) {
             borderColor = c;
+            BorderType(Netcode::BorderType::SOLID);
         }
 
         Netcode::Float4 BorderColor() const {
@@ -336,6 +357,23 @@ namespace UI {
     class StackPanel : public Panel {
     protected:
         Direction stackDirection;
+
+        static Netcode::Float2 ZeroDirection(const Netcode::Float2 & value, Direction dir) {
+            if(dir == Direction::VERTICAL) {
+                return Netcode::Float2{ value.x, 0.0f };
+            } else {
+                return Netcode::Float2{ 0.0f, value.y };
+            }
+        }
+
+        static Direction OppositeDirection(Direction dir) {
+            if(dir == Direction::VERTICAL) {
+                return Direction::HORIZONTAL;
+            } else {
+                return Direction::VERTICAL;
+            }
+        }
+
     public:
 
         virtual ~StackPanel() = default;
@@ -352,6 +390,30 @@ namespace UI {
             stackDirection = dir;
         }
 
+        virtual void UpdateLayout() override {
+            Panel::UpdateLayout();
+
+            Netcode::Float2 ao = CalculateAnchorOffset(HorizontalContentAlignment(), VerticalContentAlignment(), Size());
+            ao = ZeroDirection(ao, StackDirection());
+
+            const Netcode::Vector2 dirSelect = ZeroDirection(Netcode::Float2::One, OppositeDirection(StackDirection()));
+            const Netcode::Vector2 anchorOffset = ao;
+            Netcode::Vector2 dirSum = Netcode::Float2::Zero;
+
+            for(auto & child : children) {
+                const Netcode::Float2 bs = child->BoxSize();
+
+                Netcode::Float2 ad = CalculateAnchorOffset(HorizontalContentAlignment(), VerticalContentAlignment(), bs);
+                ad = ZeroDirection(ad, StackDirection());
+
+                const Netcode::Vector2 anchorDiff = ad;
+
+                child->Position(anchorOffset - anchorDiff + dirSum);
+
+                dirSum += dirSelect * bs;
+            }
+        }
+
         virtual void UpdateSize() override {
             Control::UpdateSize();
 
@@ -360,13 +422,11 @@ namespace UI {
                     float maxWidth = 0.0f;
                     float heightSum = 0.0f;
                     for(auto & child : children) {
-                        Netcode::Float2 childSize = child->Size();
+                        Netcode::Float2 childSize = child->BoxSize();
 
                         if(maxWidth < childSize.x) {
                             maxWidth = childSize.x;
                         }
-
-                        child->Position(Netcode::Float2{ 0.0f, heightSum });
 
                         heightSum += childSize.y;
                     }
@@ -377,13 +437,11 @@ namespace UI {
                     float widthSum = 0.0f;
 
                     for(auto & child : children) {
-                        Netcode::Float2 childSize = child->Size();
+                        Netcode::Float2 childSize = child->BoxSize();
 
                         if(maxHeight < childSize.y) {
                             maxHeight = childSize.y;
                         }
-
-                        child->Position(Netcode::Float2{ widthSum, 0.0f });
 
                         widthSum += childSize.x;
                     }
@@ -492,14 +550,14 @@ namespace UI {
         }
 
         virtual void OnRender(Netcode::SpriteBatchRef batch) override {
+            Panel::OnRender(batch);
+
             if(font != nullptr && !text.empty()) {
                 const Netcode::Vector2 screenPos = ScreenPosition();
                 const Netcode::Vector2 textPos = TextPosition();
 
                 font->DrawString(batch, text.c_str(), screenPos + textPos, TextColor());
             }
-
-            Panel::OnRender(batch);
         }
 
         virtual void OnFontChanged() {

@@ -76,6 +76,25 @@ namespace UI {
          size = sz;
     }
 
+    Netcode::Float2 Control::BoxSize() const
+    {
+        Netcode::Float2 cSize = CalculatedSize();
+        Netcode::Float4 m = Margin();
+
+        return Netcode::Float2{ cSize.x + m.x + m.z, cSize.y + m.y + m.w };
+    }
+
+    Netcode::Float2 Control::CalculatedSize() const
+    {
+        Netcode::Vector2 s = Size();
+        Netcode::Float4 p = Padding();
+
+        Netcode::Vector2 horizontal = Netcode::Float2{ p.x + p.z, 0.0f };
+        Netcode::Vector2 vertical = Netcode::Float2{ 0.0f, p.y + p.w };
+
+        return s + horizontal + vertical;
+    }
+
     Netcode::Float2 Control::Position() const {
         return position;
     }
@@ -93,7 +112,7 @@ namespace UI {
         if(parent != nullptr) {
             parentScreenPos = parent->ScreenPosition();
             anchorOffs = parent->AnchorOffset();
-            anchorDiff = CalculateAnchorOffset(parent->HorizontalContentAlignment(), parent->VerticalContentAlignment(), Size());
+            anchorDiff = CalculateAnchorOffset(parent->HorizontalContentAlignment(), parent->VerticalContentAlignment(), BoxSize());
         }
 
         return parentScreenPos + anchorOffs - anchorDiff + Position();
@@ -102,6 +121,22 @@ namespace UI {
     Netcode::Float2 Control::AnchorOffset() const
     {
         return anchorOffset;
+    }
+
+    Netcode::Float4 Control::Margin() const {
+        return margin;
+    }
+
+    void Control::Margin(const Netcode::Float4 & leftTopRightBottom) {
+        margin = leftTopRightBottom;
+    }
+
+    Netcode::Float4 Control::Padding() const {
+        return padding;
+    }
+
+    void Control::Padding(const Netcode::Float4 & leftTopRightBottom) {
+        padding = leftTopRightBottom;
     }
 
     void Control::UpdateSize()
@@ -140,6 +175,10 @@ namespace UI {
     void Control::UpdateLayout()
     {
         AnchorOffset(CalculateAnchorOffset(HorizontalContentAlignment(), VerticalContentAlignment(), Size()));
+
+        for(auto & child : children) {
+            child->UpdateLayout();
+        }
     }
 
     void Control::Destruct() {
@@ -197,6 +236,10 @@ namespace UI {
     {
         for(auto & child : children) {
             child->OnScreenResized(newSize);
+        }
+
+        if(Sizing() == SizingType::DERIVED) {
+            UpdateSize();
         }
 
         if(Sizing() == SizingType::WINDOW) {

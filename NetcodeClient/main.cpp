@@ -31,7 +31,6 @@ void ListConfigEntries(const std::string & prefix, const Netcode::Ptree & tree) 
 }
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR command, _In_ INT nShowCmd) {
-
 	std::vector<std::wstring> args = po::split_winmain(command);
 	std::wstring workingDirectory = QueryWorkingDirectory();
 
