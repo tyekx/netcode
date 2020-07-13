@@ -22,7 +22,7 @@ public:
 		return animationSet;
 	}
 
-	void Animate(const std::vector<Netcode::Animation::BlendItem> & blendPlan);
+	void Update(const std::vector<Netcode::Animation::BlendItem> & blendPlan);
 
 	friend class AnimationSet;
 };

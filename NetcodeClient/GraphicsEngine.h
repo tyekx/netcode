@@ -733,9 +733,11 @@ private:
 		[&](IRenderContext * context) -> void {
 
 			Netcode::UInt2 ss = ui_Input->ScreenSize();
-			Netcode::Matrix vp = Netcode::OrtographicMatrix(static_cast<float>(ss.x), static_cast<float>(ss.y), 0.0f, 128.0f);
+			Netcode::Matrix vp =
+				Netcode::LookToMatrix(Netcode::Float3::Zero, Netcode::Float3{ 0.0f, 0.0f, 1.0f }, Netcode::Float3::UnitY) *
+				Netcode::OrtographicMatrix(static_cast<float>(ss.x), static_cast<float>(ss.y), 0.0f, UI::Control::MAX_DEPTH);
 			Netcode::Matrix tex = Netcode::Float4x4{
-				1.0f, 0.0f, 0.0f, 0.0f,
+				-1.0f, 0.0f, 0.0f, 0.0f,
 				0.0f, -1.0f, 0.0f, 0.0f,
 				0.0f, 0.0f, 1.0f, 0.0f,
 				-1.0f, 1.0f, 0.0f, 1.0f
@@ -744,7 +746,7 @@ private:
 
 			context->SetRenderTargets(0, 0);
 			uiPass_SpriteBatch->BeginRecord(context, (vp * tex).Transpose());
-			ui_Input->OnRender(uiPass_SpriteBatch);
+			ui_Input->Render(uiPass_SpriteBatch.get());
 			uiPass_SpriteBatch->EndRecord();
 		});
 	}

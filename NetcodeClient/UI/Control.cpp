@@ -7,10 +7,11 @@ namespace UI {
         size{ Netcode::Float2::Zero },
         position{ Netcode::Float2::Zero },
         rotationOrigin{ Netcode::Float2::Zero },
-        anchorOffset{ Netcode::Float2::Zero },
         margin{ Netcode::Float4::Zero },
         padding{ Netcode::Float4::Zero },
         rotationZ{ 0.0f },
+        zIndex{ 0.0f },
+        zIndexSizing{ SizingType::DERIVED },
         rotationOriginSizing{ SizingType::FIXED },
         sizing{ SizingType::FIXED },
         horizontalRotationOrigin{ HorizontalAnchor::LEFT },
@@ -38,19 +39,20 @@ namespace UI {
         verticalRotationOrigin = yAnchor;
     }
 
+    SizingType Control::ZIndexSizing() const {
+        return zIndexSizing;
+    }
+
+    void Control::ZIndexSizing(SizingType sz) {
+        zIndexSizing = sz;
+    }
+
     SizingType Control::RotationOriginSizing() const {
         return rotationOriginSizing;
     }
 
     void Control::RotationOriginSizing(SizingType sz) {
         rotationOriginSizing = sz;
-    }
-
-    void Control::AnchorOffset(const Netcode::Float2 & layoutPos)
-    {
-        anchorOffset = layoutPos;
-
-        OnLayoutChanged();
     }
 
     Netcode::Float2 Control::CalculateAnchorOffset(HorizontalAnchor xAnchor, VerticalAnchor yAnchor, const Netcode::Float2 & controlSize) {
@@ -141,6 +143,7 @@ namespace UI {
 
     void Control::Position(const Netcode::Float2 & pos) {
         position = pos;
+        OnPositionChanged();
     }
 
     Netcode::Float2 Control::RotationOrigin() const
@@ -175,16 +178,11 @@ namespace UI {
             parentRotationOrigin = parent->RotationOrigin();
             parentScreenPos = parent->ScreenPosition();
             parentScreenPos -= parentRotationOrigin;
-            anchorOffs = parent->AnchorOffset();
+            anchorOffs = CalculateAnchorOffset(parent->HorizontalContentAlignment(), parent->VerticalContentAlignment(), parent->Size());
             anchorDiff = CalculateAnchorOffset(parent->HorizontalContentAlignment(), parent->VerticalContentAlignment(), BoxSize());
         }
 
         return parentScreenPos + anchorOffs - anchorDiff + Position() + RotationOrigin();
-    }
-
-    Netcode::Float2 Control::AnchorOffset() const
-    {
-        return anchorOffset;
     }
 
     Netcode::Float4 Control::Margin() const {
@@ -203,10 +201,14 @@ namespace UI {
         padding = leftTopRightBottom;
     }
 
-    void Control::UpdateSize()
+    void Control::UpdateSize(const Netcode::Float2 & screenSize)
     {
         for(auto & child : children) {
-            child->UpdateSize();
+            child->UpdateSize(screenSize);
+        }
+
+        if(Sizing() == SizingType::WINDOW) {
+            Size(screenSize);
         }
 
         if(Sizing() == SizingType::INHERITED) {
@@ -236,10 +238,7 @@ namespace UI {
         }
     }
 
-    void Control::UpdateLayout()
-    {
-        AnchorOffset(CalculateAnchorOffset(HorizontalContentAlignment(), VerticalContentAlignment(), Size()));
-
+    void Control::UpdateLayout() {
         for(auto & child : children) {
             child->UpdateLayout();
         }
@@ -291,33 +290,31 @@ namespace UI {
         return rotationZ;
     }
 
+    void Control::ZIndex(float zValue) {
+        ZIndexSizing(SizingType::FIXED);
+        zIndex = zValue;
+    }
+
+    float Control::ZIndex() const {
+        return zIndex;
+    }
+
+    void Control::ResetZIndex() {
+        ZIndex(0.0f);
+        ZIndexSizing(SizingType::DERIVED);
+    }
+
     void Control::AddChild(std::shared_ptr<Control> child) {
         children.push_back(child);
         child->Parent(shared_from_this());
     }
 
-    void Control::OnUpdate(float dt)
+    void Control::Update(float dt)
     {
         animations.Update(dt);
 
         for(auto & child : children) {
-            child->OnUpdate(dt);
-        }
-    }
-
-    void Control::OnScreenResized(const Netcode::UInt2 & newSize)
-    {
-        for(auto & child : children) {
-            child->OnScreenResized(newSize);
-        }
-
-        if(Sizing() == SizingType::DERIVED) {
-            UpdateSize();
-        }
-
-        if(Sizing() == SizingType::WINDOW) {
-            Size(Netcode::Float2{ static_cast<float>(newSize.x), static_cast<float>(newSize.y) });
-            UpdateLayout();
+            child->Update(dt);
         }
     }
 
@@ -336,11 +333,7 @@ namespace UI {
     }
 
     void Control::OnInitialized() {
-
-    }
-
-    void Control::OnLayoutChanged() {
-
+        UpdateZIndices(1);
     }
 
     void Control::OnKeyDown(KeyboardEventArgs & args) {
@@ -352,26 +345,20 @@ namespace UI {
     }
 
     void Control::OnMouseEnter(MouseEventArgs & args) {
-        for(auto & child : children) {
-            if(args.Handled()) {
-                return;
-            }
-            child->OnMouseEnter(args);
-        }
+        MouseEnterEvent.Invoke(this, args);
+    }
+
+    void Control::OnMouseMove(MouseEventArgs & args) {
+        MouseMoveEvent.Invoke(this, args);
     }
 
     void Control::OnMouseLeave(MouseEventArgs & args) {
-        for(auto & child : children) {
-            if(args.Handled()) {
-                return;
-            }
-            child->OnMouseEnter(args);
-        }
+        MouseLeaveEvent.Invoke(this, args);
     }
 
-    void Control::OnRender(Netcode::SpriteBatchRef batch) {
+    void Control::Render(Netcode::SpriteBatchPtr batch) {
         for(auto & child : children) {
-            child->OnRender(batch);
+            child->Render(batch);
         }
     }
 
@@ -394,6 +381,12 @@ namespace UI {
     void Control::OnSizeChanged() {
         if(RotationOriginSizing() == SizingType::DERIVED) {
             rotationOrigin = CalculateAnchorOffset(HorizontalRotationOrigin(), VerticalRotationOrigin(), Size());
+        }
+    }
+
+    void Control::OnPositionChanged() {
+        for(auto & child : children) {
+            child->OnPositionChanged();
         }
     }
 

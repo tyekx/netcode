@@ -31,7 +31,9 @@ namespace Netcode {
 
 		PxPtr() : ptr{ nullptr } { }
 		PxPtr(T * p) : ptr{ p } { }
-		PxPtr(PxPtr<T> && rhs) : ptr{ std::move(rhs.ptr) } { }
+		PxPtr(PxPtr<T> && rhs) : ptr{ std::move(rhs.ptr) } {
+			rhs.ptr = nullptr;
+		}
 		PxPtr & operator=(const PxPtr<T> & rhs) = delete;
 		PxPtr & operator=(PxPtr<T> rhs) noexcept {
 			std::swap(ptr, rhs.ptr);
@@ -49,6 +51,10 @@ namespace Netcode {
 
 		constexpr auto * operator->() const {
 			return ptr;
+		}
+
+		T ** GetAddressOf() {
+			return &ptr;
 		}
 
 		T * Get() {

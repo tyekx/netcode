@@ -5,6 +5,8 @@
 #include <Netcode/HandleTypes.h>
 #include <Netcode/Graphics/GraphicsContexts.h>
 #include <Netcode/Functions.h>
+#include <Netcode/PhysXWrapper.h>
+#include <Netcode/Event.hpp>
 
 #include "EventArgs.h"
 #include "Animation.hpp"
@@ -29,16 +31,16 @@ namespace UI {
         FIXED, DERIVED, INHERITED, WINDOW
     };
 
-
     class Control : public std::enable_shared_from_this<Control> {
     protected:
         Netcode::Float2 size;
         Netcode::Float2 position;
         Netcode::Float2 rotationOrigin;
-        Netcode::Float2 anchorOffset;
         Netcode::Float4 margin;
         Netcode::Float4 padding;
         float rotationZ;
+        float zIndex;
+        SizingType zIndexSizing;
         SizingType rotationOriginSizing;
         SizingType sizing;
         HorizontalAnchor horizontalRotationOrigin;
@@ -50,15 +52,29 @@ namespace UI {
         AnimationContainer animations;
         bool enabled;
 
+        SizingType ZIndexSizing() const;
+
+        void ZIndexSizing(SizingType sz);
+
         SizingType RotationOriginSizing() const;
 
         void RotationOriginSizing(SizingType sz);
 
-        void AnchorOffset(const Netcode::Float2 & layoutPos);
-
         static Netcode::Float2 CalculateAnchorOffset(HorizontalAnchor xAnchor, VerticalAnchor yAnchor, const Netcode::Float2 & controlSize);
 
+        void UpdateZIndices(int depth) {
+            if(ZIndexSizing() == SizingType::DERIVED) {
+                zIndex = static_cast<float>(depth);
+            }
+
+            for(auto & child : children) {
+                child->UpdateZIndices(depth + 1);
+            }
+        }
+
     public:
+        static constexpr float MAX_DEPTH = 256.0f;
+
         Control();
 
         virtual ~Control() = default;
@@ -104,8 +120,6 @@ namespace UI {
 
         Netcode::Float2 ScreenPosition() const;
 
-        Netcode::Float2 AnchorOffset() const;
-
         Netcode::Float4 Margin() const;
 
         void Margin(const Netcode::Float4 & leftTopRightBottom);
@@ -124,13 +138,21 @@ namespace UI {
 
         float RotationZ() const;
 
+        void ZIndex(float zValue);
+
+        float ZIndex() const;
+
+        void ResetZIndex();
+
         virtual Netcode::Float2 BoxSize() const;
         
         virtual Netcode::Float2 CalculatedSize() const;
 
-        virtual void UpdateSize();
+        virtual void UpdateSize(const Netcode::Float2 & screenSize);
 
         virtual void UpdateLayout();
+
+        virtual void Update(float dt);
 
         virtual void Destruct();
 
@@ -140,15 +162,11 @@ namespace UI {
 
         virtual void AddChild(std::shared_ptr<Control> child);
 
-        virtual void OnUpdate(float dt);
-
-        virtual void OnScreenResized(const Netcode::UInt2 & newSize);
-
-        virtual void OnFocused(FocusChangedEventArgs & args);
+        virtual void Render(Netcode::SpriteBatchPtr batch);
 
         virtual void OnInitialized();
 
-        virtual void OnLayoutChanged();
+        virtual void OnFocused(FocusChangedEventArgs & args);
 
         virtual void OnKeyDown(KeyboardEventArgs & args);
 
@@ -158,9 +176,9 @@ namespace UI {
 
         virtual void OnMouseEnter(MouseEventArgs & args);
 
-        virtual void OnMouseLeave(MouseEventArgs & args);
+        virtual void OnMouseMove(MouseEventArgs & args);
 
-        virtual void OnRender(Netcode::SpriteBatchRef batch);
+        virtual void OnMouseLeave(MouseEventArgs & args);
 
         virtual void OnEnabled();
 
@@ -168,9 +186,15 @@ namespace UI {
 
         virtual void OnSizeChanged();
 
+        virtual void OnPositionChanged();
+
         virtual bool IsFocused();
 
         virtual bool IsEnabled();
+
+        Netcode::Event<Control *, MouseEventArgs &> MouseEnterEvent;
+        Netcode::Event<Control *, MouseEventArgs &> MouseLeaveEvent;
+        Netcode::Event<Control *, MouseEventArgs &> MouseMoveEvent;
     };
 
 
@@ -187,6 +211,8 @@ namespace UI {
         Netcode::UInt2 backgroundImageSize;
         Netcode::Float4 backgroundColor;
         Netcode::Float4 borderColor;
+        Netcode::Float4 renderedBackgroundColor;
+        Netcode::Float4 renderedBorderColor;
 
         Netcode::BorderType BorderType() const {
             return borderType;
@@ -213,7 +239,7 @@ namespace UI {
                 Netcode::Float2 bgSize = BackgroundSize();
 
                 if(bgSize.x == 0.0f || bgSize.y == 0.0f) {
-                    return Netcode::SpriteDesc{ BackgroundImage(), BackgroundImageSize(), BackgroundColor() };
+                    return Netcode::SpriteDesc{ BackgroundImage(), BackgroundImageSize(), RenderedBackgroundColor() };
                 } else {
                     HorizontalAnchor ha = BackgroundHorizontalAlignment();
                     VerticalAnchor va = BackgroundVerticalAlignment();
@@ -236,12 +262,12 @@ namespace UI {
                         static_cast<int32_t>(br.y)
                     };
 
-                    return Netcode::SpriteDesc{ BackgroundImage(), BackgroundImageSize(), sourceRectangle, BackgroundColor() };
+                    return Netcode::SpriteDesc{ BackgroundImage(), BackgroundImageSize(), sourceRectangle, RenderedBackgroundColor() };
                 }
             }
 
             if(BackgroundType() == Netcode::BackgroundType::SOLID) {
-                return Netcode::SpriteDesc{ BackgroundColor() };
+                return Netcode::SpriteDesc{ RenderedBackgroundColor() };
             }
 
             return Netcode::SpriteDesc{};
@@ -249,10 +275,18 @@ namespace UI {
 
         Netcode::BorderDesc GetBorderDesc() const {
             if(BorderType() == Netcode::BorderType::SOLID) {
-                return Netcode::BorderDesc{ BorderWidth(), BorderRadius(), BorderColor() };
+                return Netcode::BorderDesc{ BorderWidth(), BorderRadius(), RenderedBorderColor() };
             }
 
             return Netcode::BorderDesc{};
+        }
+
+        void RenderedBackgroundColor(const Netcode::Float4 & clr) {
+            renderedBackgroundColor = clr;
+        }
+
+        void RenderedBorderColor(const Netcode::Float4 & clr) {
+            renderedBorderColor = clr;
         }
 
     public:
@@ -261,16 +295,18 @@ namespace UI {
         }
 
         Panel() : Control{}, borderType{ Netcode::BorderType::NONE }, borderWidth{ 0.0f }, borderRadius{ 0.0f }, backgroundType{ Netcode::BackgroundType::NONE }, backgroundVerticalAlignment{ VerticalAnchor::TOP }, backgroundHorizontalAlignment{ HorizontalAnchor::LEFT },
-            backgroundImage{ nullptr }, backgroundSize{ Netcode::Float2::Zero }, backgroundImageSize{ Netcode::UInt2::Zero }, backgroundColor{ Netcode::Float4::Zero }, borderColor{ Netcode::Float4::Zero } { }
+            backgroundImage{ nullptr }, backgroundSize{ Netcode::Float2::Zero }, backgroundImageSize{ Netcode::UInt2::Zero }, backgroundColor{ Netcode::Float4::Zero }, borderColor{ Netcode::Float4::Zero },
+            renderedBackgroundColor{ Netcode::Float4::Zero }, renderedBorderColor{ Netcode::Float4::Zero } { }
 
         virtual ~Panel() = default;
-        /*
-        virtual Netcode::Float2 CalculatedSize() const override {
-            Netcode::Vector2 f = Control::CalculatedSize();
-            float bw = BorderWidth();
 
-            return f + bw;
-        }*/
+        Netcode::Float4 RenderedBorderColor() const {
+            return renderedBorderColor;
+        }
+
+        Netcode::Float4 RenderedBackgroundColor() const {
+            return renderedBackgroundColor;
+        }
 
         VerticalAnchor BackgroundVerticalAlignment() const {
             return backgroundVerticalAlignment;
@@ -326,6 +362,7 @@ namespace UI {
 
         void BorderColor(const Netcode::Float4 & c) {
             borderColor = c;
+            RenderedBorderColor(borderColor);
             BorderType(Netcode::BorderType::SOLID);
         }
 
@@ -351,6 +388,7 @@ namespace UI {
             }
 
             backgroundColor = color;
+            RenderedBackgroundColor(backgroundColor);
         }
 
         float Opacity() const {
@@ -378,15 +416,15 @@ namespace UI {
             }
         }
 
-        virtual void OnRender(Netcode::SpriteBatchRef batch) {
+        virtual void Render(Netcode::SpriteBatchPtr batch) override {
             Netcode::SpriteDesc spriteDesc = GetSpriteDesc();
             Netcode::BorderDesc borderDesc = GetBorderDesc();
 
             if(!spriteDesc.IsEmpty() || !borderDesc.IsEmpty()) {
-                batch->DrawSprite(spriteDesc, borderDesc, ScreenPosition(), Size(), RotationOrigin(), RotationZ());
+                batch->DrawSprite(spriteDesc, borderDesc, ScreenPosition(), Size(), RotationOrigin(), RotationZ(), ZIndex());
             }
 
-            Control::OnRender(batch);
+            Control::Render(batch);
         }
     };
 
@@ -450,8 +488,8 @@ namespace UI {
             }
         }
 
-        virtual void UpdateSize() override {
-            Control::UpdateSize();
+        virtual void UpdateSize(const Netcode::Float2 & screenSize) override {
+            Control::UpdateSize(screenSize);
 
             if(Sizing() == SizingType::DERIVED) {
                 if(StackDirection() == Direction::VERTICAL) {
@@ -512,21 +550,16 @@ namespace UI {
     public:
         virtual ~ScrollViewer() = default;
         ScrollViewer() : Panel{} { }
-
-        /*
-        mouse enter, mouse leave, static currently focused ptr
-        mouse wheel input
-        override OnRender method
-            use rendercontext to set ScissorRect
-        */
     };
 
     class Label : public Panel {
     protected:
         Netcode::SpriteFontRef font;
         Netcode::Float4 textColor;
+        Netcode::Float4 renderedTextColor;
         std::wstring text;
         Netcode::Float2 textPosition;
+
 
         void TextPosition(const Netcode::Float2 & tp) {
             textPosition = tp;
@@ -556,10 +589,14 @@ namespace UI {
             }
         }
 
+        void RenderedTextColor(const Netcode::Float4 & clr) {
+            renderedTextColor = clr;
+        }
+
     public:
         virtual ~Label() = default;
 
-        Label() : Panel{}, font{ nullptr }, textColor{ Netcode::Float4::Zero }, text{}, textPosition{ Netcode::Float2::Zero } {
+        Label() : Panel{}, font{ nullptr }, textColor{ Netcode::Float4::Zero }, renderedTextColor{ Netcode::Float4::Zero }, text{}, textPosition{ Netcode::Float2::Zero } {
 
         }
 
@@ -572,16 +609,20 @@ namespace UI {
 
         void TextColor(const Netcode::Float4 & color) {
             textColor = color;
+            RenderedTextColor(textColor);
         }
+
+        Netcode::Float4 RenderedTextColor() const {
+            return renderedTextColor;
+        }
+
 
         Netcode::Float3 TextRGB() const {
             return Netcode::Float3{ textColor.x, textColor.y, textColor.z };
         }
 
         void TextRGB(const Netcode::Float3 & rgb) {
-            textColor.x = rgb.x;
-            textColor.y = rgb.y;
-            textColor.z = rgb.z;
+            TextColor(Netcode::Float4{ rgb.x, rgb.y, rgb.z, TextColor().w });
         }
 
         float TextOpacity() const {
@@ -603,14 +644,14 @@ namespace UI {
             }
         }
 
-        virtual void OnRender(Netcode::SpriteBatchRef batch) override {
-            Panel::OnRender(batch);
+        virtual void Render(Netcode::SpriteBatchPtr batch) override {
+            Panel::Render(batch);
 
             if(font != nullptr && !text.empty()) {
                 const Netcode::Vector2 screenPos = ScreenPosition();
                 const Netcode::Vector2 textPos = TextPosition();
 
-                font->DrawString(batch.get(), text, screenPos + textPos, TextColor(), RotationOrigin(), RotationZ());
+                font->DrawString(batch, text, screenPos + textPos, RenderedTextColor(), RotationOrigin(), RotationZ(), ZIndex());
             }
         }
 
@@ -630,12 +671,28 @@ namespace UI {
 
     class Input : public Label {
     protected:
+        Netcode::Float4 hoveredBackgroundColor;
+        Netcode::Float4 hoveredBorderColor;
+        Netcode::Float4 hoveredTextColor;
+        Netcode::PxPtr<physx::PxRigidDynamic> actor;
         int32_t tabIndex;
         bool focused;
+        bool hovered;
+
+        void UpdateActorPose() {
+            Netcode::Vector2 sPos = ScreenPosition();
+            Netcode::Vector2 halfSize = Netcode::Vector2{ Size() } / 2.0f;
+
+            Netcode::Float2 sp = sPos + halfSize;
+
+            actor->setGlobalPose(physx::PxTransform{ sp.x, sp.y, ZIndex(), physx::PxQuat{ RotationZ(), physx::PxVec3{ 0.0f, 0.0f, 1.0f } } });
+        }
 
     public:
         virtual ~Input() = default;
-        Input() : Label{}, tabIndex{ 0 }, focused{ false } { }
+        Input(Netcode::PxPtr<physx::PxRigidDynamic> pxActor) : Label{}, actor{ std::move(pxActor) }, tabIndex{ 0 }, focused{ false }, hovered{ false } {
+            actor->userData = this;
+        }
 
         int32_t TabIndex() const {
             return tabIndex;
@@ -647,6 +704,85 @@ namespace UI {
 
         bool Focused() const {
             return focused;
+        }
+
+        void HoveredBackgroundColor(const Netcode::Float4 & color) {
+            hoveredBackgroundColor = color;
+        }
+
+        Netcode::Float4 HoveredBackgroundColor() const {
+            return hoveredBackgroundColor;
+        }
+
+        void HoveredTextColor(const Netcode::Float4 & color) {
+            hoveredTextColor = color;
+        }
+
+        Netcode::Float4 HoveredTextColor() const {
+            return hoveredTextColor;
+        }
+
+        void HoveredBorderColor(const Netcode::Float4 & color) {
+            hoveredBorderColor = color;
+        }
+
+        Netcode::Float4 HoveredBorderColor() const {
+            return hoveredBorderColor;
+        }
+
+        virtual void OnMouseEnter(MouseEventArgs & evtArgs) override {
+            Label::OnMouseEnter(evtArgs);
+
+            RenderedBackgroundColor(HoveredBackgroundColor());
+            RenderedBorderColor(HoveredBorderColor());
+            RenderedTextColor(HoveredTextColor());
+
+            hovered = true;
+        }
+
+        virtual void OnMouseLeave(MouseEventArgs & evtArgs) override {
+            Label::OnMouseLeave(evtArgs);
+
+            RenderedBackgroundColor(BackgroundColor());
+            RenderedBorderColor(BorderColor());
+            RenderedTextColor(TextColor());
+
+            hovered = false;
+        }
+
+        void SetDefaultHoverColors() {
+            HoveredBackgroundColor(BackgroundColor());
+            HoveredBorderColor(BorderColor());
+            HoveredTextColor(TextColor());
+        }
+
+        virtual void OnSizeChanged() override {
+            Label::OnSizeChanged();
+
+            physx::PxShape* shape{ nullptr };
+            physx::PxU32 returnedShapes = actor->getShapes(&shape, 1, 0);
+
+            if(returnedShapes == 1) {
+                Netcode::Float2 halfSize = Netcode::Vector2{ Size() } / 2.0f;
+
+                shape->setGeometry(physx::PxBoxGeometry{ halfSize.x, halfSize.y, 0.25f });
+
+                UpdateActorPose();
+            }
+        }
+
+        virtual void Destruct() override {
+            physx::PxScene * scene = actor->getScene();
+
+            if(scene != nullptr) {
+                scene->removeActor(*actor);
+            }
+
+            Label::Destruct();
+        }
+
+        virtual void OnPositionChanged() override {
+            UpdateActorPose();
         }
 
         virtual void OnFocused(FocusChangedEventArgs & evtArgs) override {
@@ -661,7 +797,14 @@ namespace UI {
     protected:
     public:
         virtual ~Button() = default;
-        Button() : Input{} { }
+
+        using Input::Input;
+
+        virtual void OnClick(MouseEventArgs & evtArgs) override {
+            evtArgs.Handled(true);
+
+            Log::Debug("Button");
+        }
     };
 
     class TextBox : public Input {
@@ -672,7 +815,7 @@ namespace UI {
     public:
         virtual ~TextBox() = default;
 
-        TextBox() : Input{}, isPassword{ false } { }
+        TextBox(Netcode::PxPtr<physx::PxRigidDynamic> pxActor) : Input{ std::move(pxActor) }, isPassword{ false } { }
 
         bool IsPassword() const {
             return isPassword;
@@ -682,7 +825,11 @@ namespace UI {
             isPassword = isPw;
         }
 
+        virtual void OnClick(MouseEventArgs & evtArgs) {
+            evtArgs.Handled(true);
 
+            Log::Debug("TextBox");
+        }
 
     };
 

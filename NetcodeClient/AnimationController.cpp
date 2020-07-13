@@ -5,6 +5,6 @@ AnimationController::AnimationController(std::shared_ptr<AnimationSet> animation
 
 }
 
-void AnimationController::Animate(const std::vector<Netcode::Animation::BlendItem> & blendPlan) {
+void AnimationController::Update(const std::vector<Netcode::Animation::BlendItem> & blendPlan) {
 	entryId = animationSet->Activate(blendPlan);
 }

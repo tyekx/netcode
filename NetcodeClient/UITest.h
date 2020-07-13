@@ -72,7 +72,7 @@ public:
 		usernameLabel->Font(assets->ImportFont(L"titillium18.spritefont"));
 		usernameLabel->Text(L"Username:");
 
-		std::shared_ptr<UI::TextBox> usernameTextBox = std::make_shared<UI::TextBox>();
+		std::shared_ptr<UI::TextBox> usernameTextBox = std::make_shared<UI::TextBox>(CreatePhysxActor());
 		usernameTextBox->Sizing(UI::SizingType::FIXED);
 		usernameTextBox->Size(Netcode::Float2{ 280.0f, 48.0f });
 		usernameTextBox->BackgroundColor(Netcode::Float4{ 0.7f, 0.7f, 0.7f, 1.0f });
@@ -82,6 +82,8 @@ public:
 		usernameTextBox->Font(assets->ImportFont(L"titillium18.spritefont"));
 		usernameTextBox->VerticalContentAlignment(UI::VerticalAnchor::MIDDLE);
 		usernameTextBox->HorizontalContentAlignment(UI::HorizontalAnchor::LEFT);
+		usernameTextBox->SetDefaultHoverColors();
+		usernameTextBox->HoveredBackgroundColor(Netcode::Float4::One);
 
 		std::shared_ptr<UI::StackPanel> passwordField = std::make_shared<UI::StackPanel>();
 		passwordField->StackDirection(UI::Direction::HORIZONTAL);
@@ -103,7 +105,7 @@ public:
 		buttonField->Sizing(UI::SizingType::DERIVED);
 		buttonField->Margin(Netcode::Float4{ 10.0f, 10.0f, 10.0f, 0.0f });
 
-		std::shared_ptr<UI::Button> loginButton = std::make_shared<UI::Button>();
+		std::shared_ptr<UI::Button> loginButton = std::make_shared<UI::Button>(CreatePhysxActor());
 		loginButton->Sizing(UI::SizingType::FIXED);
 		loginButton->Size(Netcode::Float2{ 156.0f, 48.0f });
 		loginButton->BackgroundColor(Netcode::Float4{ 0.7f, 0.7f, 0.7f, 1.0f });
@@ -116,8 +118,10 @@ public:
 		loginButton->Text(L"Login");
 		loginButton->TextColor(Netcode::Float4{ 0.2f, 0.2f, 0.2f, 1.0f });
 		loginButton->Margin(Netcode::Float4{ 0.0f, 0.0f, 0.0f, 0.0f });
+		loginButton->SetDefaultHoverColors();
+		loginButton->HoveredBackgroundColor(Netcode::Float4::One);
 
-		std::shared_ptr<UI::Button> exitButton = std::make_shared<UI::Button>();
+		std::shared_ptr<UI::Button> exitButton = std::make_shared<UI::Button>(CreatePhysxActor());
 		exitButton->Sizing(UI::SizingType::FIXED);
 		exitButton->Size(Netcode::Float2{ 156.0f, 48.0f });
 		exitButton->BackgroundColor(Netcode::Float4{ 0.7f, 0.7f, 0.7f, 1.0f });
@@ -130,8 +134,10 @@ public:
 		exitButton->Text(L"Exit");
 		exitButton->TextColor(Netcode::Float4{ 0.2f, 0.2f, 0.2f, 1.0f });
 		exitButton->Margin(Netcode::Float4{ 0.0f, 0.0f, 10.0f, 0.0f });
+		exitButton->SetDefaultHoverColors();
+		exitButton->HoveredBackgroundColor(Netcode::Float4::One);
 
-		std::shared_ptr<UI::TextBox> passwordTextBox = std::make_shared<UI::TextBox>();
+		std::shared_ptr<UI::TextBox> passwordTextBox = std::make_shared<UI::TextBox>(CreatePhysxActor());
 		passwordTextBox->Sizing(UI::SizingType::FIXED);
 		passwordTextBox->Size(Netcode::Float2{ 280.0f, 48.0f });
 		passwordTextBox->BackgroundColor(Netcode::Float4{ 0.7f, 0.7f, 0.7f, 1.0f });
@@ -141,6 +147,9 @@ public:
 		passwordTextBox->Font(assets->ImportFont(L"titillium18.spritefont"));
 		passwordTextBox->VerticalContentAlignment(UI::VerticalAnchor::MIDDLE);
 		passwordTextBox->HorizontalContentAlignment(UI::HorizontalAnchor::LEFT);
+		passwordTextBox->IsPassword(true);
+		passwordTextBox->SetDefaultHoverColors();
+		passwordTextBox->HoveredBackgroundColor(Netcode::Float4::One);
 
 		passwordField->AddChild(passwordLabel);
 		passwordField->AddChild(passwordTextBox);
@@ -163,7 +172,7 @@ public:
 		//rootPanel->AddChild(loadingIconPanel);
 
 		this->AddChild(rootPanel);
-
+		/*
 		std::unique_ptr<UI::Animation> loadingAnim = UI::MakeAnimation(
 			static_cast<UI::Panel*>(rootPanel.get()),
 			&UI::Panel::Opacity,
@@ -173,7 +182,7 @@ public:
 			&Netcode::Function::HalfStep, 1.0f
 		);
 
-		rootPanel->AddAnimation(std::move(loadingAnim));
+		rootPanel->AddAnimation(std::move(loadingAnim));*/
 
 		std::unique_ptr<UI::Animation> positionAnim = UI::MakeAnimation(
 			static_cast<UI::Control*>(inputGroup.get()),

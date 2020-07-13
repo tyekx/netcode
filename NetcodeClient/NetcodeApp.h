@@ -93,7 +93,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	void Simulate(float dt) {
 		totalTime += dt;
 
-		loginPage->OnUpdate(dt);
+		loginPage->Update(dt);
 
 		gameScene->GetPhysXScene()->simulate(dt);
 		gameScene->GetPhysXScene()->fetchResults(true);
@@ -145,9 +145,6 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 		loginPage = std::make_shared<LoginPage>(px);
 		loginPage->InitializeComponents();
-		loginPage->ScreenSize(Netcode::UInt2{ 1280, 720 });
-		loginPage->UpdateSize();
-		loginPage->UpdateLayout();
 		renderSystem.renderer.ui_Input = loginPage;
 
 		GameObject * testbox = gameScene->Create();

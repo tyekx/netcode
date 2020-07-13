@@ -6,7 +6,8 @@ namespace UI {
 
 	void Page::ScreenSize(const Netcode::UInt2 & ss) {
 		screenSize = ss;
-		OnScreenResized(screenSize);
+		UpdateSize(Netcode::Float2{ static_cast<float>(ss.x), static_cast<float>(ss.y) });
+		UpdateLayout();
 	}
 
 	Netcode::UInt2 Page::ScreenSize() const {
