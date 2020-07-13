@@ -571,6 +571,7 @@ namespace Netcode {
 	};
 
 	using SpriteBatchRef = std::shared_ptr<SpriteBatch>;
+	using SpriteBatchPtr = SpriteBatch *;
 
 	class SpriteBatchBuilder {
 	public:
@@ -589,6 +590,8 @@ namespace Netcode {
 		virtual ResourceViewsRef GetResourceView() const = 0;
 		virtual Float2 MeasureString(const char * str) const = 0;
 		virtual Float2 MeasureString(const wchar_t * str) const = 0;
+		virtual Float2 MeasureString(std::string_view view) const = 0;
+		virtual Float2 MeasureString(std::wstring_view view) const = 0;
 
 		virtual float GetHighestCharHeight() const = 0;
 		virtual float GetWidestCharWidth() const = 0;
@@ -602,8 +605,25 @@ namespace Netcode {
 		virtual wchar_t GetHeighestAlphaNumericChar() const = 0;
 		virtual Float2 GetMaxSizedAlphaNumericStringOf(uint32_t stringMaxLength) const = 0;
 
-		virtual void DrawString(Netcode::SpriteBatchRef spriteBatch, const wchar_t * text, const Netcode::Float2 & position, const Netcode::Float4 & color) const = 0;
-		virtual void DrawString(Netcode::SpriteBatchRef spriteBatch, const char * text, const Netcode::Float2 & position, const Netcode::Float4 & color) const = 0;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color) const = 0;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, float zIndex) const = 0;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const = 0;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const = 0;
+
+		virtual void DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color) const = 0;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, float zIndex) const = 0;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const = 0;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const = 0;
+
+		virtual void DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color) const = 0;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, float zIndex) const = 0;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const = 0;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const = 0;
+
+		virtual void DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color) const = 0;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, float zIndex) const = 0;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const = 0;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const = 0;
 	};
 
 	using SpriteFontRef = std::shared_ptr<SpriteFont>;

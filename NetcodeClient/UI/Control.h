@@ -7,6 +7,7 @@
 #include <Netcode/Functions.h>
 
 #include "EventArgs.h"
+#include "Animation.hpp"
 
 using Netcode::SpriteBatch;
 
@@ -28,131 +29,30 @@ namespace UI {
         FIXED, DERIVED, INHERITED, WINDOW
     };
 
-    using AnimationTimeFunc = float(*)(float);
-
-    class Animation {
-    protected:
-        AnimationTimeFunc timeFunc;
-        float duration;
-        float time;
-
-    public:
-        Animation(AnimationTimeFunc timeFunc, float duration) : timeFunc{ timeFunc }, duration{ duration }, time{ 0.0f } { }
-
-        virtual ~Animation() = default;
-        virtual void Run(float dt) = 0;
-        virtual bool IsDone() const = 0;
-    };
-
-    template<typename VectorType>
-    class LerpAnimator {
-        VectorType startValue;
-        VectorType endValue;
-    public:
-        LerpAnimator(VectorType startValue, VectorType endValue) : startValue{ startValue }, endValue{ endValue } {
-
-        }
-
-        VectorType operator()(VectorType vec, float value) const {
-            return VectorType::Lerp(startValue, endValue, value);
-        }
-    };
-
-    class RepeatBehaviour {
-        uint64_t times;
-        uint64_t counter;
-    public:
-        RepeatBehaviour(uint64_t nTimes = std::numeric_limits<uint64_t>::max()) : times{ nTimes }, counter{ 0 } { }
-
-        float operator()(float currentValue, float duration) {
-            if(currentValue >= duration) {
-                counter++;
-                return ::fmodf(currentValue, duration);
-            }
-
-            return currentValue;
-        }
-
-        bool IsDone() const {
-            return times <= counter;
-        }
-    };
-
-    class PlayOnceBehaviour {
-        bool isDone;
-    public:
-
-        PlayOnceBehaviour() : isDone{ false } { }
-
-        float operator()(float currentValue, float duration) {
-            if(isDone) {
-                return duration;
-            }
-
-            if(currentValue >= duration) {
-                isDone = true;
-                return duration;
-            }
-
-            return currentValue;
-        }
-
-        bool IsDone() const {
-            return isDone;
-        }
-    };
-
-    template<typename CtrlType, typename GetterFunc, typename SetterFunc, typename Animator, typename Behaviour>
-    class PropertyAnimation : public Animation {
-        CtrlType * control;
-        GetterFunc getter;
-        SetterFunc setter;
-        Animator animator;
-        Behaviour behaviour;
-    public:
-
-        PropertyAnimation(AnimationTimeFunc timeFunc, float duration, CtrlType * controlPointer, GetterFunc getter, SetterFunc setter, Animator animator, Behaviour behav) :
-            Animation{ timeFunc, duration },
-            control{ controlPointer }, getter{ getter }, setter{ setter }, animator{ animator }, behaviour{ behav } {
-
-        }
-
-        virtual void Run(float dt) override {
-            Animation::time = behaviour(Animation::time + dt, Animation::duration);
-
-            float t = Animation::timeFunc(Animation::time / Animation::duration);
-
-            auto currentValue = ((*static_cast<const CtrlType*>(control)).*getter)();
-            auto updatedValue = animator(currentValue, t);
-
-            ((*control).*setter)(updatedValue);
-        }
-
-        virtual bool IsDone() const override {
-            return behaviour.IsDone();
-        }
-    };
-
-    template<typename CtrlType, typename PropertyType, typename Animator, typename Behaviour>
-    std::unique_ptr<Animation> MakeAnimation(CtrlType * control, PropertyType(CtrlType:: * getter)() const, void (CtrlType:: * setter)(const PropertyType &), Animator animator, Behaviour behaviour, AnimationTimeFunc timeFunc, float duration) {
-        return std::make_unique<PropertyAnimation<CtrlType, PropertyType(CtrlType:: *)() const, void (CtrlType:: *)(const PropertyType &), Animator, Behaviour>>(timeFunc, duration, control, getter, setter, animator, behaviour);
-    }
 
     class Control : public std::enable_shared_from_this<Control> {
     protected:
         Netcode::Float2 size;
         Netcode::Float2 position;
+        Netcode::Float2 rotationOrigin;
         Netcode::Float2 anchorOffset;
         Netcode::Float4 margin;
         Netcode::Float4 padding;
         float rotationZ;
+        SizingType rotationOriginSizing;
         SizingType sizing;
+        HorizontalAnchor horizontalRotationOrigin;
+        VerticalAnchor verticalRotationOrigin;
         HorizontalAnchor horizontalContentAlignment;
         VerticalAnchor verticalContentAlignment;
         std::shared_ptr<Control> parent;
         std::vector<std::shared_ptr<Control>> children;
-        std::unique_ptr<Animation> animation;
+        AnimationContainer animations;
         bool enabled;
+
+        SizingType RotationOriginSizing() const;
+
+        void RotationOriginSizing(SizingType sz);
 
         void AnchorOffset(const Netcode::Float2 & layoutPos);
 
@@ -163,6 +63,14 @@ namespace UI {
 
         virtual ~Control() = default;
 
+        HorizontalAnchor HorizontalRotationOrigin() const;
+
+        void HorizontalRotationOrigin(HorizontalAnchor xAnchor);
+
+        VerticalAnchor VerticalRotationOrigin() const;
+
+        void VerticalRotationOrigin(VerticalAnchor yAnchor);
+
         HorizontalAnchor HorizontalContentAlignment() const;
 
         void HorizontalContentAlignment(HorizontalAnchor horizontalAnchor);
@@ -171,9 +79,9 @@ namespace UI {
 
         void VerticalContentAlignment(VerticalAnchor verticalAnchor);
 
-        void Animation(std::unique_ptr<Animation> anim) {
-            animation = std::move(anim);
-            animation->Run(0.0f);
+        void AddAnimation(std::unique_ptr<Animation> anim) {
+            anim->Run(0.0f);
+            animations.Add(std::move(anim));
         }
 
         SizingType Sizing() const;
@@ -187,6 +95,12 @@ namespace UI {
         Netcode::Float2 Position() const;
 
         void Position(const Netcode::Float2 & pos);
+
+        Netcode::Float2 RotationOrigin() const;
+
+        void RotationOrigin(const Netcode::Float2 & pos);
+
+        void RotationOrigin(HorizontalAnchor x, VerticalAnchor y);
 
         Netcode::Float2 ScreenPosition() const;
 
@@ -304,18 +218,13 @@ namespace UI {
                     HorizontalAnchor ha = BackgroundHorizontalAlignment();
                     VerticalAnchor va = BackgroundVerticalAlignment();
 
-                    Netcode::UInt2 imgSize = BackgroundImageSize();
+                    Netcode::Float2 controlSize = Size();
 
-                    Netcode::Float2 imgSizeAsFloat = Netcode::Float2{
-                        static_cast<float>(imgSize.x),
-                        static_cast<float>(imgSize.y)
-                    };
-
-                    Netcode::Vector2 anchorOffset = CalculateAnchorOffset(ha, va, imgSizeAsFloat);
-                    Netcode::Vector2 anchorDiff = CalculateAnchorOffset(ha, va, bgSize);
+                    Netcode::Vector2 anchorDiff = CalculateAnchorOffset(ha, va, controlSize);
+                    Netcode::Vector2 anchorOffset = CalculateAnchorOffset(ha, va, bgSize);
 
                     Netcode::Vector2 topLeftCorner = anchorOffset - anchorDiff;
-                    Netcode::Vector2 bottomRightCorner = topLeftCorner + imgSizeAsFloat;
+                    Netcode::Vector2 bottomRightCorner = topLeftCorner + controlSize;
 
                     Netcode::Float2 tl = topLeftCorner;
                     Netcode::Float2 br = bottomRightCorner;
@@ -444,6 +353,14 @@ namespace UI {
             backgroundColor = color;
         }
 
+        float Opacity() const {
+            return backgroundColor.w;
+        }
+
+        void Opacity(float w) {
+            backgroundColor.w = w;
+        }
+
         Netcode::ResourceViewsRef BackgroundImage() const {
             return backgroundImage;
         }
@@ -466,7 +383,7 @@ namespace UI {
             Netcode::BorderDesc borderDesc = GetBorderDesc();
 
             if(!spriteDesc.IsEmpty() || !borderDesc.IsEmpty()) {
-                batch->DrawSprite(spriteDesc, borderDesc, ScreenPosition(), Size());
+                batch->DrawSprite(spriteDesc, borderDesc, ScreenPosition(), Size(), RotationOrigin(), RotationZ());
             }
 
             Control::OnRender(batch);
@@ -657,6 +574,24 @@ namespace UI {
             textColor = color;
         }
 
+        Netcode::Float3 TextRGB() const {
+            return Netcode::Float3{ textColor.x, textColor.y, textColor.z };
+        }
+
+        void TextRGB(const Netcode::Float3 & rgb) {
+            textColor.x = rgb.x;
+            textColor.y = rgb.y;
+            textColor.z = rgb.z;
+        }
+
+        float TextOpacity() const {
+            return textColor.w;
+        }
+
+        void TextOpacity(float w) {
+            textColor.w = w;
+        }
+
         const std::wstring & Text() const {
             return text;
         }
@@ -675,7 +610,7 @@ namespace UI {
                 const Netcode::Vector2 screenPos = ScreenPosition();
                 const Netcode::Vector2 textPos = TextPosition();
 
-                font->DrawString(batch, text.c_str(), screenPos + textPos, TextColor());
+                font->DrawString(batch.get(), text, screenPos + textPos, TextColor(), RotationOrigin(), RotationZ());
             }
         }
 

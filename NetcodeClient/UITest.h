@@ -5,6 +5,8 @@
 #include "Services.h"
 
 class LoginPage : public UI::Page {
+	Netcode::GpuResourceRef aenami;
+	Netcode::GpuResourceRef loadingIcon;
 public:
 	using UI::Page::Page;
 
@@ -13,11 +15,30 @@ public:
 	virtual void InitializeComponents() override {
 		AssetManager * assets = Service::Get<AssetManager>();
 
+		aenami = assets->ImportTexture2D(L"aenami_dreamer.jpg");
+		Netcode::ResourceViewsRef aenamiRv = assets->CreateTextureRV(aenami);
+		Netcode::UInt2 aenamiSize = Netcode::UInt2{ static_cast<uint32_t>(aenami->GetDesc().width), aenami->GetDesc().height };
+
+		loadingIcon = assets->ImportTexture2D(L"loading_icon.png");
+		Netcode::ResourceViewsRef loadingIconRv = assets->CreateTextureRV(loadingIcon);
+		Netcode::UInt2 loadingIconSize = Netcode::UInt2{ static_cast<uint32_t>(loadingIcon->GetDesc().width), loadingIcon->GetDesc().height };
+
 		std::shared_ptr<UI::Panel> rootPanel = std::make_shared<UI::Panel>();
 		rootPanel->BackgroundColor(Netcode::Float4::One);
 		rootPanel->Sizing(UI::SizingType::WINDOW);
 		rootPanel->HorizontalContentAlignment(UI::HorizontalAnchor::CENTER);
 		rootPanel->VerticalContentAlignment(UI::VerticalAnchor::MIDDLE);
+		rootPanel->BackgroundImage(aenamiRv, aenamiSize);
+		rootPanel->BackgroundSize(Netcode::Float2{ 1920.0f, 1080.0f });
+		rootPanel->BackgroundHorizontalAlignment(UI::HorizontalAnchor::CENTER);
+		rootPanel->BackgroundVerticalAlignment(UI::VerticalAnchor::MIDDLE);
+
+		std::shared_ptr<UI::Panel> loadingIconPanel = std::make_shared<UI::Panel>();
+		loadingIconPanel->BackgroundImage(loadingIconRv, loadingIconSize);
+		loadingIconPanel->Sizing(UI::SizingType::FIXED);
+		loadingIconPanel->BackgroundColor(Netcode::Float4::One);
+		loadingIconPanel->RotationOrigin(UI::HorizontalAnchor::CENTER, UI::VerticalAnchor::MIDDLE);
+		loadingIconPanel->Size(Netcode::Float2{ 64.0f, 64.0f });
 
 		std::shared_ptr<UI::InputGroup> inputGroup = std::make_shared<UI::InputGroup>();
 		inputGroup->Sizing(UI::SizingType::DERIVED);
@@ -32,7 +53,7 @@ public:
 		titleLabel->Size(Netcode::Float2{ 400.0f, 100.0f });
 		titleLabel->HorizontalContentAlignment(UI::HorizontalAnchor::CENTER);
 		titleLabel->VerticalContentAlignment(UI::VerticalAnchor::MIDDLE);
-		titleLabel->TextColor(Netcode::Float4{ 0.2f, 0.2f, 0.2f, 1.0f });
+		titleLabel->TextColor(Netcode::Float4{ 1.0f, 0.2f, 0.2f, 1.0f });
 		titleLabel->Font(assets->ImportFont(L"titillium48bold.spritefont"));
 		titleLabel->Text(L"Netcode");
 
@@ -138,17 +159,31 @@ public:
 
 		inputGroup->AddChild(inputWrapper);
 		rootPanel->AddChild(inputGroup);
+
+		//rootPanel->AddChild(loadingIconPanel);
+
 		this->AddChild(rootPanel);
 
-		std::unique_ptr<UI::Animation> positionAnim = UI::MakeAnimation<UI::Control, Netcode::Float2, UI::LerpAnimator<Netcode::Vector2>, UI::PlayOnceBehaviour>(
-			inputGroup.get(),
+		std::unique_ptr<UI::Animation> loadingAnim = UI::MakeAnimation(
+			static_cast<UI::Panel*>(rootPanel.get()),
+			&UI::Panel::Opacity,
+			&UI::Panel::Opacity,
+			UI::Interpolator<float>{ 0.0f, 1.0f },
+			UI::RepeatBehaviour{},
+			&Netcode::Function::HalfStep, 1.0f
+		);
+
+		rootPanel->AddAnimation(std::move(loadingAnim));
+
+		std::unique_ptr<UI::Animation> positionAnim = UI::MakeAnimation(
+			static_cast<UI::Control*>(inputGroup.get()),
 			&UI::Control::Position,
 			&UI::Control::Position,
-			UI::LerpAnimator<Netcode::Vector2>{ Netcode::Float2{ -1000.0f, 0.0f }, Netcode::Float2{ 0.0f, 0.0f } },
+			UI::Interpolator<Netcode::Vector2>{ Netcode::Float2{ -1000.0f, 0.0f }, Netcode::Float2{ 0.0f, 0.0f } },
 			UI::PlayOnceBehaviour{ },
 			&Netcode::Function::EaseOutQuad, 0.7f);
 
-		inputGroup->Animation(std::move(positionAnim));
+		inputGroup->AddAnimation(std::move(positionAnim));
 
 		OnInitialized();
 	}

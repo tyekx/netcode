@@ -3,9 +3,48 @@
 namespace UI {
 
 
-    Control::Control() : std::enable_shared_from_this<Control>{}, size{ Netcode::Float2::Zero }, position{ Netcode::Float2::Zero }, anchorOffset{ Netcode::Float2::Zero },
-        margin{ Netcode::Float4::Zero }, padding{ Netcode::Float4::Zero }, rotationZ{ 0.0f }, sizing{ SizingType::FIXED }, horizontalContentAlignment{ HorizontalAnchor::LEFT },
-        verticalContentAlignment{ VerticalAnchor::TOP }, parent{ nullptr }, children{}, enabled{ true } { }
+    Control::Control() : std::enable_shared_from_this<Control>{},
+        size{ Netcode::Float2::Zero },
+        position{ Netcode::Float2::Zero },
+        rotationOrigin{ Netcode::Float2::Zero },
+        anchorOffset{ Netcode::Float2::Zero },
+        margin{ Netcode::Float4::Zero },
+        padding{ Netcode::Float4::Zero },
+        rotationZ{ 0.0f },
+        rotationOriginSizing{ SizingType::FIXED },
+        sizing{ SizingType::FIXED },
+        horizontalRotationOrigin{ HorizontalAnchor::LEFT },
+        verticalRotationOrigin{ VerticalAnchor::TOP },
+        horizontalContentAlignment{ HorizontalAnchor::LEFT },
+        verticalContentAlignment{ VerticalAnchor::TOP },
+        parent{ nullptr },
+        children{},
+        animations{},
+        enabled{ true } { }
+
+    HorizontalAnchor Control::HorizontalRotationOrigin() const {
+        return horizontalRotationOrigin;
+    }
+
+    void Control::HorizontalRotationOrigin(HorizontalAnchor xAnchor) {
+        horizontalRotationOrigin = xAnchor;
+    }
+
+    VerticalAnchor Control::VerticalRotationOrigin() const {
+        return verticalRotationOrigin;
+    }
+
+    void Control::VerticalRotationOrigin(VerticalAnchor yAnchor) {
+        verticalRotationOrigin = yAnchor;
+    }
+
+    SizingType Control::RotationOriginSizing() const {
+        return rotationOriginSizing;
+    }
+
+    void Control::RotationOriginSizing(SizingType sz) {
+        rotationOriginSizing = sz;
+    }
 
     void Control::AnchorOffset(const Netcode::Float2 & layoutPos)
     {
@@ -74,6 +113,7 @@ namespace UI {
 
     void Control::Size(const Netcode::Float2 & sz) {
          size = sz;
+         OnSizeChanged();
     }
 
     Netcode::Float2 Control::BoxSize() const
@@ -103,19 +143,43 @@ namespace UI {
         position = pos;
     }
 
+    Netcode::Float2 Control::RotationOrigin() const
+    {
+        return rotationOrigin;
+    }
+
+    void Control::RotationOrigin(const Netcode::Float2 & pos) {
+        RotationOriginSizing(SizingType::FIXED);
+        rotationOrigin = pos;
+    }
+
+    void Control::RotationOrigin(HorizontalAnchor x, VerticalAnchor y)
+    {
+        HorizontalRotationOrigin(x);
+        VerticalRotationOrigin(y);
+        rotationOrigin = CalculateAnchorOffset(HorizontalRotationOrigin(), VerticalRotationOrigin(), Size());
+        RotationOriginSizing(SizingType::DERIVED);
+    }
+
+    /*
+    for now, every Control rotates on its own, not affecting its children.
+    */
     Netcode::Float2 Control::ScreenPosition() const
     {
         Netcode::Vector2 parentScreenPos = Netcode::Float2::Zero;
         Netcode::Vector2 anchorOffs = Netcode::Float2::Zero;
         Netcode::Vector2 anchorDiff = Netcode::Float2::Zero;
+        Netcode::Vector2 parentRotationOrigin = Netcode::Float2::Zero;
 
         if(parent != nullptr) {
+            parentRotationOrigin = parent->RotationOrigin();
             parentScreenPos = parent->ScreenPosition();
+            parentScreenPos -= parentRotationOrigin;
             anchorOffs = parent->AnchorOffset();
             anchorDiff = CalculateAnchorOffset(parent->HorizontalContentAlignment(), parent->VerticalContentAlignment(), BoxSize());
         }
 
-        return parentScreenPos + anchorOffs - anchorDiff + Position();
+        return parentScreenPos + anchorOffs - anchorDiff + Position() + RotationOrigin();
     }
 
     Netcode::Float2 Control::AnchorOffset() const
@@ -234,13 +298,7 @@ namespace UI {
 
     void Control::OnUpdate(float dt)
     {
-        if(animation != nullptr) {
-            animation->Run(dt);
-
-            if(animation->IsDone()) {
-                animation.reset();
-            }
-        }
+        animations.Update(dt);
 
         for(auto & child : children) {
             child->OnUpdate(dt);
@@ -334,7 +392,9 @@ namespace UI {
     }
 
     void Control::OnSizeChanged() {
-
+        if(RotationOriginSizing() == SizingType::DERIVED) {
+            rotationOrigin = CalculateAnchorOffset(HorizontalRotationOrigin(), VerticalRotationOrigin(), Size());
+        }
     }
 
     bool Control::IsFocused() {

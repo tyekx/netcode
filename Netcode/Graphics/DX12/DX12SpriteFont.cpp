@@ -9,7 +9,7 @@ static const char spriteFontMagic[] = "DXTKfont";
 
 namespace Netcode::Graphics::DX12 {
 
-	const wchar_t * SpriteFont::ConvertUTF8(const char * text) const
+	const wchar_t * SpriteFont::ConvertUTF8(const char * text, int numChars) const
 	{
 		if(!utfBuffer)
 		{
@@ -17,16 +17,16 @@ namespace Netcode::Graphics::DX12 {
 			utfBuffer = std::make_unique<wchar_t[]>(utfBufferSize);
 		}
 
-		int result = MultiByteToWideChar(CP_UTF8, 0, text, -1, utfBuffer.get(), static_cast<int>(utfBufferSize));
+		int result = MultiByteToWideChar(CP_UTF8, 0, text, numChars, utfBuffer.get(), static_cast<int>(utfBufferSize));
 		if(!result && (GetLastError() == ERROR_INSUFFICIENT_BUFFER))
 		{
 			// Compute required buffer size
-			result = MultiByteToWideChar(CP_UTF8, 0, text, -1, nullptr, 0);
+			result = MultiByteToWideChar(CP_UTF8, 0, text, numChars, nullptr, 0);
 			utfBufferSize = AlignUp(static_cast<size_t>(result), 1024);
 			utfBuffer = std::make_unique<wchar_t[]>(utfBufferSize);
 
 			// Retry conversion
-			result = MultiByteToWideChar(CP_UTF8, 0, text, -1, utfBuffer.get(), static_cast<int>(utfBufferSize));
+			result = MultiByteToWideChar(CP_UTF8, 0, text, numChars, utfBuffer.get(), static_cast<int>(utfBufferSize));
 		}
 
 		ASSERT(result, "ERROR: MultiByteToWideChar failed with error %u.\n", GetLastError());
@@ -135,24 +135,99 @@ namespace Netcode::Graphics::DX12 {
 		return shaderResourceView;
 	}
 
-	void SpriteFont::DrawString(Netcode::SpriteBatchRef spriteBatch, const wchar_t * text, const Netcode::Float2 & position, const Netcode::Float4 & color) const {
-		DrawString(spriteBatch, text, position, color, 0, Float2::Zero, 1.0f, 0);
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color) const {
+		DrawString(spriteBatch, text, -1, position, color, Float2::Zero, 0.0f, 0.0f);
 	}
 
-	void SpriteFont::DrawString(Netcode::SpriteBatchRef spriteBatch, const char * text, const Netcode::Float2 & position, const Netcode::Float4 & color) const {
-		DrawString(spriteBatch, ConvertUTF8(text), position, color, 0, Float2::Zero, 1.0f, 0);
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, float zIndex) const {
+		DrawString(spriteBatch, text, -1, position, color, Float2::Zero, 0.0f, zIndex);
 	}
 
-	void SpriteFont::DrawString(Netcode::SpriteBatchRef spriteBatch,
-		const wchar_t * text,
-		const Netcode::Float2 & position,
-		const Netcode::Float4 & color,
-		float rotation,
-		const Netcode::Float2 & origin,
-		float scale,
-		float layerDepth) const
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const {
+		DrawString(spriteBatch, text, -1, position, color, rotationOrigin, rotationZ, 0.0f);
+	}
+
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const {
+		DrawString(spriteBatch, text, -1, position, color, rotationOrigin, rotationZ, zIndex);
+	}
+
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color) const {
+		DrawString(spriteBatch, ConvertUTF8(text), -1, position, color, Float2::Zero, 0.0f, 0.0f);
+	}
+
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, float zIndex) const
 	{
+		DrawString(spriteBatch, ConvertUTF8(text), -1, position, color, Float2::Zero, 0.0f, zIndex);
+	}
 
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const
+	{
+		DrawString(spriteBatch, ConvertUTF8(text), -1, position, color, rotationOrigin, rotationZ, 0.0f);
+	}
+
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const
+	{
+		DrawString(spriteBatch, ConvertUTF8(text), -1, position, color, rotationOrigin, rotationZ, zIndex);
+	}
+
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color) const
+	{
+		int32_t textLen = static_cast<int32_t>(text.size());
+
+		DrawString(spriteBatch, text.data(), textLen, position, color, Float2::Zero, 0.0f, 0.0f);
+	}
+
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, float zIndex) const
+	{
+		int32_t textLen = static_cast<int32_t>(text.size());
+
+		DrawString(spriteBatch, text.data(), textLen, position, color, Float2::Zero, 0.0f, zIndex);
+	}
+
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const
+	{
+		int32_t textLen = static_cast<int32_t>(text.size());
+
+		DrawString(spriteBatch, text.data(), textLen, position, color, rotationOrigin, rotationZ, 0.0f);
+	}
+
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const
+	{
+		int32_t textLen = static_cast<int32_t>(text.size());
+
+		DrawString(spriteBatch, text.data(), textLen, position, color, rotationOrigin, rotationZ, zIndex);
+	}
+
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color) const
+	{
+		int32_t textLen = static_cast<int32_t>(text.size());
+
+		DrawString(spriteBatch, ConvertUTF8(text.data(), textLen), textLen, position, color, Float2::Zero, 0.0f, 0.0f);
+	}
+
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, float zIndex) const
+	{
+		int32_t textLen = static_cast<int32_t>(text.size());
+
+		DrawString(spriteBatch, ConvertUTF8(text.data(), textLen), textLen, position, color, Float2::Zero, 0.0f, zIndex);
+	}
+
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const
+	{
+		int32_t textLen = static_cast<int32_t>(text.size());
+
+		DrawString(spriteBatch, ConvertUTF8(text.data(), textLen), textLen, position, color, rotationOrigin, rotationZ, 0.0f);
+	}
+
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const
+	{
+		int32_t textLen = static_cast<int32_t>(text.size());
+
+		DrawString(spriteBatch, ConvertUTF8(text.data(), textLen), textLen, position, color, rotationOrigin, rotationZ, zIndex);
+	}
+
+	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, int length, const Float2 & position, const Float4 & color, const Float2 & origin, float rotation, float layerDepth) const
+	{
 		SpriteEffects effects = SpriteEffects_None;
 
 		// Lookup table indicates which way to move along each axis per SpriteEffects enum value.
@@ -179,12 +254,12 @@ namespace Netcode::Graphics::DX12 {
 		if(effects)
 		{
 			baseOffset = XMVectorNegativeMultiplySubtract(
-				MeasureString_Impl(text),
+				MeasureString_Impl(text).v,
 				axisIsMirroredTable[effects & 3],
 				baseOffset);
 		}
 
-		ForEachGlyph(text, [&, color](Glyph const * glyph, float x, float y, float advance)
+		ForEachGlyph(text, length, [&, color](Glyph const * glyph, float x, float y, float advance)
 		{
 			UNREFERENCED_PARAMETER(advance);
 
@@ -211,11 +286,11 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 
-	DirectX::XMVECTOR SpriteFont::MeasureString_Impl(const wchar_t * text) const
+	Netcode::Vector2 NC_MATH_CALLCONV SpriteFont::MeasureString_Impl(const wchar_t * text, int numChars) const
 	{
-		DirectX::XMVECTOR result = DirectX::XMVectorZero();
+		Vector2 result = Float2::Zero;
 
-		ForEachGlyph(text, [&](Glyph const * glyph, float x, float y, float advance)
+		ForEachGlyph(text, numChars, [&](Glyph const * glyph, float x, float y, float advance)
 		{
 			UNREFERENCED_PARAMETER(advance);
 
@@ -224,14 +299,14 @@ namespace Netcode::Graphics::DX12 {
 
 			h = std::max(h, lineSpacing);
 
-			result = DirectX::XMVectorMax(result, DirectX::XMVectorSet(x + w, y + h, 0, 0));
+			result = result.Max(Float2{ x + w, y + h });
 		});
 
 		return result;
 	}
 
 
-	void __cdecl SpriteFont::SetDefaultCharacter(wchar_t character)
+	void SpriteFont::SetDefaultCharacter(wchar_t character)
 	{
 		defaultGlyph = nullptr;
 
@@ -259,25 +334,37 @@ namespace Netcode::Graphics::DX12 {
 		return nullptr;
 	}
 
-	Netcode::UInt2 SpriteFont::GetSpriteSheetSize() const
+	UInt2 SpriteFont::GetSpriteSheetSize() const
 	{
 		return textureSize;
 	}
 
 
-	DirectX::XMVECTOR SpriteFont::MeasureString_Impl(const char * text) const
+	Vector2 NC_MATH_CALLCONV SpriteFont::MeasureString_Impl(const char * text, int numChars) const
 	{
-		return MeasureString_Impl(ConvertUTF8(text));
+		return MeasureString_Impl(ConvertUTF8(text, numChars), numChars);
 	}
 
-	Netcode::Float2 SpriteFont::MeasureString(const char * str) const {
-		Netcode::Vector2 v = MeasureString_Impl(str);
-		return v;
+	Float2 SpriteFont::MeasureString(const char * str) const {
+		return MeasureString_Impl(str);
 	}
 
-	Netcode::Float2 SpriteFont::MeasureString(const wchar_t * str) const {
-		Netcode::Vector2 v = MeasureString_Impl(str);
-		return v;
+	Float2 SpriteFont::MeasureString(const wchar_t * str) const {
+		return MeasureString_Impl(str);
+	}
+
+	Float2 SpriteFont::MeasureString(std::string_view view) const
+	{
+		const int32_t strLen = static_cast<int32_t>(view.size());
+
+		return MeasureString_Impl(ConvertUTF8(view.data(), strLen), strLen);
+	}
+
+	Float2 SpriteFont::MeasureString(std::wstring_view view) const
+	{
+		const int32_t strLen = static_cast<int32_t>(view.size());
+
+		return MeasureString_Impl(view.data(), strLen);
 	}
 
 	float SpriteFont::GetHighestCharHeight() const
@@ -348,7 +435,7 @@ namespace Netcode::Graphics::DX12 {
 	{
 		Rect result = { LONG_MAX, LONG_MAX, 0, 0 };
 
-		ForEachGlyph(text, [&](Glyph const * glyph, float x, float y, float advance)
+		ForEachGlyph(text, -1, [&](Glyph const * glyph, float x, float y, float advance)
 		{
 			auto w = static_cast<float>(glyph->Subrect.right - glyph->Subrect.left);
 			auto h = static_cast<float>(glyph->Subrect.bottom - glyph->Subrect.top);

@@ -19,6 +19,14 @@ namespace Netcode::Function {
 	float LerpOut(float x) {
 		return 1.0f - x;
 	}
+	float HalfStep(float x)
+	{
+		if(x < 0.5f) {
+			return 0.0f;
+		} else {
+			return 1.0f;
+		}
+	}
 	float ConstantZero(float x) {
 		return 0.0f;
 	}

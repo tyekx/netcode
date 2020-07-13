@@ -62,8 +62,8 @@ namespace Netcode::Graphics::DX12 {
 
 		void UpdateLimits();
 
-		DirectX::XMVECTOR MeasureString_Impl(const wchar_t * text) const;
-		DirectX::XMVECTOR MeasureString_Impl(const char * text) const;
+		Netcode::Vector2 NC_MATH_CALLCONV MeasureString_Impl(const wchar_t * text, int numChars = -1) const;
+		Netcode::Vector2 NC_MATH_CALLCONV MeasureString_Impl(const char * text, int numChars = -1) const;
 	public:
 		SpriteFont(SpriteFont && moveFrom) = default;
 		SpriteFont & operator= (SpriteFont && moveFrom) = default;
@@ -75,24 +75,36 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual ResourceViewsRef GetResourceView() const override;
 
-		virtual void DrawString(Netcode::SpriteBatchRef spriteBatch, const wchar_t * text, const Netcode::Float2 & position, const Netcode::Float4 & color) const override;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color) const override;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, float zIndex) const override;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const override;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const override;
 
-		virtual void DrawString(Netcode::SpriteBatchRef spriteBatch, const char * text, const Netcode::Float2 & position, const Netcode::Float4 & color) const override;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color) const override;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, float zIndex) const override;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const override;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const override;
 
-		void DrawString(Netcode::SpriteBatchRef spriteBatch,
-			const wchar_t * text,
-			const Netcode::Float2 & position,
-			const Netcode::Float4 & color,
-			float rotation,
-			const Netcode::Float2 & origin,
-			float scale,
-			float layerDepth) const;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color) const override;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, float zIndex) const override;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const override;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const override;
 
-		Rect __cdecl MeasureDrawBounds(const wchar_t * text, const Netcode::Float2 & position) const;
-		Rect  MeasureDrawBounds(const wchar_t * text, DirectX::FXMVECTOR position) const;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color) const override;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, float zIndex) const override;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const override;
+		virtual void DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const override;
 
-		Netcode::Float2 MeasureString(const char * str) const override;
-		Netcode::Float2 MeasureString(const wchar_t * str) const override;
+		void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, int length, const Float2 & position, const Float4 & color, const Float2 & origin, float rotation, float layerDepth) const;
+
+		Rect MeasureDrawBounds(const wchar_t * text, const Netcode::Float2 & position) const;
+		Rect NC_MATH_CALLCONV MeasureDrawBounds(const wchar_t * text, DirectX::FXMVECTOR position) const;
+
+		virtual Float2 MeasureString(const char * str) const override;
+		virtual Float2 MeasureString(const wchar_t * str) const override;
+
+		virtual Float2 MeasureString(std::string_view view) const override;
+		virtual Float2 MeasureString(std::wstring_view view) const override;
 
 		virtual float GetHighestCharHeight() const override;
 		virtual float GetWidestCharWidth() const override;
@@ -106,29 +118,29 @@ namespace Netcode::Graphics::DX12 {
 		virtual wchar_t GetHeighestAlphaNumericChar() const override;
 		virtual Float2 GetMaxSizedAlphaNumericStringOf(uint32_t stringMaxLength) const override;
 
-		Rect __cdecl MeasureDrawBounds(const char * text, const Netcode::Float2 & position) const;
-		Rect  MeasureDrawBounds(const char * text, DirectX::FXMVECTOR position) const;
+		Rect MeasureDrawBounds(const char * text, const Netcode::Float2 & position) const;
+		Rect NC_MATH_CALLCONV MeasureDrawBounds(const char * text, DirectX::FXMVECTOR position) const;
 
 		// Spacing properties
-		float __cdecl GetLineSpacing() const;
-		void __cdecl SetLineSpacing(float spacing);
+		float GetLineSpacing() const;
+		void SetLineSpacing(float spacing);
 
 		// Font properties
-		wchar_t __cdecl GetDefaultCharacter() const;
-		void __cdecl SetDefaultCharacter(wchar_t character);
+		wchar_t GetDefaultCharacter() const;
+		void SetDefaultCharacter(wchar_t character);
 
-		bool __cdecl ContainsCharacter(wchar_t character) const;
+		bool ContainsCharacter(wchar_t character) const;
 
-		const Glyph * __cdecl FindGlyph(wchar_t character) const;
-		Netcode::UInt2 __cdecl GetSpriteSheetSize() const;
+		const Glyph * FindGlyph(wchar_t character) const;
+		Netcode::UInt2 GetSpriteSheetSize() const;
 
 		template<typename TAction>
-		void ForEachGlyph(const wchar_t * text, TAction action) const
+		void ForEachGlyph(const wchar_t * text, int numChars, TAction action) const
 		{
 			float x = 0;
 			float y = 0;
-
-			for(; *text; text++)
+			const uint32_t nChars = static_cast<uint32_t>(numChars);
+			for(uint32_t i = 0; *text && (i < nChars); i++, text++)
 			{
 				wchar_t character = *text;
 
@@ -168,7 +180,7 @@ namespace Netcode::Graphics::DX12 {
 			}
 		}
 
-		const wchar_t * ConvertUTF8(const char * text) const;
+		const wchar_t * ConvertUTF8(const char * text, int numChars = -1) const;
 	};
 
 	using DX12SpriteFont = Netcode::Graphics::DX12::SpriteFont;

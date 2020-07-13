@@ -359,11 +359,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 		DirectX::XMVECTOR sourceSize = DirectX::XMVectorSwizzle<2, 3, 2, 3>(source.v);
 		DirectX::XMVECTOR destinationSize = DirectX::XMVectorSwizzle<2, 3, 2, 3>(destination.v);
 
-		// Scale the origin offset by source size, taking care to avoid overflow if the source region is zero.
-		DirectX::XMVECTOR isZeroMask = DirectX::XMVectorEqual(sourceSize, DirectX::XMVectorZero());
-		DirectX::XMVECTOR nonZeroSourceSize = DirectX::XMVectorSelect(sourceSize, DirectX::g_XMEpsilon, isZeroMask);
-
-		DirectX::XMVECTOR origin = DirectX::XMVectorDivide(originRotationDepth.v, nonZeroSourceSize);
+		DirectX::XMVECTOR origin = DirectX::XMVectorDivide(originRotationDepth.v, destinationSize);
 
 		// Convert the source region from texels to mod-1 texture coordinate format.
 		if(flags & SpriteInfo::SourceInTexels)

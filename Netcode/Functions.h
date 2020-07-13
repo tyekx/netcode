@@ -16,6 +16,8 @@ namespace Netcode::Function {
 
 	float LerpOut(float x);
 
+	float HalfStep(float x);
+
 	float ConstantZero(float x);
 
 	float ConstantOne(float x);
