@@ -34,17 +34,17 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual ~ResourceViews() = default;
 
-		virtual void CreateSRV(uint32_t idx, GpuResourceRef resourceHandle) override;
+		virtual void CreateSRV(uint32_t idx, GpuResourcePtr resourceHandle) override;
 
-		virtual void CreateSRV(uint32_t idx, GpuResourceRef resourceHandle, uint32_t firstElement, uint32_t numElements) override;
+		virtual void CreateSRV(uint32_t idx, GpuResourcePtr resourceHandle, uint32_t firstElement, uint32_t numElements) override;
 
-		virtual void CreateRTV(uint32_t idx, GpuResourceRef resourceHandle) override;
+		virtual void CreateRTV(uint32_t idx, GpuResourcePtr resourceHandle) override;
 
-		virtual void CreateDSV(GpuResourceRef resourceHandle)  override;
+		virtual void CreateDSV(GpuResourcePtr resourceHandle)  override;
 
-		virtual void CreateUAV(uint32_t idx, GpuResourceRef resourceHandle) override;
+		virtual void CreateUAV(uint32_t idx, GpuResourcePtr resourceHandle) override;
 
-		virtual void CreateSampler(uint32_t idx, GpuResourceRef resourceHandle)  override;
+		virtual void CreateSampler(uint32_t idx, GpuResourcePtr resourceHandle)  override;
 	};
 
 	using DX12ResourceViews = Netcode::Graphics::DX12::ResourceViews;

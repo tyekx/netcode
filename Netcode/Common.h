@@ -7,8 +7,6 @@
 
 namespace Netcode::Detail {
 
-	void NotImplementedAssertion();
-
 	void Assert(bool trueMeansOk, const char * msgOnFail, ...);
 
 }

@@ -121,14 +121,14 @@ AnimationSet::AnimationSet(Netcode::Module::IGraphicsModule * graphics, Netcode:
 		Netcode::Graphics::ResourceFlags::NONE);
 
 	animKeysView = graphics->resources->CreateShaderResourceViews(3);
-	animKeysView->CreateSRV(0, animationKeysBuffer);
-	animKeysView->CreateUAV(1, intermediateBuffer);
-	animKeysView->CreateUAV(2, resultBuffer);
+	animKeysView->CreateSRV(0, animationKeysBuffer.get());
+	animKeysView->CreateUAV(1, intermediateBuffer.get());
+	animKeysView->CreateUAV(2, resultBuffer.get());
 
 	ctrlView = graphics->resources->CreateShaderResourceViews(MAX_INSTANCE_COUNT);
 	constexpr uint32_t STRIDE = BoneData::MAX_BONE_COUNT * 2;
 	for(uint32_t i = 0; i < MAX_INSTANCE_COUNT; ++i) {
-		ctrlView->CreateSRV(i, resultBuffer, i * STRIDE, STRIDE);
+		ctrlView->CreateSRV(i, resultBuffer.get(), i * STRIDE, STRIDE);
 	}
 
 	Netcode::Graphics::UploadBatch uploadBatch;

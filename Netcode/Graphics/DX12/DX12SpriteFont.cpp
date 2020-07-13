@@ -73,7 +73,7 @@ namespace Netcode::Graphics::DX12 {
 
 		textureResource = resourceContext->CreateTexture2D(textureWidth, textureHeight, textureFormat, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST, ResourceFlags::NONE);
 		shaderResourceView = std::dynamic_pointer_cast<DX12ResourceViews>(resourceContext->CreateShaderResourceViews(1));
-		shaderResourceView->CreateSRV(0, textureResource);
+		shaderResourceView->CreateSRV(0, textureResource.get());
 
 		resourceContext->SetDebugName(textureResource, L"SpriteFont:Texture");
 

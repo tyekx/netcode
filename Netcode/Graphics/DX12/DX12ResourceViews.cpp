@@ -75,27 +75,27 @@ namespace Netcode::Graphics::DX12 {
 		device->CreateRenderTargetView(resource, &rtvd, CD3DX12_CPU_DESCRIPTOR_HANDLE{ baseCpuHandle_CpuVisible, offset, Platform::RenderTargetViewIncrementSize });
 	}
 
-	void ResourceViews::CreateSRV(uint32_t idx, GpuResourceRef resourceHandle) {
+	void ResourceViews::CreateSRV(uint32_t idx, GpuResourcePtr resourceHandle) {
 		INT offset = static_cast<INT>(idx);
 
 		ASSERT(static_cast<uint32_t>(offset) < numDescriptors && offset >= 0, "ResourceViews: idx is out of range");
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "ResourceViews: invalid heap type");
 
-		DX12ResourceRef resource = std::dynamic_pointer_cast<DX12Resource>(resourceHandle);
+		DX12ResourcePtr resource = static_cast<DX12ResourcePtr>(resourceHandle);
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvd = GetShaderResourceViewDesc(resource->desc);
 
 		device->CreateShaderResourceView(resource->resource.Get(), &srvd, CD3DX12_CPU_DESCRIPTOR_HANDLE{ baseCpuHandle_ShaderVisible, offset, Platform::ShaderResourceViewIncrementSize });
 	}
 
-	void ResourceViews::CreateSRV(uint32_t idx, GpuResourceRef resourceHandle, uint32_t firstElement, uint32_t numElements)
+	void ResourceViews::CreateSRV(uint32_t idx, GpuResourcePtr resourceHandle, uint32_t firstElement, uint32_t numElements)
 	{
 		INT offset = static_cast<INT>(idx);
 
 		ASSERT(static_cast<uint32_t>(offset) < numDescriptors && offset >= 0, "ResourceViews: idx is out of range");
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "ResourceViews: invalid heap type");
 
-		DX12ResourceRef resource = std::dynamic_pointer_cast<DX12Resource>(resourceHandle);
+		DX12ResourcePtr resource = static_cast<DX12ResourcePtr>(resourceHandle);
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvd = GetShaderResourceViewDesc(resource->desc);
 
@@ -107,38 +107,38 @@ namespace Netcode::Graphics::DX12 {
 		device->CreateShaderResourceView(resource->resource.Get(), &srvd, CD3DX12_CPU_DESCRIPTOR_HANDLE{ baseCpuHandle_ShaderVisible, offset, Platform::ShaderResourceViewIncrementSize });
 	}
 
-	void ResourceViews::CreateRTV(uint32_t idx, GpuResourceRef resourceHandle) {
+	void ResourceViews::CreateRTV(uint32_t idx, GpuResourcePtr resourceHandle) {
 		INT offset = static_cast<INT>(idx);
 
 		ASSERT(static_cast<uint32_t>(offset) < numDescriptors && offset >= 0, "ResourceViews: idx is out of range");
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_RTV, "ResourceViews: invalid heap type");
 
-		DX12ResourceRef resource = std::dynamic_pointer_cast<DX12Resource>(resourceHandle);
+		DX12ResourcePtr resource = static_cast<DX12ResourcePtr>(resourceHandle);
 
 		D3D12_RENDER_TARGET_VIEW_DESC rtvd = GetRenderTargetViewDesc(resource->desc);
 
 		device->CreateRenderTargetView(resource->resource.Get(), &rtvd, CD3DX12_CPU_DESCRIPTOR_HANDLE{ baseCpuHandle_CpuVisible, offset, Platform::RenderTargetViewIncrementSize });
 	}
 
-	void ResourceViews::CreateDSV(GpuResourceRef resourceHandle) {
+	void ResourceViews::CreateDSV(GpuResourcePtr resourceHandle) {
 		INT offset = 0;
 
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_DSV, "ResourceViews: invalid heap type");
 		ASSERT(numDescriptors == 1, "Array of depth stencil views is not valid");
 
-		DX12ResourceRef resource = std::dynamic_pointer_cast<DX12Resource>(resourceHandle);
+		DX12ResourcePtr resource = static_cast<DX12ResourcePtr>(resourceHandle);
 
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsvd = GetDepthStencilViewDesc(resource->desc);
 
 		device->CreateDepthStencilView(resource->resource.Get(), &dsvd, CD3DX12_CPU_DESCRIPTOR_HANDLE{ baseCpuHandle_CpuVisible, offset, Platform::DepthStencilViewIncrementSize });
 	}
 
-	void ResourceViews::CreateUAV(uint32_t idx, GpuResourceRef resourceHandle) {
+	void ResourceViews::CreateUAV(uint32_t idx, GpuResourcePtr resourceHandle) {
 		INT offset = static_cast<INT>(idx);
 		ASSERT(idx < numDescriptors, "ResourceViews: idx is out of range");
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "ResourceViews: invalid heap type");
 
-		DX12ResourceRef resource = std::dynamic_pointer_cast<DX12Resource>(resourceHandle);
+		DX12ResourcePtr resource = static_cast<DX12ResourcePtr>(resourceHandle);
 
 		D3D12_UNORDERED_ACCESS_VIEW_DESC uavd = GetUnorderedAccessViewDesc(resource->desc);
 
@@ -146,10 +146,11 @@ namespace Netcode::Graphics::DX12 {
 		device->CreateUnorderedAccessView(resource->resource.Get(), nullptr, &uavd, CD3DX12_CPU_DESCRIPTOR_HANDLE{ baseCpuHandle_ShaderVisible, offset, Platform::ShaderResourceViewIncrementSize });
 	}
 
-	void ResourceViews::CreateSampler(uint32_t idx, GpuResourceRef resourceHandle) {
+	void ResourceViews::CreateSampler(uint32_t idx, GpuResourcePtr resourceHandle) {
 		ASSERT(idx < numDescriptors, "ResourceViews: idx is out of range");
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, "ResourceViews: invalid heap type");
-		ASSERT(false, "Not implemented");
+		
+		NotImplementedAssertion("");
 	}
 
 }

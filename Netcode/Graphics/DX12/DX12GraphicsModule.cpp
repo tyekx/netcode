@@ -641,7 +641,7 @@ namespace Netcode::Graphics::DX12 {
 
 		depthStencil.reset();
 		depthStencil = resources->CreateDepthStencil(depthStencilFormat, ResourceType::PERMANENT_DEFAULT);
-		depthStencilView->CreateDSV(depthStencil);
+		depthStencilView->CreateDSV(depthStencil.get());
 
 		resources->SetDebugName(depthStencil, L"Default Depth Stencil");
 

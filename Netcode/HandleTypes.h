@@ -282,6 +282,7 @@ namespace Netcode {
 
 	using GpuResourceWeakRef = std::weak_ptr<GpuResource>;
 	using GpuResourceRef = std::shared_ptr<GpuResource>;
+	using GpuResourcePtr = GpuResource *;
 
 	class ShaderBytecode {
 	public:
@@ -316,6 +317,7 @@ namespace Netcode {
 		virtual void * GetImplDetail() const = 0;
 	};
 
+	using PipelineStatePtr = PipelineState *;
 	using PipelineStateRef = std::shared_ptr<PipelineState>;
 	using PipelineStateWeakRef = std::weak_ptr<PipelineState>;
 
@@ -368,6 +370,7 @@ namespace Netcode {
 		virtual void * GetImplDetail() const = 0;
 	};
 
+	using RootSignaturePtr = RootSignature *;
 	using RootSignatureRef = std::shared_ptr<RootSignature>;
 	using RootSignatureWeakRef = std::weak_ptr<RootSignature>;
 
@@ -451,12 +454,12 @@ namespace Netcode {
 	class ResourceViews {
 	public:
 		virtual ~ResourceViews() = default;
-		virtual void CreateSRV(uint32_t idx, GpuResourceRef resourceHandle) = 0;
-		virtual void CreateSRV(uint32_t idx, GpuResourceRef resourceHandle, uint32_t firstElement, uint32_t numElements) = 0;
-		virtual void CreateRTV(uint32_t idx, GpuResourceRef resourceHandle) = 0;
-		virtual void CreateDSV(GpuResourceRef resourceHandle) = 0;
-		virtual void CreateUAV(uint32_t idx, GpuResourceRef resourceHandle) = 0;
-		virtual void CreateSampler(uint32_t idx, GpuResourceRef resourceHandle) = 0;
+		virtual void CreateSRV(uint32_t idx, GpuResourcePtr resourceHandle) = 0;
+		virtual void CreateSRV(uint32_t idx, GpuResourcePtr resourceHandle, uint32_t firstElement, uint32_t numElements) = 0;
+		virtual void CreateRTV(uint32_t idx, GpuResourcePtr resourceHandle) = 0;
+		virtual void CreateDSV(GpuResourcePtr resourceHandle) = 0;
+		virtual void CreateUAV(uint32_t idx, GpuResourcePtr resourceHandle) = 0;
+		virtual void CreateSampler(uint32_t idx, GpuResourcePtr resourceHandle) = 0;
 	};
 
 	using ResourceViewsRef = std::shared_ptr<ResourceViews>;

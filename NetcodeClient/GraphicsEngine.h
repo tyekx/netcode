@@ -261,9 +261,9 @@ private:
 		graphics->resources->SetDebugName(gbufferPass_NormalsRenderTarget, L"GBuffer:Normals");
 		graphics->resources->SetDebugName(gbufferPass_DepthBuffer, L"GBuffer:Depth");
 
-		gbufferPass_RenderTargetViews->CreateRTV(0, gbufferPass_ColorRenderTarget);
-		gbufferPass_RenderTargetViews->CreateRTV(1, gbufferPass_NormalsRenderTarget);
-		gbufferPass_DepthStencilView->CreateDSV(gbufferPass_DepthBuffer);
+		gbufferPass_RenderTargetViews->CreateRTV(0, gbufferPass_ColorRenderTarget.get());
+		gbufferPass_RenderTargetViews->CreateRTV(1, gbufferPass_NormalsRenderTarget.get());
+		gbufferPass_DepthStencilView->CreateDSV(gbufferPass_DepthBuffer.get());
 	}
 
 	void CreateSSAOBlurPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
@@ -354,7 +354,7 @@ private:
 		ssaoPass_OcclusionRenderTarget = graphics->resources->CreateRenderTarget(ssaoRenderTargetSize.x, ssaoRenderTargetSize.y, DXGI_FORMAT_R32_FLOAT, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
 		ssaoPass_BlurRenderTarget = graphics->resources->CreateRenderTarget(ssaoRenderTargetSize.x, ssaoRenderTargetSize.y, DXGI_FORMAT_R32_FLOAT, ResourceType::PERMANENT_DEFAULT, ResourceState::PIXEL_SHADER_RESOURCE);
 		
-		lightingPass_ShaderResourceViews->CreateSRV(3, ssaoPass_BlurRenderTarget);
+		lightingPass_ShaderResourceViews->CreateSRV(3, ssaoPass_BlurRenderTarget.get());
 	}
 
 	void CreateLightingPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
@@ -399,9 +399,9 @@ private:
 	}
 
 	void CreateLightingPassResourceViews() {
-		lightingPass_ShaderResourceViews->CreateSRV(0, gbufferPass_ColorRenderTarget);
-		lightingPass_ShaderResourceViews->CreateSRV(1, gbufferPass_NormalsRenderTarget);
-		lightingPass_ShaderResourceViews->CreateSRV(2, gbufferPass_DepthBuffer);
+		lightingPass_ShaderResourceViews->CreateSRV(0, gbufferPass_ColorRenderTarget.get());
+		lightingPass_ShaderResourceViews->CreateSRV(1, gbufferPass_NormalsRenderTarget.get());
+		lightingPass_ShaderResourceViews->CreateSRV(2, gbufferPass_DepthBuffer.get());
 	}
 
 	void CreateUIPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
@@ -786,7 +786,7 @@ public:
 		g->frame->SyncUpload(batch);
 
 		cloudynoonView = g->resources->CreateShaderResourceViews(1);
-		cloudynoonView->CreateSRV(0, cloudynoonTexture);
+		cloudynoonView->CreateSRV(0, cloudynoonTexture.get());
 
 		Netcode::ShaderBuilderRef shaderBuilder = g->CreateShaderBuilder();
 		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"envmapPass_Vertex.cso");

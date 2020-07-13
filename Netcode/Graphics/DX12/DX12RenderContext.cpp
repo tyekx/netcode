@@ -121,7 +121,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void GraphicsContext::Dispatch(uint32_t threadGroupX, uint32_t threadGroupY, uint32_t threadGroupZ)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void GraphicsContext::SetRootSignature(RootSignatureRef rs) {
@@ -430,32 +430,32 @@ namespace Netcode::Graphics::DX12 {
 
 	void ComputeContext::SetVertexBuffer(GpuResourceRef handle)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetIndexBuffer(GpuResourceRef handle)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::DrawIndexed(uint32_t indexCount)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::DrawIndexed(uint32_t indexCount, uint32_t vertexOffset)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::Draw(uint32_t vertexCount)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::Draw(uint32_t vertexCount, uint32_t vertexOffset)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::Dispatch(uint32_t threadGroupX, uint32_t threadGroupY, uint32_t threadGroupZ)
@@ -465,133 +465,133 @@ namespace Netcode::Graphics::DX12 {
 
 	void ComputeContext::SetPrimitiveTopology(PrimitiveTopology topology)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::ClearUnorderedAccessViewUint(GpuResourceRef handle, const DirectX::XMUINT4 & values)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::ClearRenderTarget(uint8_t idx)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::ClearRenderTarget(uint8_t idx, const float * clearColor)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::ClearDepthOnly()
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::ClearStencilOnly()
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::ClearDepthStencil()
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetStreamOutput(GpuResourceRef handle)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetStreamOutputFilledSize(GpuResourceRef handle, uint64_t byteOffset)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::ResetStreamOutput()
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetRenderTargets(std::initializer_list<GpuResourceRef> handles, GpuResourceRef depthStencil)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetStencilReference(uint8_t stencilValue)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetViewport(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetViewport(uint32_t width, uint32_t height)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetViewport()
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	Float4 ComputeContext::GetViewport()
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 		return Float4::Zero;
 	}
 
 	void ComputeContext::SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetScissorRect(uint32_t width, uint32_t height)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetScissorRect()
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetRenderTargets(GpuResourceRef renderTarget, GpuResourceRef depthStencil)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetRenderTargets(std::nullptr_t rt, std::nullptr_t ds)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetRenderTargets(std::nullptr_t rt, ResourceViewsRef ds)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetRenderTargets(ResourceViewsRef rt, std::nullptr_t ds)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetRenderTargets(std::nullptr_t rt, GpuResourceRef ds)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetRenderTargets(GpuResourceRef rt, std::nullptr_t ds)
 	{
-		Netcode::Detail::NotImplementedAssertion();
+		Netcode::NotImplementedAssertion("");
 	}
 
 	void ComputeContext::SetRootConstants(int slot, const void * srcData, uint32_t numConstants)

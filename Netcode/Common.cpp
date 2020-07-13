@@ -25,11 +25,6 @@ namespace Netcode::Detail {
 #endif
 	}
 
-	void NotImplementedAssertion()
-	{
-		throw Netcode::NotImplementedException("Not implemented");
-	}
-
 	void Assert(bool trueMeansOk, const char * msgOnFail, ...) {
 		if(!trueMeansOk) {
 			va_list argList;

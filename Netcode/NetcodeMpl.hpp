@@ -290,11 +290,7 @@ struct TupleRename;
 
 template<template<typename...> typename CANDIDATE, typename ... T>
 struct TupleRename< CANDIDATE, std::tuple<T...> > {
-#ifdef _MSC_VER
-	using type = typename CANDIDATE<T...>;
-#else
 	using type = CANDIDATE<T...>;
-#endif
 };
 
 template<size_t N, typename ... T>

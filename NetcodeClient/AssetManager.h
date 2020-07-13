@@ -65,7 +65,7 @@ public:
 
 	Netcode::ResourceViewsRef CreateTextureRV(Netcode::GpuResourceRef resourceRef) {
 		Netcode::ResourceViewsRef rv = graphics->resources->CreateShaderResourceViews(1);
-		rv->CreateSRV(0, resourceRef);
+		rv->CreateSRV(0, resourceRef.get());
 		return rv;
 	}
 

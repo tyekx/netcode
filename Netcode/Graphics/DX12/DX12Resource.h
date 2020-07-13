@@ -30,6 +30,7 @@ namespace Netcode::Graphics::DX12 {
 	};
 
 	using DX12Resource = Netcode::Graphics::DX12::Resource;
+	using DX12ResourcePtr = DX12Resource *;
 	using DX12ResourceRef = std::shared_ptr<DX12Resource>;
 
 }
