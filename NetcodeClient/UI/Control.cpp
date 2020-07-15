@@ -336,14 +336,6 @@ namespace UI {
         UpdateZIndices(1);
     }
 
-    void Control::OnKeyDown(KeyboardEventArgs & args) {
-
-    }
-
-    void Control::OnKeyUp(KeyboardEventArgs & args) {
-
-    }
-
     void Control::OnMouseEnter(MouseEventArgs & args) {
         MouseEnterEvent.Invoke(this, args);
     }

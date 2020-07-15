@@ -31,17 +31,6 @@ namespace UI {
 		}
 	};
 
-	class KeyboardEventArgs : public EventArgs {
-		uint32_t keys[8];
-		uint32_t numKeys;
-	public:
-		Netcode::KeyModifiers modifiers;
-
-		Netcode::ArrayView<uint32_t> Keys() const {
-			return Netcode::ArrayView<uint32_t>(keys, numKeys);
-		}
-	};
-
 	class FocusChangedEventArgs : public EventArgs {
 		int32_t tabIndex;
 

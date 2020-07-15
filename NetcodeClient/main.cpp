@@ -68,7 +68,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	ListConfigEntries("", Netcode::Config::storage);
 
-	Netcode::Input::CreateResources();
+	Netcode::Input::Initialize();
 
 	Netcode::Module::DefaultModuleFactory defModuleFactory;
 	std::unique_ptr<Netcode::Module::AApp> app = std::make_unique<GameApp>();

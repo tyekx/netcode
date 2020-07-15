@@ -32,8 +32,8 @@ class PlayerBehavior : public IBehavior {
 	}
 
 	Netcode::Vector3 GetDirectionalMovement() {
-		float dx = Netcode::Input::GetAxis("Horizontal");
-		float dz = Netcode::Input::GetAxis("Vertical");
+		float dx = Netcode::Input::GetAxis(AxisEnum::HORIZONTAL);
+		float dz = Netcode::Input::GetAxis(AxisEnum::VERTICAL);
 
 		Netcode::Vector3 dxdzVec = Netcode::Float3{ dx, 0.0f, dz };
 		

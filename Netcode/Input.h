@@ -1,7 +1,9 @@
 #pragma once
 
+#include <NetcodeFoundation/Memory.h>
 #include <NetcodeFoundation/Math.h>
 
+#include <algorithm>
 #include <string>
 #include <map>
 #include "Utility.h"
@@ -12,110 +14,352 @@
 
 namespace Netcode {
 
-	enum KeyModifiers {
-		CTRL = 1, ALT = 2, SHIFT = 4, CAPS_LOCK = 8, 
+	enum KeyModifier {
+		NONE = 0,
+		CTRL = 1, ALT = 2, SHIFT = 4,
 		CTRL_ALT = ( CTRL | ALT ),
-		SHIFT_ALT = ( SHIFT | ALT ),
-		SHIFT_CAPS_LOCK = ( SHIFT | CAPS_LOCK )
+		SHIFT_ALT = ( SHIFT | ALT )
 	};
+
 	/*
-	namespace Input {
+	LSB   = "Is active?"
+	LSB+1 = "Is edge?"
+	*/
+	enum class KeyState : uint32_t {
+		INACTIVE = 0,
+		ACTIVE = 1,
+		FALLING_EDGE = 2,
+		RISING_EDGE = 3,
+		PULSE = 5,
+		UNDEFINED = 0xFFFFFFFF
+	};
 
-		class Events {
-			~Events() = delete;
-			Events() = delete;
-		public:
+	enum class KeyCode : uint32_t {
+		UNDEFINED = 0x00,
 
-			static Event<uint32_t, uint32_t> OnKeyPressed;
-			static Event<uint32_t, uint32_t> OnMouseMoved;
-			static Event<> OnFocused;
-			static Event<> OnBlurred;
-			// [...]
-		};
+		MOUSE_LEFT = 0x01,
+		MOUSE_RIGHT = 0x02,
+		MOUSE_MIDDLE = 0x04,
+		MOUSE4 = 0x05,
+		MOUSE5 = 0x06,
 
-		class InputBase {
-		protected:
-			static bool isFocused;
+		BACKSPACE = 0x08,
+		TAB = 0x09,
 
-		public:
-			static void Focus();
+		CLEAR = 0x0C,
+		RETURN = 0x0D,
 
-			static void Blur();
-		};
+		SHIFT = 0x10,
+		CONTROL = 0x11,
+		ALT = 0x12,
+		PAUSE = 0x13,
+		CAPS_LOCK = 0x14,
 
-		class Axes {
+		ESCAPE = 0x18,
+		SPACE = 0x20,
+		PAGE_UP = 0x21,
+		PAGE_DOWN = 0x22,
+		END = 0x23,
+		HOME = 0x24,
+		LEFT = 0x25,
+		UP = 0x26,
+		RIGHT = 0x27,
+		DOWN = 0x28,
 
-		public:
-			float GetAxis(const std::string & axis);
-			void SetAxis(const std::string & name, uint32_t posKey, uint32_t negKey);
-		};
+		PRINT_SCREEN = 0x2C,
+		INSERT = 0x2D,
+		DEL = 0x2E,
+		
+		_0 = 0x30,
+		_1 = 0x31,
+		_2 = 0x32,
+		_3 = 0x33,
+		_4 = 0x34,
+		_5 = 0x35,
+		_6 = 0x36,
+		_7 = 0x37,
+		_8 = 0x38,
+		_9 = 0x39,
 
-		class Mouse {
-			DirectX::XMINT2 cursorPos;
-			DirectX::XMINT2 cursorDelta;
-			std::bitset<256> keysHeld;
-		public:
-			DirectX::XMINT2 GetDelta() const {
+		A = 0x41,
+		B = 0x42,
+		C = 0x43,
+		D = 0x44,
+		E = 0x45,
+		F = 0x46,
+		G = 0x47,
+		H = 0x48,
+		I = 0x49,
+		J = 0x4A,
+		K = 0x4B,
+		L = 0x4C,
+		M = 0x4D,
+		N = 0x4E,
+		O = 0x4F,
+		P = 0x50,
+		Q = 0x51,
+		R = 0x52,
+		S = 0x53,
+		T = 0x54,
+		U = 0x55,
+		V = 0x56,
+		W = 0x57,
+		X = 0x58,
+		Y = 0x59,
+		Z = 0x5A,
 
+		NUM_0 = 0x60,
+		NUM_1 = 0x61,
+		NUM_2 = 0x62,
+		NUM_3 = 0x63,
+		NUM_4 = 0x64,
+		NUM_5 = 0x65,
+		NUM_6 = 0x66,
+		NUM_7 = 0x67,
+		NUM_8 = 0x68,
+		NUM_9 = 0x69,
+
+		MULTIPLY = 0x6A,
+		ADD = 0x6B,
+		SEPARATOR = 0x6C,
+		SUBTRACT = 0x6D,
+		DECIMAL = 0x6E,
+		DIVIDE = 0x6F,
+
+		F1 = 0x70,
+		F2 = 0x71,
+		F3 = 0x72,
+		F4 = 0x73,
+		F5 = 0x74,
+		F6 = 0x75,
+		F7 = 0x76,
+		F8 = 0x77,
+		F9 = 0x78,
+		F10 = 0x79,
+		F11 = 0x7A,
+		F12 = 0x7B,
+
+		NUM_LOCK = 0x90,
+		SCROLL_LOCK = 0x91
+	};
+
+	class Key {
+		KeyCode code;
+		KeyState state;
+	public:
+		Key() : code{ KeyCode::UNDEFINED }, state{ KeyState::UNDEFINED } { }
+		Key(KeyCode code, KeyState state) : code{ code }, state{ state } { }
+		Key(KeyCode code) : code{ code }, state{ KeyState::UNDEFINED } { }
+
+		inline KeyCode GetCode() const {
+			return code;
+		}
+
+		inline KeyState GetState() const {
+			return state;
+		}
+
+		inline void SetState(KeyState newState) {
+			state = newState;
+		}
+
+		bool IsMouse() const {
+			return code == KeyCode::MOUSE_LEFT || code == KeyCode::MOUSE_RIGHT || code == KeyCode::MOUSE_MIDDLE || code == KeyCode::MOUSE4 || code == KeyCode::MOUSE5;
+		}
+
+		bool IsKeyboard() const {
+			return code != KeyCode::UNDEFINED && !IsMouse();
+		}
+
+		bool IsPressed() const {
+			return static_cast<uint32_t>(GetState()) & (1U);
+		}
+
+		bool IsReleased() const {
+			return !IsPressed();
+		}
+
+		bool IsRising() const {
+			return GetState() == KeyState::RISING_EDGE;
+		}
+
+		bool IsFalling() const {
+			return GetState() == KeyState::FALLING_EDGE;
+		}
+
+		bool IsEdge() const {
+			return static_cast<uint32_t>(GetState()) & (2U);
+		}
+
+		bool operator==(KeyCode keyCode) const {
+			return code == keyCode;
+		}
+	};
+
+	enum DefaultAxes {
+		VERTICAL,
+		HORIZONTAL,
+		FIRE1,
+		FIRE2,
+		JUMP
+	};
+
+	class AxisMapBase {
+	public:
+		virtual ~AxisMapBase() = default;
+		virtual float GetAxis(uint32_t axisId) = 0;
+		virtual void Update(ArrayView<Key> keys) = 0;
+	};
+
+	using AxisMapRef = std::shared_ptr<AxisMapBase>;
+
+	template<typename AxisEnum = DefaultAxes>
+	class AxisData {
+	public:
+		AxisEnum axisId;
+		KeyCode positiveKey;
+		KeyCode negativeKey;
+		float value;
+
+		AxisData() : axisId{ 0 }, positiveKey{ KeyCode::UNDEFINED }, negativeKey{ KeyCode::UNDEFINED }, value{ 0.0f } { }
+		AxisData(AxisEnum axisId, KeyCode posKey, KeyCode negKey) :
+			axisId{ axisId }, positiveKey{ posKey }, negativeKey{ negKey }, value{ 0.0f } { }
+	};
+
+	template<typename AxisEnum = DefaultAxes>
+	class AxisMap : public AxisMapBase {
+
+		using ContainerType = std::vector<AxisData<AxisEnum>>;
+
+		ContainerType data;
+	public:
+
+		AxisMap(const std::initializer_list<typename ContainerType::value_type> & initList) : data{} {
+			uint32_t maxId = 0;
+
+			for(const auto & i : initList) {
+				uint32_t axisId = static_cast<uint32_t>(i.axisId);
+				maxId = std::max(axisId, maxId);
 			}
 
-			DirectX::XMINT2 GetPosition() const {
+			ASSERT(maxId <= 64, "AxisMap enum value is out of range. Valid range: [0, 64]");
 
+			data.resize(maxId + 1);
+
+			for(const auto & i : initList) {
+				data[static_cast<uint32_t>(i.axisId)] = i;
 			}
+		}
 
-			void Consume();
-		};
+		virtual float GetAxis(uint32_t axisId) override {
+			ASSERT(axisId < static_cast<uint32_t>(data.size()), "Out of range");
 
+			return data[axisId].value;
+		}
 
+		virtual void Update(ArrayView<Key> keys) override {
+			for(AxisData<AxisEnum> & axisData : data) {
+				Key posKey = keys[static_cast<uint32_t>(axisData.positiveKey)];
+				Key negKey = keys[static_cast<uint32_t>(axisData.negativeKey)];
 
-	}*/
+				if(posKey.IsPressed() && negKey.IsReleased()) {
+					axisData.value = 1.0f;
+				}
+
+				if(posKey.IsReleased() && negKey.IsReleased()) {
+					axisData.value = -1.0f;
+				}
+
+				// both is in the same state
+				if(posKey.IsPressed() == negKey.IsPressed()) {
+					axisData.value = 0.0f;
+				}
+			}
+		}
+	};
 
 	class Input {
-		~Input() = delete;
 		Input() = delete;
+		~Input() = delete;
 
-		struct Axis {
-			uint32_t PositiveKey;
-			uint32_t NegativeKey;
-			float CurrentValue;
+		struct detail;
 
-			Axis();
-			Axis(uint32_t posK, uint32_t negK);
-		};
-
-		static Netcode::Int2 mousePos;
-		static Netcode::Int2 mouseDelta;
-		static bool isFocused;
-		static std::map<std::string, Axis> axisMap;
-		static bool keysHeld[256];
-		static unsigned char inputBuffer[2048];
-		static uint32_t activeModifiers;
+		static std::unique_ptr<detail> instance;
 	public:
-		static void CreateResources();
-		static void ReadRawMouse(unsigned long long wParam, unsigned long long lParam);
-		static void SetMousePos(const Netcode::Int2 & pos);
 
-		static void KeyPressed(uint32_t keyCode);
-		static void KeyReleased(uint32_t keyCode);
+		using Alloc = Memory::ObjectAllocator;
 
-		static Event<uint32_t, uint32_t> OnKeyPressed;
+		using StdAlloc = Memory::StdAllocatorAdapter<void, Alloc>;
 
-		static float GetAxis(const std::string & axis);
-		static void SetAxis(const std::string & name, uint32_t posKey, uint32_t negKey);
+		template<typename ... T>
+		using EventType = ManagedEvent<StdAlloc, T...>;
 
-		static void MouseMove(const Netcode::Int2 & xy);
-		
-		static Netcode::Int2 GetMouseDelta();
-		static Netcode::Int2 GetMousePos();
-
-		static void Blur();
-
-		static void Focused();
-
-		/*
-		* Reset must be called after updating the scene and processing the inputs, otherwise some inputs will not register
+		/**
+		* Raw input, every key, every mouse button, every state
 		*/
-		static void Reset();
+		static EventType<Key, KeyModifier> * OnInput;
+
+		/**
+		* Raw mouse input, every mouse key, every state
+		*/
+		static EventType<Key, KeyModifier> * OnMouseInput;
+
+		/**
+		* Rising edges for mouse keys
+		*/
+		static EventType<Key, KeyModifier> * OnMouseKeyPressed;
+
+		/**
+		* Falling edges for mouse keys
+		*/
+		static EventType<Key, KeyModifier> * OnMouseKeyReleased;
+
+		/**
+		* Raw keyboard input, every keyboard key, every state
+		*/
+		static EventType<Key, KeyModifier> * OnKeyInput;
+
+		/**
+		* Rising edges or pulses for keyboard keys
+		*/
+		static EventType<Key, KeyModifier> * OnKeyPressed;
+
+		/**
+		* Falling edges for keyboard keys
+		*/
+		static EventType<Key, KeyModifier> * OnKeyReleased;
+
+		/**
+		* Mouse wheel scroll event
+		* 1st argument is a 1D vector, direction and longitude. 
+		* x > 0: scroll up
+		* x < 0: scroll down
+		*/
+		static EventType<int, KeyModifier> * OnScroll;
+
+
+		
+
+		static void ProcessEvent(Key keyEvent);
+
+		static void ProcessMouseMoveEvent(const Int2 & mouseWindowPosition);
+
+		static void ProcessPlatformEvent(uintptr_t wParam, intptr_t lParam);
+
+		static void Initialize();
+
+		static void UpdateAxisMap(float dt);
+
+		static float GetAxis(uint32_t axis);
+
+		static void SetAxisMap(AxisMapRef axisMap);
+
+		static void CompleteFrame();
+
+		static Int2 GetMouseDelta();
+
+		static Int2 GetMousePosition();
 
 	};
+
 }

@@ -16,29 +16,28 @@ public:
 	}
 
 	virtual void Setup(GameObject * owner) override {
-		token = Netcode::Input::OnKeyPressed.Subscribe([this](uint32_t keyCode, uint32_t modifiers) -> void {
-			uint32_t idx = keyCode - static_cast<uint32_t>('0');
-			if(idx < 4) {
+		token = Netcode::Input::OnKeyPressed->Subscribe([this](Netcode::Key key, Netcode::KeyModifier modifiers) -> void {
+			int32_t idx = static_cast<int32_t>(key.GetCode()) - static_cast<int32_t>(Netcode::KeyCode::_0);
+			if(idx >= 0 && idx < 4) {
 				curr = refs[idx];
-				Log::Debug("[DebugScript] selected value of index: {0}", static_cast<int32_t>(idx));
+				Log::Debug("[DebugScript] selected value of index: {0}", idx);
 			}
-
 
 			if(curr != nullptr) {
 				float scale = 1.0f;
 
-				if((modifiers & Netcode::KeyModifiers::CTRL) > 0) {
+				if((modifiers & Netcode::KeyModifier::CTRL) > 0) {
 					scale *= 10.0f;
-				} else if((modifiers & Netcode::KeyModifiers::ALT) > 0) {
+				} else if((modifiers & Netcode::KeyModifier::ALT) > 0) {
 					scale /= 10.0f;
 				}
 
-				if(keyCode == VK_ADD) {
+				if(key.GetCode() == Netcode::KeyCode::ADD) {
 					*curr += scale;
 					Log::Debug("[DebugScript] value increased to {0}", std::to_string(*curr));
 				}
 
-				if(keyCode == VK_SUBTRACT) {
+				if(key.GetCode() == Netcode::KeyCode::SUBTRACT) {
 					*curr -= scale;
 					Log::Debug("[DebugScript] value decreased to {0}", std::to_string(*curr));
 				}

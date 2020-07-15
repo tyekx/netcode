@@ -168,10 +168,6 @@ namespace UI {
 
         virtual void OnFocused(FocusChangedEventArgs & args);
 
-        virtual void OnKeyDown(KeyboardEventArgs & args);
-
-        virtual void OnKeyUp(KeyboardEventArgs & args);
-
         virtual void OnClick(MouseEventArgs & args);
 
         virtual void OnMouseEnter(MouseEventArgs & args);
@@ -195,6 +191,7 @@ namespace UI {
         Netcode::Event<Control *, MouseEventArgs &> MouseEnterEvent;
         Netcode::Event<Control *, MouseEventArgs &> MouseLeaveEvent;
         Netcode::Event<Control *, MouseEventArgs &> MouseMoveEvent;
+        Netcode::Event<Control *, MouseEventArgs &> MouseClick;
     };
 
 
@@ -211,8 +208,6 @@ namespace UI {
         Netcode::UInt2 backgroundImageSize;
         Netcode::Float4 backgroundColor;
         Netcode::Float4 borderColor;
-        Netcode::Float4 renderedBackgroundColor;
-        Netcode::Float4 renderedBorderColor;
 
         Netcode::BorderType BorderType() const {
             return borderType;
@@ -239,7 +234,7 @@ namespace UI {
                 Netcode::Float2 bgSize = BackgroundSize();
 
                 if(bgSize.x == 0.0f || bgSize.y == 0.0f) {
-                    return Netcode::SpriteDesc{ BackgroundImage(), BackgroundImageSize(), RenderedBackgroundColor() };
+                    return Netcode::SpriteDesc{ BackgroundImage(), BackgroundImageSize(), BackgroundColor() };
                 } else {
                     HorizontalAnchor ha = BackgroundHorizontalAlignment();
                     VerticalAnchor va = BackgroundVerticalAlignment();
@@ -262,12 +257,12 @@ namespace UI {
                         static_cast<int32_t>(br.y)
                     };
 
-                    return Netcode::SpriteDesc{ BackgroundImage(), BackgroundImageSize(), sourceRectangle, RenderedBackgroundColor() };
+                    return Netcode::SpriteDesc{ BackgroundImage(), BackgroundImageSize(), sourceRectangle, BackgroundColor() };
                 }
             }
 
             if(BackgroundType() == Netcode::BackgroundType::SOLID) {
-                return Netcode::SpriteDesc{ RenderedBackgroundColor() };
+                return Netcode::SpriteDesc{ BackgroundColor() };
             }
 
             return Netcode::SpriteDesc{};
@@ -275,18 +270,10 @@ namespace UI {
 
         Netcode::BorderDesc GetBorderDesc() const {
             if(BorderType() == Netcode::BorderType::SOLID) {
-                return Netcode::BorderDesc{ BorderWidth(), BorderRadius(), RenderedBorderColor() };
+                return Netcode::BorderDesc{ BorderWidth(), BorderRadius(), BorderColor() };
             }
 
             return Netcode::BorderDesc{};
-        }
-
-        void RenderedBackgroundColor(const Netcode::Float4 & clr) {
-            renderedBackgroundColor = clr;
-        }
-
-        void RenderedBorderColor(const Netcode::Float4 & clr) {
-            renderedBorderColor = clr;
         }
 
     public:
@@ -295,18 +282,9 @@ namespace UI {
         }
 
         Panel() : Control{}, borderType{ Netcode::BorderType::NONE }, borderWidth{ 0.0f }, borderRadius{ 0.0f }, backgroundType{ Netcode::BackgroundType::NONE }, backgroundVerticalAlignment{ VerticalAnchor::TOP }, backgroundHorizontalAlignment{ HorizontalAnchor::LEFT },
-            backgroundImage{ nullptr }, backgroundSize{ Netcode::Float2::Zero }, backgroundImageSize{ Netcode::UInt2::Zero }, backgroundColor{ Netcode::Float4::Zero }, borderColor{ Netcode::Float4::Zero },
-            renderedBackgroundColor{ Netcode::Float4::Zero }, renderedBorderColor{ Netcode::Float4::Zero } { }
+            backgroundImage{ nullptr }, backgroundSize{ Netcode::Float2::Zero }, backgroundImageSize{ Netcode::UInt2::Zero }, backgroundColor{ Netcode::Float4::Zero }, borderColor{ Netcode::Float4::Zero } { }
 
         virtual ~Panel() = default;
-
-        Netcode::Float4 RenderedBorderColor() const {
-            return renderedBorderColor;
-        }
-
-        Netcode::Float4 RenderedBackgroundColor() const {
-            return renderedBackgroundColor;
-        }
 
         VerticalAnchor BackgroundVerticalAlignment() const {
             return backgroundVerticalAlignment;
@@ -362,7 +340,6 @@ namespace UI {
 
         void BorderColor(const Netcode::Float4 & c) {
             borderColor = c;
-            RenderedBorderColor(borderColor);
             BorderType(Netcode::BorderType::SOLID);
         }
 
@@ -388,7 +365,6 @@ namespace UI {
             }
 
             backgroundColor = color;
-            RenderedBackgroundColor(backgroundColor);
         }
 
         float Opacity() const {
@@ -556,7 +532,6 @@ namespace UI {
     protected:
         Netcode::SpriteFontRef font;
         Netcode::Float4 textColor;
-        Netcode::Float4 renderedTextColor;
         std::wstring text;
         Netcode::Float2 textPosition;
 
@@ -589,14 +564,10 @@ namespace UI {
             }
         }
 
-        void RenderedTextColor(const Netcode::Float4 & clr) {
-            renderedTextColor = clr;
-        }
-
     public:
         virtual ~Label() = default;
 
-        Label() : Panel{}, font{ nullptr }, textColor{ Netcode::Float4::Zero }, renderedTextColor{ Netcode::Float4::Zero }, text{}, textPosition{ Netcode::Float2::Zero } {
+        Label() : Panel{}, font{ nullptr }, textColor{ Netcode::Float4::Zero }, text{}, textPosition{ Netcode::Float2::Zero } {
 
         }
 
@@ -609,13 +580,7 @@ namespace UI {
 
         void TextColor(const Netcode::Float4 & color) {
             textColor = color;
-            RenderedTextColor(textColor);
         }
-
-        Netcode::Float4 RenderedTextColor() const {
-            return renderedTextColor;
-        }
-
 
         Netcode::Float3 TextRGB() const {
             return Netcode::Float3{ textColor.x, textColor.y, textColor.z };
@@ -651,7 +616,7 @@ namespace UI {
                 const Netcode::Vector2 screenPos = ScreenPosition();
                 const Netcode::Vector2 textPos = TextPosition();
 
-                font->DrawString(batch, text, screenPos + textPos, RenderedTextColor(), RotationOrigin(), RotationZ(), ZIndex());
+                font->DrawString(batch, text, screenPos + textPos, TextColor(), RotationOrigin(), RotationZ(), ZIndex());
             }
         }
 
@@ -671,9 +636,6 @@ namespace UI {
 
     class Input : public Label {
     protected:
-        Netcode::Float4 hoveredBackgroundColor;
-        Netcode::Float4 hoveredBorderColor;
-        Netcode::Float4 hoveredTextColor;
         Netcode::PxPtr<physx::PxRigidDynamic> actor;
         int32_t tabIndex;
         bool focused;
@@ -706,54 +668,14 @@ namespace UI {
             return focused;
         }
 
-        void HoveredBackgroundColor(const Netcode::Float4 & color) {
-            hoveredBackgroundColor = color;
-        }
-
-        Netcode::Float4 HoveredBackgroundColor() const {
-            return hoveredBackgroundColor;
-        }
-
-        void HoveredTextColor(const Netcode::Float4 & color) {
-            hoveredTextColor = color;
-        }
-
-        Netcode::Float4 HoveredTextColor() const {
-            return hoveredTextColor;
-        }
-
-        void HoveredBorderColor(const Netcode::Float4 & color) {
-            hoveredBorderColor = color;
-        }
-
-        Netcode::Float4 HoveredBorderColor() const {
-            return hoveredBorderColor;
-        }
-
         virtual void OnMouseEnter(MouseEventArgs & evtArgs) override {
             Label::OnMouseEnter(evtArgs);
-
-            RenderedBackgroundColor(HoveredBackgroundColor());
-            RenderedBorderColor(HoveredBorderColor());
-            RenderedTextColor(HoveredTextColor());
-
             hovered = true;
         }
 
         virtual void OnMouseLeave(MouseEventArgs & evtArgs) override {
             Label::OnMouseLeave(evtArgs);
-
-            RenderedBackgroundColor(BackgroundColor());
-            RenderedBorderColor(BorderColor());
-            RenderedTextColor(TextColor());
-
             hovered = false;
-        }
-
-        void SetDefaultHoverColors() {
-            HoveredBackgroundColor(BackgroundColor());
-            HoveredBorderColor(BorderColor());
-            HoveredTextColor(TextColor());
         }
 
         virtual void OnSizeChanged() override {

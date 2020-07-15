@@ -124,10 +124,18 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	void LoadAssets() {
 		AssetManager * assetManager = Service::Get<AssetManager>();
 
-		Netcode::Input::SetAxis("Vertical", 'W', 'S');
-		Netcode::Input::SetAxis("Horizontal", 'A', 'D');
-		Netcode::Input::SetAxis("Jump", VK_SPACE, 0);
-		Netcode::Input::SetAxis("Fire", VK_LBUTTON, 0);
+		Netcode::AxisMapRef axisMap = std::make_shared<Netcode::AxisMap<AxisEnum>>(std::initializer_list<Netcode::AxisData<AxisEnum>> {
+			Netcode::AxisData<AxisEnum> { AxisEnum::VERTICAL,		Netcode::KeyCode::W,			Netcode::KeyCode::S },
+			Netcode::AxisData<AxisEnum> { AxisEnum::HORIZONTAL,	Netcode::KeyCode::D,			Netcode::KeyCode::A },
+			Netcode::AxisData<AxisEnum> { AxisEnum::FIRE1,			Netcode::KeyCode::MOUSE_LEFT,	Netcode::KeyCode::UNDEFINED },
+			Netcode::AxisData<AxisEnum> { AxisEnum::FIRE2,			Netcode::KeyCode::MOUSE_RIGHT,	Netcode::KeyCode::UNDEFINED },
+			Netcode::AxisData<AxisEnum> { AxisEnum::JUMP,			Netcode::KeyCode::SPACE,		Netcode::KeyCode::UNDEFINED },
+			Netcode::AxisData<AxisEnum> { AxisEnum::DEV_CAM_X,		Netcode::KeyCode::NUM_6,		Netcode::KeyCode::NUM_4 },
+			Netcode::AxisData<AxisEnum> { AxisEnum::DEV_CAM_Y,		Netcode::KeyCode::NUM_9,		Netcode::KeyCode::NUM_7 },
+			Netcode::AxisData<AxisEnum> { AxisEnum::DEV_CAM_Z,		Netcode::KeyCode::NUM_8,		Netcode::KeyCode::NUM_5 },
+		});
+
+		Netcode::Input::SetAxisMap(std::move(axisMap));
 
 		renderSystem.CreatePermanentResources(graphics.get());
 		defaultPhysxMaterial = px.physics->createMaterial(0.5f, 0.5f, 0.5f);

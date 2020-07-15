@@ -49,7 +49,7 @@ namespace UI {
 		virtual void Update(float dt) override {
 			Control::Update(dt);
 
-			Netcode::Int2 v = Netcode::Input::GetMousePos();
+			Netcode::Int2 v = Netcode::Input::GetMousePosition();
 			MouseEventArgs evtArgs{ v };
 
 			Netcode::Float3 mousePos = Netcode::Float3{ static_cast<float>(v.x), static_cast<float>(v.y), Control::MAX_DEPTH };
@@ -72,13 +72,15 @@ namespace UI {
 
 							if(hCtrl != ctrl) {
 								FadeAway(hCtrl, evtArgs);
+								ctrl->OnMouseEnter(evtArgs);
 							}
+
+						} else {
+							hoveredControl = ctrl;
+							ctrl->OnMouseEnter(evtArgs);
 						}
 
-						ctrl->OnMouseEnter(evtArgs);
 						ctrl->OnMouseMove(evtArgs);
-
-						hoveredControl = ctrl;
 					}
 				}
 			} else {

@@ -8,6 +8,7 @@
 #include <NetcodeAssetLib/Collider.h>
 #include <NetcodeAssetLib/Bone.h>
 #include <NetcodeAssetLib/Animation.h>
+#include <Netcode/Input.h>
 #include <Netcode/Event.hpp>
 #include <Netcode/HandleTypes.h>
 #include <Netcode/PhysXWrapper.h>
@@ -18,6 +19,17 @@
 #include <Netcode/Animation/IK.h>
 #include <Netcode/Animation/Blackboard.h>
 #include <Netcode/Animation/Blender.h>
+
+enum AxisEnum : uint32_t {
+	VERTICAL,
+	HORIZONTAL,
+	FIRE1,
+	FIRE2,
+	JUMP,
+	DEV_CAM_X,
+	DEV_CAM_Y,
+	DEV_CAM_Z
+};
 
 using ColliderShape = Netcode::Asset::Collider;
 

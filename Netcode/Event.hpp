@@ -1,5 +1,7 @@
 #pragma once
 
+
+
 #include <cstdint>
 #include <functional>
 #include <map>
@@ -8,31 +10,80 @@ namespace Netcode {
 
 	using EventToken = int64_t;
 
-	template<typename ... T>
-	class Event {
-		EventToken tokenGenerator;
+	class EventBase {
+	public:
+		static EventToken NextToken() {
+			static EventToken id = 0;
+			return id++;
+		}
+	};
 
-		using func_t = typename std::function<void(T...)>;
+	template<typename StdAlloc, typename ... T>
+	class ManagedEvent : public EventBase {
+	public:
 
-		std::map<EventToken, func_t> callbacks;
-
+		using FunctionType = typename std::function<void(T...)>;
+		using PairType = typename std::pair<EventToken, FunctionType>;
+		using ReboundAllocatorType = typename StdAlloc::template rebind<PairType>::other;
+		using ContainerType = std::list<PairType, ReboundAllocatorType>;
+	private:
+		ContainerType handlers;
 
 	public:
+		ManagedEvent(const StdAlloc & alloc) : handlers{ alloc } {
+
+		}
+
 		EventToken Subscribe(std::function<void(T...)> callback) {
-			EventToken t = tokenGenerator++;
-			callbacks[t] = callback;
+			EventToken t = EventBase::NextToken();
+			handlers.emplace_back(t, std::move(callback));
 			return t;
 		}
 
 		void Erase(EventToken token) {
-			callbacks.erase(token);
+			for(typename ContainerType::iterator it = handlers.begin(); it != handlers.end(); ++it) {
+				if(it->first == token) {
+					handlers.erase(token);
+				}
+			}
 		}
 
 		void Invoke(T ... args) {
-			for(auto it = callbacks.begin(); it != callbacks.end(); ++it) {
+			for(typename ContainerType::iterator it = handlers.begin(); it != handlers.end(); ++it) {
 				(it->second)(std::forward<T>(args)...);
 			}
 		}
 	};
+
+	template<typename ... T>
+	class Event : public EventBase {
+	public:
+		using FunctionType = typename std::function<void(T...)>;
+		using ContainerType = std::list<std::pair<EventToken, FunctionType>>;
+	private:
+		ContainerType handlers;
+
+	public:
+		EventToken Subscribe(std::function<void(T...)> callback) {
+			EventToken t = EventBase::NextToken();
+			handlers.emplace_back(t, std::move(callback));
+			return t;
+		}
+
+		void Erase(EventToken token) {
+			for(typename ContainerType::iterator it = handlers.begin(); it != handlers.end(); ++it) {
+				if(it->first == token) {
+					handlers.erase(token);
+				}
+			}
+		}
+
+		void Invoke(T ... args) {
+			for(typename ContainerType::iterator it = handlers.begin(); it != handlers.end(); ++it) {
+				(it->second)(std::forward<T>(args)...);
+			}
+		}
+	};
+
 }
 

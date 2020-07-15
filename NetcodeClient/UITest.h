@@ -7,13 +7,85 @@
 class LoginPage : public UI::Page {
 	Netcode::GpuResourceRef aenami;
 	Netcode::GpuResourceRef loadingIcon;
+
+	Netcode::SpriteFontRef textFont;
+
 public:
+	constexpr static Netcode::Float4 COLOR_ACCENT{ 1.0f, 0.4f, 0.533333f, 1.0f };
+	constexpr static Netcode::Float4 COLOR_SECONDARY{ 0.043137f, 0.164705f, 0.247058f, 0.8f };
+	constexpr static Netcode::Float4 COLOR_BORDER{ 0.02745f, 0.141176f, 0.211764f, 1.0f };
+	constexpr static Netcode::Float4 COLOR_HOVER{ 0.458823f, 0.235294f, 0.282353f, 1.0f };
+	constexpr static Netcode::Float4 COLOR_TEXT{ 0.8f, 0.8f, 0.8f, 1.0f };
+
+	constexpr static float BORDER_RADIUS = 4.0f;
+	constexpr static float BORDER_WIDTH = 2.0f;
+
 	using UI::Page::Page;
+
+	std::shared_ptr<UI::Button> CreateButton(const wchar_t* text) {
+		std::shared_ptr<UI::Button> button = std::make_shared<UI::Button>(CreatePhysxActor());
+		button->Sizing(UI::SizingType::FIXED);
+		button->Size(Netcode::Float2{ 156.0f, 48.0f });
+		button->BackgroundColor(COLOR_SECONDARY);
+		button->BorderColor(COLOR_HOVER);
+		button->BorderRadius(BORDER_RADIUS);
+		button->BorderWidth(BORDER_WIDTH);
+		button->Font(textFont);
+		button->VerticalContentAlignment(UI::VerticalAnchor::MIDDLE);
+		button->HorizontalContentAlignment(UI::HorizontalAnchor::CENTER);
+		button->Text(text);
+		button->TextColor(COLOR_ACCENT);
+		return button;
+	}
+
+	std::shared_ptr<UI::TextBox> CreateTextBox() {
+		std::shared_ptr<UI::TextBox> textBox = std::make_shared<UI::TextBox>(CreatePhysxActor());
+		textBox->Sizing(UI::SizingType::FIXED);
+		textBox->Size(Netcode::Float2{ 280.0f, 48.0f });
+		textBox->BackgroundColor(COLOR_SECONDARY);
+		textBox->BorderColor(COLOR_HOVER);
+		textBox->BorderRadius(BORDER_RADIUS);
+		textBox->BorderWidth(BORDER_WIDTH);
+		textBox->Font(textFont);
+		textBox->VerticalContentAlignment(UI::VerticalAnchor::MIDDLE);
+		textBox->HorizontalContentAlignment(UI::HorizontalAnchor::LEFT);
+		textBox->Text(L"testtex");
+
+		textBox->MouseEnterEvent.Subscribe([](UI::Control * controlPointer, UI::MouseEventArgs & args) -> void {
+			auto * pThis = static_cast<UI::Panel *>(controlPointer);
+			pThis->AddAnimation(UI::MakeAnimation(
+				pThis,
+				&UI::Panel::BackgroundColor,
+				&UI::Panel::BackgroundColor,
+				UI::Interpolator<Netcode::Vector4>{ pThis->BackgroundColor(), COLOR_HOVER },
+				UI::PlayOnceBehaviour{},
+				&Netcode::Function::EaseOutQuad,
+				0.7f
+			));
+		});
+
+		textBox->MouseLeaveEvent.Subscribe([](UI::Control * controlPointer, UI::MouseEventArgs & args) -> void {
+			auto * pThis = static_cast<UI::Panel *>(controlPointer);
+			pThis->AddAnimation(UI::MakeAnimation(
+				pThis,
+				&UI::Panel::BackgroundColor,
+				&UI::Panel::BackgroundColor,
+				UI::Interpolator<Netcode::Vector4>{ pThis->BackgroundColor(), COLOR_SECONDARY },
+				UI::PlayOnceBehaviour{},
+				& Netcode::Function::EaseOutQuad,
+				0.7f
+			));
+		});
+
+		return textBox;
+	}
 
 	virtual ~LoginPage() = default;
 
 	virtual void InitializeComponents() override {
 		AssetManager * assets = Service::Get<AssetManager>();
+
+		textFont = assets->ImportFont(L"titillium18.spritefont");
 
 		aenami = assets->ImportTexture2D(L"aenami_dreamer.jpg");
 		Netcode::ResourceViewsRef aenamiRv = assets->CreateTextureRV(aenami);
@@ -53,9 +125,10 @@ public:
 		titleLabel->Size(Netcode::Float2{ 400.0f, 100.0f });
 		titleLabel->HorizontalContentAlignment(UI::HorizontalAnchor::CENTER);
 		titleLabel->VerticalContentAlignment(UI::VerticalAnchor::MIDDLE);
-		titleLabel->TextColor(Netcode::Float4{ 1.0f, 0.2f, 0.2f, 1.0f });
+		titleLabel->TextColor(COLOR_ACCENT);
 		titleLabel->Font(assets->ImportFont(L"titillium48bold.spritefont"));
 		titleLabel->Text(L"Netcode");
+		titleLabel->Margin(Netcode::Float4{ 0.0f, 0.0f, 0.0f, 64.0f });
 
 		std::shared_ptr<UI::StackPanel> usernameField = std::make_shared<UI::StackPanel>();
 		usernameField->StackDirection(UI::Direction::HORIZONTAL);
@@ -68,22 +141,11 @@ public:
 		usernameLabel->HorizontalContentAlignment(UI::HorizontalAnchor::RIGHT);
 		usernameLabel->VerticalContentAlignment(UI::VerticalAnchor::MIDDLE);
 		usernameLabel->Margin(Netcode::Float4{ 0.0f, 0.0f, 10.0f, 0.0f });
-		usernameLabel->TextColor(Netcode::Float4{ 0.2f, 0.2f, 0.2f, 1.0f });
+		usernameLabel->TextColor(COLOR_ACCENT);
 		usernameLabel->Font(assets->ImportFont(L"titillium18.spritefont"));
 		usernameLabel->Text(L"Username:");
 
-		std::shared_ptr<UI::TextBox> usernameTextBox = std::make_shared<UI::TextBox>(CreatePhysxActor());
-		usernameTextBox->Sizing(UI::SizingType::FIXED);
-		usernameTextBox->Size(Netcode::Float2{ 280.0f, 48.0f });
-		usernameTextBox->BackgroundColor(Netcode::Float4{ 0.7f, 0.7f, 0.7f, 1.0f });
-		usernameTextBox->BorderColor(Netcode::Float4{ 0.2f, 0.2f, 0.2f, 1.0f });
-		usernameTextBox->BorderRadius(5.0f);
-		usernameTextBox->BorderWidth(3.0f);
-		usernameTextBox->Font(assets->ImportFont(L"titillium18.spritefont"));
-		usernameTextBox->VerticalContentAlignment(UI::VerticalAnchor::MIDDLE);
-		usernameTextBox->HorizontalContentAlignment(UI::HorizontalAnchor::LEFT);
-		usernameTextBox->SetDefaultHoverColors();
-		usernameTextBox->HoveredBackgroundColor(Netcode::Float4::One);
+		std::shared_ptr<UI::TextBox> usernameTextBox = CreateTextBox();
 
 		std::shared_ptr<UI::StackPanel> passwordField = std::make_shared<UI::StackPanel>();
 		passwordField->StackDirection(UI::Direction::HORIZONTAL);
@@ -96,7 +158,7 @@ public:
 		passwordLabel->Margin(Netcode::Float4{ 0.0f, 0.0f, 10.0f, 0.0f });
 		passwordLabel->HorizontalContentAlignment(UI::HorizontalAnchor::RIGHT);
 		passwordLabel->VerticalContentAlignment(UI::VerticalAnchor::MIDDLE);
-		passwordLabel->TextColor(Netcode::Float4{ 0.2f, 0.2f, 0.2f, 1.0f });
+		passwordLabel->TextColor(COLOR_ACCENT);
 		passwordLabel->Font(assets->ImportFont(L"titillium18.spritefont"));
 		passwordLabel->Text(L"Password:");
 
@@ -105,51 +167,12 @@ public:
 		buttonField->Sizing(UI::SizingType::DERIVED);
 		buttonField->Margin(Netcode::Float4{ 10.0f, 10.0f, 10.0f, 0.0f });
 
-		std::shared_ptr<UI::Button> loginButton = std::make_shared<UI::Button>(CreatePhysxActor());
-		loginButton->Sizing(UI::SizingType::FIXED);
-		loginButton->Size(Netcode::Float2{ 156.0f, 48.0f });
-		loginButton->BackgroundColor(Netcode::Float4{ 0.7f, 0.7f, 0.7f, 1.0f });
-		loginButton->BorderColor(Netcode::Float4{ 0.2f, 0.2f, 0.2f, 1.0f });
-		loginButton->BorderRadius(5.0f);
-		loginButton->BorderWidth(3.0f);
-		loginButton->Font(assets->ImportFont(L"titillium18.spritefont"));
-		loginButton->VerticalContentAlignment(UI::VerticalAnchor::MIDDLE);
-		loginButton->HorizontalContentAlignment(UI::HorizontalAnchor::CENTER);
-		loginButton->Text(L"Login");
-		loginButton->TextColor(Netcode::Float4{ 0.2f, 0.2f, 0.2f, 1.0f });
-		loginButton->Margin(Netcode::Float4{ 0.0f, 0.0f, 0.0f, 0.0f });
-		loginButton->SetDefaultHoverColors();
-		loginButton->HoveredBackgroundColor(Netcode::Float4::One);
-
-		std::shared_ptr<UI::Button> exitButton = std::make_shared<UI::Button>(CreatePhysxActor());
-		exitButton->Sizing(UI::SizingType::FIXED);
-		exitButton->Size(Netcode::Float2{ 156.0f, 48.0f });
-		exitButton->BackgroundColor(Netcode::Float4{ 0.7f, 0.7f, 0.7f, 1.0f });
-		exitButton->BorderColor(Netcode::Float4{ 0.2f, 0.2f, 0.2f, 1.0f });
-		exitButton->BorderRadius(5.0f);
-		exitButton->BorderWidth(3.0f);
-		exitButton->Font(assets->ImportFont(L"titillium18.spritefont"));
-		exitButton->VerticalContentAlignment(UI::VerticalAnchor::MIDDLE);
-		exitButton->HorizontalContentAlignment(UI::HorizontalAnchor::CENTER);
-		exitButton->Text(L"Exit");
-		exitButton->TextColor(Netcode::Float4{ 0.2f, 0.2f, 0.2f, 1.0f });
+		std::shared_ptr<UI::Button> loginButton = CreateButton(L"Login");
+		std::shared_ptr<UI::Button> exitButton = CreateButton(L"Exit");
 		exitButton->Margin(Netcode::Float4{ 0.0f, 0.0f, 10.0f, 0.0f });
-		exitButton->SetDefaultHoverColors();
-		exitButton->HoveredBackgroundColor(Netcode::Float4::One);
 
-		std::shared_ptr<UI::TextBox> passwordTextBox = std::make_shared<UI::TextBox>(CreatePhysxActor());
-		passwordTextBox->Sizing(UI::SizingType::FIXED);
-		passwordTextBox->Size(Netcode::Float2{ 280.0f, 48.0f });
-		passwordTextBox->BackgroundColor(Netcode::Float4{ 0.7f, 0.7f, 0.7f, 1.0f });
-		passwordTextBox->BorderColor(Netcode::Float4{ 0.2f, 0.2f, 0.2f, 1.0f });
-		passwordTextBox->BorderRadius(5.0f);
-		passwordTextBox->BorderWidth(3.0f);
-		passwordTextBox->Font(assets->ImportFont(L"titillium18.spritefont"));
-		passwordTextBox->VerticalContentAlignment(UI::VerticalAnchor::MIDDLE);
-		passwordTextBox->HorizontalContentAlignment(UI::HorizontalAnchor::LEFT);
+		std::shared_ptr<UI::TextBox> passwordTextBox = CreateTextBox();
 		passwordTextBox->IsPassword(true);
-		passwordTextBox->SetDefaultHoverColors();
-		passwordTextBox->HoveredBackgroundColor(Netcode::Float4::One);
 
 		passwordField->AddChild(passwordLabel);
 		passwordField->AddChild(passwordTextBox);

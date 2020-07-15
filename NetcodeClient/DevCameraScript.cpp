@@ -3,9 +3,6 @@
 #include <Windows.h>
 
 void DevCameraScript::Setup(GameObject * gameObject) {
-	Netcode::Input::SetAxis("DevCameraX", VK_NUMPAD6, VK_NUMPAD4);
-	Netcode::Input::SetAxis("DevCameraZ", VK_NUMPAD5, VK_NUMPAD8);
-	Netcode::Input::SetAxis("DevCameraY", VK_NUMPAD9, VK_NUMPAD7);
 	transform = gameObject->GetComponent<Transform>();
 	camera = gameObject->GetComponent<Camera>();
 	cameraPitch = 0.0f;
@@ -15,9 +12,9 @@ void DevCameraScript::Setup(GameObject * gameObject) {
 }
 
 void DevCameraScript::Update(float dt) {
-	float devCamX = Netcode::Input::GetAxis("DevCameraX");
-	float devCamZ = Netcode::Input::GetAxis("DevCameraZ");
-	float devCamY = Netcode::Input::GetAxis("DevCameraY");
+	float devCamX = Netcode::Input::GetAxis(AxisEnum::DEV_CAM_X);
+	float devCamZ = Netcode::Input::GetAxis(AxisEnum::DEV_CAM_Y);
+	float devCamY = Netcode::Input::GetAxis(AxisEnum::DEV_CAM_Z);
 
 	DirectX::XMINT2 mouseDelta = Netcode::Input::GetMouseDelta();
 
