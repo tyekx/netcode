@@ -1,9 +1,28 @@
 #pragma once
 
-#include <NetcodeFoundation/Math.h>
-#include <Netcode/Input.h>
+#include "../HandleTypes.h"
+#include "../Event.hpp"
+#include "../PhysXWrapper.h"
+#include "../Graphics/GraphicsContexts.h"
 
-namespace UI {
+namespace Netcode::UI {
+
+	enum class Direction : uint32_t {
+		VERTICAL, HORIZONTAL
+	};
+
+	enum class HorizontalAnchor : uint32_t {
+		LEFT, CENTER, RIGHT
+	};
+
+	enum class VerticalAnchor : uint32_t {
+		TOP, MIDDLE, BOTTOM
+	};
+
+	enum class SizingType : uint32_t {
+		FIXED, DERIVED, INHERITED
+	};
+
 
 	class EventArgs {
 		bool handled;
@@ -22,8 +41,8 @@ namespace UI {
 		Netcode::Int2 position;
 
 	public:
-		MouseEventArgs(const Netcode::Int2 & pos) : EventArgs{}, position { pos } {
-		
+		MouseEventArgs(const Netcode::Int2 & pos) : EventArgs{}, position{ pos } {
+
 		}
 
 		Netcode::Int2 Position() const {

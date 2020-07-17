@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Netcode/UI/Page.h>
 #include <Netcode/Graphics/FrameGraph.h>
 #include <Netcode/FancyIterators.hpp>
 #include <Netcode/Graphics/ResourceDesc.h>
@@ -9,7 +10,6 @@
 #include <variant>
 #include "GameObject.h"
 #include "AnimationSet.h"
-#include "UI/Page.h"
 
 using Netcode::GpuResourceRef;
 
@@ -106,7 +106,7 @@ public:
 	Netcode::ScratchBuffer<std::shared_ptr<AnimationSet>> skinningPass_Input;
 	Netcode::ScratchBuffer<RenderItem> skinnedGbufferPass_Input;
 	Netcode::ScratchBuffer<RenderItem> gbufferPass_Input;
-	std::shared_ptr<UI::Page> ui_Input;
+	std::shared_ptr<Netcode::UI::Page> ui_Input;
 
 private:
 
@@ -735,7 +735,7 @@ private:
 			Netcode::UInt2 ss = ui_Input->WindowSize();
 			Netcode::Matrix vp =
 				Netcode::LookToMatrix(Netcode::Float3::Zero, Netcode::Float3{ 0.0f, 0.0f, 1.0f }, Netcode::Float3::UnitY) *
-				Netcode::OrtographicMatrix(static_cast<float>(ss.x), static_cast<float>(ss.y), 0.0f, UI::Control::MAX_DEPTH);
+				Netcode::OrtographicMatrix(static_cast<float>(ss.x), static_cast<float>(ss.y), 0.0f, Netcode::UI::Control::MAX_DEPTH);
 			Netcode::Matrix tex = Netcode::Float4x4{
 				-1.0f, 0.0f, 0.0f, 0.0f,
 				0.0f, -1.0f, 0.0f, 0.0f,

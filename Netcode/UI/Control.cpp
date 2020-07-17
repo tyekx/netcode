@@ -1,6 +1,8 @@
 #include "Control.h"
+#include <NetcodeFoundation/Exceptions.h>
 
-namespace UI {
+namespace Netcode::UI {
+
 
     Control::Control(const AllocType & allocator) : std::enable_shared_from_this<Control>{},
         size{ Netcode::Float2::Zero },
@@ -219,9 +221,9 @@ namespace UI {
     }
 
     void Control::Size(const Netcode::Float2 & sz) {
-         size = sz;
-         UpdateActorShape();
-         PropagateOnSizeChanged();
+        size = sz;
+        UpdateActorShape();
+        PropagateOnSizeChanged();
     }
 
     Netcode::Float2 Control::BoxSize() const
@@ -340,7 +342,7 @@ namespace UI {
                     maxSize.y = size.y;
                 }
             }
-            
+
             Size(maxSize);
         }
     }*/
@@ -595,17 +597,6 @@ namespace UI {
                 parent->PropagateOnMouseScroll(args);
             }
         }
-    }
-
-    void Label::Font(Netcode::SpriteFontRef ref) {
-        if(font != ref) {
-            font = ref;
-            OnFontChanged();
-        }
-    }
-
-    Netcode::SpriteFontRef Label::Font() const {
-        return font;
     }
 
 }

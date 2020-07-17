@@ -4,8 +4,7 @@
 #include <vector>
 #include <memory>
 
-namespace UI {
-
+namespace Netcode::UI {
 
     using AnimationTimeFunc = float(*)(float);
 
@@ -46,7 +45,7 @@ namespace UI {
                 }
             }
         }
-        
+
         void Add(std::unique_ptr<Animation> anim) {
             if(static_cast<uint32_t>(animations.size()) > numAnimations) {
                 animations[numAnimations++] = std::move(anim);

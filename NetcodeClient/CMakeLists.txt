@@ -81,7 +81,8 @@ PRIVATE
 	"AnimationController.cpp"
 	"ProgramOptions.h"
 	"ProgramOptions.cpp"
- "UITest.h")
+ "UITest.h"
+ "UITest.cpp")
 
 target_link_libraries(NetcodeClient
 PRIVATE
@@ -100,7 +101,6 @@ PRIVATE
 	${DX12_LIBRARIES})
 
 add_subdirectory(Shaders)
-add_subdirectory(UI)
 
 add_dependencies(NetcodeClient NetcodeClientShaders)
 

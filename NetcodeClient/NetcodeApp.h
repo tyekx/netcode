@@ -9,6 +9,7 @@
 #include <Netcode/Modules.h>
 #include <Netcode/Stopwatch.h>
 #include <Netcode/Service.hpp>
+#include <Netcode/UI/PageManager.h>
 
 #include "Asset.h"
 #include "GameObject.h"
@@ -40,7 +41,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	RenderSystem renderSystem;
 	AnimationSystem animSystem;
 	PhysXSystem pxSystem;
-	UI::PageManager ui;
+	Netcode::UI::PageManager pageManager;
 
 	GameScene * gameScene;
 
@@ -93,7 +94,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	void Simulate(float dt) {
 		totalTime += dt;
 
-		ui.Update(dt);
+		pageManager.Update(dt);
 
 		gameScene->GetPhysXScene()->simulate(dt);
 		gameScene->GetPhysXScene()->fetchResults(true);
@@ -151,10 +152,10 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			gameScene->SpawnPhysxActor(planeActor);
 		}
 
-		std::shared_ptr<LoginPage> loginPage = ui.CreatePage<LoginPage>(px);
+		std::shared_ptr<LoginPage> loginPage = pageManager.CreatePage<LoginPage>(px);
 		loginPage->InitializeComponents();
-		ui.AddPage(loginPage);
-		ui.Activate(PagesEnum::LOGIN_PAGE);
+		pageManager.AddPage(loginPage);
+		pageManager.Activate(PagesEnum::LOGIN_PAGE);
 		renderSystem.renderer.ui_Input = loginPage;
 
 		GameObject * testbox = gameScene->Create();
@@ -418,7 +419,7 @@ public:
 	virtual void OnResized(int w, int h) override {
 		float asp = graphics->GetAspectRatio();
 		gameScene->GetCamera()->GetComponent<Camera>()->aspect = asp;
-		ui.WindowResized(Netcode::UInt2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
+		pageManager.WindowResized(Netcode::UInt2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
 		renderSystem.renderer.OnResize(w, h);
 	}
 
@@ -483,7 +484,7 @@ public:
 	virtual void Exit() override {
 		defaultPhysxMaterial.Reset();
 		renderSystem.renderer.ui_Input.reset();
-		ui.Destruct();
+		pageManager.Destruct();
 		Service::Clear();
 		px.ReleaseResources();
 		ShutdownModule(network.get());

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 
 target_sources(Netcode 
-PRIVATE
+PUBLIC
 	"GameSession.h"
 	"ClientSession.h"
 	"NetcodeNetworkModule.h"
@@ -10,8 +10,8 @@ PRIVATE
 	"HttpSession.h"
 	"ServerSession.h"
 	"MysqlSession.h"
-
-PUBLIC
+	
+PRIVATE
 	"GameSession.cpp"
 	"ClientSession.cpp"
 	"NetcodeNetworkModule.cpp"
