@@ -732,7 +732,7 @@ private:
 		},
 		[&](IRenderContext * context) -> void {
 
-			Netcode::UInt2 ss = ui_Input->ScreenSize();
+			Netcode::UInt2 ss = ui_Input->WindowSize();
 			Netcode::Matrix vp =
 				Netcode::LookToMatrix(Netcode::Float3::Zero, Netcode::Float3{ 0.0f, 0.0f, 1.0f }, Netcode::Float3::UnitY) *
 				Netcode::OrtographicMatrix(static_cast<float>(ss.x), static_cast<float>(ss.y), 0.0f, UI::Control::MAX_DEPTH);

@@ -2,8 +2,7 @@
 
 namespace UI {
 
-
-    Control::Control() : std::enable_shared_from_this<Control>{},
+    Control::Control(const AllocType & allocator) : std::enable_shared_from_this<Control>{},
         size{ Netcode::Float2::Zero },
         position{ Netcode::Float2::Zero },
         rotationOrigin{ Netcode::Float2::Zero },
@@ -18,10 +17,41 @@ namespace UI {
         verticalRotationOrigin{ VerticalAnchor::TOP },
         horizontalContentAlignment{ HorizontalAnchor::LEFT },
         verticalContentAlignment{ VerticalAnchor::TOP },
+        lastScenePtr{ nullptr },
+        pxActor{ nullptr },
         parent{ nullptr },
         children{},
         animations{},
-        enabled{ true } { }
+        hoverState{ HoverState::INACTIVE },
+        enabled{ true },
+        OnMouseEnter{ allocator },
+        OnMouseLeave{ allocator },
+        OnMouseMove{ allocator },
+        OnMouseClick{ allocator },
+        OnMouseScroll{ allocator },
+        OnFocused{ allocator },
+        OnEnabled{ allocator },
+        OnDisabled{ allocator },
+        OnParentChanged{ allocator },
+        OnPositionChanged{ allocator },
+        OnSizeChanged{ allocator } {
+
+    }
+
+    void Control::AssignActor(Netcode::PxPtr<physx::PxRigidDynamic> actor) {
+        physx::PxScene * scenePtr = actor->getScene();
+
+        Netcode::UndefinedBehaviourAssertion(scenePtr != nullptr);
+        Netcode::UndefinedBehaviourAssertion(pxActor == nullptr);
+
+        actor->userData = this;
+
+        pxActor = std::move(actor);
+    }
+
+    Control::Control(const AllocType & allocator, Netcode::PxPtr<physx::PxRigidDynamic> pxActor) : Control{ allocator } {
+        AssignActor(std::move(pxActor));
+    }
 
     HorizontalAnchor Control::HorizontalRotationOrigin() const {
         return horizontalRotationOrigin;
@@ -85,6 +115,64 @@ namespace UI {
         return anchorOffset;
     }
 
+    void Control::UpdateZIndices(float depth) {
+        if(ZIndexSizing() == SizingType::DERIVED) {
+            zIndex = depth;
+            for(auto & child : children) {
+                child->UpdateZIndices(depth + 1.0f);
+            }
+        } else {
+            for(auto & child : children) {
+                child->UpdateZIndices(ZIndex() + 1.0f);
+            }
+        }
+    }
+
+    void Control::UpdateActorPose() {
+        Netcode::Vector2 sPos = ScreenPosition();
+        Netcode::Vector2 halfSize = Netcode::Vector2{ Size() } / 2.0f;
+
+        Netcode::Float2 sp = sPos + halfSize;
+
+        pxActor->setGlobalPose(physx::PxTransform{ sp.x, sp.y, ZIndex(), physx::PxQuat{ RotationZ(), physx::PxVec3{ 0.0f, 0.0f, 1.0f } } });
+    }
+
+    void Control::UpdateActorShape() {
+        physx::PxShape * shape{ nullptr };
+        physx::PxU32 returnedShapes = pxActor->getShapes(&shape, 1, 0);
+
+        if(returnedShapes == 1) {
+            Netcode::Float2 halfSize = Netcode::Vector2{ Size() } / 2.0f;
+
+            shape->setGeometry(physx::PxBoxGeometry{ halfSize.x, halfSize.y, 0.25f });
+
+            UpdateActorPose();
+        }
+    }
+
+    void Control::AddActorToScene()
+    {
+        if(lastScenePtr != nullptr) {
+            UpdateActorShape();
+            UpdateActorPose();
+            lastScenePtr->addActor(*pxActor);
+            lastScenePtr = nullptr;
+        }
+    }
+
+    void Control::RemoveActorFromScene()
+    {
+        if(pxActor != nullptr) {
+            if(lastScenePtr == nullptr) {
+                lastScenePtr = pxActor->getScene();
+
+                if(lastScenePtr != nullptr) {
+                    lastScenePtr->removeActor(*pxActor);
+                }
+            }
+        }
+    }
+
     HorizontalAnchor Control::HorizontalContentAlignment() const {
         return horizontalContentAlignment;
     }
@@ -101,12 +189,29 @@ namespace UI {
         verticalContentAlignment = verticalAnchor;
     }
 
+    bool Control::Enabled() const {
+        return enabled;
+    }
+
+    void Control::Enabled(bool isEnabled) {
+        if(isEnabled && Enabled() != isEnabled) {
+            enabled = isEnabled;
+            PropagateOnEnabled();
+        }
+
+        if(!isEnabled && Enabled() != isEnabled) {
+            enabled = isEnabled;
+            PropagateOnDisabled();
+        }
+    }
+
     SizingType Control::Sizing() const {
         return sizing;
     }
 
     void Control::Sizing(SizingType sizingType) {
         sizing = sizingType;
+        CheckSizingConsistency();
     }
 
     Netcode::Float2 Control::Size() const {
@@ -115,7 +220,8 @@ namespace UI {
 
     void Control::Size(const Netcode::Float2 & sz) {
          size = sz;
-         OnSizeChanged();
+         UpdateActorShape();
+         PropagateOnSizeChanged();
     }
 
     Netcode::Float2 Control::BoxSize() const
@@ -143,7 +249,7 @@ namespace UI {
 
     void Control::Position(const Netcode::Float2 & pos) {
         position = pos;
-        OnPositionChanged();
+        PropagateOnPositionChanged();
     }
 
     Netcode::Float2 Control::RotationOrigin() const
@@ -201,6 +307,7 @@ namespace UI {
         padding = leftTopRightBottom;
     }
 
+    /*
     void Control::UpdateSize(const Netcode::Float2 & screenSize)
     {
         for(auto & child : children) {
@@ -236,16 +343,41 @@ namespace UI {
             
             Size(maxSize);
         }
-    }
+    }*/
 
     void Control::UpdateLayout() {
+        /**
+        * Every control will get the UpdateLayout call, so invoking
+        * hierarchy propagation is not necessary
+        */
+
+        if(Sizing() == SizingType::INHERITED) {
+            Netcode::UndefinedBehaviourAssertion(parent != nullptr);
+
+            size = parent->Size();
+
+            UpdateActorShape();
+
+            OnSizeChanged.Invoke(this);
+        }
+
         for(auto & child : children) {
             child->UpdateLayout();
+        }
+
+        if(Sizing() == SizingType::DERIVED) {
+            size = DeriveSize();
+
+            UpdateActorShape();
         }
     }
 
     void Control::Destruct() {
         Parent(nullptr);
+
+        RemoveActorFromScene();
+
+        pxActor.Reset(nullptr);
 
         for(auto & child : children) {
             child->Destruct();
@@ -254,23 +386,10 @@ namespace UI {
         children.clear();
     }
 
-    void Control::Enable() {
-        if(!enabled) {
-            enabled = true;
-            OnEnabled();
-        }
-    }
-
-    void Control::Disable() {
-        if(enabled) {
-            enabled = false;
-            OnDisabled();
-        }
-    }
-
     void Control::Parent(std::shared_ptr<Control> newParent) {
         if(parent != newParent) {
             parent = newParent;
+            PropagateOnParentChanged();
         }
     }
 
@@ -318,34 +437,41 @@ namespace UI {
         }
     }
 
-    void Control::OnFocused(FocusChangedEventArgs & args) {
+    void Control::PropagateOnFocused(FocusChangedEventArgs & args) {
         if(args.Handled()) {
-            return;
-        }
-
-        for(auto & child : Children()) {
-            child->OnFocused(args);
-
-            if(args.Handled()) {
-                return;
+            OnFocused.Invoke(this, args);
+        } else {
+            if(parent != nullptr) {
+                parent->PropagateOnFocused(args);
             }
         }
     }
 
-    void Control::OnInitialized() {
-        UpdateZIndices(1);
+    Netcode::Float2 Control::DeriveSize()
+    {
+        Netcode::Vector2 maxSize = Netcode::Float2::Zero;
+
+        for(auto & child : children) {
+            maxSize = maxSize.Max(child->BoxSize());
+        }
+
+        return maxSize;
     }
 
-    void Control::OnMouseEnter(MouseEventArgs & args) {
-        MouseEnterEvent.Invoke(this, args);
+    void Control::OnLayoutChanged() {
+
     }
 
-    void Control::OnMouseMove(MouseEventArgs & args) {
-        MouseMoveEvent.Invoke(this, args);
+    void Control::UpdateZIndices() {
+        UpdateZIndices(ZIndex() + 1.0f);
     }
 
-    void Control::OnMouseLeave(MouseEventArgs & args) {
-        MouseLeaveEvent.Invoke(this, args);
+    void Control::CheckSizingConsistency() {
+        if(parent != nullptr) {
+            if(parent->Sizing() == SizingType::DERIVED && Sizing() == SizingType::INHERITED) {
+                Netcode::UndefinedBehaviourAssertion(false);
+            }
+        }
     }
 
     void Control::Render(Netcode::SpriteBatchPtr batch) {
@@ -354,44 +480,121 @@ namespace UI {
         }
     }
 
-    void Control::OnEnabled() {
-        if(!enabled) {
+    void Control::PropagateOnEnabled() {
+        if(!Enabled()) {
             return;
         }
 
+        OnEnabled.Invoke(this);
+
         for(auto & child : children) {
-            child->OnEnabled();
+            child->PropagateOnEnabled();
         }
     }
 
-    void Control::OnDisabled() {
+    void Control::PropagateOnDisabled() {
+        OnDisabled.Invoke(this);
+
         for(auto & child : children) {
-            child->OnDisabled();
+            child->PropagateOnDisabled();
         }
     }
 
-    void Control::OnSizeChanged() {
+    void Control::PropagateOnSizeChanged() {
         if(RotationOriginSizing() == SizingType::DERIVED) {
             rotationOrigin = CalculateAnchorOffset(HorizontalRotationOrigin(), VerticalRotationOrigin(), Size());
         }
+
+        if(parent != nullptr) {
+            if(parent->Sizing() == SizingType::DERIVED) {
+                parent->PropagateOnSizeChanged();
+            }
+        }
+
+        for(auto & child : children) {
+            if(child->Sizing() == SizingType::INHERITED) {
+                child->PropagateOnSizeChanged();
+            }
+        }
+
+        OnSizeChanged.Invoke(this);
     }
 
-    void Control::OnPositionChanged() {
+    void Control::PropagateOnParentChanged() {
+        CheckSizingConsistency();
+
+        OnParentChanged.Invoke(this);
+    }
+
+    void Control::PropagateOnPositionChanged() {
+        UpdateActorPose();
+
         for(auto & child : children) {
-            child->OnPositionChanged();
+            child->PropagateOnPositionChanged();
+        }
+
+        OnPositionChanged.Invoke(this);
+    }
+
+    void Control::PropagateOnMouseEnter(MouseEventArgs & args) {
+        if(args.Handled()) {
+            OnMouseEnter.Invoke(this, args);
+        } else {
+            if(parent != nullptr) {
+                parent->PropagateOnMouseEnter(args);
+            }
         }
     }
 
-    bool Control::IsFocused() {
-        return false;
+    void Control::PropagateOnMouseMove(MouseEventArgs & args) {
+        if(hoverState == HoverState::INACTIVE) {
+            MouseEventArgs copyArgs{ args.Position() };
+            PropagateOnMouseEnter(copyArgs);
+        }
+
+        hoverState = HoverState::RAYCASTED;
+
+        if(args.Handled()) {
+            OnMouseMove.Invoke(this, args);
+        } else {
+            if(parent != nullptr) {
+                parent->PropagateOnMouseMove(args);
+            }
+        }
     }
 
-    bool Control::IsEnabled() {
-        return enabled;
+    void Control::PropagateOnMouseLeave(MouseEventArgs & args) {
+        HoverState decayedState = DecayState(hoverState);
+
+        if(decayedState == HoverState::INACTIVE && hoverState != HoverState::INACTIVE) {
+            OnMouseLeave.Invoke(this, args);
+        }
+
+        hoverState = decayedState;
+
+        for(auto & child : children) {
+            child->PropagateOnMouseLeave(args);
+        }
     }
 
-    void Control::OnClick(MouseEventArgs & args) {
+    void Control::PropagateOnClick(MouseEventArgs & args) {
+        if(args.Handled()) {
+            OnMouseClick.Invoke(this, args);
+        } else {
+            if(parent != nullptr) {
+                parent->PropagateOnClick(args);
+            }
+        }
+    }
 
+    void Control::PropagateOnMouseScroll(ScrollEventArgs & args) {
+        if(args.Handled()) {
+            OnMouseScroll.Invoke(this, args);
+        } else {
+            if(parent != nullptr) {
+                parent->PropagateOnMouseScroll(args);
+            }
+        }
     }
 
     void Label::Font(Netcode::SpriteFontRef ref) {

@@ -4,6 +4,12 @@
 
 #include "Services.h"
 
+enum PagesEnum {
+	LOGIN_PAGE,
+	MAIN_MENU,
+	LOADING_PAGE
+};
+
 class LoginPage : public UI::Page {
 	Netcode::GpuResourceRef aenami;
 	Netcode::GpuResourceRef loadingIcon;
@@ -23,7 +29,7 @@ public:
 	using UI::Page::Page;
 
 	std::shared_ptr<UI::Button> CreateButton(const wchar_t* text) {
-		std::shared_ptr<UI::Button> button = std::make_shared<UI::Button>(CreatePhysxActor());
+		std::shared_ptr<UI::Button> button = std::make_shared<UI::Button>(eventAllocator, CreatePhysxActor());
 		button->Sizing(UI::SizingType::FIXED);
 		button->Size(Netcode::Float2{ 156.0f, 48.0f });
 		button->BackgroundColor(COLOR_SECONDARY);
@@ -39,7 +45,7 @@ public:
 	}
 
 	std::shared_ptr<UI::TextBox> CreateTextBox() {
-		std::shared_ptr<UI::TextBox> textBox = std::make_shared<UI::TextBox>(CreatePhysxActor());
+		std::shared_ptr<UI::TextBox> textBox = std::make_shared<UI::TextBox>(eventAllocator, CreatePhysxActor());
 		textBox->Sizing(UI::SizingType::FIXED);
 		textBox->Size(Netcode::Float2{ 280.0f, 48.0f });
 		textBox->BackgroundColor(COLOR_SECONDARY);
@@ -51,7 +57,7 @@ public:
 		textBox->HorizontalContentAlignment(UI::HorizontalAnchor::LEFT);
 		textBox->Text(L"testtex");
 
-		textBox->MouseEnterEvent.Subscribe([](UI::Control * controlPointer, UI::MouseEventArgs & args) -> void {
+		textBox->OnMouseEnter.Subscribe([](UI::Control * controlPointer, UI::MouseEventArgs & args) -> void {
 			auto * pThis = static_cast<UI::Panel *>(controlPointer);
 			pThis->AddAnimation(UI::MakeAnimation(
 				pThis,
@@ -64,7 +70,7 @@ public:
 			));
 		});
 
-		textBox->MouseLeaveEvent.Subscribe([](UI::Control * controlPointer, UI::MouseEventArgs & args) -> void {
+		textBox->OnMouseLeave.Subscribe([](UI::Control * controlPointer, UI::MouseEventArgs & args) -> void {
 			auto * pThis = static_cast<UI::Panel *>(controlPointer);
 			pThis->AddAnimation(UI::MakeAnimation(
 				pThis,
@@ -95,9 +101,9 @@ public:
 		Netcode::ResourceViewsRef loadingIconRv = assets->CreateTextureRV(loadingIcon);
 		Netcode::UInt2 loadingIconSize = Netcode::UInt2{ static_cast<uint32_t>(loadingIcon->GetDesc().width), loadingIcon->GetDesc().height };
 
-		std::shared_ptr<UI::Panel> rootPanel = std::make_shared<UI::Panel>();
+		std::shared_ptr<UI::Panel> rootPanel = std::make_shared<UI::Panel>(eventAllocator, CreatePhysxActor());
 		rootPanel->BackgroundColor(Netcode::Float4::One);
-		rootPanel->Sizing(UI::SizingType::WINDOW);
+		rootPanel->Sizing(UI::SizingType::INHERITED);
 		rootPanel->HorizontalContentAlignment(UI::HorizontalAnchor::CENTER);
 		rootPanel->VerticalContentAlignment(UI::VerticalAnchor::MIDDLE);
 		rootPanel->BackgroundImage(aenamiRv, aenamiSize);
@@ -105,22 +111,22 @@ public:
 		rootPanel->BackgroundHorizontalAlignment(UI::HorizontalAnchor::CENTER);
 		rootPanel->BackgroundVerticalAlignment(UI::VerticalAnchor::MIDDLE);
 
-		std::shared_ptr<UI::Panel> loadingIconPanel = std::make_shared<UI::Panel>();
+		std::shared_ptr<UI::Panel> loadingIconPanel = std::make_shared<UI::Panel>(eventAllocator, CreatePhysxActor());
 		loadingIconPanel->BackgroundImage(loadingIconRv, loadingIconSize);
 		loadingIconPanel->Sizing(UI::SizingType::FIXED);
 		loadingIconPanel->BackgroundColor(Netcode::Float4::One);
 		loadingIconPanel->RotationOrigin(UI::HorizontalAnchor::CENTER, UI::VerticalAnchor::MIDDLE);
 		loadingIconPanel->Size(Netcode::Float2{ 64.0f, 64.0f });
 
-		std::shared_ptr<UI::InputGroup> inputGroup = std::make_shared<UI::InputGroup>();
+		std::shared_ptr<UI::InputGroup> inputGroup = std::make_shared<UI::InputGroup>(eventAllocator, CreatePhysxActor());
 		inputGroup->Sizing(UI::SizingType::DERIVED);
 
-		std::shared_ptr<UI::StackPanel> inputWrapper = std::make_shared<UI::StackPanel>();
+		std::shared_ptr<UI::StackPanel> inputWrapper = std::make_shared<UI::StackPanel>(eventAllocator, CreatePhysxActor());
 		inputWrapper->Sizing(UI::SizingType::DERIVED);
 		inputWrapper->StackDirection(UI::Direction::VERTICAL);
 		inputWrapper->HorizontalContentAlignment(UI::HorizontalAnchor::CENTER);
 
-		std::shared_ptr<UI::Label> titleLabel = std::make_shared<UI::Label>();
+		std::shared_ptr<UI::Label> titleLabel = std::make_shared<UI::Label>(eventAllocator, CreatePhysxActor());
 		titleLabel->Sizing(UI::SizingType::FIXED);
 		titleLabel->Size(Netcode::Float2{ 400.0f, 100.0f });
 		titleLabel->HorizontalContentAlignment(UI::HorizontalAnchor::CENTER);
@@ -130,12 +136,12 @@ public:
 		titleLabel->Text(L"Netcode");
 		titleLabel->Margin(Netcode::Float4{ 0.0f, 0.0f, 0.0f, 64.0f });
 
-		std::shared_ptr<UI::StackPanel> usernameField = std::make_shared<UI::StackPanel>();
+		std::shared_ptr<UI::StackPanel> usernameField = std::make_shared<UI::StackPanel>(eventAllocator, CreatePhysxActor());
 		usernameField->StackDirection(UI::Direction::HORIZONTAL);
 		usernameField->Sizing(UI::SizingType::DERIVED);
 		usernameField->Margin(Netcode::Float4{ 10.0f, 10.0f, 10.0f, 0.0f });
 
-		std::shared_ptr<UI::Label> usernameLabel = std::make_shared<UI::Label>();
+		std::shared_ptr<UI::Label> usernameLabel = std::make_shared<UI::Label>(eventAllocator, CreatePhysxActor());
 		usernameLabel->Sizing(UI::SizingType::FIXED);
 		usernameLabel->Size(Netcode::Float2{ 120.0f, 48.0f });
 		usernameLabel->HorizontalContentAlignment(UI::HorizontalAnchor::RIGHT);
@@ -147,12 +153,12 @@ public:
 
 		std::shared_ptr<UI::TextBox> usernameTextBox = CreateTextBox();
 
-		std::shared_ptr<UI::StackPanel> passwordField = std::make_shared<UI::StackPanel>();
+		std::shared_ptr<UI::StackPanel> passwordField = std::make_shared<UI::StackPanel>(eventAllocator, CreatePhysxActor());
 		passwordField->StackDirection(UI::Direction::HORIZONTAL);
 		passwordField->Sizing(UI::SizingType::DERIVED);
 		passwordField->Margin(Netcode::Float4{ 10.0f, 10.0f, 10.0f, 0.0f });
 
-		std::shared_ptr<UI::Label> passwordLabel = std::make_shared<UI::Label>();
+		std::shared_ptr<UI::Label> passwordLabel = std::make_shared<UI::Label>(eventAllocator, CreatePhysxActor());
 		passwordLabel->Sizing(UI::SizingType::FIXED);
 		passwordLabel->Size(Netcode::Float2{ 120.0f, 48.0f });
 		passwordLabel->Margin(Netcode::Float4{ 0.0f, 0.0f, 10.0f, 0.0f });
@@ -162,7 +168,7 @@ public:
 		passwordLabel->Font(assets->ImportFont(L"titillium18.spritefont"));
 		passwordLabel->Text(L"Password:");
 
-		std::shared_ptr<UI::StackPanel> buttonField = std::make_shared<UI::StackPanel>();
+		std::shared_ptr<UI::StackPanel> buttonField = std::make_shared<UI::StackPanel>(eventAllocator, CreatePhysxActor());
 		buttonField->StackDirection(UI::Direction::HORIZONTAL);
 		buttonField->Sizing(UI::SizingType::DERIVED);
 		buttonField->Margin(Netcode::Float4{ 10.0f, 10.0f, 10.0f, 0.0f });
@@ -217,8 +223,10 @@ public:
 
 		inputGroup->AddAnimation(std::move(positionAnim));
 
-		OnInitialized();
+		UpdateZIndices();
 	}
+
+
 };
 
 

@@ -28,11 +28,16 @@ namespace UI {
 	};
 
     enum class SizingType : uint32_t {
-        FIXED, DERIVED, INHERITED, WINDOW
+        FIXED, DERIVED, INHERITED
     };
 
     class Control : public std::enable_shared_from_this<Control> {
     protected:
+
+        enum class HoverState {
+            INACTIVE, HOVERED, RAYCASTED
+        };
+
         Netcode::Float2 size;
         Netcode::Float2 position;
         Netcode::Float2 rotationOrigin;
@@ -47,10 +52,43 @@ namespace UI {
         VerticalAnchor verticalRotationOrigin;
         HorizontalAnchor horizontalContentAlignment;
         VerticalAnchor verticalContentAlignment;
+        physx::PxScene * lastScenePtr;
+        Netcode::PxPtr<physx::PxRigidDynamic> pxActor;
         std::shared_ptr<Control> parent;
         std::vector<std::shared_ptr<Control>> children;
         AnimationContainer animations;
+        HoverState hoverState;
         bool enabled;
+
+        static HoverState DecayState(HoverState hState) {
+            if(hState == HoverState::RAYCASTED) {
+                return HoverState::HOVERED;
+            }
+            return HoverState::INACTIVE;
+        }
+
+    public:
+
+        static constexpr float MAX_DEPTH = 256.0f;
+
+        using AllocType = Netcode::Memory::StdAllocatorAdapter<void, Netcode::Memory::ObjectAllocator>;
+
+        template<typename ... U>
+        using EventType = Netcode::ManagedEvent<AllocType, U...>;
+
+        EventType<Control *, MouseEventArgs &> OnMouseEnter;
+        EventType<Control *, MouseEventArgs &> OnMouseLeave;
+        EventType<Control *, MouseEventArgs &> OnMouseMove;
+        EventType<Control *, MouseEventArgs &> OnMouseClick;
+        EventType<Control *, ScrollEventArgs &> OnMouseScroll;
+        EventType<Control *, FocusChangedEventArgs &> OnFocused;
+        EventType<Control *> OnEnabled;
+        EventType<Control *> OnDisabled;
+        EventType<Control *> OnParentChanged;
+        EventType<Control *> OnPositionChanged;
+        EventType<Control *> OnSizeChanged;
+
+    protected:
 
         SizingType ZIndexSizing() const;
 
@@ -62,20 +100,98 @@ namespace UI {
 
         static Netcode::Float2 CalculateAnchorOffset(HorizontalAnchor xAnchor, VerticalAnchor yAnchor, const Netcode::Float2 & controlSize);
 
-        void UpdateZIndices(int depth) {
-            if(ZIndexSizing() == SizingType::DERIVED) {
-                zIndex = static_cast<float>(depth);
-            }
+        void UpdateZIndices(float depth);
 
-            for(auto & child : children) {
-                child->UpdateZIndices(depth + 1);
-            }
-        }
+        void UpdateActorPose();
+
+        void UpdateActorShape();
+
+        void AddActorToScene();
+
+        void RemoveActorFromScene();
+
+        /**
+        * Invoked when the Sizing is derived and the layout is being updated
+        */
+        virtual Netcode::Float2 DeriveSize();
+
+        /**
+        * Internal event
+        * Way to update children position
+        */
+        virtual void OnLayoutChanged();
+
+        /**
+        * DERIVED -> INHERITED in the hierarchy chain is not allowed
+        */
+        void CheckSizingConsistency();
+
+        /**
+        * Downward pre propagated event
+        */
+        virtual void PropagateOnEnabled();
+
+        /**
+        * Downward pre propagated event
+        */
+        virtual void PropagateOnDisabled();
+
+        /**
+        * Mixed pre propagated event
+        */
+        virtual void PropagateOnSizeChanged();
+
+        /**
+        * Local pre propagated event
+        */
+        virtual void PropagateOnParentChanged();
+
+        /**
+        * Downward pre propagated event
+        */
+        virtual void PropagateOnPositionChanged();
+
+        /**
+        * Internal constructor for initializing the essentials
+        */
+        Control(const AllocType & allocator);
+
+        void AssignActor(Netcode::PxPtr<physx::PxRigidDynamic> actor);
 
     public:
-        static constexpr float MAX_DEPTH = 256.0f;
+        virtual void PropagateOnFocused(FocusChangedEventArgs & args);
 
-        Control();
+        /**
+        * Upward post propagated event
+        * Invokes MouseClick if args was handled previously
+        */
+        virtual void PropagateOnClick(MouseEventArgs & args);
+
+        /**
+        * Upward post propagated event
+        * Invokes MouseEnter if args was handled previously
+        */
+        virtual void PropagateOnMouseEnter(MouseEventArgs & args);
+
+        /**
+        * Upward post propagated event
+        * Invokes MouseMove if args was handled previously
+        */
+        virtual void PropagateOnMouseMove(MouseEventArgs & args);
+
+        /**
+        * Upward post propagated event
+        * Invokes MouseLeave if args was handled previously
+        */
+        virtual void PropagateOnMouseLeave(MouseEventArgs & args);
+
+        /**
+        * Upward post propagated event
+        * Invokes MouseScroll if args was handled previously
+        */
+        virtual void PropagateOnMouseScroll(ScrollEventArgs & args);
+
+        Control(const AllocType & allocator, Netcode::PxPtr<physx::PxRigidDynamic> pxActor);
 
         virtual ~Control() = default;
 
@@ -99,6 +215,14 @@ namespace UI {
             anim->Run(0.0f);
             animations.Add(std::move(anim));
         }
+
+        const AnimationContainer & Animations() const {
+            return animations;
+        }
+
+        bool Enabled() const;
+
+        void Enabled(bool isEnabled);
 
         SizingType Sizing() const;
 
@@ -148,7 +272,7 @@ namespace UI {
         
         virtual Netcode::Float2 CalculatedSize() const;
 
-        virtual void UpdateSize(const Netcode::Float2 & screenSize);
+        virtual void UpdateZIndices();
 
         virtual void UpdateLayout();
 
@@ -156,42 +280,10 @@ namespace UI {
 
         virtual void Destruct();
 
-        virtual void Enable();
-
-        virtual void Disable();
-
         virtual void AddChild(std::shared_ptr<Control> child);
 
         virtual void Render(Netcode::SpriteBatchPtr batch);
 
-        virtual void OnInitialized();
-
-        virtual void OnFocused(FocusChangedEventArgs & args);
-
-        virtual void OnClick(MouseEventArgs & args);
-
-        virtual void OnMouseEnter(MouseEventArgs & args);
-
-        virtual void OnMouseMove(MouseEventArgs & args);
-
-        virtual void OnMouseLeave(MouseEventArgs & args);
-
-        virtual void OnEnabled();
-
-        virtual void OnDisabled();
-
-        virtual void OnSizeChanged();
-
-        virtual void OnPositionChanged();
-
-        virtual bool IsFocused();
-
-        virtual bool IsEnabled();
-
-        Netcode::Event<Control *, MouseEventArgs &> MouseEnterEvent;
-        Netcode::Event<Control *, MouseEventArgs &> MouseLeaveEvent;
-        Netcode::Event<Control *, MouseEventArgs &> MouseMoveEvent;
-        Netcode::Event<Control *, MouseEventArgs &> MouseClick;
     };
 
 
@@ -281,7 +373,7 @@ namespace UI {
             return backgroundImageSize;
         }
 
-        Panel() : Control{}, borderType{ Netcode::BorderType::NONE }, borderWidth{ 0.0f }, borderRadius{ 0.0f }, backgroundType{ Netcode::BackgroundType::NONE }, backgroundVerticalAlignment{ VerticalAnchor::TOP }, backgroundHorizontalAlignment{ HorizontalAnchor::LEFT },
+        Panel(const AllocType & alloc, Netcode::PxPtr<physx::PxRigidDynamic> pxActor) : Control{ alloc, std::move(pxActor) }, borderType{ Netcode::BorderType::NONE }, borderWidth{ 0.0f }, borderRadius{ 0.0f }, backgroundType{ Netcode::BackgroundType::NONE }, backgroundVerticalAlignment{ VerticalAnchor::TOP }, backgroundHorizontalAlignment{ HorizontalAnchor::LEFT },
             backgroundImage{ nullptr }, backgroundSize{ Netcode::Float2::Zero }, backgroundImageSize{ Netcode::UInt2::Zero }, backgroundColor{ Netcode::Float4::Zero }, borderColor{ Netcode::Float4::Zero } { }
 
         virtual ~Panel() = default;
@@ -428,7 +520,7 @@ namespace UI {
 
         virtual ~StackPanel() = default;
 
-        StackPanel() : Panel{}, stackDirection{ Direction::VERTICAL } {
+        StackPanel(const AllocType & allocator, Netcode::PxPtr<physx::PxRigidDynamic> pxActor) : Panel{ allocator, std::move(pxActor) }, stackDirection{ Direction::VERTICAL } {
             
         }
 
@@ -443,62 +535,35 @@ namespace UI {
         virtual void UpdateLayout() override {
             Panel::UpdateLayout();
 
-            Netcode::Float2 ao = CalculateAnchorOffset(HorizontalContentAlignment(), VerticalContentAlignment(), Size());
-            ao = ZeroDirection(ao, StackDirection());
-
-            const Netcode::Vector2 dirSelect = ZeroDirection(Netcode::Float2::One, OppositeDirection(StackDirection()));
-            const Netcode::Vector2 anchorOffset = ao;
+            const Netcode::Vector2 mask = (StackDirection() == Direction::VERTICAL) ? Netcode::Float2::UnitX : Netcode::Float2::UnitY;
+            const Netcode::Vector2 invMask = mask.Swizzle<1, 0>();
+            const Netcode::Vector2 anchorOffset = mask * CalculateAnchorOffset(HorizontalContentAlignment(), VerticalContentAlignment(), Size());
+            
             Netcode::Vector2 dirSum = Netcode::Float2::Zero;
 
             for(auto & child : children) {
                 const Netcode::Float2 bs = child->BoxSize();
-
-                Netcode::Float2 ad = CalculateAnchorOffset(HorizontalContentAlignment(), VerticalContentAlignment(), bs);
-                ad = ZeroDirection(ad, StackDirection());
-
-                const Netcode::Vector2 anchorDiff = ad;
+                const Netcode::Vector2 anchorDiff = mask * CalculateAnchorOffset(HorizontalContentAlignment(), VerticalContentAlignment(), bs);
 
                 child->Position(anchorOffset - anchorDiff + dirSum);
 
-                dirSum += dirSelect * bs;
+                dirSum += invMask * bs;
             }
         }
 
-        virtual void UpdateSize(const Netcode::Float2 & screenSize) override {
-            Control::UpdateSize(screenSize);
+        virtual Netcode::Float2 DeriveSize() override {
+            Netcode::Vector2 mask = (StackDirection() == Direction::VERTICAL) ? Netcode::Float2::UnitY : Netcode::Float2::UnitX;
+            Netcode::Vector2 invMask = mask.Swizzle<1, 0>();
+            Netcode::Vector2 derivedSize = Netcode::Float2::Zero;
 
-            if(Sizing() == SizingType::DERIVED) {
-                if(StackDirection() == Direction::VERTICAL) {
-                    float maxWidth = 0.0f;
-                    float heightSum = 0.0f;
-                    for(auto & child : children) {
-                        Netcode::Float2 childSize = child->BoxSize();
+            for(auto & child : children) {
+                Netcode::Vector2 childSize = child->BoxSize();
 
-                        if(maxWidth < childSize.x) {
-                            maxWidth = childSize.x;
-                        }
-
-                        heightSum += childSize.y;
-                    }
-
-                    Size(Netcode::Float2{ maxWidth, heightSum });
-                } else {
-                    float maxHeight = 0.0f;
-                    float widthSum = 0.0f;
-
-                    for(auto & child : children) {
-                        Netcode::Float2 childSize = child->BoxSize();
-
-                        if(maxHeight < childSize.y) {
-                            maxHeight = childSize.y;
-                        }
-
-                        widthSum += childSize.x;
-                    }
-
-                    Size(Netcode::Float2{ widthSum, maxHeight });
-                }
+                derivedSize = derivedSize.Max(invMask * childSize);
+                derivedSize += mask * childSize;
             }
+
+            return derivedSize;
         }
     };
 
@@ -507,7 +572,7 @@ namespace UI {
     public:
         virtual ~InputGroup() = default;
 
-        InputGroup() : StackPanel{} { }
+        using StackPanel::StackPanel;
         
         /*
         handle tab key press
@@ -525,7 +590,8 @@ namespace UI {
     protected:
     public:
         virtual ~ScrollViewer() = default;
-        ScrollViewer() : Panel{} { }
+
+        using Panel::Panel;
     };
 
     class Label : public Panel {
@@ -567,7 +633,7 @@ namespace UI {
     public:
         virtual ~Label() = default;
 
-        Label() : Panel{}, font{ nullptr }, textColor{ Netcode::Float4::Zero }, text{}, textPosition{ Netcode::Float2::Zero } {
+        Label(const AllocType & allocator, Netcode::PxPtr<physx::PxRigidDynamic> pxActor) : Panel{ allocator, std::move(pxActor) }, font{ nullptr }, textColor{ Netcode::Float4::Zero }, text{}, textPosition{ Netcode::Float2::Zero } {
 
         }
 
@@ -636,24 +702,21 @@ namespace UI {
 
     class Input : public Label {
     protected:
-        Netcode::PxPtr<physx::PxRigidDynamic> actor;
         int32_t tabIndex;
         bool focused;
         bool hovered;
 
-        void UpdateActorPose() {
-            Netcode::Vector2 sPos = ScreenPosition();
-            Netcode::Vector2 halfSize = Netcode::Vector2{ Size() } / 2.0f;
-
-            Netcode::Float2 sp = sPos + halfSize;
-
-            actor->setGlobalPose(physx::PxTransform{ sp.x, sp.y, ZIndex(), physx::PxQuat{ RotationZ(), physx::PxVec3{ 0.0f, 0.0f, 1.0f } } });
+        virtual void PropagateOnFocused(FocusChangedEventArgs & evtArgs) override {
+            if(evtArgs.TabIndex() == TabIndex()) {
+                evtArgs.Handled(true);
+                focused = true;
+            }
         }
 
     public:
         virtual ~Input() = default;
-        Input(Netcode::PxPtr<physx::PxRigidDynamic> pxActor) : Label{}, actor{ std::move(pxActor) }, tabIndex{ 0 }, focused{ false }, hovered{ false } {
-            actor->userData = this;
+        Input(const AllocType & allocator, Netcode::PxPtr<physx::PxRigidDynamic> pxActor) : Label{ allocator, std::move(pxActor) }, tabIndex{ 0 }, focused{ false }, hovered{ false } {
+            
         }
 
         int32_t TabIndex() const {
@@ -668,76 +731,65 @@ namespace UI {
             return focused;
         }
 
-        virtual void OnMouseEnter(MouseEventArgs & evtArgs) override {
-            Label::OnMouseEnter(evtArgs);
-            hovered = true;
-        }
-
-        virtual void OnMouseLeave(MouseEventArgs & evtArgs) override {
-            Label::OnMouseLeave(evtArgs);
-            hovered = false;
-        }
-
-        virtual void OnSizeChanged() override {
-            Label::OnSizeChanged();
-
-            physx::PxShape* shape{ nullptr };
-            physx::PxU32 returnedShapes = actor->getShapes(&shape, 1, 0);
-
-            if(returnedShapes == 1) {
-                Netcode::Float2 halfSize = Netcode::Vector2{ Size() } / 2.0f;
-
-                shape->setGeometry(physx::PxBoxGeometry{ halfSize.x, halfSize.y, 0.25f });
-
-                UpdateActorPose();
-            }
-        }
-
-        virtual void Destruct() override {
-            physx::PxScene * scene = actor->getScene();
-
-            if(scene != nullptr) {
-                scene->removeActor(*actor);
-            }
-
-            Label::Destruct();
-        }
-
-        virtual void OnPositionChanged() override {
-            UpdateActorPose();
-        }
-
-        virtual void OnFocused(FocusChangedEventArgs & evtArgs) override {
-            if(evtArgs.TabIndex() == TabIndex()) {
-                evtArgs.Handled(true);
-                focused = true;
-            }
-        }
     };
 
     class Button : public Input {
     protected:
+
+        virtual void PropagateOnMouseEnter(MouseEventArgs & evtArgs) override {
+            evtArgs.Handled(true);
+            Input::PropagateOnMouseEnter(evtArgs);
+        }
+
+        virtual void PropagateOnMouseLeave(MouseEventArgs & evtArgs) override {
+            evtArgs.Handled(true);
+            Input::PropagateOnMouseLeave(evtArgs);
+        }
+
+        virtual void PropagateOnMouseMove(MouseEventArgs & evtArgs) override {
+            evtArgs.Handled(true);
+            Input::PropagateOnMouseMove(evtArgs);
+        }
+
+        virtual void PropagateOnClick(MouseEventArgs & evtArgs) override {
+            evtArgs.Handled(true);
+            Input::PropagateOnClick(evtArgs);
+        }
+
     public:
         virtual ~Button() = default;
 
         using Input::Input;
-
-        virtual void OnClick(MouseEventArgs & evtArgs) override {
-            evtArgs.Handled(true);
-
-            Log::Debug("Button");
-        }
     };
 
     class TextBox : public Input {
     protected:
         bool isPassword;
 
+        virtual void PropagateOnMouseEnter(MouseEventArgs & evtArgs) override {
+            evtArgs.Handled(true);
+            Input::PropagateOnMouseEnter(evtArgs);
+        }
+
+        virtual void PropagateOnMouseLeave(MouseEventArgs & evtArgs) override {
+            evtArgs.Handled(true);
+            Input::PropagateOnMouseLeave(evtArgs);
+        }
+
+        virtual void PropagateOnMouseMove(MouseEventArgs & evtArgs) override {
+            evtArgs.Handled(true);
+            Input::PropagateOnMouseMove(evtArgs);
+        }
+
+        virtual void PropagateOnClick(MouseEventArgs & evtArgs) override {
+            evtArgs.Handled(true);
+            Input::PropagateOnClick(evtArgs);
+        }
 
     public:
         virtual ~TextBox() = default;
 
-        TextBox(Netcode::PxPtr<physx::PxRigidDynamic> pxActor) : Input{ std::move(pxActor) }, isPassword{ false } { }
+        TextBox(const AllocType & allocator, Netcode::PxPtr<physx::PxRigidDynamic> pxActor) : Input{ allocator, std::move(pxActor) }, isPassword{ false } { }
 
         bool IsPassword() const {
             return isPassword;
@@ -747,34 +799,6 @@ namespace UI {
             isPassword = isPw;
         }
 
-        virtual void OnClick(MouseEventArgs & evtArgs) {
-            evtArgs.Handled(true);
-
-            Log::Debug("TextBox");
-        }
-
     };
 
 }
-
-/*
-Login panel example:
-- Panel: center, middle alignment, window sized
-    - StackPanel: derived sized, vertical stack alignment
-        - StackPanel: derived sized, horizontal stack alignment
-            - Label: right content alignment, with text: "Username:", fix sized
-            - TextBox: left content alignment, fix sized
-        - StackPanel: derived sized, horizontal stack alignment
-            - Label: right content alignment, text: "Password:", fix sized
-            - TextBox: password switch, left content alignment, fix sized
-        - StackPanel: derived sized, horizontal stack alignment
-            - Button: center content alignment, text: "Exit", fix sized
-            - Button: center content alignment, text: "Login", fix sized
-
-Spinner example:
-- Panel: center, middle alignment, window sized
-    - StackPanel: derived sized, vertical stack alignment
-        - Panel: spinner background, fixed sized, animation on the Rotation property
-        - Label: center content alignment, fixed sized
-            
-*/

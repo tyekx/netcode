@@ -337,6 +337,12 @@ namespace Netcode {
 		*/
 		static EventType<int, KeyModifier> * OnScroll;
 
+		/**
+		* Mouse move event
+		* Int2: mouse delta
+		*/
+		static EventType<Int2, KeyModifier> * OnMouseMove;
+
 
 		
 

@@ -30,12 +30,14 @@ namespace Netcode {
 		}
 
 		PxPtr() : ptr{ nullptr } { }
+
 		PxPtr(T * p) : ptr{ p } { }
+
 		PxPtr(PxPtr<T> && rhs) : ptr{ std::move(rhs.ptr) } {
 			rhs.ptr = nullptr;
 		}
-		PxPtr & operator=(const PxPtr<T> & rhs) = delete;
-		PxPtr & operator=(PxPtr<T> rhs) noexcept {
+
+		PxPtr & operator=(PxPtr<T> && rhs) noexcept {
 			std::swap(ptr, rhs.ptr);
 			return *this;
 		}
@@ -67,6 +69,10 @@ namespace Netcode {
 
 		bool operator!=(std::nullptr_t) const {
 			return ptr != nullptr;
+		}
+
+		bool operator==(std::nullptr_t) const {
+			return ptr == nullptr;
 		}
 
 	};

@@ -31,6 +31,18 @@ namespace UI {
 		}
 	};
 
+	class ScrollEventArgs : public MouseEventArgs {
+		int32_t scrollVector;
+	public:
+		ScrollEventArgs(const Netcode::Int2 & pos, int32_t scrollVector) : MouseEventArgs{ pos }, scrollVector{ scrollVector } {
+
+		}
+
+		int32_t ScrollVector() const {
+			return scrollVector;
+		}
+	};
+
 	class FocusChangedEventArgs : public EventArgs {
 		int32_t tabIndex;
 

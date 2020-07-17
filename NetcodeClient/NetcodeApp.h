@@ -31,7 +31,7 @@ using Netcode::Graphics::FrameGraphCullMode;
 class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler {
 	Netcode::Stopwatch stopwatch;
 	Netcode::Physics::PhysX px;
-	physx::PxMaterial * defaultPhysxMaterial;
+	Netcode::PxPtr<physx::PxMaterial> defaultPhysxMaterial;
 	
 	Netcode::MovementController movCtrl;
 
@@ -40,12 +40,12 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	RenderSystem renderSystem;
 	AnimationSystem animSystem;
 	PhysXSystem pxSystem;
+	UI::PageManager ui;
 
 	GameScene * gameScene;
 
 	std::shared_ptr<AnimationSet> ybotAnimationSet;
 	Netcode::Network::GameSessionRef gameSession;
-	std::shared_ptr<LoginPage> loginPage;
 
 	float totalTime;
 
@@ -93,7 +93,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	void Simulate(float dt) {
 		totalTime += dt;
 
-		loginPage->Update(dt);
+		ui.Update(dt);
 
 		gameScene->GetPhysXScene()->simulate(dt);
 		gameScene->GetPhysXScene()->fetchResults(true);
@@ -151,8 +151,10 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			gameScene->SpawnPhysxActor(planeActor);
 		}
 
-		loginPage = std::make_shared<LoginPage>(px);
+		std::shared_ptr<LoginPage> loginPage = ui.CreatePage<LoginPage>(px);
 		loginPage->InitializeComponents();
+		ui.AddPage(loginPage);
+		ui.Activate(PagesEnum::LOGIN_PAGE);
 		renderSystem.renderer.ui_Input = loginPage;
 
 		GameObject * testbox = gameScene->Create();
@@ -327,7 +329,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 				shape = pxp->createShape(pcmg, *defaultPhysxMaterial, true, shapeFlags);
 
 			} else {
-				shape = CreatePrimitiveShapeFromAsset(*netcodeCollider, pxp, defaultPhysxMaterial, shapeFlags);
+				shape = CreatePrimitiveShapeFromAsset(*netcodeCollider, pxp, defaultPhysxMaterial.Get(), shapeFlags);
 			}
 
 			shape->setQueryFilterData(filterData);
@@ -416,7 +418,7 @@ public:
 	virtual void OnResized(int w, int h) override {
 		float asp = graphics->GetAspectRatio();
 		gameScene->GetCamera()->GetComponent<Camera>()->aspect = asp;
-		loginPage->ScreenSize(Netcode::UInt2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
+		ui.WindowResized(Netcode::UInt2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
 		renderSystem.renderer.OnResize(w, h);
 	}
 
@@ -479,9 +481,9 @@ public:
 	Properly shutdown the application
 	*/
 	virtual void Exit() override {
-		loginPage->Destruct();
+		defaultPhysxMaterial.Reset();
 		renderSystem.renderer.ui_Input.reset();
-		loginPage.reset();
+		ui.Destruct();
 		Service::Clear();
 		px.ReleaseResources();
 		ShutdownModule(network.get());

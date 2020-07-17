@@ -55,6 +55,7 @@ namespace Netcode {
 		EventType<Key, KeyModifier> OnKeyReleased;
 
 		EventType<int, KeyModifier> OnScroll;
+		EventType<Int2, KeyModifier> OnMouseMove;
 
 	private:
 		Int2 mouseDelta;
@@ -102,6 +103,7 @@ namespace Netcode {
 			OnKeyPressed{ StdAlloc{ allocator } },
 			OnKeyReleased{ StdAlloc{ allocator } },
 			OnScroll{ StdAlloc{ allocator } },
+			OnMouseMove{ StdAlloc{ allocator } },
 			mouseDelta{ Int2::Zero },
 			mouseWindowPosition{ Int2::Zero },
 			keys{ },
@@ -142,6 +144,8 @@ namespace Netcode {
 		void ProcessMouseMoveEvent(const Int2 & mouseWindowPosition)
 		{
 			this->mouseWindowPosition = mouseWindowPosition;
+
+			OnMouseMove.Invoke(mouseWindowPosition, KeyModifier::NONE);
 		}
 
 		void CompleteFrame() {
@@ -264,7 +268,7 @@ namespace Netcode {
 	Input::EventType<Key, KeyModifier> * Input::OnKeyPressed{ nullptr };
 	Input::EventType<Key, KeyModifier> * Input::OnKeyReleased{ nullptr };
 	Input::EventType<int, KeyModifier> * Input::OnScroll{ nullptr };
-
+	Input::EventType<Int2, KeyModifier> * Input::OnMouseMove{ nullptr };
 
 	void Input::ProcessEvent(Key keyEvent) {
 		instance->ProcessEvent(keyEvent);
@@ -293,6 +297,7 @@ namespace Netcode {
 			OnKeyReleased = &instance->OnKeyReleased;
 
 			OnScroll = &instance->OnScroll;
+			OnMouseMove = &instance->OnMouseMove;
 
 			instance->Initialize();
 		}

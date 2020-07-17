@@ -13,7 +13,7 @@ namespace Netcode {
 	class EventBase {
 	public:
 		static EventToken NextToken() {
-			static EventToken id = 0;
+			static EventToken id = 1;
 			return id++;
 		}
 	};
@@ -43,7 +43,7 @@ namespace Netcode {
 		void Erase(EventToken token) {
 			for(typename ContainerType::iterator it = handlers.begin(); it != handlers.end(); ++it) {
 				if(it->first == token) {
-					handlers.erase(token);
+					handlers.erase(it);
 				}
 			}
 		}

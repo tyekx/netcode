@@ -151,6 +151,12 @@ namespace Netcode {
 			return f;
 		}
 
+		template<uint32_t COMPONENT0, uint32_t COMPONENT1>
+		Vector2 NC_MATH_CALLCONV Swizzle() const noexcept;
+
+		template<uint32_t COMPONENT0, uint32_t COMPONENT1, uint32_t COMPONENT2>
+		Vector3 NC_MATH_CALLCONV Swizzle() const noexcept;
+
 		template<uint32_t COMPONENT0, uint32_t COMPONENT1, uint32_t COMPONENT2, uint32_t COMPONENT3>
 		Vector4 NC_MATH_CALLCONV Swizzle() const noexcept;
 	};

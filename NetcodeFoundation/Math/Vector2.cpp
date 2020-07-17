@@ -54,10 +54,30 @@ namespace Netcode {
 		return DirectX::XMVectorMin(Vector4(v).Permute<0, 1, 6, 7>(rhs).v, rhs.v);
 	}
 
+	template<uint32_t COMPONENT0, uint32_t COMPONENT1>
+	Vector2 NC_MATH_CALLCONV Vector2::Swizzle() const noexcept {
+		return DirectX::XMVectorSwizzle<COMPONENT0, COMPONENT1, 2, 3>(v);
+	}
+
+	template<uint32_t COMPONENT0, uint32_t COMPONENT1, uint32_t COMPONENT2>
+	Vector3 NC_MATH_CALLCONV Vector2::Swizzle() const noexcept {
+		return DirectX::XMVectorSwizzle<COMPONENT0, COMPONENT1, COMPONENT2, 3>(v);
+	}
+
 	template<uint32_t COMPONENT0, uint32_t COMPONENT1, uint32_t COMPONENT2, uint32_t COMPONENT3>
-	Vector4 NC_MATH_CALLCONV Vector2::Swizzle() const noexcept {
+	Vector4 Vector2::Swizzle() const noexcept {
 		return DirectX::XMVectorSwizzle<COMPONENT0, COMPONENT1, COMPONENT2, COMPONENT3>(v);
 	}
+
+	template Vector2 NC_MATH_CALLCONV Vector2::Swizzle<0, 0>() const noexcept;
+	template Vector2 NC_MATH_CALLCONV Vector2::Swizzle<0, 1>() const noexcept;
+	template Vector2 NC_MATH_CALLCONV Vector2::Swizzle<1, 0>() const noexcept;
+	template Vector2 NC_MATH_CALLCONV Vector2::Swizzle<1, 1>() const noexcept;
+
+	template Vector3 NC_MATH_CALLCONV Vector2::Swizzle<0, 0, 0>() const noexcept;
+	template Vector3 NC_MATH_CALLCONV Vector2::Swizzle<1, 1, 1>() const noexcept;
+	template Vector3 NC_MATH_CALLCONV Vector2::Swizzle<0, 1, 0>() const noexcept;
+	template Vector3 NC_MATH_CALLCONV Vector2::Swizzle<0, 1, 1>() const noexcept;
 
 	template Vector4 NC_MATH_CALLCONV Vector2::Swizzle<0, 0, 0, 0>() const noexcept;
 	template Vector4 NC_MATH_CALLCONV Vector2::Swizzle<0, 1, 0, 1>() const noexcept;

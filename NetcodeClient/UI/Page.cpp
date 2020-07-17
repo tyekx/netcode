@@ -4,32 +4,35 @@ namespace UI {
 
 
 
-	void Page::ScreenSize(const Netcode::UInt2 & ss) {
-		screenSize = ss;
-		UpdateSize(Netcode::Float2{ static_cast<float>(ss.x), static_cast<float>(ss.y) });
-		UpdateLayout();
+	void Page::WindowSize(const Netcode::UInt2 & ss) {
+		if(windowSize.x != ss.x || windowSize.y != ss.y) {
+			windowSize = ss;
+			Size(Netcode::Float2{ static_cast<float>(ss.x), static_cast<float>(ss.y) });
+			UpdateLayout();
+		}
 	}
 
-	Netcode::UInt2 Page::ScreenSize() const {
-		return screenSize;
+	Netcode::UInt2 Page::WindowSize() const {
+		return windowSize;
 	}
 
-	Page::Page(Netcode::Physics::PhysX & px) {
-		Sizing(SizingType::WINDOW);
+	Page::Page(const Netcode::Memory::ObjectAllocator & controlAllocator,
+		const Netcode::Memory::ObjectAllocator & eventAllocator,
+		Netcode::Physics::PhysX & px) : Control{ eventAllocator },
+		controlAllocator{ controlAllocator },
+		eventAllocator{ eventAllocator },
+		windowSize{ Netcode::UInt2::Zero },
+		dummyMaterial{ nullptr },
+		scene{ nullptr },
+		hoveredControl{},
+		clickToken{ 0 },
+		moveToken{ 0 },
+		scrollToken{ 0 } {
+
+		InitPhysx(px);
+		Sizing(SizingType::FIXED);
 		HorizontalContentAlignment(HorizontalAnchor::LEFT);
 		VerticalContentAlignment(VerticalAnchor::TOP);
-		Disable();
-
-		physx::PxSceneDesc sceneDesc{ px.physics->getTolerancesScale() };
-		sceneDesc.gravity = physx::PxVec3{ 0.0f, 0.0f, 0.0f };
-		sceneDesc.cpuDispatcher = px.dispatcher.Get();
-		sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
-
-		scene.Reset(px.physics->createScene(sceneDesc));
-	}
-
-	void Page::OnClick(MouseEventArgs & args) {
-		
 	}
 
 }
