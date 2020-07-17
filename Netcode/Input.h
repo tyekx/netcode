@@ -26,12 +26,16 @@ namespace Netcode {
 	LSB+1 = "Is edge?"
 	*/
 	enum class KeyState : uint32_t {
-		INACTIVE = 0,
-		ACTIVE = 1,
-		FALLING_EDGE = 2,
-		RISING_EDGE = 3,
-		PULSE = 5,
-		UNDEFINED = 0xFFFFFFFF
+		UP = 0,
+		DOWN = 1,
+		RELEASED = ( UP ),
+		PRESSED = ( DOWN ), 
+		EDGE = 2,
+		FALLING_EDGE = ( EDGE | RELEASED ),
+		RISING_EDGE = ( EDGE | PRESSED ),
+		PULSE = 4,
+		TOGGLED = 8,
+		UNDEFINED = std::numeric_limits<uint32_t>::max()
 	};
 
 	enum class KeyCode : uint32_t {
@@ -140,8 +144,23 @@ namespace Netcode {
 		F12 = 0x7B,
 
 		NUM_LOCK = 0x90,
-		SCROLL_LOCK = 0x91
+		SCROLL_LOCK = 0x91,
+
+		SHIFT_LEFT = 0xA0,
+		SHIFT_RIGHT = 0xA1,
+		CONTROL_LEFT = 0xA2,
+		CONTROL_RIGHT = 0xA3,
+		ALT_LEFT = 0xA4,
+		ALT_RIGHT = 0xA5
 	};
+
+	KeyModifier operator&(KeyModifier lhs, KeyModifier rhs);
+	KeyModifier operator|(KeyModifier lhs, KeyModifier rhs);
+	bool KeyModifierContains(KeyModifier lhs, KeyModifier rhs);
+
+	KeyState operator&(KeyState lhs, KeyState rhs);
+	KeyState operator|(KeyState lhs, KeyState rhs);
+	bool KeyStateContains(KeyState lhs, KeyState rhs);
 
 	class Key {
 		KeyCode code;
@@ -155,8 +174,20 @@ namespace Netcode {
 			return code;
 		}
 
+		/**
+		* KeyState can be any combination of the given states. Use a specific
+		* query function instead.
+		*/
 		inline KeyState GetState() const {
 			return state;
+		}
+
+		inline void MergeStates(KeyState orState) {
+			state = state | orState;
+		}
+
+		inline void RemoveStates(KeyState negAndState) {
+			state = state & static_cast<KeyState>((~static_cast<uint32_t>(negAndState)));
 		}
 
 		inline void SetState(KeyState newState) {
@@ -172,23 +203,39 @@ namespace Netcode {
 		}
 
 		bool IsPressed() const {
-			return static_cast<uint32_t>(GetState()) & (1U);
+			return KeyStateContains(GetState(), KeyState::PRESSED);
 		}
 
 		bool IsReleased() const {
 			return !IsPressed();
 		}
 
-		bool IsRising() const {
-			return GetState() == KeyState::RISING_EDGE;
+		bool IsToggled() const {
+			return KeyStateContains(GetState(), KeyState::TOGGLED);
 		}
 
-		bool IsFalling() const {
-			return GetState() == KeyState::FALLING_EDGE;
+		bool IsPulse() const {
+			return KeyStateContains(GetState(), KeyState::PULSE);
 		}
 
 		bool IsEdge() const {
-			return static_cast<uint32_t>(GetState()) & (2U);
+			return KeyStateContains(GetState(), KeyState::EDGE);
+		}
+
+		bool IsActive() const {
+			return IsPressed() || IsPulse() || IsToggled();
+		}
+
+		bool IsInactive() const {
+			return !IsActive();
+		}
+
+		bool IsRising() const {
+			return IsPressed() && IsEdge();
+		}
+
+		bool IsFalling() const {
+			return IsReleased() && IsEdge();
 		}
 
 		bool operator==(KeyCode keyCode) const {
@@ -343,8 +390,23 @@ namespace Netcode {
 		*/
 		static EventType<Int2, KeyModifier> * OnMouseMove;
 
+		static bool InputIsCapital();
 
+		static bool IsAlphabetic(KeyCode keyCode);
 		
+		static bool IsNumber(KeyCode keyCode);
+
+		static bool IsAlphaNumeric(KeyCode keyCode);
+
+		static bool IsModifier(KeyCode keyCode);
+		
+		static bool IsToggledType(KeyCode keyCode);
+
+		static Key GetKey(KeyCode keyCode);
+
+		static void ProcessBlurredEvent();
+
+		static void ProcessFocusedEvent();
 
 		static void ProcessEvent(Key keyEvent);
 

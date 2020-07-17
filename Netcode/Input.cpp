@@ -7,6 +7,107 @@
 
 namespace Netcode {
 
+	static KeyCode iterableKeyCodes[] = { KeyCode::MOUSE_LEFT,
+		KeyCode::MOUSE_RIGHT,
+		KeyCode::MOUSE_MIDDLE,
+		KeyCode::MOUSE4,
+		KeyCode::MOUSE5,
+		KeyCode::BACKSPACE,
+		KeyCode::TAB,
+		KeyCode::CLEAR,
+		KeyCode::RETURN,
+		KeyCode::SHIFT,
+		KeyCode::CONTROL,
+		KeyCode::ALT,
+		KeyCode::PAUSE,
+		KeyCode::CAPS_LOCK,
+		KeyCode::ESCAPE,
+		KeyCode::SPACE,
+		KeyCode::PAGE_UP,
+		KeyCode::PAGE_DOWN,
+		KeyCode::END,
+		KeyCode::HOME,
+		KeyCode::LEFT,
+		KeyCode::UP,
+		KeyCode::RIGHT,
+		KeyCode::DOWN,
+		KeyCode::PRINT_SCREEN,
+		KeyCode::INSERT,
+		KeyCode::DEL,
+		KeyCode::_0,
+		KeyCode::_1,
+		KeyCode::_2,
+		KeyCode::_3,
+		KeyCode::_4,
+		KeyCode::_5,
+		KeyCode::_6,
+		KeyCode::_7,
+		KeyCode::_8,
+		KeyCode::_9,
+		KeyCode::A,
+		KeyCode::B,
+		KeyCode::C,
+		KeyCode::D,
+		KeyCode::E,
+		KeyCode::F,
+		KeyCode::G,
+		KeyCode::H,
+		KeyCode::I,
+		KeyCode::J,
+		KeyCode::K,
+		KeyCode::L,
+		KeyCode::M,
+		KeyCode::N,
+		KeyCode::O,
+		KeyCode::P,
+		KeyCode::Q,
+		KeyCode::R,
+		KeyCode::S,
+		KeyCode::T,
+		KeyCode::U,
+		KeyCode::V,
+		KeyCode::W,
+		KeyCode::X,
+		KeyCode::Y,
+		KeyCode::Z,
+		KeyCode::NUM_0,
+		KeyCode::NUM_1,
+		KeyCode::NUM_2,
+		KeyCode::NUM_3,
+		KeyCode::NUM_4,
+		KeyCode::NUM_5,
+		KeyCode::NUM_6,
+		KeyCode::NUM_7,
+		KeyCode::NUM_8,
+		KeyCode::NUM_9,
+		KeyCode::MULTIPLY,
+		KeyCode::ADD,
+		KeyCode::SEPARATOR,
+		KeyCode::SUBTRACT,
+		KeyCode::DECIMAL,
+		KeyCode::DIVIDE,
+		KeyCode::F1,
+		KeyCode::F2,
+		KeyCode::F3,
+		KeyCode::F4,
+		KeyCode::F5,
+		KeyCode::F6,
+		KeyCode::F7,
+		KeyCode::F8,
+		KeyCode::F9,
+		KeyCode::F10,
+		KeyCode::F11,
+		KeyCode::F12,
+		KeyCode::NUM_LOCK,
+		KeyCode::SCROLL_LOCK,
+		KeyCode::SHIFT_LEFT,
+		KeyCode::SHIFT_RIGHT,
+		KeyCode::CONTROL_LEFT,
+		KeyCode::CONTROL_RIGHT,
+		KeyCode::ALT_LEFT,
+		KeyCode::ALT_RIGHT 
+	};
+
 	inline bool operator>=(uint32_t lhs, KeyCode rhs) {
 		return lhs >= static_cast<uint32_t>(rhs);
 	}
@@ -32,11 +133,29 @@ namespace Netcode {
 	}
 
 	static KeyCode MapKeyCode(uint32_t keyValue) {
-		if(keyValue > KeyCode::SCROLL_LOCK) {
+		if(keyValue > KeyCode::ALT_RIGHT) {
 			return KeyCode::UNDEFINED;
 		}
 
 		return static_cast<KeyCode>(keyValue);
+	}
+
+	static KeyModifier MapKeyModifier(KeyCode code) {
+		switch(code) {
+			case KeyCode::ALT_LEFT: [[fallthrough]];
+			case KeyCode::ALT_RIGHT: [[fallthrough]];
+			case KeyCode::ALT: return KeyModifier::ALT;
+
+			case KeyCode::SHIFT_LEFT: [[fallthrough]];
+			case KeyCode::SHIFT_RIGHT: [[fallthrough]];
+			case KeyCode::SHIFT: return KeyModifier::SHIFT;
+
+			case KeyCode::CONTROL_LEFT: [[fallthrough]];
+			case KeyCode::CONTROL_RIGHT: [[fallthrough]];
+			case KeyCode::CONTROL: return KeyModifier::CTRL;
+
+			default: return KeyModifier::NONE;
+		}
 	}
 
 	struct Input::detail {
@@ -58,43 +177,156 @@ namespace Netcode {
 		EventType<Int2, KeyModifier> OnMouseMove;
 
 	private:
+
+		class KeyStorage {
+			Key keys[256];
+
+		public:
+			KeyStorage() : keys{} {
+				for(uint32_t i = 0; i < 256; ++i) {
+					keys[i] = Key(MapKeyCode(i), KeyState::RELEASED);
+				}
+			}
+
+			const Key & operator[](KeyCode code) const {
+				return keys[static_cast<uint32_t>(code)];
+			}
+
+			Key & operator[](KeyCode code) {
+				return keys[static_cast<uint32_t>(code)];
+			}
+
+			ArrayView<Key> GetView() const {
+				return ArrayView<Key>{keys, 256};
+			}
+		};
+
 		Int2 mouseDelta;
 		Int2 mouseWindowPosition;
-
-		Key keys[256];
+		KeyModifier modifiers;
+		KeyStorage keys;
 
 		uint8_t inputBuffer[2048];
 		
 		void InputEvent(Key keyEvt) {
-			OnInput.Invoke(keyEvt, KeyModifier::NONE);
+			OnInput.Invoke(keyEvt, modifiers);
 
 			if(keyEvt.IsKeyboard()) {
-				OnKeyInput.Invoke(keyEvt, KeyModifier::NONE);
+				OnKeyInput.Invoke(keyEvt, modifiers);
 
 				if(keyEvt.IsRising() || keyEvt.GetState() == KeyState::PULSE) {
-					OnKeyPressed.Invoke(keyEvt, KeyModifier::NONE);
+					OnKeyPressed.Invoke(keyEvt, modifiers);
 				}
 
 				if(keyEvt.IsFalling()) {
-					OnKeyReleased.Invoke(keyEvt, KeyModifier::NONE);
+					OnKeyReleased.Invoke(keyEvt, modifiers);
 				}
 			}
 
 			if(keyEvt.IsMouse()) {
-				OnMouseInput.Invoke(keyEvt, KeyModifier::NONE);
+				OnMouseInput.Invoke(keyEvt, modifiers);
 
 				if(keyEvt.IsFalling()) {
-					OnMouseKeyReleased.Invoke(keyEvt, KeyModifier::NONE);
+					OnMouseKeyReleased.Invoke(keyEvt, modifiers);
 				}
 
 				if(keyEvt.IsRising()) {
-					OnMouseKeyPressed.Invoke(keyEvt, KeyModifier::NONE);
+					OnMouseKeyPressed.Invoke(keyEvt, modifiers);
 				}
 			}
 		}
 
+		void ReflectKeyboardState() {
+			static BYTE keyStates[256] = {};
+
+			BOOL queryResult = GetKeyboardState(keyStates);
+
+			if(queryResult) {
+				for(uint32_t i = 0; i < ARRAYSIZE(iterableKeyCodes); ++i) {
+					KeyCode keyCode = iterableKeyCodes[i];
+					BYTE st = keyStates[static_cast<uint32_t>(keyCode)];
+
+					bool isKeyDown = (st & 0x80) == 0x80;
+					bool isKeyToggled = (st & 0x01) == 0x01;
+
+
+					if(isKeyDown) {
+						keys[keyCode].MergeStates(KeyState::PRESSED);
+					} else {
+						keys[keyCode].RemoveStates(KeyState::PRESSED);
+					}
+
+					if(IsModifier(keyCode)) {
+						KeyModifier modifier = MapKeyModifier(keyCode);
+
+						if(isKeyDown) {
+							modifiers = modifiers | modifier;
+						} else {
+							modifiers = modifiers & static_cast<KeyModifier>(~static_cast<uint32_t>(modifier));
+						}
+					}
+
+					if(IsToggledType(keyCode)) {
+						if(isKeyToggled) {
+							keys[keyCode].MergeStates(KeyState::TOGGLED);
+						} else {
+							keys[keyCode].RemoveStates(KeyState::TOGGLED);
+						}
+					}
+				}
+			}
+
+			UpdateModifiers();
+		}
+
+		static KeyState ApplyModifierLogic(Key leftModifier, Key rightModifier) {
+			KeyState leftState = leftModifier.GetState();
+			KeyState rightState = rightModifier.GetState();
+
+			UndefinedBehaviourAssertion(!KeyStateContains(leftState, KeyState::PULSE) &&
+										!KeyStateContains(leftState, KeyState::TOGGLED) &&
+										!KeyStateContains(rightState, KeyState::PULSE) &&
+										!KeyStateContains(rightState, KeyState::TOGGLED));
+
+			return leftState | rightState;
+		}
+
+		void UpdateModifiers() {
+			Key leftAlt = keys[KeyCode::ALT_LEFT];
+			Key rightAlt = keys[KeyCode::ALT_RIGHT];
+			
+			keys[KeyCode::ALT].SetState(ApplyModifierLogic(leftAlt, rightAlt));
+			
+			Key leftControl = keys[KeyCode::CONTROL_LEFT];
+			Key rightControl = keys[KeyCode::CONTROL_RIGHT];
+
+			keys[KeyCode::CONTROL].SetState(ApplyModifierLogic(leftControl, rightControl));
+
+			Key leftShift = keys[KeyCode::SHIFT_LEFT];
+			Key rightShift = keys[KeyCode::SHIFT_RIGHT];
+
+			keys[KeyCode::SHIFT].SetState(ApplyModifierLogic(leftShift, rightShift));
+
+			KeyModifier sum = KeyModifier::NONE;
+
+			if(keys[KeyCode::ALT].IsPressed()) {
+				sum = sum | KeyModifier::ALT;
+			}
+
+			if(keys[KeyCode::CONTROL].IsPressed()) {
+				sum = sum | KeyModifier::CTRL;
+			}
+
+			if(keys[KeyCode::SHIFT].IsPressed()) {
+				sum = sum | KeyModifier::SHIFT;
+			}
+
+			modifiers = sum;
+		}
+
 	public:
 		detail() : allocator{  },
+			axisMap{ nullptr },
 			OnInput{ StdAlloc{ allocator } },
 			OnMouseInput{ StdAlloc{ allocator } },
 			OnMouseKeyPressed{ StdAlloc{ allocator } },
@@ -106,38 +338,62 @@ namespace Netcode {
 			OnMouseMove{ StdAlloc{ allocator } },
 			mouseDelta{ Int2::Zero },
 			mouseWindowPosition{ Int2::Zero },
+			modifiers{ KeyModifier::NONE },
 			keys{ },
 			inputBuffer{} {
 
-			for(uint32_t i = 0; i < 256; ++i) {
-				keys[i] = Key(MapKeyCode(i), KeyState::INACTIVE);
-			}
+			ReflectKeyboardState();
+		}
+
+		void ProcessBlurredEvent() {
 
 		}
 
+		void ProcessFocusedEvent() {
+			ReflectKeyboardState();
+		}
+
 		void ProcessEvent(Key keyEvent) {
-			uint32_t idx = static_cast<uint32_t>(keyEvent.GetCode());
-			Key currentState = keys[idx];
+			KeyCode keyCode = keyEvent.GetCode();
+			Key propagatedKeyEvent{ keyEvent.GetCode(), KeyState::UNDEFINED };
+			Key currentState = keys[keyCode];
 
-			if(currentState.IsReleased() && keyEvent.GetState() == KeyState::ACTIVE) {
-				keyEvent.SetState(KeyState::RISING_EDGE);
-				keys[idx].SetState(KeyState::RISING_EDGE);
+			/**
+			* 1.) Pulse state does not get saved, its only for propagation
+			* 2.) Toggled bit is handled separately for ToggledTypes.
+			*/
+
+			if(currentState.IsReleased() && keyEvent.IsPressed()) {
+				keys[keyCode].MergeStates(KeyState::RISING_EDGE);
+
+				if(IsToggledType(keyEvent.GetCode())) {
+					if(currentState.IsToggled()) {
+						keys[keyCode].RemoveStates(KeyState::TOGGLED);
+					} else {
+						keys[keyCode].MergeStates(KeyState::TOGGLED);
+					}
+				}
+
+				propagatedKeyEvent.SetState(keys[keyCode].GetState());
 			}
 
-			if(currentState.IsPressed() && keyEvent.GetState() == KeyState::INACTIVE) {
-				keyEvent.SetState(KeyState::FALLING_EDGE);
-				keys[idx].SetState(KeyState::FALLING_EDGE);
+			if(currentState.IsPressed() && keyEvent.IsReleased()) {
+				keys[keyCode].RemoveStates(KeyState::PRESSED);
+				keys[keyCode].MergeStates(KeyState::EDGE);
+				propagatedKeyEvent.SetState(keys[keyCode].GetState());
 			}
 
-			if(keyEvent.GetState() == KeyState::ACTIVE && currentState.GetState() == KeyState::ACTIVE) {
-				keyEvent.SetState(KeyState::PULSE);
+			if(keyEvent.IsPressed() && currentState.IsPressed()) {
+				propagatedKeyEvent.SetState(currentState.GetState() | KeyState::PULSE);
 			}
+
+			UpdateModifiers();
 
 			InputEvent(keyEvent);
 		}
 
 		void ProcessMouseScrollEvent(int delta) {
-			OnScroll.Invoke(delta, KeyModifier::NONE);
+			OnScroll.Invoke(delta, modifiers);
 		}
 
 
@@ -145,20 +401,12 @@ namespace Netcode {
 		{
 			this->mouseWindowPosition = mouseWindowPosition;
 
-			OnMouseMove.Invoke(mouseWindowPosition, KeyModifier::NONE);
+			OnMouseMove.Invoke(mouseWindowPosition, modifiers);
 		}
 
 		void CompleteFrame() {
-			for(uint32_t i = 0; i < 256; ++i) {
-				Key * key = keys + i;
-
-				if(key->IsFalling()) {
-					key->SetState(KeyState::INACTIVE);
-				}
-
-				if(key->IsRising()) {
-					key->SetState(KeyState::ACTIVE);
-				}
+			for(uint32_t i = 0; i < ARRAYSIZE(iterableKeyCodes); ++i) {
+				keys[iterableKeyCodes[i]].RemoveStates(KeyState::EDGE);
 			}
 
 			mouseDelta = Int2::Zero;
@@ -180,7 +428,7 @@ namespace Netcode {
 			UNREFERENCED_PARAMETER(dt);
 
 			if(axisMap != nullptr) {
-				axisMap->Update(ArrayView<Key>(keys, 256));
+				axisMap->Update(keys.GetView());
 			}
 		}
 
@@ -196,6 +444,10 @@ namespace Netcode {
 			return mouseDelta;
 		}
 
+		bool InputIsCapital() {
+			return GetKey(KeyCode::CAPS_LOCK).IsToggled() ^ GetKey(KeyCode::SHIFT).IsPressed();
+		}
+
 		Int2 GetMousePosition()
 		{
 			return mouseWindowPosition;
@@ -203,6 +455,12 @@ namespace Netcode {
 
 		void SetAxisMap(AxisMapRef axMap) {
 			axisMap = std::move(axMap);
+		}
+
+		Key GetKey(KeyCode code) {
+			UndefinedBehaviourAssertion(static_cast<uint32_t>(code) < 256);
+
+			return keys[code];
 		}
 
 		void ReadWinApiMouse(uintptr_t wParam, intptr_t lParam) {
@@ -229,20 +487,20 @@ namespace Netcode {
 
 				if(rawMouse->ulButtons != 0) {
 #define IF_PRESENT(numValue) if((rawMouse->ulButtons & numValue) == numValue)
-					IF_PRESENT(RI_MOUSE_LEFT_BUTTON_DOWN) ProcessEvent(Key{ KeyCode::MOUSE_LEFT, KeyState::ACTIVE });
-					IF_PRESENT(RI_MOUSE_LEFT_BUTTON_UP) ProcessEvent(Key{ KeyCode::MOUSE_LEFT, KeyState::INACTIVE });
+					IF_PRESENT(RI_MOUSE_LEFT_BUTTON_DOWN) ProcessEvent(Key{ KeyCode::MOUSE_LEFT, KeyState::PRESSED });
+					IF_PRESENT(RI_MOUSE_LEFT_BUTTON_UP) ProcessEvent(Key{ KeyCode::MOUSE_LEFT, KeyState::RELEASED });
 
-					IF_PRESENT(RI_MOUSE_RIGHT_BUTTON_DOWN) ProcessEvent(Key{ KeyCode::MOUSE_RIGHT, KeyState::ACTIVE });
-					IF_PRESENT(RI_MOUSE_RIGHT_BUTTON_UP) ProcessEvent(Key{ KeyCode::MOUSE_RIGHT, KeyState::INACTIVE });
+					IF_PRESENT(RI_MOUSE_RIGHT_BUTTON_DOWN) ProcessEvent(Key{ KeyCode::MOUSE_RIGHT, KeyState::PRESSED });
+					IF_PRESENT(RI_MOUSE_RIGHT_BUTTON_UP) ProcessEvent(Key{ KeyCode::MOUSE_RIGHT, KeyState::RELEASED });
 
-					IF_PRESENT(RI_MOUSE_MIDDLE_BUTTON_DOWN) ProcessEvent(Key{ KeyCode::MOUSE_MIDDLE, KeyState::ACTIVE });
-					IF_PRESENT(RI_MOUSE_MIDDLE_BUTTON_UP) ProcessEvent(Key{ KeyCode::MOUSE_MIDDLE, KeyState::INACTIVE });
+					IF_PRESENT(RI_MOUSE_MIDDLE_BUTTON_DOWN) ProcessEvent(Key{ KeyCode::MOUSE_MIDDLE, KeyState::PRESSED });
+					IF_PRESENT(RI_MOUSE_MIDDLE_BUTTON_UP) ProcessEvent(Key{ KeyCode::MOUSE_MIDDLE, KeyState::RELEASED });
 
-					IF_PRESENT(RI_MOUSE_BUTTON_4_DOWN) ProcessEvent(Key{ KeyCode::MOUSE4, KeyState::ACTIVE });
-					IF_PRESENT(RI_MOUSE_BUTTON_4_UP) ProcessEvent(Key{ KeyCode::MOUSE4, KeyState::INACTIVE });
+					IF_PRESENT(RI_MOUSE_BUTTON_4_DOWN) ProcessEvent(Key{ KeyCode::MOUSE4, KeyState::PRESSED });
+					IF_PRESENT(RI_MOUSE_BUTTON_4_UP) ProcessEvent(Key{ KeyCode::MOUSE4, KeyState::RELEASED });
 
-					IF_PRESENT(RI_MOUSE_BUTTON_5_DOWN) ProcessEvent(Key{ KeyCode::MOUSE5, KeyState::ACTIVE });
-					IF_PRESENT(RI_MOUSE_BUTTON_5_UP) ProcessEvent(Key{ KeyCode::MOUSE5, KeyState::INACTIVE });
+					IF_PRESENT(RI_MOUSE_BUTTON_5_DOWN) ProcessEvent(Key{ KeyCode::MOUSE5, KeyState::PRESSED });
+					IF_PRESENT(RI_MOUSE_BUTTON_5_UP) ProcessEvent(Key{ KeyCode::MOUSE5, KeyState::RELEASED });
 
 					IF_PRESENT(RI_MOUSE_WHEEL) ProcessMouseScrollEvent(static_cast<int16_t>(rawMouse->usButtonData));
 #undef IF_PRESENT
@@ -270,17 +528,51 @@ namespace Netcode {
 	Input::EventType<int, KeyModifier> * Input::OnScroll{ nullptr };
 	Input::EventType<Int2, KeyModifier> * Input::OnMouseMove{ nullptr };
 
+	bool Input::InputIsCapital() {
+		return instance->InputIsCapital();
+	}
+
+	bool Input::IsAlphabetic(KeyCode keyCode) {
+		return keyCode >= KeyCode::A && keyCode <= KeyCode::Z;
+	}
+
+	bool Input::IsNumber(KeyCode keyCode) {
+		return (keyCode >= KeyCode::_0 && keyCode <= KeyCode::_9);
+	}
+
+	bool Input::IsAlphaNumeric(KeyCode keyCode) {
+		return IsNumber(keyCode) || IsAlphabetic(keyCode);
+	}
+
+	bool Input::IsModifier(KeyCode keyCode) {
+		return MapKeyModifier(keyCode) != KeyModifier::NONE;
+	}
+
+	bool Input::IsToggledType(KeyCode keyCode) {
+		return keyCode == KeyCode::CAPS_LOCK || keyCode == KeyCode::SCROLL_LOCK || keyCode == KeyCode::NUM_LOCK;
+	}
+
+	Key Input::GetKey(KeyCode keyCode) {
+		return instance->GetKey(keyCode);
+	}
+
+	void Input::ProcessBlurredEvent() {
+		instance->ProcessBlurredEvent();
+	}
+
+	void Input::ProcessFocusedEvent() {
+		instance->ProcessFocusedEvent();
+	}
+
 	void Input::ProcessEvent(Key keyEvent) {
 		instance->ProcessEvent(keyEvent);
 	}
 
-	void Input::ProcessMouseMoveEvent(const Int2 & mouseWindowPosition)
-	{
+	void Input::ProcessMouseMoveEvent(const Int2 & mouseWindowPosition) {
 		instance->ProcessMouseMoveEvent(mouseWindowPosition);
 	}
 
-	void Input::ProcessPlatformEvent(uintptr_t wParam, intptr_t lParam)
-	{
+	void Input::ProcessPlatformEvent(uintptr_t wParam, intptr_t lParam) {
 		instance->ReadWinApiMouse(wParam, lParam);
 	}
 
@@ -315,19 +607,47 @@ namespace Netcode {
 		instance->SetAxisMap(std::move(axisMap));
 	}
 
-	void Input::CompleteFrame()
-	{
+	void Input::CompleteFrame() {
 		instance->CompleteFrame();
 	}
 
-	Int2 Input::GetMouseDelta()
-	{
+	Int2 Input::GetMouseDelta() {
 		return instance->GetMouseDelta();
 	}
 
-	Int2 Input::GetMousePosition()
-	{
+	Int2 Input::GetMousePosition() {
 		return instance->GetMousePosition();
+	}
+
+	KeyModifier operator&(KeyModifier lhs, KeyModifier rhs)
+	{
+		return static_cast<KeyModifier>(static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs));
+	}
+
+	KeyModifier operator|(KeyModifier lhs, KeyModifier rhs)
+	{
+		return static_cast<KeyModifier>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
+	}
+
+	bool KeyModifierContains(KeyModifier lhs, KeyModifier rhs)
+	{
+		// if rhs is 0, then this call always returns true, which can cause issues
+		UndefinedBehaviourAssertion(static_cast<uint32_t>(rhs) != 0);
+		return (lhs & rhs) == rhs;
+	}
+
+	KeyState operator&(KeyState lhs, KeyState rhs) {
+		return static_cast<KeyState>(static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs));
+	}
+
+	KeyState operator|(KeyState lhs, KeyState rhs) {
+		return static_cast<KeyState>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
+	}
+
+	bool KeyStateContains(KeyState lhs, KeyState rhs) {
+		// if rhs is 0, then this call always returns true, which can cause issues
+		UndefinedBehaviourAssertion(static_cast<uint32_t>(rhs) != 0);
+		return (lhs & rhs) == rhs;
 	}
 
 }

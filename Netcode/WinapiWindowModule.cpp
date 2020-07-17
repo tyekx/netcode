@@ -79,10 +79,17 @@ namespace Netcode::Module {
 		PostMessage(hwnd, UM_RENDER, 0, 0);
 	}
 
+	static KeyCode TranslateVirtualKey(LPARAM lParam) {
+		uint32_t scanCode = LOBYTE(HIWORD(lParam)) & (0x7f);
+		uint32_t keyCode = MapVirtualKey(scanCode, MAPVK_VSC_TO_VK_EX);
+
+		return static_cast<KeyCode>(keyCode);
+	}
+
 	LRESULT CALLBACK WindowProcess(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam) {
 		WinapiWindowModule * pThis = reinterpret_cast<WinapiWindowModule *>(GetWindowLongPtr(windowHandle, GWLP_USERDATA));
 
-		//Egg::Utility::DebugEvent(message, { WM_NCHITTEST, WM_MOUSEFIRST, WM_SETCURSOR, WM_MOUSEMOVE, WM_INPUT });
+		Netcode::Utility::DebugEvent(message, { WM_NCHITTEST, WM_MOUSEFIRST, WM_SETCURSOR, WM_MOUSEMOVE, WM_INPUT });
 
 		switch(message) {
 		case WM_DESTROY:
@@ -110,6 +117,23 @@ namespace Netcode::Module {
 					evt.displayMode = DisplayMode::BORDERLESS;
 					pThis->eventSystem->PostEvent(evt);
 				}
+			} else {
+				if(wParam == VK_MENU || wParam == VK_CONTROL) {
+					Netcode::Input::ProcessEvent(Key{ TranslateVirtualKey(lParam), KeyState::PRESSED });
+				}
+			}
+			break;
+
+		case WM_SYSCOMMAND:
+			// ALT should no longer access system menu
+			if(wParam == SC_KEYMENU) {
+				return LRESULT{};
+			}
+			break;
+
+		case WM_SYSKEYUP: 
+			if(wParam == VK_MENU || wParam == VK_CONTROL) {
+				Netcode::Input::ProcessEvent(Key{ TranslateVirtualKey(lParam), KeyState::RELEASED });
 			}
 			break;
 
@@ -156,12 +180,14 @@ namespace Netcode::Module {
 			Netcode::Input::ProcessPlatformEvent(wParam, lParam);
 			return 0;
 
-		case WM_KEYDOWN:
-			Netcode::Input::ProcessEvent(Key{ static_cast<KeyCode>(wParam), KeyState::ACTIVE });
+		case WM_KEYDOWN: {
+				Netcode::Input::ProcessEvent(Key{ TranslateVirtualKey(lParam), KeyState::PRESSED });
+			}
 			break;
 
-		case WM_KEYUP:
-			Netcode::Input::ProcessEvent(Key{ static_cast<KeyCode>(wParam), KeyState::INACTIVE });
+		case WM_KEYUP: {
+				Netcode::Input::ProcessEvent(Key{ TranslateVirtualKey(lParam), KeyState::RELEASED });
+			}
 			break;
 		}
 

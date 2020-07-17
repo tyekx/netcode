@@ -124,6 +124,8 @@ namespace UI {
 						ctrl->PropagateOnMouseMove(args);
 					}
 
+					Log::Debug("modifier: {0}", static_cast<int32_t>(modifier));
+
 					MouseEventArgs leaveArgs{ mousePosition };
 					PropagateOnMouseLeave(leaveArgs);
 				});
