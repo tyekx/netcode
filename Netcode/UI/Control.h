@@ -14,11 +14,12 @@ namespace Netcode::UI {
             INACTIVE, HOVERED, RAYCASTED
         };
 
-        Netcode::Float2 size;
-        Netcode::Float2 position;
-        Netcode::Float2 rotationOrigin;
-        Netcode::Float4 margin;
-        Netcode::Float4 padding;
+        Float2 size;
+        Float2 position;
+        Float2 screenPositionCache;
+        Float2 rotationOrigin;
+        Float4 margin;
+        Float4 padding;
         float rotationZ;
         float zIndex;
         SizingType zIndexSizing;
@@ -29,12 +30,14 @@ namespace Netcode::UI {
         HorizontalAnchor horizontalContentAlignment;
         VerticalAnchor verticalContentAlignment;
         physx::PxScene * lastScenePtr;
-        Netcode::PxPtr<physx::PxRigidDynamic> pxActor;
+        PxPtr<physx::PxRigidDynamic> pxActor;
         std::shared_ptr<Control> parent;
         std::vector<std::shared_ptr<Control>> children;
         AnimationContainer animations;
         HoverState hoverState;
         bool enabled;
+
+        Float2 CalculateScreenPosition();
 
         static HoverState DecayState(HoverState hState) {
             if(hState == HoverState::RAYCASTED) {
@@ -47,10 +50,10 @@ namespace Netcode::UI {
 
         static constexpr float MAX_DEPTH = 256.0f;
 
-        using AllocType = Netcode::Memory::StdAllocatorAdapter<void, Netcode::Memory::ObjectAllocator>;
+        using AllocType = Memory::StdAllocatorAdapter<void, Memory::ObjectAllocator>;
 
         template<typename ... U>
-        using EventType = Netcode::ManagedEvent<AllocType, U...>;
+        using EventType = ManagedEvent<AllocType, U...>;
 
         EventType<Control *, MouseEventArgs &> OnMouseEnter;
         EventType<Control *, MouseEventArgs &> OnMouseLeave;
@@ -58,6 +61,9 @@ namespace Netcode::UI {
         EventType<Control *, MouseEventArgs &> OnMouseClick;
         EventType<Control *, ScrollEventArgs &> OnMouseScroll;
         EventType<Control *, FocusChangedEventArgs &> OnFocused;
+        EventType<Control *, FocusChangedEventArgs &> OnBlurred;
+        EventType<Control *, KeyEventArgs &> OnKeyPressed;
+        EventType<Control *, CharInputEventArgs &> OnCharInput;
         EventType<Control *> OnEnabled;
         EventType<Control *> OnDisabled;
         EventType<Control *> OnParentChanged;
@@ -74,7 +80,7 @@ namespace Netcode::UI {
 
         void RotationOriginSizing(SizingType sz);
 
-        static Netcode::Float2 CalculateAnchorOffset(HorizontalAnchor xAnchor, VerticalAnchor yAnchor, const Netcode::Float2 & controlSize);
+        static Float2 CalculateAnchorOffset(HorizontalAnchor xAnchor, VerticalAnchor yAnchor, const Float2 & controlSize);
 
         void UpdateZIndices(float depth);
 
@@ -89,7 +95,7 @@ namespace Netcode::UI {
         /**
         * Invoked when the Sizing is derived and the layout is being updated
         */
-        virtual Netcode::Float2 DeriveSize();
+        virtual Float2 DeriveSize();
 
         /**
         * Internal event
@@ -132,10 +138,13 @@ namespace Netcode::UI {
         */
         Control(const AllocType & allocator);
 
-        void AssignActor(Netcode::PxPtr<physx::PxRigidDynamic> actor);
+        void AssignActor(PxPtr<physx::PxRigidDynamic> actor);
 
     public:
+        virtual void PropagateOnCharInput(CharInputEventArgs & args);
+
         virtual void PropagateOnFocused(FocusChangedEventArgs & args);
+        virtual void PropagateOnBlurred(FocusChangedEventArgs & args);
 
         /**
         * Upward post propagated event
@@ -167,7 +176,13 @@ namespace Netcode::UI {
         */
         virtual void PropagateOnMouseScroll(ScrollEventArgs & args);
 
-        Control(const AllocType & allocator, Netcode::PxPtr<physx::PxRigidDynamic> pxActor);
+        /**
+        * Upward post propagated event
+        * Invokes KeyPressed if args was handled previously
+        */
+        virtual void PropagateOnKeyPressed(KeyEventArgs & args);
+
+        Control(const AllocType & allocator, PxPtr<physx::PxRigidDynamic> pxActor);
 
         virtual ~Control() = default;
 
@@ -192,8 +207,16 @@ namespace Netcode::UI {
             animations.Add(std::move(anim));
         }
 
-        const AnimationContainer & Animations() const {
+        AnimationContainer & Animations() {
             return animations;
+        }
+
+        void ClearAnimations() {
+            animations.Clear();
+        }
+
+        bool Hovered() const {
+            return hoverState != HoverState::INACTIVE;
         }
 
         bool Enabled() const;
@@ -204,29 +227,29 @@ namespace Netcode::UI {
 
         void Sizing(SizingType sizingType);
 
-        Netcode::Float2 Size() const;
+        Float2 Size() const;
 
-        void Size(const Netcode::Float2 & sz);
+        void Size(const Float2 & sz);
 
-        Netcode::Float2 Position() const;
+        Float2 Position() const;
 
-        void Position(const Netcode::Float2 & pos);
+        void Position(const Float2 & pos);
 
-        Netcode::Float2 RotationOrigin() const;
+        Float2 RotationOrigin() const;
 
-        void RotationOrigin(const Netcode::Float2 & pos);
+        void RotationOrigin(const Float2 & pos);
 
         void RotationOrigin(HorizontalAnchor x, VerticalAnchor y);
 
-        Netcode::Float2 ScreenPosition() const;
+        Float2 ScreenPosition() const;
 
-        Netcode::Float4 Margin() const;
+        Float4 Margin() const;
 
-        void Margin(const Netcode::Float4 & leftTopRightBottom);
+        void Margin(const Float4 & leftTopRightBottom);
 
-        Netcode::Float4 Padding() const;
+        Float4 Padding() const;
 
-        void Padding(const Netcode::Float4 & leftTopRightBottom);
+        void Padding(const Float4 & leftTopRightBottom);
 
         void Parent(std::shared_ptr<Control> newParent);
 
@@ -244,9 +267,9 @@ namespace Netcode::UI {
 
         void ResetZIndex();
 
-        virtual Netcode::Float2 BoxSize() const;
+        virtual Float2 BoxSize() const;
 
-        virtual Netcode::Float2 CalculatedSize() const;
+        virtual Float2 CalculatedSize() const;
 
         virtual void UpdateZIndices();
 
@@ -258,7 +281,7 @@ namespace Netcode::UI {
 
         virtual void AddChild(std::shared_ptr<Control> child);
 
-        virtual void Render(Netcode::SpriteBatchPtr batch);
+        virtual void Render(SpriteBatchPtr batch);
 
     };
 

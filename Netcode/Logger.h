@@ -10,6 +10,7 @@ namespace Log {
 	void Debug(const char * message, int value);
 	void Debug(const char * message, const std::string& value);
 	void Debug(const char * message, int value, int value2);
+	void Debug(const char * message, float x, float y);
 
 	void Debug(int id, const std::string & name, const std::string & password, const std::string & salt, bool isBanned);
 	void Debug(int id, int ownerId, int maxPlayers, int interval, int status, const std::string & address, int createdAt, int closedAt);

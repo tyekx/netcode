@@ -100,7 +100,7 @@ namespace Netcode::Module {
 			{
 				int x = LOWORD(lParam);
 				int y = HIWORD(lParam);
-				Netcode::Input::ProcessMouseMoveEvent(Netcode::Int2{ x, y });
+				Input::ProcessMouseMoveEvent(Netcode::Int2{ x, y });
 			}
 			break;
 
@@ -119,7 +119,7 @@ namespace Netcode::Module {
 				}
 			} else {
 				if(wParam == VK_MENU || wParam == VK_CONTROL) {
-					Netcode::Input::ProcessEvent(Key{ TranslateVirtualKey(lParam), KeyState::PRESSED });
+					Input::ProcessKeyEvent(Key{ TranslateVirtualKey(lParam), KeyState::PRESSED });
 				}
 			}
 			break;
@@ -133,7 +133,7 @@ namespace Netcode::Module {
 
 		case WM_SYSKEYUP: 
 			if(wParam == VK_MENU || wParam == VK_CONTROL) {
-				Netcode::Input::ProcessEvent(Key{ TranslateVirtualKey(lParam), KeyState::RELEASED });
+				Input::ProcessKeyEvent(Key{ TranslateVirtualKey(lParam), KeyState::RELEASED });
 			}
 			break;
 
@@ -165,28 +165,34 @@ namespace Netcode::Module {
 
 		case WM_ACTIVATE:
 		case WM_SETFOCUS:
+			Input::ProcessFocusedEvent();
 			if(pThis) {
 				pThis->eventSystem->PostEvent(AppEvent{ EAppEventType::FOCUSED });
 			}
 			break;
 
 		case WM_KILLFOCUS:
+			Input::ProcessBlurredEvent();
 			if(pThis) {
 				pThis->eventSystem->PostEvent(AppEvent{ EAppEventType::BLURRED });
 			}
 			break;
 
 		case WM_INPUT:
-			Netcode::Input::ProcessPlatformEvent(wParam, lParam);
+			Input::ProcessPlatformEvent(wParam, lParam);
 			return 0;
 
 		case WM_KEYDOWN: {
-				Netcode::Input::ProcessEvent(Key{ TranslateVirtualKey(lParam), KeyState::PRESSED });
+				Input::ProcessKeyEvent(Key{ TranslateVirtualKey(lParam), KeyState::PRESSED });
 			}
 			break;
 
 		case WM_KEYUP: {
-				Netcode::Input::ProcessEvent(Key{ TranslateVirtualKey(lParam), KeyState::RELEASED });
+				Input::ProcessKeyEvent(Key{ TranslateVirtualKey(lParam), KeyState::RELEASED });
+			}
+			break;
+		case WM_CHAR: {
+				Input::ProcessCharEvent(static_cast<wchar_t>(wParam));
 			}
 			break;
 		}

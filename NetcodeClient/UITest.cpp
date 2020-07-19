@@ -34,32 +34,111 @@ std::shared_ptr<Netcode::UI::TextBox> LoginPage::CreateTextBox() {
 	textBox->Font(textFont);
 	textBox->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
 	textBox->HorizontalContentAlignment(ui::HorizontalAnchor::LEFT);
-	textBox->Text(L"testtex");
+	textBox->Padding(Netcode::Float4{ 10.0f, 0.0f, 10.0f, 0.0f });
+	textBox->Text(L"");
+	textBox->TextColor(COLOR_ACCENT);
+	textBox->SelectionBackgroundColor(COLOR_SECONDARY);
+	textBox->SelectionTextColor(COLOR_ACCENT);
+	textBox->CaretColor(COLOR_SECONDARY);
 
-	textBox->OnMouseEnter.Subscribe([](ui::Control * controlPointer, ui::MouseEventArgs & args) -> void {
-		auto * pThis = static_cast<ui::Panel *>(controlPointer);
+	textBox->OnKeyPressed.Subscribe([](ui::Control * ctrl, ui::KeyEventArgs & args) -> void {
+		ui::TextBox * pThis = static_cast<ui::TextBox *>(ctrl);
+
+		Netcode::Key key = args.Key();
+
+		pThis->HandleDefaultKeyStrokes(key, args.Modifier());
+	});
+
+	textBox->OnCharInput.Subscribe([](ui::Control * ctrl, ui::CharInputEventArgs & args) -> void {
+		wchar_t v = args.Value();
+		ui::TextBox * pThis = static_cast<ui::TextBox *>(ctrl);
+
+		if(v > 0x20) {
+			pThis->AppendChar(v);
+		}
+	});
+
+	textBox->OnBlurred.Subscribe([](ui::Control * ctrl, ui::FocusChangedEventArgs & args) -> void {
+		auto * pThis = static_cast<ui::Input *>(ctrl);
+		Netcode::Float4 targetColor = (pThis->Hovered()) ? COLOR_HOVER : COLOR_SECONDARY;
+		pThis->ClearAnimations();
 		pThis->AddAnimation(ui::MakeAnimation(
-			pThis,
+			static_cast<ui::Panel *>(pThis),
 			&ui::Panel::BackgroundColor,
 			&ui::Panel::BackgroundColor,
-			ui::Interpolator<Netcode::Vector4>{ pThis->BackgroundColor(), COLOR_HOVER },
+			ui::Interpolator<Netcode::Vector4>{ pThis->BackgroundColor(), targetColor },
+			ui::PlayOnceBehaviour{},
+			& Netcode::Function::EaseOutQuad,
+			0.7f
+		));
+
+		pThis->AddAnimation(ui::MakeAnimation(
+			static_cast<ui::Label *>(pThis),
+			&ui::Label::TextColor,
+			&ui::Label::TextColor,
+			ui::Interpolator<Netcode::Vector4>{ pThis->TextColor(), COLOR_ACCENT },
+			ui::PlayOnceBehaviour{},
+			& Netcode::Function::EaseOutQuad,
+			0.7f
+		));
+	});
+
+	textBox->OnFocused.Subscribe([](ui::Control * ctrl, ui::FocusChangedEventArgs & args) -> void {
+		auto * pThis = static_cast<ui::Input *>(ctrl);
+		pThis->ClearAnimations();
+		pThis->AddAnimation(ui::MakeAnimation(
+			static_cast<ui::Panel *>(pThis),
+			&ui::Panel::BackgroundColor,
+			&ui::Panel::BackgroundColor,
+			ui::Interpolator<Netcode::Vector4>{ pThis->BackgroundColor(), COLOR_ACCENT },
+			ui::PlayOnceBehaviour{},
+			& Netcode::Function::EaseOutQuad,
+			0.7f
+		));
+
+		pThis->AddAnimation(ui::MakeAnimation(
+			static_cast<ui::Label*>(pThis),
+			&ui::Label::TextColor,
+			&ui::Label::TextColor,
+			ui::Interpolator<Netcode::Vector4>{ pThis->TextColor(), COLOR_SECONDARY },
 			ui::PlayOnceBehaviour{},
 			&Netcode::Function::EaseOutQuad,
 			0.7f
 		));
 	});
 
+	textBox->OnMouseEnter.Subscribe([](ui::Control * controlPointer, ui::MouseEventArgs & args) -> void {
+		auto * pThis = static_cast<ui::Input *>(controlPointer);
+
+		if(!pThis->Focused()) {
+			pThis->ClearAnimations();
+			pThis->AddAnimation(ui::MakeAnimation(
+				static_cast<ui::Panel *>(pThis),
+				&ui::Panel::BackgroundColor,
+				&ui::Panel::BackgroundColor,
+				ui::Interpolator<Netcode::Vector4>{ pThis->BackgroundColor(), COLOR_HOVER },
+				ui::PlayOnceBehaviour{},
+				& Netcode::Function::EaseOutQuad,
+				0.7f
+			));
+		}
+	});
+
 	textBox->OnMouseLeave.Subscribe([](ui::Control * controlPointer, ui::MouseEventArgs & args) -> void {
-		auto * pThis = static_cast<ui::Panel *>(controlPointer);
-		pThis->AddAnimation(ui::MakeAnimation(
-			pThis,
-			&ui::Panel::BackgroundColor,
-			&ui::Panel::BackgroundColor,
-			ui::Interpolator<Netcode::Vector4>{ pThis->BackgroundColor(), COLOR_SECONDARY },
-			ui::PlayOnceBehaviour{},
-			&Netcode::Function::EaseOutQuad,
-			0.7f
-		));
+		auto * pThis = static_cast<ui::Input *>(controlPointer);
+
+		if(!pThis->Focused()) {
+			pThis->ClearAnimations();
+			pThis->AddAnimation(ui::MakeAnimation(
+				static_cast<ui::Panel *>(pThis),
+				&ui::Panel::BackgroundColor,
+				&ui::Panel::BackgroundColor,
+				ui::Interpolator<Netcode::Vector4>{ pThis->BackgroundColor(), COLOR_SECONDARY },
+				ui::PlayOnceBehaviour{},
+				& Netcode::Function::EaseOutQuad,
+				0.7f
+			));
+		}
 	});
 
 	return textBox;
@@ -69,7 +148,7 @@ void LoginPage::InitializeComponents() {
 	AssetManager * assets = Service::Get<AssetManager>();
 
 	textFont = assets->ImportFont(L"titillium18.spritefont");
-
+	/*
 	aenami = assets->ImportTexture2D(L"aenami_dreamer.jpg");
 	Netcode::ResourceViewsRef aenamiRv = assets->CreateTextureRV(aenami);
 	Netcode::UInt2 aenamiSize = Netcode::UInt2{ static_cast<uint32_t>(aenami->GetDesc().width), aenami->GetDesc().height };
@@ -77,19 +156,19 @@ void LoginPage::InitializeComponents() {
 	loadingIcon = assets->ImportTexture2D(L"loading_icon.png");
 	Netcode::ResourceViewsRef loadingIconRv = assets->CreateTextureRV(loadingIcon);
 	Netcode::UInt2 loadingIconSize = Netcode::UInt2{ static_cast<uint32_t>(loadingIcon->GetDesc().width), loadingIcon->GetDesc().height };
-
+	*/
 	std::shared_ptr<ui::Panel> rootPanel = std::make_shared<ui::Panel>(eventAllocator, CreatePhysxActor());
 	rootPanel->BackgroundColor(Netcode::Float4::One);
 	rootPanel->Sizing(ui::SizingType::INHERITED);
 	rootPanel->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
 	rootPanel->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
-	rootPanel->BackgroundImage(aenamiRv, aenamiSize);
+	//rootPanel->BackgroundImage(aenamiRv, aenamiSize);
 	rootPanel->BackgroundSize(Netcode::Float2{ 1920.0f, 1080.0f });
 	rootPanel->BackgroundHorizontalAlignment(ui::HorizontalAnchor::CENTER);
 	rootPanel->BackgroundVerticalAlignment(ui::VerticalAnchor::MIDDLE);
 
 	std::shared_ptr<ui::Panel> loadingIconPanel = std::make_shared<ui::Panel>(eventAllocator, CreatePhysxActor());
-	loadingIconPanel->BackgroundImage(loadingIconRv, loadingIconSize);
+	//loadingIconPanel->BackgroundImage(loadingIconRv, loadingIconSize);
 	loadingIconPanel->Sizing(ui::SizingType::FIXED);
 	loadingIconPanel->BackgroundColor(Netcode::Float4::One);
 	loadingIconPanel->RotationOrigin(ui::HorizontalAnchor::CENTER, ui::VerticalAnchor::MIDDLE);

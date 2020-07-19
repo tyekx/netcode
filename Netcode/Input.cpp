@@ -175,6 +175,7 @@ namespace Netcode {
 
 		EventType<int, KeyModifier> OnScroll;
 		EventType<Int2, KeyModifier> OnMouseMove;
+		EventType<wchar_t> OnCharInput;
 
 	private:
 
@@ -214,7 +215,7 @@ namespace Netcode {
 			if(keyEvt.IsKeyboard()) {
 				OnKeyInput.Invoke(keyEvt, modifiers);
 
-				if(keyEvt.IsRising() || keyEvt.GetState() == KeyState::PULSE) {
+				if(keyEvt.IsRising() || keyEvt.IsPulse()) {
 					OnKeyPressed.Invoke(keyEvt, modifiers);
 				}
 
@@ -336,6 +337,7 @@ namespace Netcode {
 			OnKeyReleased{ StdAlloc{ allocator } },
 			OnScroll{ StdAlloc{ allocator } },
 			OnMouseMove{ StdAlloc{ allocator } },
+			OnCharInput{ StdAlloc{ allocator } },
 			mouseDelta{ Int2::Zero },
 			mouseWindowPosition{ Int2::Zero },
 			modifiers{ KeyModifier::NONE },
@@ -353,7 +355,11 @@ namespace Netcode {
 			ReflectKeyboardState();
 		}
 
-		void ProcessEvent(Key keyEvent) {
+		void ProcessCharEvent(wchar_t value) {
+			OnCharInput.Invoke(value);
+		}
+
+		void ProcessKeyEvent(Key keyEvent) {
 			KeyCode keyCode = keyEvent.GetCode();
 			Key propagatedKeyEvent{ keyEvent.GetCode(), KeyState::UNDEFINED };
 			Key currentState = keys[keyCode];
@@ -389,7 +395,7 @@ namespace Netcode {
 
 			UpdateModifiers();
 
-			InputEvent(keyEvent);
+			InputEvent(propagatedKeyEvent);
 		}
 
 		void ProcessMouseScrollEvent(int delta) {
@@ -487,20 +493,20 @@ namespace Netcode {
 
 				if(rawMouse->ulButtons != 0) {
 #define IF_PRESENT(numValue) if((rawMouse->ulButtons & numValue) == numValue)
-					IF_PRESENT(RI_MOUSE_LEFT_BUTTON_DOWN) ProcessEvent(Key{ KeyCode::MOUSE_LEFT, KeyState::PRESSED });
-					IF_PRESENT(RI_MOUSE_LEFT_BUTTON_UP) ProcessEvent(Key{ KeyCode::MOUSE_LEFT, KeyState::RELEASED });
+					IF_PRESENT(RI_MOUSE_LEFT_BUTTON_DOWN) ProcessKeyEvent(Key{ KeyCode::MOUSE_LEFT, KeyState::PRESSED });
+					IF_PRESENT(RI_MOUSE_LEFT_BUTTON_UP) ProcessKeyEvent(Key{ KeyCode::MOUSE_LEFT, KeyState::RELEASED });
 
-					IF_PRESENT(RI_MOUSE_RIGHT_BUTTON_DOWN) ProcessEvent(Key{ KeyCode::MOUSE_RIGHT, KeyState::PRESSED });
-					IF_PRESENT(RI_MOUSE_RIGHT_BUTTON_UP) ProcessEvent(Key{ KeyCode::MOUSE_RIGHT, KeyState::RELEASED });
+					IF_PRESENT(RI_MOUSE_RIGHT_BUTTON_DOWN) ProcessKeyEvent(Key{ KeyCode::MOUSE_RIGHT, KeyState::PRESSED });
+					IF_PRESENT(RI_MOUSE_RIGHT_BUTTON_UP) ProcessKeyEvent(Key{ KeyCode::MOUSE_RIGHT, KeyState::RELEASED });
 
-					IF_PRESENT(RI_MOUSE_MIDDLE_BUTTON_DOWN) ProcessEvent(Key{ KeyCode::MOUSE_MIDDLE, KeyState::PRESSED });
-					IF_PRESENT(RI_MOUSE_MIDDLE_BUTTON_UP) ProcessEvent(Key{ KeyCode::MOUSE_MIDDLE, KeyState::RELEASED });
+					IF_PRESENT(RI_MOUSE_MIDDLE_BUTTON_DOWN) ProcessKeyEvent(Key{ KeyCode::MOUSE_MIDDLE, KeyState::PRESSED });
+					IF_PRESENT(RI_MOUSE_MIDDLE_BUTTON_UP) ProcessKeyEvent(Key{ KeyCode::MOUSE_MIDDLE, KeyState::RELEASED });
 
-					IF_PRESENT(RI_MOUSE_BUTTON_4_DOWN) ProcessEvent(Key{ KeyCode::MOUSE4, KeyState::PRESSED });
-					IF_PRESENT(RI_MOUSE_BUTTON_4_UP) ProcessEvent(Key{ KeyCode::MOUSE4, KeyState::RELEASED });
+					IF_PRESENT(RI_MOUSE_BUTTON_4_DOWN) ProcessKeyEvent(Key{ KeyCode::MOUSE4, KeyState::PRESSED });
+					IF_PRESENT(RI_MOUSE_BUTTON_4_UP) ProcessKeyEvent(Key{ KeyCode::MOUSE4, KeyState::RELEASED });
 
-					IF_PRESENT(RI_MOUSE_BUTTON_5_DOWN) ProcessEvent(Key{ KeyCode::MOUSE5, KeyState::PRESSED });
-					IF_PRESENT(RI_MOUSE_BUTTON_5_UP) ProcessEvent(Key{ KeyCode::MOUSE5, KeyState::RELEASED });
+					IF_PRESENT(RI_MOUSE_BUTTON_5_DOWN) ProcessKeyEvent(Key{ KeyCode::MOUSE5, KeyState::PRESSED });
+					IF_PRESENT(RI_MOUSE_BUTTON_5_UP) ProcessKeyEvent(Key{ KeyCode::MOUSE5, KeyState::RELEASED });
 
 					IF_PRESENT(RI_MOUSE_WHEEL) ProcessMouseScrollEvent(static_cast<int16_t>(rawMouse->usButtonData));
 #undef IF_PRESENT
@@ -527,6 +533,7 @@ namespace Netcode {
 	Input::EventType<Key, KeyModifier> * Input::OnKeyReleased{ nullptr };
 	Input::EventType<int, KeyModifier> * Input::OnScroll{ nullptr };
 	Input::EventType<Int2, KeyModifier> * Input::OnMouseMove{ nullptr };
+	Input::EventType<wchar_t> * Input::OnCharInput{ nullptr };
 
 	bool Input::InputIsCapital() {
 		return instance->InputIsCapital();
@@ -564,8 +571,12 @@ namespace Netcode {
 		instance->ProcessFocusedEvent();
 	}
 
-	void Input::ProcessEvent(Key keyEvent) {
-		instance->ProcessEvent(keyEvent);
+	void Input::ProcessKeyEvent(Key keyEvent) {
+		instance->ProcessKeyEvent(keyEvent);
+	}
+
+	void Input::ProcessCharEvent(wchar_t value) {
+		instance->ProcessCharEvent(value);
 	}
 
 	void Input::ProcessMouseMoveEvent(const Int2 & mouseWindowPosition) {
@@ -590,6 +601,7 @@ namespace Netcode {
 
 			OnScroll = &instance->OnScroll;
 			OnMouseMove = &instance->OnMouseMove;
+			OnCharInput = &instance->OnCharInput;
 
 			instance->Initialize();
 		}

@@ -7,6 +7,14 @@
 
 namespace Netcode::Graphics::DX12 {
 
+	static bool IsRectZero(const Rect & r) {
+		return r.left == 0 && r.right == 0 && r.top == 0 && r.bottom == 0;
+	}
+
+	static bool RectMismatch(const Netcode::Rect & lhs, const Netcode::Rect & rhs) {
+		return lhs.left != rhs.left || lhs.right != rhs.right || lhs.top != rhs.top || lhs.bottom != rhs.bottom;
+	}
+
 	struct ControlDisplayData {
 		float borderRadius;
 		float borderWidth;
@@ -100,7 +108,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 
 		mInBeginEndPair = true;
 		firstDraw = true;
-		recordScissorRect.Clear();
+		recordScissorRect = Rect{ 0,0,0,0 };
 	}
 
 	void SpriteBatch::End()
@@ -186,7 +194,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 		Vector2 batchTextureSize = {};
 		BorderDesc batchBorderDesc;
 		SpriteDesc batchSpriteDesc;
-		SpriteScissorRect batchSpr = Rect{};
+		Rect batchSpr = Rect{};
 		uint32_t batchStart = 0;
 
 		for(uint32_t pos = 0; pos < mSpriteQueueCount; pos++)
@@ -194,7 +202,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 			const SpriteInfo * sprite = mSortedSprites[pos];
 
 			ResourceViewsRef texture = sprite->spriteDesc.texture;
-			SpriteScissorRect spr = sprite->scissorRect;
+			Rect spr = sprite->scissorRect;
 			BorderDesc borderDesc = sprite->borderDesc;
 			SpriteDesc spriteDesc = sprite->spriteDesc;
 
@@ -211,7 +219,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 				default:break;
 			}
 
-			bool scDiff = spr != batchSpr;
+			bool scDiff = RectMismatch(spr, batchSpr);
 			bool borderDiff = batchBorderDesc != borderDesc;
 			bool spriteDiff = batchSpriteDesc != spriteDesc;
 			bool isNotTexture = sprite->spriteDesc.type != BackgroundType::TEXTURE;
@@ -298,21 +306,18 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 
 			if(firstDraw) {
 				firstDraw = false;
-				currentlyBoundScissorRect.Clear();
+				currentlyBoundScissorRect = Rect{ 0,0,0,0 };
 				renderContext->SetScissorRect();
 			}
 
-			if(currentlyBoundScissorRect != sprites[0]->scissorRect) {
+			if(RectMismatch(currentlyBoundScissorRect, sprites[0]->scissorRect)) {
 				currentlyBoundScissorRect = sprites[0]->scissorRect;
 
-				if(currentlyBoundScissorRect == 0) {
+				if(IsRectZero(currentlyBoundScissorRect)) {
 					renderContext->SetScissorRect();
 				} else {
-					Rect r = currentlyBoundScissorRect.GetRect();
-					renderContext->SetScissorRect(static_cast<uint32_t>(r.left),
-						static_cast<uint32_t>(r.right),
-						static_cast<uint32_t>(r.top),
-						static_cast<uint32_t>(r.bottom));
+					Rect r = currentlyBoundScissorRect;
+					renderContext->SetScissorRect(r.left, r.right, r.top, r.bottom);
 				}
 			}
 
@@ -604,7 +609,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 	}
 
 	void SpriteBatch::SetScissorRect() {
-		recordScissorRect.Clear();
+		recordScissorRect = Rect{ 0, 0, 0, 0 };
 	}
 
 }

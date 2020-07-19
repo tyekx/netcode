@@ -231,7 +231,7 @@ namespace Netcode::Graphics::DX12 {
 		};
 	}
 
-	void GraphicsContext::SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
+	void GraphicsContext::SetScissorRect(int32_t left, int32_t right, int32_t top, int32_t bottom)
 	{
 		D3D12_RECT scissorRect;
 		scissorRect.left = left;
@@ -244,7 +244,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void GraphicsContext::SetScissorRect(uint32_t width, uint32_t height)
 	{
-		SetScissorRect(0, width, 0, height);
+		SetScissorRect(0, static_cast<int32_t>(width), 0, static_cast<int32_t>(height));
 	}
 
 	void GraphicsContext::SetScissorRect()
@@ -544,7 +544,7 @@ namespace Netcode::Graphics::DX12 {
 		return Float4::Zero;
 	}
 
-	void ComputeContext::SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom)
+	void ComputeContext::SetScissorRect(int32_t left, int32_t right, int32_t top, int32_t bottom)
 	{
 		Netcode::NotImplementedAssertion("");
 	}

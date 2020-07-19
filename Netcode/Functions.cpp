@@ -27,6 +27,10 @@ namespace Netcode::Function {
 			return 1.0f;
 		}
 	}
+	float InvHalfStep(float x)
+	{
+		return 1.0f - HalfStep(x);
+	}
 	float ConstantZero(float x) {
 		return 0.0f;
 	}

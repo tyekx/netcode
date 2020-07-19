@@ -99,7 +99,7 @@ namespace Netcode::UI {
             const Vector2 screenPos = ScreenPosition();
             const Vector2 textPos = TextPosition();
 
-            font->DrawString(batch, text, screenPos + textPos, TextColor(), RotationOrigin(), RotationZ(), ZIndex());
+            font->DrawString(batch, text, screenPos + textPos, TextColor(), RotationOrigin(), RotationZ(), ZIndex() + 0.1f);
         }
     }
 

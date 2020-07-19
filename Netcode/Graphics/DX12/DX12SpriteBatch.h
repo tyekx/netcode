@@ -35,71 +35,6 @@ namespace Netcode::Graphics::DX12
         SpriteEffects_FlipBoth = SpriteEffects_FlipHorizontally | SpriteEffects_FlipVertically,
     };
 
-    class RectHash {
-        uint64_t value;
-    public:
-        RectHash() = default;
-
-        RectHash(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) {
-            constexpr uint64_t mask = 0xFFFF;
-
-            value = (static_cast<uint64_t>(left) & mask) << 48 |
-                (static_cast<uint64_t>(right) & mask) << 32 |
-                (static_cast<uint64_t>(top) & mask) << 16 |
-                (static_cast<uint64_t>(bottom) & mask);
-        }
-
-        RectHash(const Rect & rect) : RectHash(rect.left, rect.right, rect.top, rect.bottom) {
-
-        }
-
-        bool operator==(const RectHash & rhs) const {
-            return value == rhs.value;
-        }
-
-        bool operator!=(const RectHash & rhs) const {
-            return !operator==(rhs);
-        }
-
-        bool operator==(uint64_t v) const {
-            return value == v;
-        }
-    };
-
-    class SpriteScissorRect {
-        RectHash hash;
-        Rect rect;
-    public:
-        SpriteScissorRect() = default;
-
-        SpriteScissorRect(const Rect & r) :hash{ r }, rect{ r } {}
-
-        void Clear() {
-            rect = Rect{ 0,0,0,0 };
-        }
-
-        void SetRect(const Rect & r) {
-            rect = r;
-            hash = RectHash(r);
-        }
-
-        Rect GetRect() const {
-            return rect;
-        }
-
-        bool operator!=(const SpriteScissorRect & rhs) const {
-            return hash != rhs.hash;
-        }
-
-        bool operator==(const SpriteScissorRect & rhs) const {
-            return hash == rhs.hash;
-        }
-
-        bool operator==(uint64_t value) const {
-            return hash == value;
-        }
-    };
-
     class SpriteBatch : public Netcode::SpriteBatch {
         static GpuResourceWeakRef indexBuffer;
     public:
@@ -111,7 +46,7 @@ namespace Netcode::Graphics::DX12
             Float4 destination;
             Float4 originRotationDepth;
             Vector2 textureSize;
-            SpriteScissorRect scissorRect;
+            Rect scissorRect;
             unsigned int flags;
 
             // Combine values from the public SpriteEffects enum with these internal-only flags.
@@ -130,8 +65,8 @@ namespace Netcode::Graphics::DX12
         RootSignatureRef rootSignature;
         PipelineStateRef pipelineState;
         
-        SpriteScissorRect recordScissorRect;
-        SpriteScissorRect currentlyBoundScissorRect;
+        Rect recordScissorRect;
+        Rect currentlyBoundScissorRect;
 
         std::unique_ptr<PCT_Vertex[]> vertexData;
         std::unique_ptr<SpriteInfo[]> mSpriteQueue;

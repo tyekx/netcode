@@ -5,11 +5,12 @@ namespace Netcode::UI {
 
 
     Control::Control(const AllocType & allocator) : std::enable_shared_from_this<Control>{},
-        size{ Netcode::Float2::Zero },
-        position{ Netcode::Float2::Zero },
-        rotationOrigin{ Netcode::Float2::Zero },
-        margin{ Netcode::Float4::Zero },
-        padding{ Netcode::Float4::Zero },
+        size{ Float2::Zero },
+        position{ Float2::Zero },
+        screenPositionCache{ Float2::Zero },
+        rotationOrigin{ Float2::Zero },
+        margin{ Float4::Zero },
+        padding{ Float4::Zero },
         rotationZ{ 0.0f },
         zIndex{ 0.0f },
         zIndexSizing{ SizingType::DERIVED },
@@ -32,6 +33,9 @@ namespace Netcode::UI {
         OnMouseClick{ allocator },
         OnMouseScroll{ allocator },
         OnFocused{ allocator },
+        OnBlurred{ allocator },
+        OnKeyPressed{ allocator },
+        OnCharInput{ allocator },
         OnEnabled{ allocator },
         OnDisabled{ allocator },
         OnParentChanged{ allocator },
@@ -40,19 +44,33 @@ namespace Netcode::UI {
 
     }
 
-    void Control::AssignActor(Netcode::PxPtr<physx::PxRigidDynamic> actor) {
+    void Control::AssignActor(PxPtr<physx::PxRigidDynamic> actor) {
         physx::PxScene * scenePtr = actor->getScene();
 
-        Netcode::UndefinedBehaviourAssertion(scenePtr != nullptr);
-        Netcode::UndefinedBehaviourAssertion(pxActor == nullptr);
+        UndefinedBehaviourAssertion(scenePtr != nullptr);
+        UndefinedBehaviourAssertion(pxActor == nullptr);
 
         actor->userData = this;
 
         pxActor = std::move(actor);
     }
 
-    Control::Control(const AllocType & allocator, Netcode::PxPtr<physx::PxRigidDynamic> pxActor) : Control{ allocator } {
-        AssignActor(std::move(pxActor));
+    void Control::PropagateOnKeyPressed(KeyEventArgs & args)
+    {
+        if(args.Handled()) {
+            args.HandledBy(this);
+            OnKeyPressed.Invoke(this, args);
+        } else {
+            if(parent != nullptr) {
+                parent->PropagateOnKeyPressed(args);
+            }
+        }
+    }
+
+    Control::Control(const AllocType & allocator, PxPtr<physx::PxRigidDynamic> pxActor) : Control{ allocator } {
+        if(pxActor != nullptr) {
+            AssignActor(std::move(pxActor));
+        }
     }
 
     HorizontalAnchor Control::HorizontalRotationOrigin() const {
@@ -71,6 +89,23 @@ namespace Netcode::UI {
         verticalRotationOrigin = yAnchor;
     }
 
+    Float2 Control::CalculateScreenPosition() {
+        Vector2 parentScreenPos = Float2::Zero;
+        Vector2 anchorOffs = Float2::Zero;
+        Vector2 anchorDiff = Float2::Zero;
+        Vector2 parentRotationOrigin = Float2::Zero;
+
+        if(parent != nullptr) {
+            parentRotationOrigin = parent->RotationOrigin();
+            parentScreenPos = parent->ScreenPosition();
+            parentScreenPos -= parentRotationOrigin;
+            anchorOffs = CalculateAnchorOffset(parent->HorizontalContentAlignment(), parent->VerticalContentAlignment(), parent->Size());
+            anchorDiff = CalculateAnchorOffset(parent->HorizontalContentAlignment(), parent->VerticalContentAlignment(), BoxSize());
+        }
+
+        return parentScreenPos + anchorOffs - anchorDiff + Position() + RotationOrigin();
+    }
+
     SizingType Control::ZIndexSizing() const {
         return zIndexSizing;
     }
@@ -87,8 +122,8 @@ namespace Netcode::UI {
         rotationOriginSizing = sz;
     }
 
-    Netcode::Float2 Control::CalculateAnchorOffset(HorizontalAnchor xAnchor, VerticalAnchor yAnchor, const Netcode::Float2 & controlSize) {
-        Netcode::Float2 anchorOffset;
+    Float2 Control::CalculateAnchorOffset(HorizontalAnchor xAnchor, VerticalAnchor yAnchor, const Float2 & controlSize) {
+        Float2 anchorOffset;
 
         switch(xAnchor) {
             case HorizontalAnchor::LEFT:
@@ -131,24 +166,28 @@ namespace Netcode::UI {
     }
 
     void Control::UpdateActorPose() {
-        Netcode::Vector2 sPos = ScreenPosition();
-        Netcode::Vector2 halfSize = Netcode::Vector2{ Size() } / 2.0f;
+        if(pxActor != nullptr) {
+            Vector2 sPos = ScreenPosition();
+            Vector2 halfSize = Vector2{ Size() } / 2.0f;
 
-        Netcode::Float2 sp = sPos + halfSize;
+            Float2 sp = sPos + halfSize;
 
-        pxActor->setGlobalPose(physx::PxTransform{ sp.x, sp.y, ZIndex(), physx::PxQuat{ RotationZ(), physx::PxVec3{ 0.0f, 0.0f, 1.0f } } });
+            pxActor->setGlobalPose(physx::PxTransform{ sp.x, sp.y, ZIndex(), physx::PxQuat{ RotationZ(), physx::PxVec3{ 0.0f, 0.0f, 1.0f } } });
+        }
     }
 
     void Control::UpdateActorShape() {
-        physx::PxShape * shape{ nullptr };
-        physx::PxU32 returnedShapes = pxActor->getShapes(&shape, 1, 0);
+        if(pxActor != nullptr) {
+            physx::PxShape * shape{ nullptr };
+            physx::PxU32 returnedShapes = pxActor->getShapes(&shape, 1, 0);
 
-        if(returnedShapes == 1) {
-            Netcode::Float2 halfSize = Netcode::Vector2{ Size() } / 2.0f;
+            if(returnedShapes == 1) {
+                Float2 halfSize = Vector2{ Size() } / 2.0f;
 
-            shape->setGeometry(physx::PxBoxGeometry{ halfSize.x, halfSize.y, 0.25f });
+                shape->setGeometry(physx::PxBoxGeometry{ halfSize.x, halfSize.y, 0.25f });
 
-            UpdateActorPose();
+                UpdateActorPose();
+            }
         }
     }
 
@@ -216,50 +255,50 @@ namespace Netcode::UI {
         CheckSizingConsistency();
     }
 
-    Netcode::Float2 Control::Size() const {
+    Float2 Control::Size() const {
         return size;
     }
 
-    void Control::Size(const Netcode::Float2 & sz) {
+    void Control::Size(const Float2 & sz) {
         size = sz;
         UpdateActorShape();
         PropagateOnSizeChanged();
     }
 
-    Netcode::Float2 Control::BoxSize() const
+    Float2 Control::BoxSize() const
     {
-        Netcode::Float2 cSize = CalculatedSize();
-        Netcode::Float4 m = Margin();
+        Float2 cSize = CalculatedSize();
+        Float4 m = Margin();
 
-        return Netcode::Float2{ cSize.x + m.x + m.z, cSize.y + m.y + m.w };
+        return Float2{ cSize.x + m.x + m.z, cSize.y + m.y + m.w };
     }
 
-    Netcode::Float2 Control::CalculatedSize() const
+    Float2 Control::CalculatedSize() const
     {
-        Netcode::Vector2 s = Size();
-        Netcode::Float4 p = Padding();
+        Vector2 s = Size();
+        Float4 p = Padding();
 
-        Netcode::Vector2 horizontal = Netcode::Float2{ p.x + p.z, 0.0f };
-        Netcode::Vector2 vertical = Netcode::Float2{ 0.0f, p.y + p.w };
+        Vector2 horizontal = Float2{ p.x + p.z, 0.0f };
+        Vector2 vertical = Float2{ 0.0f, p.y + p.w };
 
         return s + horizontal + vertical;
     }
 
-    Netcode::Float2 Control::Position() const {
+    Float2 Control::Position() const {
         return position;
     }
 
-    void Control::Position(const Netcode::Float2 & pos) {
+    void Control::Position(const Float2 & pos) {
         position = pos;
         PropagateOnPositionChanged();
     }
 
-    Netcode::Float2 Control::RotationOrigin() const
+    Float2 Control::RotationOrigin() const
     {
         return rotationOrigin;
     }
 
-    void Control::RotationOrigin(const Netcode::Float2 & pos) {
+    void Control::RotationOrigin(const Float2 & pos) {
         RotationOriginSizing(SizingType::FIXED);
         rotationOrigin = pos;
     }
@@ -275,77 +314,26 @@ namespace Netcode::UI {
     /*
     for now, every Control rotates on its own, not affecting its children.
     */
-    Netcode::Float2 Control::ScreenPosition() const
+    Float2 Control::ScreenPosition() const
     {
-        Netcode::Vector2 parentScreenPos = Netcode::Float2::Zero;
-        Netcode::Vector2 anchorOffs = Netcode::Float2::Zero;
-        Netcode::Vector2 anchorDiff = Netcode::Float2::Zero;
-        Netcode::Vector2 parentRotationOrigin = Netcode::Float2::Zero;
-
-        if(parent != nullptr) {
-            parentRotationOrigin = parent->RotationOrigin();
-            parentScreenPos = parent->ScreenPosition();
-            parentScreenPos -= parentRotationOrigin;
-            anchorOffs = CalculateAnchorOffset(parent->HorizontalContentAlignment(), parent->VerticalContentAlignment(), parent->Size());
-            anchorDiff = CalculateAnchorOffset(parent->HorizontalContentAlignment(), parent->VerticalContentAlignment(), BoxSize());
-        }
-
-        return parentScreenPos + anchorOffs - anchorDiff + Position() + RotationOrigin();
+        return screenPositionCache;
     }
 
-    Netcode::Float4 Control::Margin() const {
+    Float4 Control::Margin() const {
         return margin;
     }
 
-    void Control::Margin(const Netcode::Float4 & leftTopRightBottom) {
+    void Control::Margin(const Float4 & leftTopRightBottom) {
         margin = leftTopRightBottom;
     }
 
-    Netcode::Float4 Control::Padding() const {
+    Float4 Control::Padding() const {
         return padding;
     }
 
-    void Control::Padding(const Netcode::Float4 & leftTopRightBottom) {
+    void Control::Padding(const Float4 & leftTopRightBottom) {
         padding = leftTopRightBottom;
     }
-
-    /*
-    void Control::UpdateSize(const Netcode::Float2 & screenSize)
-    {
-        for(auto & child : children) {
-            child->UpdateSize(screenSize);
-        }
-
-        if(Sizing() == SizingType::WINDOW) {
-            Size(screenSize);
-        }
-
-        if(Sizing() == SizingType::INHERITED) {
-            auto parentControl = Parent();
-            if(parentControl != nullptr) {
-                Size(parentControl->Size());
-            } else {
-                Size(Netcode::Float2::Zero);
-            }
-        }
-
-        if(Sizing() == SizingType::DERIVED) {
-            Netcode::Float2 maxSize;
-            for(auto & child : children) {
-                const Netcode::Float2 size = child->Size();
-
-                if(maxSize.x < size.x) {
-                    maxSize.x = size.x;
-                }
-
-                if(maxSize.y < size.y) {
-                    maxSize.y = size.y;
-                }
-            }
-
-            Size(maxSize);
-        }
-    }*/
 
     void Control::UpdateLayout() {
         /**
@@ -354,7 +342,7 @@ namespace Netcode::UI {
         */
 
         if(Sizing() == SizingType::INHERITED) {
-            Netcode::UndefinedBehaviourAssertion(parent != nullptr);
+            UndefinedBehaviourAssertion(parent != nullptr);
 
             size = parent->Size();
 
@@ -439,8 +427,21 @@ namespace Netcode::UI {
         }
     }
 
+    void Control::PropagateOnCharInput(CharInputEventArgs & args)
+    {
+        if(args.Handled()) {
+            args.HandledBy(this);
+            OnCharInput.Invoke(this, args);
+        } else {
+            if(parent != nullptr) {
+                parent->PropagateOnCharInput(args);
+            }
+        }
+    }
+
     void Control::PropagateOnFocused(FocusChangedEventArgs & args) {
         if(args.Handled()) {
+            args.HandledBy(this);
             OnFocused.Invoke(this, args);
         } else {
             if(parent != nullptr) {
@@ -449,9 +450,21 @@ namespace Netcode::UI {
         }
     }
 
-    Netcode::Float2 Control::DeriveSize()
+    void Control::PropagateOnBlurred(FocusChangedEventArgs & args)
     {
-        Netcode::Vector2 maxSize = Netcode::Float2::Zero;
+        if(args.Handled()) {
+            args.HandledBy(this);
+            OnBlurred.Invoke(this, args);
+        } else {
+            if(parent != nullptr) {
+                parent->PropagateOnBlurred(args);
+            }
+        }
+    }
+
+    Float2 Control::DeriveSize()
+    {
+        Vector2 maxSize = Float2::Zero;
 
         for(auto & child : children) {
             maxSize = maxSize.Max(child->BoxSize());
@@ -471,12 +484,12 @@ namespace Netcode::UI {
     void Control::CheckSizingConsistency() {
         if(parent != nullptr) {
             if(parent->Sizing() == SizingType::DERIVED && Sizing() == SizingType::INHERITED) {
-                Netcode::UndefinedBehaviourAssertion(false);
+                UndefinedBehaviourAssertion(false);
             }
         }
     }
 
-    void Control::Render(Netcode::SpriteBatchPtr batch) {
+    void Control::Render(SpriteBatchPtr batch) {
         for(auto & child : children) {
             child->Render(batch);
         }
@@ -529,6 +542,8 @@ namespace Netcode::UI {
     }
 
     void Control::PropagateOnPositionChanged() {
+        screenPositionCache = CalculateScreenPosition();
+
         UpdateActorPose();
 
         for(auto & child : children) {
@@ -540,6 +555,7 @@ namespace Netcode::UI {
 
     void Control::PropagateOnMouseEnter(MouseEventArgs & args) {
         if(args.Handled()) {
+            args.HandledBy(this);
             OnMouseEnter.Invoke(this, args);
         } else {
             if(parent != nullptr) {
@@ -550,13 +566,14 @@ namespace Netcode::UI {
 
     void Control::PropagateOnMouseMove(MouseEventArgs & args) {
         if(hoverState == HoverState::INACTIVE) {
-            MouseEventArgs copyArgs{ args.Position() };
+            MouseEventArgs copyArgs{ args.Position(), args.Modifier() };
             PropagateOnMouseEnter(copyArgs);
         }
 
         hoverState = HoverState::RAYCASTED;
 
         if(args.Handled()) {
+            args.HandledBy(this);
             OnMouseMove.Invoke(this, args);
         } else {
             if(parent != nullptr) {
@@ -580,17 +597,18 @@ namespace Netcode::UI {
     }
 
     void Control::PropagateOnClick(MouseEventArgs & args) {
-        if(args.Handled()) {
+        if(args.Handled() || parent == nullptr) {
+            args.Handled(true);
+            args.HandledBy(this);
             OnMouseClick.Invoke(this, args);
         } else {
-            if(parent != nullptr) {
-                parent->PropagateOnClick(args);
-            }
+            parent->PropagateOnClick(args);
         }
     }
 
     void Control::PropagateOnMouseScroll(ScrollEventArgs & args) {
         if(args.Handled()) {
+            args.HandledBy(this);
             OnMouseScroll.Invoke(this, args);
         } else {
             if(parent != nullptr) {

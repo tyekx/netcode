@@ -312,7 +312,7 @@ namespace Netcode::Graphics::DX12 {
 
 		if(character)
 		{
-			defaultGlyph = FindGlyph(character);
+			defaultGlyph = DX12SpriteFont::FindGlyph(character);
 		}
 	}
 

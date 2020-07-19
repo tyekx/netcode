@@ -46,6 +46,11 @@ namespace Log {
 		spdlog::debug(message, value, value2);
 	}
 
+	void Debug(const char * message, float x, float y)
+	{
+		spdlog::debug(message, x, y);
+	}
+
 	void Debug(int id, const std::string & name, const std::string & password, const std::string & salt, bool isBanned)
 	{
 		spdlog::debug("[Db][users] id: {0}, name: {1}, password: {2}, salt: {3}, is_banned: {4}", id, name, password, salt, isBanned);

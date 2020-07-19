@@ -390,6 +390,8 @@ namespace Netcode {
 		*/
 		static EventType<Int2, KeyModifier> * OnMouseMove;
 
+		static EventType<wchar_t> * OnCharInput;
+
 		static bool InputIsCapital();
 
 		static bool IsAlphabetic(KeyCode keyCode);
@@ -408,7 +410,9 @@ namespace Netcode {
 
 		static void ProcessFocusedEvent();
 
-		static void ProcessEvent(Key keyEvent);
+		static void ProcessKeyEvent(Key keyEvent);
+
+		static void ProcessCharEvent(wchar_t value);
 
 		static void ProcessMouseMoveEvent(const Int2 & mouseWindowPosition);
 

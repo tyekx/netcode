@@ -17,6 +17,10 @@ namespace Netcode::UI {
     public:
         Animation(AnimationTimeFunc timeFunc, float duration) : timeFunc{ timeFunc }, duration{ duration }, time{ 0.0f } { }
 
+        void SetTime(float animTime) {
+            time = animTime;
+        }
+
         virtual ~Animation() = default;
         virtual void Run(float dt) = 0;
         virtual bool IsDone() const = 0;
@@ -46,6 +50,12 @@ namespace Netcode::UI {
             }
         }
 
+        void RestartAnimation(uint32_t idx) {
+            if(idx < numAnimations) {
+                animations[idx]->SetTime(0.0f);
+            }
+        }
+
         void Add(std::unique_ptr<Animation> anim) {
             if(static_cast<uint32_t>(animations.size()) > numAnimations) {
                 animations[numAnimations++] = std::move(anim);
@@ -56,6 +66,7 @@ namespace Netcode::UI {
         }
 
         void Clear() {
+            numAnimations = 0;
             animations.clear();
         }
 

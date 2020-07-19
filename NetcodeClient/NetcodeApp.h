@@ -152,8 +152,10 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			gameScene->SpawnPhysxActor(planeActor);
 		}
 
+
 		std::shared_ptr<LoginPage> loginPage = pageManager.CreatePage<LoginPage>(px);
 		loginPage->InitializeComponents();
+
 		pageManager.AddPage(loginPage);
 		pageManager.Activate(PagesEnum::LOGIN_PAGE);
 		renderSystem.renderer.ui_Input = loginPage;

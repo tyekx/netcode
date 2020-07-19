@@ -18,6 +18,8 @@ namespace Netcode::Function {
 
 	float HalfStep(float x);
 
+	float InvHalfStep(float x);
+
 	float ConstantZero(float x);
 
 	float ConstantOne(float x);

@@ -87,7 +87,7 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual Float4 GetViewport() override;
 
-		virtual void SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) override;
+		virtual void SetScissorRect(int32_t left, int32_t right, int32_t top, int32_t bottom) override;
 
 		virtual void SetScissorRect(uint32_t width, uint32_t height) override;
 
@@ -191,7 +191,7 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual Float4 GetViewport() override;
 
-		virtual void SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) override;
+		virtual void SetScissorRect(int32_t left, int32_t right, int32_t top, int32_t bottom) override;
 		virtual void SetScissorRect(uint32_t width, uint32_t height) override;
 		virtual void SetScissorRect() override;
 

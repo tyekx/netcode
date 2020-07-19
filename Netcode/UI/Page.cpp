@@ -1,4 +1,5 @@
 #include "Page.h"
+#include "Input.h"
 #include <NetcodeFoundation/Exceptions.h>
 #include "../MathExt.h"
 #include "../Input.h"
@@ -28,7 +29,9 @@ namespace Netcode::UI {
 		hoveredControl{},
 		clickToken{ 0 },
 		moveToken{ 0 },
-		scrollToken{ 0 } {
+		scrollToken{ 0 },
+		keyPressedToken{ 0 },
+		charToken{ 0 } {
 
 		InitPhysx(px);
 		Sizing(SizingType::FIXED);
@@ -107,9 +110,39 @@ namespace Netcode::UI {
 
 					Control * ctrl = Raycast(mousePosition);
 
+					MouseEventArgs args{ mousePosition, modifier };
 					if(ctrl != nullptr) {
-						MouseEventArgs args{ mousePosition };
 						ctrl->PropagateOnClick(args);
+					}
+
+					Control * handledBy = args.HandledBy();
+
+					if(handledBy != nullptr) {
+						std::shared_ptr<Input> input = std::dynamic_pointer_cast<Input>(handledBy->shared_from_this());
+
+						if(input != nullptr) {
+							std::shared_ptr<Input> currentlyFocusedInput = focusedInput.lock();
+
+							if(input != currentlyFocusedInput) {
+								if(currentlyFocusedInput != nullptr) {
+									FocusChangedEventArgs blurredArgs{ input->TabIndex() };
+									currentlyFocusedInput->PropagateOnBlurred(blurredArgs);
+								}
+
+								focusedInput = input;
+
+								FocusChangedEventArgs focusedArgs{ input->TabIndex() };
+								input->PropagateOnFocused(focusedArgs);
+							}
+						} else {
+							std::shared_ptr<Input> currentlyFocusedInput = focusedInput.lock();
+
+							if(currentlyFocusedInput != nullptr) {
+								FocusChangedEventArgs blurredArgs{ -1 };
+								currentlyFocusedInput->PropagateOnBlurred(blurredArgs);
+								focusedInput.reset();
+							}
+						}
 					}
 				}
 			});
@@ -122,11 +155,11 @@ namespace Netcode::UI {
 				Control * ctrl = Raycast(mousePosition);
 
 				if(ctrl != nullptr) {
-					MouseEventArgs args{ mousePosition };
+					MouseEventArgs args{ mousePosition, modifier };
 					ctrl->PropagateOnMouseMove(args);
 				}
 
-				MouseEventArgs leaveArgs{ mousePosition };
+				MouseEventArgs leaveArgs{ mousePosition, modifier };
 				PropagateOnMouseLeave(leaveArgs);
 			});
 		}
@@ -138,8 +171,34 @@ namespace Netcode::UI {
 				Control * ctrl = Raycast(mousePosition);
 
 				if(ctrl != nullptr) {
-					ScrollEventArgs scrollArgs{ mousePosition, scrollVector };
+					ScrollEventArgs scrollArgs{ mousePosition, modifier, scrollVector };
 					ctrl->PropagateOnClick(scrollArgs);
+				}
+			});
+		}
+
+		if(keyPressedToken == 0) {
+			keyPressedToken = Netcode::Input::OnKeyPressed->Subscribe([this](Key key, KeyModifier modifier) -> void {
+				if(!Netcode::Utility::IsWeakRefEmpty(focusedInput)) {
+					std::shared_ptr<Input> input = focusedInput.lock();
+
+					if(input != nullptr) {
+						KeyEventArgs eventArgs{ key, modifier };
+						input->PropagateOnKeyPressed(eventArgs);
+					}
+				}
+			});
+		}
+
+		if(charToken == 0) {
+			charToken = Netcode::Input::OnCharInput->Subscribe([this](wchar_t value) -> void {
+				if(!Netcode::Utility::IsWeakRefEmpty(focusedInput)) {
+					std::shared_ptr<Input> input = focusedInput.lock();
+
+					if(input != nullptr) {
+						CharInputEventArgs eventArgs{ value };
+						input->PropagateOnCharInput(eventArgs);
+					}
 				}
 			});
 		}
@@ -159,6 +218,11 @@ namespace Netcode::UI {
 		if(scrollToken != 0) {
 			Netcode::Input::OnScroll->Erase(scrollToken);
 			scrollToken = 0;
+		}
+
+		if(keyPressedToken != 0) {
+			Netcode::Input::OnKeyPressed->Erase(keyPressedToken);
+			keyPressedToken = 0;
 		}
 	}
 

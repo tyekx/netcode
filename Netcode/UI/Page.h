@@ -4,6 +4,7 @@
 
 namespace Netcode::UI {
 
+	class Input;
 
 	class Page : public Control {
 	protected:
@@ -13,11 +14,14 @@ namespace Netcode::UI {
 		UInt2 windowSize;
 		PxPtr<physx::PxMaterial> dummyMaterial;
 		PxPtr<physx::PxScene> scene;
-		std::weak_ptr<UI::Control> hoveredControl;
+		std::weak_ptr<Control> hoveredControl;
+		std::weak_ptr<Input> focusedInput;
 
 		EventToken clickToken;
 		EventToken moveToken;
 		EventToken scrollToken;
+		EventToken keyPressedToken;
+		EventToken charToken;
 
 		void InitPhysx(Physics::PhysX & px);
 

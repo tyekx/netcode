@@ -257,11 +257,11 @@ namespace Netcode::Graphics::DX12 {
 		clearColor.b = cColor.z;
 		clearColor.a = cColor.w;
 
-		DX_API("Failed to create debug layer")
-			D3D12GetDebugInterface(IID_PPV_ARGS(debugController.GetAddressOf()));
-
 		const bool debugEnabled = Config::Get<bool>("graphics.debug.enabled:bool");
 		if(IsDebuggerPresent() && debugEnabled) {
+			DX_API("Failed to create debug layer")
+				D3D12GetDebugInterface(IID_PPV_ARGS(debugController.GetAddressOf()));
+
 			debugController->EnableDebugLayer();
 
 			if(Config::Get<bool>("graphics.debug.gpuBasedValidation:bool")) {

@@ -9,9 +9,10 @@ namespace Netcode::UI {
         int32_t tabIndex;
         bool focused;
 
-        virtual void PropagateOnFocused(FocusChangedEventArgs & evtArgs) override;
-
     public:
+        virtual void PropagateOnFocused(FocusChangedEventArgs & evtArgs) override;
+        virtual void PropagateOnBlurred(FocusChangedEventArgs & evtArgs) override;
+
         virtual ~Input() = default;
 
         Input(const AllocType & allocator, PxPtr<physx::PxRigidDynamic> pxActor);

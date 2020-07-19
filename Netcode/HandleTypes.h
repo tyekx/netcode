@@ -53,6 +53,30 @@ namespace Netcode {
 	using Image = DirectX::Image;
 	using Rect = RECT;
 
+	struct Glyph
+	{
+		uint32_t Character;
+		Rect Subrect;
+		float XOffset;
+		float YOffset;
+		float XAdvance;
+	};
+
+	static inline bool operator<(const Glyph & left, const Glyph & right)
+	{
+		return left.Character < right.Character;
+	}
+
+	static inline bool operator<(wchar_t left, const Glyph & right)
+	{
+		return left < right.Character;
+	}
+
+	static inline bool operator<(const Glyph & left, wchar_t right)
+	{
+		return left.Character < right;
+	}
+
 #endif
 
 	enum class ShaderType : unsigned {
@@ -607,6 +631,8 @@ namespace Netcode {
 		virtual wchar_t GetWidestAlphaNumericChar() const = 0;
 		virtual wchar_t GetHeighestAlphaNumericChar() const = 0;
 		virtual Float2 GetMaxSizedAlphaNumericStringOf(uint32_t stringMaxLength) const = 0;
+
+		virtual const Glyph * FindGlyph(wchar_t character) const = 0;
 
 		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color) const = 0;
 		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, float zIndex) const = 0;

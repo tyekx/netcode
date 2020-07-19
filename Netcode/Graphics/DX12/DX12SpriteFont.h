@@ -26,15 +26,6 @@ namespace Netcode::Graphics::DX12 {
 		return size;
 	}
 
-	struct Glyph
-	{
-		uint32_t Character;
-		Rect Subrect;
-		float XOffset;
-		float YOffset;
-		float XAdvance;
-	};
-
 	struct GlyphLimits {
 		Glyph highestGlyph;
 		Glyph widestGlyph;
@@ -131,7 +122,7 @@ namespace Netcode::Graphics::DX12 {
 
 		bool ContainsCharacter(wchar_t character) const;
 
-		const Glyph * FindGlyph(wchar_t character) const;
+		virtual const Glyph * FindGlyph(wchar_t character) const override;
 		Netcode::UInt2 GetSpriteSheetSize() const;
 
 		template<typename TAction>
@@ -160,10 +151,13 @@ namespace Netcode::Graphics::DX12 {
 					// Output this character.
 					auto glyph = FindGlyph(character);
 
-					x += glyph->XOffset;
+					if(i != 0) {
+						x += glyph->XOffset;
+					}
 
-					if(x < 0)
-						x = 0;
+					if(x < 0.0f) {
+						x = 0.0f;
+					}
 
 					float advance = glyph->Subrect.right - glyph->Subrect.left + glyph->XAdvance;
 
@@ -185,21 +179,6 @@ namespace Netcode::Graphics::DX12 {
 
 	using DX12SpriteFont = Netcode::Graphics::DX12::SpriteFont;
 	using DX12SpriteFontRef = std::shared_ptr<DX12SpriteFont>;
-
-	static inline bool operator<(const Glyph & left, const Glyph & right)
-	{
-		return left.Character < right.Character;
-	}
-
-	static inline bool operator<(wchar_t left, const Glyph & right)
-	{
-		return left < right.Character;
-	}
-
-	static inline bool operator<(const Glyph & left, wchar_t right)
-	{
-		return left.Character < right;
-	}
 	
 	using DX12SpriteFont = Netcode::Graphics::DX12::SpriteFont;
 	using DX12SpriteFontRef = std::shared_ptr<DX12SpriteFont>;
