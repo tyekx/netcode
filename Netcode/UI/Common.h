@@ -60,11 +60,16 @@ namespace Netcode::UI {
 
 	class MouseEventArgs : public EventArgs {
 		Netcode::Int2 position;
+		Netcode::Key key;
 		Netcode::KeyModifier modifier;
 
 	public:
-		MouseEventArgs(const Netcode::Int2 & pos, Netcode::KeyModifier modifier) : EventArgs{}, position{ pos }, modifier{ modifier } {
+		MouseEventArgs(const Netcode::Int2 & pos, Netcode::Key key, Netcode::KeyModifier modifier) : EventArgs{}, position{ pos }, key{ key }, modifier{ modifier } {
 
+		}
+
+		Netcode::Key Key() const {
+			return key;
 		}
 
 		Netcode::KeyModifier Modifier() const {
@@ -79,7 +84,7 @@ namespace Netcode::UI {
 	class ScrollEventArgs : public MouseEventArgs {
 		int32_t scrollVector;
 	public:
-		ScrollEventArgs(const Netcode::Int2 & pos, Netcode::KeyModifier modifier, int32_t scrollVector) : MouseEventArgs{ pos, modifier }, scrollVector{ scrollVector } {
+		ScrollEventArgs(const Netcode::Int2 & pos, Netcode::Key key, Netcode::KeyModifier modifier, int32_t scrollVector) : MouseEventArgs{ pos, key, modifier }, scrollVector{ scrollVector } {
 
 		}
 

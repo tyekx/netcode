@@ -15,13 +15,8 @@ namespace Netcode::UI {
 	class TextBox;
 };
 
-class LoginPage : public Netcode::UI::Page {
-	Netcode::GpuResourceRef aenami;
-	Netcode::GpuResourceRef loadingIcon;
-
-	Netcode::SpriteFontRef textFont;
-
-public:
+class PageBase : public Netcode::UI::Page {
+protected:
 	constexpr static Netcode::Float4 COLOR_ACCENT{ 1.0f, 0.4f, 0.533333f, 1.0f };
 	constexpr static Netcode::Float4 COLOR_SECONDARY{ 0.043137f, 0.164705f, 0.247058f, 0.8f };
 	constexpr static Netcode::Float4 COLOR_BORDER{ 0.02745f, 0.141176f, 0.211764f, 1.0f };
@@ -31,17 +26,29 @@ public:
 	constexpr static float BORDER_RADIUS = 4.0f;
 	constexpr static float BORDER_WIDTH = 2.0f;
 
-	using Netcode::UI::Page::Page;
+	Netcode::SpriteFontRef textFont;
 
 	std::shared_ptr<Netcode::UI::Button> CreateButton(const wchar_t * text);
 
 	std::shared_ptr<Netcode::UI::TextBox> CreateTextBox();
+public:
+	using Netcode::UI::Page::Page;
+
+	void DebugDump();
+
+	virtual void InitializeComponents() override;
+};
+
+class LoginPage : public PageBase {
+	Netcode::GpuResourceRef aenami;
+	Netcode::GpuResourceRef loadingIcon;
+public:
+
+	using PageBase::PageBase;
 
 	virtual ~LoginPage() = default;
 
 	virtual void InitializeComponents() override;
-
-
 };
 
 

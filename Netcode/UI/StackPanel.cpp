@@ -25,9 +25,8 @@ namespace Netcode::UI {
 
         for(auto & child : children) {
             const Float2 bs = child->BoxSize();
-            const Vector2 anchorDiff = mask * CalculateAnchorOffset(HorizontalContentAlignment(), VerticalContentAlignment(), bs);
 
-            child->Position(anchorOffset - anchorDiff + dirSum);
+            child->Position(invMask * anchorOffset + dirSum);
 
             dirSum += invMask * bs;
         }

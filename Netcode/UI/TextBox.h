@@ -29,6 +29,8 @@ namespace Netcode::UI {
         virtual void PropagateOnKeyPressed(KeyEventArgs & args) override;
         virtual void PropagateOnCharInput(CharInputEventArgs & args) override;
         virtual void PropagateOnBlurred(FocusChangedEventArgs & args) override;
+        virtual void PropagateOnMouseKeyPressed(MouseEventArgs & args) override;
+        virtual void PropagateOnMouseKeyReleased(MouseEventArgs & args) override;
 
         virtual void Render(SpriteBatchPtr batch) override;
 

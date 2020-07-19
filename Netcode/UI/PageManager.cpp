@@ -37,6 +37,14 @@ namespace Netcode::UI {
 		activePage->WindowSize(windowSize);
 	}
 
+	std::shared_ptr<Page> PageManager::GetPage(uint32_t value)
+	{
+		if(value < pages.size()) {
+			return pages[value];
+		}
+		return nullptr;
+	}
+
 	void PageManager::Destruct() {
 		for(auto & i : pages) {
 			i->Destruct();

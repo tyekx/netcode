@@ -99,8 +99,6 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		gameScene->GetPhysXScene()->simulate(dt);
 		gameScene->GetPhysXScene()->fetchResults(true);
 
-		// ui
-
 		gameScene->Foreach([this, dt](GameObject * gameObject)->void {
 			if(gameObject->IsActive()) {
 				scriptSystem.Run(gameObject, dt);

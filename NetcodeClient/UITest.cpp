@@ -7,7 +7,7 @@
 namespace ui = Netcode::UI;
 
 
-std::shared_ptr<ui::Button> LoginPage::CreateButton(const wchar_t * text) {
+std::shared_ptr<ui::Button> PageBase::CreateButton(const wchar_t * text) {
 	std::shared_ptr<ui::Button> button = std::make_shared<ui::Button>(eventAllocator, CreatePhysxActor());
 	button->Sizing(ui::SizingType::FIXED);
 	button->Size(Netcode::Float2{ 156.0f, 48.0f });
@@ -20,10 +20,113 @@ std::shared_ptr<ui::Button> LoginPage::CreateButton(const wchar_t * text) {
 	button->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
 	button->Text(text);
 	button->TextColor(COLOR_ACCENT);
+
+	button->OnMouseKeyPressed.Subscribe([](ui::Control * ctrl, ui::MouseEventArgs & args) -> void {
+		if(args.Key().GetCode() == Netcode::KeyCode::MOUSE_LEFT) {
+			auto * pThis = static_cast<ui::Input *>(ctrl);
+			pThis->ClearAnimations();
+			pThis->AddAnimation(ui::MakeAnimation(
+				static_cast<ui::Panel *>(pThis),
+				&ui::Panel::BackgroundColor,
+				&ui::Panel::BackgroundColor,
+				ui::Interpolator<Netcode::Vector4>{ pThis->BackgroundColor(), COLOR_ACCENT },
+				ui::PlayOnceBehaviour{},
+				& Netcode::Function::EaseOutQuad,
+				0.15f
+			));
+
+			pThis->AddAnimation(ui::MakeAnimation(
+				static_cast<ui::Label *>(pThis),
+				&ui::Label::TextColor,
+				&ui::Label::TextColor,
+				ui::Interpolator<Netcode::Vector4>{ pThis->TextColor(), COLOR_SECONDARY },
+				ui::PlayOnceBehaviour{},
+				& Netcode::Function::EaseOutQuad,
+				0.15f
+			));
+		}
+	});
+
+	button->OnMouseKeyReleased.Subscribe([](ui::Control * ctrl, ui::MouseEventArgs & args) -> void {
+		if(args.Key().GetCode() == Netcode::KeyCode::MOUSE_LEFT) {
+			auto * pThis = static_cast<ui::Input *>(ctrl);
+			pThis->ClearAnimations();
+			pThis->AddAnimation(ui::MakeAnimation(
+				static_cast<ui::Panel *>(pThis),
+				&ui::Panel::BackgroundColor,
+				&ui::Panel::BackgroundColor,
+				ui::Interpolator<Netcode::Vector4>{ pThis->BackgroundColor(), COLOR_HOVER },
+				ui::PlayOnceBehaviour{},
+				& Netcode::Function::EaseOutQuad,
+				0.35f
+			));
+
+			pThis->AddAnimation(ui::MakeAnimation(
+				static_cast<ui::Label *>(pThis),
+				&ui::Label::TextColor,
+				&ui::Label::TextColor,
+				ui::Interpolator<Netcode::Vector4>{ pThis->TextColor(), COLOR_ACCENT },
+				ui::PlayOnceBehaviour{},
+				& Netcode::Function::EaseOutQuad,
+				0.35f
+			));
+		}
+	});
+
+	button->OnMouseEnter.Subscribe([](ui::Control * ctrl, ui::MouseEventArgs & args) -> void {
+		ui::Label * pThis = static_cast<ui::Label *>(ctrl);
+
+		ctrl->ClearAnimations();
+		ctrl->AddAnimation(ui::MakeAnimation(
+			static_cast<ui::Panel*>(ctrl),
+			&ui::Panel::BackgroundColor,
+			&ui::Panel::BackgroundColor,
+			ui::Interpolator<Netcode::Vector4>(pThis->BackgroundColor(), COLOR_HOVER),
+			ui::PlayOnceBehaviour{},
+			&Netcode::Function::EaseOutQuad,
+			0.7f
+		));
+
+		ctrl->AddAnimation(ui::MakeAnimation(
+			pThis,
+			&ui::Label::TextColor,
+			&ui::Label::TextColor,
+			ui::Interpolator<Netcode::Vector4>{ pThis->TextColor(), COLOR_ACCENT },
+			ui::PlayOnceBehaviour{},
+			& Netcode::Function::EaseOutQuad,
+			0.7f
+		));
+	});
+
+	button->OnMouseLeave.Subscribe([](ui::Control * ctrl, ui::MouseEventArgs & args) -> void {
+		ui::Label * pThis = static_cast<ui::Label *>(ctrl);
+
+		ctrl->ClearAnimations();
+		ctrl->AddAnimation(ui::MakeAnimation(
+			static_cast<ui::Panel *>(ctrl),
+			&ui::Panel::BackgroundColor,
+			&ui::Panel::BackgroundColor,
+			ui::Interpolator<Netcode::Vector4>(pThis->BackgroundColor(), COLOR_SECONDARY),
+			ui::PlayOnceBehaviour{},
+			&Netcode::Function::EaseOutQuad,
+			0.7f
+		));
+
+		ctrl->AddAnimation(ui::MakeAnimation(
+			pThis,
+			&ui::Label::TextColor,
+			&ui::Label::TextColor,
+			ui::Interpolator<Netcode::Vector4>{ pThis->TextColor(), COLOR_ACCENT },
+			ui::PlayOnceBehaviour{},
+			& Netcode::Function::EaseOutQuad,
+			0.7f
+		));
+	});
+
 	return button;
 }
 
-std::shared_ptr<Netcode::UI::TextBox> LoginPage::CreateTextBox() {
+std::shared_ptr<Netcode::UI::TextBox> PageBase::CreateTextBox() {
 	std::shared_ptr<ui::TextBox> textBox = std::make_shared<ui::TextBox>(eventAllocator, CreatePhysxActor());
 	textBox->Sizing(ui::SizingType::FIXED);
 	textBox->Size(Netcode::Float2{ 280.0f, 48.0f });
@@ -121,6 +224,16 @@ std::shared_ptr<Netcode::UI::TextBox> LoginPage::CreateTextBox() {
 				& Netcode::Function::EaseOutQuad,
 				0.7f
 			));
+
+			pThis->AddAnimation(ui::MakeAnimation(
+				static_cast<ui::Label *>(pThis),
+				&ui::Label::TextColor,
+				&ui::Label::TextColor,
+				ui::Interpolator<Netcode::Vector4>{ pThis->TextColor(), COLOR_ACCENT },
+				ui::PlayOnceBehaviour{},
+				& Netcode::Function::EaseOutQuad,
+				0.7f
+			));
 		}
 	});
 
@@ -138,16 +251,52 @@ std::shared_ptr<Netcode::UI::TextBox> LoginPage::CreateTextBox() {
 				& Netcode::Function::EaseOutQuad,
 				0.7f
 			));
+
+			pThis->AddAnimation(ui::MakeAnimation(
+				static_cast<ui::Label *>(pThis),
+				&ui::Label::TextColor,
+				&ui::Label::TextColor,
+				ui::Interpolator<Netcode::Vector4>{ pThis->TextColor(), COLOR_ACCENT },
+				ui::PlayOnceBehaviour{},
+				& Netcode::Function::EaseOutQuad,
+				0.7f
+			));
 		}
 	});
 
 	return textBox;
 }
 
-void LoginPage::InitializeComponents() {
+static void LogControls(int depth, const std::vector<std::shared_ptr<ui::Control>> & children) {
+	std::string prefix(depth, '\t');
+
+	for(const auto & i : children) {
+		Netcode::Float2 sp = i->ScreenPosition();
+		Netcode::Float2 sz = i->Size();
+
+		std::ostringstream oss;
+		oss << prefix << "WindowCoords: (" << sp.x << "; " << sp.y << ") Size: (" << sz.x << "; " << sz.y << ")";
+		
+		Log::Debug(oss.str().c_str());
+		LogControls(depth + 1, i->Children());
+	}
+}
+
+void PageBase::DebugDump()
+{
+	LogControls(0, Children());
+}
+
+void PageBase::InitializeComponents() {
 	AssetManager * assets = Service::Get<AssetManager>();
 
 	textFont = assets->ImportFont(L"titillium18.spritefont");
+}
+
+void LoginPage::InitializeComponents() {
+	PageBase::InitializeComponents();
+
+	AssetManager * assets = Service::Get<AssetManager>();
 	/*
 	aenami = assets->ImportTexture2D(L"aenami_dreamer.jpg");
 	Netcode::ResourceViewsRef aenamiRv = assets->CreateTextureRV(aenami);
@@ -180,7 +329,7 @@ void LoginPage::InitializeComponents() {
 	std::shared_ptr<ui::StackPanel> inputWrapper = std::make_shared<ui::StackPanel>(eventAllocator, CreatePhysxActor());
 	inputWrapper->Sizing(ui::SizingType::DERIVED);
 	inputWrapper->StackDirection(ui::Direction::VERTICAL);
-	inputWrapper->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
+	inputWrapper->HorizontalContentAlignment(ui::HorizontalAnchor::RIGHT);
 
 	std::shared_ptr<ui::Label> titleLabel = std::make_shared<ui::Label>(eventAllocator, CreatePhysxActor());
 	titleLabel->Sizing(ui::SizingType::FIXED);
@@ -230,6 +379,7 @@ void LoginPage::InitializeComponents() {
 	buttonField->Margin(Netcode::Float4{ 10.0f, 10.0f, 10.0f, 0.0f });
 
 	std::shared_ptr<ui::Button> loginButton = CreateButton(L"Login");
+	loginButton->Margin(Netcode::Float4{ 0.0f, 0.0f, 20.0f, 0.0f });
 	std::shared_ptr<ui::Button> exitButton = CreateButton(L"Exit");
 	exitButton->Margin(Netcode::Float4{ 0.0f, 0.0f, 10.0f, 0.0f });
 

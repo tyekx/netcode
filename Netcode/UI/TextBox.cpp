@@ -146,6 +146,24 @@ namespace Netcode::UI {
 		Input::PropagateOnBlurred(args);
 	}
 
+	void TextBox::PropagateOnMouseKeyPressed(MouseEventArgs & args) {
+		args.Handled(true);
+
+		if(args.Key().GetCode() == KeyCode::MOUSE_LEFT) {
+			MouseEventArgs copyArgs{ args.Position(), args.Key(), args.Modifier() };
+			copyArgs.Handled(true);
+			copyArgs.HandledBy(this);
+			PropagateOnClick(copyArgs);
+		}
+
+		Input::PropagateOnMouseKeyPressed(args);
+	}
+
+	void TextBox::PropagateOnMouseKeyReleased(MouseEventArgs & args) {
+		args.Handled(true);
+		Input::PropagateOnMouseKeyReleased(args);
+	}
+
 	void TextBox::Render(SpriteBatchPtr batch) {
 		Panel::Render(batch);
 

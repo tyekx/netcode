@@ -24,6 +24,8 @@ namespace Netcode::UI {
 
 		void Activate(uint32_t value);
 
+		std::shared_ptr<Page> GetPage(uint32_t value);
+
 		void Destruct();
 
 		template<typename PageType>

@@ -6,6 +6,63 @@
 
 namespace Netcode::UI {
 
+	namespace Detail {
+
+		class NullInput : public Input {
+		public:
+			using Input::Input;
+
+			virtual void PropagateOnCharInput(CharInputEventArgs & args) override { }
+			virtual void PropagateOnFocused(FocusChangedEventArgs & args) override { }
+			virtual void PropagateOnBlurred(FocusChangedEventArgs & args) override { }
+			virtual void PropagateOnMouseKeyPressed(MouseEventArgs & args) override { }
+			virtual void PropagateOnMouseKeyReleased(MouseEventArgs & args) override { }
+			virtual void PropagateOnClick(MouseEventArgs & args) override { }
+			virtual void PropagateOnMouseEnter(MouseEventArgs & args) override { }
+			virtual void PropagateOnMouseMove(MouseEventArgs & args) override { }
+			virtual void PropagateOnMouseLeave(MouseEventArgs & args) override { }
+			virtual void PropagateOnMouseScroll(ScrollEventArgs & args) override { }
+			virtual void PropagateOnKeyPressed(KeyEventArgs & args) override { }
+		};
+
+		template<typename T>
+		class NullSafePtr {
+			T * main;
+			T * secondary;
+		public:
+			NullSafePtr(T * main, T * secondary) : main{ main }, secondary{ secondary } {
+				UndefinedBehaviourAssertion(secondary != nullptr);
+			}
+
+			T * Get() const {
+				if(main) {
+					return main;
+				} else {
+					return secondary;
+				}
+			}
+
+			bool operator==(const NullSafePtr<T> & rhs) const {
+				return Get() == rhs.Get();
+			}
+
+			bool operator!=(const NullSafePtr<T> & rhs) const {
+				return !operator==(rhs);
+			}
+
+			T * operator->() {
+				if(main) {
+					return main;
+				} else {
+					return secondary;
+				}
+			}
+		};
+
+		static std::shared_ptr<NullInput> defaultInput;
+
+	};
+
 	void Page::WindowSize(const UInt2 & ss) {
 		if(windowSize.x != ss.x || windowSize.y != ss.y) {
 			windowSize = ss;
@@ -37,6 +94,12 @@ namespace Netcode::UI {
 		Sizing(SizingType::FIXED);
 		HorizontalContentAlignment(HorizontalAnchor::LEFT);
 		VerticalContentAlignment(VerticalAnchor::TOP);
+
+		if(Detail::defaultInput == nullptr) {
+			Detail::defaultInput = std::make_shared<Detail::NullInput>(eventAllocator, nullptr);
+			Detail::defaultInput->TabIndex(-1);
+		}
+
 	}
 
 	void Page::InitPhysx(Physics::PhysX & px) {
@@ -104,46 +167,41 @@ namespace Netcode::UI {
 
 	void Page::Activate() {
 		if(clickToken == 0) {
-			clickToken = Netcode::Input::OnMouseKeyPressed->Subscribe([this](Key key, KeyModifier modifier) -> void {
-				if(key.IsRising() && key.GetCode() == Netcode::KeyCode::MOUSE_LEFT) {
-					const Int2 mousePosition = Netcode::Input::GetMousePosition();
+			clickToken = Netcode::Input::OnMouseInput->Subscribe([this](Key key, KeyModifier modifier) -> void {
+				const Int2 mousePosition = Netcode::Input::GetMousePosition();
 
-					Control * ctrl = Raycast(mousePosition);
+				Control * raycastedCtrl = Raycast(mousePosition);
 
-					MouseEventArgs args{ mousePosition, modifier };
-					if(ctrl != nullptr) {
-						ctrl->PropagateOnClick(args);
-					}
+				Detail::NullSafePtr<Control> control{ raycastedCtrl, Detail::defaultInput.get() };
+
+				MouseEventArgs args{ mousePosition, key, modifier };
+
+				if(key.IsRising()) {
+					/*
+					if(key.GetCode() == KeyCode::MOUSE_LEFT) {
+						control->PropagateOnClick(args);
+					}*/
+
+					control->PropagateOnMouseKeyPressed(args);
 
 					Control * handledBy = args.HandledBy();
+					Detail::NullSafePtr<Input> input{ static_cast<Input *>(handledBy), Detail::defaultInput.get() };
 
-					if(handledBy != nullptr) {
-						std::shared_ptr<Input> input = std::dynamic_pointer_cast<Input>(handledBy->shared_from_this());
+					std::shared_ptr<Input> currentlyFocusedInput = focusedInput.lock();
+					Detail::NullSafePtr<Input> lastInput{ currentlyFocusedInput.get(), Detail::defaultInput.get() };
 
-						if(input != nullptr) {
-							std::shared_ptr<Input> currentlyFocusedInput = focusedInput.lock();
-
-							if(input != currentlyFocusedInput) {
-								if(currentlyFocusedInput != nullptr) {
-									FocusChangedEventArgs blurredArgs{ input->TabIndex() };
-									currentlyFocusedInput->PropagateOnBlurred(blurredArgs);
-								}
-
-								focusedInput = input;
-
-								FocusChangedEventArgs focusedArgs{ input->TabIndex() };
-								input->PropagateOnFocused(focusedArgs);
-							}
-						} else {
-							std::shared_ptr<Input> currentlyFocusedInput = focusedInput.lock();
-
-							if(currentlyFocusedInput != nullptr) {
-								FocusChangedEventArgs blurredArgs{ -1 };
-								currentlyFocusedInput->PropagateOnBlurred(blurredArgs);
-								focusedInput.reset();
-							}
-						}
+					if(input != lastInput) {
+						FocusChangedEventArgs blurredArgs{ input->TabIndex() };
+						lastInput->PropagateOnBlurred(blurredArgs);
 					}
+
+
+					FocusChangedEventArgs focusedArgs{ input->TabIndex() };
+					input->PropagateOnFocused(focusedArgs);
+
+					focusedInput = std::dynamic_pointer_cast<Input>(input->shared_from_this());
+				} else {
+					control->PropagateOnMouseKeyReleased(args);
 				}
 			});
 		}
@@ -155,11 +213,11 @@ namespace Netcode::UI {
 				Control * ctrl = Raycast(mousePosition);
 
 				if(ctrl != nullptr) {
-					MouseEventArgs args{ mousePosition, modifier };
+					MouseEventArgs args{ mousePosition, KeyCode::UNDEFINED, modifier };
 					ctrl->PropagateOnMouseMove(args);
 				}
 
-				MouseEventArgs leaveArgs{ mousePosition, modifier };
+				MouseEventArgs leaveArgs{ mousePosition, KeyCode::UNDEFINED, modifier };
 				PropagateOnMouseLeave(leaveArgs);
 			});
 		}
@@ -171,7 +229,7 @@ namespace Netcode::UI {
 				Control * ctrl = Raycast(mousePosition);
 
 				if(ctrl != nullptr) {
-					ScrollEventArgs scrollArgs{ mousePosition, modifier, scrollVector };
+					ScrollEventArgs scrollArgs{ mousePosition, KeyCode::UNDEFINED, modifier, scrollVector };
 					ctrl->PropagateOnClick(scrollArgs);
 				}
 			});

@@ -58,7 +58,9 @@ namespace Netcode::UI {
         EventType<Control *, MouseEventArgs &> OnMouseEnter;
         EventType<Control *, MouseEventArgs &> OnMouseLeave;
         EventType<Control *, MouseEventArgs &> OnMouseMove;
-        EventType<Control *, MouseEventArgs &> OnMouseClick;
+        EventType<Control *, MouseEventArgs &> OnMouseKeyPressed;
+        EventType<Control *, MouseEventArgs &> OnMouseKeyReleased;
+        EventType<Control *, MouseEventArgs &> OnClick;
         EventType<Control *, ScrollEventArgs &> OnMouseScroll;
         EventType<Control *, FocusChangedEventArgs &> OnFocused;
         EventType<Control *, FocusChangedEventArgs &> OnBlurred;
@@ -145,6 +147,9 @@ namespace Netcode::UI {
 
         virtual void PropagateOnFocused(FocusChangedEventArgs & args);
         virtual void PropagateOnBlurred(FocusChangedEventArgs & args);
+
+        virtual void PropagateOnMouseKeyPressed(MouseEventArgs & args);
+        virtual void PropagateOnMouseKeyReleased(MouseEventArgs & args);
 
         /**
         * Upward post propagated event

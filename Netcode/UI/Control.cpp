@@ -30,7 +30,9 @@ namespace Netcode::UI {
         OnMouseEnter{ allocator },
         OnMouseLeave{ allocator },
         OnMouseMove{ allocator },
-        OnMouseClick{ allocator },
+        OnMouseKeyPressed{ allocator },
+        OnMouseKeyReleased{ allocator },
+        OnClick{ allocator },
         OnMouseScroll{ allocator },
         OnFocused{ allocator },
         OnBlurred{ allocator },
@@ -360,6 +362,8 @@ namespace Netcode::UI {
 
             UpdateActorShape();
         }
+        
+        PropagateOnPositionChanged();
     }
 
     void Control::Destruct() {
@@ -458,6 +462,28 @@ namespace Netcode::UI {
         } else {
             if(parent != nullptr) {
                 parent->PropagateOnBlurred(args);
+            }
+        }
+    }
+
+    void Control::PropagateOnMouseKeyPressed(MouseEventArgs & args) {
+        if(args.Handled()) {
+            args.HandledBy(this);
+            OnMouseKeyPressed.Invoke(this, args);
+        } else {
+            if(parent != nullptr) {
+                parent->PropagateOnMouseKeyPressed(args);
+            }
+        }
+    }
+
+    void Control::PropagateOnMouseKeyReleased(MouseEventArgs & args) {
+        if(args.Handled()) {
+            args.HandledBy(this);
+            OnMouseKeyReleased.Invoke(this, args);
+        } else {
+            if(parent != nullptr) {
+                parent->PropagateOnMouseKeyReleased(args);
             }
         }
     }
@@ -566,7 +592,7 @@ namespace Netcode::UI {
 
     void Control::PropagateOnMouseMove(MouseEventArgs & args) {
         if(hoverState == HoverState::INACTIVE) {
-            MouseEventArgs copyArgs{ args.Position(), args.Modifier() };
+            MouseEventArgs copyArgs{ args.Position(), args.Key(), args.Modifier() };
             PropagateOnMouseEnter(copyArgs);
         }
 
@@ -600,7 +626,7 @@ namespace Netcode::UI {
         if(args.Handled() || parent == nullptr) {
             args.Handled(true);
             args.HandledBy(this);
-            OnMouseClick.Invoke(this, args);
+            OnClick.Invoke(this, args);
         } else {
             parent->PropagateOnClick(args);
         }
