@@ -12,6 +12,11 @@ namespace Netcode::UI {
 		public:
 			using Input::Input;
 
+			virtual void PropagateOnEnabled() override { }
+			virtual void PropagateOnDisabled() override { }
+			virtual void PropagateOnSizeChanged() override { }
+			virtual void PropagateOnParentChanged() override { }
+			virtual void PropagateOnPositionChanged() override { }
 			virtual void PropagateOnCharInput(CharInputEventArgs & args) override { }
 			virtual void PropagateOnFocused(FocusChangedEventArgs & args) override { }
 			virtual void PropagateOnBlurred(FocusChangedEventArgs & args) override { }
@@ -23,6 +28,7 @@ namespace Netcode::UI {
 			virtual void PropagateOnMouseLeave(MouseEventArgs & args) override { }
 			virtual void PropagateOnMouseScroll(ScrollEventArgs & args) override { }
 			virtual void PropagateOnKeyPressed(KeyEventArgs & args) override { }
+			virtual void PropagateOnDrag(DragEventArgs & args) override { }
 		};
 
 		template<typename T>
@@ -80,10 +86,13 @@ namespace Netcode::UI {
 		Netcode::Physics::PhysX & px) : Control{ eventAllocator },
 		controlAllocator{ controlAllocator },
 		eventAllocator{ eventAllocator },
-		windowSize{ Netcode::UInt2::Zero },
+		lastMousePosition{ Int2::Zero },
+		windowSize{ UInt2::Zero },
 		dummyMaterial{ nullptr },
 		scene{ nullptr },
-		hoveredControl{},
+		raycastedControl{},
+		draggedControl{},
+		focusedInput{},
 		clickToken{ 0 },
 		moveToken{ 0 },
 		scrollToken{ 0 },
@@ -99,7 +108,6 @@ namespace Netcode::UI {
 			Detail::defaultInput = std::make_shared<Detail::NullInput>(eventAllocator, nullptr);
 			Detail::defaultInput->TabIndex(-1);
 		}
-
 	}
 
 	void Page::InitPhysx(Physics::PhysX & px) {
@@ -157,6 +165,40 @@ namespace Netcode::UI {
 		return nullptr;
 	}
 
+	void Page::HandleMouseLeaveEnter(const Int2 & windowPos, Control * lastRaycastedPtr, Control * currentRaycastedPtr)
+	{
+		if(lastRaycastedPtr != currentRaycastedPtr) {
+			if(currentRaycastedPtr != nullptr) {
+				RaycastEnter(currentRaycastedPtr);
+				MouseEventArgs args{ windowPos, Key{}, KeyModifier::NONE };
+				currentRaycastedPtr->PropagateOnMouseEnter(args);
+			}
+
+			if(lastRaycastedPtr != nullptr) {
+				RaycastFade(lastRaycastedPtr);
+				MouseEventArgs args{ windowPos, Key{}, KeyModifier::NONE };
+				lastRaycastedPtr->PropagateOnMouseLeave(args);
+			}
+		}
+	}
+
+	Control * Page::HandleRaycastChanges(const Int2 & windowPos)
+	{
+		Control * ctrl = Raycast(windowPos);
+
+		std::shared_ptr<Control> lastRaycastedControl = raycastedControl.lock();
+
+		HandleMouseLeaveEnter(windowPos, lastRaycastedControl.get(), ctrl);
+
+		if(ctrl != nullptr) {
+			raycastedControl = ctrl->weak_from_this();
+		} else {
+			raycastedControl.reset();
+		}
+
+		return ctrl;
+	}
+
 	void Page::Destruct() {
 		Control::Destruct();
 
@@ -166,23 +208,27 @@ namespace Netcode::UI {
 	}
 
 	void Page::Activate() {
+		lastMousePosition = Netcode::Input::GetMousePosition();
+
 		if(clickToken == 0) {
 			clickToken = Netcode::Input::OnMouseInput->Subscribe([this](Key key, KeyModifier modifier) -> void {
-				const Int2 mousePosition = Netcode::Input::GetMousePosition();
 
-				Control * raycastedCtrl = Raycast(mousePosition);
+				std::shared_ptr<Control> control = raycastedControl.lock();
 
-				Detail::NullSafePtr<Control> control{ raycastedCtrl, Detail::defaultInput.get() };
+				if(control == nullptr) {
+					return;
+				}
 
-				MouseEventArgs args{ mousePosition, key, modifier };
+				MouseEventArgs args{ Netcode::Input::GetMousePosition(), key, modifier };
 
 				if(key.IsRising()) {
-					/*
 					if(key.GetCode() == KeyCode::MOUSE_LEFT) {
 						control->PropagateOnClick(args);
-					}*/
+					}
 
 					control->PropagateOnMouseKeyPressed(args);
+
+					draggedControl = control;
 
 					Control * handledBy = args.HandledBy();
 					Detail::NullSafePtr<Input> input{ static_cast<Input *>(handledBy), Detail::defaultInput.get() };
@@ -194,7 +240,6 @@ namespace Netcode::UI {
 						FocusChangedEventArgs blurredArgs{ input->TabIndex() };
 						lastInput->PropagateOnBlurred(blurredArgs);
 					}
-
 
 					FocusChangedEventArgs focusedArgs{ input->TabIndex() };
 					input->PropagateOnFocused(focusedArgs);
@@ -210,27 +255,47 @@ namespace Netcode::UI {
 			moveToken = Netcode::Input::OnMouseMove->Subscribe([this](Int2 delta, KeyModifier modifier) -> void {
 				const Int2 mousePosition = Netcode::Input::GetMousePosition();
 
-				Control * ctrl = Raycast(mousePosition);
+
+				if(Netcode::Input::GetKey(KeyCode::MOUSE_LEFT).IsPressed()) {
+					std::shared_ptr<Control> dragged = draggedControl.lock();
+
+					Int2 mouseDelta = Int2{ mousePosition.x - lastMousePosition.x, mousePosition.y - lastMousePosition.y };
+					if(dragged != nullptr) {
+						DragEventArgs args{ mousePosition, KeyCode::UNDEFINED, modifier, mouseDelta };
+						dragged->PropagateOnDrag(args);
+
+						if(!args.Handled()) {
+							draggedControl.reset();
+						}
+
+						if(args.Handled() && args.HandledBy() != dragged.get()) {
+							draggedControl = args.HandledBy()->weak_from_this();
+						}
+					}
+				}
+
+				Control * ctrl = HandleRaycastChanges(mousePosition);
 
 				if(ctrl != nullptr) {
 					MouseEventArgs args{ mousePosition, KeyCode::UNDEFINED, modifier };
 					ctrl->PropagateOnMouseMove(args);
 				}
 
-				MouseEventArgs leaveArgs{ mousePosition, KeyCode::UNDEFINED, modifier };
-				PropagateOnMouseLeave(leaveArgs);
+				lastMousePosition = mousePosition;
 			});
 		}
 
 		if(scrollToken == 0) {
 			scrollToken = Netcode::Input::OnScroll->Subscribe([this](int scrollVector, KeyModifier modifier) -> void {
-				const Int2 mousePosition = Netcode::Input::GetMousePosition();
-
-				Control * ctrl = Raycast(mousePosition);
+				std::shared_ptr<Control> ctrl = raycastedControl.lock();
 
 				if(ctrl != nullptr) {
-					ScrollEventArgs scrollArgs{ mousePosition, KeyCode::UNDEFINED, modifier, scrollVector };
-					ctrl->PropagateOnClick(scrollArgs);
+					ScrollEventArgs scrollArgs{ Netcode::Input::GetMousePosition(), KeyCode::UNDEFINED, modifier, scrollVector };
+					ctrl->PropagateOnMouseScroll(scrollArgs);
+
+					if(scrollArgs.Handled()) {
+						HandleRaycastChanges(Netcode::Input::GetMousePosition());
+					}
 				}
 			});
 		}
@@ -260,6 +325,8 @@ namespace Netcode::UI {
 				}
 			});
 		}
+
+		HandleRaycastChanges(Netcode::Input::GetMousePosition());
 	}
 
 	void Page::Deactivate() {

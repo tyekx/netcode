@@ -11,10 +11,12 @@ namespace Netcode::UI {
 		Memory::ObjectAllocator controlAllocator;
 		Memory::ObjectAllocator eventAllocator;
 
+		Int2 lastMousePosition;
 		UInt2 windowSize;
 		PxPtr<physx::PxMaterial> dummyMaterial;
 		PxPtr<physx::PxScene> scene;
-		std::weak_ptr<Control> hoveredControl;
+		std::weak_ptr<Control> raycastedControl;
+		std::weak_ptr<Control> draggedControl;
 		std::weak_ptr<Input> focusedInput;
 
 		EventToken clickToken;
@@ -29,6 +31,10 @@ namespace Netcode::UI {
 
 		Control * Raycast(const Int2 & windowPos);
 
+		static void HandleMouseLeaveEnter(const Int2 & windowPos, Control * lastRaycastedPtr, Control * currentRaycastedPtr);
+
+		Control * HandleRaycastChanges(const Int2 & windowPos);
+
 	public:
 		virtual ~Page() = default;
 
@@ -36,8 +42,8 @@ namespace Netcode::UI {
 		UInt2 WindowSize() const;
 
 		Page(const Memory::ObjectAllocator & controlAllocator,
-			const Memory::ObjectAllocator & eventAllocator,
-			Physics::PhysX & px);
+			 const Memory::ObjectAllocator & eventAllocator,
+			 Physics::PhysX & px);
 
 		virtual void InitializeComponents() = 0;
 

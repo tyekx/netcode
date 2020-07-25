@@ -81,6 +81,19 @@ namespace Netcode::UI {
 		}
 	};
 
+	class DragEventArgs : public MouseEventArgs {
+		Netcode::Int2 deltaPosition;
+	public:
+		DragEventArgs(const Netcode::Int2 & pos, Netcode::Key key, Netcode::KeyModifier modifier, const Netcode::Int2 & deltaPos) :
+			MouseEventArgs{ pos, key, modifier }, deltaPosition{ deltaPos } {
+
+		}
+
+		Netcode::Int2 DeltaPosition() const {
+			return deltaPosition;
+		}
+	};
+
 	class ScrollEventArgs : public MouseEventArgs {
 		int32_t scrollVector;
 	public:

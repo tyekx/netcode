@@ -39,13 +39,6 @@ namespace Netcode::UI {
 
         Float2 CalculateScreenPosition();
 
-        static HoverState DecayState(HoverState hState) {
-            if(hState == HoverState::RAYCASTED) {
-                return HoverState::HOVERED;
-            }
-            return HoverState::INACTIVE;
-        }
-
     public:
 
         static constexpr float MAX_DEPTH = 256.0f;
@@ -66,6 +59,7 @@ namespace Netcode::UI {
         EventType<Control *, FocusChangedEventArgs &> OnBlurred;
         EventType<Control *, KeyEventArgs &> OnKeyPressed;
         EventType<Control *, CharInputEventArgs &> OnCharInput;
+        EventType<Control *, DragEventArgs &> OnDrag;
         EventType<Control *> OnEnabled;
         EventType<Control *> OnDisabled;
         EventType<Control *> OnParentChanged;
@@ -98,12 +92,6 @@ namespace Netcode::UI {
         * Invoked when the Sizing is derived and the layout is being updated
         */
         virtual Float2 DeriveSize();
-
-        /**
-        * Internal event
-        * Way to update children position
-        */
-        virtual void OnLayoutChanged();
 
         /**
         * DERIVED -> INHERITED in the hierarchy chain is not allowed
@@ -142,6 +130,16 @@ namespace Netcode::UI {
 
         void AssignActor(PxPtr<physx::PxRigidDynamic> actor);
 
+        // implementation detail
+        static void RaycastEnter(Control * ptr) {
+            ptr->hoverState = HoverState::RAYCASTED;
+        }
+
+        // implementation detail
+        static void RaycastFade(Control * ptr) {
+            ptr->hoverState = HoverState::HOVERED;
+        }
+
     public:
         virtual void PropagateOnCharInput(CharInputEventArgs & args);
 
@@ -150,6 +148,11 @@ namespace Netcode::UI {
 
         virtual void PropagateOnMouseKeyPressed(MouseEventArgs & args);
         virtual void PropagateOnMouseKeyReleased(MouseEventArgs & args);
+
+        /**
+        * Local event
+        */
+        virtual void PropagateOnDrag(DragEventArgs & args);
 
         /**
         * Upward post propagated event

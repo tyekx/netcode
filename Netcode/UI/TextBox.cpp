@@ -32,13 +32,15 @@ namespace Netcode::UI {
 
 		if(IsPassword()) {
 			constexpr size_t staticArraySize = ARRAYSIZE(WIDE_STARS);
-			if(Text().size() > staticArraySize) {
-				if(Text().size() > overflowedPasswordFieldContent.size()) {
-					overflowedPasswordFieldContent = std::wstring(Text().size(), L'*');
+			const size_t tSize = Text().size();
+
+			if(tSize > staticArraySize) {
+				if(tSize > overflowedPasswordFieldContent.size()) {
+					overflowedPasswordFieldContent = std::wstring(tSize, L'*');
 				}
 				view = overflowedPasswordFieldContent;
 			} else {
-				view = std::wstring_view{ WIDE_STARS, Text().size() };
+				view = std::wstring_view{ WIDE_STARS, tSize };
 			}
 		} else {
 			view = Text();
@@ -100,16 +102,6 @@ namespace Netcode::UI {
 		Input::PropagateOnMouseLeave(evtArgs);
 	}
 
-	void TextBox::PropagateOnMouseMove(MouseEventArgs & evtArgs) {
-		if(Netcode::Input::GetKey(KeyCode::MOUSE_LEFT).IsPressed()) {
-			int32_t targetedIndex = GetTargetedCaretPosition(evtArgs.Position().x);
-			selectionOffset = targetedIndex - caretPosition;
-		}
-
-		evtArgs.Handled(true);
-		Input::PropagateOnMouseMove(evtArgs);
-	}
-
 	void TextBox::PropagateOnClick(MouseEventArgs & evtArgs) {
 		int32_t targetedIndex = GetTargetedCaretPosition(evtArgs.Position().x);
 
@@ -162,6 +154,15 @@ namespace Netcode::UI {
 	void TextBox::PropagateOnMouseKeyReleased(MouseEventArgs & args) {
 		args.Handled(true);
 		Input::PropagateOnMouseKeyReleased(args);
+	}
+
+	void TextBox::PropagateOnDrag(DragEventArgs & args) {
+		args.Handled(true);
+
+		int32_t targetedIndex = GetTargetedCaretPosition(args.Position().x);
+		selectionOffset = targetedIndex - caretPosition;
+
+		Input::PropagateOnDrag(args);
 	}
 
 	void TextBox::Render(SpriteBatchPtr batch) {

@@ -32,8 +32,7 @@ namespace Netcode::UI {
             MouseEventArgs copyArgs{ args.Position(), args.Key(), args.Modifier() };
             copyArgs.Handled(true);
             copyArgs.HandledBy(this);
-
-            PropagateOnClick(copyArgs);
+            OnClick.Invoke(this, copyArgs);
         }
 
         Input::PropagateOnMouseKeyReleased(args);

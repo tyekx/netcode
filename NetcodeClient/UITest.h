@@ -6,6 +6,7 @@
 
 enum PagesEnum {
 	LOGIN_PAGE,
+	SERVER_BROWSER_PAGE,
 	MAIN_MENU,
 	LOADING_PAGE
 };
@@ -43,10 +44,17 @@ class LoginPage : public PageBase {
 	Netcode::GpuResourceRef aenami;
 	Netcode::GpuResourceRef loadingIcon;
 public:
-
 	using PageBase::PageBase;
 
-	virtual ~LoginPage() = default;
+	virtual void InitializeComponents() override;
+};
+
+class ServerBrowserPage : public PageBase {
+
+	std::shared_ptr<Netcode::UI::Control> CreateServerRow(std::wstring serverIp);
+
+public:
+	using PageBase::PageBase;
 
 	virtual void InitializeComponents() override;
 };

@@ -38,6 +38,7 @@ namespace Netcode::UI {
         OnBlurred{ allocator },
         OnKeyPressed{ allocator },
         OnCharInput{ allocator },
+        OnDrag{ allocator },
         OnEnabled{ allocator },
         OnDisabled{ allocator },
         OnParentChanged{ allocator },
@@ -488,6 +489,18 @@ namespace Netcode::UI {
         }
     }
 
+    void Control::PropagateOnDrag(DragEventArgs & args)
+    {
+        if(args.Handled()) {
+            args.HandledBy(this);
+            OnDrag.Invoke(this, args);
+        } else {
+            if(parent != nullptr) {
+                parent->PropagateOnDrag(args);
+            }
+        }
+    }
+
     Float2 Control::DeriveSize()
     {
         Vector2 maxSize = Float2::Zero;
@@ -497,10 +510,6 @@ namespace Netcode::UI {
         }
 
         return maxSize;
-    }
-
-    void Control::OnLayoutChanged() {
-
     }
 
     void Control::UpdateZIndices() {
@@ -552,9 +561,12 @@ namespace Netcode::UI {
             }
         }
 
-        for(auto & child : children) {
-            if(child->Sizing() == SizingType::INHERITED) {
-                child->PropagateOnSizeChanged();
+        // sanity check since DERIVED -> INHERITED is disallowed
+        if(Sizing() != SizingType::DERIVED) {
+            for(auto & child : children) {
+                if(child->Sizing() == SizingType::INHERITED) {
+                    child->PropagateOnSizeChanged();
+                }
             }
         }
 
@@ -609,24 +621,26 @@ namespace Netcode::UI {
     }
 
     void Control::PropagateOnMouseLeave(MouseEventArgs & args) {
-        HoverState decayedState = DecayState(hoverState);
-
-        if(decayedState == HoverState::INACTIVE && hoverState != HoverState::INACTIVE) {
-            OnMouseLeave.Invoke(this, args);
+        if(hoverState == HoverState::RAYCASTED) {
+            return;
         }
 
-        hoverState = decayedState;
+        if(hoverState == HoverState::HOVERED) {
+            hoverState = HoverState::INACTIVE;
 
-        for(auto & child : children) {
-            child->PropagateOnMouseLeave(args);
+            OnMouseLeave.Invoke(this, args);
+
+            for(auto & child : children) {
+                child->PropagateOnMouseLeave(args);
+            }
         }
     }
 
     void Control::PropagateOnClick(MouseEventArgs & args) {
+        OnClick.Invoke(this, args);
         if(args.Handled() || parent == nullptr) {
             args.Handled(true);
             args.HandledBy(this);
-            OnClick.Invoke(this, args);
         } else {
             parent->PropagateOnClick(args);
         }

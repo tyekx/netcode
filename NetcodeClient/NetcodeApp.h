@@ -154,7 +154,11 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		std::shared_ptr<LoginPage> loginPage = pageManager.CreatePage<LoginPage>(px);
 		loginPage->InitializeComponents();
 
+		std::shared_ptr<ServerBrowserPage> serverBrowserPage = pageManager.CreatePage<ServerBrowserPage>(px);
+		serverBrowserPage->InitializeComponents();
+
 		pageManager.AddPage(loginPage);
+		pageManager.AddPage(serverBrowserPage);
 		pageManager.Activate(PagesEnum::LOGIN_PAGE);
 		renderSystem.renderer.ui_Input = loginPage;
 

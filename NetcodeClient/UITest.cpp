@@ -3,12 +3,13 @@
 #include <Netcode/UI/Button.h>
 #include <Netcode/UI/StackPanel.h>
 #include <Netcode/UI/InputGroup.h>
+#include <Netcode/UI/ScrollViewer.h>
 
 namespace ui = Netcode::UI;
 
 
 std::shared_ptr<ui::Button> PageBase::CreateButton(const wchar_t * text) {
-	std::shared_ptr<ui::Button> button = std::make_shared<ui::Button>(eventAllocator, CreatePhysxActor());
+	std::shared_ptr<ui::Button> button = controlAllocator.MakeShared<ui::Button>(eventAllocator, CreatePhysxActor());
 	button->Sizing(ui::SizingType::FIXED);
 	button->Size(Netcode::Float2{ 156.0f, 48.0f });
 	button->BackgroundColor(COLOR_SECONDARY);
@@ -127,7 +128,7 @@ std::shared_ptr<ui::Button> PageBase::CreateButton(const wchar_t * text) {
 }
 
 std::shared_ptr<Netcode::UI::TextBox> PageBase::CreateTextBox() {
-	std::shared_ptr<ui::TextBox> textBox = std::make_shared<ui::TextBox>(eventAllocator, CreatePhysxActor());
+	std::shared_ptr<ui::TextBox> textBox = controlAllocator.MakeShared<ui::TextBox>(eventAllocator, CreatePhysxActor());
 	textBox->Sizing(ui::SizingType::FIXED);
 	textBox->Size(Netcode::Float2{ 280.0f, 48.0f });
 	textBox->BackgroundColor(COLOR_SECONDARY);
@@ -306,32 +307,32 @@ void LoginPage::InitializeComponents() {
 	Netcode::ResourceViewsRef loadingIconRv = assets->CreateTextureRV(loadingIcon);
 	Netcode::UInt2 loadingIconSize = Netcode::UInt2{ static_cast<uint32_t>(loadingIcon->GetDesc().width), loadingIcon->GetDesc().height };
 	*/
-	std::shared_ptr<ui::Panel> rootPanel = std::make_shared<ui::Panel>(eventAllocator, CreatePhysxActor());
+	std::shared_ptr<ui::Panel> rootPanel = controlAllocator.MakeShared<ui::Panel>(eventAllocator, CreatePhysxActor());
 	rootPanel->BackgroundColor(Netcode::Float4::One);
 	rootPanel->Sizing(ui::SizingType::INHERITED);
 	rootPanel->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
 	rootPanel->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
 	//rootPanel->BackgroundImage(aenamiRv, aenamiSize);
-	rootPanel->BackgroundSize(Netcode::Float2{ 1920.0f, 1080.0f });
+	//rootPanel->BackgroundSize(Netcode::Float2{ 1920.0f, 1080.0f });
 	rootPanel->BackgroundHorizontalAlignment(ui::HorizontalAnchor::CENTER);
 	rootPanel->BackgroundVerticalAlignment(ui::VerticalAnchor::MIDDLE);
 
-	std::shared_ptr<ui::Panel> loadingIconPanel = std::make_shared<ui::Panel>(eventAllocator, CreatePhysxActor());
+	std::shared_ptr<ui::Panel> loadingIconPanel = controlAllocator.MakeShared<ui::Panel>(eventAllocator, CreatePhysxActor());
 	//loadingIconPanel->BackgroundImage(loadingIconRv, loadingIconSize);
 	loadingIconPanel->Sizing(ui::SizingType::FIXED);
 	loadingIconPanel->BackgroundColor(Netcode::Float4::One);
 	loadingIconPanel->RotationOrigin(ui::HorizontalAnchor::CENTER, ui::VerticalAnchor::MIDDLE);
 	loadingIconPanel->Size(Netcode::Float2{ 64.0f, 64.0f });
 
-	std::shared_ptr<ui::InputGroup> inputGroup = std::make_shared<ui::InputGroup>(eventAllocator, CreatePhysxActor());
+	std::shared_ptr<ui::InputGroup> inputGroup = controlAllocator.MakeShared<ui::InputGroup>(eventAllocator, CreatePhysxActor());
 	inputGroup->Sizing(ui::SizingType::DERIVED);
 
-	std::shared_ptr<ui::StackPanel> inputWrapper = std::make_shared<ui::StackPanel>(eventAllocator, CreatePhysxActor());
+	std::shared_ptr<ui::StackPanel> inputWrapper = controlAllocator.MakeShared<ui::StackPanel>(eventAllocator, CreatePhysxActor());
 	inputWrapper->Sizing(ui::SizingType::DERIVED);
 	inputWrapper->StackDirection(ui::Direction::VERTICAL);
 	inputWrapper->HorizontalContentAlignment(ui::HorizontalAnchor::RIGHT);
 
-	std::shared_ptr<ui::Label> titleLabel = std::make_shared<ui::Label>(eventAllocator, CreatePhysxActor());
+	std::shared_ptr<ui::Label> titleLabel = controlAllocator.MakeShared<ui::Label>(eventAllocator, CreatePhysxActor());
 	titleLabel->Sizing(ui::SizingType::FIXED);
 	titleLabel->Size(Netcode::Float2{ 400.0f, 100.0f });
 	titleLabel->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
@@ -341,12 +342,12 @@ void LoginPage::InitializeComponents() {
 	titleLabel->Text(L"Netcode");
 	titleLabel->Margin(Netcode::Float4{ 0.0f, 0.0f, 0.0f, 64.0f });
 
-	std::shared_ptr<ui::StackPanel> usernameField = std::make_shared<ui::StackPanel>(eventAllocator, CreatePhysxActor());
+	std::shared_ptr<ui::StackPanel> usernameField = controlAllocator.MakeShared<ui::StackPanel>(eventAllocator, CreatePhysxActor());
 	usernameField->StackDirection(ui::Direction::HORIZONTAL);
 	usernameField->Sizing(ui::SizingType::DERIVED);
 	usernameField->Margin(Netcode::Float4{ 10.0f, 10.0f, 10.0f, 0.0f });
 
-	std::shared_ptr<ui::Label> usernameLabel = std::make_shared<ui::Label>(eventAllocator, CreatePhysxActor());
+	std::shared_ptr<ui::Label> usernameLabel = controlAllocator.MakeShared<ui::Label>(eventAllocator, CreatePhysxActor());
 	usernameLabel->Sizing(ui::SizingType::FIXED);
 	usernameLabel->Size(Netcode::Float2{ 120.0f, 48.0f });
 	usernameLabel->HorizontalContentAlignment(ui::HorizontalAnchor::RIGHT);
@@ -358,12 +359,12 @@ void LoginPage::InitializeComponents() {
 
 	std::shared_ptr<ui::TextBox> usernameTextBox = CreateTextBox();
 
-	std::shared_ptr<ui::StackPanel> passwordField = std::make_shared<ui::StackPanel>(eventAllocator, CreatePhysxActor());
+	std::shared_ptr<ui::StackPanel> passwordField = controlAllocator.MakeShared<ui::StackPanel>(eventAllocator, CreatePhysxActor());
 	passwordField->StackDirection(ui::Direction::HORIZONTAL);
 	passwordField->Sizing(ui::SizingType::DERIVED);
 	passwordField->Margin(Netcode::Float4{ 10.0f, 10.0f, 10.0f, 0.0f });
 
-	std::shared_ptr<ui::Label> passwordLabel = std::make_shared<ui::Label>(eventAllocator, CreatePhysxActor());
+	std::shared_ptr<ui::Label> passwordLabel = controlAllocator.MakeShared<ui::Label>(eventAllocator, CreatePhysxActor());
 	passwordLabel->Sizing(ui::SizingType::FIXED);
 	passwordLabel->Size(Netcode::Float2{ 120.0f, 48.0f });
 	passwordLabel->Margin(Netcode::Float4{ 0.0f, 0.0f, 10.0f, 0.0f });
@@ -373,7 +374,7 @@ void LoginPage::InitializeComponents() {
 	passwordLabel->Font(assets->ImportFont(L"titillium18.spritefont"));
 	passwordLabel->Text(L"Password:");
 
-	std::shared_ptr<ui::StackPanel> buttonField = std::make_shared<ui::StackPanel>(eventAllocator, CreatePhysxActor());
+	std::shared_ptr<ui::StackPanel> buttonField = controlAllocator.MakeShared<ui::StackPanel>(eventAllocator, CreatePhysxActor());
 	buttonField->StackDirection(ui::Direction::HORIZONTAL);
 	buttonField->Sizing(ui::SizingType::DERIVED);
 	buttonField->Margin(Netcode::Float4{ 10.0f, 10.0f, 10.0f, 0.0f });
@@ -432,3 +433,53 @@ void LoginPage::InitializeComponents() {
 	UpdateZIndices();
 }
 
+std::shared_ptr<ui::Control> ServerBrowserPage::CreateServerRow(std::wstring serverIp)
+{
+	std::shared_ptr<ui::Label> label = controlAllocator.MakeShared<ui::Label>(eventAllocator, CreatePhysxActor());
+	label->Sizing(ui::SizingType::FIXED);
+	label->Size(Netcode::Float2{ 480.0f, 48.0f });
+	label->BackgroundColor(COLOR_SECONDARY);
+	label->HorizontalContentAlignment(ui::HorizontalAnchor::LEFT);
+	label->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
+	label->TextColor(COLOR_ACCENT);
+	label->Font(textFont);
+	label->Text(std::move(serverIp));
+
+	return label;
+}
+
+void ServerBrowserPage::InitializeComponents()
+{
+	PageBase::InitializeComponents();
+
+	std::shared_ptr<ui::Panel> rootPanel = controlAllocator.MakeShared<ui::Panel>(eventAllocator, CreatePhysxActor());
+	rootPanel->BackgroundColor(Netcode::Float4::One);
+	rootPanel->Sizing(ui::SizingType::INHERITED);
+	rootPanel->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
+	rootPanel->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
+
+	std::shared_ptr<ui::ScrollViewer> scrollViewer = controlAllocator.MakeShared<ui::ScrollViewer>(controlAllocator, eventAllocator, CreatePhysxActor());
+	scrollViewer->Sizing(ui::SizingType::DERIVED);
+	scrollViewer->MaxSize(Netcode::Float2{ 480.0f, 640.0f });
+	scrollViewer->ScrollBarColor(COLOR_HOVER);
+	scrollViewer->ScrollButtonColor(COLOR_ACCENT);
+	scrollViewer->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
+
+	std::shared_ptr<ui::StackPanel> serversListPanel = controlAllocator.MakeShared<ui::StackPanel>(eventAllocator, CreatePhysxActor());
+	serversListPanel->Sizing(ui::SizingType::DERIVED);
+
+	
+	for(uint32_t i = 0; i < 32; ++i) {
+		std::wstring txt = L"192.168.0." + std::to_wstring(i);
+		
+		serversListPanel->AddChild(CreateServerRow(std::move(txt)));
+	}
+
+	scrollViewer->AddChild(serversListPanel);
+
+	rootPanel->AddChild(scrollViewer);
+
+	this->AddChild(rootPanel);
+
+	UpdateZIndices();
+}
