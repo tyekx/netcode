@@ -112,7 +112,7 @@ class EditorFrameGraph {
 
 		gbufferPass_DepthStencil = g->resources->CreateDepthStencil(DXGI_FORMAT_D32_FLOAT_S8X24_UINT, ResourceType::PERMANENT_DEFAULT, ResourceState::DEPTH_READ);
 		gbufferPass_DepthStencilView = g->resources->CreateDepthStencilView();
-		gbufferPass_DepthStencilView->CreateDSV(gbufferPass_DepthStencil);
+		gbufferPass_DepthStencilView->CreateDSV(gbufferPass_DepthStencil.get());
 	}
 
 	void Create_BoneVisibilityPass_PermanentResources(Netcode::Module::IGraphicsModule * g) {
@@ -174,7 +174,7 @@ class EditorFrameGraph {
 		g->frame->SyncUpload(batch);
 
 		cloudynoonView = g->resources->CreateShaderResourceViews(1);
-		cloudynoonView->CreateSRV(0, cloudynoonTexture);
+		cloudynoonView->CreateSRV(0, cloudynoonTexture.get());
 
 		Netcode::ShaderBuilderRef shaderBuilder = g->CreateShaderBuilder();
 		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"envmapPass_Vertex.cso");

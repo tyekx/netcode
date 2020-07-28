@@ -559,8 +559,7 @@ void LoadingPage::InitializeComponents() {
 	UpdateZIndices();
 }
 
-void LoadingPage::Activate()
-{
+void LoadingPage::Activate() {
 	Page::Activate();
 
 	static_cast<ui::Panel *>(rootPanel.get())->BackgroundColor(Netcode::Float4::One);

@@ -46,6 +46,9 @@
     <Filter Include="IO">
       <UniqueIdentifier>{882c0f23-197a-4872-a3db-275fc2784287}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{3749cdf8-e962-44ed-b50c-12933aac2438}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ProgramArgs.h">
@@ -380,6 +383,45 @@
     </ClInclude>
     <ClInclude Include="MathExt.h" />
     <ClInclude Include="Config.h" />
+    <ClInclude Include="UI\Animation.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Button.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Common.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Control.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Input.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\InputGroup.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Label.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Page.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\PageManager.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Panel.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\ScrollViewer.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\StackPanel.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\TextBox.h">
+      <Filter>UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Stopwatch.cpp">
@@ -638,6 +680,42 @@
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="Graphics\DX12\DX12ShaderSourceLibrary.cpp">
       <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Animation.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Button.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Control.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Input.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\InputGroup.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Label.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Page.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\PageManager.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Panel.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\ScrollViewer.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\StackPanel.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\TextBox.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
