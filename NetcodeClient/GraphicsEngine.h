@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Netcode/UI/Page.h>
+#include <Netcode/UI/PageManager.h>
 #include <Netcode/Graphics/FrameGraph.h>
 #include <Netcode/FancyIterators.hpp>
 #include <Netcode/Graphics/ResourceDesc.h>
@@ -106,7 +106,7 @@ public:
 	Netcode::ScratchBuffer<std::shared_ptr<AnimationSet>> skinningPass_Input;
 	Netcode::ScratchBuffer<RenderItem> skinnedGbufferPass_Input;
 	Netcode::ScratchBuffer<RenderItem> gbufferPass_Input;
-	std::shared_ptr<Netcode::UI::Page> ui_Input;
+	Netcode::UI::PageManager* ui_Input;
 
 private:
 

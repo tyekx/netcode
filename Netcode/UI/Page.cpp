@@ -103,6 +103,7 @@ namespace Netcode::UI {
 		Sizing(SizingType::FIXED);
 		HorizontalContentAlignment(HorizontalAnchor::LEFT);
 		VerticalContentAlignment(VerticalAnchor::TOP);
+		ZIndex(0.0f);
 
 		if(Detail::defaultInput == nullptr) {
 			Detail::defaultInput = std::make_shared<Detail::NullInput>(eventAllocator, nullptr);
@@ -349,6 +350,11 @@ namespace Netcode::UI {
 			Netcode::Input::OnKeyPressed->Erase(keyPressedToken);
 			keyPressedToken = 0;
 		}
+	}
+
+	bool Page::IsActive() const
+	{
+		return clickToken != 0 || moveToken != 0 || scrollToken != 0 || keyPressedToken != 0;
 	}
 
 }

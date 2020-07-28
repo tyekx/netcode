@@ -32,6 +32,8 @@ namespace Netcode::UI {
 
         BorderDesc GetBorderDesc() const;
 
+        Rect GetContentRect() const;
+
     public:
         UInt2 BackgroundImageSize() const;
 

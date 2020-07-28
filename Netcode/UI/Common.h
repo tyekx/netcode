@@ -24,6 +24,10 @@ namespace Netcode::UI {
 		FIXED, DERIVED, INHERITED
 	};
 
+	enum class OverflowType : uint32_t {
+		VISIBLE, HIDDEN
+	};
+
 	class Control;
 
 	class EventArgs {

@@ -74,16 +74,8 @@ namespace Netcode::UI {
             return;
         }
 
-        Float2 pos = ScreenPosition();
-        Vector2 posV = pos;
-        Vector2 sz = Size();
-        Float2 rb = sz + pos;
-
-        Rect rect;
-        rect.left = static_cast<int32_t>(pos.x);
-        rect.top = static_cast<int32_t>(pos.y);
-        rect.right = static_cast<int32_t>(rb.x);
-        rect.bottom = static_cast<int32_t>(rb.y);
+        Vector2 posV = ScreenPosition();
+        Rect rect = GetContentRect();
 
         Vector2 yOffset = Float2{ 0.0f, scrollY };
         Vector2 cSize = contentSize;

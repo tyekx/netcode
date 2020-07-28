@@ -2,7 +2,61 @@
 
 namespace Netcode::UI {
 
-	PageManager::PageManager() : controlAllocator{ }, eventHandlerAllocator{ }, pages{  }, activePage{ nullptr } {
+	void PageManager::SortDrawBuffer() {
+		std::sort(drawBuffer, drawBuffer + numDrawnPages, [](Page * a, Page * b) -> bool {
+			return a->ZIndex() < b->ZIndex();
+		});
+	}
+
+	void PageManager::EraseFromDrawBuffer(uint32_t idx)
+	{
+		OutOfMemoryAssertion(idx < numDrawnPages);
+
+		std::swap(drawBuffer[idx], drawBuffer[numDrawnPages - 1]);
+		numDrawnPages -= 1;
+	}
+
+	void PageManager::EraseFromDrawBuffer(Page * p)
+	{
+		for(uint32_t i = 0; i < numDrawnPages; i++) {
+			if(p == drawBuffer[i]) {
+				EraseFromDrawBuffer(i);
+				return;
+			}
+		}
+		UndefinedBehaviourAssertion(true);
+	}
+
+	void PageManager::AddToDrawBuffer(Page * p)
+	{
+		OutOfRangeAssertion(numDrawnPages <= 8);
+
+		for(uint32_t i = 0; i < numDrawnPages; i++) {
+			if(p == drawBuffer[i]) {
+				return;
+			}
+		}
+
+		drawBuffer[numDrawnPages++] = p;
+	}
+
+	void PageManager::CleanDrawBuffer() {
+		bool anyActive = false;
+		for(uint32_t i = 0; i < numDrawnPages;) {
+			if(!drawBuffer[i]->Enabled()) {
+				EraseFromDrawBuffer(i);
+			} else {
+				anyActive |= drawBuffer[i]->IsActive();
+				i++;
+			}
+		}
+
+		if(!anyActive) {
+			ReturnToLastPage();
+		}
+	}
+
+	PageManager::PageManager() : controlAllocator{ }, eventHandlerAllocator{ }, pages{  }, drawBuffer{}, numDrawnPages{ 0 }, pageHistory{}, historyDepth{ 0 }, windowSize{ UInt2::Zero } {
 		pages.reserve(16);
 	}
 
@@ -11,30 +65,100 @@ namespace Netcode::UI {
 	}
 
 	void PageManager::Update(float dt) {
-		if(activePage != nullptr) {
-			activePage->Update(dt);
+		CleanDrawBuffer();
+
+		for(uint32_t i = 0; i < numDrawnPages; i++) {
+			drawBuffer[i]->Update(dt);
 		}
 	}
 
 	void PageManager::WindowResized(const Netcode::UInt2 & newSize) {
-		if(activePage != nullptr) {
-			activePage->WindowSize(newSize);
+		for(auto & i : pages) {
+			if(i->Enabled()) {
+				i->WindowSize(newSize);
+			}
 		}
 		windowSize = newSize;
 	}
 
-	void PageManager::Deactivate() {
-		if(activePage != nullptr) {
-			activePage->Deactivate();
+	void PageManager::Display(uint32_t idx) {
+		auto page = pages[idx];
+		page->ZIndex(static_cast<float>(idx));
+		AddToDrawBuffer(page.get());
+	}
+
+	void PageManager::Hide(uint32_t idx) {
+		Page * page = pages[idx].get();
+
+		if(page->IsActive()) {
+			page->Deactivate();
+		}
+
+		EraseFromDrawBuffer(page);
+		SortDrawBuffer();
+	}
+
+	void PageManager::Deactivate(uint32_t value) {
+		pages[value]->Deactivate();
+	}
+
+	void PageManager::NavigateTo(uint32_t idx) {
+		const uint32_t groupIdx = historyDepth;
+
+		for(uint32_t i = 0; i < numDrawnPages; i++) {
+			if(drawBuffer[i]->IsActive()) {
+				OutOfRangeAssertion(historyDepth <= 16);
+				pageHistory[historyDepth++] = PageHistoryEntry{ drawBuffer[i], groupIdx };
+				drawBuffer[i]->Deactivate();
+			}
+		}
+
+		Display(idx);
+		Activate(idx);
+	}
+
+	void PageManager::ReturnToLastPage()
+	{
+		for(uint32_t i = 0; i < numDrawnPages; ) {
+			if(drawBuffer[i]->IsActive()) {
+				drawBuffer[i]->Deactivate();
+				EraseFromDrawBuffer(drawBuffer[i]);
+			} else {
+				i++;
+			}
+		}
+
+		if(historyDepth == 0) {
+			return;
+		}
+
+		int32_t n = static_cast<int32_t>(historyDepth - 1);
+		uint32_t groupIdx = pageHistory[n].groupIdx;
+		while(n >= 0 && pageHistory[n].groupIdx == groupIdx) {
+			pageHistory[n].pagePtr->Activate();
+
+			historyDepth = n;
+			n--;
 		}
 	}
 
 	void PageManager::Activate(uint32_t value) {
-		Netcode::UndefinedBehaviourAssertion(static_cast<uint32_t>(pages.size()) > value);
-		Deactivate();
-		activePage = pages[value];
-		activePage->Activate();
-		activePage->WindowSize(windowSize);
+		Netcode::OutOfRangeAssertion(static_cast<uint32_t>(pages.size()) > value);
+		auto v = pages[value];
+		v->Activate();
+		v->WindowSize(windowSize);
+	}
+
+	UInt2 PageManager::WindowSize() const
+	{
+		return windowSize;
+	}
+
+	void PageManager::Render(Netcode::SpriteBatchPtr batch)
+	{
+		for(uint32_t i = 0; i < numDrawnPages; i++) {
+			drawBuffer[i]->Render(batch);
+		}
 	}
 
 	std::shared_ptr<Page> PageManager::GetPage(uint32_t value)

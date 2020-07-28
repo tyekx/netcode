@@ -152,15 +152,21 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 
 		std::shared_ptr<LoginPage> loginPage = pageManager.CreatePage<LoginPage>(px);
-		loginPage->InitializeComponents();
-
 		std::shared_ptr<ServerBrowserPage> serverBrowserPage = pageManager.CreatePage<ServerBrowserPage>(px);
+		std::shared_ptr<LoadingPage> loadingPage = pageManager.CreatePage<LoadingPage>(px);
+
+		loginPage->InitializeComponents();
 		serverBrowserPage->InitializeComponents();
+		loadingPage->InitializeComponents();
 
 		pageManager.AddPage(loginPage);
 		pageManager.AddPage(serverBrowserPage);
-		pageManager.Activate(PagesEnum::LOGIN_PAGE);
-		renderSystem.renderer.ui_Input = loginPage;
+		pageManager.AddPage(loadingPage);
+
+		pageManager.NavigateTo(PagesEnum::LOGIN_PAGE);
+		pageManager.NavigateTo(PagesEnum::LOADING_PAGE);
+
+		renderSystem.renderer.ui_Input = &pageManager;
 
 		GameObject * testbox = gameScene->Create();
 		
@@ -487,7 +493,7 @@ public:
 	*/
 	virtual void Exit() override {
 		defaultPhysxMaterial.Reset();
-		renderSystem.renderer.ui_Input.reset();
+		renderSystem.renderer.ui_Input = nullptr;
 		pageManager.Destruct();
 		Service::Clear();
 		px.ReleaseResources();

@@ -25,6 +25,7 @@ namespace Netcode::UI {
         SizingType zIndexSizing;
         SizingType rotationOriginSizing;
         SizingType sizing;
+        OverflowType overflow;
         HorizontalAnchor horizontalRotationOrigin;
         VerticalAnchor verticalRotationOrigin;
         HorizontalAnchor horizontalContentAlignment;
@@ -65,6 +66,7 @@ namespace Netcode::UI {
         EventType<Control *> OnParentChanged;
         EventType<Control *> OnPositionChanged;
         EventType<Control *> OnSizeChanged;
+        EventType<Control *> OnAnimationsFinished;
 
     protected:
 
@@ -87,6 +89,11 @@ namespace Netcode::UI {
         void AddActorToScene();
 
         void RemoveActorFromScene();
+
+        /**
+        * Positions the children controls
+        */
+        virtual void AlignChildren();
 
         /**
         * Invoked when the Sizing is derived and the layout is being updated
@@ -194,6 +201,10 @@ namespace Netcode::UI {
 
         virtual ~Control() = default;
 
+        OverflowType Overflow() const;
+
+        void Overflow(OverflowType ot);
+
         HorizontalAnchor HorizontalRotationOrigin() const;
 
         void HorizontalRotationOrigin(HorizontalAnchor xAnchor);
@@ -238,6 +249,22 @@ namespace Netcode::UI {
         Float2 Size() const;
 
         void Size(const Float2 & sz);
+
+        float SizeX() const {
+            return size.x;
+        }
+
+        void SizeX(float v) {
+            Size(Float2{ v, size.y });
+        }
+
+        float SizeY() const {
+            return size.y;
+        }
+
+        void SizeY(float v) {
+            Size(Float2{ size.x, v });
+        }
 
         Float2 Position() const;
 

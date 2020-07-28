@@ -70,6 +70,10 @@ namespace Netcode::UI {
             animations.clear();
         }
 
+        bool Empty() const {
+            return numAnimations == 0;
+        }
+
     };
 
     template<typename VectorType>
@@ -121,15 +125,22 @@ namespace Netcode::UI {
     };
 
     class PlayOnceBehaviour {
+        float delay;
         bool isDone;
     public:
 
-        PlayOnceBehaviour() : isDone{ false } { }
+        PlayOnceBehaviour(float delay = 0.0f) : delay{ delay }, isDone { false } { }
 
         float operator()(float currentValue, float duration) {
             if(isDone) {
                 return duration;
             }
+
+            if(delay > 0.0f) {
+                delay -= currentValue;
+                return 0.0f;
+            }
+            
 
             if(currentValue >= duration) {
                 isDone = true;

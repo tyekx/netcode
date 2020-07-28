@@ -228,7 +228,9 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 			if(isNotTexture || scDiff || borderDiff || spriteDiff) {
 				if(pos > batchStart)
 				{
-					RenderBatch(batchTexture, batchTextureSize, &mSortedSprites[batchStart], pos - batchStart);
+					if(!batchTextureSize.AnyZero()) {
+						RenderBatch(batchTexture, batchTextureSize, &mSortedSprites[batchStart], pos - batchStart);
+					}
 				}
 
 				batchTexture = texture;

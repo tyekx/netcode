@@ -302,10 +302,6 @@ void LoginPage::InitializeComponents() {
 	aenami = assets->ImportTexture2D(L"aenami_dreamer.jpg");
 	Netcode::ResourceViewsRef aenamiRv = assets->CreateTextureRV(aenami);
 	Netcode::UInt2 aenamiSize = Netcode::UInt2{ static_cast<uint32_t>(aenami->GetDesc().width), aenami->GetDesc().height };
-
-	loadingIcon = assets->ImportTexture2D(L"loading_icon.png");
-	Netcode::ResourceViewsRef loadingIconRv = assets->CreateTextureRV(loadingIcon);
-	Netcode::UInt2 loadingIconSize = Netcode::UInt2{ static_cast<uint32_t>(loadingIcon->GetDesc().width), loadingIcon->GetDesc().height };
 	*/
 	std::shared_ptr<ui::Panel> rootPanel = controlAllocator.MakeShared<ui::Panel>(eventAllocator, CreatePhysxActor());
 	rootPanel->BackgroundColor(Netcode::Float4::One);
@@ -317,12 +313,6 @@ void LoginPage::InitializeComponents() {
 	rootPanel->BackgroundHorizontalAlignment(ui::HorizontalAnchor::CENTER);
 	rootPanel->BackgroundVerticalAlignment(ui::VerticalAnchor::MIDDLE);
 
-	std::shared_ptr<ui::Panel> loadingIconPanel = controlAllocator.MakeShared<ui::Panel>(eventAllocator, CreatePhysxActor());
-	//loadingIconPanel->BackgroundImage(loadingIconRv, loadingIconSize);
-	loadingIconPanel->Sizing(ui::SizingType::FIXED);
-	loadingIconPanel->BackgroundColor(Netcode::Float4::One);
-	loadingIconPanel->RotationOrigin(ui::HorizontalAnchor::CENTER, ui::VerticalAnchor::MIDDLE);
-	loadingIconPanel->Size(Netcode::Float2{ 64.0f, 64.0f });
 
 	std::shared_ptr<ui::InputGroup> inputGroup = controlAllocator.MakeShared<ui::InputGroup>(eventAllocator, CreatePhysxActor());
 	inputGroup->Sizing(ui::SizingType::DERIVED);
@@ -405,20 +395,7 @@ void LoginPage::InitializeComponents() {
 	inputGroup->AddChild(inputWrapper);
 	rootPanel->AddChild(inputGroup);
 
-	//rootPanel->AddChild(loadingIconPanel);
-
 	this->AddChild(rootPanel);
-	/*
-	std::unique_ptr<UI::Animation> loadingAnim = UI::MakeAnimation(
-		static_cast<UI::Panel*>(rootPanel.get()),
-		&UI::Panel::Opacity,
-		&UI::Panel::Opacity,
-		UI::Interpolator<float>{ 0.0f, 1.0f },
-		UI::RepeatBehaviour{},
-		&Netcode::Function::HalfStep, 1.0f
-	);
-
-	rootPanel->AddAnimation(std::move(loadingAnim));*/
 
 	std::unique_ptr<ui::Animation> positionAnim = ui::MakeAnimation(
 		static_cast<ui::Control *>(inputGroup.get()),
@@ -482,4 +459,144 @@ void ServerBrowserPage::InitializeComponents()
 	this->AddChild(rootPanel);
 
 	UpdateZIndices();
+}
+
+void LoadingPage::CloseDialog()
+{
+	rootPanel->AddAnimation(ui::MakeAnimation(
+		rootPanel.get(),
+		&ui::Control::SizeY,
+		&ui::Control::SizeY,
+		ui::Interpolator<float>{ rootPanel->SizeY(), 0.0f },
+		ui::PlayOnceBehaviour{  },
+		& Netcode::Function::EaseOutQuad,
+		0.25f
+	));
+
+	rootPanel->OnAnimationsFinished.Subscribe([this](ui::Control *) -> void {
+		Enabled(false);
+		Deactivate();
+	});
+}
+
+void LoadingPage::InitializeComponents() {
+	PageBase::InitializeComponents();
+
+	HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
+	VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
+
+	AssetManager * assets = Service::Get<AssetManager>();
+
+	loadingIcon = assets->ImportTexture2D(L"loading_icon.png");
+	Netcode::ResourceViewsRef loadingIconRv = assets->CreateTextureRV(loadingIcon);
+	Netcode::UInt2 loadingIconSize = Netcode::UInt2{ static_cast<uint32_t>(loadingIcon->GetDesc().width), loadingIcon->GetDesc().height };
+
+	warningIcon = assets->ImportTexture2D(L"warning_icon.png");
+	Netcode::ResourceViewsRef warningIconRv = assets->CreateTextureRV(warningIcon);
+	Netcode::UInt2 warningIconSize = Netcode::UInt2{ static_cast<uint32_t>(warningIcon->GetDesc().width), warningIcon->GetDesc().height };
+
+	std::shared_ptr<ui::Panel> rPanel = controlAllocator.MakeShared<ui::Panel>(eventAllocator, CreatePhysxActor());
+	rPanel->BackgroundColor(COLOR_SECONDARY);
+	rPanel->Sizing(ui::SizingType::FIXED);
+	rPanel->Size(Netcode::Float2{ 1920.0f, 300.0f });
+	rPanel->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
+	rPanel->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
+	rPanel->Overflow(ui::OverflowType::HIDDEN);
+	
+	std::shared_ptr<ui::StackPanel> contentPanel = controlAllocator.MakeShared<ui::StackPanel>(eventAllocator, CreatePhysxActor());
+	contentPanel->Sizing(ui::SizingType::DERIVED);
+	contentPanel->StackDirection(ui::Direction::VERTICAL);
+	contentPanel->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
+
+	std::shared_ptr<ui::Panel> warningIconPanel = controlAllocator.MakeShared<ui::Panel>(eventAllocator, CreatePhysxActor());
+	warningIconPanel->BackgroundImage(warningIconRv, warningIconSize);
+	warningIconPanel->Sizing(ui::SizingType::FIXED);
+	warningIconPanel->Size(Netcode::Float2{ 80.0f, 80.0f });
+	warningIconPanel->BackgroundColor(COLOR_ACCENT);
+
+	std::shared_ptr<ui::Panel> loadingIconPanel = controlAllocator.MakeShared<ui::Panel>(eventAllocator, CreatePhysxActor());
+	loadingIconPanel->BackgroundImage(loadingIconRv, loadingIconSize);
+	loadingIconPanel->Sizing(ui::SizingType::FIXED);
+	loadingIconPanel->Size(Netcode::Float2{ 80.0f, 80.0f });
+	loadingIconPanel->BackgroundColor(COLOR_ACCENT);
+	loadingIconPanel->RotationOrigin(ui::HorizontalAnchor::CENTER, ui::VerticalAnchor::MIDDLE);
+
+	std::shared_ptr<ui::Button> ackBtn = CreateButton(L"Aight");
+
+	std::shared_ptr<ui::Label> loadingLabel = controlAllocator.MakeShared<ui::Label>(eventAllocator, CreatePhysxActor());
+	loadingLabel->Text(L"You broke it");
+	loadingLabel->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
+	loadingLabel->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
+	loadingLabel->TextColor(COLOR_ACCENT);
+	loadingLabel->Sizing(ui::SizingType::FIXED);
+	loadingLabel->Size(Netcode::Float2{ 200.0f, 40.0f });
+	loadingLabel->Font(textFont);
+
+	std::unique_ptr<ui::Animation> loadingAnim = ui::MakeAnimation(
+		static_cast<ui::Control *>(loadingIconPanel.get()),
+		&ui::Control::RotationZ,
+		&ui::Control::RotationZ,
+		ui::Interpolator<float>{ 0.0f, Netcode::C_2PI },
+		ui::RepeatBehaviour{},
+		&Netcode::Function::LerpIn, 0.7f
+	);
+
+	ackBtn->OnClick.Subscribe([this](ui::Control *, ui::MouseEventArgs &) ->void {
+		CloseDialog();
+	});
+
+	loadingIconPanel->AddAnimation(std::move(loadingAnim));
+
+	//contentPanel->AddChild(loadingIconPanel);
+	contentPanel->AddChild(warningIconPanel);
+	contentPanel->AddChild(loadingLabel);
+	contentPanel->AddChild(ackBtn);
+	rPanel->AddChild(contentPanel);
+	this->AddChild(rPanel);
+
+	rootPanel = rPanel;
+
+	UpdateZIndices();
+}
+
+void LoadingPage::Activate()
+{
+	Page::Activate();
+
+	static_cast<ui::Panel *>(rootPanel.get())->BackgroundColor(Netcode::Float4::One);
+	rootPanel->Size(Netcode::Float2{ 0.0f, 20.0f });
+
+	rootPanel->AddAnimation(ui::MakeAnimation(
+		rootPanel.get(),
+		&ui::Control::SizeX,
+		&ui::Control::SizeX,
+		ui::Interpolator<float>{ 0.0f, 1920.0f },
+		ui::PlayOnceBehaviour{ 1.0f },
+		&Netcode::Function::EaseOutQuad,
+		0.5f
+	));
+
+	rootPanel->AddAnimation(ui::MakeAnimation(
+		static_cast<ui::Panel*>(rootPanel.get()),
+		&ui::Panel::BackgroundColor,
+		&ui::Panel::BackgroundColor,
+		ui::Interpolator<Netcode::Vector4>{ COLOR_ACCENT, COLOR_SECONDARY },
+		ui::PlayOnceBehaviour{ 1.25f },
+		& Netcode::Function::EaseOutQuad,
+		0.35f
+	));
+
+	rootPanel->AddAnimation(ui::MakeAnimation(
+		rootPanel.get(),
+		&ui::Control::SizeY,
+		&ui::Control::SizeY,
+		ui::Interpolator<float>{ 20.0f, 300.0f },
+		ui::PlayOnceBehaviour{ 1.25f },
+		&Netcode::Function::EaseOutQuad,
+		0.5f
+	));
+}
+
+void LoadingPage::SetError(const std::wstring & msg) {
+	errorContent->Enabled(true);
 }

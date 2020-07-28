@@ -69,6 +69,19 @@ namespace Netcode::UI {
         return BorderDesc{ };
     }
 
+    Rect Panel::GetContentRect() const {
+        Float2 pos = ScreenPosition();
+        Float2 sz = Size();
+
+        Rect rect;
+        rect.left = static_cast<int32_t>(pos.x);
+        rect.top = static_cast<int32_t>(pos.y);
+        rect.right = static_cast<int32_t>(pos.x + sz.x);
+        rect.bottom = static_cast<int32_t>(pos.y + sz.y);
+
+        return rect;
+    }
+
     UInt2 Panel::BackgroundImageSize() const {
         return backgroundImageSize;
     }
@@ -187,10 +200,29 @@ namespace Netcode::UI {
         BorderDesc borderDesc = GetBorderDesc();
 
         if(!spriteDesc.IsEmpty() || !borderDesc.IsEmpty()) {
+            if(Overflow() == OverflowType::HIDDEN) {
+                Rect rect = GetContentRect();
+
+                int32_t rectWidth = rect.right - rect.left;
+                int32_t rectHeight = rect.bottom - rect.top;
+
+                int32_t rectArea = rectWidth * rectHeight;
+                
+                if(rectArea == 0) {
+                    return;
+                }
+
+                batch->SetScissorRect(rect);
+            }
+
             batch->DrawSprite(spriteDesc, borderDesc, ScreenPosition(), Size(), RotationOrigin(), RotationZ(), ZIndex());
         }
 
         Control::Render(batch);
+
+        if(Overflow() == OverflowType::HIDDEN) {
+            batch->SetScissorRect();
+        }
     }
 
 }

@@ -34,6 +34,14 @@ namespace Netcode {
 
 		}
 
+		void Clear() {
+			handlers.clear();
+		}
+
+		bool Empty() const {
+			return handlers.empty();
+		}
+
 		EventToken Subscribe(std::function<void(T...)> callback) {
 			EventToken t = EventBase::NextToken();
 			handlers.emplace_back(t, std::move(callback));
@@ -44,6 +52,7 @@ namespace Netcode {
 			for(typename ContainerType::iterator it = handlers.begin(); it != handlers.end(); ++it) {
 				if(it->first == token) {
 					handlers.erase(it);
+					return;
 				}
 			}
 		}

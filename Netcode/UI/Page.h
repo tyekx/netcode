@@ -52,6 +52,8 @@ namespace Netcode::UI {
 		virtual void Activate();
 
 		virtual void Deactivate();
+
+		bool IsActive() const;
 	};
 
 }

@@ -16,6 +16,7 @@ namespace Netcode::UI {
         zIndexSizing{ SizingType::DERIVED },
         rotationOriginSizing{ SizingType::FIXED },
         sizing{ SizingType::FIXED },
+        overflow { OverflowType::VISIBLE },
         horizontalRotationOrigin{ HorizontalAnchor::LEFT },
         verticalRotationOrigin{ VerticalAnchor::TOP },
         horizontalContentAlignment{ HorizontalAnchor::LEFT },
@@ -43,7 +44,8 @@ namespace Netcode::UI {
         OnDisabled{ allocator },
         OnParentChanged{ allocator },
         OnPositionChanged{ allocator },
-        OnSizeChanged{ allocator } {
+        OnSizeChanged{ allocator },
+        OnAnimationsFinished{ allocator } {
 
     }
 
@@ -56,6 +58,8 @@ namespace Netcode::UI {
         actor->userData = this;
 
         pxActor = std::move(actor);
+
+        lastScenePtr = nullptr;
     }
 
     void Control::PropagateOnKeyPressed(KeyEventArgs & args)
@@ -74,6 +78,14 @@ namespace Netcode::UI {
         if(pxActor != nullptr) {
             AssignActor(std::move(pxActor));
         }
+    }
+
+    OverflowType Control::Overflow() const {
+        return overflow;
+    }
+
+    void Control::Overflow(OverflowType ot) {
+        overflow = ot;
     }
 
     HorizontalAnchor Control::HorizontalRotationOrigin() const {
@@ -185,11 +197,25 @@ namespace Netcode::UI {
             physx::PxU32 returnedShapes = pxActor->getShapes(&shape, 1, 0);
 
             if(returnedShapes == 1) {
-                Float2 halfSize = Vector2{ Size() } / 2.0f;
+                Vector2 vSize = Size();
 
-                shape->setGeometry(physx::PxBoxGeometry{ halfSize.x, halfSize.y, 0.25f });
+                if(vSize.AnyZero()) {
+                    if(lastScenePtr == nullptr) {
+                        lastScenePtr = pxActor->getScene();
+                        lastScenePtr->removeActor(*pxActor);
+                    }
+                } else {
+                    if(lastScenePtr != nullptr) {
+                        lastScenePtr->addActor(*pxActor);
+                        lastScenePtr = nullptr;
+                    }
 
-                UpdateActorPose();
+                    Float2 halfSize = vSize / 2.0f;
+
+                    shape->setGeometry(physx::PxBoxGeometry{ halfSize.x, halfSize.y, 0.25f });
+
+                    UpdateActorPose();
+                }
             }
         }
     }
@@ -214,6 +240,12 @@ namespace Netcode::UI {
                     lastScenePtr->removeActor(*pxActor);
                 }
             }
+        }
+    }
+
+    void Control::AlignChildren() {
+        for(auto & i : children) {
+            i->PropagateOnPositionChanged();
         }
     }
 
@@ -427,6 +459,11 @@ namespace Netcode::UI {
     {
         animations.Update(dt);
 
+        if(animations.Empty() && !OnAnimationsFinished.Empty()) {
+            OnAnimationsFinished.Invoke(this);
+            OnAnimationsFinished.Clear();
+        }
+
         for(auto & child : children) {
             child->Update(dt);
         }
@@ -559,6 +596,8 @@ namespace Netcode::UI {
             if(parent->Sizing() == SizingType::DERIVED) {
                 parent->PropagateOnSizeChanged();
             }
+
+            parent->AlignChildren();
         }
 
         // sanity check since DERIVED -> INHERITED is disallowed

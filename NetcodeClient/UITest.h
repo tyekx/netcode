@@ -7,8 +7,8 @@
 enum PagesEnum {
 	LOGIN_PAGE,
 	SERVER_BROWSER_PAGE,
-	MAIN_MENU,
-	LOADING_PAGE
+	LOADING_PAGE,
+	MAIN_MENU
 };
 
 namespace Netcode::UI {
@@ -42,7 +42,6 @@ public:
 
 class LoginPage : public PageBase {
 	Netcode::GpuResourceRef aenami;
-	Netcode::GpuResourceRef loadingIcon;
 public:
 	using PageBase::PageBase;
 
@@ -57,6 +56,36 @@ public:
 	using PageBase::PageBase;
 
 	virtual void InitializeComponents() override;
+};
+
+class LoadingPage : public PageBase {
+	Netcode::GpuResourceRef loadingIcon;
+	Netcode::GpuResourceRef warningIcon;
+
+	std::shared_ptr<Netcode::UI::Control> rootPanel;
+
+	std::shared_ptr<Netcode::UI::Control> errorContent;
+	std::shared_ptr<Netcode::UI::Control> dialogContent;
+	std::shared_ptr<Netcode::UI::Control> loaderContent;
+
+	void CloseDialog();
+
+public:
+	using PageBase::PageBase;
+
+	virtual void InitializeComponents() override;
+
+	virtual void Activate() override;
+
+	void SetError(const std::wstring & msg);
+
+	void SetDialog(const std::wstring & msg) {
+
+	}
+
+	void SetLoader(const std::wstring & msg) {
+
+	}
 };
 
 
