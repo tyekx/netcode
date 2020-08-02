@@ -13,7 +13,7 @@ namespace Netcode::IO {
 		Directory();
 		~Directory();
 
-		static bool Exists(std::wstring_view path);
+		static bool Exists(const std::wstring & path);
 
 	};
 

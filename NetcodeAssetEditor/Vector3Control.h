@@ -14,9 +14,22 @@ namespace winrt::NetcodeAssetEditor::implementation
         Vector3Control();
 
         static Windows::UI::Xaml::DependencyProperty valueProperty;
+        static Windows::UI::Xaml::DependencyProperty isReadOnlyProperty;
 
-       Windows::Foundation::Numerics::float3 Value() {
-           return unbox_value< Windows::Foundation::Numerics::float3 >(GetValue(valueProperty));
+        bool IsReadOnly() const {
+            return unbox_value<bool>(GetValue(isReadOnlyProperty));
+        }
+
+        void IsReadOnly(bool value) {
+            SetValue(isReadOnlyProperty, box_value(value));
+        }
+
+        static Windows::UI::Xaml::DependencyProperty IsReadOnlyProperty() {
+            return isReadOnlyProperty;
+        }
+
+        Windows::Foundation::Numerics::float3 Value() const {
+           return unbox_value<Windows::Foundation::Numerics::float3>(GetValue(valueProperty));
         }
 
         static Windows::UI::Xaml::DependencyProperty ValueProperty() {

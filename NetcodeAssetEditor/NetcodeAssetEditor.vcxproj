@@ -78,6 +78,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <PreprocessorDefinitions>BOOST_BEAST_USE_WIN32_FILE=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SuppressStartupBanner Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</SuppressStartupBanner>
     </ClCompile>
     <Link>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Netcode.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -115,6 +116,7 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     <ClInclude Include="DC_Animation.h" />
     <ClInclude Include="DC_Bone.h" />
     <ClInclude Include="DC_Collider.h" />
+    <ClInclude Include="DC_GeometryPage.h" />
     <ClInclude Include="DC_Lod.h" />
     <ClInclude Include="DC_MainPage.h" />
     <ClInclude Include="DC_Material.h" />
@@ -130,6 +132,7 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     <ClInclude Include="FBXImporter.h" />
     <ClInclude Include="FloatBox.h" />
     <ClInclude Include="GBuffer.h" />
+    <ClInclude Include="GCommandTransform.h" />
     <ClInclude Include="GeometryPage.h">
       <DependentUpon>GeometryPage.xaml</DependentUpon>
     </ClInclude>
@@ -187,6 +190,7 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     <ClCompile Include="BonesPage.cpp">
       <DependentUpon>BonesPage.xaml</DependentUpon>
     </ClCompile>
+    <ClCompile Include="BoundingBoxHelpers.cpp" />
     <ClCompile Include="CollidersPage.cpp">
       <DependentUpon>CollidersPage.xaml</DependentUpon>
     </ClCompile>
@@ -198,6 +202,7 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     <ClCompile Include="DC_Animation.cpp" />
     <ClCompile Include="DC_Bone.cpp" />
     <ClCompile Include="DC_Collider.cpp" />
+    <ClCompile Include="DC_GeometryPage.cpp" />
     <ClCompile Include="DC_Lod.cpp" />
     <ClCompile Include="DC_MainPage.cpp" />
     <ClCompile Include="DC_Material.cpp" />
@@ -210,6 +215,8 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     <ClCompile Include="EditorModuleFactory.cpp" />
     <ClCompile Include="FBXImporter.cpp" />
     <ClCompile Include="FloatBox.cpp" />
+    <ClCompile Include="GCommandTransform.cpp" />
+    <ClCompile Include="Generated Files\module.g.cpp" />
     <ClCompile Include="GeometryPage.cpp">
       <DependentUpon>GeometryPage.xaml</DependentUpon>
     </ClCompile>
@@ -219,11 +226,11 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     <ClCompile Include="MaterialsPage.cpp">
       <DependentUpon>MaterialsPage.xaml</DependentUpon>
     </ClCompile>
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="NetcodeAssetExporter.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="SelectionToVisibilityConverter.cpp" />
     <ClCompile Include="UC_Lod.cpp">
       <DependentUpon>UC_Lod.xaml</DependentUpon>

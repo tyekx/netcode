@@ -21,8 +21,7 @@ namespace Netcode::IO {
 		impl.reset();
 	}
 
-	bool Directory::Exists(std::wstring_view path)
-	{
+	bool Directory::Exists(const std::wstring & path) {
 		DWORD attribs = GetFileAttributesW(path.data());
 
 		return (attribs != INVALID_FILE_ATTRIBUTES) &&

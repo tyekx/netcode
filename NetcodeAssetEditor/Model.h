@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <memory>
 #include <vector>
 #include <DirectXCollision.h>
@@ -51,6 +52,19 @@ struct Mesh {
 	uint32_t vertexStride;
 	uint32_t materialIdx;
 	DirectX::BoundingBox boundingBox;
+
+	static DirectX::BoundingBox CalculateBoundingBox(const Mesh & mesh);
+
+	Mesh() = default;
+	Mesh(Mesh &&) noexcept = default;
+	Mesh & operator=(Mesh &&) noexcept = default;
+	Mesh & operator=(const Mesh &) noexcept = delete;
+	Mesh(const Mesh & rhs) = delete;
+	~Mesh() noexcept = default;
+
+	Mesh Clone() const;
+
+	void ApplyTransformation(const Netcode::Float4x4 & mat);
 };
 
 struct Material {

@@ -7,6 +7,9 @@
 #include "BoundingBoxHelpers.h"
 #include <Netcode/BasicGeometry.h>
 #include <Netcode/IO/Path.h>
+#include <Netcode/IO/Json.h>
+#include <Netcode/IO/File.h>
+#include <Netcode/Config.h>
 
 namespace Netcode::Module {
 
@@ -177,8 +180,21 @@ namespace Netcode::Module {
 		Initialize modules
 		*/
 		virtual void Setup(IModuleFactory * factory) override {
-			Netcode::IO::Path::SetMediaRoot(L"Media");
-			Netcode::IO::Path::SetShaderRoot(L"Shaders");
+			Netcode::IO::Path::SetShaderRoot(L"C:/work/directx12/Bin/v142-msvc/AppX/Shaders");
+			Netcode::IO::Path::SetMediaRoot(L"C:/work/directx12/Bin/v142-msvc/AppX/Media");
+			Netcode::IO::Path::SetWorkingDirectiory(L"C:/work/directx12/Bin/v142-msvc/AppX");
+
+			Netcode::IO::File configFile{ L"config.json" };
+
+			if(!Netcode::IO::File::Exists(configFile.GetFullPath())) {
+				Log::Error("File does not exist");
+				return;
+			}
+
+			rapidjson::Document doc;
+			Netcode::IO::ParseJson(doc, configFile.GetFullPath());
+
+			Netcode::Config::LoadJson(doc);
 
 			events = std::make_unique<Netcode::Module::AppEventSystem>();
 

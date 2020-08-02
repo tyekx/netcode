@@ -145,6 +145,20 @@ namespace NetcodeAssetEditor
         Windows.Foundation.Collections.IObservableVector<DC_Mesh> Meshes;
     }
 
+    [bindable]
+    [default_interface]
+    runtimeclass DC_GeometryPage : Windows.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        DC_GeometryPage();
+
+        DC_MainPage Shared;
+
+        Single UniformScale;
+        Windows.Foundation.Numerics.Vector3 RotationInDegrees;
+        Windows.Foundation.Numerics.Vector3 BoundingBoxSize;
+        Windows.Foundation.Collections.IObservableVector<Windows.Foundation.Numerics.Matrix4x4> TransformBuffer{ get; };
+    }
+
     [default_interface]
     runtimeclass FloatBox : Windows.UI.Xaml.Controls.TextBox {
         FloatBox();

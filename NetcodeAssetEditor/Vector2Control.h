@@ -14,17 +14,30 @@ namespace winrt::NetcodeAssetEditor::implementation
         Vector2Control();
 
         static Windows::UI::Xaml::DependencyProperty valueProperty;
+        static Windows::UI::Xaml::DependencyProperty isReadOnlyProperty;
 
-        Windows::Foundation::Numerics::float2 Value() {
-            return unbox_value< Windows::Foundation::Numerics::float2>(GetValue(valueProperty));
+        bool IsReadOnly() const {
+            return unbox_value<bool>(GetValue(isReadOnlyProperty));
         }
 
-        static Windows::UI::Xaml::DependencyProperty ValueProperty() {
-            return valueProperty;
+        void IsReadOnly(bool value) {
+            SetValue(isReadOnlyProperty, box_value(value));
+        }
+
+        static Windows::UI::Xaml::DependencyProperty IsReadOnlyProperty() {
+            return isReadOnlyProperty;
+        }
+
+        Windows::Foundation::Numerics::float2 Value() const {
+            return unbox_value<Windows::Foundation::Numerics::float2>(GetValue(valueProperty));
         }
 
         void Value(Windows::Foundation::Numerics::float2 const & value) {
             SetValue(valueProperty, box_value(value));
+        }
+
+        static Windows::UI::Xaml::DependencyProperty ValueProperty() {
+            return valueProperty;
         }
 
         void OnValueUpdated(Windows::Foundation::IInspectable const & s, Windows::UI::Xaml::Data::PropertyChangedEventArgs const & e) {

@@ -17,7 +17,7 @@ PUBLIC
 PRIVATE
 	
 	"Math.cpp"
- "Exceptions.cpp")
+ "Exceptions.cpp" "Uri.h")
 
 add_subdirectory(Math)
 add_subdirectory(Exception)

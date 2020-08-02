@@ -20,7 +20,9 @@ namespace NetcodeAssetEditor
         Vector4Control();
 
         static Windows.UI.Xaml.DependencyProperty ValueProperty{ get; };
+        static Windows.UI.Xaml.DependencyProperty IsReadOnlyProperty{ get; };
 
         IInspectable Value;
+        Boolean IsReadOnly;
     }
 }

@@ -103,7 +103,7 @@ namespace Netcode::IO {
 			return GetFileSize(handle, nullptr);
 		}
 
-		std::wstring_view GetFullPath() const
+		const std::wstring & GetFullPath() const
 		{
 			return path;
 		}
@@ -214,7 +214,7 @@ namespace Netcode::IO {
 		return impl->GetSize();
 	}
 
-	std::wstring_view File::GetFullPath() const
+	const std::wstring & File::GetFullPath() const
 	{
 		return impl->GetFullPath();
 	}
@@ -239,9 +239,9 @@ namespace Netcode::IO {
 		return impl->GetParentDirectory();
 	}
 
-	bool File::Exists(std::wstring_view path)
+	bool File::Exists(const std::wstring & path)
 	{
-		DWORD attribs = GetFileAttributesW(path.data());
+		DWORD attribs = GetFileAttributesW(path.c_str());
 
 		return (attribs != INVALID_FILE_ATTRIBUTES) &&
 			  !(attribs & FILE_ATTRIBUTE_DIRECTORY);

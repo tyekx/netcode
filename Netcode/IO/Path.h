@@ -11,8 +11,6 @@ namespace Netcode::IO {
 		static std::wstring workingDirectory;
 		static std::wstring shaderRoot;
 		static std::wstring mediaRoot;
-
-		static constexpr wchar_t GetOtherSlash();
 	public:
 
 		static void SetWorkingDirectiory(const std::wstring & pwd);
@@ -27,7 +25,9 @@ namespace Netcode::IO {
 
 		static std::wstring_view MediaRoot();
 
-		static constexpr wchar_t GetSlash();
+		static wchar_t GetOtherSlash();
+
+		static wchar_t GetSlash();
 
 		static void FixFilePath(std::wstring & str);
 

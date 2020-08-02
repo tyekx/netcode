@@ -45,6 +45,8 @@ namespace Netcode::Graphics::DX12 {
 		virtual void CreateUAV(uint32_t idx, GpuResourcePtr resourceHandle) override;
 
 		virtual void CreateSampler(uint32_t idx, GpuResourcePtr resourceHandle)  override;
+
+		virtual void RemoveSRV(uint32_t idx, Graphics::ResourceDimension expectedResourceDimension) override;
 	};
 
 	using DX12ResourceViews = Netcode::Graphics::DX12::ResourceViews;

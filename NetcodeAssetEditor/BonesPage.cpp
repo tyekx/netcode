@@ -22,7 +22,9 @@ namespace winrt::NetcodeAssetEditor::implementation
 
     void BonesPage::OnNavigatedTo(Windows::UI::Xaml::Navigation::NavigationEventArgs const & e) {
         if(firstNavigation) {
-            DataContext(e.Parameter());
+            MainPage mainPage = e.Parameter().as<MainPage>();
+
+            DataContext(mainPage.DataContext());
 
             firstNavigation = false;
         }

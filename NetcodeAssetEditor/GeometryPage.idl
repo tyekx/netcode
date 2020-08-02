@@ -1,6 +1,11 @@
 namespace NetcodeAssetEditor
 {
     [default_interface]
+    runtimeclass GCommandTransform : Windows.UI.Xaml.Input.ICommand {
+        GCommandTransform();
+    }
+
+    [default_interface]
     runtimeclass GeometryPage : Windows.UI.Xaml.Controls.Page
     {
         GeometryPage();

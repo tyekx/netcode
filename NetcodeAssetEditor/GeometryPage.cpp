@@ -10,15 +10,23 @@
 using namespace winrt;
 using namespace Windows::UI::Xaml;
 
-namespace winrt::NetcodeAssetEditor::implementation
-{
-    GeometryPage::GeometryPage()
-    {
-        InitializeComponent();
-        firstNavigation = true;
+static DirectX::BoundingBox CalculateBoundingBoxForModel(const std::vector<Mesh> & meshes) {
+    if(meshes.empty()) {
+        return DirectX::BoundingBox{};
     }
 
-    void GeometryPage::ListView_SelectionChanged(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs const & e)
+    DirectX::BoundingBox boundingBox = meshes.front().boundingBox;
+
+    for(auto it = std::cbegin(meshes) + 1; it != std::cend(meshes); ++it) {
+        boundingBox = MergeBoundingBoxes(boundingBox, it->boundingBox);
+    }
+
+    return boundingBox;
+}
+
+namespace winrt::NetcodeAssetEditor::implementation
+{
+    void GeometryPage::UpdateRenderedModel()
     {
         auto inspectableVector = geometryListView().SelectedRanges();
 
@@ -37,7 +45,7 @@ namespace winrt::NetcodeAssetEditor::implementation
             auto range = inspectableVector.GetAt(i);
 
             for(uint32_t j = range.FirstIndex(); j <= range.LastIndex(); ++j) {
-                LOD * lodRef = &Global::Model->meshes[j].lods.at(0);
+                LOD * lodRef = &transformedMeshes[j].lods.at(0);
 
                 drawCandidates.push_back(lodRef);
             }
@@ -47,9 +55,102 @@ namespace winrt::NetcodeAssetEditor::implementation
         Global::EditorApp->Run();
     }
 
+    void GeometryPage::OnModelChanged(uint64_t value) {
+        if(Global::Model != nullptr) {
+            transformedMeshes.clear();
+            transformedMeshes.reserve(Global::Model->meshes.size());
+
+
+            auto dc = DataContext().as<DC_GeometryPage>();
+            dc->TransformBuffer().Clear();
+
+            for(const Mesh & m : Global::Model->meshes) {
+                transformedMeshes.emplace_back(std::move(m.Clone()));
+            }
+
+            if(!Global::Model->meshes.empty()) {
+                auto boundingBox = CalculateBoundingBoxForModel(Global::Model->meshes);
+
+                dc->BoundingBoxSize(Windows::Foundation::Numerics::float3{
+                    2.0f * boundingBox.Extents.x,
+                    2.0f * boundingBox.Extents.y,
+                    2.0f * boundingBox.Extents.z
+                });
+
+                Global::EditorApp->SetBoundingBoxes({ boundingBox });
+            }
+        }
+    }
+
+    GeometryPage::GeometryPage()
+    {
+        InitializeComponent();
+        firstNavigation = true;
+    }
+
+    void GeometryPage::ListView_SelectionChanged(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs const & e)
+    {
+        UpdateRenderedModel();
+    }
+
+    void GeometryPage::OnTransformBufferChanged(Windows::Foundation::Collections::IObservableVector<Windows::Foundation::Numerics::float4x4> sender, Windows::Foundation::Collections::IVectorChangedEventArgs args) {
+        namespace wn = Windows::Foundation::Numerics;
+
+        if(sender.Size() == 0) {
+            return;
+        }
+
+        wn::float4x4 transform = wn::float4x4::identity();
+
+        for(wn::float4x4 i : sender) {
+            transform = transform * i;
+        }
+
+        transform = wn::transpose(transform);
+
+        Netcode::Float4x4 v{
+            &transform.m11
+        };
+
+        std::vector<Mesh> cloned;
+        cloned.reserve(Global::Model->meshes.size());
+
+        for(const Mesh & m : Global::Model->meshes) {
+            Mesh cMesh = m.Clone();
+            cMesh.ApplyTransformation(v);
+            cloned.emplace_back(std::move(cMesh));
+        }
+
+        transformedMeshes = std::move(cloned);
+
+        auto boundingBox = CalculateBoundingBoxForModel(transformedMeshes);
+        auto dc = DataContext().as<NetcodeAssetEditor::DC_GeometryPage>();
+
+        dc.BoundingBoxSize(Windows::Foundation::Numerics::float3{
+            2.0f * boundingBox.Extents.x,
+            2.0f * boundingBox.Extents.y,
+            2.0f * boundingBox.Extents.z
+        });
+
+        Global::EditorApp->SetBoundingBoxes({ boundingBox });
+        UpdateRenderedModel();
+    }
+
     void GeometryPage::OnNavigatedTo(Windows::UI::Xaml::Navigation::NavigationEventArgs const & e) {
         if(firstNavigation) {
-            DataContext(e.Parameter());
+            namespace wc = Windows::Foundation::Collections;
+            namespace wn = Windows::Foundation::Numerics;
+
+            MainPage mainPage = e.Parameter().as<MainPage>();
+
+            mainPage.ModelChanged(NetcodeAssetEditor::ModelChangedHandler{ this, &GeometryPage::OnModelChanged });
+
+            auto dataContext = DataContext().as<DC_GeometryPage>();
+            dataContext->Shared(mainPage.DataContext().as<NetcodeAssetEditor::DC_MainPage>());
+            dataContext->TransformBuffer().VectorChanged(wc::VectorChangedEventHandler<wn::float4x4>{ 
+                this,
+                &GeometryPage::OnTransformBufferChanged
+            });
 
             geometryListView().SelectAll();
 
@@ -60,7 +161,7 @@ namespace winrt::NetcodeAssetEditor::implementation
 
     void GeometryPage::geometryListView_ContainerContentChanging(Windows::UI::Xaml::Controls::ListViewBase const & sender, Windows::UI::Xaml::Controls::ContainerContentChangingEventArgs const & args)
     {
-        //geometryListView().SelectAll();
+
     }
 }
 

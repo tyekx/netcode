@@ -46,7 +46,7 @@ namespace winrt::NetcodeAssetEditor::implementation
         winrt::fire_and_forget AssetCtx_ImportAnimation_Click(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
         
 
-    
+        void CommandInvokeHandler(Windows::UI::Popups::IUICommand const & command);
 
         void swapChainPanel_Loaded(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
         void swapChainPanel_PointerPressed(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::Input::PointerRoutedEventArgs const & e);

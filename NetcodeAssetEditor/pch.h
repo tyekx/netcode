@@ -21,6 +21,7 @@
 #include <winrt/Windows.UI.Core.h>
 #include <winrt/Windows.UI.Input.h>
 #include <winrt/Windows.UI.Xaml.Media.h>
+#include <winrt/Windows.UI.Popups.h>
 
 // not part of winrt for some reason?
 #include <windows.ui.xaml.media.dxinterop.h>

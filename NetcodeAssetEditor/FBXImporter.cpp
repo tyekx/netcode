@@ -429,7 +429,6 @@ static Material ImportMaterial(const aiMaterial * mat) {
 		imat.name = str.C_Str();
 	}
 
-
 	unsigned int diffuseCount = mat->GetTextureCount(aiTextureType_DIFFUSE);
 	unsigned int normalCount = mat->GetTextureCount(aiTextureType_NORMALS);
 	unsigned int emissiveColorCount = mat->GetTextureCount(aiTextureType_EMISSION_COLOR);
@@ -446,24 +445,30 @@ static Material ImportMaterial(const aiMaterial * mat) {
 	unsigned int unknownTexCount = mat->GetTextureCount(aiTextureType_UNKNOWN);
 	unsigned int shininessCount = mat->GetTextureCount(aiTextureType_SHININESS);
 	unsigned int opacity = mat->GetTextureCount(aiTextureType_OPACITY);
-	unsigned int outOfIdeas = mat->GetTextureCount(_aiTextureType_Force32Bit);
-	/*
+
+	uint32_t sum = diffuseCount + normalCount + emissiveColorCount + emissiveCount + displacementCount + ambientCount + ambientOccCount + lightmapCount
+		+ heightCount + reflectionCount + kd + metalnessCount + unknownTexCount + shininessCount + opacity;
+
+	char buffer[256];
+
 	for(unsigned int i = 0; i < mat->mNumProperties; ++i) {
 		const aiMaterialProperty * prop = mat->mProperties[i];
-		printf("key: %s | idx: %d idx2: %d\r\n", prop->mKey.C_Str(), prop->mIndex, prop->mType);
+		sprintf_s(buffer, "key: %s | idx: %d idx2: %d\r\n", prop->mKey.C_Str(), prop->mIndex, prop->mType);
+
+		OutputDebugStringA(buffer);
 		//$raw.ShininessExponent|file
 		//$raw.DiffuseColor|file
 		switch(prop->mType) {
 			case aiPropertyTypeInfo::aiPTI_String:
 			{
 				aiString & str2 = *reinterpret_cast<aiString *>(prop->mData);
-				printf("\t (string[%d]): %s\r\n", prop->mDataLength, str2.C_Str());
+				sprintf_s(buffer, "\t (string[%d]): %s\r\n", prop->mDataLength, str2.C_Str());
 			}
 			break;
 			case aiPropertyTypeInfo::aiPTI_Integer:
 			{
 				int & v = *reinterpret_cast<int *>(prop->mData);
-				printf("\t    (int[%d]): %d\r\n", prop->mDataLength / 4, v);
+				sprintf_s(buffer, "\t    (int[%d]): %d\r\n", prop->mDataLength / 4, v);
 			}
 			break;
 			case aiPropertyTypeInfo::aiPTI_Float:
@@ -472,23 +477,24 @@ static Material ImportMaterial(const aiMaterial * mat) {
 
 				switch(prop->mDataLength) {
 					case 4:
-						printf("\t  (float[%d]): %f\r\n", 1, *f);
+						sprintf_s(buffer, "\t  (float[%d]): %f\r\n", 1, *f);
 						break;
 					case 8:
-						printf("\t  (float[%d]): %f %f\r\n", 2, f[0], f[1]);
+						sprintf_s(buffer, "\t  (float[%d]): %f %f\r\n", 2, f[0], f[1]);
 						break;
 					case 12:
-						printf("\t  (float[%d]): %f %f %f\r\n", 3, f[0], f[1], f[2]);
+						sprintf_s(buffer, "\t  (float[%d]): %f %f %f\r\n", 3, f[0], f[1], f[2]);
 						break;
 					case 16:
-						printf("\t  (float[%d]): %f %f %f %f\r\n", 4, f[0], f[1], f[2], f[3]);
+						sprintf_s(buffer, "\t  (float[%d]): %f %f %f %f\r\n", 4, f[0], f[1], f[2], f[3]);
 						break;
 				}
-				//printf("\t  (float[%d]): %f\r\n", prop->mDataLength / 4, f);
 			}
 			break;
 		}
-	}*/
+
+		OutputDebugStringA(buffer);
+	}
 
 	if(diffuseCount > 0) {
 		if(diffuseCount > 1) {

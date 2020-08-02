@@ -15,6 +15,19 @@ namespace winrt::NetcodeAssetEditor::implementation
         Vector4Control();
 
         static Windows::UI::Xaml::DependencyProperty valueProperty;
+        static Windows::UI::Xaml::DependencyProperty isReadOnlyProperty;
+
+        bool IsReadOnly() const {
+            return unbox_value<bool>(GetValue(isReadOnlyProperty));
+        }
+
+        void IsReadOnly(bool value) {
+            SetValue(isReadOnlyProperty, box_value(value));
+        }
+
+        static Windows::UI::Xaml::DependencyProperty IsReadOnlyProperty() {
+            return isReadOnlyProperty;
+        }
 
         Windows::Foundation::IInspectable Value() {
             return GetValue(valueProperty);

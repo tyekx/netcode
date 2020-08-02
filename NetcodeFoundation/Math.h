@@ -8,6 +8,10 @@
 
 namespace Netcode {
 
+	float DegreesToRadians(float degrees);
+
+	float RadiansToDegrees(float rads);
+
 	Matrix NC_MATH_CALLCONV AffineTransformation(Vector3 scaling, Vector3 rotationOrigin, Quaternion rotation, Vector3 translation);
 
 	Matrix NC_MATH_CALLCONV AffineTransformation(Vector3 scaling, Quaternion rotation, Vector3 translation);

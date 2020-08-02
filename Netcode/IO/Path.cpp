@@ -18,7 +18,6 @@ namespace Netcode::IO {
 
 		workingDirectory = pwd;
 		Path::FixDirectoryPath(workingDirectory);
-		UndefinedBehaviourAssertion(Directory::Exists(workingDirectory));
 	}
 
 	void Path::SetShaderRoot(const std::wstring & rootDir) {
@@ -27,7 +26,6 @@ namespace Netcode::IO {
 
 		shaderRoot = rootDir;
 		Path::FixDirectoryPath(shaderRoot);
-		UndefinedBehaviourAssertion(Directory::Exists(shaderRoot));
 	}
 
 	void Path::SetMediaRoot(const std::wstring & rootDir) {
@@ -36,7 +34,6 @@ namespace Netcode::IO {
 
 		mediaRoot = rootDir;
 		Path::FixDirectoryPath(mediaRoot);
-		UndefinedBehaviourAssertion(Directory::Exists(mediaRoot));
 	}
 
 	std::wstring_view Path::WorkingDirectory() {
@@ -51,7 +48,7 @@ namespace Netcode::IO {
 		return mediaRoot;
 	}
 
-	constexpr wchar_t Path::GetOtherSlash() {
+	wchar_t Path::GetOtherSlash() {
 #if defined(NETCODE_OS_WINDOWS)
 		return L'/';
 #else
@@ -59,7 +56,7 @@ namespace Netcode::IO {
 #endif
 	}
 
-	constexpr wchar_t Path::GetSlash() {
+	wchar_t Path::GetSlash() {
 #if defined(NETCODE_OS_WINDOWS)
 		return L'\\';
 #else

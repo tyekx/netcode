@@ -41,7 +41,6 @@ namespace winrt::NetcodeAssetEditor::implementation
                 dcMat.FresnelR0(Windows::Foundation::Numerics::float3(material.fresnelR0.x, material.fresnelR0.y, material.fresnelR0.z));
                 dcMat.AmbientMapReference(to_hstring(material.ambientMapReference));
                 dcMat.DiffuseMapReference(to_hstring(material.diffuseMapReference));
-                dcMat.HeightMapReference(L"");
                 dcMat.NormalMapReference(to_hstring(material.normalMapReference));
                 dcMat.RoughnessMapReference(to_hstring(material.roughnessMapReference));
                 dcMat.SpecularMapReference(to_hstring(material.specularMapReference));

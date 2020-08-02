@@ -484,6 +484,8 @@ namespace Netcode {
 		virtual void CreateDSV(GpuResourcePtr resourceHandle) = 0;
 		virtual void CreateUAV(uint32_t idx, GpuResourcePtr resourceHandle) = 0;
 		virtual void CreateSampler(uint32_t idx, GpuResourcePtr resourceHandle) = 0;
+
+		virtual void RemoveSRV(uint32_t idx, Graphics::ResourceDimension expectedResourceDimension) = 0;
 	};
 
 	using ResourceViewsRef = std::shared_ptr<ResourceViews>;

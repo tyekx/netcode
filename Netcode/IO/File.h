@@ -35,7 +35,7 @@ namespace Netcode::IO {
 
 		size_t GetSize() const;
 
-		std::wstring_view GetFullPath() const;
+		const std::wstring & GetFullPath() const;
 
 		std::wstring_view GetFullName() const;
 
@@ -45,7 +45,7 @@ namespace Netcode::IO {
 
 		std::wstring_view GetParentDirectory() const;
 
-		static bool Exists(std::wstring_view path);
+		static bool Exists(const std::wstring & path);
 	};
 
 	template<typename T>

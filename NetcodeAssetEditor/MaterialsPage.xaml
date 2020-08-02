@@ -57,29 +57,29 @@
                     <local:FloatBox Margin="30,0,30,0" Text="{Binding SelectedItem.Shininess, Mode=TwoWay, ElementName=materialsList}" MaxWidth="240"></local:FloatBox>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
-                    <TextBlock Margin="15,0,0,5" Text="DiffuseMapReference:"></TextBlock>
+                    <TextBlock Margin="15,0,0,5" Text="Diffuse Texture Relative Path:"></TextBlock>
                     <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.DiffuseMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
-                    <TextBlock Margin="15,0,0,5" Text="NormalMapReference:"></TextBlock>
+                    <TextBlock Margin="15,0,0,5" Text="Normal Texture Relative Path:"></TextBlock>
                     <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.NormalMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
-                    <TextBlock Margin="15,0,0,5" Text="SpecularMapReference:"></TextBlock>
+                    <TextBlock Margin="15,0,0,5" Text="Specular Texture Relative Path:"></TextBlock>
                     <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.SpecularMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
-                    <TextBlock Margin="15,0,0,5" Text="RoughnessMapReference:"></TextBlock>
+                    <TextBlock Margin="15,0,0,5" Text="Roughtness Texture Relative Path:"></TextBlock>
                     <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.RoughnessMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
-                    <TextBlock Margin="15,0,0,5" Text="AmbientMapReference:"></TextBlock>
+                    <TextBlock Margin="15,0,0,5" Text="Ambient Texture Relative Path:"></TextBlock>
                     <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.AmbientMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
-                <StackPanel Margin="0,15,0,0">
-                    <TextBlock Margin="15,0,0,5" Text="HeightMapReference:"></TextBlock>
+                <!--<StackPanel Margin="0,15,0,0">
+                    <TextBlock Margin="15,0,0,5" Text="Height Texture Relative Path:"></TextBlock>
                     <TextBox  Margin="30,0,30,0" Text="{Binding SelectedItem.HeightMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
-                </StackPanel>
+                </StackPanel>-->
                 <StackPanel HorizontalAlignment="Right"  Margin="0,15,0,15">
                     <Button Margin="30,0,30,0" Content="Save Changes" Click="PropertiesButton_Click"></Button>
                 </StackPanel>

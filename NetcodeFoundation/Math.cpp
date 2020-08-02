@@ -2,6 +2,18 @@
 
 namespace Netcode {
 
+	float DegreesToRadians(float degrees)
+	{
+		constexpr float conversionConstant = Netcode::C_PI / 180.0f;
+		return conversionConstant * degrees;
+	}
+
+	float RadiansToDegrees(float rads)
+	{
+		constexpr float conversionConstant = 180.0f / Netcode::C_PI;
+		return conversionConstant * rads;
+	}
+
 	Matrix NC_MATH_CALLCONV AffineTransformation(Vector3 scaling, Vector3 rotationOrigin, Quaternion rotation, Vector3 translation) {
 		return DirectX::XMMatrixAffineTransformation(scaling.v, rotationOrigin.v, rotation.q, translation.v);
 	}

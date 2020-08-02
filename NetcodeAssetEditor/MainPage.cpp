@@ -4,6 +4,7 @@
 #include "FBXImporter.h"
 #include "EditorModuleFactory.h"
 #include <Netcode/Input.h>
+#include <Netcode/IO/Path.h>
 
 #include "CreateColliderDialog.h"
 
@@ -57,8 +58,14 @@ namespace winrt::NetcodeAssetEditor::implementation
         //manifestChanged(reinterpret_cast<uint64_t>(manifest.get()));
     }
 
+    void MainPage::CommandInvokeHandler(Windows::UI::Popups::IUICommand const & command)
+    {
+        // ok
+    }
+
     void MainPage::swapChainPanel_Loaded(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e)
     {
+
         Netcode::Module::EditorModuleFactory editorModuleFactory;
 
         Global::Model = std::make_unique<Model>();
@@ -136,44 +143,17 @@ namespace winrt::NetcodeAssetEditor::implementation
         }
     }
 
-
-
-    /*
-    winrt::fire_and_forget MainPage::AssetCtx_AddStaticCollider_Click(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e)
-    {
-        auto lifetime = get_strong();
-
-        auto dialog = winrt::make<CreateColliderDialog>();
-
-        co_await dialog.ShowAsync(Windows::UI::Xaml::Controls::ContentDialogPlacement::Popup);
-
-        auto result = dialog.SelectedBones();
-
-        auto resultView = result.GetView();
-
-        Collider c;
-        c.localPosition = DirectX::XMFLOAT3{ 0.0f, 5.0f, 0.0f };
-        c.localRotation = DirectX::XMFLOAT4{ 0.0f, 0.0f, 0.0f, 1.0f };
-        c.boxArgs = DirectX::XMFLOAT3{ 10.0f, 10.0f, 10.0f };
-        c.type = ColliderType::BOX;
-        c.boneReference = 8;
-
-        Global::Model->colliders.push_back(c);
-    }*/
-
-
     void MainPage::Pivot_SelectionChanged(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs const & e)
     {
         uint32_t selectionIndex = mainPivot().SelectedIndex();
 
         switch(selectionIndex) {
-            case 0: mainFrame().Navigate(xaml_typename<NetcodeAssetEditor::GeometryPage>(), DataContext()); break;
-            case 1: mainFrame().Navigate(xaml_typename<NetcodeAssetEditor::MaterialsPage>(), DataContext()); break;
-            case 2: mainFrame().Navigate(xaml_typename<NetcodeAssetEditor::BonesPage>(), DataContext()); break;
-            case 3: mainFrame().Navigate(xaml_typename<NetcodeAssetEditor::AnimationsPage>(), DataContext()); break;
-            case 4: mainFrame().Navigate(xaml_typename<NetcodeAssetEditor::CollidersPage>(), DataContext()); break;
+            case 0: mainFrame().Navigate(xaml_typename<NetcodeAssetEditor::GeometryPage>(), *this); break;
+            case 1: mainFrame().Navigate(xaml_typename<NetcodeAssetEditor::MaterialsPage>(), *this); break;
+            case 2: mainFrame().Navigate(xaml_typename<NetcodeAssetEditor::BonesPage>(), *this); break;
+            case 3: mainFrame().Navigate(xaml_typename<NetcodeAssetEditor::AnimationsPage>(), *this); break;
+            case 4: mainFrame().Navigate(xaml_typename<NetcodeAssetEditor::CollidersPage>(), *this); break;
         }
-
     }
 
     fire_and_forget MainPage::AssetCtx_ImportFBX_Click(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e)
@@ -223,6 +203,8 @@ namespace winrt::NetcodeAssetEditor::implementation
 
                 dcMainPage->Meshes().Append(dcMesh);
             }
+
+            modelChanged(reinterpret_cast<uint64_t>(Global::Model.get()));
 
             if(Global::Manifest == nullptr) {
                 Global::Manifest = std::make_unique<Netcode::Asset::Manifest>();
@@ -319,7 +301,12 @@ namespace winrt::NetcodeAssetEditor::implementation
             Windows::Storage::Provider::FileUpdateStatus status = co_await Windows::Storage::CachedFileManager::CompleteUpdatesAsync(file);
 
             if(status == Windows::Storage::Provider::FileUpdateStatus::Complete) {
-                OutputDebugStringW(L"Ok\r\n");
+                Windows::UI::Popups::MessageDialog msg{ L"Manifest was successfully saved at: " + file.Path(), L"Success" };
+                Windows::UI::Popups::UICommand closeCommand{ L"Close", { this, &MainPage::CommandInvokeHandler } };
+
+                msg.Commands().Append(closeCommand);
+
+                msg.ShowAsync();
             }
         }
         /**/
@@ -462,7 +449,12 @@ namespace winrt::NetcodeAssetEditor::implementation
             Windows::Storage::Provider::FileUpdateStatus status = co_await Windows::Storage::CachedFileManager::CompleteUpdatesAsync(file);
 
             if(status == Windows::Storage::Provider::FileUpdateStatus::Complete) {
-                OutputDebugStringW(L"Ok\r\n");
+                Windows::UI::Popups::MessageDialog msg{ L"Asset was successfully saved at: " + file.Path(), L"Success" };
+                Windows::UI::Popups::UICommand closeCommand{ L"Close", { this, &MainPage::CommandInvokeHandler } };
+
+                msg.Commands().Append(closeCommand);
+
+                msg.ShowAsync();
             }
         }
         /**/

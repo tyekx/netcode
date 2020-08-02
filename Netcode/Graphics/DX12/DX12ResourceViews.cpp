@@ -81,11 +81,13 @@ namespace Netcode::Graphics::DX12 {
 		ASSERT(static_cast<uint32_t>(offset) < numDescriptors && offset >= 0, "ResourceViews: idx is out of range");
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "ResourceViews: invalid heap type");
 
+		CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle{ baseCpuHandle_ShaderVisible, offset, Platform::ShaderResourceViewIncrementSize };
+
 		DX12ResourcePtr resource = static_cast<DX12ResourcePtr>(resourceHandle);
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvd = GetShaderResourceViewDesc(resource->desc);
 
-		device->CreateShaderResourceView(resource->resource.Get(), &srvd, CD3DX12_CPU_DESCRIPTOR_HANDLE{ baseCpuHandle_ShaderVisible, offset, Platform::ShaderResourceViewIncrementSize });
+		device->CreateShaderResourceView(resource->resource.Get(), &srvd, cpuHandle);
 	}
 
 	void ResourceViews::CreateSRV(uint32_t idx, GpuResourcePtr resourceHandle, uint32_t firstElement, uint32_t numElements)
@@ -151,6 +153,32 @@ namespace Netcode::Graphics::DX12 {
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, "ResourceViews: invalid heap type");
 		
 		NotImplementedAssertion("");
+	}
+
+	void ResourceViews::RemoveSRV(uint32_t idx, Graphics::ResourceDimension expectedResourceDimension)
+	{
+		INT offset = static_cast<INT>(idx);
+
+		ASSERT(static_cast<uint32_t>(offset) < numDescriptors && offset >= 0, "ResourceViews: idx is out of range");
+		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "ResourceViews: invalid heap type");
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvd = {};
+		srvd.Format = DXGI_FORMAT_UNKNOWN;
+
+		switch(expectedResourceDimension) {
+			case Graphics::ResourceDimension::BUFFER:
+				srvd.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+				break;
+			case Graphics::ResourceDimension::TEXTURE2D:
+				srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+				break;
+			case Graphics::ResourceDimension::TEXTURE3D: 
+				srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
+				break;
+			default: UndefinedBehaviourAssertion(false); break;
+		}
+
+		device->CreateShaderResourceView(nullptr, &srvd, CD3DX12_CPU_DESCRIPTOR_HANDLE{ baseCpuHandle_ShaderVisible, offset, Platform::ShaderResourceViewIncrementSize });
 	}
 
 }

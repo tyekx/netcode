@@ -63,7 +63,6 @@ PUBLIC
 	"Event.hpp"
 	"FancyIterators.hpp"
 	"Service.hpp"
-	"Shared.h"
 	"Stopwatch.h"
 	"Utility.h"
 	"Vertex.h"

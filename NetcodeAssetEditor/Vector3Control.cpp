@@ -22,6 +22,13 @@ namespace winrt::NetcodeAssetEditor::implementation
         );
     }
 
+    Windows::UI::Xaml::DependencyProperty Vector3Control::isReadOnlyProperty = Windows::UI::Xaml::DependencyProperty::Register(
+        L"IsReadOnly",
+        winrt::xaml_typename<Windows::Foundation::IInspectable>(),
+        winrt::xaml_typename<NetcodeAssetEditor::Vector3Control>(),
+        Windows::UI::Xaml::PropertyMetadata{ box_value(false) }
+    );
+
     Windows::UI::Xaml::DependencyProperty Vector3Control::valueProperty = Windows::UI::Xaml::DependencyProperty::Register(
         L"Value",
         winrt::xaml_typename<Windows::Foundation::IInspectable>(),

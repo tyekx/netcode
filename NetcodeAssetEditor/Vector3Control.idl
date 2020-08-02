@@ -19,7 +19,9 @@ namespace NetcodeAssetEditor
         Vector3Control();
 
         static Windows.UI.Xaml.DependencyProperty ValueProperty{ get; };
+        static Windows.UI.Xaml.DependencyProperty IsReadOnlyProperty{ get; };
 
         Windows.Foundation.Numerics.Vector3 Value;
+        Boolean IsReadOnly;
     }
 }

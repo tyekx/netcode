@@ -29,7 +29,6 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="App.cpp" />
     <ClCompile Include="MainPage.cpp" />
-    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="DC_Lod.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -133,6 +132,11 @@
     <ClCompile Include="MaterialsPage.cpp">
       <Filter>XAML</Filter>
     </ClCompile>
+    <ClCompile Include="Generated Files\module.g.cpp" />
+    <ClCompile Include="GCommandTransform.cpp" />
+    <ClCompile Include="DC_GeometryPage.cpp" />
+    <ClCompile Include="Model.cpp" />
+    <ClCompile Include="BoundingBoxHelpers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -257,6 +261,8 @@
     <ClInclude Include="MaterialsPage.h">
       <Filter>XAML</Filter>
     </ClInclude>
+    <ClInclude Include="GCommandTransform.h" />
+    <ClInclude Include="DC_GeometryPage.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">
