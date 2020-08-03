@@ -11,26 +11,25 @@
 #include <variant>
 
 #include "DX12Common.h"
-#include "DX12Fence.h"
-#include "DX12SpriteFontLibrary.h"
 #include "DX12ConstantBufferPool.h"
 #include "DX12ResourcePool.h"
-#include "DX12ResourceContext.h"
-#include "DX12RenderContext.h"
 #include "DX12DynamicDescriptorHeap.h"
-
-#include "DX12ShaderLibrary.h"
-#include "DX12InputLayoutLibrary.h"
-#include "DX12RootSignatureLibrary.h"
-#include "DX12StreamOutputLibrary.h"
-#include "DX12GPipelineStateLibrary.h"
-#include "DX12CPipelineStateLibrary.h"
-#include "DX12CommandListPool.h"
-#include "DX12DebugContext.h"
-
-
+#include "DX12CommandList.h"
 
 namespace Netcode::Graphics::DX12 {
+
+	class Fence;
+	class HeapManager;
+	class ResourceContext;
+	class DebugContext;
+	class CommandListPool;
+	class GPipelineStateLibrary;
+	class CPipelineStateLibrary;
+	class InputLayoutLibrary;
+	class StreamOutputLibrary;
+	class RootSignatureLibrary;
+	class SpriteFontLibrary;
+	class ShaderLibrary;
 
 	class FrameResource {
 	public:
@@ -143,33 +142,30 @@ namespace Netcode::Graphics::DX12 {
 
 		DisplayMode displayMode;
 
-		DX12FenceRef mainFence;
-		DX12FenceRef uploadFence;
-
-		DX12CommandListPoolRef commandListPool;
-
-		DX12HeapManagerRef heapManager;
-
 		ResourcePool resourcePool;
 		ConstantBufferPool cbufferPool;
 		DynamicDescriptorHeap dheaps;
 
-		DX12SpriteFontLibraryRef spriteFontLibrary;
-		DX12ShaderLibraryRef shaderLibrary;
-		DX12RootSignatureLibraryRef rootSigLibrary;
-		DX12StreamOutputLibraryRef streamOutputLibrary;
-		DX12InputLayoutLibraryRef inputLayoutLibrary;
-		DX12GPipelineStateLibraryRef gPipelineLibrary;
-		DX12CPipelineStateLibraryRef cPipelineLibrary;
+
+		std::shared_ptr<DX12::Fence> mainFence;
+		std::shared_ptr<DX12::Fence> uploadFence;
+		std::shared_ptr<DX12::CommandListPool> commandListPool;
+		std::shared_ptr<DX12::HeapManager> heapManager;
+
+		std::shared_ptr<DX12::SpriteFontLibrary> spriteFontLibrary;
+		std::shared_ptr<DX12::ShaderLibrary> shaderLibrary;
+		std::shared_ptr<DX12::RootSignatureLibrary> rootSigLibrary;
+		std::shared_ptr<DX12::StreamOutputLibrary> streamOutputLibrary;
+		std::shared_ptr<DX12::InputLayoutLibrary> inputLayoutLibrary;
+		std::shared_ptr<DX12::GPipelineStateLibrary> gPipelineLibrary;
+		std::shared_ptr<DX12::CPipelineStateLibrary> cPipelineLibrary;
+
+		std::shared_ptr<DX12::DebugContext> debugContext;
+		std::shared_ptr<DX12::ResourceContext> resourceContext;
+		std::shared_ptr<DX12::ResourceViews> renderTargetViews;
+		std::shared_ptr<DX12::ResourceViews> depthStencilView;
 
 		std::vector<CommandList> inFlightCommandLists;
-
-		DX12DebugContextRef debugContext;
-
-		DX12ResourceContextRef resourceContext;
-
-		DX12ResourceViewsRef renderTargetViews;
-		DX12ResourceViewsRef depthStencilView;
 
 		GpuResourceRef depthStencil;
 
@@ -262,6 +258,5 @@ namespace Netcode::Graphics::DX12 {
 		virtual FrameGraphBuilderRef CreateFrameGraphBuilder() override;
 
 	};
-
 
 }

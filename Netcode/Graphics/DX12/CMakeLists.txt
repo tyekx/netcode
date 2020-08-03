@@ -4,6 +4,7 @@ target_sources(Netcode
 PUBLIC
 	"d3dx12.h"
 	"DX12Builders.h"
+	"DX12CommandList.h"
 	"DX12CommandListPool.h"
 	"DX12Common.h"
 	"DX12ConstantBufferPool.h"

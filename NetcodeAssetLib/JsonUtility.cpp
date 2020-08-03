@@ -107,6 +107,7 @@ namespace Netcode::Asset {
 				obj["shape_data"] = std::move(arr);
 			}
 			break;
+			default: break;
 		}
 
 		return obj;
@@ -138,6 +139,7 @@ namespace Netcode::Asset {
 				c.sphereArgs = LoadFloat1(json["shape_data"]);
 			}
 			break;
+			default: break;
 		}
 
 		return c;

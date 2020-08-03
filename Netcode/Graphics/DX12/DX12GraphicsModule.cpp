@@ -1,8 +1,20 @@
 #include "DX12GraphicsModule.h"
+
+#include <sstream>
+
 #include "DX12Builders.h"
 #include "DX12Platform.h"
 #include "DX12FrameGraphExecutor.h"
-#include <sstream>
+
+#include "DX12SpriteFontLibrary.h"
+#include "DX12ShaderLibrary.h"
+#include "DX12RootSignatureLibrary.h"
+#include "DX12StreamOutputLibrary.h"
+#include "DX12InputLayoutLibrary.h"
+#include "DX12GPipelineStateLibrary.h"
+#include "DX12CPipelineStateLibrary.h"
+#include "DX12ResourceContext.h"
+#include "DX12DebugContext.h"
 
 #include "../../Config.h"
 
@@ -167,20 +179,21 @@ namespace Netcode::Graphics::DX12 {
 
 	void DX12GraphicsModule::CreateLibraries()
 	{
-		shaderLibrary = stackAllocator.MakeShared<DX12ShaderLibrary>();
+		shaderLibrary = stackAllocator.MakeShared<DX12::ShaderLibrary>();
 		//std::make_shared<DX12ShaderLibrary>();
 
-		rootSigLibrary = stackAllocator.MakeShared<DX12RootSignatureLibrary>(objectAllocator, device);
+		rootSigLibrary = stackAllocator.MakeShared<DX12::RootSignatureLibrary>(objectAllocator, device);
 
-		streamOutputLibrary = stackAllocator.MakeShared<DX12StreamOutputLibrary>(objectAllocator);
+		streamOutputLibrary = stackAllocator.MakeShared<DX12::StreamOutputLibrary>(objectAllocator);
 
-		inputLayoutLibrary = stackAllocator.MakeShared<DX12InputLayoutLibrary>(objectAllocator);
+		inputLayoutLibrary = stackAllocator.MakeShared<DX12::InputLayoutLibrary>(objectAllocator);
 
-		gPipelineLibrary = stackAllocator.MakeShared<DX12GPipelineStateLibrary>(objectAllocator, device);
+		gPipelineLibrary = stackAllocator.MakeShared<DX12::GPipelineStateLibrary>(objectAllocator, device);
 
-		cPipelineLibrary = stackAllocator.MakeShared<DX12CPipelineStateLibrary>(objectAllocator, device);
+		cPipelineLibrary = stackAllocator.MakeShared<DX12::CPipelineStateLibrary>(objectAllocator, device);
 
-		spriteFontLibrary = stackAllocator.MakeShared<DX12SpriteFontLibrary>(objectAllocator);
+		spriteFontLibrary = stackAllocator.MakeShared<DX12::SpriteFontLibrary>(objectAllocator);
+
 		spriteFontLibrary->frameCtx = frame;
 		spriteFontLibrary->resourceCtx = resources;
 	}

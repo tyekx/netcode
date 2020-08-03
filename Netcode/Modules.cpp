@@ -107,6 +107,7 @@ namespace Netcode::Module {
 		case EAppEventType::MODE_CHANGED:
 			OnModeChanged(evt.displayMode);
 			return;
+		default: return;
 		}
 	}
 

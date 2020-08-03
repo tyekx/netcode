@@ -2,6 +2,8 @@
 
 #include "File.h"
 #include "Path.h"
+#include "../Logger.h"
+#include "../Utility.h"
 
 #include <cassert>
 #include <algorithm>
@@ -49,7 +51,7 @@ namespace Netcode::IO {
 			HANDLE f = CreateFileW(path.c_str(), apiMode, shareMode, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
 			if(f == INVALID_HANDLE_VALUE) {
-				OutputDebugString("Failed to open file\n");
+				Log::Error("Failed to open file: '{0}'", Utility::ToNarrowString(path));
 				return false;
 			}
 
@@ -58,7 +60,13 @@ namespace Netcode::IO {
 		}
 
 		size_t Read(MutableArrayView<uint8_t> buffer) {
-			if(handle == INVALID_HANDLE_VALUE || buffer.Size() == 0) {
+			if(handle == INVALID_HANDLE_VALUE) {
+				Log::Warn("Trying to read a file with an invalid handle.");
+				return 0;
+			}
+
+			if(buffer.Size() == 0) {
+				Log::Warn("Trying to read a file with an empty buffer.");
 				return 0;
 			}
 
@@ -66,7 +74,7 @@ namespace Netcode::IO {
 			BOOL readResult = ReadFile(handle, buffer.Data(), buffer.Size(), &readBytes, nullptr);
 
 			if(!readResult) {
-				OutputDebugString("Failed to read file\n");
+				Log::Error("Failed to read from file: {0}", Utility::ToNarrowString(path));
 				return 0;
 			}
 
@@ -74,7 +82,8 @@ namespace Netcode::IO {
 		}
 
 		size_t Write(ArrayView<uint8_t> buffer) {
-			if(handle == INVALID_HANDLE_VALUE || buffer.Size() == 0) {
+			if(handle == INVALID_HANDLE_VALUE) {
+				Log::Warn("Trying to write a file with an invalid handle.");
 				return 0;
 			}
 
@@ -82,7 +91,7 @@ namespace Netcode::IO {
 			BOOL writeResult = WriteFile(handle, buffer.Data(), buffer.Size(), &writtenBytes, nullptr);
 
 			if(!writeResult) {
-				OutputDebugString("Failed to write file\n");
+				Log::Error("Failed to write to file: {0}", Utility::ToNarrowString(path));
 				return 0;
 			}
 
@@ -92,7 +101,7 @@ namespace Netcode::IO {
 		void Close() noexcept {
 			if(handle != INVALID_HANDLE_VALUE) {
 				if(!CloseHandle(handle)) {
-					OutputDebugString("Failed to close file properly\n");
+					Log::Error("Failed to close file: {0}", Utility::ToNarrowString(path));
 				}
 
 				handle = INVALID_HANDLE_VALUE;

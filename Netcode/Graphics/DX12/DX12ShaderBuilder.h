@@ -25,11 +25,11 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetEntrypoint(const std::string & entryFunction) override;
 
-		virtual void SetSource(const std::wstring & shaderPath) override;
+		virtual void SetSource(const URI::Shader & uri) override;
 
 		virtual void SetDefinitions(const std::map<std::string, std::string> & defines) override;
 
-		virtual ShaderBytecodeRef LoadBytecode(const std::wstring & precompiledShaderPath) override;
+		virtual ShaderBytecodeRef LoadBytecode(const URI::Shader & uri) override;
 
 		virtual ShaderBytecodeRef Build() override;
 	};

@@ -7,7 +7,7 @@ namespace Netcode {
 
     /*
     dangerous helper class, the copy constructor moves, useful for std::function and std::bind when 
-    certain parameters are not copy constructible
+    certain parameters are not move constructible
     */
     template <typename T>
     struct destructive_copy_constructible

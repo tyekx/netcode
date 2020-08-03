@@ -97,5 +97,6 @@ add_subdirectory(Network)
 add_subdirectory(Window)
 add_subdirectory(IO)
 add_subdirectory(UI)
+add_subdirectory(URI)
 
 add_dependencies(Netcode NetcodeShaders NetcodeFoundation NetcodeAssetLib NetcodeProtocol)

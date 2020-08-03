@@ -15,17 +15,7 @@
 #include <map>
 #include <string>
 
-/*
-Note to future me:
-The idea behind this pattern was to ditch handles, which could lead the system being in metastable state.
-Having builders enforces an explicit Build call, or the destructor will clean up automatically, leaving a nullptr
-which should be easy to debug.
-
-The reasoning behind many interfaces approach was that these classes are just to initialize the pipeline and the
-execution.
-
-This also heavily favors the DirectX ecosystem, but thats an issue for possible future opengl ports
-*/
+#include "URI/Shader.h"
 
 namespace Netcode {
 
@@ -325,10 +315,10 @@ namespace Netcode {
 
 		virtual void SetShaderType(ShaderType shaderType) = 0;
 		virtual void SetEntrypoint(const std::string & entryFunction) = 0;
-		virtual void SetSource(const std::wstring & shaderPath) = 0;
+		virtual void SetSource(const URI::Shader & resourceIdentifier) = 0;
 		virtual void SetDefinitions(const std::map<std::string, std::string> & defines) = 0;
 
-		virtual ShaderBytecodeRef LoadBytecode(const std::wstring & precompiledShaderPath) = 0;
+		virtual ShaderBytecodeRef LoadBytecode(const URI::Shader & shaderUri) = 0;
 		virtual ShaderBytecodeRef Build() = 0;
 	};
 

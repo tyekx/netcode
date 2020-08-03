@@ -5,8 +5,8 @@
 namespace Netcode::IO {
 
 	class Path {
-		Path() noexcept = default;
-		~Path() noexcept = default;
+		Path() = default;
+		~Path() = default;
 
 		static std::wstring workingDirectory;
 		static std::wstring shaderRoot;
@@ -25,9 +25,17 @@ namespace Netcode::IO {
 
 		static std::wstring_view MediaRoot();
 
+		static wchar_t GetOppositeSlash(wchar_t slash);
+
 		static wchar_t GetOtherSlash();
 
 		static wchar_t GetSlash();
+
+		static bool HasRelativeSections(const std::wstring & str, wchar_t slash = GetSlash());
+
+		static void UnifySlashes(std::wstring & str, wchar_t desiredSlash);
+
+		static void RemoveRelativeSections(std::wstring & str);
 
 		static void FixFilePath(std::wstring & str);
 

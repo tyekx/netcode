@@ -14,7 +14,7 @@ namespace Netcode::Graphics::DX12 {
 	struct ShaderVariantDesc {
 		std::map<std::string, std::string> defines;
 		std::string entryFunctionName;
-		std::wstring sourceFile;
+		URI::Shader sourceFileUri;
 		ShaderType shaderType;
 
 		bool operator==(const ShaderVariantDesc & rhs) const {
@@ -22,7 +22,7 @@ namespace Netcode::Graphics::DX12 {
 				return false;
 			}
 
-			if(sourceFile != rhs.sourceFile) {
+			if(sourceFileUri.GetFullPath() != rhs.sourceFileUri.GetFullPath()) {
 				return false;
 			}
 
@@ -60,7 +60,7 @@ namespace Netcode::Graphics::DX12 {
 		}
 
 		virtual const std::wstring & GetFileReference() const override {
-			return desc.sourceFile;
+			return desc.sourceFileUri.GetShaderPath();
 		}
 
 		const ShaderVariantDesc & GetDesc() const {

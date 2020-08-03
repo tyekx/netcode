@@ -17,7 +17,7 @@ namespace Netcode::Graphics::DX12 {
 		static ShaderCompiledRef LoadCSO(std::wstring_view absolutePath);
 
 	public:
-		ShaderCompiledRef LoadShader(const std::wstring & filePath);
+		ShaderCompiledRef LoadShader(const URI::Shader & filePath);
 
 		ShaderVariantRef GetShaderVariant(const ShaderVariantDesc & desc);
 	};

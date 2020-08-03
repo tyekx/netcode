@@ -7,7 +7,7 @@ PUBLIC
 	"ArrayView.hpp"
 	"Formats.h"
 	"Foundation.h"
-	
+	"UriBase.h"
 	"Platform.h"
 	"Sal.h"
 	"Exceptions.h"
@@ -17,7 +17,9 @@ PUBLIC
 PRIVATE
 	
 	"Math.cpp"
- "Exceptions.cpp" "Uri.h")
+	"Exceptions.cpp"
+	"UriBase.cpp"
+)
 
 add_subdirectory(Math)
 add_subdirectory(Exception)

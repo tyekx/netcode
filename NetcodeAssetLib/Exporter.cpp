@@ -134,7 +134,7 @@ namespace Netcode {
 			return -1;
 
 			FILE * file;
-			errno_t r = fopen_s(&file, path, "wb");
+			fopen_s(&file, path, "wb");
 
 			if(file == nullptr) {
 				return -1;

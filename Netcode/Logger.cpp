@@ -27,29 +27,55 @@ namespace Log {
 		spdlog::set_default_logger(console);
 	}
 
-	void Debug(const char * message) {
-		spdlog::debug(message);
+	template<typename ... T>
+	void Debug(const char * message, const T & ... values) {
+		spdlog::debug(message, values...);
 	}
 
-	void Debug(const char * message, int value)
-	{
-		spdlog::debug(message, value);
+	template<typename ... T>
+	void Info(const char * message, const T & ... values) {
+		spdlog::info(message, values...);
 	}
 
-	void Debug(const char * message, const std::string & value)
-	{
-		spdlog::debug(message, value);
+	template<typename ... T>
+	void Warn(const char * message, const T & ... values) {
+		spdlog::warn(message, values...);
 	}
 
-	void Debug(const char * message, int value, int value2)
-	{
-		spdlog::debug(message, value, value2);
+	template<typename ... T>
+	void Error(const char * message, const T & ... values) {
+		spdlog::error(message, values...);
 	}
 
-	void Debug(const char * message, float x, float y)
-	{
-		spdlog::debug(message, x, y);
+	template<typename ... T>
+	void Critical(const char * message, const T & ... values) {
+		spdlog::critical(message, values...);
 	}
+	
+	template void Debug<std::string>(const char * message, const std::string & value);
+	template void Debug<int32_t>(const char * message, const int32_t & value);
+	template void Debug<int32_t, int32_t>(const char * message, const int32_t & value, const int32_t & value2);
+	template void Debug<uint64_t>(const char * message, const uint64_t & value);
+	template void Debug<float, float>(const char * message, const float & value, const float & value2);
+	template void Debug<>(const char * message);
+
+	template void Info<>(const char * message);
+	template void Info<std::string>(const char * message, const std::string & value);
+	template void Info<const char *>(const char * message, const char * const & value);
+	template void Info<int32_t>(const char * message, const int32_t & value);
+	template void Info<uint16_t>(const char * message, const uint16_t & value);
+	template void Info<int32_t, int32_t>(const char * message, const int32_t & value, const int32_t & value2);
+	template void Info<uint16_t, uint16_t>(const char * message, const uint16_t & value, const uint16_t & value2);
+	template void Info<int32_t, int32_t, int32_t>(const char * message, const int32_t & x, const int32_t & y, const int32_t & z);
+	template void Info<uint64_t>(const char * message, const uint64_t & value);
+
+	template void Warn<>(const char * message);
+
+	template void Error<>(const char * message);
+	template void Error<std::string>(const char * message, const std::string & value);
+	template void Error<const char *>(const char * message, const char * const & value);
+
+	template void Critical<>(const char * message);
 
 	void Debug(int id, const std::string & name, const std::string & password, const std::string & salt, bool isBanned)
 	{
@@ -71,44 +97,6 @@ namespace Log {
 	{
 		spdlog::debug("[Db][game_sessions] id: {0}, user_id: {1}, game_server_id: {2}, joined_at: {3}, left_at: {4}",
 			id, userId, gameServerId, joinedAt, leftAt);
-	}
-
-	void Info(const char * message) {
-		spdlog::info(message);
-	}
-
-	void Info(const char * message, const std::string & value) {
-		spdlog::info(message, value);
-	}
-
-	void Info(const char * message, uint64_t value) {
-		spdlog::info(message, value);
-	}
-
-	void Info(const char * message, int32_t x, int32_t y) {
-		spdlog::info(message, x, y);
-	}
-
-	void Info(const char * message, int32_t x, int32_t y, int32_t z)
-	{
-		spdlog::info(message, x, y, z);
-	}
-
-	void Warn(const char * message) {
-		spdlog::warn(message);
-	}
-
-	void Error(const char * message) {
-		spdlog::error(message);
-	}
-
-	void Error(const char * message, const std::string & value)
-	{
-		spdlog::error(message, value);
-	}
-
-	void Critical(const char * message) {
-		spdlog::critical(message);
 	}
 
 }

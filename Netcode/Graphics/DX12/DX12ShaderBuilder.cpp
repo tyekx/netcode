@@ -29,9 +29,10 @@ namespace Netcode::Graphics::DX12 {
 		variantDesc.entryFunctionName = entryFunction;
 	}
 
-	void ShaderBuilder::SetSource(const std::wstring & shaderPath) {
+	void ShaderBuilder::SetSource(const URI::Shader & uri)
+	{
 		SetState(BuilderState::VARIANT);
-		variantDesc.sourceFile = shaderPath;
+		variantDesc.sourceFileUri = uri;
 	}
 
 	void ShaderBuilder::SetDefinitions(const std::map<std::string, std::string> & defines) {
@@ -39,9 +40,9 @@ namespace Netcode::Graphics::DX12 {
 		variantDesc.defines = defines;
 	}
 
-	ShaderBytecodeRef ShaderBuilder::LoadBytecode(const std::wstring & precompiledShaderPath) {
+	ShaderBytecodeRef ShaderBuilder::LoadBytecode(const URI::Shader & uri) {
 		SetState(BuilderState::PRECOMPILED);
-		auto shader = shaderLibrary->LoadShader(precompiledShaderPath);
+		auto shader = shaderLibrary->LoadShader(uri);
 		Clear();
 		return shader;
 	}
