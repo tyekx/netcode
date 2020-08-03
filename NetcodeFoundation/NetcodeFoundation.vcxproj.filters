@@ -86,6 +86,7 @@
     <ClInclude Include="Memory.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="Sal.h" />
+    <ClInclude Include="UriBase.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Memory\Common.cpp">
@@ -117,6 +118,7 @@
     </ClCompile>
     <ClCompile Include="Exceptions.cpp" />
     <ClCompile Include="Math.cpp" />
+    <ClCompile Include="UriBase.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Math\README.md">

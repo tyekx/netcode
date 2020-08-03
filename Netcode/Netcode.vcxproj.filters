@@ -49,6 +49,9 @@
     <Filter Include="UI">
       <UniqueIdentifier>{3749cdf8-e962-44ed-b50c-12933aac2438}</UniqueIdentifier>
     </Filter>
+    <Filter Include="URI">
+      <UniqueIdentifier>{960786f3-9ccd-48f3-b7ab-16e748de5e1b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ProgramArgs.h">
@@ -422,6 +425,18 @@
     <ClInclude Include="UI\TextBox.h">
       <Filter>UI</Filter>
     </ClInclude>
+    <ClInclude Include="URI\AssetBase.h">
+      <Filter>URI</Filter>
+    </ClInclude>
+    <ClInclude Include="URI\Model.h">
+      <Filter>URI</Filter>
+    </ClInclude>
+    <ClInclude Include="URI\Shader.h">
+      <Filter>URI</Filter>
+    </ClInclude>
+    <ClInclude Include="URI\Texture.h">
+      <Filter>URI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Stopwatch.cpp">
@@ -716,6 +731,18 @@
     </ClCompile>
     <ClCompile Include="UI\TextBox.cpp">
       <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="URI\Model.cpp">
+      <Filter>URI</Filter>
+    </ClCompile>
+    <ClCompile Include="URI\Shader.cpp">
+      <Filter>URI</Filter>
+    </ClCompile>
+    <ClCompile Include="URI\Texture.cpp">
+      <Filter>URI</Filter>
+    </ClCompile>
+    <ClCompile Include="URI\AssetBase.cpp">
+      <Filter>URI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

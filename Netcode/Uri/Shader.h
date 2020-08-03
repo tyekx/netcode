@@ -1,15 +1,11 @@
 #pragma once
 
-#include <NetcodeFoundation/UriBase.h>
+#include "AssetBase.h"
 
 namespace Netcode::URI {
 
-	class Shader final : public UriBase {
-		std::wstring shaderPath;
-
-		void ParseShaderPath(std::wstring_view path);
+	class Shader final : public AssetBase {
 	public:
-
 		Shader() = default;
 		Shader(const wchar_t * relativePath);
 		Shader(std::wstring relativePath);

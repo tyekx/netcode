@@ -2,9 +2,9 @@
 
 #include <NetcodeFoundation/UriBase.h>
 
-namespace Netcode {
+namespace Netcode::URI {
 
-	class ModelUri final : public UriBase {
+	class Model final : public UriBase {
 	public:
 
 	};

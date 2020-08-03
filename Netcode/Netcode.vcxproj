@@ -173,6 +173,10 @@
     <ClInclude Include="UI\ScrollViewer.h" />
     <ClInclude Include="UI\StackPanel.h" />
     <ClInclude Include="UI\TextBox.h" />
+    <ClInclude Include="URI\AssetBase.h" />
+    <ClInclude Include="URI\Model.h" />
+    <ClInclude Include="URI\Shader.h" />
+    <ClInclude Include="URI\Texture.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="WinapiWindowModule.h" />
@@ -275,6 +279,10 @@
     <ClCompile Include="UI\ScrollViewer.cpp" />
     <ClCompile Include="UI\StackPanel.cpp" />
     <ClCompile Include="UI\TextBox.cpp" />
+    <ClCompile Include="URI\AssetBase.cpp" />
+    <ClCompile Include="URI\Model.cpp" />
+    <ClCompile Include="URI\Shader.cpp" />
+    <ClCompile Include="URI\Texture.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="WinapiWindowModule.cpp" />
   </ItemGroup>

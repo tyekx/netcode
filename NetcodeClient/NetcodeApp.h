@@ -160,8 +160,8 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		pageManager.AddPage(serverBrowserPage);
 		pageManager.AddPage(loadingPage);
 
-		//pageManager.NavigateTo(PagesEnum::LOGIN_PAGE);
-		//pageManager.NavigateTo(PagesEnum::LOADING_PAGE);
+		pageManager.NavigateTo(PagesEnum::LOGIN_PAGE);
+		pageManager.NavigateTo(PagesEnum::LOADING_PAGE);
 
 		renderSystem.renderer.ui_Input = &pageManager;
 

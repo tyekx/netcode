@@ -4,30 +4,14 @@
 
 namespace Netcode::URI {
 
-	void Shader::ParseShaderPath(std::wstring_view path)
-	{
-		constexpr auto globalId = Shader::GetGlobalId();
-		auto shaderRoot = IO::Path::ShaderRoot();
-
-		fullPath.reserve(globalId.size() + path.size());
-		fullPath.append(globalId);
-		fullPath.append(path);
-
-		shaderPath.reserve(shaderRoot.size() + path.size());
-		shaderPath.append(shaderRoot);
-		shaderPath.append(path);
-
-		IO::Path::UnifySlashes(shaderPath, IO::Path::GetSlash());
-	}
-
-	Shader::Shader(const wchar_t * relativePath) : UriBase{}
+	Shader::Shader(const wchar_t * relativePath) : AssetBase{}
 	{
 		std::wstring tmp = relativePath;
 		Shader v(std::move(tmp));
 		*this = std::move(v);
 	}
 
-	Shader::Shader(std::wstring path) : UriBase {} {
+	Shader::Shader(std::wstring path) : AssetBase{} {
 
 		if(path.empty()) {
 			return;
@@ -39,10 +23,10 @@ namespace Netcode::URI {
 			return;
 		}
 
-		ParseShaderPath(path);
+		ConstructPaths(path, GetGlobalId(), IO::Path::ShaderRoot());
 	}
 
-	Shader::Shader(std::wstring uriPath, FullPathToken) : UriBase { } {
+	Shader::Shader(std::wstring uriPath, FullPathToken) : AssetBase{ } {
 		IO::Path::UnifySlashes(uriPath, L'/');
 
 		constexpr auto globalId = Shader::GetGlobalId();
@@ -51,14 +35,14 @@ namespace Netcode::URI {
 			return;
 		}
 
-		std::wstring_view sPath = { uriPath.c_str() + globalId.size(), uriPath.size() - globalId.size() };
+		std::wstring_view localPath = { uriPath.c_str() + globalId.size(), uriPath.size() - globalId.size() };
 
-		ParseShaderPath(sPath);
+		ConstructPaths(localPath, globalId, IO::Path::ShaderRoot());
 	}
 
 	const std::wstring & Shader::GetShaderPath() const
 	{
-		return shaderPath;
+		return assetPath;
 	}
 
 	Shader Shader::Parse(UriBase uri) {

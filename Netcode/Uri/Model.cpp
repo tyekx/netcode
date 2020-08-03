@@ -1,7 +1,7 @@
 #include "Model.h"
 #include <NetcodeFoundation/Exceptions.h>
 
-namespace Netcode {
+namespace Netcode::URI {
 
 
 

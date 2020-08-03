@@ -6,6 +6,10 @@
 
 #include <algorithm>
 
+#if defined(NETCODE_OS_WINDOWS)
+#include <Windows.h>
+#endif
+
 namespace Netcode::IO {
 
 	std::wstring Path::workingDirectory{};
@@ -93,11 +97,30 @@ namespace Netcode::IO {
 		return false;
 	}
 
+	std::wstring Path::CurrentWorkingDirectory() {
+#if defined(NETCODE_OS_WINDOWS)
+		DWORD len = GetCurrentDirectoryW(0, nullptr);
+		std::wstring pwd;
+		pwd.resize(len);
+		GetCurrentDirectoryW(static_cast<DWORD>(pwd.size()), pwd.data());
+		pwd.resize(len - 1);
+		return pwd;
+#else
+		/* not implemented */
+#endif
+	}
+
 	void Path::UnifySlashes(std::wstring & str, wchar_t desiredSlash) {
 		wchar_t slash = desiredSlash;
 		wchar_t oppositeSlash = GetOppositeSlash(slash);
 
 		std::replace(str.begin(), str.end(), oppositeSlash, slash);
+	}
+
+	bool Path::CheckSlashConsistency(std::wstring_view str, wchar_t expectedSlash) {
+		wchar_t oppositeSlash = GetOppositeSlash(expectedSlash);
+
+		return str.find(oppositeSlash) == std::wstring::npos;
 	}
 
 	void Path::RemoveRelativeSections(std::wstring & str) {
@@ -129,38 +152,34 @@ namespace Netcode::IO {
 		str = std::move(strCopy);
 	}
 
-	void Path::FixFilePath(std::wstring & str) {
+	void Path::FixFilePath(std::wstring & str, wchar_t desiredSlash) {
 		if(str.empty()) {
 			return;
 		}
 
-		const wchar_t slash = GetSlash();
+		UnifySlashes(str, desiredSlash);
 
-		UnifySlashes(str, slash);
-
-		UndefinedBehaviourAssertion(str.back() != slash);
+		UndefinedBehaviourAssertion(str.back() != desiredSlash);
 	}
 
-	void Path::FixDirectoryPath(std::wstring & dir) {
+	void Path::FixDirectoryPath(std::wstring & dir, wchar_t desiredSlash) {
 		if(dir.empty()) {
 			return;
 		}
 
-		wchar_t slash = GetSlash();
+		UnifySlashes(dir, desiredSlash);
 
-		UnifySlashes(dir, slash);
-
-		if(!dir.empty() && dir.back() != slash) {
-			dir.push_back(slash);
+		if(!dir.empty() && dir.back() != desiredSlash) {
+			dir.push_back(desiredSlash);
 		}
 	}
 
-	bool Path::IsAbsolute(const std::wstring & path)
+	bool Path::IsAbsolute(std::wstring_view str)
 	{
 #if defined (NETCODE_OS_WINDOWS)
-		return path.find_first_of(L':') != std::wstring::npos;
+		return str.find_first_of(L':') != std::wstring::npos;
 #else
-		return !path.empty() && path.at(0) == GetSlash();
+		return !str.empty() && str[0] == GetSlash();
 #endif
 	}
 }

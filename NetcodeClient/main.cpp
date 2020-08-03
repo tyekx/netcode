@@ -9,17 +9,6 @@
 #include <NetcodeFoundation/Memory.h>
 #include <Netcode/Config.h>
 #include "ProgramOptions.h"
-/*
-*/
-
-std::wstring QueryWorkingDirectory() {
-	DWORD len = GetCurrentDirectoryW(0, nullptr);
-	std::wstring pwd;
-	pwd.resize(len);
-	GetCurrentDirectoryW(static_cast<DWORD>(pwd.size()), pwd.data());
-	pwd.resize(len - 1);
-	return pwd;
-}
 
 void ListConfigEntries(const std::string & prefix, const Netcode::Ptree & tree) {
 	for(const auto & i : tree) {
@@ -32,7 +21,7 @@ void ListConfigEntries(const std::string & prefix, const Netcode::Ptree & tree) 
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR command, _In_ INT nShowCmd) {
 	std::vector<std::wstring> args = po::split_winmain(command);
-	std::wstring workingDirectory = QueryWorkingDirectory();
+	std::wstring workingDirectory = Netcode::IO::Path::CurrentWorkingDirectory();
 
 	Netcode::IO::Path::SetWorkingDirectiory(workingDirectory);
 
@@ -63,7 +52,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	rapidjson::Document doc;
 	Netcode::IO::ParseJson(doc, configFile.GetFullPath());
-
 	Netcode::Config::LoadJson(doc);
 
 	ListConfigEntries("", Netcode::Config::storage);

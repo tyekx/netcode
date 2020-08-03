@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.8)
 
 project("Netcode" VERSION 0.0.1 HOMEPAGE_URL "https://netcode-game.eu" LANGUAGES CXX)
 
+enable_testing()
+
 # target_sources now uses proper relative paths
 set(CMAKE_POLICY_DEFAULT_CMP0076 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0079 NEW)
@@ -163,6 +165,7 @@ add_subdirectory("NetcodeProtocol")
 add_subdirectory("Netcode")
 add_subdirectory("NetcodeClient")
 add_subdirectory("NetcodeServer")
+add_subdirectory("NetcodeUnitTests")
 
 add_dependencies(Netcode NetcodeProtocol)
 add_dependencies(NetcodeClient Netcode)

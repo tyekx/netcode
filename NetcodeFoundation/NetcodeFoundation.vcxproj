@@ -37,6 +37,7 @@
     <ClInclude Include="Memory\StdAllocatorAdapter.hpp" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="Sal.h" />
+    <ClInclude Include="UriBase.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Exceptions.cpp" />
@@ -50,6 +51,7 @@
     <ClCompile Include="Math\Vector3.cpp" />
     <ClCompile Include="Math\Vector4.cpp" />
     <ClCompile Include="Memory\Common.cpp" />
+    <ClCompile Include="UriBase.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Math\README.md" />

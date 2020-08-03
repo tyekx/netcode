@@ -33,18 +33,22 @@ namespace Netcode::IO {
 
 		static bool HasRelativeSections(const std::wstring & str, wchar_t slash = GetSlash());
 
+		static std::wstring CurrentWorkingDirectory();
+
 		static void UnifySlashes(std::wstring & str, wchar_t desiredSlash);
+
+		static bool CheckSlashConsistency(std::wstring_view str, wchar_t expectedSlash = GetSlash());
 
 		static void RemoveRelativeSections(std::wstring & str);
 
-		static void FixFilePath(std::wstring & str);
+		static void FixFilePath(std::wstring & str, wchar_t desiredSlash = GetSlash());
 
-		static void FixDirectoryPath(std::wstring & dir);
+		static void FixDirectoryPath(std::wstring & dir, wchar_t desiredSlash = GetSlash());
 
-		static bool IsAbsolute(const std::wstring & path);
+		static bool IsAbsolute(std::wstring_view str);
 
-		static inline bool IsRelative(const std::wstring & path) {
-			return !IsAbsolute(path);
+		static inline bool IsRelative(std::wstring_view str) {
+			return !IsAbsolute(str);
 		}
 
 	};
