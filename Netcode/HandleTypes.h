@@ -1,5 +1,7 @@
 #pragma once
 
+#include "HandleDecl.h"
+
 #include <NetcodeFoundation/Math.h>
 
 #include "Graphics/ResourceEnums.h"
@@ -39,8 +41,9 @@ namespace Netcode {
 	};
 
 #else
-
+	
 	using Image = DirectX::Image;
+
 	using Rect = RECT;
 
 	struct Glyph
@@ -294,10 +297,6 @@ namespace Netcode {
 		virtual const Graphics::ResourceDesc & GetDesc() const = 0;
 	};
 
-	using GpuResourceWeakRef = std::weak_ptr<GpuResource>;
-	using GpuResourceRef = std::shared_ptr<GpuResource>;
-	using GpuResourcePtr = GpuResource *;
-
 	class ShaderBytecode {
 	public:
 		virtual ~ShaderBytecode() = default;
@@ -305,9 +304,6 @@ namespace Netcode {
 		virtual size_t GetBufferSize() = 0;
 		virtual const std::wstring & GetFileReference() const = 0;
 	};
-
-	using ShaderBytecodeRef = std::shared_ptr<ShaderBytecode>;
-	using ShaderBytecodeWeakRef = std::weak_ptr<ShaderBytecode>;
 
 	class ShaderBuilder {
 	public:
@@ -318,12 +314,9 @@ namespace Netcode {
 		virtual void SetSource(const URI::Shader & resourceIdentifier) = 0;
 		virtual void SetDefinitions(const std::map<std::string, std::string> & defines) = 0;
 
-		virtual ShaderBytecodeRef LoadBytecode(const URI::Shader & shaderUri) = 0;
-		virtual ShaderBytecodeRef Build() = 0;
+		virtual Ref<ShaderBytecode> LoadBytecode(const URI::Shader & shaderUri) = 0;
+		virtual Ref<ShaderBytecode> Build() = 0;
 	};
-
-	using ShaderBuilderRef = std::shared_ptr<ShaderBuilder>;
-	using ShaderBuilderWeakRef = std::weak_ptr<ShaderBuilder>;
 
 	class PipelineState {
 	public:
@@ -331,18 +324,10 @@ namespace Netcode {
 		virtual void * GetImplDetail() const = 0;
 	};
 
-	using PipelineStatePtr = PipelineState *;
-	using PipelineStateRef = std::shared_ptr<PipelineState>;
-	using PipelineStateWeakRef = std::weak_ptr<PipelineState>;
-
 	class InputLayout {
 	public:
 		virtual ~InputLayout() = default;
-		
 	};
-
-	using InputLayoutRef = std::shared_ptr<InputLayout>;
-	using InputLayoutWeakRef = std::weak_ptr<InputLayout>;
 
 	class InputLayoutBuilder {
 	public:
@@ -351,19 +336,13 @@ namespace Netcode {
 		virtual void AddInputElement(const char * semanticName, unsigned int semanticIndex, DXGI_FORMAT format) = 0;
 		virtual void AddInputElement(const char * semanticName, DXGI_FORMAT format, unsigned int byteOffset) = 0;
 		virtual void AddInputElement(const char * semanticName, unsigned int semanticIndex, DXGI_FORMAT format, unsigned int byteOffset) = 0;
-		virtual InputLayoutRef Build() = 0;
+		virtual Ref<InputLayout> Build() = 0;
 	};
-
-	using InputLayoutBuilderRef = std::shared_ptr<InputLayoutBuilder>;
-	using InputLayoutBuilderWeakRef = std::weak_ptr<InputLayoutBuilder>;
 
 	class StreamOutput {
 	public:
 		virtual ~StreamOutput() = default;
 	};
-
-	using StreamOutputRef = std::shared_ptr<StreamOutput>;
-	using StreamOutputWeakRef = std::weak_ptr<StreamOutput>;
 
 	class StreamOutputBuilder {
 	public:
@@ -372,11 +351,8 @@ namespace Netcode {
 		virtual void SetRasterizedStream(uint32_t stream) = 0;
 		virtual void AddStreamOutputEntry(const char * semanticName, uint8_t componentCount, uint8_t outputSlot, uint8_t startComponent, uint32_t stream) = 0;
 		virtual void AddStreamOutputEntry(const char * semanticName, uint32_t semanticIndex, uint8_t componentCount, uint8_t outputSlot, uint8_t startComponent, uint32_t stream) = 0;
-		virtual StreamOutputRef Build() = 0;
+		virtual Ref<StreamOutput> Build() = 0;
 	};
-
-	using StreamOutputBuilderRef = std::shared_ptr<StreamOutputBuilder>;
-	using StreamOutputBuilderWeakRef = std::weak_ptr<StreamOutputBuilder>;
 
 	class RootSignature {
 	public:
@@ -384,68 +360,53 @@ namespace Netcode {
 		virtual void * GetImplDetail() const = 0;
 	};
 
-	using RootSignaturePtr = RootSignature *;
-	using RootSignatureRef = std::shared_ptr<RootSignature>;
-	using RootSignatureWeakRef = std::weak_ptr<RootSignature>;
-
 	class RootSignatureBuilder {
 	public:
 		virtual ~RootSignatureBuilder() = default;
-		virtual RootSignatureRef Build() = 0;
-		virtual RootSignatureRef BuildFromShader(ShaderBytecodeRef rootSigContainingBytecode) = 0;
-		virtual RootSignatureRef BuildEmpty() = 0;
+		virtual Ref<RootSignature> Build() = 0;
+		virtual Ref<RootSignature> BuildFromShader(Ref<ShaderBytecode> rootSigContainingBytecode) = 0;
+		virtual Ref<RootSignature> BuildEmpty() = 0;
 	};
-
-	using RootSignatureBuilderRef = std::shared_ptr<RootSignatureBuilder>;
-	using RootSignatureBuilderWeakRef = std::weak_ptr<RootSignatureBuilder>;
 
 	class GPipelineStateBuilder {
 	public:
 		virtual ~GPipelineStateBuilder() = default;
-		virtual void SetRootSignature(RootSignatureRef rootSignature) = 0;
+		virtual void SetRootSignature(Ref<RootSignature> rootSignature) = 0;
 		virtual void SetDepthStencilState(const DepthStencilDesc & depthStencilState) = 0;
 		virtual void SetRasterizerState(const RasterizerDesc & rasterizerState) = 0;
 		virtual void SetBlendState(const BlendDesc & blendState) = 0;
-		virtual void SetStreamOutput(StreamOutputRef streamOutput) = 0;
-		virtual void SetInputLayout(InputLayoutRef inputLayout) = 0;
-		virtual void SetVertexShader(ShaderBytecodeRef shader) = 0;
-		virtual void SetPixelShader(ShaderBytecodeRef shader) = 0;
-		virtual void SetGeometryShader(ShaderBytecodeRef shader) = 0;
-		virtual void SetHullShader(ShaderBytecodeRef shader) = 0;
-		virtual void SetDomainShader(ShaderBytecodeRef shader) = 0;
+		virtual void SetStreamOutput(Ref<StreamOutput> streamOutput) = 0;
+		virtual void SetInputLayout(Ref<InputLayout> inputLayout) = 0;
+		virtual void SetVertexShader(Ref<ShaderBytecode> shader) = 0;
+		virtual void SetPixelShader(Ref<ShaderBytecode> shader) = 0;
+		virtual void SetGeometryShader(Ref<ShaderBytecode> shader) = 0;
+		virtual void SetHullShader(Ref<ShaderBytecode> shader) = 0;
+		virtual void SetDomainShader(Ref<ShaderBytecode> shader) = 0;
 		virtual void SetNumRenderTargets(uint8_t numRenderTargets) = 0;
 		virtual void SetDepthStencilFormat(DXGI_FORMAT format) = 0;
 		virtual void SetRenderTargetFormat(uint8_t renderTargetIdx, DXGI_FORMAT format) = 0;
 		virtual void SetRenderTargetFormats(std::initializer_list<DXGI_FORMAT> formats) = 0;
-		virtual void SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType topType) = 0;
-		virtual PipelineStateRef Build() = 0;
+		virtual void SetPrimitiveTopologyType(Graphics::PrimitiveTopologyType topType) = 0;
+		virtual Ref<PipelineState> Build() = 0;
 	};
-
-	using GPipelineStateBuilderRef = std::shared_ptr<GPipelineStateBuilder>;
-	using GPipelineStateBuilderWeakRef = std::weak_ptr<GPipelineStateBuilder>;
 
 	class CPipelineStateBuilder {
 	public:
 		virtual ~CPipelineStateBuilder() = default;
-		virtual void SetRootSignature(RootSignatureRef rootSig) = 0;
-		virtual void SetComputeShader(ShaderBytecodeRef shader) = 0;
-		virtual PipelineStateRef Build() = 0;
+		virtual void SetRootSignature(Ref<RootSignature> rootSig) = 0;
+		virtual void SetComputeShader(Ref<ShaderBytecode> shader) = 0;
+		virtual Ref<PipelineState> Build() = 0;
 	};
-
-	using CPipelineStateBuilderRef = std::shared_ptr<CPipelineStateBuilder>;
 
 	class Texture {
 	public:
 		virtual ~Texture() = default;
-		virtual Netcode::Graphics::ResourceDimension GetDimension() const = 0;
+		virtual Graphics::ResourceDimension GetDimension() const = 0;
 		virtual uint16_t GetMipLevelCount() const = 0;
 		virtual const Image * GetImage(uint16_t mipIndex, uint16_t arrayIndex, uint32_t slice) = 0;
 		virtual const Image * GetImages() = 0;
 		virtual uint16_t GetImageCount() = 0;
 	};
-
-	using TextureRef = std::shared_ptr<Texture>;
-	using TextureWeakRef = std::weak_ptr<Texture>;
 
 	class TextureBuilder {
 	public:
@@ -460,31 +421,27 @@ namespace Netcode {
 
 		virtual uint16_t GetCurrentMipLevelCount() = 0;
 		virtual void GenerateMipLevels(uint16_t mipLevelCount) = 0;
-		virtual TextureRef Build() = 0;
+		virtual Ref<Texture> Build() = 0;
 	};
-
-	using TextureBuilderRef = std::shared_ptr<TextureBuilder>;
 
 	class ResourceViews {
 	public:
 		virtual ~ResourceViews() = default;
-		virtual void CreateSRV(uint32_t idx, GpuResourcePtr resourceHandle) = 0;
-		virtual void CreateSRV(uint32_t idx, GpuResourcePtr resourceHandle, uint32_t firstElement, uint32_t numElements) = 0;
-		virtual void CreateRTV(uint32_t idx, GpuResourcePtr resourceHandle) = 0;
-		virtual void CreateDSV(GpuResourcePtr resourceHandle) = 0;
-		virtual void CreateUAV(uint32_t idx, GpuResourcePtr resourceHandle) = 0;
-		virtual void CreateSampler(uint32_t idx, GpuResourcePtr resourceHandle) = 0;
+		virtual void CreateSRV(uint32_t idx, Ptr<GpuResource> resourceHandle) = 0;
+		virtual void CreateSRV(uint32_t idx, Ptr<GpuResource> resourceHandle, uint32_t firstElement, uint32_t numElements) = 0;
+		virtual void CreateRTV(uint32_t idx, Ptr<GpuResource> resourceHandle) = 0;
+		virtual void CreateDSV(Ptr<GpuResource> resourceHandle) = 0;
+		virtual void CreateUAV(uint32_t idx, Ptr<GpuResource> resourceHandle) = 0;
+		virtual void CreateSampler(uint32_t idx, Ptr<GpuResource> resourceHandle) = 0;
 
 		virtual void RemoveSRV(uint32_t idx, Graphics::ResourceDimension expectedResourceDimension) = 0;
 	};
 
-	using ResourceViewsRef = std::shared_ptr<ResourceViews>;
-
 	struct SpriteDesc {
 		BackgroundType type;
-		Netcode::ResourceViewsRef texture;
-		Netcode::UInt2 textureSize;
-		Netcode::Float4 color;
+		Ref<ResourceViews> texture;
+		UInt2 textureSize;
+		Float4 color;
 		Rect sourceRect;
 
 		bool IsEmpty() const {
@@ -502,8 +459,8 @@ namespace Netcode {
 		SpriteDesc() :
 			type{ BackgroundType::NONE },
 			texture{ nullptr },
-			textureSize{ Netcode::UInt2::Zero },
-			color{ Netcode::Float4::Zero },
+			textureSize{ UInt2::Zero },
+			color{ Float4::Zero },
 			sourceRect{ 0, 0, 0, 0 } {
 
 		}
@@ -511,26 +468,26 @@ namespace Netcode {
 		SpriteDesc(const Netcode::Float4 & color) :
 			type{ BackgroundType::SOLID },
 			texture{ nullptr },
-			textureSize{ Netcode::UInt2::Zero },
+			textureSize{ UInt2::Zero },
 			color{ color },
 			sourceRect{ 0, 0, 0, 0 } {
 
 		}
 
-		SpriteDesc(const Netcode::ResourceViewsRef & texture, const Netcode::UInt2 & textureSize) :
-			SpriteDesc(texture, textureSize, Netcode::Float4::One) { }
+		SpriteDesc(const Ref<ResourceViews> & texture, const UInt2 & textureSize) :
+			SpriteDesc(texture, textureSize, Float4::One) { }
 
-		SpriteDesc(const Netcode::ResourceViewsRef & texture, const Netcode::UInt2 & textureSize, const Netcode::Float4 & albedoColor) :
+		SpriteDesc(const Ref<ResourceViews> & texture, const UInt2 & textureSize, const Float4 & albedoColor) :
 			SpriteDesc(texture, textureSize, Rect{ 0, 0, static_cast<int32_t>(textureSize.x), static_cast<int32_t>(textureSize.y) }, albedoColor) {
 
 		}
 
-		SpriteDesc(const Netcode::ResourceViewsRef & texture, const Netcode::UInt2 & textureSize, const Rect & sourceRect) :
-			SpriteDesc(texture, textureSize, sourceRect, Netcode::Float4::One) {
+		SpriteDesc(const Ref<ResourceViews> & texture, const UInt2 & textureSize, const Rect & sourceRect) :
+			SpriteDesc(texture, textureSize, sourceRect, Float4::One) {
 
 		}
 
-		SpriteDesc(const Netcode::ResourceViewsRef & texture, const Netcode::UInt2 & textureSize, const Rect & sourceRect, const Netcode::Float4 & albedoColor) :
+		SpriteDesc(const Ref<ResourceViews> & texture, const UInt2 & textureSize, const Rect & sourceRect, const Float4 & albedoColor) :
 			type{ BackgroundType::TEXTURE },
 			texture{ texture },
 			textureSize{ textureSize },
@@ -544,7 +501,7 @@ namespace Netcode {
 		BorderType type;
 		float borderWidth;
 		float borderRadius;
-		Netcode::Float4 color;
+		Float4 color;
 
 		bool IsEmpty() const {
 			return type == BorderType::NONE;
@@ -558,9 +515,9 @@ namespace Netcode {
 			return !operator==(rhs);
 		}
 
-		BorderDesc() : type{ BorderType::NONE }, borderWidth{ 0.0f }, borderRadius{ 0.0f }, color{ Netcode::Float4::Zero } { }
+		BorderDesc() : type{ BorderType::NONE }, borderWidth{ 0.0f }, borderRadius{ 0.0f }, color{ Float4::Zero } { }
 		
-		BorderDesc(float width, float radius, const Netcode::Float4 & color) :
+		BorderDesc(float width, float radius, const Float4 & color) :
 			type{ BorderType::SOLID },
 			borderWidth{ width },
 			borderRadius{ radius },
@@ -589,24 +546,19 @@ namespace Netcode {
 		virtual void EndRecord() = 0;
 	};
 
-	using SpriteBatchRef = std::shared_ptr<SpriteBatch>;
-	using SpriteBatchPtr = SpriteBatch *;
-
 	class SpriteBatchBuilder {
 	public:
 		virtual ~SpriteBatchBuilder() = default;
 
-		virtual void SetPipelineState(PipelineStateRef pipelineState) = 0;
-		virtual void SetRootSignature(RootSignatureRef rootSignature) = 0;
-		virtual SpriteBatchRef Build() = 0;
+		virtual void SetPipelineState(Ref<PipelineState> pipelineState) = 0;
+		virtual void SetRootSignature(Ref<RootSignature> rootSignature) = 0;
+		virtual Ref<SpriteBatch> Build() = 0;
 	};
-
-	using SpriteBatchBuilderRef = std::shared_ptr<SpriteBatchBuilder>;
 
 	class SpriteFont {
 	public:
 		virtual ~SpriteFont() = default;
-		virtual ResourceViewsRef GetResourceView() const = 0;
+		virtual Ref<ResourceViews> GetResourceView() const = 0;
 		virtual Float2 MeasureString(const char * str) const = 0;
 		virtual Float2 MeasureString(const wchar_t * str) const = 0;
 		virtual Float2 MeasureString(std::string_view view) const = 0;
@@ -626,40 +578,33 @@ namespace Netcode {
 
 		virtual const Glyph * FindGlyph(wchar_t character) const = 0;
 
-		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color) const = 0;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, float zIndex) const = 0;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const = 0;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const = 0;
+		virtual void DrawString(Ptr<SpriteBatch> spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color) const = 0;
+		virtual void DrawString(Ptr<SpriteBatch> spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, float zIndex) const = 0;
+		virtual void DrawString(Ptr<SpriteBatch> spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const = 0;
+		virtual void DrawString(Ptr<SpriteBatch> spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const = 0;
 
-		virtual void DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color) const = 0;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, float zIndex) const = 0;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const = 0;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const = 0;
+		virtual void DrawString(Ptr<SpriteBatch> spriteBatch, const char * text, const Float2 & position, const Float4 & color) const = 0;
+		virtual void DrawString(Ptr<SpriteBatch> spriteBatch, const char * text, const Float2 & position, const Float4 & color, float zIndex) const = 0;
+		virtual void DrawString(Ptr<SpriteBatch> spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const = 0;
+		virtual void DrawString(Ptr<SpriteBatch> spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const = 0;
 
-		virtual void DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color) const = 0;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, float zIndex) const = 0;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const = 0;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const = 0;
+		virtual void DrawString(Ptr<SpriteBatch> spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color) const = 0;
+		virtual void DrawString(Ptr<SpriteBatch> spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, float zIndex) const = 0;
+		virtual void DrawString(Ptr<SpriteBatch> spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const = 0;
+		virtual void DrawString(Ptr<SpriteBatch> spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const = 0;
 
-		virtual void DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color) const = 0;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, float zIndex) const = 0;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const = 0;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const = 0;
+		virtual void DrawString(Ptr<SpriteBatch> spriteBatch, std::string_view text, const Float2 & position, const Float4 & color) const = 0;
+		virtual void DrawString(Ptr<SpriteBatch> spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, float zIndex) const = 0;
+		virtual void DrawString(Ptr<SpriteBatch> spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const = 0;
+		virtual void DrawString(Ptr<SpriteBatch> spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const = 0;
 	};
-
-	using SpriteFontRef = std::shared_ptr<SpriteFont>;
 
 	class SpriteFontBuilder {
 	public:
 		virtual ~SpriteFontBuilder() = default;
-		/* maybe later:
-		virtual void PremultiplyAlpha() = 0;
-		*/
 		virtual void LoadFont(const std::wstring & mediaPath) = 0;
-		virtual SpriteFontRef Build() = 0;
+		virtual Ref<SpriteFont> Build() = 0;
 	};
-
-	using SpriteFontBuilderRef = std::shared_ptr<SpriteFontBuilder>;
 
 	class Fence {
 	public:
@@ -670,8 +615,8 @@ namespace Netcode {
 		virtual void Increment() = 0;
 	};
 
-	using FenceRef = std::shared_ptr<Fence>;
-
+	/*???*/
+	
 	struct User {
 		int id;
 		std::string hash;

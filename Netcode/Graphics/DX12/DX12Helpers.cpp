@@ -29,7 +29,7 @@ namespace Netcode::Graphics::DX12 {
 		return nativeDesc;
 	}
 
-	D3D12_SHADER_BYTECODE GetNativeBytecode(ShaderBytecodeRef bytecode) {
+	D3D12_SHADER_BYTECODE GetNativeBytecode(Ptr<ShaderBytecode> bytecode) {
 		D3D12_SHADER_BYTECODE bc;
 		if(bytecode != nullptr) {
 			bc.pShaderBytecode = bytecode->GetBufferPointer();

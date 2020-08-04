@@ -95,8 +95,8 @@ namespace Netcode::Graphics::DX12 {
 
 	class DX12GraphicsModule : public Module::IGraphicsModule, Graphics::IFrameContext {
 	private:
-		void CullFrameGraph(FrameGraphRef frameGraph);
-		void ExecuteFrameGraph(FrameGraphRef frameGraph);
+		void CullFrameGraph(Ref<FrameGraph> frameGraph);
+		void ExecuteFrameGraph(Ref<FrameGraph> frameGraph);
 
 	protected:
 		Module::AppEventSystem * eventSystem;
@@ -167,7 +167,7 @@ namespace Netcode::Graphics::DX12 {
 
 		std::vector<CommandList> inFlightCommandLists;
 
-		GpuResourceRef depthStencil;
+		Ref<GpuResource> depthStencil;
 
 		void NextBackBufferIndex();
 
@@ -223,7 +223,7 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SyncUpload(const UploadBatch & upload) override;
 
-		virtual void Run(FrameGraphRef frameGraph, FrameGraphCullMode cullMode) override;
+		virtual void Run(Ref<FrameGraph> frameGraph, FrameGraphCullMode cullMode) override;
 
 		virtual Netcode::UInt2 GetBackbufferSize() const override;
 
@@ -235,27 +235,27 @@ namespace Netcode::Graphics::DX12 {
 
 		void CreateSwapChainResources();
 
-		virtual FenceRef CreateFence(uint64_t initialValue) override;
+		virtual Ref<Fence> CreateFence(uint64_t initialValue) override;
 
-		virtual ShaderBuilderRef CreateShaderBuilder() override;
+		virtual Ref<ShaderBuilder> CreateShaderBuilder() override;
 
-		virtual GPipelineStateBuilderRef CreateGPipelineStateBuilder() override;
+		virtual Ref<GPipelineStateBuilder> CreateGPipelineStateBuilder() override;
 
-		virtual CPipelineStateBuilderRef CreateCPipelineStateBuilder() override;
+		virtual Ref<CPipelineStateBuilder> CreateCPipelineStateBuilder() override;
 
-		virtual InputLayoutBuilderRef CreateInputLayoutBuilder() override;
+		virtual Ref<InputLayoutBuilder> CreateInputLayoutBuilder() override;
 
-		virtual StreamOutputBuilderRef CreateStreamOutputBuilder() override;
+		virtual Ref<StreamOutputBuilder> CreateStreamOutputBuilder() override;
 
-		virtual RootSignatureBuilderRef CreateRootSignatureBuilder() override;
+		virtual Ref<RootSignatureBuilder> CreateRootSignatureBuilder() override;
 
-		virtual SpriteFontBuilderRef CreateSpriteFontBuilder() override;
+		virtual Ref<SpriteFontBuilder> CreateSpriteFontBuilder() override;
 
-		virtual SpriteBatchBuilderRef CreateSpriteBatchBuilder() override;
+		virtual Ref<SpriteBatchBuilder> CreateSpriteBatchBuilder() override;
 
 		virtual TextureBuilderRef CreateTextureBuilder() override;
 
-		virtual FrameGraphBuilderRef CreateFrameGraphBuilder() override;
+		virtual Ref<FrameGraphBuilder> CreateFrameGraphBuilder() override;
 
 	};
 

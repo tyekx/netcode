@@ -163,17 +163,17 @@ namespace Netcode::Module {
 		virtual DXGI_FORMAT GetBackbufferFormat() const = 0;
 		virtual DXGI_FORMAT GetDepthStencilFormat() const = 0;
 
-		virtual FenceRef CreateFence(uint64_t initialValue) = 0;
-		virtual ShaderBuilderRef CreateShaderBuilder() = 0;
-		virtual GPipelineStateBuilderRef CreateGPipelineStateBuilder() = 0;
-		virtual CPipelineStateBuilderRef CreateCPipelineStateBuilder() = 0;
-		virtual InputLayoutBuilderRef CreateInputLayoutBuilder() = 0;
-		virtual StreamOutputBuilderRef CreateStreamOutputBuilder() = 0;
-		virtual RootSignatureBuilderRef CreateRootSignatureBuilder() = 0;
-		virtual SpriteFontBuilderRef CreateSpriteFontBuilder() = 0;
-		virtual SpriteBatchBuilderRef CreateSpriteBatchBuilder() = 0;
-		virtual TextureBuilderRef CreateTextureBuilder() = 0;
-		virtual FrameGraphBuilderRef CreateFrameGraphBuilder() = 0;
+		virtual Ref<Fence> CreateFence(uint64_t initialValue) = 0;
+		virtual Ref<ShaderBuilder> CreateShaderBuilder() = 0;
+		virtual Ref<GPipelineStateBuilder> CreateGPipelineStateBuilder() = 0;
+		virtual Ref<CPipelineStateBuilder> CreateCPipelineStateBuilder() = 0;
+		virtual Ref<InputLayoutBuilder> CreateInputLayoutBuilder() = 0;
+		virtual Ref<StreamOutputBuilder> CreateStreamOutputBuilder() = 0;
+		virtual Ref<RootSignatureBuilder> CreateRootSignatureBuilder() = 0;
+		virtual Ref<SpriteFontBuilder> CreateSpriteFontBuilder() = 0;
+		virtual Ref<SpriteBatchBuilder> CreateSpriteBatchBuilder() = 0;
+		virtual Ref<TextureBuilder> CreateTextureBuilder() = 0;
+		virtual Ref<FrameGraphBuilder> CreateFrameGraphBuilder() = 0;
 	};
 
 	class IAudioModule : public IModule {

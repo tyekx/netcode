@@ -3,17 +3,17 @@
 
 namespace Netcode::Graphics::DX12 {
 	StreamOutputLibrary::StreamOutputLibrary(Memory::ObjectAllocator allocator) : objectAllocator{ allocator },
-		streamOutputs{ BuilderAllocator<DX12StreamOutputRef>{ allocator } }
+		streamOutputs{ BuilderAllocator<Ref<DX12::StreamOutput>>{ allocator } }
 	{
 		streamOutputs.reserve(8);
 	}
 
-	void StreamOutputLibrary::Insert(DX12StreamOutputRef soRef) {
+	void StreamOutputLibrary::Insert(Ref<DX12::StreamOutput> soRef) {
 		streamOutputs.push_back(std::move(soRef));
 	}
 
-	StreamOutputRef StreamOutputLibrary::GetStreamOutput(const D3D12_STREAM_OUTPUT_DESC & soDesc) {
-		auto it = std::find_if(std::begin(streamOutputs), std::end(streamOutputs), [&soDesc](const DX12StreamOutputRef & item) -> bool {
+	Ref<Netcode::StreamOutput> StreamOutputLibrary::GetStreamOutput(const D3D12_STREAM_OUTPUT_DESC & soDesc) {
+		auto it = std::find_if(std::begin(streamOutputs), std::end(streamOutputs), [&soDesc](const Ref<DX12::StreamOutput> & item) -> bool {
 			return *item == soDesc;
 		});
 

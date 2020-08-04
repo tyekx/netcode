@@ -2,11 +2,11 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	DX12ResourceRef ResourcePool::CreateResource(const ResourceDesc & resource) {
+	Ref<DX12::Resource> ResourcePool::CreateResource(const ResourceDesc & resource) {
 		return heapManager->CreateResource(resource);
 	}
 
-	DX12ResourceRef ResourcePool::CreateStructuredBuffer(size_t sizeInBytes, UINT strideInBytes, ResourceType type, ResourceState initialState, ResourceFlags flags) {
+	Ref<DX12::Resource> ResourcePool::CreateStructuredBuffer(size_t sizeInBytes, UINT strideInBytes, ResourceType type, ResourceState initialState, ResourceFlags flags) {
 		ResourceDesc rDesc;
 		rDesc.type = type;
 		rDesc.dimension = ResourceDimension::BUFFER;
@@ -22,7 +22,7 @@ namespace Netcode::Graphics::DX12 {
 		return CreateResource(rDesc);
 	}
 
-	DX12ResourceRef ResourcePool::CreateTypedBuffer(size_t sizeInBytes, DXGI_FORMAT format, ResourceType type, ResourceState initialState, ResourceFlags flags) {
+	Ref<DX12::Resource> ResourcePool::CreateTypedBuffer(size_t sizeInBytes, DXGI_FORMAT format, ResourceType type, ResourceState initialState, ResourceFlags flags) {
 		ResourceDesc rDesc;
 		rDesc.type = type;
 		rDesc.dimension = ResourceDimension::BUFFER;
@@ -38,7 +38,7 @@ namespace Netcode::Graphics::DX12 {
 		return CreateResource(rDesc);
 	}
 
-	DX12ResourceRef ResourcePool::CreateDepthBuffer(ResourceType type, UINT width, UINT height, DXGI_FORMAT format, ResourceState initialState, ResourceFlags optFlags) {
+	Ref<DX12::Resource> ResourcePool::CreateDepthBuffer(ResourceType type, UINT width, UINT height, DXGI_FORMAT format, ResourceState initialState, ResourceFlags optFlags) {
 		ResourceDesc rDesc;
 		rDesc.type = type;
 		rDesc.dimension = ResourceDimension::TEXTURE2D;

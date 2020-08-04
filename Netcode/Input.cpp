@@ -1,4 +1,8 @@
 #include "Input.h"
+#include <NetcodeFoundation/ArrayView.hpp>
+#include "Event.hpp"
+#include "Input/Key.h"
+#include "Input/AxisMapBase.h"
 
 #if defined(NETCODE_OS_WINDOWS)
 #include <Windows.h>
@@ -162,7 +166,7 @@ namespace Netcode {
 	private:
 		Alloc allocator;
 
-		AxisMapRef axisMap;
+		Ref<AxisMapBase> axisMap;
 
 	public:
 		EventType<Key, KeyModifier> OnInput;
@@ -459,7 +463,7 @@ namespace Netcode {
 			return mouseWindowPosition;
 		}
 
-		void SetAxisMap(AxisMapRef axMap) {
+		void SetAxisMap(Ref<AxisMapBase> axMap) {
 			axisMap = std::move(axMap);
 		}
 
@@ -615,7 +619,7 @@ namespace Netcode {
 		return instance->GetAxis(axis);
 	}
 
-	void Input::SetAxisMap(AxisMapRef axisMap) {
+	void Input::SetAxisMap(Ref<AxisMapBase> axisMap) {
 		instance->SetAxisMap(std::move(axisMap));
 	}
 

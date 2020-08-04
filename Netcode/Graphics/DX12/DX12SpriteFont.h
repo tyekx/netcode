@@ -35,8 +35,8 @@ namespace Netcode::Graphics::DX12 {
 
 	class SpriteFont : public Netcode::SpriteFont
 	{
-		GpuResourceRef textureResource;
-		DX12ResourceViewsRef shaderResourceView;
+		Ref<GpuResource> textureResource;
+		Ref<DX12::ResourceViews> shaderResourceView;
 
 		GlyphLimits limits;
 
@@ -64,29 +64,29 @@ namespace Netcode::Graphics::DX12 {
 
 		SpriteFont(IResourceContext * resourceContext, IFrameContext * frameContext, const std::wstring & fileName);
 
-		virtual ResourceViewsRef GetResourceView() const override;
+		virtual Ref<Netcode::ResourceViews> GetResourceView() const override;
 
-		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color) const override;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, float zIndex) const override;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const override;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const override;
+		virtual void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color) const override;
+		virtual void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, float zIndex) const override;
+		virtual void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const override;
+		virtual void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const override;
 
-		virtual void DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color) const override;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, float zIndex) const override;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const override;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const override;
+		virtual void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const char * text, const Float2 & position, const Float4 & color) const override;
+		virtual void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const char * text, const Float2 & position, const Float4 & color, float zIndex) const override;
+		virtual void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const override;
+		virtual void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const override;
 
-		virtual void DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color) const override;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, float zIndex) const override;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const override;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const override;
+		virtual void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color) const override;
+		virtual void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, float zIndex) const override;
+		virtual void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const override;
+		virtual void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const override;
 
-		virtual void DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color) const override;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, float zIndex) const override;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const override;
-		virtual void DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const override;
+		virtual void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, std::string_view text, const Float2 & position, const Float4 & color) const override;
+		virtual void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, float zIndex) const override;
+		virtual void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const override;
+		virtual void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const override;
 
-		void DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, int length, const Float2 & position, const Float4 & color, const Float2 & origin, float rotation, float layerDepth) const;
+		void DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const wchar_t * text, int length, const Float2 & position, const Float4 & color, const Float2 & origin, float rotation, float layerDepth) const;
 
 		Rect MeasureDrawBounds(const wchar_t * text, const Netcode::Float2 & position) const;
 		Rect NC_MATH_CALLCONV MeasureDrawBounds(const wchar_t * text, DirectX::FXMVECTOR position) const;
@@ -176,11 +176,5 @@ namespace Netcode::Graphics::DX12 {
 
 		const wchar_t * ConvertUTF8(const char * text, int numChars = -1) const;
 	};
-
-	using DX12SpriteFont = Netcode::Graphics::DX12::SpriteFont;
-	using DX12SpriteFontRef = std::shared_ptr<DX12SpriteFont>;
-	
-	using DX12SpriteFont = Netcode::Graphics::DX12::SpriteFont;
-	using DX12SpriteFontRef = std::shared_ptr<DX12SpriteFont>;
 
 };

@@ -176,7 +176,7 @@ namespace Netcode::Graphics::DX12 {
 
 	}
 
-	RootSignatureRef RootSignatureLibrary::GetRootSignature(ShaderBytecodeRef blobWithRootSig) {
+	Ref<DX12::RootSignature> RootSignatureLibrary::GetRootSignature(Ref<Netcode::ShaderBytecode> blobWithRootSig) {
 		com_ptr<ID3D12VersionedRootSignatureDeserializer> deserializer;
 
 		DX_API("Failed to create versioned root signature deserializer")
@@ -209,7 +209,7 @@ namespace Netcode::Graphics::DX12 {
 		return rootSigs.emplace_back(std::make_shared<Netcode::Graphics::DX12::RootSignature>(std::move(rootSig), *desc));
 	}
 
-	RootSignatureRef RootSignatureLibrary::GetRootSignature(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & desc)
+	Ref<DX12::RootSignature> RootSignatureLibrary::GetRootSignature(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & desc)
 	{
 		for(const auto & i : rootSigs) {
 			if(IsCompatible(i->GetDesc(), desc)) {

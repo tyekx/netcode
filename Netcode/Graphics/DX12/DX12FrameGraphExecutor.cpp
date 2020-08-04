@@ -28,13 +28,13 @@ namespace Netcode::Graphics::DX12 {
 		computeSubmitCache[computeSubmitCacheSize++] = cl;
 	}
 
-	void FrameGraphExecutor::PushCompute(RenderPassRef renderPass, CommandList ccl) {
+	void FrameGraphExecutor::PushCompute(Ref<Netcode::RenderPass> renderPass, CommandList ccl) {
 		computeStack.emplace_back(std::move(renderPass));
 		AddComputeCommandList(ccl.GetCommandList());
 		inFlightCommandLists->push_back(std::move(ccl));
 	}
 
-	void FrameGraphExecutor::PushDirect(RenderPassRef renderPass, CommandList gcl) {
+	void FrameGraphExecutor::PushDirect(Ref<Netcode::RenderPass> renderPass, CommandList gcl) {
 		directStack.emplace_back(std::move(renderPass));
 		AddDirectCommandList(gcl.GetCommandList());
 		inFlightCommandLists->push_back(std::move(gcl));
@@ -107,7 +107,7 @@ namespace Netcode::Graphics::DX12 {
 		return false;
 	}
 
-	bool FrameGraphExecutor::HasResourceReadDependency(RenderPassRef renderPass) {
+	bool FrameGraphExecutor::HasResourceReadDependency(Ref<Netcode::RenderPass> renderPass) {
 		if(renderPass->Type() == RenderPassType::DIRECT) {
 			ArrayView<uint64_t> readResources = renderPass->GetReadResources();
 			for(const auto & computePass : computeStack) {
@@ -133,7 +133,7 @@ namespace Netcode::Graphics::DX12 {
 		return false;
 	}
 
-	void FrameGraphExecutor::InvokeRenderFunction(RenderPassRef renderPass) {
+	void FrameGraphExecutor::InvokeRenderFunction(Ref<Netcode::RenderPass> renderPass) {
 		if(renderPass->Type() == RenderPassType::DIRECT) {
 			CommandList cl = commandListPool->GetDirect();
 			GraphicsContext gctx{ resourcePool, cbufferPool, dheaps, cl.GetCommandList(),
@@ -204,12 +204,12 @@ namespace Netcode::Graphics::DX12 {
 		usingBackbuffer{ false } {
 	}
 
-	void FrameGraphExecutor::Execute(FrameGraphRef frameGraph) {
+	void FrameGraphExecutor::Execute(Ref<FrameGraph> frameGraph) {
 		usingBackbuffer = frameGraph->UsingBackbuffer();
 
 		BeginFrame();
 
-		std::vector<RenderPassRef> runnable = frameGraph->QueryCompleteRenderPasses();
+		std::vector<Ref<Netcode::RenderPass>> runnable = frameGraph->QueryCompleteRenderPasses();
 
 		while(!runnable.empty()) {
 			bool directSyncSubmission = false;

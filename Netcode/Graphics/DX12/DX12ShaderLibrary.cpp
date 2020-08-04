@@ -6,7 +6,7 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	ShaderCompiledRef ShaderLibrary::LoadCSO(std::wstring_view absolutePath) {
+	Ref<DX12::ShaderCompiled> ShaderLibrary::LoadCSO(std::wstring_view absolutePath) {
 		IO::File shaderFile{ std::wstring{ absolutePath } };
 		IO::FileReader<IO::File> reader{ shaderFile, Netcode::IO::FileOpenMode::READ_BINARY };
 
@@ -27,8 +27,8 @@ namespace Netcode::Graphics::DX12 {
 		return std::make_shared<ShaderCompiled>(std::wstring{ absolutePath }, std::move(shaderByteCode));
 	}
 
-	ShaderCompiledRef ShaderLibrary::LoadShader(const URI::Shader & filePath) {
-		auto it = std::find_if(std::begin(compiledShaders), std::end(compiledShaders), [&filePath](const ShaderCompiledRef & ref) -> bool {
+	Ref<DX12::ShaderCompiled> ShaderLibrary::LoadShader(const URI::Shader & filePath) {
+		auto it = std::find_if(std::begin(compiledShaders), std::end(compiledShaders), [&filePath](const Ref<DX12::ShaderCompiled> & ref) -> bool {
 			if(ref->GetFileReference() == filePath.GetShaderPath()) {
 				return true;
 			}
@@ -38,7 +38,7 @@ namespace Netcode::Graphics::DX12 {
 		if(it == std::end(compiledShaders)) {
 			Log::Debug("[DX12] Loading shader object: {0}", Netcode::Utility::ToNarrowString(filePath.GetFullPath()));
 
-			ShaderCompiledRef compiledRef = LoadCSO(filePath.GetShaderPath());
+			Ref<ShaderCompiled> compiledRef = LoadCSO(filePath.GetShaderPath());
 
 			ASSERT(compiledRef != nullptr, "Failed to load cso");
 
@@ -50,8 +50,8 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 	
-	ShaderVariantRef ShaderLibrary::GetShaderVariant(const ShaderVariantDesc & desc) {
-		auto it = std::find_if(std::begin(shaderVariants), std::end(shaderVariants), [&desc](const ShaderVariantRef & ref) -> bool {
+	Ref<DX12::ShaderVariant>  ShaderLibrary::GetShaderVariant(const ShaderVariantDesc & desc) {
+		auto it = std::find_if(std::begin(shaderVariants), std::end(shaderVariants), [&desc](const Ref<ShaderVariant> & ref) -> bool {
 			if(ref->GetDesc() == desc) {
 				return true;
 			}
@@ -61,7 +61,7 @@ namespace Netcode::Graphics::DX12 {
 		if(it == std::end(shaderVariants)) {
 			com_ptr<ID3DBlob> blob = CompileShader(shaderSources.GetSource(desc.sourceFileUri.GetFullPath()), desc.entryFunctionName, desc.shaderType, desc.defines);
 
-			ShaderVariantRef shaderVariant = std::make_shared<ShaderVariant>(desc, std::move(blob));
+			Ref<DX12::ShaderVariant> shaderVariant = std::make_shared<DX12::ShaderVariant>(desc, std::move(blob));
 
 			shaderVariants.push_back(shaderVariant);
 

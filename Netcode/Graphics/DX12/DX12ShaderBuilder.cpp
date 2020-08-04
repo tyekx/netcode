@@ -17,7 +17,7 @@ namespace Netcode::Graphics::DX12 {
 		SetState(BuilderState::CLEAR);
 	}
 
-	ShaderBuilder::ShaderBuilder(DX12ShaderLibraryRef shaderLibrary) : shaderLibrary{ std::move(shaderLibrary) }, variantDesc{}, state{ BuilderState::CLEAR } { }
+	ShaderBuilder::ShaderBuilder(Ref<DX12::ShaderLibrary> shaderLibrary) : shaderLibrary{ std::move(shaderLibrary) }, variantDesc{}, state{ BuilderState::CLEAR } { }
 
 	void ShaderBuilder::SetShaderType(ShaderType shaderType) {
 		SetState(BuilderState::VARIANT);
@@ -40,14 +40,14 @@ namespace Netcode::Graphics::DX12 {
 		variantDesc.defines = defines;
 	}
 
-	ShaderBytecodeRef ShaderBuilder::LoadBytecode(const URI::Shader & uri) {
+	Ref<Netcode::ShaderBytecode> ShaderBuilder::LoadBytecode(const URI::Shader & uri) {
 		SetState(BuilderState::PRECOMPILED);
 		auto shader = shaderLibrary->LoadShader(uri);
 		Clear();
 		return shader;
 	}
 
-	ShaderBytecodeRef ShaderBuilder::Build() {
+	Ref<Netcode::ShaderBytecode> ShaderBuilder::Build() {
 		ASSERT(state == BuilderState::VARIANT, "Failed to build shader: no inputs were given");
 
 		if(state == BuilderState::VARIANT) {

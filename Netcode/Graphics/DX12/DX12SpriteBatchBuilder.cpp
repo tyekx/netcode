@@ -3,20 +3,20 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	SpriteBatchBuilder::SpriteBatchBuilder(const Netcode::Module::IGraphicsModule * gModule) : gModule{ gModule } {
+	SpriteBatchBuilder::SpriteBatchBuilder(Ptr<Module::IGraphicsModule> gModule) : gModule{ gModule } {
 
 	}
 
-	void SpriteBatchBuilder::SetPipelineState(PipelineStateRef pipelineState) {
+	void SpriteBatchBuilder::SetPipelineState(Ref<Netcode::PipelineState> pipelineState) {
 		std::swap(pso, pipelineState);
 	}
 
-	void SpriteBatchBuilder::SetRootSignature(RootSignatureRef rootSignature) {
+	void SpriteBatchBuilder::SetRootSignature(Ref<Netcode::RootSignature> rootSignature) {
 		std::swap(rootSig, rootSignature);
 	}
 
-	SpriteBatchRef SpriteBatchBuilder::Build() {
-		return std::make_shared<DX12SpriteBatch>(gModule, std::move(rootSig), std::move(pso));
+	Ref<Netcode::SpriteBatch> SpriteBatchBuilder::Build() {
+		return std::make_shared<DX12::SpriteBatch>(gModule, std::move(rootSig), std::move(pso));
 	}
 
 }

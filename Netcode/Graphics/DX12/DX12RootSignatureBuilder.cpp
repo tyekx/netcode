@@ -3,19 +3,19 @@
 
 namespace  Netcode::Graphics::DX12 {
 
-	RootSignatureBuilder::RootSignatureBuilder(DX12RootSignatureLibraryRef libRef) :rootSigLibrary{ std::move(libRef) } { }
+	RootSignatureBuilder::RootSignatureBuilder(Ref<DX12::RootSignatureLibrary> libRef) :rootSigLibrary{ std::move(libRef) } { }
 
-	RootSignatureRef RootSignatureBuilder::Build() {
+	Ref<Netcode::RootSignature> RootSignatureBuilder::Build() {
 		//@TODO: support manual creation of root signature
 		ASSERT(false, "Building from scratch is not supported yet");
 
 		return nullptr;
 	}
-	RootSignatureRef RootSignatureBuilder::BuildFromShader(ShaderBytecodeRef rootSigContainingBytecode) {
+	Ref<Netcode::RootSignature> RootSignatureBuilder::BuildFromShader(Ref<Netcode::ShaderBytecode> rootSigContainingBytecode) {
 		return rootSigLibrary->GetRootSignature(rootSigContainingBytecode);
 	}
 
-	RootSignatureRef RootSignatureBuilder::BuildEmpty()
+	Ref<Netcode::RootSignature> RootSignatureBuilder::BuildEmpty()
 	{
 		D3D12_VERSIONED_ROOT_SIGNATURE_DESC vrsd;
 		vrsd.Version = D3D_ROOT_SIGNATURE_VERSION_1_0;

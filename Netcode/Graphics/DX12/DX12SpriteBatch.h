@@ -36,7 +36,7 @@ namespace Netcode::Graphics::DX12
     };
 
     class SpriteBatch : public Netcode::SpriteBatch {
-        static GpuResourceWeakRef indexBuffer;
+        static Weak<GpuResource> indexBuffer;
     public:
 
         struct SpriteInfo {
@@ -56,14 +56,14 @@ namespace Netcode::Graphics::DX12
             static_assert((SpriteEffects_FlipBoth & (SourceInTexels | DestSizeInPixels)) == 0, "Flag bits must not overlap");
         };
 
-        GpuResourceRef vertexBuffer;
-        GpuResourceRef indexBufferRef;
+        Ref<GpuResource> vertexBuffer;
+        Ref<GpuResource> indexBufferRef;
 
         IResourceContext * resourceContext;
         IRenderContext * renderContext;
 
-        RootSignatureRef rootSignature;
-        PipelineStateRef pipelineState;
+        Ref<Netcode::RootSignature> rootSignature;
+        Ref<Netcode::PipelineState> pipelineState;
         
         Rect recordScissorRect;
         Rect currentlyBoundScissorRect;
@@ -104,7 +104,7 @@ namespace Netcode::Graphics::DX12
 
         void CreateIndexBuffer(const Netcode::Module::IGraphicsModule * graphics);
 
-        SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netcode::RootSignatureRef rootSig, Netcode::PipelineStateRef pso);
+        SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<Netcode::RootSignature> rootSig, Ref<Netcode::PipelineState> pso);
 
         SpriteBatch(SpriteBatch && moveFrom) = default;
         SpriteBatch & operator= (SpriteBatch && moveFrom) = default;
@@ -152,15 +152,12 @@ namespace Netcode::Graphics::DX12
         void SortSprites();
         void GrowSortedSprites();
 
-        void NC_MATH_CALLCONV RenderBatch(ResourceViewsRef texture, Vector2 textureSize, const SpriteInfo * const * sprites, uint32_t count);
+        void NC_MATH_CALLCONV RenderBatch(Ref<Netcode::ResourceViews> texture, Vector2 textureSize, const SpriteInfo * const * sprites, uint32_t count);
 
         static void NC_MATH_CALLCONV RenderSprite(const SpriteInfo * sprite, PCT_Vertex * vertices, Vector2 textureSize, Vector2 inverseTextureSize);
 
         void NC_MATH_CALLCONV Draw(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, Netcode::Vector4 destination, Netcode::Vector4 originRotationDepth, uint32_t flags);
     };
-
-    using DX12SpriteBatch = Netcode::Graphics::DX12::SpriteBatch;
-    using DX12SpriteBatchRef = std::shared_ptr<DX12SpriteBatch>;
 
 }
 

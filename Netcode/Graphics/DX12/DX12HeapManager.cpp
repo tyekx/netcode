@@ -38,7 +38,7 @@ namespace Netcode::Graphics::DX12 {
 		return D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES;
 	}
 
-	DX12ResourceRef HeapManager::CreateResource(const ResourceDesc & d) {
+	Ref<DX12::Resource> HeapManager::CreateResource(const ResourceDesc & d) {
 		using value_type = decltype(heaps)::value_type;
 
 		const D3D12_RESOURCE_DESC dxDesc = GetNativeDesc(d);
@@ -85,7 +85,7 @@ namespace Netcode::Graphics::DX12 {
 			return true;
 		});
 
-		DX12ResourceRef resource;
+		Ref<DX12::Resource> resource;
 		if(it != std::end(heaps)) {
 			resource = (*it)->CreateResource(cpy, dxDesc, initState, optCv, dxAlloc);
 		} else {

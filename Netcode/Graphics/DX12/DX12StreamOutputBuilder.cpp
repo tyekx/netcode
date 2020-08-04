@@ -2,12 +2,12 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	StreamOutputBuilder::StreamOutputBuilder(Memory::ObjectAllocator alloc, DX12StreamOutputLibraryRef streamOutputLib) :
+	StreamOutputBuilder::StreamOutputBuilder(Memory::ObjectAllocator alloc, Ref<DX12::StreamOutputLibrary> streamOutputLib) :
 		objectAllocator{ alloc },
 		declarations{ BuilderAllocator<D3D12_SO_DECLARATION_ENTRY>{alloc} },
 		strides{ BuilderAllocator<UINT>{alloc} },
 		rasterizedStream{ D3D12_SO_NO_RASTERIZED_STREAM },
-		streamOutputLibrary{ streamOutputLib } {
+		streamOutputLibrary{ std::move(streamOutputLib) } {
 		declarations.reserve(4);
 		strides.reserve(8);
 	}
@@ -33,7 +33,7 @@ namespace Netcode::Graphics::DX12 {
 		declarations.push_back(entry);
 	}
 
-	StreamOutputRef StreamOutputBuilder::Build() {
+	Ref<Netcode::StreamOutput> StreamOutputBuilder::Build() {
 		D3D12_STREAM_OUTPUT_DESC soDesc;
 		soDesc.NumEntries = static_cast<UINT>(declarations.size());
 		soDesc.pSODeclaration = declarations.data();
@@ -44,7 +44,7 @@ namespace Netcode::Graphics::DX12 {
 		auto candidate = streamOutputLibrary->GetStreamOutput(soDesc);
 
 		if(candidate == nullptr) {
-			DX12StreamOutputRef so = objectAllocator.MakeShared<DX12StreamOutput>(soDesc, std::move(declarations), std::move(strides));
+			Ref<DX12::StreamOutput> so = objectAllocator.MakeShared<DX12::StreamOutput>(soDesc, std::move(declarations), std::move(strides));
 
 			streamOutputLibrary->Insert(so);
 

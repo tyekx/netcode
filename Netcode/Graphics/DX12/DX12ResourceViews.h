@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../HandleTypes.h"
+#include <Netcode/HandleTypes.h>
 #include "DX12Common.h"
 
 namespace Netcode::Graphics::DX12 {
@@ -34,22 +34,19 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual ~ResourceViews() = default;
 
-		virtual void CreateSRV(uint32_t idx, GpuResourcePtr resourceHandle) override;
+		virtual void CreateSRV(uint32_t idx, Ptr<GpuResource> resourceHandle) override;
 
-		virtual void CreateSRV(uint32_t idx, GpuResourcePtr resourceHandle, uint32_t firstElement, uint32_t numElements) override;
+		virtual void CreateSRV(uint32_t idx, Ptr<GpuResource> resourceHandle, uint32_t firstElement, uint32_t numElements) override;
 
-		virtual void CreateRTV(uint32_t idx, GpuResourcePtr resourceHandle) override;
+		virtual void CreateRTV(uint32_t idx, Ptr<GpuResource> resourceHandle) override;
 
-		virtual void CreateDSV(GpuResourcePtr resourceHandle)  override;
+		virtual void CreateDSV(Ptr<GpuResource> resourceHandle)  override;
 
-		virtual void CreateUAV(uint32_t idx, GpuResourcePtr resourceHandle) override;
+		virtual void CreateUAV(uint32_t idx, Ptr<GpuResource> resourceHandle) override;
 
-		virtual void CreateSampler(uint32_t idx, GpuResourcePtr resourceHandle)  override;
+		virtual void CreateSampler(uint32_t idx, Ptr<GpuResource> resourceHandle)  override;
 
 		virtual void RemoveSRV(uint32_t idx, Graphics::ResourceDimension expectedResourceDimension) override;
 	};
-
-	using DX12ResourceViews = Netcode::Graphics::DX12::ResourceViews;
-	using DX12ResourceViewsRef = std::shared_ptr<DX12ResourceViews>;
 
 }

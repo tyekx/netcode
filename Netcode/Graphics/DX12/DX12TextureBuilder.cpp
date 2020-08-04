@@ -57,8 +57,8 @@ namespace Netcode::Graphics::DX12 {
 		std::swap(outIm, scratchImage);
 	}
 	
-	TextureRef TextureBuilder::Build() {
-		return std::make_shared<DX12Texture>(std::move(scratchImage));
+	Ref<Netcode::Texture> TextureBuilder::Build() {
+		return std::make_shared<DX12::Texture>(std::move(scratchImage));
 	}
 
 }

@@ -14,7 +14,7 @@ namespace Netcode::Graphics::DX12 {
 		ResourceDesc desc;
 		D3D12_RESOURCE_DESC nativeDesc;
 		com_ptr<ID3D12Resource> resource;
-		std::shared_ptr<Heap> heap;
+		Ref<Heap> heap;
 
 		virtual const ResourceDesc & GetDesc() const override;
 
@@ -26,12 +26,8 @@ namespace Netcode::Graphics::DX12 {
 			const ResourceDesc & resourceDesc,
 			const D3D12_RESOURCE_DESC & nativeDesc,
 			com_ptr<ID3D12Resource> resource,
-			std::shared_ptr<Heap> heap);
+			Ref<Heap> heap);
 	};
-
-	using DX12Resource = Netcode::Graphics::DX12::Resource;
-	using DX12ResourcePtr = DX12Resource *;
-	using DX12ResourceRef = std::shared_ptr<DX12Resource>;
 
 }
 

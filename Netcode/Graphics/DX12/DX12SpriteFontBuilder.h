@@ -9,17 +9,14 @@
 namespace Netcode::Graphics::DX12 {
 
 	class SpriteFontBuilder : public Netcode::SpriteFontBuilder {
-		DX12SpriteFontLibraryRef spriteFontLib;
-		DX12SpriteFontRef spriteFont;
+		Ref<DX12::SpriteFontLibrary> spriteFontLib;
+		Ref<DX12::SpriteFont> spriteFont;
 	public:
-		SpriteFontBuilder(DX12SpriteFontLibraryRef spriteFontLib);
+		SpriteFontBuilder(Ref<DX12::SpriteFontLibrary> spriteFontLib);
 
 		virtual void LoadFont(const std::wstring & mediaPath) override;
 
-		virtual SpriteFontRef Build() override;
+		virtual Ref<Netcode::SpriteFont> Build() override;
 	};
-
-	using DX12SpriteFontBuilder = Netcode::Graphics::DX12::SpriteFontBuilder;
-	using DX12SpriteFontBuilderRef = std::shared_ptr<DX12SpriteFontBuilder>;
 
 }

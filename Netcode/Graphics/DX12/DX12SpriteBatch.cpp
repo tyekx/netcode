@@ -3,7 +3,6 @@
 #include <algorithm>
 
 #include "DX12SpriteBatch.h"
-#include "DX12ResourceViews.h"
 
 namespace Netcode::Graphics::DX12 {
 
@@ -26,7 +25,7 @@ namespace Netcode::Graphics::DX12 {
 		int backgroundType;
 	};
 
-	GpuResourceWeakRef SpriteBatch::indexBuffer{ };
+	Weak<GpuResource> SpriteBatch::indexBuffer{ };
 
 void SpriteBatch::CreateIndexBuffer(const Netcode::Module::IGraphicsModule * graphics)
 {
@@ -55,15 +54,15 @@ void SpriteBatch::CreateIndexBuffer(const Netcode::Module::IGraphicsModule * gra
 
 	indexBufferRef = graphics->resources->CreateIndexBuffer(ibufferSize, DXGI_FORMAT_R16_UINT, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
 	
-	UploadBatch upload;
-	upload.Upload(indexBufferRef, indices.data(), ibufferSize);
-	upload.ResourceBarrier(indexBufferRef, ResourceState::COPY_DEST, ResourceState::INDEX_BUFFER);
+	Ref<UploadBatch> upload = graphics->resources->CreateUploadBatch();
+	upload->Upload(indexBufferRef, indices.data(), ibufferSize);
+	upload->Barrier(indexBufferRef, ResourceState::COPY_DEST, ResourceState::INDEX_BUFFER);
 	graphics->frame->SyncUpload(upload);
 
 	indexBuffer = indexBufferRef;
 }
 
-SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netcode::RootSignatureRef rootSig, Netcode::PipelineStateRef pso)
+SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<Netcode::RootSignature> rootSig, Ref<Netcode::PipelineState> pso)
 			: vertexBuffer{ 0 },
 			resourceContext{ nullptr },
 			renderContext{ nullptr },
@@ -190,7 +189,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 		SortSprites();
 
 		// Walk through the sorted sprite list, looking for adjacent entries that share a texture.
-		ResourceViewsRef batchTexture;
+		Ref<Netcode::ResourceViews> batchTexture;
 		Vector2 batchTextureSize = {};
 		BorderDesc batchBorderDesc;
 		SpriteDesc batchSpriteDesc;
@@ -201,7 +200,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 		{
 			const SpriteInfo * sprite = mSortedSprites[pos];
 
-			ResourceViewsRef texture = sprite->spriteDesc.texture;
+			Ref<Netcode::ResourceViews> texture = sprite->spriteDesc.texture;
 			Rect spr = sprite->scissorRect;
 			BorderDesc borderDesc = sprite->borderDesc;
 			SpriteDesc spriteDesc = sprite->spriteDesc;
@@ -260,7 +259,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Netc
 		}
 	}
 
-	void NC_MATH_CALLCONV SpriteBatch::RenderBatch(ResourceViewsRef texture, Vector2 textureSize, const SpriteInfo * const * sprites, uint32_t count)
+	void NC_MATH_CALLCONV SpriteBatch::RenderBatch(Ref<Netcode::ResourceViews> texture, Vector2 textureSize, const SpriteInfo * const * sprites, uint32_t count)
 	{
 
 		Vector2 inverseTextureSize = textureSize.Reciprocal();

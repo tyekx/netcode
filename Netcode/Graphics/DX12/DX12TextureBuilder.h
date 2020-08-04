@@ -25,10 +25,7 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void GenerateMipLevels(uint16_t mipLevelCount) override;
 
-		virtual TextureRef Build() override;
+		virtual Ref<Netcode::Texture> Build() override;
 	};
-
-	using DX12TextureBuilder = Netcode::Graphics::DX12::TextureBuilder;
-	using DX12TextureBuilderRef = std::shared_ptr<DX12TextureBuilder>;
 
 }

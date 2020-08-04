@@ -22,10 +22,7 @@ namespace Netcode::Graphics::DX12 {
 	public:
 		void SetDevice(com_ptr<ID3D12Device> dev);
 
-		DX12ResourceRef CreateResource(const ResourceDesc & d);
+		Ref<DX12::Resource> CreateResource(const ResourceDesc & d);
 	};
-
-	using DX12HeapManager = Netcode::Graphics::DX12::HeapManager;
-	using DX12HeapManagerRef = std::shared_ptr<DX12HeapManager>;
 
 }

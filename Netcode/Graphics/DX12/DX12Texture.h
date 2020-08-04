@@ -21,8 +21,5 @@ namespace Netcode::Graphics::DX12 {
 		virtual uint16_t GetImageCount() override;
 	};
 
-	using DX12Texture = Netcode::Graphics::DX12::Texture;
-	using DX12TextureRef = std::shared_ptr<Netcode::Graphics::DX12::Texture>;
-
 }
 

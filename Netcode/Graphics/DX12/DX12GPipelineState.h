@@ -7,17 +7,17 @@
 namespace Netcode::Graphics::DX12 {
 
 	struct GPipelineStateDesc {
-		RootSignatureRef rootSignature;
+		Ref<RootSignature> rootSignature;
 		DepthStencilDesc depthStencilState;
 		BlendDesc blendState;
-		StreamOutputRef streamOutput;
-		InputLayoutRef inputLayout;
+		Ref<StreamOutput> streamOutput;
+		Ref<InputLayout> inputLayout;
 		RasterizerDesc rasterizerState;
-		ShaderBytecodeRef VS;
-		ShaderBytecodeRef PS;
-		ShaderBytecodeRef GS;
-		ShaderBytecodeRef HS;
-		ShaderBytecodeRef DS;
+		Ref<ShaderBytecode> VS;
+		Ref<ShaderBytecode> PS;
+		Ref<ShaderBytecode> GS;
+		Ref<ShaderBytecode> HS;
+		Ref<ShaderBytecode> DS;
 		DXGI_FORMAT rtvFormats[D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT];
 		DXGI_FORMAT dsvFormat;
 		PrimitiveTopologyType topologyType;
@@ -42,8 +42,5 @@ namespace Netcode::Graphics::DX12 {
 		virtual void * GetImplDetail() const override;
 
 	};
-
-	using DX12GPipelineState = Netcode::Graphics::DX12::GPipelineState;
-	using DX12GPipelineStateRef = std::shared_ptr<DX12GPipelineState>;
 
 }

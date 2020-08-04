@@ -1,24 +1,25 @@
 #pragma once
 
-#include "../../HandleTypes.h"
-#include "../../Modules.h"
+#include <Netcode/HandleTypes.h>
+#include <memory>
+
+namespace Netcode::Module {
+	class IGraphicsModule;
+}
 
 namespace Netcode::Graphics::DX12 {
 
 	class SpriteBatchBuilder : public Netcode::SpriteBatchBuilder {
-		const Netcode::Module::IGraphicsModule * gModule;
-		Netcode::RootSignatureRef rootSig;
-		Netcode::PipelineStateRef pso;
+		Ptr<Module::IGraphicsModule> gModule;
+		Ref<Netcode::RootSignature> rootSig;
+		Ref<Netcode::PipelineState> pso;
 	public:
-		SpriteBatchBuilder(const Netcode::Module::IGraphicsModule * gModule);
+		SpriteBatchBuilder(Ptr<Module::IGraphicsModule> gModule);
 
-		virtual void SetPipelineState(PipelineStateRef pipelineState) override;
+		virtual void SetPipelineState(Ref<Netcode::RootSignature> pipelineState) override;
+		virtual void SetRootSignature(Ref<Netcode::PipelineState> rootSignature) override;
 
-		virtual void SetRootSignature(RootSignatureRef rootSignature) override;
-
-		virtual SpriteBatchRef Build() override;
+		virtual Ref<Netcode::SpriteBatch> Build() override;
 	};
-
-	using DX12SpriteBatchBuilder = Netcode::Graphics::DX12::SpriteBatchBuilder;
 
 }

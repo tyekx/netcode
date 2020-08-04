@@ -77,10 +77,10 @@ namespace Netcode::Graphics::DX12 {
 
 		resourceContext->SetDebugName(textureResource, L"SpriteFont:Texture");
 
-		UploadBatch batch;
-		batch.Upload(textureResource, imageData.GetPixels(), imageData.GetPixelsSize());
-		batch.ResourceBarrier(textureResource, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
-		frameContext->SyncUpload(batch);
+		Ref<UploadBatch> batch = resourceContext->CreateUploadBatch();
+		batch->Upload(textureResource, imageData.GetPixels(), imageData.GetPixelsSize());
+		batch->Barrier(textureResource, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
+		frameContext->SyncUpload(std::move(batch));
 
 		imageData.Release();
 	}
@@ -131,102 +131,102 @@ namespace Netcode::Graphics::DX12 {
 		Construct(&reader, resourceContext, frameContext);
 	}
 
-	ResourceViewsRef SpriteFont::GetResourceView() const {
+	Ref<Netcode::ResourceViews> SpriteFont::GetResourceView() const {
 		return shaderResourceView;
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color) const {
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color) const {
 		DrawString(spriteBatch, text, -1, position, color, Float2::Zero, 0.0f, 0.0f);
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, float zIndex) const {
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, float zIndex) const {
 		DrawString(spriteBatch, text, -1, position, color, Float2::Zero, 0.0f, zIndex);
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const {
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const {
 		DrawString(spriteBatch, text, -1, position, color, rotationOrigin, rotationZ, 0.0f);
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const {
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const wchar_t * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const {
 		DrawString(spriteBatch, text, -1, position, color, rotationOrigin, rotationZ, zIndex);
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color) const {
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const char * text, const Float2 & position, const Float4 & color) const {
 		DrawString(spriteBatch, ConvertUTF8(text), -1, position, color, Float2::Zero, 0.0f, 0.0f);
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, float zIndex) const
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const char * text, const Float2 & position, const Float4 & color, float zIndex) const
 	{
 		DrawString(spriteBatch, ConvertUTF8(text), -1, position, color, Float2::Zero, 0.0f, zIndex);
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const
 	{
 		DrawString(spriteBatch, ConvertUTF8(text), -1, position, color, rotationOrigin, rotationZ, 0.0f);
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const char * text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const
 	{
 		DrawString(spriteBatch, ConvertUTF8(text), -1, position, color, rotationOrigin, rotationZ, zIndex);
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color) const
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color) const
 	{
 		int32_t textLen = static_cast<int32_t>(text.size());
 
 		DrawString(spriteBatch, text.data(), textLen, position, color, Float2::Zero, 0.0f, 0.0f);
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, float zIndex) const
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, float zIndex) const
 	{
 		int32_t textLen = static_cast<int32_t>(text.size());
 
 		DrawString(spriteBatch, text.data(), textLen, position, color, Float2::Zero, 0.0f, zIndex);
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const
 	{
 		int32_t textLen = static_cast<int32_t>(text.size());
 
 		DrawString(spriteBatch, text.data(), textLen, position, color, rotationOrigin, rotationZ, 0.0f);
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, std::wstring_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const
 	{
 		int32_t textLen = static_cast<int32_t>(text.size());
 
 		DrawString(spriteBatch, text.data(), textLen, position, color, rotationOrigin, rotationZ, zIndex);
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color) const
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, std::string_view text, const Float2 & position, const Float4 & color) const
 	{
 		int32_t textLen = static_cast<int32_t>(text.size());
 
 		DrawString(spriteBatch, ConvertUTF8(text.data(), textLen), textLen, position, color, Float2::Zero, 0.0f, 0.0f);
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, float zIndex) const
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, float zIndex) const
 	{
 		int32_t textLen = static_cast<int32_t>(text.size());
 
 		DrawString(spriteBatch, ConvertUTF8(text.data(), textLen), textLen, position, color, Float2::Zero, 0.0f, zIndex);
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ) const
 	{
 		int32_t textLen = static_cast<int32_t>(text.size());
 
 		DrawString(spriteBatch, ConvertUTF8(text.data(), textLen), textLen, position, color, rotationOrigin, rotationZ, 0.0f);
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, std::string_view text, const Float2 & position, const Float4 & color, const Float2 & rotationOrigin, float rotationZ, float zIndex) const
 	{
 		int32_t textLen = static_cast<int32_t>(text.size());
 
 		DrawString(spriteBatch, ConvertUTF8(text.data(), textLen), textLen, position, color, rotationOrigin, rotationZ, zIndex);
 	}
 
-	void SpriteFont::DrawString(SpriteBatchPtr spriteBatch, const wchar_t * text, int length, const Float2 & position, const Float4 & color, const Float2 & origin, float rotation, float layerDepth) const
+	void SpriteFont::DrawString(Ptr<Netcode::SpriteBatch> spriteBatch, const wchar_t * text, int length, const Float2 & position, const Float4 & color, const Float2 & origin, float rotation, float layerDepth) const
 	{
 		SpriteEffects effects = SpriteEffects_None;
 
@@ -312,7 +312,7 @@ namespace Netcode::Graphics::DX12 {
 
 		if(character)
 		{
-			defaultGlyph = DX12SpriteFont::FindGlyph(character);
+			defaultGlyph = DX12::SpriteFont::FindGlyph(character);
 		}
 	}
 

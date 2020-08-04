@@ -13,8 +13,8 @@ namespace Netcode::Graphics {
 
 namespace Netcode {
 
-	using SetupCallback = std::function<void(Netcode::Graphics::IResourceContext *)>;
-	using RenderCallback = std::function<void(Netcode::Graphics::IRenderContext *)>;
+	using SetupCallback = std::function<void(Graphics::IResourceContext *)>;
+	using RenderCallback = std::function<void(Graphics::IRenderContext *)>;
 
 	enum class RenderPassType {
 		COMPUTE, DIRECT
@@ -40,8 +40,6 @@ namespace Netcode {
 		virtual void ReadsResource(uint64_t resource) = 0;
 		virtual void WritesResource(uint64_t resource) = 0;
 	};
-
-	using RenderPassRef = std::shared_ptr<RenderPass>;
 
 
 	/*
@@ -70,25 +68,23 @@ namespace Netcode {
 		Returns the set of render passes, that has no consumers but produces a resource.
 		This is used for culling the framegraph. An empty vector means that there is nothing left to clear
 		*/
-		virtual std::vector<RenderPassRef> QueryDanglingRenderPasses() = 0;
+		virtual std::vector<Ref<RenderPass>> QueryDanglingRenderPasses() = 0;
 
 		/*
 		Culls the render passes, removes its connected references
 		*/
-		virtual void EraseRenderPasses(std::vector<RenderPassRef> rps) = 0;
+		virtual void EraseRenderPasses(std::vector<Ref<RenderPass>> rps) = 0;
 
 		/*
 		Returns the set of render passes, that are ready to be executed
 		*/
-		virtual std::vector<RenderPassRef> QueryCompleteRenderPasses() = 0;
+		virtual std::vector<Ref<RenderPass>> QueryCompleteRenderPasses() = 0;
 
 		/*
 		Returns true if the currently remaining render passes write the null resource (backbuffer)
 		*/
 		virtual bool UsingBackbuffer() const = 0;
 	};
-
-	using FrameGraphRef = std::shared_ptr<FrameGraph>;
 
 	class FrameGraphBuilder {
 	public:
@@ -98,10 +94,8 @@ namespace Netcode {
 			SetupCallback setupFunction,
 			RenderCallback renderFunction) = 0;
 
-		virtual FrameGraphRef Build() = 0;
+		virtual Ref<FrameGraph> Build() = 0;
 	};
-
-	using FrameGraphBuilderRef = std::shared_ptr<FrameGraphBuilder>;
 
 	template<typename T>
 	class ScratchBuffer {

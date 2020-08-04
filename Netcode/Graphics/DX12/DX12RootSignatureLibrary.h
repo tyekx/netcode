@@ -6,7 +6,7 @@ namespace Netcode::Graphics::DX12 {
 
 	class RootSignatureLibrary {
 		Memory::ObjectAllocator objectAllocator;
-		BuilderContainer<DX12RootSignatureRef> rootSigs;
+		BuilderContainer<Ref<DX12::RootSignature>> rootSigs;
 		com_ptr<ID3D12Device> device;
 
 		static bool IsCompatible(const D3D12_ROOT_SIGNATURE_DESC & lhs, const D3D12_ROOT_SIGNATURE_DESC & rhs);
@@ -28,11 +28,8 @@ namespace Netcode::Graphics::DX12 {
 	public:
 		RootSignatureLibrary(Memory::ObjectAllocator allocator, com_ptr<ID3D12Device> device);
 
-		RootSignatureRef GetRootSignature(ShaderBytecodeRef blobWithRootSig);
+		Ref<DX12::RootSignature> GetRootSignature(Ref<Netcode::ShaderBytecode> blobWithRootSig);
 
-		RootSignatureRef GetRootSignature(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & desc);
+		Ref<DX12::RootSignature> GetRootSignature(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & desc);
 	};
-
-	using DX12RootSignatureLibrary = Netcode::Graphics::DX12::RootSignatureLibrary;
-	using DX12RootSignatureLibraryRef = std::shared_ptr<DX12RootSignatureLibrary>;
 }

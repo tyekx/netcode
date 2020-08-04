@@ -20,7 +20,5 @@ namespace Netcode::Graphics::DX12 {
 		
 		ShaderCompiled(std::wstring sourceFile, com_ptr<ID3DBlob> blob);
 	};
-	
-	using ShaderCompiledRef = std::shared_ptr<ShaderCompiled>;
 
 }

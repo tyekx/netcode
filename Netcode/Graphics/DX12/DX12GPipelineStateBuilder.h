@@ -7,12 +7,12 @@ namespace Netcode::Graphics::DX12 {
 
 	class GPipelineStateBuilder : public Netcode::GPipelineStateBuilder {
 		GPipelineStateDesc desc;
-		DX12GPipelineStateLibraryRef libraryRef;
+		Ref<DX12::GPipelineStateLibrary> libraryRef;
 
 	public:
-		GPipelineStateBuilder(DX12GPipelineStateLibraryRef libRef);
+		GPipelineStateBuilder(Ref<DX12::GPipelineStateLibrary> libRef);
 
-		virtual void SetRootSignature(RootSignatureRef rootSignature) override;
+		virtual void SetRootSignature(Ref<Netcode::RootSignature> rootSignature) override;
 
 		virtual void SetDepthStencilState(const DepthStencilDesc & depthStencilState) override;
 
@@ -20,19 +20,19 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetBlendState(const BlendDesc & blendState) override;
 
-		virtual void SetStreamOutput(StreamOutputRef streamOutput) override;
+		virtual void SetStreamOutput(Ref<Netcode::StreamOutput> streamOutput) override;
 
-		virtual void SetInputLayout(InputLayoutRef inputLayout) override;
+		virtual void SetInputLayout(Ref<Netcode::InputLayout> inputLayout) override;
 
-		virtual void SetVertexShader(ShaderBytecodeRef shader) override;
+		virtual void SetVertexShader(Ref<Netcode::ShaderBytecode> shader) override;
 
-		virtual void SetPixelShader(ShaderBytecodeRef shader) override;
+		virtual void SetPixelShader(Ref<Netcode::ShaderBytecode> shader) override;
 
-		virtual void SetGeometryShader(ShaderBytecodeRef shader) override;
+		virtual void SetGeometryShader(Ref<Netcode::ShaderBytecode> shader) override;
 
-		virtual void SetHullShader(ShaderBytecodeRef shader) override;
+		virtual void SetHullShader(Ref<Netcode::ShaderBytecode> shader) override;
 
-		virtual void SetDomainShader(ShaderBytecodeRef shader) override;
+		virtual void SetDomainShader(Ref<Netcode::ShaderBytecode> shader) override;
 
 		virtual void SetNumRenderTargets(uint8_t numRenderTargets) override;
 
@@ -44,9 +44,7 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType topType) override;
 
-		virtual PipelineStateRef Build() override;
+		virtual Ref<Netcode::PipelineState> Build() override;
 	};
 
-	using DX12GPipelineStateBuilder = Netcode::Graphics::DX12::GPipelineStateBuilder;
-	using DX12GPipelineStateBuilderRef = std::shared_ptr<Netcode::Graphics::DX12::GPipelineStateBuilder>;
 }

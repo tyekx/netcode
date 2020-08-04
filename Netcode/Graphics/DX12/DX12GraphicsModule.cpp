@@ -15,6 +15,7 @@
 #include "DX12CPipelineStateLibrary.h"
 #include "DX12ResourceContext.h"
 #include "DX12DebugContext.h"
+#include "DX12UploadBatch.h"
 
 #include "../../Config.h"
 

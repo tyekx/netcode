@@ -53,6 +53,7 @@ PUBLIC
 	"DX12Texture.h"
 	"DX12TextureBuilder.h"
 	"DX12FrameGraphExecutor.h"
+	"DX12UploadBatch.h"
 
 PRIVATE
 	"DX12CommandListPool.cpp"
@@ -102,4 +103,5 @@ PRIVATE
 	"DX12Texture.cpp"
 	"DX12TextureBuilder.cpp"
 	"DX12FrameGraphExecutor.cpp"
+	"DX12UploadBatch.cpp"
 )

@@ -9,7 +9,7 @@ namespace Netcode::Graphics::DX12 {
 		inputLayouts.reserve(8);
 	}
 
-	InputLayoutRef InputLayoutLibrary::Insert(BuilderContainer<D3D12_INPUT_ELEMENT_DESC> inputElements) {
+	Ref<DX12::InputLayout> InputLayoutLibrary::Insert(BuilderContainer<D3D12_INPUT_ELEMENT_DESC> inputElements) {
 		auto sharedPtr = std::make_shared<DX12InputLayout>(std::move(inputElements));
 
 		inputLayouts.push_back(sharedPtr);
@@ -17,7 +17,7 @@ namespace Netcode::Graphics::DX12 {
 		return sharedPtr;
 	}
 
-	InputLayoutRef InputLayoutLibrary::GetInputLayout(const BuilderContainer<D3D12_INPUT_ELEMENT_DESC> & desc) {
+	Ref<DX12::InputLayout> InputLayoutLibrary::GetInputLayout(const BuilderContainer<D3D12_INPUT_ELEMENT_DESC> & desc) {
 		for(const auto & i : inputLayouts) {
 			if(*i == desc) {
 				return i;

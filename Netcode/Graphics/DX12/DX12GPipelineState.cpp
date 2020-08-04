@@ -41,11 +41,11 @@ namespace Netcode::Graphics::DX12 {
 			psd.StreamOutput.RasterizedStream = 0;
 		}
 
-		psd.VS = GetNativeBytecode(VS);
-		psd.PS = GetNativeBytecode(PS);
-		psd.GS = GetNativeBytecode(GS);
-		psd.HS = GetNativeBytecode(HS);
-		psd.DS = GetNativeBytecode(DS);
+		psd.VS = GetNativeBytecode(VS.get());
+		psd.PS = GetNativeBytecode(PS.get());
+		psd.GS = GetNativeBytecode(GS.get());
+		psd.HS = GetNativeBytecode(HS.get());
+		psd.DS = GetNativeBytecode(DS.get());
 	}
 
 	/*

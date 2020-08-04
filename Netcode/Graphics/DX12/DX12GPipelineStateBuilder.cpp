@@ -2,11 +2,11 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	GPipelineStateBuilder::GPipelineStateBuilder(DX12GPipelineStateLibraryRef libRef) : desc{}, libraryRef{ libRef } {
+	GPipelineStateBuilder::GPipelineStateBuilder(Ref<DX12::GPipelineStateLibrary> libRef) : desc{}, libraryRef{ std::move( libRef ) } {
 		
 	}
 
-	void GPipelineStateBuilder::SetRootSignature(RootSignatureRef rootSignature) {
+	void GPipelineStateBuilder::SetRootSignature(Ref<Netcode::RootSignature> rootSignature) {
 		desc.rootSignature = rootSignature;
 	}
 

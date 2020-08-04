@@ -46,9 +46,6 @@ namespace Netcode::Graphics::DX12 {
 		}
 	};
 
-	using DX12RenderPass = Netcode::Graphics::DX12::RenderPass;
-	using DX12RenderPassRef = std::shared_ptr<DX12RenderPass>;
-
 	class FrameGraph : public Netcode::FrameGraph {
 	private:
 		struct ResourceRegistry {
@@ -59,19 +56,19 @@ namespace Netcode::Graphics::DX12 {
 		};
 
 		std::map<uint64_t, ResourceRegistry> resources;
-		std::list<RenderPassRef> renderPasses;
+		std::list<Ref<RenderPass>> renderPasses;
 
 	public:
-		FrameGraph(std::vector<DX12RenderPassRef> setupRenderPasses);
+		FrameGraph(std::vector<Ref<DX12::RenderPass>> setupRenderPasses);
 
 		FrameGraph(const FrameGraph &) = delete;
 		FrameGraph & operator=(const FrameGraph &) = delete;
 
-		virtual std::vector<RenderPassRef> QueryDanglingRenderPasses() override;
+		virtual std::vector<Ref<Netcode::RenderPass>> QueryDanglingRenderPasses() override;
 
-		virtual void EraseRenderPasses(std::vector<RenderPassRef> rps) override;
+		virtual void EraseRenderPasses(std::vector<Ref<Netcode::RenderPass>> rps) override;
 
-		virtual std::vector<RenderPassRef> QueryCompleteRenderPasses() override;
+		virtual std::vector<Ref<Netcode::RenderPass>> QueryCompleteRenderPasses() override;
 
 		virtual bool UsingBackbuffer() const override;
 	};
@@ -80,7 +77,7 @@ namespace Netcode::Graphics::DX12 {
 	using DX12FrameGraphRef = std::shared_ptr<DX12FrameGraph>;
 
 	class FrameGraphBuilder : public Netcode::FrameGraphBuilder {
-		std::vector<DX12RenderPassRef> renderPasses;
+		std::vector<Ref<DX12::RenderPass>> renderPasses;
 		std::shared_ptr<IResourceContext> resourceContext;
 
 	public:
@@ -91,10 +88,10 @@ namespace Netcode::Graphics::DX12 {
 		virtual void CreateRenderPass(const std::string & name,
 			SetupCallback setupFunction,
 			RenderCallback renderFunction) override {
-			renderPasses.emplace_back(std::make_shared<DX12RenderPass>(name, setupFunction, renderFunction));
+			renderPasses.emplace_back(std::make_shared<DX12::RenderPass>(name, setupFunction, renderFunction));
 		}
 
-		virtual FrameGraphRef Build() override {
+		virtual Ref<FrameGraph> Build() override {
 			for(auto & renderPass : renderPasses) {
 				resourceContext->SetRenderPass(renderPass);
 				renderPass->Setup(resourceContext.get());

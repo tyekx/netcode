@@ -19,7 +19,4 @@ namespace Netcode::Graphics::DX12 {
 		bool operator==(const D3D12_STREAM_OUTPUT_DESC & soOutput) const;
 	};
 
-	using DX12StreamOutput = Netcode::Graphics::DX12::StreamOutput;
-	using DX12StreamOutputRef = std::shared_ptr<DX12StreamOutput>;
-
 }

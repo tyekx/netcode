@@ -29,8 +29,8 @@ namespace Netcode::Graphics::DX12 {
 		ID3D12CommandList * computeSubmitCache[16];
 		uint32_t directSubmitCacheSize;
 		uint32_t computeSubmitCacheSize;
-		std::vector<RenderPassRef> computeStack;
-		std::vector<RenderPassRef> directStack;
+		std::vector<Ref<RenderPass>> computeStack;
+		std::vector<Ref<RenderPass>> directStack;
 		ID3D12CommandList * renderTargetToPresent;
 		bool usingBackbuffer;
 
@@ -42,9 +42,9 @@ namespace Netcode::Graphics::DX12 {
 
 		void AddComputeCommandList(ID3D12CommandList * cl);
 
-		void PushCompute(RenderPassRef renderPass, CommandList ccl);
+		void PushCompute(Ref<Netcode::RenderPass> renderPass, CommandList ccl);
 
-		void PushDirect(RenderPassRef renderPass, CommandList gcl);
+		void PushDirect(Ref<Netcode::RenderPass> renderPass, CommandList gcl);
 
 		void BeginFrame();
 		
@@ -52,9 +52,9 @@ namespace Netcode::Graphics::DX12 {
 
 		bool HasMatchingElement(ArrayView<uint64_t> lhs, ArrayView<uint64_t> rhs);
 
-		bool HasResourceReadDependency(RenderPassRef renderPass);
+		bool HasResourceReadDependency(Ref<Netcode::RenderPass> renderPass);
 
-		void InvokeRenderFunction(RenderPassRef renderPass);
+		void InvokeRenderFunction(Ref<Netcode::RenderPass> renderPass);
 
 	public:
 
@@ -75,7 +75,7 @@ namespace Netcode::Graphics::DX12 {
 			D3D12_VIEWPORT viewport,
 			D3D12_RECT scissorRect);
 
-		void Execute(FrameGraphRef frameGraph);
+		void Execute(Ref<FrameGraph> frameGraph);
 
 		~FrameGraphExecutor();
 

@@ -2,7 +2,7 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	InputLayoutBuilder::InputLayoutBuilder(Memory::ObjectAllocator allocator, DX12InputLayoutLibraryRef libRef) : inputElements{ BuilderAllocator<D3D12_INPUT_ELEMENT_DESC>{ allocator } }, inputLayoutLibrary{ libRef } {
+	InputLayoutBuilder::InputLayoutBuilder(Memory::ObjectAllocator allocator, Ref<DX12::InputLayoutLibrary> libRef) : inputElements{ BuilderAllocator<D3D12_INPUT_ELEMENT_DESC>{ allocator } }, inputLayoutLibrary{ libRef } {
 		inputElements.reserve(8);
 	}
 	
@@ -30,10 +30,10 @@ namespace Netcode::Graphics::DX12 {
 		inputElements.push_back(element);
 	}
 
-	InputLayoutRef InputLayoutBuilder::Build() {
+	Ref<Netcode::InputLayout> InputLayoutBuilder::Build() {
 		ASSERT(inputElements.size() > 0, "Input elements not supplied");
 
-		InputLayoutRef rf = inputLayoutLibrary->GetInputLayout(inputElements);
+		Ref<Netcode::InputLayout> rf = inputLayoutLibrary->GetInputLayout(inputElements);
 
 		if(rf) {
 			return rf;

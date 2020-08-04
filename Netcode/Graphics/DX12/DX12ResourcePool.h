@@ -14,13 +14,13 @@ namespace Netcode::Graphics::DX12 {
 			heapManager = std::move(heapMan);
 		}
 
-		DX12ResourceRef CreateResource(const ResourceDesc & resource);
+		Ref<DX12::Resource> CreateResource(const ResourceDesc & resource);
 
-		DX12ResourceRef CreateStructuredBuffer(size_t sizeInBytes, UINT strideInBytes, ResourceType type, ResourceState initialState, ResourceFlags flags);
+		Ref<DX12::Resource> CreateStructuredBuffer(size_t sizeInBytes, UINT strideInBytes, ResourceType type, ResourceState initialState, ResourceFlags flags);
 
-		DX12ResourceRef CreateTypedBuffer(size_t sizeInBytes, DXGI_FORMAT format, ResourceType type, ResourceState initialState, ResourceFlags flags);
+		Ref<DX12::Resource> CreateTypedBuffer(size_t sizeInBytes, DXGI_FORMAT format, ResourceType type, ResourceState initialState, ResourceFlags flags);
 
-		DX12ResourceRef CreateDepthBuffer(ResourceType type, UINT width, UINT height, DXGI_FORMAT format, ResourceState initialState = ResourceState::DEPTH_WRITE, ResourceFlags optFlags = ResourceFlags::ALLOW_DEPTH_STENCIL);
+		Ref<DX12::Resource> CreateDepthBuffer(ResourceType type, UINT width, UINT height, DXGI_FORMAT format, ResourceState initialState = ResourceState::DEPTH_WRITE, ResourceFlags optFlags = ResourceFlags::ALLOW_DEPTH_STENCIL);
 
 	};
 

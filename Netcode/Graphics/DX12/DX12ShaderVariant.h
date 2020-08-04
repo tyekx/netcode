@@ -74,6 +74,4 @@ namespace Netcode::Graphics::DX12 {
 
 	};
 
-	using ShaderVariantRef = std::shared_ptr<ShaderVariant>;
-
 }

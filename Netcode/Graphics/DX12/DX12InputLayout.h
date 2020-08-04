@@ -16,7 +16,4 @@ namespace Netcode::Graphics::DX12 {
 		bool operator==(const BuilderContainer<D3D12_INPUT_ELEMENT_DESC> & rhs) const;
 	};
 
-	using DX12InputLayout = Netcode::Graphics::DX12::InputLayout;
-	using DX12InputLayoutRef = std::shared_ptr<DX12InputLayout>;
-
 }

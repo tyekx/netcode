@@ -2,7 +2,6 @@
 
 #if defined(_WIN32)
 #define NETCODE_OS_WINDOWS
-#include <sdkddkver.h>
 #endif
 
 #if defined(__linux__)
@@ -11,5 +10,9 @@
 
 #if defined(_DEBUG)
 #define NETCODE_DEBUG
+#endif
+
+#if defined(_RELEASE) 
+#define NETCODE_RELEASE
 #endif
 

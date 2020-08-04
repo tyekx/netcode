@@ -11,7 +11,6 @@ PUBLIC
 PRIVATE
 	"FrameGraph.cpp"
 	"ResourceEnums.cpp"
-	"UploadBatch.cpp"
 )
 
 add_subdirectory(DX12)

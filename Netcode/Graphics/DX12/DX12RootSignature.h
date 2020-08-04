@@ -33,7 +33,4 @@ namespace Netcode::Graphics::DX12 {
 		virtual void * GetImplDetail() const override;
 	};
 
-	using DX12RootSignature = Netcode::Graphics::DX12::RootSignature;
-	using DX12RootSignatureRef = std::shared_ptr<DX12RootSignature>;
-
 }

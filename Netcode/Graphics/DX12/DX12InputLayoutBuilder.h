@@ -7,10 +7,10 @@ namespace Netcode::Graphics::DX12 {
 
 	class InputLayoutBuilder : public Netcode::InputLayoutBuilder {
 		BuilderContainer<D3D12_INPUT_ELEMENT_DESC> inputElements;
-		DX12InputLayoutLibraryRef inputLayoutLibrary;
+		Ref<DX12::InputLayoutLibrary> inputLayoutLibrary;
 	public:
 
-		InputLayoutBuilder(Memory::ObjectAllocator allocator, DX12InputLayoutLibraryRef libRef);
+		InputLayoutBuilder(Memory::ObjectAllocator allocator, Ref<DX12::InputLayoutLibrary> libRef);
 
 		virtual void AddInputElement(const char * semanticName, DXGI_FORMAT format) override;
 
@@ -20,12 +20,9 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void AddInputElement(const char * semanticName, unsigned int semanticIndex, DXGI_FORMAT format, unsigned int byteOffset) override;
 
-		virtual InputLayoutRef Build() override;
+		virtual Ref<Netcode::InputLayout> Build() override;
 
 	};
-
-	using DX12InputLayoutBuilder = Netcode::Graphics::DX12::InputLayoutBuilder;
-	using DX12InputLayoutBuilderRef = std::shared_ptr<Netcode::Graphics::DX12::InputLayoutBuilder>;
 
 
 }

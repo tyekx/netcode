@@ -7,15 +7,15 @@
 namespace Netcode::Graphics::DX12 {
 
 	class RootSignatureBuilder : public Netcode::RootSignatureBuilder {
-		DX12RootSignatureLibraryRef rootSigLibrary;
+		Ref<DX12::RootSignatureLibrary> rootSigLibrary;
 	public:
-		RootSignatureBuilder(DX12RootSignatureLibraryRef libRef);
+		RootSignatureBuilder(Ref<DX12::RootSignatureLibrary> libRef);
 
-		virtual RootSignatureRef Build() override;
+		virtual Ref<Netcode::RootSignature> Build() override;
 
-		virtual RootSignatureRef BuildFromShader(ShaderBytecodeRef rootSigContainingBytecode) override;
+		virtual Ref<Netcode::RootSignature> BuildFromShader(Ref<Netcode::ShaderBytecode> rootSigContainingBytecode) override;
 
-		virtual RootSignatureRef BuildEmpty() override;
+		virtual Ref<Netcode::RootSignature> BuildEmpty() override;
 	};
 
 	using DX12RootSignatureBuilder = Netcode::Graphics::DX12::RootSignatureBuilder;

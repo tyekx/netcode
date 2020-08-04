@@ -1,9 +1,6 @@
 #pragma once
 
-#include "../Common.h"
-#include "ResourceEnums.h"
-
-#include <cstdint>
+#include <Netcode/HandleDecl.h>
 
 namespace Netcode::Graphics {
 

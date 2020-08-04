@@ -10,7 +10,7 @@ namespace Netcode::Graphics::DX12 {
 
 	D3D12_BLEND_DESC GetNativeBlendDesc(const BlendDesc & blendDesc);
 
-	D3D12_SHADER_BYTECODE GetNativeBytecode(ShaderBytecodeRef bytecode);
+	D3D12_SHADER_BYTECODE GetNativeBytecode(Ptr<ShaderBytecode> bytecode);
 
 	D3D12_DEPTH_STENCIL_DESC GetNativeDepthStencilDesc(const DepthStencilDesc & dsd);
 

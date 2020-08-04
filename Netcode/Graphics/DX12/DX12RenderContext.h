@@ -4,17 +4,18 @@
 
 #include "../GraphicsContexts.h"
 #include "DX12Common.h"
-#include "DX12ResourcePool.h"
-#include "DX12ConstantBufferPool.h"
-#include "DX12DynamicDescriptorHeap.h"
 
 namespace Netcode::Graphics::DX12 {
 
+	class ConstantBufferPool;
+	class ResourcePool;
+	class DynamicDescriptorHeap;
+
 	class BaseRenderContext : public Netcode::Graphics::IRenderContext {
 	protected:
-		ResourcePool * resources;
-		ConstantBufferPool * cbuffers;
-		DynamicDescriptorHeap * descHeaps;
+		Ptr<ResourcePool> resources;
+		Ptr<ConstantBufferPool> cbuffers;
+		Ptr<DynamicDescriptorHeap> descHeaps;
 		ID3D12GraphicsCommandList* commandList;
 		std::vector<D3D12_RESOURCE_BARRIER> barriers;
 	public:
@@ -23,12 +24,10 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual ~BaseRenderContext() = default;
 
-		virtual void UnorderedAccessBarrier(GpuResourceRef handle) override;
-		virtual void ResourceBarrier(GpuResourceRef handle, ResourceState before, ResourceState after) override;
+		virtual void UnorderedAccessBarrier(Ref<GpuResource> handle) override;
+		virtual void ResourceBarrier(Ref<GpuResource> handle, ResourceState before, ResourceState after) override;
 
 		virtual void FlushResourceBarriers() override;
-
-
 	};
 
 
@@ -37,13 +36,13 @@ namespace Netcode::Graphics::DX12 {
 		using BaseRenderContext::BaseRenderContext;
 
 		// Inherited via BaseRenderContext
-		virtual void SetRootSignature(RootSignatureRef rs) override;
+		virtual void SetRootSignature(Ref<RootSignature> rs) override;
 
-		virtual void SetPipelineState(PipelineStateRef pso) override;
+		virtual void SetPipelineState(Ref<PipelineState> pso) override;
 
-		virtual void SetVertexBuffer(GpuResourceRef handle) override;
+		virtual void SetVertexBuffer(Ref<GpuResource> handle) override;
 
-		virtual void SetIndexBuffer(GpuResourceRef handle) override;
+		virtual void SetIndexBuffer(Ref<GpuResource> handle) override;
 
 		virtual void DrawIndexed(uint32_t indexCount) override;
 
@@ -57,7 +56,7 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetPrimitiveTopology(PrimitiveTopology topology) override;
 
-		virtual void ClearUnorderedAccessViewUint(GpuResourceRef handle, const DirectX::XMUINT4 & values) override;
+		virtual void ClearUnorderedAccessViewUint(Ref<GpuResource> handle, const UInt4 & values) override;
 
 		virtual void ClearRenderTarget(uint8_t idx) override;
 
@@ -69,13 +68,13 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void ClearDepthStencil() override;
 
-		virtual void SetStreamOutput(GpuResourceRef handle) override;
+		virtual void SetStreamOutput(Ref<GpuResource> handle) override;
 
-		virtual void SetStreamOutputFilledSize(GpuResourceRef handle, uint64_t byteOffset) override;
+		virtual void SetStreamOutputFilledSize(Ref<GpuResource> handle, uint64_t byteOffset) override;
 
 		virtual void ResetStreamOutput() override;
 
-		virtual void SetRenderTargets(std::initializer_list<GpuResourceRef> handles, GpuResourceRef depthStencil) override;
+		virtual void SetRenderTargets(std::initializer_list<Ref<GpuResource>> handles, Ref<GpuResource> depthStencil) override;
 
 		virtual void SetStencilReference(uint8_t stencilValue) override;
 
@@ -95,31 +94,26 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetRenderTargets(std::nullptr_t rt, std::nullptr_t ds) override;
 
-		virtual void SetRenderTargets(std::nullptr_t rt, ResourceViewsRef ds) override;
-		virtual void SetRenderTargets(ResourceViewsRef rt, std::nullptr_t ds) override;
-		virtual void SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil) override;
+		virtual void SetRenderTargets(std::nullptr_t rt, Ref<ResourceViews> ds) override;
+		virtual void SetRenderTargets(Ref<ResourceViews> rt, std::nullptr_t ds) override;
+		virtual void SetRenderTargets(Ref<ResourceViews> renderTargets, Ref<ResourceViews> depthStencil) override;
 
-		virtual void SetRenderTargets(std::nullptr_t rt, GpuResourceRef ds) override;
-		virtual void SetRenderTargets(GpuResourceRef rt, std::nullptr_t ds) override;
-		virtual void SetRenderTargets(GpuResourceRef renderTarget, GpuResourceRef depthStencil) override;
+		virtual void SetRenderTargets(std::nullptr_t rt, Ref<GpuResource> ds) override;
+		virtual void SetRenderTargets(Ref<GpuResource> rt, std::nullptr_t ds) override;
+		virtual void SetRenderTargets(Ref<GpuResource> renderTarget, Ref<GpuResource> depthStencil) override;
 
 		virtual void SetRootConstants(int slot, const void * srcData, uint32_t numConstants) override;
-
-		virtual void SetConstantBuffer(int slot, GpuResourceRef cbufferHandle) override;
-
+		virtual void SetConstantBuffer(int slot, Ref<GpuResource> cbufferHandle) override;
 		virtual void SetConstants(int slot, uint64_t constantHandle) override;
-
 		virtual uint64_t SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) override;
 
-		virtual void SetShaderResources(int slot, std::initializer_list<GpuResourceRef> shaderResourceHandles) override;
+		virtual void SetShaderResources(int slot, std::initializer_list<Ref<GpuResource>> shaderResourceHandles) override;
+		virtual void SetShaderResources(int slot, Ref<ResourceViews> resourceView) override;
+		virtual void SetShaderResources(int slot, Ref<ResourceViews> resourceView, int descriptorOffset) override;
 
-		virtual void SetShaderResources(int slot, ResourceViewsRef resourceView) override;
-
-		virtual void SetShaderResources(int slot, ResourceViewsRef resourceView, int descriptorOffset) override;
-
-		virtual void CopyBufferRegion(GpuResourceRef dstResource, GpuResourceRef srcResource, size_t sizeInBytes) override;
+		virtual void CopyBufferRegion(Ref<GpuResource> dstResource, Ref<GpuResource> srcResource, size_t sizeInBytes) override;
 		
-		virtual void CopyBufferRegion(GpuResourceRef dstResource, size_t dstOffset, GpuResourceRef srcResource, size_t srcOffset, size_t sizeInBytes) override;
+		virtual void CopyBufferRegion(Ref<GpuResource> dstResource, size_t dstOffset, Ref<GpuResource> srcResource, size_t srcOffset, size_t sizeInBytes) override;
 
 		virtual void BeginPass() override;
 
@@ -151,9 +145,9 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetStencilReference(uint8_t stencilValue) override;
 
-		virtual void SetVertexBuffer(GpuResourceRef handle) override;
+		virtual void SetVertexBuffer(Ref<GpuResource> handle) override;
 
-		virtual void SetIndexBuffer(GpuResourceRef handle) override;
+		virtual void SetIndexBuffer(Ref<GpuResource> handle) override;
 
 		virtual void DrawIndexed(uint32_t indexCount) override;
 
@@ -165,13 +159,13 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void Dispatch(uint32_t threadGroupX, uint32_t threadGroupY, uint32_t threadGroupZ) override;
 
-		virtual void SetRootSignature(RootSignatureRef rs) override;
+		virtual void SetRootSignature(Ref<RootSignature> rs) override;
 
-		virtual void SetPipelineState(PipelineStateRef pso) override;
+		virtual void SetPipelineState(Ref<PipelineState> pso) override;
 
 		virtual void SetPrimitiveTopology(PrimitiveTopology topology) override;
 
-		virtual void ClearUnorderedAccessViewUint(GpuResourceRef handle, const DirectX::XMUINT4 & values) override;
+		virtual void ClearUnorderedAccessViewUint(Ref<GpuResource> handle, const UInt4 & values) override;
 
 		virtual void ClearDepthOnly() override;
 		virtual void ClearStencilOnly() override;
@@ -180,9 +174,9 @@ namespace Netcode::Graphics::DX12 {
 		virtual void ClearRenderTarget(uint8_t idx) override;
 		virtual void ClearRenderTarget(uint8_t idx, const float * clearColor) override;
 
-		virtual void SetStreamOutput(GpuResourceRef handle) override;
+		virtual void SetStreamOutput(Ref<GpuResource> handle) override;
 
-		virtual void SetStreamOutputFilledSize(GpuResourceRef handle, uint64_t byteOffset) override;
+		virtual void SetStreamOutputFilledSize(Ref<GpuResource> handle, uint64_t byteOffset) override;
 		virtual void ResetStreamOutput() override;
 
 		virtual void SetViewport(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) override;
@@ -195,33 +189,33 @@ namespace Netcode::Graphics::DX12 {
 		virtual void SetScissorRect(uint32_t width, uint32_t height) override;
 		virtual void SetScissorRect() override;
 
-		virtual void SetRenderTargets(std::initializer_list<GpuResourceRef> handles, GpuResourceRef depthStencil) override;
+		virtual void SetRenderTargets(std::initializer_list<Ref<GpuResource>> handles, Ref<GpuResource> depthStencil) override;
 
 		virtual void SetRenderTargets(std::nullptr_t rt, std::nullptr_t ds) override;
 
-		virtual void SetRenderTargets(std::nullptr_t rt, ResourceViewsRef ds) override;
-		virtual void SetRenderTargets(ResourceViewsRef rt, std::nullptr_t ds) override;
-		virtual void SetRenderTargets(ResourceViewsRef renderTargets, ResourceViewsRef depthStencil) override;
+		virtual void SetRenderTargets(std::nullptr_t rt, Ref<ResourceViews> ds) override;
+		virtual void SetRenderTargets(Ref<ResourceViews> rt, std::nullptr_t ds) override;
+		virtual void SetRenderTargets(Ref<ResourceViews> renderTargets, Ref<ResourceViews> depthStencil) override;
 
-		virtual void SetRenderTargets(std::nullptr_t rt, GpuResourceRef ds) override;
-		virtual void SetRenderTargets(GpuResourceRef rt, std::nullptr_t ds) override;
-		virtual void SetRenderTargets(GpuResourceRef renderTarget, GpuResourceRef depthStencil) override;
+		virtual void SetRenderTargets(std::nullptr_t rt, Ref<GpuResource> ds) override;
+		virtual void SetRenderTargets(Ref<GpuResource> rt, std::nullptr_t ds) override;
+		virtual void SetRenderTargets(Ref<GpuResource> renderTarget, Ref<GpuResource> depthStencil) override;
 
-		virtual void SetShaderResources(int slot, std::initializer_list<GpuResourceRef> shaderResourceHandles) override;
-		virtual void SetShaderResources(int slot, ResourceViewsRef resourceView) override;
-		virtual void SetShaderResources(int slot, ResourceViewsRef resourceView, int descriptorOffset) override;
+		virtual void SetShaderResources(int slot, std::initializer_list<Ref<GpuResource>> shaderResourceHandles) override;
+		virtual void SetShaderResources(int slot, Ref<ResourceViews> resourceView) override;
+		virtual void SetShaderResources(int slot, Ref<ResourceViews> resourceView, int descriptorOffset) override;
 
 
 		virtual void SetRootConstants(int slot, const void * srcData, uint32_t numConstants) override;
-		virtual void SetConstantBuffer(int slot, GpuResourceRef cbufferHandle) override;
+		virtual void SetConstantBuffer(int slot, Ref<GpuResource> cbufferHandle) override;
 
 		virtual void SetConstants(int slot, uint64_t constantHandle) override;
 
 		virtual uint64_t SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) override;
 
-		virtual void CopyBufferRegion(GpuResourceRef dstResource, GpuResourceRef srcResource, size_t sizeInBytes) override;
+		virtual void CopyBufferRegion(Ref<GpuResource> dstResource, Ref<GpuResource> srcResource, size_t sizeInBytes) override;
 
-		virtual void CopyBufferRegion(GpuResourceRef dstResource, size_t dstOffset, GpuResourceRef srcResource, size_t srcOffset, size_t sizeInBytes) override;
+		virtual void CopyBufferRegion(Ref<GpuResource> dstResource, size_t dstOffset, Ref<GpuResource> srcResource, size_t srcOffset, size_t sizeInBytes) override;
 
 		virtual void BeginPass() override;
 

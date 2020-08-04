@@ -6,17 +6,14 @@ namespace Netcode::Graphics::DX12 {
 
 	class StreamOutputLibrary {
 		Memory::ObjectAllocator objectAllocator;
-		BuilderContainer<DX12StreamOutputRef> streamOutputs;
+		BuilderContainer<Ref<DX12::StreamOutput>> streamOutputs;
 	public:
 
 		StreamOutputLibrary(Memory::ObjectAllocator allocator);
 
-		void Insert(DX12StreamOutputRef soRef);
+		void Insert(Ref<DX12::StreamOutput> soRef);
 
-		StreamOutputRef GetStreamOutput(const D3D12_STREAM_OUTPUT_DESC & soDesc);
+		Ref<Netcode::StreamOutput> GetStreamOutput(const D3D12_STREAM_OUTPUT_DESC & soDesc);
 	};
-
-	using DX12StreamOutputLibrary = Netcode::Graphics::DX12::StreamOutputLibrary;
-	using DX12StreamOutputLibraryRef = std::shared_ptr<DX12StreamOutputLibrary>;
 
 }

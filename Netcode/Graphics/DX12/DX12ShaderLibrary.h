@@ -10,19 +10,15 @@
 namespace Netcode::Graphics::DX12 {
 
 	class ShaderLibrary {
-		std::vector<ShaderVariantRef> shaderVariants;
-		std::vector<ShaderCompiledRef> compiledShaders;
+		std::vector<Ref<DX12::ShaderVariant>> shaderVariants;
+		std::vector<Ref<DX12::ShaderCompiled>> compiledShaders;
 		ShaderSourceLibrary shaderSources;
 		
-		static ShaderCompiledRef LoadCSO(std::wstring_view absolutePath);
+		static Ref<DX12::ShaderCompiled> LoadCSO(std::wstring_view absolutePath);
 
 	public:
-		ShaderCompiledRef LoadShader(const URI::Shader & filePath);
-
-		ShaderVariantRef GetShaderVariant(const ShaderVariantDesc & desc);
+		Ref<DX12::ShaderCompiled> LoadShader(const URI::Shader & filePath);
+		Ref<DX12::ShaderVariant> GetShaderVariant(const ShaderVariantDesc & desc);
 	};
-
-	using DX12ShaderLibrary = Netcode::Graphics::DX12::ShaderLibrary;
-	using DX12ShaderLibraryRef = std::shared_ptr<DX12ShaderLibrary>;
 
 }

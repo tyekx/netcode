@@ -2,7 +2,7 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	SpriteFontBuilder::SpriteFontBuilder(DX12SpriteFontLibraryRef spriteFontLib) : spriteFontLib{ std::move(spriteFontLib) }, spriteFont{ nullptr } {
+	SpriteFontBuilder::SpriteFontBuilder(Ref<DX12::SpriteFontLibrary> spriteFontLib) : spriteFontLib{ std::move(spriteFontLib) }, spriteFont{ nullptr } {
 	
 	}
 
@@ -10,9 +10,9 @@ namespace Netcode::Graphics::DX12 {
 		spriteFont = spriteFontLib->Get(mediaPath);
 	}
 
-	SpriteFontRef SpriteFontBuilder::Build()
+	Ref<Netcode::SpriteFont> SpriteFontBuilder::Build()
 	{
-		return std::dynamic_pointer_cast<SpriteFont>(spriteFont);
+		return spriteFont;
 	}
 
 }

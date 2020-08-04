@@ -10,7 +10,7 @@ namespace Netcode::Graphics::DX12 {
 			CLEAR, VARIANT, PRECOMPILED
 		};
 
-		DX12ShaderLibraryRef shaderLibrary;
+		Ref<DX12::ShaderLibrary> shaderLibrary;
 		ShaderVariantDesc variantDesc;
 		BuilderState state;
 
@@ -19,7 +19,7 @@ namespace Netcode::Graphics::DX12 {
 		void Clear();
 
 	public:
-		ShaderBuilder(DX12ShaderLibraryRef shaderLibrary);
+		ShaderBuilder(Ref<DX12::ShaderLibrary> shaderLibrary);
 
 		virtual void SetShaderType(ShaderType shaderType) override;
 
@@ -29,9 +29,9 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetDefinitions(const std::map<std::string, std::string> & defines) override;
 
-		virtual ShaderBytecodeRef LoadBytecode(const URI::Shader & uri) override;
+		virtual Ref<Netcode::ShaderBytecode> LoadBytecode(const URI::Shader & uri) override;
 
-		virtual ShaderBytecodeRef Build() override;
+		virtual Ref<Netcode::ShaderBytecode> Build() override;
 	};
 
 	using DX12ShaderBuilder = Netcode::Graphics::DX12::ShaderBuilder;
