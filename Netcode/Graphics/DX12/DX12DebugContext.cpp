@@ -5,23 +5,23 @@
 
 namespace Netcode::Graphics::DX12 {
 	void DebugContext::CreateResources(Module::IGraphicsModule * graphics) {
-		Netcode::InputLayoutBuilderRef ilBuilder = graphics->CreateInputLayoutBuilder();
+		Ref<Netcode::InputLayoutBuilder> ilBuilder = graphics->CreateInputLayoutBuilder();
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("COLOR", DXGI_FORMAT_R32G32B32_FLOAT);
-		Netcode::InputLayoutRef il = ilBuilder->Build();
+		Ref<Netcode::InputLayout> il = ilBuilder->Build();
 
 		Netcode::DepthStencilDesc depthStencilDesc;
 		Netcode::RasterizerDesc rasterizerDesc;
 		rasterizerDesc.antialiasedLineEnable = true;
 
-		Netcode::ShaderBuilderRef shaderBuilder = graphics->CreateShaderBuilder();
-		Netcode::ShaderBytecodeRef vertexShader = shaderBuilder->LoadBytecode(L"Netcode_DebugPrimVS.cso");
-		Netcode::ShaderBytecodeRef pixelShader = shaderBuilder->LoadBytecode(L"Netcode_DebugPrimPS.cso");
+		Ref<Netcode::ShaderBuilder> shaderBuilder = graphics->CreateShaderBuilder();
+		Ref<Netcode::ShaderBytecode> vertexShader = shaderBuilder->LoadBytecode(L"Netcode_DebugPrimVS.cso");
+		Ref<Netcode::ShaderBytecode> pixelShader = shaderBuilder->LoadBytecode(L"Netcode_DebugPrimPS.cso");
 
-		Netcode::RootSignatureBuilderRef rootSigBuilder = graphics->CreateRootSignatureBuilder();
+		Ref<Netcode::RootSignatureBuilder> rootSigBuilder = graphics->CreateRootSignatureBuilder();
 		rootSignature = rootSigBuilder->BuildFromShader(vertexShader);
 
-		Netcode::GPipelineStateBuilderRef gpsoBuilder = graphics->CreateGPipelineStateBuilder();
+		Ref<Netcode::GPipelineStateBuilder> gpsoBuilder = graphics->CreateGPipelineStateBuilder();
 		gpsoBuilder->SetNumRenderTargets(1);
 		gpsoBuilder->SetRenderTargetFormat(0, graphics->GetBackbufferFormat());
 		gpsoBuilder->SetDepthStencilFormat(graphics->GetDepthStencilFormat());

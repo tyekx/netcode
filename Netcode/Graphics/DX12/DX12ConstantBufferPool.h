@@ -18,11 +18,11 @@ namespace Netcode::Graphics::DX12 {
 
 		// actual cbuffer page with GPU resource
 		struct CBufferPage {
-			DX12ResourceRef resource;
+			Ref<DX12::Resource> resource;
 			UINT64 offset;
 			const D3D12_GPU_VIRTUAL_ADDRESS baseAddr;
 
-			CBufferPage(DX12ResourceRef resource) : resource{ resource }, offset{ 0 }, baseAddr{ resource->resource->GetGPUVirtualAddress() } { }
+			CBufferPage(Ref<DX12::Resource> resource) : resource{ resource }, offset{ 0 }, baseAddr{ resource->resource->GetGPUVirtualAddress() } { }
 		};
 
 		// a single allocation for a cbuffer 32 bytes of management data
@@ -59,11 +59,11 @@ namespace Netcode::Graphics::DX12 {
 
 		CBufferAllocationPage * currentAllocationPage;
 
-		std::shared_ptr<HeapManager> heapManager;
+		Ref<HeapManager> heapManager;
 
 		uint8_t * mappedPtr;
 
-		DX12ResourceRef CreatePageResource();
+		Ref<DX12::Resource> CreatePageResource();
 
 		void ValidateCurrentPageFor(size_t size);
 
@@ -71,7 +71,7 @@ namespace Netcode::Graphics::DX12 {
 
 	public:
 
-		void SetHeapManager(std::shared_ptr<HeapManager> heapMan);
+		void SetHeapManager(Ref<HeapManager> heapMan);
 
 		~ConstantBufferPool();
 

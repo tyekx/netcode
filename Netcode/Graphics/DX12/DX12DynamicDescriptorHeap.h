@@ -55,13 +55,13 @@ namespace Netcode::Graphics::DX12 {
 
 		D3D12_CPU_DESCRIPTOR_HANDLE CreateDSV(DX12ResourceRef resource);
 
-		DX12ResourceViewsRef CreatePermanentSRV(uint32_t numDescriptors);
+		Ref<DX12::ResourceViews> CreatePermanentSRV(uint32_t numDescriptors);
 
-		DX12ResourceViewsRef CreatePermanentDSV();
+		Ref<DX12::ResourceViews> CreatePermanentDSV();
 
-		DX12ResourceViewsRef CreatePermanentRTV(uint32_t numDescriptors);
+		Ref<DX12::ResourceViews> CreatePermanentRTV(uint32_t numDescriptors);
 
-		DX12ResourceViewsRef CreatePermanentSamplers(uint32_t numDescriptors);
+		Ref<DX12::ResourceViews> CreatePermanentSamplers(uint32_t numDescriptors);
 
 		void Prepare();
 

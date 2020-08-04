@@ -2,7 +2,7 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	DX12ResourceRef ConstantBufferPool::CreatePageResource() {
+	Ref<DX12::Resource> ConstantBufferPool::CreatePageResource() {
 		ResourceDesc desc;
 		desc.depth = 1;
 		desc.dimension = ResourceDimension::BUFFER;
@@ -40,7 +40,7 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 
-	void ConstantBufferPool::SetHeapManager(std::shared_ptr<HeapManager> heapMan) {
+	void ConstantBufferPool::SetHeapManager(Ref<HeapManager> heapMan) {
 		heapManager = std::move(heapMan);
 	}
 

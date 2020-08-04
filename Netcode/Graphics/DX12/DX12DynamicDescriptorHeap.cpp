@@ -87,7 +87,7 @@ namespace Netcode::Graphics::DX12 {
 		return gpuHandle;
 	}
 
-	DX12ResourceViewsRef DynamicDescriptorHeap::CreatePermanentSRV(uint32_t numDescriptors)
+	Ref<DX12::ResourceViews> DynamicDescriptorHeap::CreatePermanentSRV(uint32_t numDescriptors)
 	{
 		ASSERT(!IsRendering, "Creating permanent descriptor during rendering is invalid, create them before a frame->Prepare() call");
 
@@ -110,7 +110,7 @@ namespace Netcode::Graphics::DX12 {
 													device);
 	}
 
-	DX12ResourceViewsRef DynamicDescriptorHeap::CreatePermanentDSV()
+	Ref<DX12::ResourceViews> DynamicDescriptorHeap::CreatePermanentDSV()
 	{
 		ASSERT(!IsRendering, "Creating permanent descriptor during rendering is invalid, create them before a frame->Prepare() call");
 
@@ -128,7 +128,7 @@ namespace Netcode::Graphics::DX12 {
 			device);
 	}
 
-	DX12ResourceViewsRef DynamicDescriptorHeap::CreatePermanentRTV(uint32_t numDescriptors)
+	Ref<DX12::ResourceViews> DynamicDescriptorHeap::CreatePermanentRTV(uint32_t numDescriptors)
 	{
 		ASSERT(!IsRendering, "Creating permanent descriptor during rendering is invalid, create them before a frame->Prepare() call");
 		
@@ -146,11 +146,11 @@ namespace Netcode::Graphics::DX12 {
 			device);
 	}
 
-	DX12ResourceViewsRef DynamicDescriptorHeap::CreatePermanentSamplers(uint32_t numDescriptors)
+	Ref<DX12::ResourceViews> DynamicDescriptorHeap::CreatePermanentSamplers(uint32_t numDescriptors)
 	{
 		ASSERT(!IsRendering, "Creating permanent descriptor during rendering is invalid, create them before a frame->Prepare() call");
 		ASSERT(false, "Samplers are not implemented yet");
-		return DX12ResourceViewsRef();
+		return Ref<DX12::ResourceViews>{};
 	}
 
 	void DynamicDescriptorHeap::Prepare()

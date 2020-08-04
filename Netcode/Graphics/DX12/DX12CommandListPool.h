@@ -63,7 +63,4 @@ namespace Netcode::Graphics::DX12 {
 
 	};
 
-	using DX12CommandListPool = Netcode::Graphics::DX12::CommandListPool;
-	using DX12CommandListPoolRef = std::shared_ptr<DX12CommandListPool>;
-
 }

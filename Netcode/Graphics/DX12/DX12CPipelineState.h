@@ -6,8 +6,8 @@
 namespace Netcode::Graphics::DX12 {
 
 	struct CPipelineStateDesc {
-		RootSignatureRef rootSignature;
-		ShaderBytecodeRef CS;
+		Ref<Netcode::RootSignature> rootSignature;
+		Ref<Netcode::ShaderBytecode> CS;
 
 		void FillNativeDesc(D3D12_COMPUTE_PIPELINE_STATE_DESC & cpsd);
 
@@ -27,8 +27,5 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void * GetImplDetail() const override;
 	};
-
-	using DX12CPipelineState = Netcode::Graphics::DX12::CPipelineState;
-	using DX12CPipelineStateRef = std::shared_ptr<DX12CPipelineState>;
 
 }
