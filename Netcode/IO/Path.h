@@ -45,6 +45,10 @@ namespace Netcode::IO {
 
 		static void FixDirectoryPath(std::wstring & dir, wchar_t desiredSlash = GetSlash());
 
+		static bool IsDirectory(std::wstring_view str, wchar_t desiredSlash = GetSlash());
+
+		static std::wstring_view GetParentDirectory(std::wstring_view str, wchar_t desiredSlash = GetSlash());
+
 		static bool IsAbsolute(std::wstring_view str);
 
 		static inline bool IsRelative(std::wstring_view str) {

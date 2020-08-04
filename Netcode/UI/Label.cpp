@@ -1,4 +1,6 @@
 #include "Label.h"
+#include <physx/PxRigidDynamic.h>
+#include <physx/PxScene.h>
 
 namespace Netcode::UI {
 

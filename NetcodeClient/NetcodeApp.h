@@ -148,9 +148,9 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		}
 
 
-		std::shared_ptr<LoginPage> loginPage = pageManager.CreatePage<LoginPage>(px);
-		std::shared_ptr<ServerBrowserPage> serverBrowserPage = pageManager.CreatePage<ServerBrowserPage>(px);
-		std::shared_ptr<LoadingPage> loadingPage = pageManager.CreatePage<LoadingPage>(px);
+		std::shared_ptr<LoginPage> loginPage = pageManager.CreatePage<LoginPage>(*px.physics);
+		std::shared_ptr<ServerBrowserPage> serverBrowserPage = pageManager.CreatePage<ServerBrowserPage>(*px.physics);
+		std::shared_ptr<LoadingPage> loadingPage = pageManager.CreatePage<LoadingPage>(*px.physics);
 
 		loginPage->InitializeComponents();
 		serverBrowserPage->InitializeComponents();

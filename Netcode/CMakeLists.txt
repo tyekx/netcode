@@ -68,7 +68,9 @@ PUBLIC
 	"Vertex.h"
 	"WinapiWindowModule.h"
 	"ConsoleModule.h"
-	"Config.h" 
+	"Config.h"
+	"HandleDecl.h"
+	"PxPtr.hpp"
 
 PRIVATE
 	"BasicGeometry.cpp"

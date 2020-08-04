@@ -15,10 +15,6 @@ namespace Netcode::URI {
 
 		static Shader Parse(UriBase uri);
 
-		constexpr static std::wstring_view GetLocalId() {
-			return std::wstring_view{ L"Shader/" };
-		}
-
 		constexpr static std::wstring_view GetGlobalId() {
 			return std::wstring_view{ L"/Asset/Shader/" };
 		}

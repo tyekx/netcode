@@ -146,10 +146,11 @@ namespace Netcode::IO {
 
 			wchar_t slash = Path::GetSlash();
 
+			parentDir = Path::GetParentDirectory(path);
+
 			size_t indexOfLastSlash = path.find_last_of(slash);
 
 			if(indexOfLastSlash != std::wstring::npos) {
-				parentDir = std::wstring_view{ path.c_str(), indexOfLastSlash + 1 };
 				fullName = std::wstring_view{ path.c_str() + indexOfLastSlash + 1, path.size() - indexOfLastSlash - 1 };
 			}
 

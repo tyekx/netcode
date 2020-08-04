@@ -4,6 +4,7 @@
 
 #include "Common.h"
 #include "Animation.hpp"
+#include "../PxPtr.hpp"
 
 namespace Netcode::UI {
 

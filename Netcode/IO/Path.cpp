@@ -85,7 +85,7 @@ namespace Netcode::IO {
 				lastIndex = str.size();
 			}
 
-			std::basic_string_view<const wchar_t> section{ str.c_str() + firstIndex, lastIndex - firstIndex };
+			std::wstring_view section{ str.c_str() + firstIndex, lastIndex - firstIndex };
 
 			if(section == L"." || section == L"..") {
 				return true;
@@ -171,6 +171,42 @@ namespace Netcode::IO {
 
 		if(!dir.empty() && dir.back() != desiredSlash) {
 			dir.push_back(desiredSlash);
+		}
+	}
+
+	bool Path::IsDirectory(std::wstring_view str, wchar_t slash)
+	{
+		return !str.empty() && str.back() == slash;
+	}
+
+	std::wstring_view Path::GetParentDirectory(std::wstring_view str, wchar_t slash)
+	{
+		if(str.empty()) {
+			return std::wstring_view{};
+		}
+
+		if(str.size() == 1 && str[0] == slash) {
+			return str;
+		}
+
+		if(IsDirectory(str, slash)) {
+			str = std::wstring_view{ str.data(), str.size() - 1 };
+		}
+
+		size_t idx = str.find_last_of(slash);
+
+		if(IsRelative(str)) {
+			if(idx == std::wstring::npos) {
+				return WorkingDirectory();
+			} else {
+				return std::wstring_view{ str.data(), idx + 1 };
+			}
+		} else {
+			if(idx == std::wstring::npos) {
+				return str;
+			} else {
+				return std::wstring_view{ str.data(), idx + 1 };
+			}
 		}
 	}
 

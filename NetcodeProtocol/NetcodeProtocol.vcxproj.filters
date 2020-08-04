@@ -48,4 +48,11 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="control.proto" />
+    <None Include="client.proto" />
+    <None Include="netcode.proto" />
+    <None Include="server.proto" />
+    <None Include="shared.proto" />
+  </ItemGroup>
 </Project>

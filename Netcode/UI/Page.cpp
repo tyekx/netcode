@@ -3,6 +3,8 @@
 #include <NetcodeFoundation/Exceptions.h>
 #include "../MathExt.h"
 #include "../Input.h"
+#include <physx/PxRigidDynamic.h>
+#include <physx/PxScene.h>
 
 namespace Netcode::UI {
 
@@ -83,7 +85,7 @@ namespace Netcode::UI {
 
 	Page::Page(const Netcode::Memory::ObjectAllocator & controlAllocator,
 		const Netcode::Memory::ObjectAllocator & eventAllocator,
-		Netcode::Physics::PhysX & px) : Control{ eventAllocator },
+		physx::PxPhysics & px) : Control{ eventAllocator },
 		controlAllocator{ controlAllocator },
 		eventAllocator{ eventAllocator },
 		lastMousePosition{ Int2::Zero },
@@ -111,15 +113,15 @@ namespace Netcode::UI {
 		}
 	}
 
-	void Page::InitPhysx(Physics::PhysX & px) {
-		physx::PxSceneDesc sceneDesc{ px.physics->getTolerancesScale() };
+	void Page::InitPhysx(physx::PxPhysics & px) {
+		physx::PxSceneDesc sceneDesc{ px.getTolerancesScale() };
 		sceneDesc.gravity = physx::PxVec3{ 0.0f, 0.0f, 0.0f };
-		sceneDesc.cpuDispatcher = px.dispatcher.Get();
+		sceneDesc.cpuDispatcher = physx::PxDefaultCpuDispatcherCreate(1);
 		sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
 
-		scene.Reset(px.physics->createScene(sceneDesc));
+		scene.Reset(px.createScene(sceneDesc));
 
-		dummyMaterial.Reset(px.physics->createMaterial(0.5f, 0.5f, 0.5f));
+		dummyMaterial.Reset(px.createMaterial(0.5f, 0.5f, 0.5f));
 
 		AssignActor(CreatePhysxActor());
 	}

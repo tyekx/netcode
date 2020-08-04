@@ -25,7 +25,7 @@ namespace Netcode::UI {
 		EventToken keyPressedToken;
 		EventToken charToken;
 
-		void InitPhysx(Physics::PhysX & px);
+		void InitPhysx(physx::PxPhysics& px);
 
 		PxPtr<physx::PxRigidDynamic> CreatePhysxActor();
 
@@ -43,7 +43,7 @@ namespace Netcode::UI {
 
 		Page(const Memory::ObjectAllocator & controlAllocator,
 			 const Memory::ObjectAllocator & eventAllocator,
-			 Physics::PhysX & px);
+			physx::PxPhysics & px);
 
 		virtual void InitializeComponents() = 0;
 

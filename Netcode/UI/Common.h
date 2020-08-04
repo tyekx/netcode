@@ -2,9 +2,17 @@
 
 #include "../HandleTypes.h"
 #include "../Event.hpp"
-#include "../PhysXWrapper.h"
 #include "../Input.h"
 #include "../Graphics/GraphicsContexts.h"
+
+namespace physx {
+
+	class PxRigidDynamic;
+	class PxPhysics;
+	class PxScene;
+	class PxMaterial;
+
+}
 
 namespace Netcode::UI {
 

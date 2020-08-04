@@ -12,7 +12,6 @@ namespace Netcode::URI {
 	}
 
 	Shader::Shader(std::wstring path) : AssetBase{} {
-
 		if(path.empty()) {
 			return;
 		}

@@ -69,7 +69,7 @@ namespace Netcode::UI {
 		std::shared_ptr<Page> GetPage(uint32_t value);
 
 		template<typename PageType>
-		std::shared_ptr<PageType> CreatePage(Physics::PhysX & px) {
+		std::shared_ptr<PageType> CreatePage(physx::PxPhysics & px) {
 			return controlAllocator.MakeShared<PageType>(controlAllocator, eventHandlerAllocator, px);
 		}
 	};

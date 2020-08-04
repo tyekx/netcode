@@ -1,4 +1,5 @@
 #include "Panel.h"
+#include <physx/PxRigidDynamic.h>
 
 namespace Netcode::UI {
 
