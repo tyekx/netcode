@@ -416,7 +416,7 @@ namespace Netcode::Network {
 		controlQueue.Send(std::move(packet));
 	}
 
-	std::shared_ptr<ServerSession> ServerSession::GetStrongRef() {
+	Ref<ServerSession> ServerSession::GetStrongRef() {
 		return std::dynamic_pointer_cast<ServerSession>(shared_from_this());
 	}
 

@@ -415,18 +415,18 @@ namespace Netcode::UI {
         children.clear();
     }
 
-    void Control::Parent(std::shared_ptr<Control> newParent) {
+    void Control::Parent(Ref<Control> newParent) {
         if(parent != newParent) {
             parent = newParent;
             PropagateOnParentChanged();
         }
     }
 
-    std::shared_ptr<Control> Control::Parent() const {
+    Ref<Control> Control::Parent() const {
         return parent;
     }
 
-    const std::vector<std::shared_ptr<Control>> & Control::Children() const {
+    const std::vector<Ref<Control>> & Control::Children() const {
         return children;
     }
 
@@ -452,7 +452,7 @@ namespace Netcode::UI {
         ZIndexSizing(SizingType::DERIVED);
     }
 
-    void Control::AddChild(std::shared_ptr<Control> child) {
+    void Control::AddChild(Ref<Control> child) {
         children.push_back(child);
         child->Parent(shared_from_this());
     }

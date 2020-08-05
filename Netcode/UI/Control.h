@@ -33,8 +33,8 @@ namespace Netcode::UI {
         VerticalAnchor verticalContentAlignment;
         physx::PxScene * lastScenePtr;
         PxPtr<physx::PxRigidDynamic> pxActor;
-        std::shared_ptr<Control> parent;
-        std::vector<std::shared_ptr<Control>> children;
+        Ref<Control> parent;
+        std::vector<Ref<Control>> children;
         AnimationContainer animations;
         HoverState hoverState;
         bool enabled;
@@ -287,11 +287,11 @@ namespace Netcode::UI {
 
         void Padding(const Float4 & leftTopRightBottom);
 
-        void Parent(std::shared_ptr<Control> newParent);
+        void Parent(Ref<Control> newParent);
 
-        std::shared_ptr<Control> Parent() const;
+        Ref<Control> Parent() const;
 
-        const std::vector<std::shared_ptr<Control>> & Children() const;
+        const std::vector<Ref<Control>> & Children() const;
 
         void RotationZ(float rotZ);
 
@@ -315,7 +315,7 @@ namespace Netcode::UI {
 
         virtual void Destruct();
 
-        virtual void AddChild(std::shared_ptr<Control> child);
+        virtual void AddChild(Ref<Control> child);
 
         virtual void Render(Ptr<SpriteBatch> batch);
 

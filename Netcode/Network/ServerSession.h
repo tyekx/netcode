@@ -13,8 +13,8 @@ namespace Netcode::Network {
 		boost::asio::deadline_timer timer;
 		MessageQueue<UdpPacket> controlQueue;
 		MessageQueue<UdpPacket> gameQueue;
-		std::shared_ptr<UdpStream> controlStream;
-		std::shared_ptr<UdpStream> gameStream;
+		Ref<UdpStream> controlStream;
+		Ref<UdpStream> gameStream;
 		PacketStorage storage;
 		ControlPacketStorage controlStorage;
 		MysqlSession db;
@@ -31,7 +31,7 @@ namespace Netcode::Network {
 		void ParseControlMessages(std::vector<Protocol::Message> & outVec, std::vector<UdpPacket> packets);
 		void ParseGameMessages(std::vector<Protocol::Message> & outVec, std::vector<UdpPacket> packets);
 		void SendAck(udp_endpoint_t endpoint, int32_t ack);
-		std::shared_ptr<ServerSession> GetStrongRef();
+		Ref<ServerSession> GetStrongRef();
 
 	public:
 		virtual ~ServerSession() override;

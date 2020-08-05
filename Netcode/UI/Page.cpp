@@ -69,7 +69,7 @@ namespace Netcode::UI {
 			}
 		};
 
-		static std::shared_ptr<NullInput> defaultInput;
+		static Ref<NullInput> defaultInput;
 
 	};
 
@@ -191,7 +191,7 @@ namespace Netcode::UI {
 	{
 		Control * ctrl = Raycast(windowPos);
 
-		std::shared_ptr<Control> lastRaycastedControl = raycastedControl.lock();
+		Ref<Control> lastRaycastedControl = raycastedControl.lock();
 
 		HandleMouseLeaveEnter(windowPos, lastRaycastedControl.get(), ctrl);
 
@@ -218,7 +218,7 @@ namespace Netcode::UI {
 		if(clickToken == 0) {
 			clickToken = Netcode::Input::OnMouseInput->Subscribe([this](Key key, KeyModifier modifier) -> void {
 
-				std::shared_ptr<Control> control = raycastedControl.lock();
+				Ref<Control> control = raycastedControl.lock();
 
 				if(control == nullptr) {
 					return;
@@ -238,7 +238,7 @@ namespace Netcode::UI {
 					Control * handledBy = args.HandledBy();
 					Detail::NullSafePtr<Input> input{ static_cast<Input *>(handledBy), Detail::defaultInput.get() };
 
-					std::shared_ptr<Input> currentlyFocusedInput = focusedInput.lock();
+					Ref<Input> currentlyFocusedInput = focusedInput.lock();
 					Detail::NullSafePtr<Input> lastInput{ currentlyFocusedInput.get(), Detail::defaultInput.get() };
 
 					if(input != lastInput) {
@@ -262,7 +262,7 @@ namespace Netcode::UI {
 
 
 				if(Netcode::Input::GetKey(KeyCode::MOUSE_LEFT).IsPressed()) {
-					std::shared_ptr<Control> dragged = draggedControl.lock();
+					Ref<Control> dragged = draggedControl.lock();
 
 					Int2 mouseDelta = Int2{ mousePosition.x - lastMousePosition.x, mousePosition.y - lastMousePosition.y };
 					if(dragged != nullptr) {
@@ -292,7 +292,7 @@ namespace Netcode::UI {
 
 		if(scrollToken == 0) {
 			scrollToken = Netcode::Input::OnScroll->Subscribe([this](int scrollVector, KeyModifier modifier) -> void {
-				std::shared_ptr<Control> ctrl = raycastedControl.lock();
+				Ref<Control> ctrl = raycastedControl.lock();
 
 				if(ctrl != nullptr) {
 					ScrollEventArgs scrollArgs{ Netcode::Input::GetMousePosition(), KeyCode::UNDEFINED, modifier, scrollVector };
@@ -308,7 +308,7 @@ namespace Netcode::UI {
 		if(keyPressedToken == 0) {
 			keyPressedToken = Netcode::Input::OnKeyPressed->Subscribe([this](Key key, KeyModifier modifier) -> void {
 				if(!Netcode::Utility::IsWeakRefEmpty(focusedInput)) {
-					std::shared_ptr<Input> input = focusedInput.lock();
+					Ref<Input> input = focusedInput.lock();
 
 					if(input != nullptr) {
 						KeyEventArgs eventArgs{ key, modifier };
@@ -321,7 +321,7 @@ namespace Netcode::UI {
 		if(charToken == 0) {
 			charToken = Netcode::Input::OnCharInput->Subscribe([this](wchar_t value) -> void {
 				if(!Netcode::Utility::IsWeakRefEmpty(focusedInput)) {
-					std::shared_ptr<Input> input = focusedInput.lock();
+					Ref<Input> input = focusedInput.lock();
 
 					if(input != nullptr) {
 						CharInputEventArgs eventArgs{ value };

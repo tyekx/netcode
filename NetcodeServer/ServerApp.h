@@ -25,7 +25,7 @@ class PlayerStorage {
 		}
 	};
 
-	std::shared_ptr<Netcode::Network::ServerSession> serverSession;
+	Ref<Netcode::Network::ServerSession> serverSession;
 	std::list<User> activePlayers;
 	std::vector<Netcode::Network::UserRow> pendingPlayers;
 
@@ -151,7 +151,7 @@ class PlayerStorage {
 	}
 
 public:
-	void SetSession(std::shared_ptr<Netcode::Network::ServerSession> sess) {
+	void SetSession(Ref<Netcode::Network::ServerSession> sess) {
 		serverSession = sess;
 	}
 
@@ -252,7 +252,7 @@ public:
 
 class ServerApp : public Netcode::Module::AApp {
 	Netcode::Network::Config config;
-	std::shared_ptr<Netcode::Network::ServerSession> serverSession;
+	Ref<Netcode::Network::ServerSession> serverSession;
 	std::vector<Netcode::Protocol::Message> controlMessages;
 	std::vector<Netcode::Protocol::Message> gameMessages;
 	Netcode::Network::GameSessionRef clientSession;

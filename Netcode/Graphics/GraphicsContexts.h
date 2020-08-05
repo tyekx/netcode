@@ -29,7 +29,7 @@ namespace Netcode::Graphics {
 		virtual void Writes(uintptr_t virtualDependency) = 0;
 		virtual void Reads(uintptr_t virtualDependency) = 0;
 
-		virtual void SetRenderPass(std::shared_ptr<RenderPass> renderPass) = 0;
+		virtual void SetRenderPass(Ref<RenderPass> renderPass) = 0;
 		virtual void ClearRenderPass() = 0;
 
 		virtual Ref<UploadBatch> CreateUploadBatch() = 0;

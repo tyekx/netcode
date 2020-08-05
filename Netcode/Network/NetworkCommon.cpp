@@ -8,7 +8,7 @@ namespace Netcode::Network {
 
 	PacketStorage::StorageType PacketStorage::AllocateStorage() {
 		// make_shared<uint8_t[]> wouldnt work here, so make_unique it is
-		return std::shared_ptr<uint8_t[]>(std::make_unique<uint8_t[]>(PACKET_STORAGE_SIZE));
+		return Ref<uint8_t[]>(std::make_unique<uint8_t[]>(PACKET_STORAGE_SIZE));
 	}
 
 	PacketStorage::PacketStorage(uint32_t preallocatedBuffers) : availableBuffers{} {

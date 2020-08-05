@@ -126,7 +126,7 @@ namespace Netcode::Graphics::DX12 {
 		freedResources = std::move(defragmented);
 	}
 
-	std::shared_ptr<Resource> Heap::CreateResource(const ResourceDesc & resourceDesc, const D3D12_RESOURCE_DESC & desc, D3D12_RESOURCE_STATES initState, const D3D12_CLEAR_VALUE * clearValue, const D3D12_RESOURCE_ALLOCATION_INFO & allocation) {
+	Ref<Resource> Heap::CreateResource(const ResourceDesc & resourceDesc, const D3D12_RESOURCE_DESC & desc, D3D12_RESOURCE_STATES initState, const D3D12_CLEAR_VALUE * clearValue, const D3D12_RESOURCE_ALLOCATION_INFO & allocation) {
 		const uint64_t bytesToStore = allocation.SizeInBytes;
 
 		auto it = std::find_if(std::begin(freedResources), std::end(freedResources), [bytesToStore](std::unique_ptr<Resource> & resource) -> bool {
@@ -161,7 +161,7 @@ namespace Netcode::Graphics::DX12 {
 			device->CreatePlacedResource(heap.Get(), heapOffset, &desc, initState, clearValue, IID_PPV_ARGS(dx12Resource.GetAddressOf()));
 
 		if(resource == nullptr) {
-			resource = std::shared_ptr<Resource>(
+			resource = Ref<Resource>(
 				new Resource{ allocationSize, heapOffset, resourceDesc, desc, std::move(dx12Resource), shared_from_this() },
 				std::bind(&Heap::ReturnResource, this, std::placeholders::_1));
 		} else {

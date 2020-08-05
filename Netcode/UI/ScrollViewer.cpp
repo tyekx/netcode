@@ -40,7 +40,7 @@ namespace Netcode::UI {
             return;
         }
 
-        std::shared_ptr<Control> ctrl = children.front();
+        Ref<Control> ctrl = children.front();
 
         contentSize = ctrl->BoxSize();
 
@@ -186,7 +186,7 @@ namespace Netcode::UI {
         }
     }
 
-    void ScrollViewer::AddChild(std::shared_ptr<Control> child)
+    void ScrollViewer::AddChild(Ref<Control> child)
     {
         if(child != nullptr) {
             children.clear();

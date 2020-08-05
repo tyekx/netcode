@@ -62,11 +62,11 @@ class LoadingPage : public PageBase {
 	Ref<Netcode::GpuResource> loadingIcon;
 	Ref<Netcode::GpuResource> warningIcon;
 
-	std::shared_ptr<Netcode::UI::Control> rootPanel;
+	Ref<Netcode::UI::Control> rootPanel;
 
-	std::shared_ptr<Netcode::UI::Control> errorContent;
-	std::shared_ptr<Netcode::UI::Control> dialogContent;
-	std::shared_ptr<Netcode::UI::Control> loaderContent;
+	Ref<Netcode::UI::Control> errorContent;
+	Ref<Netcode::UI::Control> dialogContent;
+	Ref<Netcode::UI::Control> loaderContent;
 
 	void CloseDialog();
 

@@ -23,6 +23,6 @@ namespace Netcode::Network {
 		
 	};
 
-	using GameSessionRef = std::shared_ptr<GameSession>;
+	using GameSessionRef = Ref<GameSession>;
 
 }

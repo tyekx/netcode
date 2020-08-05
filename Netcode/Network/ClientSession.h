@@ -17,7 +17,7 @@ namespace Netcode::Network {
 		boost::asio::deadline_timer timer;
 		boost::asio::deadline_timer protocolTimer;
 		udp_resolver_t resolver;
-		std::shared_ptr<UdpStream> stream;
+		Ref<UdpStream> stream;
 		udp_endpoint_t controlEndpoint;
 		udp_endpoint_t updateEndpoint;
 		int32_t clientAck;
@@ -35,7 +35,7 @@ namespace Netcode::Network {
 		void OnRead(std::size_t transferredBytes, udp_endpoint_t endpoint, PacketStorage::StorageType buffer);
 		void OnMessageSent(const ErrorCode & ec, std::size_t size, PacketStorage::StorageType buffer);
 
-		std::shared_ptr<ClientSession> GetStrongRef() {
+		Ref<ClientSession> GetStrongRef() {
 			return std::dynamic_pointer_cast<ClientSession>(shared_from_this());
 		}
 

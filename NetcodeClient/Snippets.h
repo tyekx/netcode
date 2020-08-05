@@ -53,7 +53,7 @@ void CreateYbotAnimationComponent(Netcode::Asset::Model * model, Animation * ani
 		lhe
 	};
 	
-	anim->blackboard = std::shared_ptr<Blackboard<CtrlType>>(new Blackboard<CtrlType>(
+	anim->blackboard = Ref<Blackboard<CtrlType>>(new Blackboard<CtrlType>(
 		{ // Group List
 			{ // Legs Group
 				{ // StateList

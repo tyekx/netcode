@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Netcode/HandleDecl.h>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -56,13 +57,13 @@ namespace Netcode::Network {
 	};
 
 	struct UdpPacket {
-		std::shared_ptr<uint8_t[]> data;
+		Ref<uint8_t[]> data;
 		boost::asio::ip::udp::endpoint endpoint;
 		boost::asio::mutable_buffer mBuffer;
 
 		UdpPacket() = default;
 
-		UdpPacket(std::shared_ptr<uint8_t[]> storage) : data{ std::move(storage) }, endpoint{}, mBuffer{ boost::asio::buffer(data.get(), PACKET_STORAGE_SIZE) } { }
+		UdpPacket(Ref<uint8_t[]> storage) : data{ std::move(storage) }, endpoint{}, mBuffer{ boost::asio::buffer(data.get(), PACKET_STORAGE_SIZE) } { }
 	};
 
 	template<typename T>
@@ -103,7 +104,7 @@ namespace Netcode::Network {
 
 	class PacketStorage {
 	public:
-		using StorageType = std::shared_ptr<uint8_t[]>;
+		using StorageType = Ref<uint8_t[]>;
 	private:
 		std::vector<StorageType> availableBuffers;
 

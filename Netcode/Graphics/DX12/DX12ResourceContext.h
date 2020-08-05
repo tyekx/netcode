@@ -92,6 +92,6 @@ namespace Netcode::Graphics::DX12 {
 	};
 
 	using DX12ResourceContext = Netcode::Graphics::DX12::ResourceContext;
-	using DX12ResourceContextRef = std::shared_ptr<DX12ResourceContext>;
+	using DX12ResourceContextRef = Ref<DX12ResourceContext>;
 
 }

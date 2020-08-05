@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Netcode/HandleDecl.h>
 #include <memory>
 #include <Netcode/Animation/Blender.h>
 
@@ -7,18 +8,18 @@ class AnimationSet;
 
 class AnimationController {
 private:
-	std::shared_ptr<AnimationSet> animationSet;
+	Ref<AnimationSet> animationSet;
 
 	int32_t entryId;
 
 public:
-	AnimationController(std::shared_ptr<AnimationSet> animationSet);
+	AnimationController(Ref<AnimationSet> animationSet);
 
 	int32_t GetId() const {
 		return entryId;
 	}
 
-	std::shared_ptr<AnimationSet> GetAnimationSet() const {
+	Ref<AnimationSet> GetAnimationSet() const {
 		return animationSet;
 	}
 

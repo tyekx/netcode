@@ -15,7 +15,7 @@ Ref<AnimationController> AnimationSet::MakeNewController() {
 
 	++numActiveControllers;
 
-	return std::shared_ptr<AnimationController>(
+	return Ref<AnimationController>(
 		new AnimationController(shared_from_this()),
 		std::bind(&AnimationSet::FreeController, this, std::placeholders::_1));
 }
@@ -157,7 +157,7 @@ AnimationSet::AnimationSet(Netcode::Module::IGraphicsModule * graphics, Netcode:
 	graphics->frame->SyncUpload(uploadBatch);
 }
 
-std::shared_ptr<AnimationController> AnimationSet::CreateController() {
+Ref<AnimationController> AnimationSet::CreateController() {
 	if(freedControllers.empty()) {
 		return MakeNewController();
 	} else {

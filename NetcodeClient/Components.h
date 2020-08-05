@@ -84,10 +84,10 @@ public:
 };
 
 struct ShadedMesh {
-	std::shared_ptr<Mesh> mesh;
-	std::shared_ptr<Material> material;
+	Ref<Mesh> mesh;
+	Ref<Material> material;
 
-	ShadedMesh(std::shared_ptr<Mesh> m, std::shared_ptr<Material> mat) : mesh{ std::move(m) }, material{ std::move(mat) } {
+	ShadedMesh(Ref<Mesh> m, Ref<Material> mat) : mesh{ std::move(m) }, material{ std::move(mat) } {
 
 	}
 
@@ -103,7 +103,7 @@ public:
 	int32_t boneDataOffset;
 	std::vector<ShadedMesh> meshes;
 
-	ShadedMesh & AddShadedMesh(std::shared_ptr<Mesh> m, std::shared_ptr<Material> mat) {
+	ShadedMesh & AddShadedMesh(Ref<Mesh> m, Ref<Material> mat) {
 		return meshes.emplace_back(std::move(m), std::move(mat));
 	}
 };
@@ -134,9 +134,9 @@ public:
 COMPONENT_ALIGN class Animation {
 public:
 	std::vector<Netcode::Animation::IKEffector> effectors;
-	std::shared_ptr<AnimationController> controller;
-	std::shared_ptr<Netcode::Animation::BlackboardBase> blackboard;
-	std::shared_ptr<Netcode::Animation::Blender> blender;
+	Ref<AnimationController> controller;
+	Ref<Netcode::Animation::BlackboardBase> blackboard;
+	Ref<Netcode::Animation::Blender> blender;
 	std::unique_ptr<BoneData> debugBoneData;
 	Netcode::ArrayView<Netcode::Asset::Bone> bones;
 	Netcode::ArrayView<Netcode::Asset::Animation> clips;

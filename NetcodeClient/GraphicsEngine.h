@@ -487,7 +487,7 @@ private:
 			
 				context->UseComputeContext();
 
-				for(std::shared_ptr<AnimationSet> & animSet : skinningPass_Input) {
+				for(Ref<AnimationSet> & animSet : skinningPass_Input) {
 					animSet->UploadConstants(context);
 				}
 
@@ -496,7 +496,7 @@ private:
 
 			context->SetRootSignature(skinningPass_RootSignature);
 
-			for(std::shared_ptr<AnimationSet> & animSet : skinningPass_Input) {
+			for(Ref<AnimationSet> & animSet : skinningPass_Input) {
 				animSet->BindResources(context);
 
 				context->SetPipelineState(skinningInterpolatePass_PipelineState);

@@ -6,7 +6,7 @@ namespace Netcode::UI {
 
     class ScrollViewer : public Panel {
     protected:
-        std::shared_ptr<Panel> scrollButton;
+        Ref<Panel> scrollButton;
         Float2 maxSize;
         Float2 contentSize;
         Float4 scrollBarColor;
@@ -31,7 +31,7 @@ namespace Netcode::UI {
 
         virtual void PropagateOnDrag(DragEventArgs & args) override;
 
-        virtual void AddChild(std::shared_ptr<Control> child) override;
+        virtual void AddChild(Ref<Control> child) override;
 
         void ScrollButtonColor(const Float4 & color) {
             scrollButton->BackgroundColor(color);

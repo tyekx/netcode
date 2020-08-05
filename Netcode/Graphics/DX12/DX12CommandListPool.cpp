@@ -121,8 +121,8 @@ namespace Netcode::Graphics::DX12 {
 		CommandListType * gcl = pcl.gcl.Detach();
 
 		return CommandList(
-			std::shared_ptr<ID3D12CommandAllocator>(allocator, std::bind(&CommandListPool::ReturnAllocator, this, std::placeholders::_1, type)),
-			std::shared_ptr<CommandListType>(gcl, std::bind(&CommandListPool::ReturnCommandList, this, std::placeholders::_1, type))
+			Ref<ID3D12CommandAllocator>(allocator, std::bind(&CommandListPool::ReturnAllocator, this, std::placeholders::_1, type)),
+			Ref<CommandListType>(gcl, std::bind(&CommandListPool::ReturnCommandList, this, std::placeholders::_1, type))
 		);
 	}
 

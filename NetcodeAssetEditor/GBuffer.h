@@ -139,7 +139,7 @@ class BRDF_NormalSkinnedMaterial : public BRDF_MaterialBase {
 
 struct ShadedMesh {
 	GBuffer geometry;
-	std::shared_ptr<MaterialBase> material;
+	Ref<MaterialBase> material;
 
 	void Render(Netcode::Graphics::IRenderContext * ctx) {
 		material->Apply(ctx);
