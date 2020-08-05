@@ -1,10 +1,8 @@
 #pragma once
 
-#include "DX12Common.h"
-#include <vector>
-#include <string>
-
 #include "DX12CommandList.h"
+#include <vector>
+#include <wrl.h>
 
 namespace Netcode::Graphics::DX12 {
 

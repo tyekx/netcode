@@ -1,9 +1,8 @@
 #pragma once
 
 #include <NetcodeFoundation/Math.h>
-
-#include "../GraphicsContexts.h"
-#include "DX12Common.h"
+#include <Netcode/Graphics/GraphicsContexts.h>
+#include "DX12Includes.h"
 
 namespace Netcode::Graphics::DX12 {
 
@@ -16,11 +15,14 @@ namespace Netcode::Graphics::DX12 {
 		Ptr<ResourcePool> resources;
 		Ptr<ConstantBufferPool> cbuffers;
 		Ptr<DynamicDescriptorHeap> descHeaps;
-		ID3D12GraphicsCommandList* commandList;
+		Ptr<ID3D12GraphicsCommandList> commandList;
 		std::vector<D3D12_RESOURCE_BARRIER> barriers;
 	public:
 
-		BaseRenderContext(ResourcePool * resourcePool, ConstantBufferPool * cbufferPool, DynamicDescriptorHeap * dHeaps, ID3D12GraphicsCommandList * cl);
+		BaseRenderContext(Ptr<ResourcePool> resourcePool,
+			Ptr<ConstantBufferPool> cbufferPool,
+			Ptr<DynamicDescriptorHeap> dHeaps,
+			Ptr<ID3D12GraphicsCommandList> cl);
 
 		virtual ~BaseRenderContext() = default;
 
@@ -36,9 +38,9 @@ namespace Netcode::Graphics::DX12 {
 		using BaseRenderContext::BaseRenderContext;
 
 		// Inherited via BaseRenderContext
-		virtual void SetRootSignature(Ref<RootSignature> rs) override;
+		virtual void SetRootSignature(Ref<Netcode::RootSignature> rs) override;
 
-		virtual void SetPipelineState(Ref<PipelineState> pso) override;
+		virtual void SetPipelineState(Ref<Netcode::PipelineState> pso) override;
 
 		virtual void SetVertexBuffer(Ref<GpuResource> handle) override;
 
@@ -94,9 +96,9 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetRenderTargets(std::nullptr_t rt, std::nullptr_t ds) override;
 
-		virtual void SetRenderTargets(std::nullptr_t rt, Ref<ResourceViews> ds) override;
-		virtual void SetRenderTargets(Ref<ResourceViews> rt, std::nullptr_t ds) override;
-		virtual void SetRenderTargets(Ref<ResourceViews> renderTargets, Ref<ResourceViews> depthStencil) override;
+		virtual void SetRenderTargets(std::nullptr_t rt, Ref<Netcode::ResourceViews> ds) override;
+		virtual void SetRenderTargets(Ref<Netcode::ResourceViews> rt, std::nullptr_t ds) override;
+		virtual void SetRenderTargets(Ref<Netcode::ResourceViews> renderTargets, Ref<Netcode::ResourceViews> depthStencil) override;
 
 		virtual void SetRenderTargets(std::nullptr_t rt, Ref<GpuResource> ds) override;
 		virtual void SetRenderTargets(Ref<GpuResource> rt, std::nullptr_t ds) override;
@@ -108,8 +110,8 @@ namespace Netcode::Graphics::DX12 {
 		virtual uint64_t SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) override;
 
 		virtual void SetShaderResources(int slot, std::initializer_list<Ref<GpuResource>> shaderResourceHandles) override;
-		virtual void SetShaderResources(int slot, Ref<ResourceViews> resourceView) override;
-		virtual void SetShaderResources(int slot, Ref<ResourceViews> resourceView, int descriptorOffset) override;
+		virtual void SetShaderResources(int slot, Ref<Netcode::ResourceViews> resourceView) override;
+		virtual void SetShaderResources(int slot, Ref<Netcode::ResourceViews> resourceView, int descriptorOffset) override;
 
 		virtual void CopyBufferRegion(Ref<GpuResource> dstResource, Ref<GpuResource> srcResource, size_t sizeInBytes) override;
 		
@@ -132,16 +134,14 @@ namespace Netcode::Graphics::DX12 {
 		D3D12_VIEWPORT defaultViewport;
 		D3D12_RECT defaultScissorRect;
 
-		GraphicsContext(
-			ResourcePool * resourcePool,
-			ConstantBufferPool * cbpool,
-			DynamicDescriptorHeap * dheaps,
-			ID3D12GraphicsCommandList * directCommandList,
-			const D3D12_CPU_DESCRIPTOR_HANDLE & backbuffer,
-			const D3D12_CPU_DESCRIPTOR_HANDLE & backbufferDepth,
-			const D3D12_VIEWPORT & viewPort,
-			const D3D12_RECT & scissorRect
-		);
+		GraphicsContext(Ptr<ResourcePool> resourcePool,
+						Ptr<ConstantBufferPool> cbufferPool,
+						Ptr<DynamicDescriptorHeap> dHeaps,
+						Ptr<ID3D12GraphicsCommandList> cl,
+						const D3D12_CPU_DESCRIPTOR_HANDLE & backbuffer,
+						const D3D12_CPU_DESCRIPTOR_HANDLE & backbufferDepth,
+						const D3D12_VIEWPORT & viewPort,
+						const D3D12_RECT & scissorRect);
 
 		virtual void SetStencilReference(uint8_t stencilValue) override;
 
@@ -159,9 +159,9 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void Dispatch(uint32_t threadGroupX, uint32_t threadGroupY, uint32_t threadGroupZ) override;
 
-		virtual void SetRootSignature(Ref<RootSignature> rs) override;
+		virtual void SetRootSignature(Ref<Netcode::RootSignature> rs) override;
 
-		virtual void SetPipelineState(Ref<PipelineState> pso) override;
+		virtual void SetPipelineState(Ref<Netcode::PipelineState> pso) override;
 
 		virtual void SetPrimitiveTopology(PrimitiveTopology topology) override;
 
@@ -193,17 +193,17 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetRenderTargets(std::nullptr_t rt, std::nullptr_t ds) override;
 
-		virtual void SetRenderTargets(std::nullptr_t rt, Ref<ResourceViews> ds) override;
-		virtual void SetRenderTargets(Ref<ResourceViews> rt, std::nullptr_t ds) override;
-		virtual void SetRenderTargets(Ref<ResourceViews> renderTargets, Ref<ResourceViews> depthStencil) override;
+		virtual void SetRenderTargets(std::nullptr_t rt, Ref<Netcode::ResourceViews> ds) override;
+		virtual void SetRenderTargets(Ref<Netcode::ResourceViews> rt, std::nullptr_t ds) override;
+		virtual void SetRenderTargets(Ref<Netcode::ResourceViews> renderTargets, Ref<Netcode::ResourceViews> depthStencil) override;
 
 		virtual void SetRenderTargets(std::nullptr_t rt, Ref<GpuResource> ds) override;
 		virtual void SetRenderTargets(Ref<GpuResource> rt, std::nullptr_t ds) override;
 		virtual void SetRenderTargets(Ref<GpuResource> renderTarget, Ref<GpuResource> depthStencil) override;
 
 		virtual void SetShaderResources(int slot, std::initializer_list<Ref<GpuResource>> shaderResourceHandles) override;
-		virtual void SetShaderResources(int slot, Ref<ResourceViews> resourceView) override;
-		virtual void SetShaderResources(int slot, Ref<ResourceViews> resourceView, int descriptorOffset) override;
+		virtual void SetShaderResources(int slot, Ref<Netcode::ResourceViews> resourceView) override;
+		virtual void SetShaderResources(int slot, Ref<Netcode::ResourceViews> resourceView, int descriptorOffset) override;
 
 
 		virtual void SetRootConstants(int slot, const void * srcData, uint32_t numConstants) override;

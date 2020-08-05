@@ -1,27 +1,22 @@
 #pragma once
 
-#include <NetcodeFoundation/Memory.h>
-
-#include "../../Utility.h"
-#include "../../Modules.h"
-#include "../../BulkAllocator.hpp"
-#include "../GraphicsContexts.h"
-
-#include <map>
-#include <variant>
-
-#include "DX12Common.h"
-#include "DX12ConstantBufferPool.h"
-#include "DX12ResourcePool.h"
-#include "DX12DynamicDescriptorHeap.h"
+#include <Netcode/Modules.h>
+#include "DX12Decl.h"
+#include "DX12Includes.h"
 #include "DX12CommandList.h"
+#include <NetcodeFoundation/Memory.h>
 
 namespace Netcode::Graphics::DX12 {
 
-	class Fence;
+	class FenceImpl;
 	class HeapManager;
 	class ResourceContext;
+	class ResourcePool;
+	class ResourceViewsImpl;
+	class ConstantBufferPool;
+	class DynamicDescriptorHeap;
 	class DebugContext;
+	class CommandList;
 	class CommandListPool;
 	class GPipelineStateLibrary;
 	class CPipelineStateLibrary;
@@ -31,71 +26,27 @@ namespace Netcode::Graphics::DX12 {
 	class SpriteFontLibrary;
 	class ShaderLibrary;
 
+
 	class FrameResource {
 	public:
 		com_ptr<ID3D12Resource> swapChainBuffer;
-		com_ptr<ID3D12GraphicsCommandList2> commandList;
+		com_ptr<ID3D12GraphicsCommandList3> commandList;
 		com_ptr<ID3D12CommandAllocator> commandAllocator;
 		com_ptr<ID3D12Fence1> fence;
 		UINT64 fenceValue;
 		HANDLE fenceEvent;
 
-		ID3D12GraphicsCommandList2 * GetCommandList() const {
-			return commandList.Get();
-		}
+		ID3D12GraphicsCommandList3 * GetCommandList() const;
 
-		void CreateResources(ID3D12Device * device) {
-			DX_API("Failed to create command allocator")
-				device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(commandAllocator.GetAddressOf()));
-
-			DX_API("Failed to create direct command list")
-				device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(commandList.GetAddressOf()));
-
-			DX_API("Failed to initially close command list")
-				commandList->Close();
-
-			fenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-			if(fenceEvent == NULL) {
-				DX_API("Failed to create windows event") HRESULT_FROM_WIN32(GetLastError());
-			}
-			fenceValue = 1;
-
-			DX_API("Failed to create fence")
-				device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.GetAddressOf()));
-		}
-		
-		void WaitForCompletion() {
-			const UINT64 cv = fenceValue;
-
-			if(fence->GetCompletedValue() < cv) {
-				DX_API("Failed to set winapi event")
-					fence->SetEventOnCompletion(cv, fenceEvent);
-				WaitForSingleObject(fenceEvent, INFINITE);
-			}
-
-			++fenceValue;
-		}
-
-		void FinishRecording() {
-			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(swapChainBuffer.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-
-			commandList->ResourceBarrier(1, &barrier);
-
-			DX_API("Failed to close command list")
-				commandList->Close();
-		}
-
-		void ReleaseResources() {
-			commandList.Reset();
-			commandAllocator.Reset();
-			fence.Reset();
-			fenceValue = 0;
-		}
+		void CreateResources(ID3D12Device * device);
+		void WaitForCompletion();
+		void FinishRecording();
+		void ReleaseResources();
 	};
 
 	class DX12GraphicsModule : public Module::IGraphicsModule, Graphics::IFrameContext {
 	private:
-		void CullFrameGraph(Ref<FrameGraph> frameGraph);
+		void CullFrameGraph(Ptr<FrameGraph> frameGraph);
 		void ExecuteFrameGraph(Ref<FrameGraph> frameGraph);
 
 	protected:
@@ -142,28 +93,27 @@ namespace Netcode::Graphics::DX12 {
 
 		DisplayMode displayMode;
 
-		ResourcePool resourcePool;
-		ConstantBufferPool cbufferPool;
-		DynamicDescriptorHeap dheaps;
+		Ref<HeapManager> heapManager;
+		Ref<ResourcePool> resourcePool;
+		Ref<ConstantBufferPool> cbufferPool;
+		Ref<DynamicDescriptorHeap> dheaps;
 
+		Ref<FenceImpl> mainFence;
+		Ref<FenceImpl> uploadFence;
+		Ref<CommandListPool> commandListPool;
 
-		std::shared_ptr<DX12::Fence> mainFence;
-		std::shared_ptr<DX12::Fence> uploadFence;
-		std::shared_ptr<DX12::CommandListPool> commandListPool;
-		std::shared_ptr<DX12::HeapManager> heapManager;
+		Ref<SpriteFontLibrary> spriteFontLibrary;
+		Ref<ShaderLibrary> shaderLibrary;
+		Ref<RootSignatureLibrary> rootSigLibrary;
+		Ref<StreamOutputLibrary> streamOutputLibrary;
+		Ref<InputLayoutLibrary> inputLayoutLibrary;
+		Ref<GPipelineStateLibrary> gPipelineLibrary;
+		Ref<CPipelineStateLibrary> cPipelineLibrary;
 
-		std::shared_ptr<DX12::SpriteFontLibrary> spriteFontLibrary;
-		std::shared_ptr<DX12::ShaderLibrary> shaderLibrary;
-		std::shared_ptr<DX12::RootSignatureLibrary> rootSigLibrary;
-		std::shared_ptr<DX12::StreamOutputLibrary> streamOutputLibrary;
-		std::shared_ptr<DX12::InputLayoutLibrary> inputLayoutLibrary;
-		std::shared_ptr<DX12::GPipelineStateLibrary> gPipelineLibrary;
-		std::shared_ptr<DX12::CPipelineStateLibrary> cPipelineLibrary;
-
-		std::shared_ptr<DX12::DebugContext> debugContext;
-		std::shared_ptr<DX12::ResourceContext> resourceContext;
-		std::shared_ptr<DX12::ResourceViews> renderTargetViews;
-		std::shared_ptr<DX12::ResourceViews> depthStencilView;
+		Ref<DebugContext> debugContext;
+		Ref<ResourceContext> resourceContext;
+		Ref<ResourceViewsImpl> renderTargetViews;
+		Ref<ResourceViewsImpl> depthStencilView;
 
 		std::vector<CommandList> inFlightCommandLists;
 
@@ -217,13 +167,13 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void OnModeChanged(DisplayMode displayMode) override;
 
-		virtual RECT GetDisplayRect() const override;
+		virtual Rect GetDisplayRect() const override;
 
 		virtual float GetAspectRatio() const override;
 
-		virtual void SyncUpload(const UploadBatch & upload) override;
+		virtual void SyncUpload(Ref<Netcode::Graphics::UploadBatch> upload) override;
 
-		virtual void Run(Ref<FrameGraph> frameGraph, FrameGraphCullMode cullMode) override;
+		virtual void Run(Ref<Netcode::FrameGraph> frameGraph, FrameGraphCullMode cullMode) override;
 
 		virtual Netcode::UInt2 GetBackbufferSize() const override;
 
@@ -253,7 +203,7 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual Ref<SpriteBatchBuilder> CreateSpriteBatchBuilder() override;
 
-		virtual TextureBuilderRef CreateTextureBuilder() override;
+		virtual Ref<TextureBuilder> CreateTextureBuilder() override;
 
 		virtual Ref<FrameGraphBuilder> CreateFrameGraphBuilder() override;
 

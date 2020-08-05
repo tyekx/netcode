@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../../HandleTypes.h"
-#include "DX12Common.h"
-#include <map>
+#include <Netcode/HandleDecl.h>
+#include "DX12Decl.h"
 #include <string>
+#include <map>
 
 namespace Netcode::Graphics::DX12 {
 	

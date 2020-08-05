@@ -1,4 +1,10 @@
 #include "DX12Helpers.h"
+#include <Netcode/Common.h>
+#include <Netcode/HandleTypes.h>
+#include <Netcode/Graphics/ResourceDesc.h>
+#include <Netcode/Graphics/ResourceEnums.h>
+#include <DirectXTex.h>
+#include "DX12Includes.h"
 
 namespace Netcode::Graphics::DX12 {
 

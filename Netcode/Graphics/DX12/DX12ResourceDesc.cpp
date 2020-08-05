@@ -1,4 +1,7 @@
 #include "DX12ResourceDesc.h"
+#include <Netcode/Graphics/ResourceEnums.h>
+#include <Netcode/Graphics/ResourceDesc.h>
+#include "DX12Includes.h"
 
 namespace Netcode::Graphics::DX12 {
 	D3D12_PRIMITIVE_TOPOLOGY GetNativePrimitiveTopology(PrimitiveTopology t) {

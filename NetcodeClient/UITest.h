@@ -27,11 +27,11 @@ protected:
 	constexpr static float BORDER_RADIUS = 4.0f;
 	constexpr static float BORDER_WIDTH = 2.0f;
 
-	Netcode::SpriteFontRef textFont;
+	Ref<Netcode::SpriteFont> textFont;
 
-	std::shared_ptr<Netcode::UI::Button> CreateButton(const wchar_t * text);
+	Ref<Netcode::UI::Button> CreateButton(const wchar_t * text);
 
-	std::shared_ptr<Netcode::UI::TextBox> CreateTextBox();
+	Ref<Netcode::UI::TextBox> CreateTextBox();
 public:
 	using Netcode::UI::Page::Page;
 
@@ -41,7 +41,7 @@ public:
 };
 
 class LoginPage : public PageBase {
-	Netcode::GpuResourceRef aenami;
+	Ref<Netcode::GpuResource> aenami;
 public:
 	using PageBase::PageBase;
 
@@ -50,7 +50,7 @@ public:
 
 class ServerBrowserPage : public PageBase {
 
-	std::shared_ptr<Netcode::UI::Control> CreateServerRow(std::wstring serverIp);
+	Ref<Netcode::UI::Control> CreateServerRow(std::wstring serverIp);
 
 public:
 	using PageBase::PageBase;
@@ -59,8 +59,8 @@ public:
 };
 
 class LoadingPage : public PageBase {
-	Netcode::GpuResourceRef loadingIcon;
-	Netcode::GpuResourceRef warningIcon;
+	Ref<Netcode::GpuResource> loadingIcon;
+	Ref<Netcode::GpuResource> warningIcon;
 
 	std::shared_ptr<Netcode::UI::Control> rootPanel;
 

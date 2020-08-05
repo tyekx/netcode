@@ -1,30 +1,23 @@
 #pragma once
 
-#include "../../Common.h"
-#include "../../IO/BinaryReader.h"
-#include "../GraphicsContexts.h"
+#include <Netcode/HandleTypes.h>
+#include <memory>
+#include <vector>
 
-#include <DirectXMath.h>
-#include "DX12Common.h"
-#include "DX12SpriteBatch.h"
-#include <DirectXColors.h>
-#include <DirectXTex.h>
-#include "DX12ResourceViews.h"
-#include "DX12Texture.h"
+namespace Netcode::IO {
+
+	class BinaryReader;
+
+}
+
+namespace Netcode::Graphics {
+
+	class IResourceContext;
+	class IFrameContext;
+
+}
 
 namespace Netcode::Graphics::DX12 {
-	
-	template<typename T>
-	inline T AlignUp(T size, size_t alignment)
-	{
-		if(alignment > 0)
-		{
-			assert(((alignment - 1) & alignment) == 0);
-			T mask = static_cast<T>(alignment - 1);
-			return (size + mask) & ~mask;
-		}
-		return size;
-	}
 
 	struct GlyphLimits {
 		Glyph highestGlyph;
@@ -33,10 +26,10 @@ namespace Netcode::Graphics::DX12 {
 		Glyph widestAlphaNumericGlyph;
 	};
 
-	class SpriteFont : public Netcode::SpriteFont
+	class SpriteFontImpl : public Netcode::SpriteFont
 	{
 		Ref<GpuResource> textureResource;
-		Ref<DX12::ResourceViews> shaderResourceView;
+		Ref<ResourceViews> shaderResourceView;
 
 		GlyphLimits limits;
 
@@ -47,7 +40,7 @@ namespace Netcode::Graphics::DX12 {
 
 		// cache members
 		mutable size_t utfBufferSize;
-		mutable std::unique_ptr<wchar_t[]> utfBuffer;
+		mutable Unique<wchar_t[]> utfBuffer;
 
 		void Construct(IO::BinaryReader * reader, IResourceContext * resourceContext, IFrameContext * frameContext);
 
@@ -56,13 +49,13 @@ namespace Netcode::Graphics::DX12 {
 		Netcode::Vector2 NC_MATH_CALLCONV MeasureString_Impl(const wchar_t * text, int numChars = -1) const;
 		Netcode::Vector2 NC_MATH_CALLCONV MeasureString_Impl(const char * text, int numChars = -1) const;
 	public:
-		SpriteFont(SpriteFont && moveFrom) = default;
-		SpriteFont & operator= (SpriteFont && moveFrom) = default;
+		SpriteFontImpl(SpriteFontImpl && moveFrom) = default;
+		SpriteFontImpl & operator= (SpriteFontImpl && moveFrom) = default;
 
-		SpriteFont(SpriteFont const &) = delete;
-		SpriteFont & operator= (SpriteFont const &) = delete;
+		SpriteFontImpl(SpriteFontImpl const &) = delete;
+		SpriteFontImpl & operator= (SpriteFontImpl const &) = delete;
 
-		SpriteFont(IResourceContext * resourceContext, IFrameContext * frameContext, const std::wstring & fileName);
+		SpriteFontImpl(IResourceContext * resourceContext, IFrameContext * frameContext, const std::wstring & fileName);
 
 		virtual Ref<Netcode::ResourceViews> GetResourceView() const override;
 

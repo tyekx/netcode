@@ -1,4 +1,8 @@
 #include "DX12Heap.h"
+#include "DX12Common.h"
+#include "DX12Includes.h"
+#include "DX12Resource.h"
+#include <functional>
 
 namespace Netcode::Graphics::DX12 {
 
@@ -28,7 +32,7 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 	void Heap::ReturnResource(Resource * rawPtr) {
-		std::unique_ptr<Resource> wrappedPtr{ rawPtr };
+		Unique<Resource> wrappedPtr{ rawPtr };
 		wrappedPtr->resource.Reset();
 		wrappedPtr->heap.reset();
 
@@ -129,7 +133,7 @@ namespace Netcode::Graphics::DX12 {
 			return resource->sizeInBytes >= bytesToStore;
 		});
 
-		std::shared_ptr<Resource> resource;
+		Ref<Resource> resource;
 		com_ptr<ID3D12Resource> dx12Resource;
 		uint64_t allocationSize;
 		uint64_t heapOffset;
@@ -137,8 +141,10 @@ namespace Netcode::Graphics::DX12 {
 		if(it != std::end(freedResources)) {
 			Resource * rptr = it->release();
 
-			resource = DX12ResourceRef { rptr,
-				std::bind(&Heap::ReturnResource, this, std::placeholders::_1) 
+			resource = Ref<DX12::Resource> { rptr,
+				std::bind(&Heap::ReturnResource,
+					this,
+					std::placeholders::_1) 
 			};
 
 			allocationSize = resource->sizeInBytes;

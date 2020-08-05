@@ -1,10 +1,12 @@
 #include "HttpSession.h"
+#include <Netcode/Logger.h>
 #include <boost/bind.hpp>
+#include "Response.hpp"
 
 
 namespace Netcode::Network {
 
-	void HttpSession::OnReceive(boost::system::error_code ec, std::size_t transferredBytes, dcc_promise promise) {
+	void HttpSession::OnReceive(ErrorCode ec, std::size_t transferredBytes, dcc_promise promise) {
 		if(ec) {
 			Log::Error("[Network][Http] Failed to read from stream: {0}", ec.message());
 
@@ -16,7 +18,7 @@ namespace Netcode::Network {
 		}
 	}
 
-	void HttpSession::OnSent(boost::system::error_code ec, std::size_t transferredBytes, dcc_promise promise) {
+	void HttpSession::OnSent(ErrorCode ec, std::size_t transferredBytes, dcc_promise promise) {
 		if(ec) {
 			Log::Error("[Network][Http] Failed to write to stream: {0}", ec.message());
 
@@ -34,7 +36,7 @@ namespace Netcode::Network {
 		}
 	}
 
-	void HttpSession::OnConnected(boost::system::error_code ec, boost::asio::ip::tcp::endpoint endpoint, dcc_promise promise) {
+	void HttpSession::OnConnected(ErrorCode ec, boost::asio::ip::tcp::endpoint endpoint, dcc_promise promise) {
 		if(ec) {
 			Log::Error("[Network][Http] Failed to connect to host: {0}", ec.message());
 
@@ -57,7 +59,7 @@ namespace Netcode::Network {
 		}
 	}
 
-	void HttpSession::OnResolved(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type results, dcc_promise promise) {
+	void HttpSession::OnResolved(ErrorCode ec, boost::asio::ip::tcp::resolver::results_type results, dcc_promise promise) {
 		if(ec) {
 			Log::Error("[Network][Http] Failed to resolve hostname: {0}", ec.message());
 
@@ -73,7 +75,7 @@ namespace Netcode::Network {
 		}
 	}
 
-	void HttpSession::OnSentFirstTry(boost::system::error_code ec, std::size_t transferredBytes, std::string host, std::string port, dcc_promise promise) {
+	void HttpSession::OnSentFirstTry(ErrorCode ec, std::size_t transferredBytes, std::string host, std::string port, dcc_promise promise) {
 		// if the stream "is just timed out", then try reconnecting first
 		if(ec == boost::beast::error::timeout) {
 			Log::Debug("[Network][Http] Stream timed out, trying to reconnect");
@@ -107,8 +109,8 @@ namespace Netcode::Network {
 
 	}
 
-	std::future<Netcode::Response> HttpSession::MakeRequest(std::string host, std::string port, std::string path, http::verb method, std::string cookies, std::string body) {
-		std::promise<Netcode::Response> promise;
+	std::future<Response> HttpSession::MakeRequest(std::string host, std::string port, std::string path, http::verb method, std::string cookies, std::string body) {
+		std::promise<Response> promise;
 		auto future = promise.get_future();
 
 		request.clear();

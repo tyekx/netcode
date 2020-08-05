@@ -1,18 +1,19 @@
 #pragma once
 
 #include "DX12GPipelineState.h"
-#include "DX12GPipelineStateLibrary.h"
 
 namespace Netcode::Graphics::DX12 {
 
-	class GPipelineStateBuilder : public Netcode::GPipelineStateBuilder {
+	class GPipelineStateLibrary;
+
+	class GPipelineStateBuilderImpl : public Netcode::GPipelineStateBuilder {
 		GPipelineStateDesc desc;
-		Ref<DX12::GPipelineStateLibrary> libraryRef;
+		Ref<GPipelineStateLibrary> libraryRef;
 
 	public:
-		GPipelineStateBuilder(Ref<DX12::GPipelineStateLibrary> libRef);
+		GPipelineStateBuilderImpl(Ref<GPipelineStateLibrary> libRef);
 
-		virtual void SetRootSignature(Ref<Netcode::RootSignature> rootSignature) override;
+		virtual void SetRootSignature(Ref<RootSignature> rootSignature) override;
 
 		virtual void SetDepthStencilState(const DepthStencilDesc & depthStencilState) override;
 
@@ -20,19 +21,19 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetBlendState(const BlendDesc & blendState) override;
 
-		virtual void SetStreamOutput(Ref<Netcode::StreamOutput> streamOutput) override;
+		virtual void SetStreamOutput(Ref<StreamOutput> streamOutput) override;
 
-		virtual void SetInputLayout(Ref<Netcode::InputLayout> inputLayout) override;
+		virtual void SetInputLayout(Ref<InputLayout> inputLayout) override;
 
-		virtual void SetVertexShader(Ref<Netcode::ShaderBytecode> shader) override;
+		virtual void SetVertexShader(Ref<ShaderBytecode> shader) override;
 
-		virtual void SetPixelShader(Ref<Netcode::ShaderBytecode> shader) override;
+		virtual void SetPixelShader(Ref<ShaderBytecode> shader) override;
 
-		virtual void SetGeometryShader(Ref<Netcode::ShaderBytecode> shader) override;
+		virtual void SetGeometryShader(Ref<ShaderBytecode> shader) override;
 
-		virtual void SetHullShader(Ref<Netcode::ShaderBytecode> shader) override;
+		virtual void SetHullShader(Ref<ShaderBytecode> shader) override;
 
-		virtual void SetDomainShader(Ref<Netcode::ShaderBytecode> shader) override;
+		virtual void SetDomainShader(Ref<ShaderBytecode> shader) override;
 
 		virtual void SetNumRenderTargets(uint8_t numRenderTargets) override;
 
@@ -42,9 +43,9 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetRenderTargetFormats(std::initializer_list<DXGI_FORMAT> formats) override;
 
-		virtual void SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType topType) override;
+		virtual void SetPrimitiveTopologyType(PrimitiveTopologyType topType) override;
 
-		virtual Ref<Netcode::PipelineState> Build() override;
+		virtual Ref<PipelineState> Build() override;
 	};
 
 }

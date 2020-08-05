@@ -1,21 +1,23 @@
-#include "../../Common.h"
 #include "DX12RootSignatureBuilder.h"
+#include <Netcode/Common.h>
+#include "DX12RootSignatureLibrary.h"
+#include "DX12RootSignature.h"
+#include "DX12Includes.h"
 
 namespace  Netcode::Graphics::DX12 {
 
-	RootSignatureBuilder::RootSignatureBuilder(Ref<DX12::RootSignatureLibrary> libRef) :rootSigLibrary{ std::move(libRef) } { }
+	RootSignatureBuilderImpl::RootSignatureBuilderImpl(Ref<DX12::RootSignatureLibrary> libRef) :rootSigLibrary{ std::move(libRef) } { }
 
-	Ref<Netcode::RootSignature> RootSignatureBuilder::Build() {
-		//@TODO: support manual creation of root signature
+	Ref<RootSignature> RootSignatureBuilderImpl::Build() {
 		ASSERT(false, "Building from scratch is not supported yet");
 
 		return nullptr;
 	}
-	Ref<Netcode::RootSignature> RootSignatureBuilder::BuildFromShader(Ref<Netcode::ShaderBytecode> rootSigContainingBytecode) {
+	Ref<RootSignature> RootSignatureBuilderImpl::BuildFromShader(Ref<ShaderBytecode> rootSigContainingBytecode) {
 		return rootSigLibrary->GetRootSignature(rootSigContainingBytecode);
 	}
 
-	Ref<Netcode::RootSignature> RootSignatureBuilder::BuildEmpty()
+	Ref<RootSignature> RootSignatureBuilderImpl::BuildEmpty()
 	{
 		D3D12_VERSIONED_ROOT_SIGNATURE_DESC vrsd;
 		vrsd.Version = D3D_ROOT_SIGNATURE_VERSION_1_0;

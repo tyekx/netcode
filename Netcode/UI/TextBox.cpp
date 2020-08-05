@@ -1,5 +1,7 @@
 #include "TextBox.h"
-#include "../Functions.h"
+#include <Netcode/Utility.h>
+#include <Netcode/Functions.h>
+#include <Netcode/Graphics/SpriteDesc.h>
 #include <physx/PxRigidDynamic.h>
 #include <physx/PxScene.h>
 
@@ -9,11 +11,11 @@ namespace Netcode::UI {
 		L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',
 		L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*',  L'*', };
 
-	std::weak_ptr<Panel> TextBox::globalCaret{};
+	Weak<Panel> TextBox::globalCaret{};
 
-	std::shared_ptr<Panel> TextBox::CreateCaret(const Memory::ObjectAllocator & alloc)
+	Ref<Panel> TextBox::CreateCaret(const Memory::ObjectAllocator & alloc)
 	{
-		std::shared_ptr<Panel> panel = std::make_shared<Panel>(alloc, nullptr);
+		Ref<Panel> panel = std::make_shared<Panel>(alloc, nullptr);
 
 		panel->Size(Netcode::Float2{ 1.0f, 26.0f });
 		panel->BackgroundColor(Netcode::Float4::One);
@@ -33,7 +35,7 @@ namespace Netcode::UI {
 		static std::wstring overflowedPasswordFieldContent;
 
 		if(IsPassword()) {
-			constexpr size_t staticArraySize = ARRAYSIZE(WIDE_STARS);
+			constexpr size_t staticArraySize = Utility::ArraySize(WIDE_STARS);
 			const size_t tSize = Text().size();
 
 			if(tSize > staticArraySize) {
@@ -167,7 +169,7 @@ namespace Netcode::UI {
 		Input::PropagateOnDrag(args);
 	}
 
-	void TextBox::Render(SpriteBatchPtr batch) {
+	void TextBox::Render(Ptr<SpriteBatch> batch) {
 		Panel::Render(batch);
 
 		if(font == nullptr) {

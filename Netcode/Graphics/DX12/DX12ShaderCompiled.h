@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../../HandleTypes.h"
-#include "DX12Common.h"
+#include <Netcode/HandleTypes.h>
+#include "DX12Decl.h"
+#include <wrl.h>
 
 namespace Netcode::Graphics::DX12 {
 
@@ -10,7 +11,6 @@ namespace Netcode::Graphics::DX12 {
 		std::wstring sourceFileRef;
 
 	public:
-		// Inherited via Shader
 		virtual uint8_t * GetBufferPointer() override;
 		virtual size_t GetBufferSize() override;
 

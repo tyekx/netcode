@@ -1,5 +1,6 @@
 #include "DX12CommandListPool.h"
-#include <memory>
+#include "DX12Common.h"
+#include "DX12Includes.h"
 #include <functional>
 
 namespace Netcode::Graphics::DX12 {

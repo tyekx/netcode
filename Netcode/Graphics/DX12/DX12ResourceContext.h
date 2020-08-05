@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../GraphicsContexts.h"
-#include "DX12Common.h"
+#include <Netcode/Graphics/GraphicsContexts.h>
+#include "DX12Decl.h"
+#include "DX12Includes.h"
 
 namespace Netcode::Graphics::DX12 {
 
@@ -33,7 +34,7 @@ namespace Netcode::Graphics::DX12 {
 		virtual void Writes(Ptr<GpuResource> resourceHandle) override;
 		virtual void Reads(Ptr<GpuResource> resourceHandle) override;
 
-		virtual void SetRenderPass(Ref<RenderPass> renderPass) override;
+		virtual void SetRenderPass(Ref<Netcode::RenderPass> renderPass) override;
 		virtual void ClearRenderPass() override;
 
 		virtual Ref<GpuResource> CreateResource(const ResourceDesc & resource) override;
@@ -86,6 +87,8 @@ namespace Netcode::Graphics::DX12 {
 		virtual void CopyConstants(Ref<GpuResource> uploadResource, const void * srcData, size_t srcDataSizeInBytes, size_t dstOffsetInBytes) override;
 
 		virtual void SetDebugName(Ref<GpuResource> resourceHandle, const wchar_t * name) override;
+
+		virtual Ref<Netcode::Graphics::UploadBatch> CreateUploadBatch() override;
 	};
 
 	using DX12ResourceContext = Netcode::Graphics::DX12::ResourceContext;

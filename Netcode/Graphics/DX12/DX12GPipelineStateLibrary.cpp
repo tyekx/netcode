@@ -1,4 +1,7 @@
 #include "DX12GPipelineStateLibrary.h"
+#include "DX12GPipelineState.h"
+#include "DX12Includes.h"
+#include <memory>
 
 namespace Netcode::Graphics::DX12 {
 

@@ -60,7 +60,7 @@ namespace Netcode::UI {
 		pages.reserve(16);
 	}
 
-	void PageManager::AddPage(std::shared_ptr<Page> page) {
+	void PageManager::AddPage(Ref<Page> page) {
 		pages.emplace_back(std::move(page));
 	}
 
@@ -154,14 +154,14 @@ namespace Netcode::UI {
 		return windowSize;
 	}
 
-	void PageManager::Render(Netcode::SpriteBatchPtr batch)
+	void PageManager::Render(Ptr<SpriteBatch> batch)
 	{
 		for(uint32_t i = 0; i < numDrawnPages; i++) {
 			drawBuffer[i]->Render(batch);
 		}
 	}
 
-	std::shared_ptr<Page> PageManager::GetPage(uint32_t value)
+	Ref<Page> PageManager::GetPage(uint32_t value)
 	{
 		if(value < pages.size()) {
 			return pages[value];

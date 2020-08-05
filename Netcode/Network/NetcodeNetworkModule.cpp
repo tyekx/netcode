@@ -1,10 +1,15 @@
 #include "NetcodeNetworkModule.h"
 #include "ClientSession.h"
 #include "ServerSession.h"
-#include "../Utility.h"
-#include <json11.hpp>
+#include "Cookie.h"
 
-#include "../Config.h"
+#include <json11.hpp>
+#include <future>
+
+#include <Netcode/Utility.h>
+#include <Netcode/Config.h>
+
+#include "Response.hpp"
 
 namespace Netcode::Module {
 
@@ -14,13 +19,13 @@ namespace Netcode::Module {
 	void NetcodeNetworkModule::Shutdown() {
 	}
 
-	Network::GameSessionRef NetcodeNetworkModule::CreateServer()
+	Ref<Network::GameSession> NetcodeNetworkModule::CreateServer()
 	{
 		context.Start(Config::Get<uint32_t>("network.server.workerThreadCount:u32"));
 		return std::make_shared<Network::ServerSession>(context.GetImpl());
 	}
 
-	Network::GameSessionRef NetcodeNetworkModule::CreateClient()
+	Ref<Network::GameSession> NetcodeNetworkModule::CreateClient()
 	{
 		context.Start(Config::Get<uint32_t>("network.client.workerThreadCount:u32"));
 		return std::make_shared<Network::ClientSession>(context.GetImpl());
@@ -52,7 +57,7 @@ namespace Netcode::Module {
 		}
 	}
 
-	std::future<Response> NetcodeNetworkModule::Login(const std::wstring & username, const std::wstring & password)
+	std::future<Network::Response> NetcodeNetworkModule::Login(const std::wstring & username, const std::wstring & password)
 	{
 		if(httpSession == nullptr) {
 			httpSession = std::make_shared<Network::HttpSession>(context.GetImpl());
@@ -68,7 +73,7 @@ namespace Netcode::Module {
 		return httpSession->MakeRequest(Config::Get<std::string>("network.web.hostname:string"), std::to_string(Config::Get<uint16_t>("network.web.port:u16")), "/api/login", Network::http::verb::post, cookiesCache, std::move(body));
 	}
 
-	std::future<Response> NetcodeNetworkModule::QueryServers()
+	std::future<Network::Response> NetcodeNetworkModule::QueryServers()
 	{
 		if(httpSession == nullptr) {
 			httpSession = std::make_shared<Network::HttpSession>(context.GetImpl());
@@ -77,7 +82,7 @@ namespace Netcode::Module {
 		return httpSession->MakeRequest(Config::Get<std::string>("network.web.hostname:string"), std::to_string(Config::Get<uint16_t>("network.web.port:u16")), "/api/list-sessions", Network::http::verb::post, cookiesCache, "");
 	}
 
-	std::future<Response> NetcodeNetworkModule::Status()
+	std::future<Network::Response> NetcodeNetworkModule::Status()
 	{
 		if(httpSession == nullptr) {
 			httpSession = std::make_shared<Network::HttpSession>(context.GetImpl());

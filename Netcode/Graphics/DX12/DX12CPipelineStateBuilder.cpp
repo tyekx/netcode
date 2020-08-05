@@ -1,22 +1,23 @@
 #include "DX12CPipelineStateBuilder.h"
+#include "DX12CPipelineStateLibrary.h"
 
 namespace Netcode::Graphics::DX12 {
 
-	CPipelineStateBuilder::CPipelineStateBuilder(DX12CPipelineStateLibraryRef libRef) : cDesc{}, cLib{ std::move(libRef) }
+	CPipelineStateBuilderImpl::CPipelineStateBuilderImpl(Ref<CPipelineStateLibrary> libRef) : cDesc{}, cLib{ std::move(libRef) }
 	{
 	}
 
-	void CPipelineStateBuilder::SetRootSignature(RootSignatureRef rootSig)
+	void CPipelineStateBuilderImpl::SetRootSignature(Ref<RootSignature>  rootSig)
 	{
 		cDesc.rootSignature = std::move(rootSig);
 	}
 
-	void CPipelineStateBuilder::SetComputeShader(ShaderBytecodeRef shader)
+	void CPipelineStateBuilderImpl::SetComputeShader(Ref<ShaderBytecode> shader)
 	{
 		cDesc.CS = std::move(shader);
 	}
 
-	PipelineStateRef CPipelineStateBuilder::Build()
+	Ref<PipelineState> CPipelineStateBuilderImpl::Build()
 	{
 		return cLib->GetComputePipelineState(std::move(cDesc));
 	}

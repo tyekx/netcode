@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Netcode/HandleTypes.h>
 #include <Netcode/Modules.h>
 #include <NetcodeAssetLib/Model.h>
 #include <map>
@@ -9,6 +10,9 @@
 
 #include <Netcode/IO/File.h>
 #include <Netcode/IO/Path.h>
+
+#include <Netcode/Graphics/UploadBatch.h>
+#include <Netcode/Graphics/ResourceEnums.h>
 
 class AssetManager {
 
@@ -42,29 +46,29 @@ public:
 
 	}
 
-	Netcode::SpriteFontRef ImportFont(const std::wstring & relativeMediaPath) {
-		Netcode::SpriteFontBuilderRef spriteFontBuilder = graphics->CreateSpriteFontBuilder();
+	Ref<Netcode::SpriteFont> ImportFont(const std::wstring & relativeMediaPath) {
+		Ref<Netcode::SpriteFontBuilder> spriteFontBuilder = graphics->CreateSpriteFontBuilder();
 		spriteFontBuilder->LoadFont(relativeMediaPath);
 		return spriteFontBuilder->Build();
 	}
 
-	Netcode::GpuResourceRef ImportTexture2D(const std::wstring & relativeMediaPath) {
-		Netcode::TextureBuilderRef builder = graphics->CreateTextureBuilder();
+	Ref<Netcode::GpuResource> ImportTexture2D(const std::wstring & relativeMediaPath) {
+		Ref<Netcode::TextureBuilder> builder = graphics->CreateTextureBuilder();
 		builder->LoadTexture2D(relativeMediaPath);
-		Netcode::TextureRef texture = builder->Build();
+		Ref<Netcode::Texture> texture = builder->Build();
 
-		Netcode::GpuResourceRef texResource = graphics->resources->CreateTexture2D(texture->GetImage(0, 0, 0));
+		Ref<Netcode::GpuResource> texResource = graphics->resources->CreateTexture2D(texture->GetImage(0, 0, 0));
 
-		Netcode::Graphics::UploadBatch uploadBatch;
-		uploadBatch.Upload(texResource, texture);
-		uploadBatch.ResourceBarrier(texResource, Netcode::Graphics::ResourceState::COPY_DEST, Netcode::Graphics::ResourceState::ANY_READ);
+		auto uploadBatch = graphics->resources->CreateUploadBatch();
+		uploadBatch->Upload(texResource, texture);
+		uploadBatch->Barrier(texResource, Netcode::Graphics::ResourceState::COPY_DEST, Netcode::Graphics::ResourceState::ANY_READ);
 		graphics->frame->SyncUpload(uploadBatch);
 
 		return texResource;
 	}
 
-	Netcode::ResourceViewsRef CreateTextureRV(Netcode::GpuResourceRef resourceRef) {
-		Netcode::ResourceViewsRef rv = graphics->resources->CreateShaderResourceViews(1);
+	Ref<Netcode::ResourceViews> CreateTextureRV(Ref<Netcode::GpuResource> resourceRef) {
+		Ref<Netcode::ResourceViews> rv = graphics->resources->CreateShaderResourceViews(1);
 		rv->CreateSRV(0, resourceRef.get());
 		return rv;
 	}

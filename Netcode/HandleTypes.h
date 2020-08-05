@@ -4,16 +4,6 @@
 
 #include <NetcodeFoundation/Math.h>
 
-#include "Graphics/ResourceEnums.h"
-#include "Graphics/ResourceDesc.h"
-#include "Common.h"
-
-#if defined(NETCODE_OS_WINDOWS)
-#include <DirectXTex.h>
-#endif
-
-#include <boost/beast/http.hpp>
-
 #include <map>
 #include <string>
 
@@ -33,21 +23,11 @@ namespace Netcode {
 		uint8_t * pixels;
 	};
 
-	struct Rect {
-		int32_t left;
-		int32_t top;
-		int32_t right;
-		int32_t bottom;
-	};
-
 #else
 	
 	using Image = DirectX::Image;
 
-	using Rect = RECT;
-
-	struct Glyph
-	{
+	struct Glyph {
 		uint32_t Character;
 		Rect Subrect;
 		float XOffset;
@@ -242,17 +222,6 @@ namespace Netcode {
 		DECR = 8
 	};
 
-	enum class BackgroundType : unsigned {
-		NONE = 0,
-		SOLID = 1,
-		TEXTURE = 2
-	};
-
-	enum class BorderType : unsigned {
-		NONE = 0,
-		SOLID = 1
-	};
-
 	struct StencilOpDesc {
 		StencilOp stencilDepthFailOp;
 		StencilOp stencilFailOp;
@@ -437,93 +406,6 @@ namespace Netcode {
 		virtual void RemoveSRV(uint32_t idx, Graphics::ResourceDimension expectedResourceDimension) = 0;
 	};
 
-	struct SpriteDesc {
-		BackgroundType type;
-		Ref<ResourceViews> texture;
-		UInt2 textureSize;
-		Float4 color;
-		Rect sourceRect;
-
-		bool IsEmpty() const {
-			return type == BackgroundType::NONE;
-		}
-
-		bool operator==(const SpriteDesc & rhs) const {
-			return rhs.type == type && texture == rhs.texture && textureSize.x == rhs.textureSize.y && textureSize.y == rhs.textureSize.y;
-		}
-
-		bool operator!=(const SpriteDesc & rhs) const {
-			return !operator==(rhs);
-		}
-
-		SpriteDesc() :
-			type{ BackgroundType::NONE },
-			texture{ nullptr },
-			textureSize{ UInt2::Zero },
-			color{ Float4::Zero },
-			sourceRect{ 0, 0, 0, 0 } {
-
-		}
-
-		SpriteDesc(const Netcode::Float4 & color) :
-			type{ BackgroundType::SOLID },
-			texture{ nullptr },
-			textureSize{ UInt2::Zero },
-			color{ color },
-			sourceRect{ 0, 0, 0, 0 } {
-
-		}
-
-		SpriteDesc(const Ref<ResourceViews> & texture, const UInt2 & textureSize) :
-			SpriteDesc(texture, textureSize, Float4::One) { }
-
-		SpriteDesc(const Ref<ResourceViews> & texture, const UInt2 & textureSize, const Float4 & albedoColor) :
-			SpriteDesc(texture, textureSize, Rect{ 0, 0, static_cast<int32_t>(textureSize.x), static_cast<int32_t>(textureSize.y) }, albedoColor) {
-
-		}
-
-		SpriteDesc(const Ref<ResourceViews> & texture, const UInt2 & textureSize, const Rect & sourceRect) :
-			SpriteDesc(texture, textureSize, sourceRect, Float4::One) {
-
-		}
-
-		SpriteDesc(const Ref<ResourceViews> & texture, const UInt2 & textureSize, const Rect & sourceRect, const Float4 & albedoColor) :
-			type{ BackgroundType::TEXTURE },
-			texture{ texture },
-			textureSize{ textureSize },
-			color{ albedoColor },
-			sourceRect{ sourceRect } {
-
-		}
-	};
-
-	struct BorderDesc {
-		BorderType type;
-		float borderWidth;
-		float borderRadius;
-		Float4 color;
-
-		bool IsEmpty() const {
-			return type == BorderType::NONE;
-		}
-
-		bool operator==(const BorderDesc & rhs) const {
-			return type == rhs.type && borderWidth == rhs.borderWidth && borderRadius == rhs.borderRadius;
-		}
-
-		bool operator!=(const BorderDesc & rhs) const {
-			return !operator==(rhs);
-		}
-
-		BorderDesc() : type{ BorderType::NONE }, borderWidth{ 0.0f }, borderRadius{ 0.0f }, color{ Float4::Zero } { }
-		
-		BorderDesc(float width, float radius, const Float4 & color) :
-			type{ BorderType::SOLID },
-			borderWidth{ width },
-			borderRadius{ radius },
-			color{ color } { }
-	};
-
 	class SpriteBatch {
 	public:
 		virtual ~SpriteBatch() = default;
@@ -614,23 +496,5 @@ namespace Netcode {
 		virtual uint64_t GetValue() const = 0;
 		virtual void Increment() = 0;
 	};
-
-	/*???*/
-	
-	struct User {
-		int id;
-		std::string hash;
-		bool isBanned;
-	};
-
-	struct Server {
-		int id;
-		int maxPlayers;
-		int activePlayers;
-		std::string address;
-		std::string owner;
-	};
-
-	using Response = boost::beast::http::response<boost::beast::http::string_body>;
 
 }

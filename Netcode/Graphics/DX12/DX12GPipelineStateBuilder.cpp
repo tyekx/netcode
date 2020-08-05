@@ -1,73 +1,77 @@
 #include "DX12GPipelineStateBuilder.h"
+#include "DX12GPipelineStateLibrary.h"
+#include "DX12RootSignature.h"
+#include "DX12InputLayout.h"
+#include "DX12StreamOutput.h"
 
 namespace Netcode::Graphics::DX12 {
 
-	GPipelineStateBuilder::GPipelineStateBuilder(Ref<DX12::GPipelineStateLibrary> libRef) : desc{}, libraryRef{ std::move( libRef ) } {
+	GPipelineStateBuilderImpl::GPipelineStateBuilderImpl(Ref<GPipelineStateLibrary> libRef) : desc{}, libraryRef{ std::move( libRef ) } {
 		
 	}
 
-	void GPipelineStateBuilder::SetRootSignature(Ref<Netcode::RootSignature> rootSignature) {
-		desc.rootSignature = rootSignature;
+	void GPipelineStateBuilderImpl::SetRootSignature(Ref<RootSignature> rootSignature) {
+		desc.rootSignature = std::dynamic_pointer_cast<RootSignatureImpl>(rootSignature);
 	}
 
-	void GPipelineStateBuilder::SetDepthStencilState(const DepthStencilDesc & depthStencilState) {
+	void GPipelineStateBuilderImpl::SetDepthStencilState(const DepthStencilDesc & depthStencilState) {
 		desc.depthStencilState = depthStencilState;
 	}
 
-	void GPipelineStateBuilder::SetRasterizerState(const RasterizerDesc & rasterizerState) {
+	void GPipelineStateBuilderImpl::SetRasterizerState(const RasterizerDesc & rasterizerState) {
 		desc.rasterizerState = rasterizerState;
 	}
 
-	void GPipelineStateBuilder::SetBlendState(const BlendDesc & blendState) {
+	void GPipelineStateBuilderImpl::SetBlendState(const BlendDesc & blendState) {
 		desc.blendState = blendState;
 	}
 
-	void GPipelineStateBuilder::SetStreamOutput(StreamOutputRef streamOutput) {
-		desc.streamOutput = streamOutput;
+	void GPipelineStateBuilderImpl::SetStreamOutput(Ref<StreamOutput> streamOutput) {
+		desc.streamOutput = std::dynamic_pointer_cast<StreamOutputImpl>(streamOutput);
 	}
 
-	void GPipelineStateBuilder::SetInputLayout(InputLayoutRef inputLayout) {
-		desc.inputLayout = inputLayout;
+	void GPipelineStateBuilderImpl::SetInputLayout(Ref<InputLayout> inputLayout) {
+		desc.inputLayout = std::dynamic_pointer_cast<InputLayoutImpl>(inputLayout);
 	}
 
-	void GPipelineStateBuilder::SetVertexShader(ShaderBytecodeRef shader) {
-		desc.VS = shader;
+	void GPipelineStateBuilderImpl::SetVertexShader(Ref<ShaderBytecode> shader) {
+		desc.VS = std::move(shader);
 	}
 
-	void GPipelineStateBuilder::SetPixelShader(ShaderBytecodeRef shader) {
-		desc.PS = shader;
+	void GPipelineStateBuilderImpl::SetPixelShader(Ref<ShaderBytecode> shader) {
+		desc.PS = std::move(shader);
 	}
 
-	void GPipelineStateBuilder::SetGeometryShader(ShaderBytecodeRef shader) {
-		desc.GS = shader;
+	void GPipelineStateBuilderImpl::SetGeometryShader(Ref<ShaderBytecode> shader) {
+		desc.GS = std::move(shader);
 	}
 
-	void GPipelineStateBuilder::SetHullShader(ShaderBytecodeRef shader) {
-		desc.HS = shader;
+	void GPipelineStateBuilderImpl::SetHullShader(Ref<ShaderBytecode> shader) {
+		desc.HS = std::move(shader);
 	}
 
-	void GPipelineStateBuilder::SetDomainShader(ShaderBytecodeRef shader) {
-		desc.DS = shader;
+	void GPipelineStateBuilderImpl::SetDomainShader(Ref<ShaderBytecode> shader) {
+		desc.DS = std::move(shader);
 	}
 
-	void GPipelineStateBuilder::SetNumRenderTargets(uint8_t numRenderTargets)
+	void GPipelineStateBuilderImpl::SetNumRenderTargets(uint8_t numRenderTargets)
 	{
 		desc.numRenderTargets = numRenderTargets;
 	}
 
-	void GPipelineStateBuilder::SetDepthStencilFormat(DXGI_FORMAT format)
+	void GPipelineStateBuilderImpl::SetDepthStencilFormat(DXGI_FORMAT format)
 	{
 		desc.dsvFormat = format;
 	}
 
-	void GPipelineStateBuilder::SetRenderTargetFormat(uint8_t renderTargetIdx, DXGI_FORMAT format)
+	void GPipelineStateBuilderImpl::SetRenderTargetFormat(uint8_t renderTargetIdx, DXGI_FORMAT format)
 	{
-		if(renderTargetIdx >= 0 && renderTargetIdx < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT) {
+		if(renderTargetIdx >= 0 && renderTargetIdx < 8) {
 			desc.rtvFormats[renderTargetIdx] = format;
 		}
 	}
 
-	void GPipelineStateBuilder::SetRenderTargetFormats(std::initializer_list<DXGI_FORMAT> formats)
+	void GPipelineStateBuilderImpl::SetRenderTargetFormats(std::initializer_list<DXGI_FORMAT> formats)
 	{
 		uint8_t i = 0;
 
@@ -77,12 +81,12 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 
-	void GPipelineStateBuilder::SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType topType)
+	void GPipelineStateBuilderImpl::SetPrimitiveTopologyType(PrimitiveTopologyType topType)
 	{
 		desc.topologyType = topType;
 	}
 
-	PipelineStateRef GPipelineStateBuilder::Build() {
+	Ref<Netcode::PipelineState> GPipelineStateBuilderImpl::Build() {
 		return libraryRef->GetGraphicsPipelineState(std::move(desc));
 	}
 

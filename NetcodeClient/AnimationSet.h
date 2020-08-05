@@ -18,15 +18,15 @@ public:
 	constexpr static uint32_t MAX_INSTANCE_COUNT = 32;
 	constexpr static uint32_t MAX_ANIMATION_COUNT = 64;
 private:
-	Netcode::GpuResourceRef resultBuffer;
-	Netcode::GpuResourceRef resultReadbackBuffer;
-	Netcode::GpuResourceRef instanceCbuffer;
-	Netcode::GpuResourceRef animationStaticCbuffer;
-	Netcode::GpuResourceRef animationKeysBuffer;
-	Netcode::GpuResourceRef intermediateBuffer;
+	Ref<Netcode::GpuResource> resultBuffer;
+	Ref<Netcode::GpuResource> resultReadbackBuffer;
+	Ref<Netcode::GpuResource> instanceCbuffer;
+	Ref<Netcode::GpuResource> animationStaticCbuffer;
+	Ref<Netcode::GpuResource> animationKeysBuffer;
+	Ref<Netcode::GpuResource> intermediateBuffer;
 
-	Netcode::ResourceViewsRef ctrlView;
-	Netcode::ResourceViewsRef animKeysView;
+	Ref<Netcode::ResourceViews> ctrlView;
+	Ref<Netcode::ResourceViews> animKeysView;
 	
 	uint32_t numInstances;
 	uint32_t numActiveControllers;
@@ -36,17 +36,17 @@ private:
 
 	BoneData results[MAX_INSTANCE_COUNT];
 
-	void FreeController(AnimationController * rawPtr);
+	void FreeController(Ptr<AnimationController> rawPtr);
 
-	std::shared_ptr<AnimationController> MakeNewController();
+	Ref<AnimationController> MakeNewController();
 
-	std::shared_ptr<AnimationController> ReuseController();
+	Ref<AnimationController> ReuseController();
 
 	AnimationSet() = default;
 
 public:
 
-	Netcode::GpuResourceRef GetIntermediateResource() const {
+	Ref<Netcode::GpuResource> GetIntermediateResource() const {
 		return intermediateBuffer;
 	}
 
@@ -54,20 +54,13 @@ public:
 
 	uint32_t GetNumInstances() const;
 
-	Netcode::ResourceViewsRef GetResultsView() const {
+	Ref<Netcode::ResourceViews> GetResultsView() const {
 		return ctrlView;
 	}
 
-	void CopyResults(Netcode::Graphics::IRenderContext * context) {
-		context->ResourceBarrier(resultBuffer, Netcode::Graphics::ResourceState::UNORDERED_ACCESS, Netcode::Graphics::ResourceState::NON_PIXEL_SHADER_RESOURCE | Netcode::Graphics::ResourceState::COPY_SOURCE);
-		context->FlushResourceBarriers();
-		size_t resultSize = BoneData::MAX_BONE_COUNT * numActiveControllers * 2 * sizeof(DirectX::XMFLOAT4X4);
-		if(resultSize > 0) {
-			context->CopyBufferRegion(resultReadbackBuffer, resultBuffer, resultSize);
-		}
-	}
+	void CopyResults(Netcode::Graphics::IRenderContext * context);
 
-	Netcode::GpuResourceRef GetResultReadbackBuffer() const {
+	Ref<Netcode::GpuResource> GetResultReadbackBuffer() const {
 		return resultReadbackBuffer;
 	}
 
@@ -83,5 +76,5 @@ public:
 
 	AnimationSet(Netcode::Module::IGraphicsModule * graphics, Netcode::ArrayView<Netcode::Asset::Animation> animations, Netcode::ArrayView<Netcode::Asset::Bone> bones);
 
-	std::shared_ptr<AnimationController> CreateController();
+	Ref<AnimationController> CreateController();
 };

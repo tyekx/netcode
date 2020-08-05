@@ -1,8 +1,15 @@
 #include "DX12ResourceContext.h"
-#include <memory>
+#include <Netcode/Common.h>
+#include <Netcode/HandleTypes.h>
+#include <Netcode/Graphics/ResourceDesc.h>
 #include "DX12ResourcePool.h"
 #include "DX12DynamicDescriptorHeap.h"
-#include "../FrameGraph.h"
+#include "DX12UploadBatch.h"
+#include "DX12RenderPass.h"
+#include "DX12ResourceViews.h"
+#include "DX12Resource.h"
+#include <memory>
+#include <DirectXTex.h>
 
 namespace Netcode::Graphics::DX12 {
 
@@ -16,7 +23,7 @@ namespace Netcode::Graphics::DX12 {
 	void ResourceContext::UseGraphicsContext()
 	{
 		if(activeRenderPass != nullptr) {
-			activeRenderPass->Type(Netcode::RenderPassType::DIRECT);
+			activeRenderPass->Type(Netcode::RenderPassType::GRAPHICS);
 		}
 	}
 
@@ -48,7 +55,7 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 
-	void ResourceContext::SetRenderPass(Ref<RenderPass> renderPass)
+	void ResourceContext::SetRenderPass(Ref<Netcode::RenderPass> renderPass)
 	{
 		activeRenderPass = std::move(renderPass);
 	}
@@ -180,6 +187,10 @@ namespace Netcode::Graphics::DX12 {
 	void ResourceContext::SetDebugName(Ref<GpuResource> resourceHandle, const wchar_t * name)
 	{
 		std::dynamic_pointer_cast<DX12::Resource>(resourceHandle)->resource->SetName(name);
+	}
+
+	Ref<Netcode::Graphics::UploadBatch> ResourceContext::CreateUploadBatch() {
+		return std::make_shared<DX12::UploadBatchImpl>();
 	}
 
 	Ref<GpuResource> ResourceContext::CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, const DirectX::XMFLOAT4 & clearColor)

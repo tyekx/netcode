@@ -28,11 +28,11 @@ namespace Netcode::Graphics::DX12 {
 		}
 
 		psd.PrimitiveTopologyType = static_cast<D3D12_PRIMITIVE_TOPOLOGY_TYPE>(topologyType);
-		psd.InputLayout = static_cast<Netcode::Graphics::DX12::InputLayout *>(inputLayout.get())->GetNativeInputLayout();
-		psd.pRootSignature = static_cast<Netcode::Graphics::DX12::RootSignature *>(rootSignature.get())->GetNativeRootSignature();
+		psd.InputLayout = std::dynamic_pointer_cast<InputLayoutImpl>(inputLayout)->GetNativeInputLayout();
+		psd.pRootSignature = std::dynamic_pointer_cast<RootSignatureImpl>(rootSignature)->GetNativeRootSignature();
 
 		if(streamOutput != nullptr) {
-			psd.StreamOutput = static_cast<Netcode::Graphics::DX12::StreamOutput *>(streamOutput.get())->GetNativeStreamOutput();
+			psd.StreamOutput = std::dynamic_pointer_cast<StreamOutputImpl>(streamOutput)->GetNativeStreamOutput();
 		} else {
 			psd.StreamOutput.NumEntries = 0;
 			psd.StreamOutput.pBufferStrides = nullptr;

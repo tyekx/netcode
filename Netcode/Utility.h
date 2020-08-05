@@ -7,6 +7,11 @@ namespace Netcode {
 
 	namespace Utility {
 
+		template<size_t N, typename T>
+		inline constexpr size_t ArraySize(T(&)[N]) {
+			return N;
+		}
+
 		/*
 		Checkes for an unsigned int if its a power of 2. Wasteful approach but working for edge cases including 0.
 		*/
@@ -41,9 +46,14 @@ namespace Netcode {
 			return (v + INT_T{ 255 }) & (~INT_T{ 255 });
 		}
 
-		template<typename INT_T = int>
+		template<typename INT_T = uint32_t>
 		constexpr INT_T Align512(INT_T v) {
 			return (v + INT_T{ 511 }) & (~(INT_T{ 511 }));
+		}
+
+		template<typename INT_T = uint32_t, INT_T alignment = 256>
+		constexpr INT_T Align(INT_T v) {
+			return (v + (alignment - 1)) & (~(alignment - 1));
 		}
 
 		/*

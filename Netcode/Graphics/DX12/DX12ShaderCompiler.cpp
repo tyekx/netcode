@@ -1,10 +1,10 @@
-#include "../../HandleTypes.h"
-#include "../../Utility.h"
-
 #include "DX12ShaderCompiler.h"
-
 #include <memory>
-#include <map>
+#include <Netcode/HandleTypes.h>
+#include <Netcode/Utility.h>
+#include "DX12Common.h"
+#include "DX12Includes.h"
+#include <d3dcompiler.h>
 
 namespace Netcode::Graphics::DX12 {
 
@@ -28,7 +28,7 @@ namespace Netcode::Graphics::DX12 {
 	com_ptr<ID3DBlob> CompileShader(const std::string & shaderSource, const std::string & entryFunction, ShaderType type, const std::map<std::string, std::string> & definitions) {
 		com_ptr<ID3DBlob> byteCode;
 
-		std::unique_ptr<D3D_SHADER_MACRO[]> preprocDefinitions{ nullptr };
+		Unique<D3D_SHADER_MACRO[]> preprocDefinitions{ nullptr };
 
 		if(definitions.size() > 0) {
 			preprocDefinitions = std::make_unique<D3D_SHADER_MACRO[]>(definitions.size() + 1);

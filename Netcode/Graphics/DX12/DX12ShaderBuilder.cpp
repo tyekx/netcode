@@ -1,62 +1,56 @@
 #include "DX12ShaderBuilder.h"
+#include <Netcode/Common.h>
+#include "DX12Common.h"
+#include "DX12ShaderCompiled.h"
+#include "DX12ShaderVariant.h"
+#include "DX12ShaderLibrary.h"
 
 namespace Netcode::Graphics::DX12 {
-
-	void ShaderBuilder::SetState(BuilderState st) {
-		if(st == state) {
-			return;
-		}
-
-		ASSERT(state == BuilderState::CLEAR || st == BuilderState::CLEAR, "Failed to set state");
-
-		state = st;
-	}
-
-	void ShaderBuilder::Clear() {
-		variantDesc = ShaderVariantDesc();
-		SetState(BuilderState::CLEAR);
-	}
-
-	ShaderBuilder::ShaderBuilder(Ref<DX12::ShaderLibrary> shaderLibrary) : shaderLibrary{ std::move(shaderLibrary) }, variantDesc{}, state{ BuilderState::CLEAR } { }
-
-	void ShaderBuilder::SetShaderType(ShaderType shaderType) {
-		SetState(BuilderState::VARIANT);
-		variantDesc.shaderType = shaderType;
-	}
-
-	void ShaderBuilder::SetEntrypoint(const std::string & entryFunction) {
-		SetState(BuilderState::VARIANT);
-		variantDesc.entryFunctionName = entryFunction;
-	}
-
-	void ShaderBuilder::SetSource(const URI::Shader & uri)
+	void ShaderBuilderImpl::InitVariantDescIfEmpty()
 	{
-		SetState(BuilderState::VARIANT);
-		variantDesc.sourceFileUri = uri;
+		if(variantDesc == nullptr) {
+			variantDesc = std::make_unique<ShaderVariantDesc>();
+		}
 	}
 
-	void ShaderBuilder::SetDefinitions(const std::map<std::string, std::string> & defines) {
-		SetState(BuilderState::VARIANT);
-		variantDesc.defines = defines;
+	void ShaderBuilderImpl::Clear() {
+		variantDesc.reset();
 	}
 
-	Ref<Netcode::ShaderBytecode> ShaderBuilder::LoadBytecode(const URI::Shader & uri) {
-		SetState(BuilderState::PRECOMPILED);
+	ShaderBuilderImpl::ShaderBuilderImpl(Ref<ShaderLibrary> shaderLibrary) : shaderLibrary{ std::move(shaderLibrary) }, variantDesc{} { }
+
+	void ShaderBuilderImpl::SetShaderType(ShaderType shaderType) {
+		InitVariantDescIfEmpty();
+		variantDesc->shaderType = shaderType;
+	}
+
+	void ShaderBuilderImpl::SetEntrypoint(const std::string & entryFunction) {
+		InitVariantDescIfEmpty();
+		variantDesc->entryFunctionName = entryFunction;
+	}
+
+	void ShaderBuilderImpl::SetSource(const URI::Shader & uri)
+	{
+		InitVariantDescIfEmpty();
+		variantDesc->sourceFileUri = uri;
+	}
+
+	void ShaderBuilderImpl::SetDefinitions(const std::map<std::string, std::string> & defines) {
+		InitVariantDescIfEmpty();
+		variantDesc->defines = defines;
+	}
+
+	Ref<ShaderBytecode> ShaderBuilderImpl::LoadBytecode(const URI::Shader & uri) {
 		auto shader = shaderLibrary->LoadShader(uri);
 		Clear();
 		return shader;
 	}
 
-	Ref<Netcode::ShaderBytecode> ShaderBuilder::Build() {
-		ASSERT(state == BuilderState::VARIANT, "Failed to build shader: no inputs were given");
-
-		if(state == BuilderState::VARIANT) {
-			auto variant = shaderLibrary->GetShaderVariant(variantDesc);
-			Clear();
-			return variant;
-		} else {
-			return nullptr;
-		}
+	Ref<ShaderBytecode> ShaderBuilderImpl::Build() {
+		ASSERT(variantDesc != nullptr, "Failed to build shader: no inputs were given");
+		auto variant = shaderLibrary->GetShaderVariant(*variantDesc);
+		Clear();
+		return variant;
 	}
 
 }

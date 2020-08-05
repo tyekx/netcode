@@ -16,14 +16,14 @@ namespace Netcode::UI {
         }
     }
 
-    void Label::Font(SpriteFontRef ref) {
+    void Label::Font(Ref<SpriteFont> ref) {
         if(font != ref) {
             font = ref;
             PropagateOnFontChanged();
         }
     }
 
-    SpriteFontRef Label::Font() const {
+    Ref<SpriteFont> Label::Font() const {
         return font;
     }
 
@@ -94,7 +94,7 @@ namespace Netcode::UI {
         }
     }
 
-    void Label::Render(SpriteBatchPtr batch)  {
+    void Label::Render(Ptr<SpriteBatch> batch)  {
         Panel::Render(batch);
 
         if(font != nullptr && !text.empty()) {

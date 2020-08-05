@@ -12,8 +12,8 @@
 struct Material {
 protected:
 public:
-	Netcode::RootSignatureRef rootSignature;
-	Netcode::PipelineStateRef pipelineState;
+	Ref<Netcode::RootSignature> rootSignature;
+	Ref<Netcode::PipelineState> pipelineState;
 
 	virtual void Apply(Netcode::Graphics::IRenderContext * ctx) {
 			

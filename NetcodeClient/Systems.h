@@ -94,10 +94,10 @@ public:
 		for(const auto & i : model->meshes) {
 
 			if(model->boneData != nullptr || hasDebugData) {
-				renderer.skinnedGbufferPass_Input.Produced(RenderItem(i, &model->perObjectData, model->boneData, model->boneDataOffset,
+				renderer.skinnedGbufferPass_Input.push_back(RenderItem(i, &model->perObjectData, model->boneData, model->boneDataOffset,
 					gameObject->GetComponent<Animation>()->debugBoneData.get()));
 			} else {
-				renderer.gbufferPass_Input.Produced(RenderItem(i, &model->perObjectData, nullptr, 0, nullptr));
+				renderer.gbufferPass_Input.push_back(RenderItem(i, &model->perObjectData, nullptr, 0, nullptr));
 			}
 		}
 	}

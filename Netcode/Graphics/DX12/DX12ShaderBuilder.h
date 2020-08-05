@@ -1,25 +1,23 @@
 #pragma once
 
-#include "../../HandleTypes.h"
-#include "DX12ShaderLibrary.h"
+#include <Netcode/HandleTypes.h>
+#include <memory>
 
 namespace Netcode::Graphics::DX12 {
 
-	class ShaderBuilder : public Netcode::ShaderBuilder {
-		enum class BuilderState {
-			CLEAR, VARIANT, PRECOMPILED
-		};
+	class ShaderLibrary;
+	struct ShaderVariantDesc;
 
-		Ref<DX12::ShaderLibrary> shaderLibrary;
-		ShaderVariantDesc variantDesc;
-		BuilderState state;
+	class ShaderBuilderImpl : public Netcode::ShaderBuilder {
+		Ref<ShaderLibrary> shaderLibrary;
+		Unique<ShaderVariantDesc> variantDesc;
 
-		void SetState(BuilderState st);
+		void InitVariantDescIfEmpty();
 
 		void Clear();
 
 	public:
-		ShaderBuilder(Ref<DX12::ShaderLibrary> shaderLibrary);
+		ShaderBuilderImpl(Ref<ShaderLibrary> shaderLibrary);
 
 		virtual void SetShaderType(ShaderType shaderType) override;
 
@@ -29,12 +27,9 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void SetDefinitions(const std::map<std::string, std::string> & defines) override;
 
-		virtual Ref<Netcode::ShaderBytecode> LoadBytecode(const URI::Shader & uri) override;
+		virtual Ref<ShaderBytecode> LoadBytecode(const URI::Shader & uri) override;
 
-		virtual Ref<Netcode::ShaderBytecode> Build() override;
+		virtual Ref<ShaderBytecode> Build() override;
 	};
-
-	using DX12ShaderBuilder = Netcode::Graphics::DX12::ShaderBuilder;
-	using DX12ShaderBuilderRef = std::shared_ptr<DX12ShaderBuilder>;
 
 }

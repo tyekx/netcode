@@ -1,8 +1,13 @@
-#include "../../Utility.h"
-
-#include <algorithm>
-
 #include "DX12SpriteBatch.h"
+#include <Netcode/Vertex.h>
+#include <Netcode/Modules.h>
+#include <Netcode/Graphics/UploadBatch.h>
+#include <Netcode/Graphics/GraphicsContexts.h>
+#include <Netcode/Graphics/ResourceEnums.h>
+#include <Netcode/Utility.h>
+#include <algorithm>
+#include <NetcodeFoundation/Exceptions.h>
+
 
 namespace Netcode::Graphics::DX12 {
 
@@ -25,9 +30,9 @@ namespace Netcode::Graphics::DX12 {
 		int backgroundType;
 	};
 
-	Weak<GpuResource> SpriteBatch::indexBuffer{ };
+	Weak<GpuResource> SpriteBatchImpl::indexBuffer{ };
 
-void SpriteBatch::CreateIndexBuffer(const Netcode::Module::IGraphicsModule * graphics)
+void SpriteBatchImpl::CreateIndexBuffer(const Netcode::Module::IGraphicsModule * graphics)
 {
 	if(!Netcode::Utility::IsWeakRefEmpty(indexBuffer)) {
 		indexBufferRef = indexBuffer.lock();
@@ -62,7 +67,7 @@ void SpriteBatch::CreateIndexBuffer(const Netcode::Module::IGraphicsModule * gra
 	indexBuffer = indexBufferRef;
 }
 
-SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<Netcode::RootSignature> rootSig, Ref<Netcode::PipelineState> pso)
+SpriteBatchImpl::SpriteBatchImpl(const Netcode::Module::IGraphicsModule * graphics, Ref<Netcode::RootSignature> rootSig, Ref<Netcode::PipelineState> pso)
 			: vertexBuffer{ 0 },
 			resourceContext{ nullptr },
 			renderContext{ nullptr },
@@ -91,7 +96,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<
 		CreateIndexBuffer(graphics);
 	}
 
-	void SpriteBatch::Begin(SpriteSortMode sortMode, Netcode::Matrix transformMatrix)
+	void SpriteBatchImpl::Begin(SpriteSortMode sortMode, Netcode::Matrix transformMatrix)
 	{
 		if(mInBeginEndPair)
 			throw std::exception("Cannot nest Begin calls on a single SpriteBatch");
@@ -110,7 +115,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<
 		recordScissorRect = Rect{ 0,0,0,0 };
 	}
 
-	void SpriteBatch::End()
+	void SpriteBatchImpl::End()
 	{
 		if(!mInBeginEndPair)
 			throw std::exception("Begin must be called before End");
@@ -124,7 +129,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<
 		mInBeginEndPair = false;
 	}
 
-	void SpriteBatch::PrepareForRendering()
+	void SpriteBatchImpl::PrepareForRendering()
 	{
 		renderContext->SetRootSignature(rootSignature);
 		renderContext->SetPipelineState(pipelineState);
@@ -135,7 +140,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<
 	}
 
 	// Sorts the array of queued sprites.
-	void SpriteBatch::SortSprites()
+	void SpriteBatchImpl::SortSprites()
 	{
 		// Fill the mSortedSprites vector.
 		if(mSortedSprites.size() < mSpriteQueueCount)
@@ -181,7 +186,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<
 	}
 
 	// Sends queued sprites to the graphics device.
-	void SpriteBatch::FlushBatch()
+	void SpriteBatchImpl::FlushBatch()
 	{
 		if(!mSpriteQueueCount)
 			return;
@@ -259,7 +264,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<
 		}
 	}
 
-	void NC_MATH_CALLCONV SpriteBatch::RenderBatch(Ref<Netcode::ResourceViews> texture, Vector2 textureSize, const SpriteInfo * const * sprites, uint32_t count)
+	void NC_MATH_CALLCONV SpriteBatchImpl::RenderBatch(Ref<Netcode::ResourceViews> texture, Vector2 textureSize, const SpriteInfo * const * sprites, uint32_t count)
 	{
 
 		Vector2 inverseTextureSize = textureSize.Reciprocal();
@@ -303,7 +308,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<
 			uint32_t spriteVertexTotalSize = sizeof(PCT_Vertex) * VerticesPerSprite;
 			resourceContext->CopyConstants(vertexBuffer, vertexData.get() + vertexOffset, batchSize * spriteVertexTotalSize, vertexOffset * sizeof(PCT_Vertex));
 
-			UINT indexCount = static_cast<UINT>(batchSize * IndicesPerSprite);
+			uint32_t indexCount = static_cast<uint32_t>(batchSize * IndicesPerSprite);
 
 			if(firstDraw) {
 				firstDraw = false;
@@ -351,7 +356,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<
 		}
 	}
 
-	void NC_MATH_CALLCONV SpriteBatch::RenderSprite(const SpriteInfo * sprite, PCT_Vertex * vertices, Vector2 textureSize, Vector2 inverseTextureSize)
+	void NC_MATH_CALLCONV SpriteBatchImpl::RenderSprite(const SpriteInfo * sprite, PCT_Vertex * vertices, Vector2 textureSize, Vector2 inverseTextureSize)
 	{
 		Netcode::Vector4 source = sprite->source;
 		Netcode::Vector4 destination = sprite->destination;
@@ -456,7 +461,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<
 		return v;
 	}
 
-	void NC_MATH_CALLCONV SpriteBatch::Draw(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, Netcode::Vector4 destination, Netcode::Vector4 originRotationDepth, uint32_t flags)
+	void NC_MATH_CALLCONV SpriteBatchImpl::Draw(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, Netcode::Vector4 destination, Netcode::Vector4 originRotationDepth, uint32_t flags)
 	{
 		if(!mInBeginEndPair)
 			throw std::exception("Begin must be called before Draw");
@@ -518,7 +523,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<
 		}
 	}
 
-	void SpriteBatch::GrowSortedSprites()
+	void SpriteBatchImpl::GrowSortedSprites()
 	{
 		uint32_t previousSize = static_cast<uint32_t>(mSortedSprites.size());
 
@@ -530,42 +535,42 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<
 		}
 	}
 
-	void SpriteBatch::DrawSprite(const SpriteDesc & spriteDesc, const Float2 & position)
+	void SpriteBatchImpl::DrawSprite(const SpriteDesc & spriteDesc, const Float2 & position)
 	{
 		DrawSprite(spriteDesc, BorderDesc{}, position, Netcode::Float2{ static_cast<float>(spriteDesc.textureSize.x), static_cast<float>(spriteDesc.textureSize.y) }, Netcode::Float2::Zero, 0.0f, 0.0f);
 	}
 
-	void SpriteBatch::DrawSprite(const SpriteDesc & spriteDesc, const Float2 & position, const Float2 & size)
+	void SpriteBatchImpl::DrawSprite(const SpriteDesc & spriteDesc, const Float2 & position, const Float2 & size)
 	{
 		DrawSprite(spriteDesc, BorderDesc{}, position, size, Netcode::Float2::Zero, 0.0f, 0.0f);
 	}
 
-	void SpriteBatch::DrawSprite(const SpriteDesc & spriteDesc, const Float2 & position, const Float2 & size, const Float2 & rotationOrigin, float rotationZ)
+	void SpriteBatchImpl::DrawSprite(const SpriteDesc & spriteDesc, const Float2 & position, const Float2 & size, const Float2 & rotationOrigin, float rotationZ)
 	{
 		DrawSprite(spriteDesc, BorderDesc{}, position, size, rotationOrigin, rotationZ, 0.0f);
 	}
 
-	void SpriteBatch::DrawSprite(const SpriteDesc & spriteDesc, const Float2 & position, const Float2 & size, const Float2 & rotationOrigin, float rotationZ, float layerDepth)
+	void SpriteBatchImpl::DrawSprite(const SpriteDesc & spriteDesc, const Float2 & position, const Float2 & size, const Float2 & rotationOrigin, float rotationZ, float layerDepth)
 	{
 		DrawSprite(spriteDesc, BorderDesc{}, position, size, rotationOrigin, rotationZ, layerDepth);
 	}
 
-	void SpriteBatch::DrawSprite(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, const Float2 & position)
+	void SpriteBatchImpl::DrawSprite(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, const Float2 & position)
 	{
 		DrawSprite(spriteDesc, borderDesc, position, Netcode::Float2{ static_cast<float>(spriteDesc.textureSize.x), static_cast<float>(spriteDesc.textureSize.y) }, Netcode::Float2::Zero, 0.0f, 0.0f);
 	}
 
-	void SpriteBatch::DrawSprite(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, const Float2 & position, const Float2 & size)
+	void SpriteBatchImpl::DrawSprite(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, const Float2 & position, const Float2 & size)
 	{
 		DrawSprite(spriteDesc, borderDesc, position, size, Netcode::Float2::Zero, 0.0f, 0.0f);
 	}
 
-	void SpriteBatch::DrawSprite(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, const Float2 & position, const Float2 & size, const Float2 & rotationOrigin, float rotationZ)
+	void SpriteBatchImpl::DrawSprite(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, const Float2 & position, const Float2 & size, const Float2 & rotationOrigin, float rotationZ)
 	{
 		DrawSprite(spriteDesc, borderDesc, position, size, rotationOrigin, rotationZ, 0);
 	}
 
-	void SpriteBatch::DrawSprite(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, const Float2 & position, const Float2 & size, const Float2 & rotationOrigin, float rotationZ, float layerDepth)
+	void SpriteBatchImpl::DrawSprite(const SpriteDesc & spriteDesc, const BorderDesc & borderDesc, const Float2 & position, const Float2 & size, const Float2 & rotationOrigin, float rotationZ, float layerDepth)
 	{
 		Netcode::Vector4 destination = DirectX::XMVectorPermute<0, 1, 4, 5>(DirectX::XMLoadFloat2(&position), DirectX::XMLoadFloat2(&size));
 		Netcode::Vector4 originRotationDepth = DirectX::XMVectorSet(rotationOrigin.x, rotationOrigin.y, rotationZ, layerDepth);
@@ -574,7 +579,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<
 	}
 
 	// Dynamically expands the array used to store pending sprite information.
-	void SpriteBatch::GrowSpriteQueue()
+	void SpriteBatchImpl::GrowSpriteQueue()
 	{
 		// Grow by a factor of 2.
 		uint32_t newSize = std::max(InitialQueueSize, mSpriteQueueArraySize * 2);
@@ -596,7 +601,7 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<
 		mSortedSprites.clear();
 	}
 
-	void SpriteBatch::SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) {
+	void SpriteBatchImpl::SetScissorRect(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom) {
 		Rect r;
 		r.left = left;
 		r.right = right;
@@ -605,11 +610,11 @@ SpriteBatch::SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<
 		SetScissorRect(r);
 	}
 
-	void SpriteBatch::SetScissorRect(const Rect & rect) {
+	void SpriteBatchImpl::SetScissorRect(const Rect & rect) {
 		recordScissorRect = rect;
 	}
 
-	void SpriteBatch::SetScissorRect() {
+	void SpriteBatchImpl::SetScissorRect() {
 		recordScissorRect = Rect{ 0, 0, 0, 0 };
 	}
 

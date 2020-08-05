@@ -1,18 +1,21 @@
 #include "DX12SpriteFontBuilder.h"
+#include "DX12SpriteFontLibrary.h"
+#include "DX12SpriteFont.h"
 
 namespace Netcode::Graphics::DX12 {
 
-	SpriteFontBuilder::SpriteFontBuilder(Ref<DX12::SpriteFontLibrary> spriteFontLib) : spriteFontLib{ std::move(spriteFontLib) }, spriteFont{ nullptr } {
+	SpriteFontBuilderImpl::SpriteFontBuilderImpl(Ref<DX12::SpriteFontLibrary> spriteFontLib) : spriteFontLib{ std::move(spriteFontLib) }, spriteFont{ nullptr } {
 	
 	}
 
-	void SpriteFontBuilder::LoadFont(const std::wstring & mediaPath) {
+	void SpriteFontBuilderImpl::LoadFont(const std::wstring & mediaPath) {
 		spriteFont = spriteFontLib->Get(mediaPath);
 	}
 
-	Ref<Netcode::SpriteFont> SpriteFontBuilder::Build()
+	Ref<SpriteFont> SpriteFontBuilderImpl::Build()
 	{
-		return spriteFont;
+		auto tmp = std::move(spriteFont);
+		return tmp;
 	}
 
 }

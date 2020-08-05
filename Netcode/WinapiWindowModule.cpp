@@ -4,6 +4,8 @@
 #include <fcntl.h>
 #include <iostream>
 
+#include <Netcode/Input/Key.h>
+
 using Netcode::Graphics::DisplayMode;
 
 namespace Netcode::Module {
@@ -233,7 +235,7 @@ namespace Netcode::Module {
 
 			SetWindowLongW(windowHandle, GWL_STYLE, windowedStyle & (~(WS_CAPTION | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU | WS_THICKFRAME)));
 
-			RECT displayRect = graphics->GetDisplayRect();
+			Rect displayRect = graphics->GetDisplayRect();
 
 			SetWindowPos(windowHandle, HWND_TOP,
 				displayRect.left,

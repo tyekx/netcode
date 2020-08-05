@@ -5,6 +5,8 @@
 #include "../Input.h"
 #include "../Graphics/GraphicsContexts.h"
 
+#include <Netcode/Input/Key.h>
+
 namespace physx {
 
 	class PxRigidDynamic;

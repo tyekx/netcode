@@ -6,16 +6,34 @@
 namespace std {
 
 	template<typename T>
+	class allocator;
+
+	template<typename T>
+	class default_delete;
+
+	template<typename T>
 	class shared_ptr;
 
 	template<typename T>
 	class weak_ptr;
 
-	template<typename T, typename A>
-	class vector;
+	template<typename T, typename D>
+	class unique_ptr;
 
 	template<typename T>
 	class initializer_list;
+
+	template<typename ... T>
+	class tuple;
+
+	template<typename T>
+	class function;
+
+	template<typename T>
+	class future;
+
+	template<typename T, typename A>
+	class vector;
 
 }
 
@@ -34,7 +52,22 @@ using Ref = std::shared_ptr<T>;
 template<typename T>
 using Weak = std::weak_ptr<T>;
 
+template<typename T, typename D = std::default_delete<T>>
+using Unique = std::unique_ptr<T, D>;
+
+enum DXGI_FORMAT;
+
 namespace Netcode {
+
+	template<typename T>
+	using Vector = std::vector<T, std::allocator<T>>;
+
+	struct Rect {
+		int32_t left;
+		int32_t top;
+		int32_t right;
+		int32_t bottom;
+	};
 
 	template<typename T>
 	class ArrayView;
@@ -82,12 +115,21 @@ namespace Netcode {
 	class SpriteBatchBuilder;
 	class SpriteFont;
 	class SpriteFontBuilder;
+	class FrameGraphBuilder;
 	class Fence;
 
 	enum class KeyModifier : uint32_t;
 	enum class KeyState : uint32_t;
 	enum class KeyCode : uint32_t;
 	class Key;
+
+}
+
+namespace Netcode::Network {
+
+	class Cookie;
+	class Response;
+	class GameSession;
 
 }
 
@@ -105,5 +147,9 @@ namespace Netcode::Graphics {
 
 	struct ClearValue;
 	struct ResourceDesc;
+
+	class IDebugContext;
+	class IResourceContext;
+	class IFrameContext;
 
 }

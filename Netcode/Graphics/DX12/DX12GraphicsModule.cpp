@@ -1,7 +1,5 @@
 #include "DX12GraphicsModule.h"
 
-#include <sstream>
-
 #include "DX12Builders.h"
 #include "DX12Platform.h"
 #include "DX12FrameGraphExecutor.h"
@@ -16,10 +14,22 @@
 #include "DX12ResourceContext.h"
 #include "DX12DebugContext.h"
 #include "DX12UploadBatch.h"
+#include "DX12DynamicDescriptorHeap.h"
+#include "DX12ConstantBufferPool.h"
+#include "DX12ResourcePool.h"
+#include "DX12Resource.h"
+#include "DX12Fence.h"
+#include "DX12CommandListPool.h"
+#include "DX12FrameGraph.h"
+#include "DX12ResourceViews.h"
+#include "DX12ShaderVariant.h"
 
-#include "../../Config.h"
+#include <Netcode/Config.h>
+#include <Netcode/Utility.h>
 
 namespace Netcode::Graphics::DX12 {
+
+
 	void DX12GraphicsModule::NextBackBufferIndex() {
 		backbufferIndex = (backbufferIndex + 1) % backbufferDepth;
 	}
@@ -157,10 +167,8 @@ namespace Netcode::Graphics::DX12 {
 
 	void DX12GraphicsModule::CreateFences()
 	{
-		mainFence = stackAllocator.MakeShared<DX12Fence>(device.Get(), 0);
-		//std::make_shared<DX12Fence>(device.Get(), 0);
-		uploadFence = stackAllocator.MakeShared<DX12Fence>(device.Get(), 0);
-		//std::make_shared<DX12Fence>(device.Get(), 0);
+		mainFence = stackAllocator.MakeShared<DX12::FenceImpl>(device.Get(), 0);
+		uploadFence = stackAllocator.MakeShared<DX12::FenceImpl>(device.Get(), 0);
 	}
 	
 	void DX12GraphicsModule::QuerySyncSupport() {
@@ -180,45 +188,39 @@ namespace Netcode::Graphics::DX12 {
 
 	void DX12GraphicsModule::CreateLibraries()
 	{
-		shaderLibrary = stackAllocator.MakeShared<DX12::ShaderLibrary>();
-		//std::make_shared<DX12ShaderLibrary>();
+		shaderLibrary = stackAllocator.MakeShared<ShaderLibrary>();
 
-		rootSigLibrary = stackAllocator.MakeShared<DX12::RootSignatureLibrary>(objectAllocator, device);
+		rootSigLibrary = stackAllocator.MakeShared<RootSignatureLibrary>(objectAllocator, device);
 
-		streamOutputLibrary = stackAllocator.MakeShared<DX12::StreamOutputLibrary>(objectAllocator);
+		streamOutputLibrary = stackAllocator.MakeShared<StreamOutputLibrary>(objectAllocator);
 
-		inputLayoutLibrary = stackAllocator.MakeShared<DX12::InputLayoutLibrary>(objectAllocator);
+		inputLayoutLibrary = stackAllocator.MakeShared<InputLayoutLibrary>(objectAllocator);
 
-		gPipelineLibrary = stackAllocator.MakeShared<DX12::GPipelineStateLibrary>(objectAllocator, device);
+		gPipelineLibrary = stackAllocator.MakeShared<GPipelineStateLibrary>(objectAllocator, device);
 
-		cPipelineLibrary = stackAllocator.MakeShared<DX12::CPipelineStateLibrary>(objectAllocator, device);
+		cPipelineLibrary = stackAllocator.MakeShared<CPipelineStateLibrary>(objectAllocator, device);
 
-		spriteFontLibrary = stackAllocator.MakeShared<DX12::SpriteFontLibrary>(objectAllocator);
-
-		spriteFontLibrary->frameCtx = frame;
-		spriteFontLibrary->resourceCtx = resources;
+		spriteFontLibrary = stackAllocator.MakeShared<SpriteFontLibrary>(objectAllocator, resources, frame);
 	}
 
 	void DX12GraphicsModule::SetContextReferences()
 	{
-		heapManager = stackAllocator.MakeShared<DX12HeapManager>();
-		heapManager->SetDevice(device);
-
-		resourcePool.SetHeapManager(heapManager);
-
-		resourceContext->descHeaps = &dheaps;
-		resourceContext->SetResourcePool(&resourcePool);
+		resourceContext->descHeaps = dheaps.get();
+		resourceContext->SetResourcePool(resourcePool.get());
 		resourceContext->SetDevice(device);
 		resourceContext->backbufferExtents = scissorRect;
-
-		cbufferPool.SetHeapManager(heapManager);
-		dheaps.CreateResources(device);
 	}
 
 	void DX12GraphicsModule::CreateContexts() {
 		resourceContext = stackAllocator.MakeShared<DX12ResourceContext>();
 		Netcode::Module::IGraphicsModule::resources = resourceContext.get();
 		Netcode::Module::IGraphicsModule::frame = this;
+
+		heapManager = stackAllocator.MakeShared<HeapManager>(device);
+		commandListPool = stackAllocator.MakeShared<CommandListPool>(device);
+		dheaps = stackAllocator.MakeShared<DynamicDescriptorHeap>(device);
+		resourcePool = stackAllocator.MakeShared<ResourcePool>(heapManager);
+		cbufferPool = stackAllocator.MakeShared<ConstantBufferPool>(heapManager);
 	}
 
 	void DX12GraphicsModule::UpdateViewport()
@@ -237,7 +239,7 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 	void DX12GraphicsModule::Prepare() {
-		dheaps.Prepare();
+		dheaps->Prepare();
 
 		resourceContext->backbufferExtents = scissorRect;
 	}
@@ -300,16 +302,14 @@ namespace Netcode::Graphics::DX12 {
 
 		CreateFences();
 
-		commandListPool = stackAllocator.MakeShared<DX12CommandListPool>(device);
-
 		CreateContexts();
 
 		CreateSwapChain();
 
 		SetContextReferences();
 
-		renderTargetViews = std::dynamic_pointer_cast<DX12ResourceViews>(resources->CreateRenderTargetViews(3));
-		depthStencilView = std::dynamic_pointer_cast<DX12ResourceViews>(resources->CreateDepthStencilView());
+		renderTargetViews = std::dynamic_pointer_cast<DX12::ResourceViewsImpl>(resources->CreateRenderTargetViews(3));
+		depthStencilView = std::dynamic_pointer_cast<DX12::ResourceViewsImpl>(resources->CreateDepthStencilView());
 
 		CreateLibraries();
 
@@ -317,7 +317,7 @@ namespace Netcode::Graphics::DX12 {
 
 #if defined(NETCODE_DEBUG)
 		if(debugEnabled) {
-			debugContext = objectAllocator.MakeShared<DX12DebugContext>();
+			debugContext = objectAllocator.MakeShared<DebugContext>();
 			debugContext->CreateResources(this);
 			debug = debugContext.get();
 		}
@@ -340,8 +340,8 @@ namespace Netcode::Graphics::DX12 {
 	{
 		NextBackBufferIndex();
 
-		cbufferPool.Clear();
-		dheaps.Reset();
+		cbufferPool->Clear();
+		dheaps->Reset();
 	}
 
 	void DX12GraphicsModule::Shutdown() {
@@ -437,7 +437,7 @@ namespace Netcode::Graphics::DX12 {
 		displayMode = newMode;
 	}
 
-	RECT DX12GraphicsModule::GetDisplayRect() const
+	Rect DX12GraphicsModule::GetDisplayRect() const
 	{
 		com_ptr<IDXGIOutput> tempOutput;
 
@@ -447,39 +447,43 @@ namespace Netcode::Graphics::DX12 {
 		DXGI_OUTPUT_DESC desc;
 		tempOutput->GetDesc(&desc);
 
-		return desc.DesktopCoordinates;
+		return (*reinterpret_cast<Rect *>(&desc.DesktopCoordinates));
 	}
 
 	float DX12GraphicsModule::GetAspectRatio() const {
 		return static_cast<float>(width) / static_cast<float>(height);
 	}
 
-	void DX12GraphicsModule::SyncUpload(const UploadBatch & upload)
+	void DX12GraphicsModule::SyncUpload(Ref<Netcode::Graphics::UploadBatch> uploadBatch)
 	{
+		Ref<DX12::UploadBatchImpl> upload = std::dynamic_pointer_cast<DX12::UploadBatchImpl>(uploadBatch);
+
 		com_ptr<ID3D12Resource> uploadResource;
 
 		CommandList directCl = commandListPool->GetDirect();
 
 		std::vector<D3D12_RESOURCE_BARRIER> barriers;
-		barriers.reserve(upload.BarrierTasks().size());
+		barriers.reserve(upload->BarrierTasks().size());
 
-		for(const auto & barrier : upload.BarrierTasks()) {
-			ID3D12Resource * resouce = std::dynamic_pointer_cast<DX12Resource>(barrier.resourceHandle)->resource.Get();
+		for(const auto & barrier : upload->BarrierTasks()) {
+			ID3D12Resource * resouce = std::dynamic_pointer_cast<Resource>(barrier.resourceHandle)->resource.Get();
 			barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::Transition(resouce, GetNativeState(barrier.before), GetNativeState(barrier.after)));
 		}
 
 		size_t totalSize = 0;
 
-		for(const auto & task : upload.UploadTasks()) {
-			if(task.type == UploadTaskType::BUFFER) {
-				totalSize += Utility::Align64K<size_t>(task.bufferTask.srcDataSizeInBytes);
-			} else if(task.type == UploadTaskType::TEXTURE) {
-				TextureRef tex = task.textureTask.texture;
+		for(const auto & task : upload->UploadTasks()) {
+			if(std::holds_alternative<BufferUploadTask>(task)) {
+				totalSize += Utility::Align64K<size_t>(std::get<BufferUploadTask>(task).srcDataSizeInBytes);
+			}
+
+			if(std::holds_alternative<TextureUploadTask>(task)) {
+				Ref<Netcode::Texture> tex = std::get<TextureUploadTask>(task).texture;
 				uint16_t imgCount = tex->GetImageCount();
 
 				size_t sum = 0;
 				for(uint16_t imgI = 0; imgI < imgCount; ++imgI) {
-					const Image* imgR = tex->GetImage(0, imgI, 0);
+					const Image * imgR = tex->GetImage(0, imgI, 0);
 					sum += imgR->slicePitch;
 				}
 				totalSize += Utility::Align64K<size_t>(sum);
@@ -503,9 +507,11 @@ namespace Netcode::Graphics::DX12 {
 			size_t offset = 0;
 
 
-			for(const auto & task : upload.UploadTasks()) {
-				if(task.type == UploadTaskType::BUFFER) {
-					DX12ResourceRef resource = std::dynamic_pointer_cast<DX12Resource>(task.bufferTask.resourceHandle);
+			for(const auto & t : upload->UploadTasks()) {
+				if(std::holds_alternative<BufferUploadTask>(t)) {
+					const BufferUploadTask & bufferTask = std::get<BufferUploadTask>(t);
+
+					Ref<DX12::Resource> resource = std::dynamic_pointer_cast<DX12::Resource>(bufferTask.resourceHandle);
 
 					if(resource->GetDesc().dimension == ResourceDimension::BUFFER) {
 						uint8_t * mappedPtr;
@@ -514,26 +520,28 @@ namespace Netcode::Graphics::DX12 {
 						DX_API("Failed to map upload resource")
 							uploadResource->Map(0, &nullRange, reinterpret_cast<void **>(&mappedPtr));
 
-						memcpy(mappedPtr + offset, task.bufferTask.srcData, task.bufferTask.srcDataSizeInBytes);
+						memcpy(mappedPtr + offset, bufferTask.srcData, bufferTask.srcDataSizeInBytes);
 
 						uploadResource->Unmap(0, &nullRange);
 
-						directCl.GetCommandList()->CopyBufferRegion(resource->resource.Get(), task.bufferTask.dstDataOffsetInBytes, uploadResource.Get(), offset, task.bufferTask.srcDataSizeInBytes);
+						directCl.GetCommandList()->CopyBufferRegion(resource->resource.Get(), bufferTask.dstDataOffsetInBytes, uploadResource.Get(), offset, bufferTask.srcDataSizeInBytes);
 					} else {
 						D3D12_SUBRESOURCE_DATA data;
-						data.RowPitch = (resource->desc.dimension == ResourceDimension::BUFFER) ? task.bufferTask.srcDataSizeInBytes : (resource->desc.strideInBytes * resource->desc.width);
-						data.SlicePitch = task.bufferTask.srcDataSizeInBytes;
-						data.pData = task.bufferTask.srcData;
+						data.RowPitch = (resource->desc.dimension == ResourceDimension::BUFFER) ? bufferTask.srcDataSizeInBytes : (resource->desc.strideInBytes * resource->desc.width);
+						data.SlicePitch = bufferTask.srcDataSizeInBytes;
+						data.pData = bufferTask.srcData;
 						UpdateSubresources(directCl.GetCommandList(), resource->resource.Get(), uploadResource.Get(), offset, 0u, 1u, &data);
 					}
 
-					offset += Utility::Align64K<size_t>(task.bufferTask.srcDataSizeInBytes);
+					offset += Utility::Align64K<size_t>(bufferTask.srcDataSizeInBytes);
 				}
 
-				if(task.type == UploadTaskType::TEXTURE) {
-					DX12ResourceRef resource = std::dynamic_pointer_cast<DX12Resource>(task.textureTask.resourceHandle);
+				if(std::holds_alternative<TextureUploadTask>(t)) {
+					const TextureUploadTask & textureTask = std::get<TextureUploadTask>(t);
 
-					TextureRef tex = task.textureTask.texture;
+					Ref<DX12::Resource> resource = std::dynamic_pointer_cast<DX12::Resource>(textureTask.resourceHandle);
+
+					Ref<Netcode::Texture> tex = textureTask.texture;
 					uint16_t imgCount = tex->GetImageCount();
 
 					size_t sum = 0;
@@ -570,9 +578,9 @@ namespace Netcode::Graphics::DX12 {
 		uploadFence->HostWait();
 	}
 
-	void DX12GraphicsModule::CullFrameGraph(FrameGraphRef frameGraph)
+	void DX12GraphicsModule::CullFrameGraph(Ptr<Netcode::FrameGraph> frameGraph)
 	{
-		std::vector<RenderPassRef> cullable = frameGraph->QueryDanglingRenderPasses();
+		std::vector<Ref<Netcode::RenderPass>> cullable = frameGraph->QueryDanglingRenderPasses();
 
 		while(!cullable.empty()) {
 			frameGraph->EraseRenderPasses(std::move(cullable));
@@ -580,14 +588,14 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 
-	void DX12GraphicsModule::ExecuteFrameGraph(FrameGraphRef frameGraph)
+	void DX12GraphicsModule::ExecuteFrameGraph(Ref<Netcode::FrameGraph> frameGraph)
 	{
 		FrameGraphExecutor executor{
 			commandListPool.get(),
 			heapManager.get(),
-			&resourcePool,
-			&dheaps,
-			&cbufferPool,
+			resourcePool.get(),
+			dheaps.get(),
+			cbufferPool.get(),
 			commandQueue.Get(),
 			computeCommandQueue.Get(),
 			frameResources[backbufferIndex].swapChainBuffer.Get(),
@@ -600,15 +608,15 @@ namespace Netcode::Graphics::DX12 {
 			scissorRect
 		};
 
-		executor.Execute(frameGraph);
+		executor.Execute(std::move(frameGraph));
 	}
 
-	void DX12GraphicsModule::Run(FrameGraphRef frameGraph, FrameGraphCullMode cullMode)
+	void DX12GraphicsModule::Run(Ref<Netcode::FrameGraph> frameGraph, FrameGraphCullMode cullMode)
 	{
 		if(cullMode == FrameGraphCullMode::ANY) {
-			CullFrameGraph(frameGraph);
+			CullFrameGraph(frameGraph.get());
 		}
-		ExecuteFrameGraph(frameGraph);
+		ExecuteFrameGraph(std::move(frameGraph));
 
 		objectAllocator.Defragment(16);
 	}
@@ -677,52 +685,104 @@ namespace Netcode::Graphics::DX12 {
 		backbufferIndex = swapChain->GetCurrentBackBufferIndex();
 	}
 
-	FenceRef DX12GraphicsModule::CreateFence(uint64_t initialValue)
+	Ref<Fence> DX12GraphicsModule::CreateFence(uint64_t initialValue)
 	{
-		return objectAllocator.MakeShared<DX12Fence>(device.Get(), initialValue);
+		return objectAllocator.MakeShared<FenceImpl>(device.Get(), initialValue);
 	}
 	
-	ShaderBuilderRef DX12GraphicsModule::CreateShaderBuilder() {
-		return objectAllocator.MakeShared<DX12ShaderBuilder>(shaderLibrary);
+	Ref<ShaderBuilder> DX12GraphicsModule::CreateShaderBuilder() {
+		return objectAllocator.MakeShared<ShaderBuilderImpl>(shaderLibrary);
 	}
 
-	GPipelineStateBuilderRef DX12GraphicsModule::CreateGPipelineStateBuilder() {
-		return objectAllocator.MakeShared<DX12GPipelineStateBuilder>(gPipelineLibrary);
+	Ref<GPipelineStateBuilder> DX12GraphicsModule::CreateGPipelineStateBuilder() {
+		return objectAllocator.MakeShared<GPipelineStateBuilderImpl>(gPipelineLibrary);
 	}
 
-	CPipelineStateBuilderRef DX12GraphicsModule::CreateCPipelineStateBuilder()
+	Ref<CPipelineStateBuilder> DX12GraphicsModule::CreateCPipelineStateBuilder()
 	{
-		return objectAllocator.MakeShared<DX12CPipelineStateBuilder>(cPipelineLibrary);
+		return objectAllocator.MakeShared<CPipelineStateBuilderImpl>(cPipelineLibrary);
 	}
 
-	InputLayoutBuilderRef DX12GraphicsModule::CreateInputLayoutBuilder() {
-		return objectAllocator.MakeShared<DX12InputLayoutBuilder>(objectAllocator, inputLayoutLibrary);
+	Ref<InputLayoutBuilder> DX12GraphicsModule::CreateInputLayoutBuilder() {
+		return objectAllocator.MakeShared<InputLayoutBuilderImpl>(objectAllocator, inputLayoutLibrary);
 	}
 
-	StreamOutputBuilderRef DX12GraphicsModule::CreateStreamOutputBuilder() {
-		return objectAllocator.MakeShared<DX12StreamOutputBuilder>(objectAllocator, streamOutputLibrary);
+	Ref<StreamOutputBuilder> DX12GraphicsModule::CreateStreamOutputBuilder() {
+		return objectAllocator.MakeShared<StreamOutputBuilderImpl>(objectAllocator, streamOutputLibrary);
 	}
 
-	RootSignatureBuilderRef DX12GraphicsModule::CreateRootSignatureBuilder() {
-		return objectAllocator.MakeShared<DX12RootSignatureBuilder>(rootSigLibrary);
+	Ref<RootSignatureBuilder> DX12GraphicsModule::CreateRootSignatureBuilder() {
+		return objectAllocator.MakeShared<RootSignatureBuilderImpl>(rootSigLibrary);
 	}
 
-	SpriteFontBuilderRef DX12GraphicsModule::CreateSpriteFontBuilder() {
-		return objectAllocator.MakeShared<DX12SpriteFontBuilder>(spriteFontLibrary);
+	Ref<SpriteFontBuilder> DX12GraphicsModule::CreateSpriteFontBuilder() {
+		return objectAllocator.MakeShared<SpriteFontBuilderImpl>(spriteFontLibrary);
 	}
 
-	SpriteBatchBuilderRef DX12GraphicsModule::CreateSpriteBatchBuilder()
+	Ref<SpriteBatchBuilder> DX12GraphicsModule::CreateSpriteBatchBuilder()
 	{
-		return objectAllocator.MakeShared<DX12SpriteBatchBuilder>(this);
+		return objectAllocator.MakeShared<SpriteBatchBuilderImpl>(this);
 	}
 
-	TextureBuilderRef DX12GraphicsModule::CreateTextureBuilder() {
-		return objectAllocator.MakeShared<DX12TextureBuilder>();
+	Ref<TextureBuilder> DX12GraphicsModule::CreateTextureBuilder() {
+		return objectAllocator.MakeShared<TextureBuilderImpl>();
 	}
 
-	FrameGraphBuilderRef DX12GraphicsModule::CreateFrameGraphBuilder()
+	Ref<FrameGraphBuilder> DX12GraphicsModule::CreateFrameGraphBuilder()
 	{
-		return objectAllocator.MakeShared<DX12FrameGraphBuilder>(resourceContext);
+		return objectAllocator.MakeShared<FrameGraphBuilderImpl>(resourceContext);
+	}
+
+	ID3D12GraphicsCommandList3 * FrameResource::GetCommandList() const {
+		return commandList.Get();
+	}
+
+	void FrameResource::CreateResources(ID3D12Device * device) {
+		DX_API("Failed to create command allocator")
+			device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(commandAllocator.GetAddressOf()));
+
+		DX_API("Failed to create direct command list")
+			device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(commandList.GetAddressOf()));
+
+		DX_API("Failed to initially close command list")
+			commandList->Close();
+
+		fenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+		if(fenceEvent == NULL) {
+			DX_API("Failed to create windows event") HRESULT_FROM_WIN32(GetLastError());
+		}
+		fenceValue = 1;
+
+		DX_API("Failed to create fence")
+			device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.GetAddressOf()));
+	}
+
+	void FrameResource::WaitForCompletion() {
+		const UINT64 cv = fenceValue;
+
+		if(fence->GetCompletedValue() < cv) {
+			DX_API("Failed to set winapi event")
+				fence->SetEventOnCompletion(cv, fenceEvent);
+			WaitForSingleObject(fenceEvent, INFINITE);
+		}
+
+		++fenceValue;
+	}
+
+	void FrameResource::FinishRecording() {
+		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(swapChainBuffer.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+
+		commandList->ResourceBarrier(1, &barrier);
+
+		DX_API("Failed to close command list")
+			commandList->Close();
+	}
+
+	void FrameResource::ReleaseResources() {
+		commandList.Reset();
+		commandAllocator.Reset();
+		fence.Reset();
+		fenceValue = 0;
 	}
 
 }

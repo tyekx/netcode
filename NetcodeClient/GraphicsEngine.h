@@ -1,8 +1,11 @@
 #pragma once
 
+#include <DirectXTex.h>
 #include <Netcode/UI/PageManager.h>
-#include <Netcode/Graphics/FrameGraph.h>
 #include <Netcode/FancyIterators.hpp>
+#include <Netcode/Graphics/FrameGraph.h>
+#include <Netcode/Graphics/UploadBatch.h>
+#include <Netcode/Graphics/ResourceEnums.h>
 #include <Netcode/Graphics/ResourceDesc.h>
 #include <Netcode/Vertex.h>
 #include <DirectXPackedVector.h>
@@ -11,7 +14,7 @@
 #include "GameObject.h"
 #include "AnimationSet.h"
 
-using Netcode::GpuResourceRef;
+using Netcode::GpuResource;
 
 using Netcode::Graphics::ResourceDesc;
 using Netcode::Graphics::ResourceType;
@@ -31,11 +34,11 @@ struct RenderItem {
 	GBuffer gbuffer;
 	Material * material;
 	PerObjectData * objectData;
-	Netcode::ResourceViewsRef boneData;
+	Ref<Netcode::ResourceViews> boneData;
 	int32_t boneDataOffset;
 	BoneData * debugBoneData;
 
-	RenderItem(const ShadedMesh & shadedMesh, PerObjectData * objectData, Netcode::ResourceViewsRef boneData, int32_t boneDataOffset, BoneData * dbBoneData) :
+	RenderItem(const ShadedMesh & shadedMesh, PerObjectData * objectData, Ref<Netcode::ResourceViews> boneData, int32_t boneDataOffset, BoneData * dbBoneData) :
 		gbuffer{ shadedMesh.mesh->GetGBuffer() }, material{ shadedMesh.material.get() }, objectData{ objectData }, boneData{ boneData },
 		boneDataOffset{ boneDataOffset }, debugBoneData{ dbBoneData } {
 
@@ -44,13 +47,13 @@ struct RenderItem {
 
 class GraphicsEngine {
 public:
-	GpuResourceRef gbufferPass_DepthBuffer;
-	GpuResourceRef gbufferPass_ColorRenderTarget;
-	GpuResourceRef gbufferPass_NormalsRenderTarget;
+	Ref<GpuResource> gbufferPass_DepthBuffer;
+	Ref<GpuResource> gbufferPass_ColorRenderTarget;
+	Ref<GpuResource> gbufferPass_NormalsRenderTarget;
 
-	GpuResourceRef ssaoPass_BlurRenderTarget;
-	GpuResourceRef ssaoPass_OcclusionRenderTarget;
-	GpuResourceRef ssaoPass_RandomVectorTexture;
+	Ref<GpuResource> ssaoPass_BlurRenderTarget;
+	Ref<GpuResource> ssaoPass_OcclusionRenderTarget;
+	Ref<GpuResource> ssaoPass_RandomVectorTexture;
 
 	GBuffer fsQuad;
 
@@ -61,32 +64,37 @@ public:
 
 	Netcode::Module::IGraphicsModule * graphics;
 
-	Netcode::ResourceViewsRef gbufferPass_RenderTargetViews;
-	Netcode::ResourceViewsRef gbufferPass_DepthStencilView;
-	Netcode::ResourceViewsRef lightingPass_ShaderResourceViews;
+	Ref<GpuResource> cloudynoonTexture;
+	Ref<Netcode::ResourceViews> cloudynoonView;
+	Ref<Netcode::ResourceViews> gbufferPass_RenderTargetViews;
+	Ref<Netcode::ResourceViews> gbufferPass_DepthStencilView;
+	Ref<Netcode::ResourceViews> lightingPass_ShaderResourceViews;
 
-	Netcode::ResourceViewsRef skinningPass_ShaderResourceViews;
+	Ref<Netcode::ResourceViews> skinningPass_ShaderResourceViews;
 
-	Netcode::RootSignatureRef skinningPass_RootSignature;
-	Netcode::PipelineStateRef skinningInterpolatePass_PipelineState;
-	Netcode::PipelineStateRef skinningBlendPass_PipelineState;
+	Ref<Netcode::RootSignature> skinningPass_RootSignature;
+	Ref<Netcode::PipelineState> skinningInterpolatePass_PipelineState;
+	Ref<Netcode::PipelineState> skinningBlendPass_PipelineState;
 
-	Netcode::RootSignatureRef skinnedGbufferPass_RootSignature;
-	Netcode::PipelineStateRef skinnedGbufferPass_PipelineState;
+	Ref<Netcode::RootSignature> skinnedGbufferPass_RootSignature;
+	Ref<Netcode::PipelineState> skinnedGbufferPass_PipelineState;
 
-	Netcode::RootSignatureRef gbufferPass_RootSignature;
-	Netcode::PipelineStateRef gbufferPass_PipelineState;
+	Ref<Netcode::RootSignature> gbufferPass_RootSignature;
+	Ref<Netcode::PipelineState> gbufferPass_PipelineState;
 
-	Netcode::RootSignatureRef lightingPass_RootSignature;
-	Netcode::PipelineStateRef lightingPass_PipelineState;
+	Ref<Netcode::RootSignature> lightingPass_RootSignature;
+	Ref<Netcode::PipelineState> lightingPass_PipelineState;
 
-	Netcode::RootSignatureRef ssaoOcclusionPass_RootSignature;
-	Netcode::PipelineStateRef ssaoOcclusionPass_PipelineState;
+	Ref<Netcode::RootSignature> ssaoOcclusionPass_RootSignature;
+	Ref<Netcode::PipelineState> ssaoOcclusionPass_PipelineState;
 
-	Netcode::RootSignatureRef ssaoBlurPass_RootSignature;
-	Netcode::PipelineStateRef ssaoBlurPass_PipelineState;
+	Ref<Netcode::RootSignature> ssaoBlurPass_RootSignature;
+	Ref<Netcode::PipelineState> ssaoBlurPass_PipelineState;
 
-	Netcode::SpriteBatchRef uiPass_SpriteBatch;
+	Ref<Netcode::RootSignature> envmapPass_RootSignature;
+	Ref<Netcode::PipelineState> envmapPass_PipelineState;
+
+	Ref<Netcode::SpriteBatch> uiPass_SpriteBatch;
 
 	uint64_t perFrameCbuffer;
 
@@ -103,9 +111,9 @@ public:
 	PerFrameData * perFrameData;
 	SsaoData * ssaoData;
 
-	Netcode::ScratchBuffer<std::shared_ptr<AnimationSet>> skinningPass_Input;
-	Netcode::ScratchBuffer<RenderItem> skinnedGbufferPass_Input;
-	Netcode::ScratchBuffer<RenderItem> gbufferPass_Input;
+	std::vector<Ref<AnimationSet>> skinningPass_Input;
+	std::vector<RenderItem> skinnedGbufferPass_Input;
+	std::vector<RenderItem> gbufferPass_Input;
 	Netcode::UI::PageManager* ui_Input;
 
 private:
@@ -130,10 +138,9 @@ private:
 		fsQuad.indexBuffer = 0;
 		fsQuad.indexCount = 0;
 
-		Netcode::Graphics::UploadBatch uploadBatch;
-		uploadBatch.Upload(fsQuad.vertexBuffer, vData, sizeof(vData));
-		uploadBatch.ResourceBarrier(fsQuad.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
-
+		auto uploadBatch = g->resources->CreateUploadBatch();
+		uploadBatch->Upload(fsQuad.vertexBuffer, vData, sizeof(vData));
+		uploadBatch->Barrier(fsQuad.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
 		g->frame->SyncUpload(uploadBatch);
 	}
 
@@ -144,11 +151,11 @@ private:
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
 		ilBuilder->AddInputElement("WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("BONEIDS", DXGI_FORMAT_R32_UINT);
-		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
+		Ref<Netcode::InputLayout> inputLayout = ilBuilder->Build();
 
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"skinningPass_Vertex.cso");
-		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"gbufferPass_Pixel.cso");
+		Ref<Netcode::ShaderBytecode> vs = shaderBuilder->LoadBytecode(L"skinningPass_Vertex.cso");
+		Ref<Netcode::ShaderBytecode> ps = shaderBuilder->LoadBytecode(L"gbufferPass_Pixel.cso");
 
 		auto rsBuilder = g->CreateRootSignatureBuilder();
 		skinnedGbufferPass_RootSignature = rsBuilder->BuildFromShader(vs);
@@ -183,8 +190,8 @@ private:
 
 	void CreateSkinningPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Netcode::ShaderBytecodeRef interpolateCS = shaderBuilder->LoadBytecode(L"skinningPassInterpolate_Compute.cso");
-		Netcode::ShaderBytecodeRef blendCS = shaderBuilder->LoadBytecode(L"skinningPassBlend_Compute.cso");
+		Ref<Netcode::ShaderBytecode> interpolateCS = shaderBuilder->LoadBytecode(L"skinningPassInterpolate_Compute.cso");
+		Ref<Netcode::ShaderBytecode> blendCS = shaderBuilder->LoadBytecode(L"skinningPassBlend_Compute.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		skinningPass_RootSignature = rootSigBuilder->BuildFromShader(interpolateCS);
@@ -203,8 +210,8 @@ private:
 		gbufferPass_DepthStencilFormat = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
 
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"gbufferPass_Vertex.cso");
-		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"gbufferPass_Pixel.cso");
+		Ref<Netcode::ShaderBytecode> vs = shaderBuilder->LoadBytecode(L"gbufferPass_Vertex.cso");
+		Ref<Netcode::ShaderBytecode> ps = shaderBuilder->LoadBytecode(L"gbufferPass_Pixel.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		gbufferPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
@@ -213,7 +220,7 @@ private:
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
-		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
+		Ref<Netcode::InputLayout> inputLayout = ilBuilder->Build();
 
 		Netcode::DepthStencilDesc depthStencilDesc;
 		depthStencilDesc.backFace.stencilDepthFailOp = Netcode::StencilOp::KEEP;
@@ -268,8 +275,8 @@ private:
 
 	void CreateSSAOBlurPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"ssaoPass_Vertex.cso");
-		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"ssaoBlurPass_Pixel.cso");
+		Ref<Netcode::ShaderBytecode> vs = shaderBuilder->LoadBytecode(L"ssaoPass_Vertex.cso");
+		Ref<Netcode::ShaderBytecode> ps = shaderBuilder->LoadBytecode(L"ssaoBlurPass_Pixel.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		ssaoBlurPass_RootSignature = rootSigBuilder->BuildFromShader(ps);
@@ -282,7 +289,7 @@ private:
 		depthDesc.depthEnable = false;
 		depthDesc.stencilEnable = false;
 
-		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
+		Ref<Netcode::InputLayout> inputLayout = ilBuilder->Build();
 		auto psoBuilder = g->CreateGPipelineStateBuilder();
 		psoBuilder->SetRootSignature(ssaoBlurPass_RootSignature);
 		psoBuilder->SetInputLayout(inputLayout);
@@ -296,8 +303,8 @@ private:
 
 	void CreateSSAOOcclusionPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"ssaoPass_Vertex.cso");
-		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"ssaoOcclusionPass_Pixel.cso");
+		Ref<Netcode::ShaderBytecode> vs = shaderBuilder->LoadBytecode(L"ssaoPass_Vertex.cso");
+		Ref<Netcode::ShaderBytecode> ps = shaderBuilder->LoadBytecode(L"ssaoOcclusionPass_Pixel.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		ssaoOcclusionPass_RootSignature = rootSigBuilder->BuildFromShader(ps);
@@ -310,7 +317,7 @@ private:
 		depthDesc.depthEnable = false;
 		depthDesc.stencilEnable = false;
 
-		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
+		Ref<Netcode::InputLayout> inputLayout = ilBuilder->Build();
 		auto psoBuilder = g->CreateGPipelineStateBuilder();
 		psoBuilder->SetRootSignature(ssaoOcclusionPass_RootSignature);
 		psoBuilder->SetInputLayout(inputLayout);
@@ -334,10 +341,10 @@ private:
 			}
 		}
 
-		Netcode::Graphics::UploadBatch upload;
-		upload.Upload(ssaoPass_RandomVectorTexture, colors.get(), 256 * 256 * sizeof(DirectX::PackedVector::XMCOLOR));
-		upload.ResourceBarrier(ssaoPass_RandomVectorTexture, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
-		g->frame->SyncUpload(upload);
+		auto batch = g->resources->CreateUploadBatch();
+		batch->Upload(ssaoPass_RandomVectorTexture, colors.get(), 256 * 256 * sizeof(DirectX::PackedVector::XMCOLOR));
+		batch->Barrier(ssaoPass_RandomVectorTexture, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
+		g->frame->SyncUpload(std::move(batch));
 
 		CreateSSAOOcclusionPassSizeDependentResources();
 	}
@@ -359,8 +366,8 @@ private:
 
 	void CreateLightingPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"lightingPass_Vertex.cso");
-		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"lightingPass_Pixel.cso");
+		Ref<Netcode::ShaderBytecode> vs = shaderBuilder->LoadBytecode(L"lightingPass_Vertex.cso");
+		Ref<Netcode::ShaderBytecode> ps = shaderBuilder->LoadBytecode(L"lightingPass_Pixel.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		lightingPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
@@ -382,7 +389,7 @@ private:
 		depthDesc.backFace = depthDesc.frontFace;
 		depthDesc.backFace.stencilFunc = Netcode::ComparisonFunc::NEVER;
 
-		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
+		Ref<Netcode::InputLayout> inputLayout = ilBuilder->Build();
 		auto psoBuilder = g->CreateGPipelineStateBuilder();
 		psoBuilder->SetRootSignature(lightingPass_RootSignature);
 		psoBuilder->SetInputLayout(inputLayout);
@@ -409,11 +416,11 @@ private:
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("COLOR", DXGI_FORMAT_R32G32B32A32_FLOAT);
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
-		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
+		Ref<Netcode::InputLayout> inputLayout = ilBuilder->Build();
 
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"Netcode_SpriteVS.cso");
-		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"Netcode_SpritePS.cso");
+		Ref<Netcode::ShaderBytecode> vs = shaderBuilder->LoadBytecode(L"Netcode_SpriteVS.cso");
+		Ref<Netcode::ShaderBytecode> ps = shaderBuilder->LoadBytecode(L"Netcode_SpritePS.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		auto rootSignature = rootSigBuilder->BuildFromShader(vs);
@@ -467,14 +474,14 @@ private:
 
 		auto pipelineState = psoBuilder->Build();
 
-		Netcode::SpriteBatchBuilderRef spriteBatchBuilder = g->CreateSpriteBatchBuilder();
+		Ref<Netcode::SpriteBatchBuilder> spriteBatchBuilder = g->CreateSpriteBatchBuilder();
 		spriteBatchBuilder->SetPipelineState(std::move(pipelineState));
 		spriteBatchBuilder->SetRootSignature(std::move(rootSignature));
 		uiPass_SpriteBatch = spriteBatchBuilder->Build();
 	}
 
 
-	void CreateSkinningPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
+	void CreateSkinningPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("Skinning",
 			[&](IResourceContext * context) -> void {
 			
@@ -507,15 +514,15 @@ private:
 		});
 	}
 
-	void CreateSkinnedGbufferPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
+	void CreateSkinnedGbufferPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("Skinned Gbuffer",
 		[&](IResourceContext * context) -> void {
 
 			context->Writes(3);
 
-			context->Writes(gbufferPass_ColorRenderTarget);
-			context->Writes(gbufferPass_NormalsRenderTarget);
-			context->Writes(gbufferPass_DepthBuffer);
+			context->Writes(gbufferPass_ColorRenderTarget.get());
+			context->Writes(gbufferPass_NormalsRenderTarget.get());
+			context->Writes(gbufferPass_DepthBuffer.get());
 
 		},
 		[&](IRenderContext * context) -> void {
@@ -551,13 +558,13 @@ private:
 		);
 	}
 
-	void CreateGbufferPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
+	void CreateGbufferPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("Gbuffer", [&](IResourceContext * context) -> void {
 
 			context->Reads(3);
-			context->Writes(gbufferPass_ColorRenderTarget);
-			context->Writes(gbufferPass_NormalsRenderTarget);
-			context->Writes(gbufferPass_DepthBuffer);
+			context->Writes(gbufferPass_ColorRenderTarget.get());
+			context->Writes(gbufferPass_NormalsRenderTarget.get());
+			context->Writes(gbufferPass_DepthBuffer.get());
 
 		},
 			[&](IRenderContext * context) -> void {
@@ -603,13 +610,13 @@ private:
 		});
 	}
 
-	void CreateSSAOOcclusionPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
+	void CreateSSAOOcclusionPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("SSAO Occlusion", [&](IResourceContext * context) -> void {
 
-			context->Reads(gbufferPass_NormalsRenderTarget);
-			context->Reads(gbufferPass_DepthBuffer);
+			context->Reads(gbufferPass_NormalsRenderTarget.get());
+			context->Reads(gbufferPass_DepthBuffer.get());
 
-			context->Writes(ssaoPass_OcclusionRenderTarget);
+			context->Writes(ssaoPass_OcclusionRenderTarget.get());
 
 		},
 			[&](IRenderContext * context) -> void {
@@ -637,11 +644,11 @@ private:
 		});
 	}
 
-	void CreateSSAOBlurPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
+	void CreateSSAOBlurPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("SSAO Blur", [&](IResourceContext * context) -> void {
 
-			context->Reads(ssaoPass_OcclusionRenderTarget);
-			context->Writes(ssaoPass_BlurRenderTarget);
+			context->Reads(ssaoPass_OcclusionRenderTarget.get());
+			context->Writes(ssaoPass_BlurRenderTarget.get());
 
 		},
 			[&](IRenderContext * context) -> void {
@@ -660,13 +667,13 @@ private:
 
 			uint32_t isHorizontal = 0;
 
-			GpuResourceRef renderTargets[2] = {
+			Ref<GpuResource> renderTargets[2] = {
 				ssaoPass_OcclusionRenderTarget, ssaoPass_BlurRenderTarget
 			};
 
 			for(uint32_t i = 0; i < 3; ++i) {
-				GpuResourceRef currentRenderTarget = renderTargets[(i + 1) % 2];
-				GpuResourceRef sourceTexture = renderTargets[i % 2];
+				Ref<GpuResource> currentRenderTarget = renderTargets[(i + 1) % 2];
+				Ref<GpuResource> sourceTexture = renderTargets[i % 2];
 
 				context->ResourceBarrier(currentRenderTarget, ResourceState::PIXEL_SHADER_RESOURCE, ResourceState::RENDER_TARGET);
 				context->FlushResourceBarriers();
@@ -694,13 +701,13 @@ private:
 		});
 	}
 
-	void CreateLightingPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
+	void CreateLightingPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("Lighting", [&](IResourceContext * context) -> void {
 
-			context->Reads(ssaoPass_BlurRenderTarget);
-			context->Reads(gbufferPass_ColorRenderTarget);
-			context->Reads(gbufferPass_DepthBuffer);
-			context->Reads(gbufferPass_NormalsRenderTarget);
+			context->Reads(ssaoPass_BlurRenderTarget.get());
+			context->Reads(gbufferPass_ColorRenderTarget.get());
+			context->Reads(gbufferPass_DepthBuffer.get());
+			context->Reads(gbufferPass_NormalsRenderTarget.get());
 
 			context->Writes(2);
 			context->Writes(nullptr);
@@ -723,7 +730,7 @@ private:
 		});
 	}
 
-	void CreateUIPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
+	void CreateUIPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("uiPass", [&](IResourceContext * context) -> void {
 			
 			context->Reads(2);
@@ -751,7 +758,7 @@ private:
 		});
 	}
 
-	void CreatePostProcessPass(Netcode::FrameGraphBuilderRef frameGraphBuilder) {
+	void CreatePostProcessPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder) {
 		frameGraphBuilder->CreateRenderPass("postProcessPass", [&](IResourceContext * context) -> void {
 
 
@@ -764,15 +771,12 @@ private:
 		});
 	}
 
-	GpuResourceRef cloudynoonTexture;
-	Netcode::ResourceViewsRef cloudynoonView;
-
 public:
 
 	void CreateBackgroundPassPermanentResources(Netcode::Module::IGraphicsModule * g) {
-		Netcode::TextureBuilderRef textureBuilder = graphics->CreateTextureBuilder();
+		Ref<Netcode::TextureBuilder> textureBuilder = graphics->CreateTextureBuilder();
 		textureBuilder->LoadTextureCube(L"cloudynoon.dds");
-		Netcode::TextureRef cloudynoon = textureBuilder->Build();
+		Ref<Netcode::Texture> cloudynoon = textureBuilder->Build();
 
 		ASSERT(cloudynoon->GetImageCount() == 6, "bad image count");
 
@@ -782,25 +786,25 @@ public:
 
 		g->resources->SetDebugName(cloudynoonTexture, L"Cloudynoon TextureCube");
 
-		Netcode::Graphics::UploadBatch batch;
-		batch.Upload(cloudynoonTexture, cloudynoon);
-		batch.ResourceBarrier(cloudynoonTexture, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
-		g->frame->SyncUpload(batch);
+		auto batch = g->resources->CreateUploadBatch();
+		batch->Upload(cloudynoonTexture, cloudynoon);
+		batch->Barrier(cloudynoonTexture, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
+		g->frame->SyncUpload(std::move(batch));
 
 		cloudynoonView = g->resources->CreateShaderResourceViews(1);
 		cloudynoonView->CreateSRV(0, cloudynoonTexture.get());
 
-		Netcode::ShaderBuilderRef shaderBuilder = g->CreateShaderBuilder();
-		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"envmapPass_Vertex.cso");
-		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"envmapPass_Pixel.cso");
+		auto shaderBuilder = g->CreateShaderBuilder();
+		Ref<Netcode::ShaderBytecode> vs = shaderBuilder->LoadBytecode(L"envmapPass_Vertex.cso");
+		Ref<Netcode::ShaderBytecode> ps = shaderBuilder->LoadBytecode(L"envmapPass_Pixel.cso");
 
-		Netcode::RootSignatureBuilderRef rootSigBuilder = g->CreateRootSignatureBuilder();
+		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		envmapPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
 
 		auto ilBuilder = g->CreateInputLayoutBuilder();
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
-		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
+		Ref<Netcode::InputLayout> inputLayout = ilBuilder->Build();
 
 
 		Netcode::DepthStencilDesc depthDesc;
@@ -816,7 +820,7 @@ public:
 		depthDesc.backFace = depthDesc.frontFace;
 		depthDesc.backFace.stencilFunc = Netcode::ComparisonFunc::NEVER;
 
-		Netcode::GPipelineStateBuilderRef psoBuilder = g->CreateGPipelineStateBuilder();
+		auto psoBuilder = g->CreateGPipelineStateBuilder();
 		psoBuilder->SetInputLayout(inputLayout);
 		psoBuilder->SetVertexShader(vs);
 		psoBuilder->SetPixelShader(ps);
@@ -829,12 +833,9 @@ public:
 		envmapPass_PipelineState = psoBuilder->Build();
 	}
 
-	Netcode::RootSignatureRef envmapPass_RootSignature;
-	Netcode::PipelineStateRef envmapPass_PipelineState;
-
-	void CreateBackgroundPass(Netcode::FrameGraphBuilderRef builder) {
+	void CreateBackgroundPass(Ptr<Netcode::FrameGraphBuilder> builder) {
 		builder->CreateRenderPass("Background", [this](IResourceContext * ctx) ->void {
-			ctx->Reads(gbufferPass_DepthBuffer);
+			ctx->Reads(gbufferPass_DepthBuffer.get());
 			ctx->Writes(2);
 			ctx->Writes(nullptr);
 		},
@@ -857,7 +858,7 @@ public:
 		});
 	}
 
-	void CreateDebugPrimPass(Netcode::FrameGraphBuilderRef builder) {
+	void CreateDebugPrimPass(Ptr<Netcode::FrameGraphBuilder> builder) {
 		builder->CreateRenderPass("Debug", [this](IResourceContext * ctx) ->void {
 			ctx->Reads(2);
 			ctx->Writes(nullptr);
@@ -869,9 +870,9 @@ public:
 	}
 
 	void Reset() {
-		skinningPass_Input.Clear();
-		skinnedGbufferPass_Input.Clear();
-		gbufferPass_Input.Clear();
+		skinningPass_Input.clear();
+		skinnedGbufferPass_Input.clear();
+		gbufferPass_Input.clear();
 		perFrameCbuffer = 0;
 	}
 
@@ -902,7 +903,7 @@ public:
 		CreateFSQuad(g);
 	}
 
-	void CreateFrameGraph(Netcode::FrameGraphBuilderRef builder) {
+	void CreateFrameGraph(Ptr<Netcode::FrameGraphBuilder> builder) {
 		CreateSkinnedGbufferPass(builder);
 		CreateGbufferPass(builder);
 		CreateSSAOOcclusionPass(builder);
@@ -913,7 +914,7 @@ public:
 		CreateDebugPrimPass(builder);
 	}
 
-	void CreateComputeFrameGraph(Netcode::FrameGraphBuilderRef builder) {
+	void CreateComputeFrameGraph(Ptr<Netcode::FrameGraphBuilder> builder) {
 		CreateSkinningPass(builder);
 	}
 

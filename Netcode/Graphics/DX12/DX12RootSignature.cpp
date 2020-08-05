@@ -39,6 +39,7 @@ namespace Netcode::Graphics::DX12 {
 		rootSigDesc.Desc_1_0.NumStaticSamplers = rsDesc.NumStaticSamplers;
 		rootSigDesc.Desc_1_0.pStaticSamplers = samplers;
 	}
+
 	void RootSignatureDesc::CreateRS_1_1(const D3D12_ROOT_SIGNATURE_DESC1 & rsDesc) {
 		size_t size = 0;
 		size_t paramsSize = rsDesc.NumParameters * sizeof(D3D12_ROOT_PARAMETER1);
@@ -91,17 +92,17 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 
-	RootSignature::RootSignature(com_ptr<ID3D12RootSignature> rs, const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & rsDesc) : rootSignature{ std::move(rs) }, desc{ rsDesc } { }
+	RootSignatureImpl::RootSignatureImpl(com_ptr<ID3D12RootSignature> rs, const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & rsDesc) : rootSignature{ std::move(rs) }, desc{ rsDesc } { }
 
-	const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & RootSignature::GetDesc() const {
+	const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & RootSignatureImpl::GetDesc() const {
 		return desc.GetNativeDesc();
 	}
 
-	ID3D12RootSignature * RootSignature::GetNativeRootSignature() const {
+	ID3D12RootSignature * RootSignatureImpl::GetNativeRootSignature() const {
 		return rootSignature.Get();
 	}
 
-	void * RootSignature::GetImplDetail() const {
+	void * RootSignatureImpl::GetImplDetail() const {
 		return GetNativeRootSignature();
 	}
 

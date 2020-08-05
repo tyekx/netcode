@@ -1,9 +1,35 @@
 #include "DX12DebugContext.h"
-
-#include "../../Config.h"
-#include "../../BasicGeometry.h"
+#include <Netcode/HandleTypes.h>
+#include <Netcode/Config.h>
+#include <Netcode/Vertex.h>
+#include <Netcode/Modules.h>
+#include <Netcode/BasicGeometry.h>
+#include <Netcode/Graphics/ResourceEnums.h>
 
 namespace Netcode::Graphics::DX12 {
+
+	void DebugContext::PushVertex(const PC_Vertex & vertex, bool depthEnabled) {
+		// assert: bufferSize > (numNoDepthVertices + numDepthVertices)
+		if(depthEnabled) {
+			vertices[numDepthVertices++] = vertex;
+		} else {
+			vertices[bufferSize - numNoDepthVertices++] = vertex;
+		}
+	}
+
+	PC_Vertex * DebugContext::GetBufferForVertices(size_t numVertices, bool depthEnabled) {
+		// assert: bufferSize >= (numNoDepthVertices + numDepthVertices + numVertices)
+		PC_Vertex * tmp;
+		if(depthEnabled) {
+			tmp = vertices.data() + numDepthVertices;
+			numDepthVertices += numVertices;
+		} else {
+			tmp = vertices.data() + (bufferSize - numNoDepthVertices - numVertices);
+			numNoDepthVertices += numVertices;
+		}
+		return tmp;
+	}
+
 	void DebugContext::CreateResources(Module::IGraphicsModule * graphics) {
 		Ref<Netcode::InputLayoutBuilder> ilBuilder = graphics->CreateInputLayoutBuilder();
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);

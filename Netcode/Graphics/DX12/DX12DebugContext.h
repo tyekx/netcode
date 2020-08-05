@@ -1,7 +1,15 @@
+#pragma once
 
-#include "../../Modules.h"
-#include "../../Vertex.h"
-#include "DX12Common.h"
+#include <Netcode/Graphics/GraphicsContexts.h>
+#include <Netcode/Vertex.h>
+#include <vector>
+#include <memory>
+
+namespace Netcode::Module {
+
+	class IGraphicsModule;
+
+}
 
 namespace Netcode::Graphics::DX12 {
 
@@ -13,33 +21,14 @@ namespace Netcode::Graphics::DX12 {
 		size_t numDepthVertices;
 		std::vector<PC_Vertex> vertices;
 
-		GpuResourceRef uploadBuffer;
+		Ref<GpuResource> uploadBuffer;
+		Ref<PipelineState> depthPso;
+		Ref<PipelineState> noDepthPso;
+		Ref<RootSignature> rootSignature;
 
-		PipelineStateRef depthPso;
-		PipelineStateRef noDepthPso;
-		RootSignatureRef rootSignature;
+		void PushVertex(const PC_Vertex & vertex, bool depthEnabled);
 
-		inline void PushVertex(const PC_Vertex & vertex, bool depthEnabled) {
-			// assert: bufferSize > (numNoDepthVertices + numDepthVertices)
-			if(depthEnabled) {
-				vertices[numDepthVertices++] = vertex;
-			} else {
-				vertices[bufferSize - numNoDepthVertices++] = vertex;
-			}
-		}
-
-		inline PC_Vertex * GetBufferForVertices(size_t numVertices, bool depthEnabled) {
-			// assert: bufferSize >= (numNoDepthVertices + numDepthVertices + numVertices)
-			PC_Vertex * tmp;
-			if(depthEnabled) {
-				tmp = vertices.data() + numDepthVertices;
-				numDepthVertices += numVertices;
-			} else {
-				tmp = vertices.data() + (bufferSize - numNoDepthVertices - numVertices);
-				numNoDepthVertices += numVertices;
-			}
-			return tmp;
-		}
+		PC_Vertex * GetBufferForVertices(size_t numVertices, bool depthEnabled);
 
 	public:
 		void CreateResources(Module::IGraphicsModule * graphics);
@@ -76,8 +65,5 @@ namespace Netcode::Graphics::DX12 {
 		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color) override;
 		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, bool depthEnabled) override;
 	};
-
-	using DX12DebugContext = Netcode::Graphics::DX12::DebugContext;
-	using DX12DebugContextRef = std::shared_ptr<DX12DebugContext>;
 
 }

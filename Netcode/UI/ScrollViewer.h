@@ -17,7 +17,7 @@ namespace Netcode::UI {
 
         void ApplyScrollYDelta(float delta);
 
-        virtual void Render(SpriteBatchPtr batch) override;
+        virtual void Render(Ptr<SpriteBatch> batch) override;
 
         virtual void PropagateOnSizeChanged() override;
     public:

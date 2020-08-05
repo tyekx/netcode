@@ -10,6 +10,8 @@ PUBLIC
 	"HttpSession.h"
 	"ServerSession.h"
 	"MysqlSession.h"
+	"NetworkDecl.h"
+	"Response.hpp"
 	
 PRIVATE
 	"GameSession.cpp"

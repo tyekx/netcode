@@ -1,9 +1,11 @@
 #include "DX12FrameGraph.h"
-
+#include <NetcodeFoundation/ArrayView.hpp>
+#include "DX12RenderPass.h"
+#include <vector>
 
 namespace Netcode::Graphics::DX12 {
 
-	FrameGraph::FrameGraph(std::vector<Ref<DX12::RenderPass>> setupRenderPasses) : resources{ }, renderPasses{ } {
+	FrameGraphImpl::FrameGraphImpl(Vector<Ref<RenderPassImpl>> setupRenderPasses) : resources{ }, renderPasses{ } {
 
 		resources[0].numReads = 1 << 30;
 
@@ -23,8 +25,8 @@ namespace Netcode::Graphics::DX12 {
 		renderPasses.assign(setupRenderPasses.begin(), setupRenderPasses.end());
 	}
 
-	std::vector<Ref<Netcode::RenderPass>> FrameGraph::QueryDanglingRenderPasses() {
-		std::vector<Ref<Netcode::RenderPass>> cullable;
+	Vector<Ref<RenderPass>> FrameGraphImpl::QueryDanglingRenderPasses() {
+		Vector<Ref<RenderPass>> cullable;
 
 		for(auto & rp : renderPasses) {
 			auto writes = rp->GetWrittenResources();
@@ -47,7 +49,7 @@ namespace Netcode::Graphics::DX12 {
 		return cullable;
 	}
 
-	void FrameGraph::EraseRenderPasses(std::vector<Ref<Netcode::RenderPass>> rps) {
+	void FrameGraphImpl::EraseRenderPasses(Vector<Ref<RenderPass>> rps) {
 		for(auto & rp : rps) {
 			for(auto it = std::begin(renderPasses); it != std::end(renderPasses); ++it) {
 
@@ -72,8 +74,8 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 
-	std::vector<Ref<Netcode::RenderPass>> FrameGraph::QueryCompleteRenderPasses() {
-		std::vector<Ref<Netcode::RenderPass>> runnable;
+	Vector<Ref<RenderPass>> FrameGraphImpl::QueryCompleteRenderPasses() {
+		Vector<Ref<RenderPass>> runnable;
 
 		for(auto & rp : renderPasses) {
 			auto reads = rp->GetReadResources();
@@ -95,7 +97,7 @@ namespace Netcode::Graphics::DX12 {
 		return runnable;
 	}
 
-	bool FrameGraph::UsingBackbuffer() const {
+	bool FrameGraphImpl::UsingBackbuffer() const {
 		decltype(resources)::const_iterator it = resources.find(0);
 
 		if(it == std::end(resources)) {

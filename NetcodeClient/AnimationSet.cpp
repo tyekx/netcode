@@ -1,12 +1,14 @@
 #include "AnimationSet.h"
+#include <Netcode/Graphics/UploadBatch.h>
+#include <Netcode/Graphics/ResourceEnums.h>
 
-void AnimationSet::FreeController(AnimationController * rawPtr) {
+void AnimationSet::FreeController(Ptr<AnimationController> rawPtr) {
 	std::unique_ptr<AnimationController> wrappedPtr{ rawPtr };
 	wrappedPtr->animationSet.reset();
 	freedControllers.emplace_back(std::move(wrappedPtr));
 }
 
-std::shared_ptr<AnimationController> AnimationSet::MakeNewController() {
+Ref<AnimationController> AnimationSet::MakeNewController() {
 	if(numActiveControllers >= MAX_INSTANCE_COUNT) {
 		return nullptr;
 	}
@@ -18,12 +20,12 @@ std::shared_ptr<AnimationController> AnimationSet::MakeNewController() {
 		std::bind(&AnimationSet::FreeController, this, std::placeholders::_1));
 }
 
-std::shared_ptr<AnimationController> AnimationSet::ReuseController() {
+Ref<AnimationController> AnimationSet::ReuseController() {
 	std::unique_ptr<AnimationController> ctrl = std::move(freedControllers.back());
 	freedControllers.pop_back();
 	AnimationController * rawPtr = ctrl.release();
 	rawPtr->animationSet = shared_from_this();
-	return std::shared_ptr<AnimationController>(rawPtr,
+	return Ref<AnimationController>(rawPtr,
 		std::bind(&AnimationSet::FreeController, this, std::placeholders::_1));
 }
 
@@ -33,6 +35,15 @@ void AnimationSet::Clear() {
 
 uint32_t AnimationSet::GetNumInstances() const {
 	return numInstances;
+}
+
+void AnimationSet::CopyResults(Netcode::Graphics::IRenderContext * context) {
+	context->ResourceBarrier(resultBuffer, Netcode::Graphics::ResourceState::UNORDERED_ACCESS, Netcode::Graphics::ResourceState::NON_PIXEL_SHADER_RESOURCE | Netcode::Graphics::ResourceState::COPY_SOURCE);
+	context->FlushResourceBarriers();
+	size_t resultSize = BoneData::MAX_BONE_COUNT * numActiveControllers * 2 * sizeof(DirectX::XMFLOAT4X4);
+	if(resultSize > 0) {
+		context->CopyBufferRegion(resultReadbackBuffer, resultBuffer, resultSize);
+	}
 }
 
 void AnimationSet::UploadConstants(Netcode::Graphics::IResourceContext * context) {
@@ -73,7 +84,7 @@ AnimationSet::AnimationSet(Netcode::Module::IGraphicsModule * graphics, Netcode:
 	instanceCbuffer = graphics->resources->CreateConstantBuffer(sizeof(AnimInstanceConstants));
 
 	AnimationStaticConstants cbufferData;
-	ZeroMemory(&cbufferData, sizeof(AnimationStaticConstants));
+	memset(&cbufferData, 0, sizeof(AnimationStaticConstants));
 
 	cbufferData.numAnimations = static_cast<uint32_t>(animations.Size());
 	cbufferData.numBones = static_cast<uint32_t>(bones.Size());
@@ -131,16 +142,16 @@ AnimationSet::AnimationSet(Netcode::Module::IGraphicsModule * graphics, Netcode:
 		ctrlView->CreateSRV(i, resultBuffer.get(), i * STRIDE, STRIDE);
 	}
 
-	Netcode::Graphics::UploadBatch uploadBatch;
+	Ref<Netcode::Graphics::UploadBatch> uploadBatch = graphics->resources->CreateUploadBatch();
 
 	size_t offset = 0;
 	for(const Netcode::Asset::Animation & anim : animations) {
 		size_t itemSize = anim.keysLength * anim.bonesLength * sizeof(Netcode::Asset::AnimationKey);
-		uploadBatch.Upload(animationKeysBuffer, anim.keys, itemSize, offset);
+		uploadBatch->Upload(animationKeysBuffer, anim.keys, itemSize, offset);
 		offset += itemSize;
 	}
 
-	uploadBatch.ResourceBarrier(animationKeysBuffer,
+	uploadBatch->Barrier(animationKeysBuffer,
 		Netcode::Graphics::ResourceState::COPY_DEST,
 		Netcode::Graphics::ResourceState::NON_PIXEL_SHADER_RESOURCE);
 	graphics->frame->SyncUpload(uploadBatch);

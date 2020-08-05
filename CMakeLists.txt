@@ -17,6 +17,7 @@ set(NETCODE_COMPILE_OPTIONS
 	"-Wno-unknown-warning-option"
 	"-Wno-return-std-move"
 	"-Wno-return-type-c-linkage"
+	"-Wno-microsoft-enum-forward-reference"
 	"/EHa")
 
 set(NETCODE_COMPILE_DEFINITIONS 

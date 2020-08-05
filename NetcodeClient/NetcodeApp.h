@@ -11,6 +11,8 @@
 #include <Netcode/Service.hpp>
 #include <Netcode/UI/PageManager.h>
 
+#include <Netcode/Input/AxisMap.hpp>
+
 #include "Asset.h"
 #include "GameObject.h"
 #include "Systems.h"
@@ -45,8 +47,8 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 	GameScene * gameScene;
 
-	std::shared_ptr<AnimationSet> ybotAnimationSet;
-	Netcode::Network::GameSessionRef gameSession;
+	Ref<AnimationSet> ybotAnimationSet;
+	Ref<Netcode::Network::GameSession> gameSession;
 
 	float totalTime;
 
@@ -58,7 +60,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		graphics->frame->Prepare();
 
 		auto cfgBuilder = graphics->CreateFrameGraphBuilder();
-		renderSystem.renderer.CreateComputeFrameGraph(cfgBuilder);
+		renderSystem.renderer.CreateComputeFrameGraph(cfgBuilder.get());
 		graphics->frame->Run(cfgBuilder->Build(), FrameGraphCullMode::NONE);
 
 		graphics->frame->DeviceSync();
@@ -78,7 +80,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		gameScene->UpdatePerFrameCb();
 
 		auto builder = graphics->CreateFrameGraphBuilder();
-		renderSystem.renderer.CreateFrameGraph(builder);
+		renderSystem.renderer.CreateFrameGraph(builder.get());
 
 		graphics->frame->Run(builder->Build(), FrameGraphCullMode::ANY);
 		graphics->frame->Present();
@@ -120,7 +122,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	void LoadAssets() {
 		AssetManager * assetManager = Service::Get<AssetManager>();
 
-		Netcode::AxisMapRef axisMap = std::make_shared<Netcode::AxisMap<AxisEnum>>(std::initializer_list<Netcode::AxisData<AxisEnum>> {
+		Ref<Netcode::AxisMapBase> axisMap = std::make_shared<Netcode::AxisMap<AxisEnum>>(std::initializer_list<Netcode::AxisData<AxisEnum>> {
 			Netcode::AxisData<AxisEnum> { AxisEnum::VERTICAL,		Netcode::KeyCode::W,			Netcode::KeyCode::S },
 			Netcode::AxisData<AxisEnum> { AxisEnum::HORIZONTAL,	Netcode::KeyCode::D,			Netcode::KeyCode::A },
 			Netcode::AxisData<AxisEnum> { AxisEnum::FIRE1,			Netcode::KeyCode::MOUSE_LEFT,	Netcode::KeyCode::UNDEFINED },
@@ -148,9 +150,9 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		}
 
 
-		std::shared_ptr<LoginPage> loginPage = pageManager.CreatePage<LoginPage>(*px.physics);
-		std::shared_ptr<ServerBrowserPage> serverBrowserPage = pageManager.CreatePage<ServerBrowserPage>(*px.physics);
-		std::shared_ptr<LoadingPage> loadingPage = pageManager.CreatePage<LoadingPage>(*px.physics);
+		Ref<LoginPage> loginPage = pageManager.CreatePage<LoginPage>(*px.physics);
+		Ref<ServerBrowserPage> serverBrowserPage = pageManager.CreatePage<ServerBrowserPage>(*px.physics);
+		Ref<LoadingPage> loadingPage = pageManager.CreatePage<LoadingPage>(*px.physics);
 
 		loginPage->InitializeComponents();
 		serverBrowserPage->InitializeComponents();
@@ -357,7 +359,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			DirectX::XMStoreFloat4x4(&modelComponent->perObjectData.Model, DirectX::XMMatrixIdentity());
 			DirectX::XMStoreFloat4x4(&modelComponent->perObjectData.InvModel, DirectX::XMMatrixIdentity());
 
-			Netcode::InputLayoutBuilderRef inputLayoutBuilder = graphics->CreateInputLayoutBuilder();
+			Ref<Netcode::InputLayoutBuilder> inputLayoutBuilder = graphics->CreateInputLayoutBuilder();
 
 			for(uint32_t ilIdx = 0; ilIdx < mesh->inputElementsLength; ++ilIdx) {
 				inputLayoutBuilder->AddInputElement(mesh->inputElements[ilIdx].semanticName,
@@ -366,9 +368,9 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 					mesh->inputElements[ilIdx].byteOffset);
 			}
 
-			Netcode::InputLayoutRef inputLayout = inputLayoutBuilder->Build();
+			Ref<Netcode::InputLayout> inputLayout = inputLayoutBuilder->Build();
 
-			Netcode::Graphics::UploadBatch batch;
+			auto batch = graphics->resources->CreateUploadBatch();
 
 			auto appMesh = std::make_shared<Mesh>();
 
@@ -378,21 +380,21 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			for(unsigned int i = 0; i < mesh->lodLevelsLength; ++i) {
 				uint8_t * vData = vBasePtr + mesh->lodLevels[i].vertexBufferByteOffset;
 				uint8_t * iData = nullptr;
-				GpuResourceRef vbuffer = graphics->resources->CreateVertexBuffer(mesh->lodLevels[i].vertexBufferSizeInBytes, mesh->vertexSize, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
+				Ref<Netcode::GpuResource> vbuffer = graphics->resources->CreateVertexBuffer(mesh->lodLevels[i].vertexBufferSizeInBytes, mesh->vertexSize, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
 				uint64_t vCount = mesh->lodLevels[i].vertexCount;
-				GpuResourceRef ibuffer = 0;
+				Ref<Netcode::GpuResource> ibuffer{ nullptr };
 				uint64_t iCount = 0;
 
-				batch.Upload(vbuffer, vData, mesh->lodLevels[i].vertexBufferSizeInBytes);
-				batch.ResourceBarrier(vbuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
+				batch->Upload(vbuffer, vData, mesh->lodLevels[i].vertexBufferSizeInBytes);
+				batch->Barrier(vbuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
 
 				if(mesh->indices != nullptr) {
 					ibuffer = graphics->resources->CreateIndexBuffer(mesh->lodLevels[i].indexBufferSizeInBytes, DXGI_FORMAT_R32_UINT, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
 					iData = iBasePtr + mesh->lodLevels[i].indexBufferByteOffset;
 					iCount = mesh->lodLevels[i].indexCount;
 
-					batch.Upload(ibuffer, iData, mesh->lodLevels[i].indexBufferSizeInBytes);
-					batch.ResourceBarrier(ibuffer, ResourceState::COPY_DEST, ResourceState::INDEX_BUFFER);
+					batch->Upload(ibuffer, iData, mesh->lodLevels[i].indexBufferSizeInBytes);
+					batch->Barrier(ibuffer, ResourceState::COPY_DEST, ResourceState::INDEX_BUFFER);
 				}
 
 				GBuffer lod;
@@ -414,7 +416,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			material->data.fresnelR0 = Netcode::Float3{ 0.05f, 0.05f, 0.05f };
 			material->data.shininess = mat->shininess;
 
-			graphics->frame->SyncUpload(batch);
+			graphics->frame->SyncUpload(std::move(batch));
 
 			modelComponent->AddShadedMesh(appMesh, material);
 		}

@@ -36,7 +36,7 @@ using ColliderShape = Netcode::Asset::Collider;
 #define COMPONENT_ALIGN __declspec(align(16))
 
 COMPONENT_ALIGN struct Sprite {
-	Netcode::ResourceViewsRef texture;
+	Ref<Netcode::ResourceViews> texture;
 	Netcode::UInt2 textureSize;
 	Netcode::Float4 diffuseColor;
 	Netcode::Float4 hoverColor;
@@ -99,7 +99,7 @@ struct ShadedMesh {
 COMPONENT_ALIGN class Model {
 public:
 	PerObjectData perObjectData;
-	Netcode::ResourceViewsRef boneData;
+	Ref<Netcode::ResourceViews> boneData;
 	int32_t boneDataOffset;
 	std::vector<ShadedMesh> meshes;
 

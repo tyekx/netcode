@@ -1,12 +1,13 @@
 #pragma once
 
-#include "../../HandleTypes.h"
+#include <Netcode/HandleTypes.h>
+#include "DX12Includes.h"
 #include "DX12Common.h"
 
 namespace Netcode::Graphics::DX12 {
 
 	class RootSignatureDesc {
-		std::unique_ptr<uint8_t[]> buffer;
+		Unique<uint8_t[]> buffer;
 		D3D12_VERSIONED_ROOT_SIGNATURE_DESC rootSigDesc;
 
 		void CreateRS_1_0(const D3D12_ROOT_SIGNATURE_DESC & rsDesc);
@@ -19,12 +20,12 @@ namespace Netcode::Graphics::DX12 {
 		const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & GetNativeDesc() const;
 	};
 
-	class RootSignature : public Netcode::RootSignature {
+	class RootSignatureImpl : public RootSignature {
 		com_ptr<ID3D12RootSignature> rootSignature;
 		RootSignatureDesc desc;
 	public:
 
-		RootSignature(com_ptr<ID3D12RootSignature> rs, const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & rsDesc);
+		RootSignatureImpl(com_ptr<ID3D12RootSignature> rs, const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & rsDesc);
 
 		const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & GetDesc() const;
 

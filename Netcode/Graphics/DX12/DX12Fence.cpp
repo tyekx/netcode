@@ -1,8 +1,9 @@
 #include "DX12Fence.h"
+#include "DX12Includes.h"
 
 namespace Netcode::Graphics::DX12 {
 
-	void Fence::CreateResources(ID3D12Device * device) {
+	void FenceImpl::CreateResources(ID3D12Device * device) {
 		DX_API("Failed to create fence")
 			device->CreateFence(fenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.GetAddressOf()));
 
@@ -12,37 +13,37 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 
-	Fence::Fence(ID3D12Device * device, uint64_t initialValue) : fence{}, fenceEvent{ nullptr }, fenceValue{ initialValue } {
+	FenceImpl::FenceImpl(ID3D12Device * device, uint64_t initialValue) : fence{}, fenceEvent{ nullptr }, fenceValue{ initialValue } {
 		CreateResources(device);
 	}
 
-	ID3D12Fence * Fence::GetFence() const {
+	ID3D12Fence * FenceImpl::GetFence() const {
 		return fence.Get();
 	}
 
-	void Fence::Increment() {
+	void FenceImpl::Increment() {
 		++fenceValue;
 	}
 
-	uint64_t Fence::GetValue() const {
+	uint64_t FenceImpl::GetValue() const {
 		return fenceValue;
 	}
 
-	void Fence::HostWait() {
+	void FenceImpl::HostWait() {
 		DX_API("Failed to SetEventOnCompletion")
 			fence->SetEventOnCompletion(GetValue(), fenceEvent);
 
 		WaitForSingleObject(fenceEvent, INFINITE);
 	}
 
-	void Fence::Signal(ID3D12CommandQueue * commandQueue) {
+	void FenceImpl::Signal(ID3D12CommandQueue * commandQueue) {
 		Increment();
 
 		DX_API("Failed to signal fence")
 			commandQueue->Signal(fence.Get(), GetValue());
 	}
 
-	void Fence::Wait(ID3D12CommandQueue * commandQueue) {
+	void FenceImpl::Wait(ID3D12CommandQueue * commandQueue) {
 		commandQueue->Wait(fence.Get(), GetValue());
 	}
 

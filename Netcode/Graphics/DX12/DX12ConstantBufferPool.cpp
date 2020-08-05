@@ -1,6 +1,48 @@
 #include "DX12ConstantBufferPool.h"
+#include <Netcode/Common.h>
+#include <Netcode/Graphics/ResourceEnums.h>
+#include "DX12Includes.h"
+#include "DX12Resource.h"
+#include "DX12HeapManager.h"
+#include <array>
 
 namespace Netcode::Graphics::DX12 {
+
+	// actual cbuffer page with GPU resource
+	struct ConstantBufferPool::CBufferPage {
+		Ref<DX12::Resource> resource;
+		UINT64 offset;
+		const D3D12_GPU_VIRTUAL_ADDRESS baseAddr;
+
+		CBufferPage(Ref<DX12::Resource> resource) : resource{ resource }, offset{ 0 }, baseAddr{ resource->resource->GetGPUVirtualAddress() } { }
+	};
+
+	// a single allocation for a cbuffer 32 bytes of management data
+	struct ConstantBufferPool::CBufferAllocation {
+		D3D12_GPU_VIRTUAL_ADDRESS address;
+		ID3D12Resource * resource;
+		UINT64 sizeInBytes;
+		UINT64 locationOffset;
+	};
+
+	/*
+	A bulk of allocations, does not invalidate the pointers to a CBufferAllocation object,
+	while maintaining the dynamically expanding nature
+	*/
+	struct ConstantBufferPool::CBufferAllocationPage {
+		constexpr static UINT PAGE_SIZE = 1024;
+		UINT nextId;
+		std::array<ConstantBufferPool::CBufferAllocation, PAGE_SIZE> allocations;
+
+		ConstantBufferPool::CBufferAllocation * Insert() {
+			return allocations.data() + nextId++;
+		}
+
+		bool IsFull() const {
+			return nextId == PAGE_SIZE;
+		}
+	};
+
 
 	Ref<DX12::Resource> ConstantBufferPool::CreatePageResource() {
 		ResourceDesc desc;
@@ -40,7 +82,7 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 
-	void ConstantBufferPool::SetHeapManager(Ref<HeapManager> heapMan) {
+	ConstantBufferPool::ConstantBufferPool(Ref<HeapManager> heapMan) : ConstantBufferPool{} {
 		heapManager = std::move(heapMan);
 	}
 

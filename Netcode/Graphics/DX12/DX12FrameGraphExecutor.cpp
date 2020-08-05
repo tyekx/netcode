@@ -1,4 +1,14 @@
 #include "DX12FrameGraphExecutor.h"
+#include <Netcode/Common.h>
+#include "DX12DynamicDescriptorHeap.h"
+#include "DX12ConstantBufferPool.h"
+#include "DX12ResourcePool.h"
+#include "DX12HeapManager.h"
+#include "DX12CommandListPool.h"
+#include "DX12RenderContext.h"
+#include "DX12Fence.h"
+#include "DX12FrameGraph.h"
+#include "DX12RenderPass.h"
 
 namespace Netcode::Graphics::DX12 {
 
@@ -28,13 +38,13 @@ namespace Netcode::Graphics::DX12 {
 		computeSubmitCache[computeSubmitCacheSize++] = cl;
 	}
 
-	void FrameGraphExecutor::PushCompute(Ref<Netcode::RenderPass> renderPass, CommandList ccl) {
+	void FrameGraphExecutor::PushCompute(Ref<RenderPass> renderPass, CommandList ccl) {
 		computeStack.emplace_back(std::move(renderPass));
 		AddComputeCommandList(ccl.GetCommandList());
 		inFlightCommandLists->push_back(std::move(ccl));
 	}
 
-	void FrameGraphExecutor::PushDirect(Ref<Netcode::RenderPass> renderPass, CommandList gcl) {
+	void FrameGraphExecutor::PushDirect(Ref<RenderPass> renderPass, CommandList gcl) {
 		directStack.emplace_back(std::move(renderPass));
 		AddDirectCommandList(gcl.GetCommandList());
 		inFlightCommandLists->push_back(std::move(gcl));
@@ -107,8 +117,8 @@ namespace Netcode::Graphics::DX12 {
 		return false;
 	}
 
-	bool FrameGraphExecutor::HasResourceReadDependency(Ref<Netcode::RenderPass> renderPass) {
-		if(renderPass->Type() == RenderPassType::DIRECT) {
+	bool FrameGraphExecutor::HasResourceReadDependency(Ref<RenderPass> renderPass) {
+		if(renderPass->Type() == RenderPassType::GRAPHICS) {
 			ArrayView<uint64_t> readResources = renderPass->GetReadResources();
 			for(const auto & computePass : computeStack) {
 				ArrayView<uint64_t> writtenResources = computePass->GetWrittenResources();
@@ -133,8 +143,10 @@ namespace Netcode::Graphics::DX12 {
 		return false;
 	}
 
-	void FrameGraphExecutor::InvokeRenderFunction(Ref<Netcode::RenderPass> renderPass) {
-		if(renderPass->Type() == RenderPassType::DIRECT) {
+	void FrameGraphExecutor::InvokeRenderFunction(Ref<RenderPass> rp) {
+		Ref<RenderPassImpl> renderPass = std::dynamic_pointer_cast<RenderPassImpl>(rp);
+
+		if(renderPass->Type() == RenderPassType::GRAPHICS) {
 			CommandList cl = commandListPool->GetDirect();
 			GraphicsContext gctx{ resourcePool, cbufferPool, dheaps, cl.GetCommandList(),
 				backbufferHandle, depthStencilHandle, viewport, scissorRect };
@@ -146,7 +158,7 @@ namespace Netcode::Graphics::DX12 {
 			DX_API("Failed to close command list during render pass: %s", renderPass->name.c_str())
 				cl.GetCommandList()->Close();
 
-			PushDirect(renderPass, std::move(cl));
+			PushDirect(rp, std::move(cl));
 		}
 
 		if(renderPass->Type() == RenderPassType::COMPUTE) {
@@ -160,25 +172,25 @@ namespace Netcode::Graphics::DX12 {
 			DX_API("Failed to close command list during render pass: %s", renderPass->name.c_str())
 				cl.GetCommandList()->Close();
 
-			PushCompute(renderPass, std::move(cl));
+			PushCompute(rp, std::move(cl));
 		}
 	}
 
-	FrameGraphExecutor::FrameGraphExecutor(CommandListPool * commandListPool,
-										HeapManager * heapManager,
-										ResourcePool * resourcePool,
-										DynamicDescriptorHeap * dheaps,
-										ConstantBufferPool * cbufferPool,
-										ID3D12CommandQueue * directCommandQueue,
-										ID3D12CommandQueue * computeCommandQueue,
-										ID3D12Resource * backbufferResource,
-										std::vector<CommandList> * inFlightCommandLists,
-										const float * clearColor,
-										DX12FenceRef mainFence,
-										D3D12_CPU_DESCRIPTOR_HANDLE backbufferHandle,
-										D3D12_CPU_DESCRIPTOR_HANDLE depthStencilHandle,
-										D3D12_VIEWPORT viewport,
-										D3D12_RECT scissorRect) :
+	FrameGraphExecutor::FrameGraphExecutor( Ptr<CommandListPool> commandListPool,
+											Ptr<HeapManager> heapManager,
+											Ptr<ResourcePool> resourcePool,
+											Ptr<DynamicDescriptorHeap> dheaps,
+											Ptr<ConstantBufferPool> cbufferPool,
+											Ptr<ID3D12CommandQueue> directCommandQueue,
+											Ptr<ID3D12CommandQueue> computeCommandQueue,
+											Ptr<ID3D12Resource> backbufferResource,
+											Ptr<std::vector<CommandList>> inFlightCommandLists,
+											const float * clearColor,
+											Ref<Fence> mainFence,
+											D3D12_CPU_DESCRIPTOR_HANDLE backbufferHandle,
+											D3D12_CPU_DESCRIPTOR_HANDLE depthStencilHandle,
+											D3D12_VIEWPORT viewport,
+											D3D12_RECT scissorRect) :
 		commandListPool{ commandListPool },
 		heapManager{ heapManager },
 		resourcePool{ resourcePool },
@@ -189,7 +201,7 @@ namespace Netcode::Graphics::DX12 {
 		backbufferResource{ backbufferResource },
 		inFlightCommandLists{ inFlightCommandLists },
 		clearColor{ clearColor },
-		mainFence{ mainFence },
+		mainFence{ std::dynamic_pointer_cast<FenceImpl>(mainFence) },
 		backbufferHandle{ backbufferHandle },
 		depthStencilHandle{ depthStencilHandle },
 		viewport{ viewport },
@@ -204,12 +216,13 @@ namespace Netcode::Graphics::DX12 {
 		usingBackbuffer{ false } {
 	}
 
-	void FrameGraphExecutor::Execute(Ref<FrameGraph> frameGraph) {
+	void FrameGraphExecutor::Execute(Ref<FrameGraph> fg) {
+		auto frameGraph = std::dynamic_pointer_cast<FrameGraphImpl>(fg);
 		usingBackbuffer = frameGraph->UsingBackbuffer();
 
 		BeginFrame();
 
-		std::vector<Ref<Netcode::RenderPass>> runnable = frameGraph->QueryCompleteRenderPasses();
+		std::vector<Ref<RenderPass>> runnable = frameGraph->QueryCompleteRenderPasses();
 
 		while(!runnable.empty()) {
 			bool directSyncSubmission = false;
@@ -218,7 +231,7 @@ namespace Netcode::Graphics::DX12 {
 			for(auto & rp : runnable) {
 				// step#1: determine dependencies
 				if(HasResourceReadDependency(rp)) {
-					if(rp->Type() == RenderPassType::DIRECT) {
+					if(rp->Type() == RenderPassType::GRAPHICS) {
 						computeSyncSubmission = true;
 					}
 

@@ -1,18 +1,18 @@
-#include "../../FancyIterators.hpp"
 #include "DX12InputLayout.h"
+#include <Netcode/FancyIterators.hpp>
 
 namespace Netcode::Graphics::DX12 {
 
-	InputLayout::InputLayout(BuilderContainer<D3D12_INPUT_ELEMENT_DESC> elements) : inputLayout{ }, elements{ std::move(elements) } {
+	InputLayoutImpl::InputLayoutImpl(BuilderContainer<D3D12_INPUT_ELEMENT_DESC> elements) : inputLayout{ }, elements{ std::move(elements) } {
 		inputLayout.NumElements = this->elements.size();
 		inputLayout.pInputElementDescs = this->elements.data();
 	}
 
-	const D3D12_INPUT_LAYOUT_DESC & InputLayout::GetNativeInputLayout() const {
+	const D3D12_INPUT_LAYOUT_DESC & InputLayoutImpl::GetNativeInputLayout() const {
 		return inputLayout;
 	}
 
-	bool InputLayout::operator==(const BuilderContainer<D3D12_INPUT_ELEMENT_DESC> & rhs) const {
+	bool InputLayoutImpl::operator==(const BuilderContainer<D3D12_INPUT_ELEMENT_DESC> & rhs) const {
 		if(elements.size() != rhs.size()) {
 			return false;
 		}

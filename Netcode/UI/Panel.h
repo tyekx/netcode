@@ -12,7 +12,7 @@ namespace Netcode::UI {
         BackgroundType backgroundType;
         VerticalAnchor backgroundVerticalAlignment;
         HorizontalAnchor backgroundHorizontalAlignment;
-        ResourceViewsRef backgroundImage;
+        Ref<ResourceViews> backgroundImage;
         Float2 backgroundSize;
         UInt2 backgroundImageSize;
         Float4 backgroundColor;
@@ -77,13 +77,13 @@ namespace Netcode::UI {
 
         void Opacity(float w);
 
-        ResourceViewsRef BackgroundImage() const;
+        Ref<ResourceViews> BackgroundImage() const;
 
         void BackgroundImage(std::nullptr_t);
 
-        void BackgroundImage(ResourceViewsRef imageRef, const UInt2 & imageSize);
+        void BackgroundImage(Ref<ResourceViews> imageRef, const UInt2 & imageSize);
 
-        virtual void Render(SpriteBatchPtr batch) override;
+        virtual void Render(Ptr<SpriteBatch> batch) override;
     };
 
 }

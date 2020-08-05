@@ -1,21 +1,30 @@
 #pragma once
 
-#include "../../Modules.h"
-#include "../../Vertex.h"
-#include "../UploadBatch.h"
+#include "DX12Decl.h"
+#include <Netcode/HandleTypes.h>
+#include <Netcode/Graphics/BorderDesc.h>
+#include <Netcode/Graphics/SpriteDesc.h>
+#include <Netcode/Vertex.h>
+#include <vector>
 
-#include <functional>
-#include <memory>
+namespace Netcode::Module {
 
-#include "DX12Common.h"
-#include <d3d12.h>
-#include <DirectXMath.h>
-#include <DirectXColors.h>
+    class IGraphicsModule;
+
+}
+
+namespace Netcode::Graphics {
+
+    class IResourceContext;
+    class IRenderContext;
+
+}
 
 namespace Netcode::Graphics::DX12
 {
+
     __declspec(align(256)) struct SpriteCbuffer {
-        DirectX::XMFLOAT4X4A transform;
+        Netcode::Float4x4 transform;
     };
 
     enum SpriteSortMode
@@ -35,7 +44,7 @@ namespace Netcode::Graphics::DX12
         SpriteEffects_FlipBoth = SpriteEffects_FlipHorizontally | SpriteEffects_FlipVertically,
     };
 
-    class SpriteBatch : public Netcode::SpriteBatch {
+    class SpriteBatchImpl : public Netcode::SpriteBatch {
         static Weak<GpuResource> indexBuffer;
     public:
 
@@ -104,15 +113,15 @@ namespace Netcode::Graphics::DX12
 
         void CreateIndexBuffer(const Netcode::Module::IGraphicsModule * graphics);
 
-        SpriteBatch(const Netcode::Module::IGraphicsModule * graphics, Ref<Netcode::RootSignature> rootSig, Ref<Netcode::PipelineState> pso);
+        SpriteBatchImpl(const Netcode::Module::IGraphicsModule * graphics, Ref<Netcode::RootSignature> rootSig, Ref<Netcode::PipelineState> pso);
 
-        SpriteBatch(SpriteBatch && moveFrom) = default;
-        SpriteBatch & operator= (SpriteBatch && moveFrom) = default;
+        SpriteBatchImpl(SpriteBatchImpl && moveFrom) = default;
+        SpriteBatchImpl & operator= (SpriteBatchImpl && moveFrom) = default;
 
-        SpriteBatch(SpriteBatch const &) = delete;
-        SpriteBatch & operator= (SpriteBatch const &) = delete;
+        SpriteBatchImpl(SpriteBatchImpl const &) = delete;
+        SpriteBatchImpl & operator= (SpriteBatchImpl const &) = delete;
 
-        virtual ~SpriteBatch() = default;
+        virtual ~SpriteBatchImpl() = default;
 
         // Begin/End a batch of sprite drawing operations.
         void Begin(SpriteSortMode sortMode = SpriteSortMode_Deferred, Netcode::Matrix transformMatrix = Netcode::Matrix{});

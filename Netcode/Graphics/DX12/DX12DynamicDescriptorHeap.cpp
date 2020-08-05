@@ -1,11 +1,16 @@
-#include "../../Common.h"
 #include "DX12DynamicDescriptorHeap.h"
+#include <Netcode/Common.h>
 #include "DX12Helpers.h"
 #include "DX12Platform.h"
+#include "DX12Includes.h"
+#include "DX12Resource.h"
+#include "DX12ResourceViews.h"
+#include <tuple>
+#include <memory>
 
 namespace Netcode::Graphics::DX12 {
 
-	std::tuple<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> DynamicDescriptorHeap::CreateBufferUAV(DX12ResourceRef resource) {
+	std::tuple<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> DynamicDescriptorHeap::CreateBufferUAV(Ref<DX12::Resource> resource) {
 		ASSERT(IsRendering, "Creating transient descriptor outside of rendering is invalid, create them after a Prepare() call");
 
 		const uint32_t srvId_cpuVisible = srvOffset_CpuVisible;
@@ -24,7 +29,7 @@ namespace Netcode::Graphics::DX12 {
 		return std::tie(srvCpuHandle_CpuVisible, srvGpuHandle_ShaderVisible);
 	}
 
-	D3D12_CPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateRTV(DX12ResourceRef resource)
+	D3D12_CPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateRTV(Ref<DX12::Resource> resource)
 	{
 		ASSERT(IsRendering, "Creating transient descriptor outside of rendering is invalid, create them after a Prepare() call");
 
@@ -39,7 +44,7 @@ namespace Netcode::Graphics::DX12 {
 		return dHandle;
 	}
 
-	D3D12_CPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateDSV(DX12ResourceRef resource)
+	D3D12_CPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateDSV(Ref<DX12::Resource> resource)
 	{
 		ASSERT(IsRendering, "Creating transient descriptor outside of rendering is invalid, create them after a Prepare() call");
 		const uint32_t dsvId_CpuVisible = dsvOffset_CpuVisible;
@@ -53,7 +58,7 @@ namespace Netcode::Graphics::DX12 {
 		return dHandle;
 	}
 
-	D3D12_GPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateSRV(DX12ResourceRef resource)
+	D3D12_GPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateSRV(Ref<DX12::Resource> resource)
 	{
 		ASSERT(IsRendering, "Creating transient descriptor outside of rendering is invalid, create them after a Prepare() call");
 
@@ -69,7 +74,7 @@ namespace Netcode::Graphics::DX12 {
 		return gpuHandle;
 	}
 
-	D3D12_GPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateCBV(DX12ResourceRef resource)
+	D3D12_GPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateCBV(Ref<DX12::Resource> resource)
 	{
 		ASSERT(IsRendering, "Creating transient descriptor outside of rendering is invalid, create them after a Prepare() call");
 
@@ -87,7 +92,7 @@ namespace Netcode::Graphics::DX12 {
 		return gpuHandle;
 	}
 
-	Ref<DX12::ResourceViews> DynamicDescriptorHeap::CreatePermanentSRV(uint32_t numDescriptors)
+	Ref<DX12::ResourceViewsImpl> DynamicDescriptorHeap::CreatePermanentSRV(uint32_t numDescriptors)
 	{
 		ASSERT(!IsRendering, "Creating permanent descriptor during rendering is invalid, create them before a frame->Prepare() call");
 
@@ -102,7 +107,7 @@ namespace Netcode::Graphics::DX12 {
 		srvOffset_ShaderVisible += numDescriptors;
 		srvNumStatic += numDescriptors;
 
-		return std::make_shared<DX12ResourceViews>(numDescriptors,
+		return std::make_shared<DX12::ResourceViewsImpl>(numDescriptors,
 													srvGpuHandle_ShaderVisible,
 													srvCpuHandle_ShaderVisible,
 													srvCpuHandle_CpuVisible,
@@ -110,7 +115,7 @@ namespace Netcode::Graphics::DX12 {
 													device);
 	}
 
-	Ref<DX12::ResourceViews> DynamicDescriptorHeap::CreatePermanentDSV()
+	Ref<DX12::ResourceViewsImpl> DynamicDescriptorHeap::CreatePermanentDSV()
 	{
 		ASSERT(!IsRendering, "Creating permanent descriptor during rendering is invalid, create them before a frame->Prepare() call");
 
@@ -120,7 +125,7 @@ namespace Netcode::Graphics::DX12 {
 		dsvOffset_CpuVisible += 1;
 		dsvNumStatic += 1;
 
-		return std::make_shared<DX12ResourceViews>(1,
+		return std::make_shared<DX12::ResourceViewsImpl>(1,
 			D3D12_GPU_DESCRIPTOR_HANDLE{},
 			D3D12_CPU_DESCRIPTOR_HANDLE{},
 			dHandle,
@@ -128,7 +133,7 @@ namespace Netcode::Graphics::DX12 {
 			device);
 	}
 
-	Ref<DX12::ResourceViews> DynamicDescriptorHeap::CreatePermanentRTV(uint32_t numDescriptors)
+	Ref<DX12::ResourceViewsImpl> DynamicDescriptorHeap::CreatePermanentRTV(uint32_t numDescriptors)
 	{
 		ASSERT(!IsRendering, "Creating permanent descriptor during rendering is invalid, create them before a frame->Prepare() call");
 		
@@ -138,7 +143,7 @@ namespace Netcode::Graphics::DX12 {
 		rtvOffset_CpuVisible += numDescriptors;
 		rtvNumStatic += numDescriptors;
 
-		return std::make_shared<DX12ResourceViews>(numDescriptors,
+		return std::make_shared<DX12::ResourceViewsImpl>(numDescriptors,
 			D3D12_GPU_DESCRIPTOR_HANDLE{},
 			D3D12_CPU_DESCRIPTOR_HANDLE{},
 			dHandle,
@@ -146,11 +151,11 @@ namespace Netcode::Graphics::DX12 {
 			device);
 	}
 
-	Ref<DX12::ResourceViews> DynamicDescriptorHeap::CreatePermanentSamplers(uint32_t numDescriptors)
+	Ref<DX12::ResourceViewsImpl> DynamicDescriptorHeap::CreatePermanentSamplers(uint32_t numDescriptors)
 	{
 		ASSERT(!IsRendering, "Creating permanent descriptor during rendering is invalid, create them before a frame->Prepare() call");
 		ASSERT(false, "Samplers are not implemented yet");
-		return Ref<DX12::ResourceViews>{};
+		return Ref<DX12::ResourceViewsImpl>{};
 	}
 
 	void DynamicDescriptorHeap::Prepare()
@@ -183,7 +188,7 @@ namespace Netcode::Graphics::DX12 {
 		gcl->SetDescriptorHeaps(ARRAYSIZE(dheaps), dheaps);
 	}
 
-	void DynamicDescriptorHeap::CreateResources(com_ptr<ID3D12Device> dev) {
+	DynamicDescriptorHeap::DynamicDescriptorHeap(com_ptr<ID3D12Device> dev) : DynamicDescriptorHeap{}  {
 		device = std::move(dev);
 
 		srvNumDesc_CpuVisible = 1 << 16; // 64K

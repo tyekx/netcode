@@ -6,8 +6,8 @@
 #include <DirectXCollision.h>
 
 struct GBuffer {
-	Netcode::GpuResourceRef vertexBuffer;
-	Netcode::GpuResourceRef indexBuffer;
+	Ref<Netcode::GpuResource> vertexBuffer;
+	Ref<Netcode::GpuResource> indexBuffer;
 	uint64_t vertexCount;
 	uint64_t indexCount;
 };

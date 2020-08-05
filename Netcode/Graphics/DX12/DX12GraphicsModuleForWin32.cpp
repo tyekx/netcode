@@ -1,4 +1,6 @@
 #include "DX12GraphicsModuleForWin32.h"
+#include "DX12Common.h"
+
 
 namespace Netcode::Graphics::DX12 {
 

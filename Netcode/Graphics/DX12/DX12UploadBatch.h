@@ -3,6 +3,7 @@
 #include <Netcode/Graphics/UploadBatch.h>
 #include <Netcode/HandleTypes.h>
 
+#include <memory>
 #include <vector>
 #include <variant>
 
@@ -40,14 +41,14 @@ namespace Netcode::Graphics::DX12 {
 	};
 
 
-	class UploadBatch : public Netcode::Graphics::UploadBatch {
+	class UploadBatchImpl : public UploadBatch {
 	public:
 	private:
 		std::vector<UploadTask> uploadTasks;
 		std::vector<BarrierTask> barrierTasks;
 
 	public:
-		virtual void Upload(Ref<GpuResource> resourceHandle, Ref<Texture> texture) override;
+		virtual void Upload(Ref<GpuResource> resourceHandle, Ref<Netcode::Texture> texture) override;
 		virtual void Upload(Ref<GpuResource> resourceHandle, const void * srcData, size_t srcDataSizeInBytes) override;
 		virtual void Upload(Ref<GpuResource> resourceHandle, const void * srcData, size_t srcDataSizeInBytes, size_t dstDataOffsetInBytes) override;
 		virtual void Barrier(Ref<GpuResource> resourceHandle, ResourceState before, ResourceState after) override;

@@ -1,8 +1,6 @@
-#include "../../Common.h"
-#include "../../Logger.h"
-#include "DX12Common.h"
 #include "DX12ShaderCompiled.h"
-#include <fstream>
+#include "DX12Common.h"
+#include <d3dcompiler.h>
 
 namespace Netcode::Graphics::DX12 {
 	ShaderCompiled::ShaderCompiled(std::wstring sourceFile, const void * srcData, size_t size) : bufferBlob{ nullptr }, sourceFileRef{ std::move(sourceFile) } {

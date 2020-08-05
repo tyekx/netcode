@@ -317,7 +317,7 @@ namespace Netcode::UI {
 
         virtual void AddChild(std::shared_ptr<Control> child);
 
-        virtual void Render(SpriteBatchPtr batch);
+        virtual void Render(Ptr<SpriteBatch> batch);
 
     };
 

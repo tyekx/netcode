@@ -2,10 +2,12 @@
 
 #include <Netcode/HandleTypes.h>
 #include "DX12Common.h"
+#include "DX12Decl.h"
+#include "DX12Includes.h"
 
 namespace Netcode::Graphics::DX12 {
 
-	class ResourceViews : public Netcode::ResourceViews {
+	class ResourceViewsImpl : public ResourceViews {
 		const uint32_t numDescriptors;
 		const D3D12_GPU_DESCRIPTOR_HANDLE baseGpuHandle_ShaderVisible;
 		const D3D12_CPU_DESCRIPTOR_HANDLE baseCpuHandle_ShaderVisible;
@@ -15,7 +17,7 @@ namespace Netcode::Graphics::DX12 {
 
 		uint32_t GetIncrementSize() const;
 	public:
-		ResourceViews(uint32_t numDescriptors,
+		ResourceViewsImpl(uint32_t numDescriptors,
 						D3D12_GPU_DESCRIPTOR_HANDLE baseGpuHandle,
 						D3D12_CPU_DESCRIPTOR_HANDLE cpu_ShaderVisible,
 						D3D12_CPU_DESCRIPTOR_HANDLE cpu_CpuVisible,
@@ -32,7 +34,7 @@ namespace Netcode::Graphics::DX12 {
 
 		void CreateRTV(uint32_t idx, ID3D12Resource * resource, DXGI_FORMAT format);
 
-		virtual ~ResourceViews() = default;
+		virtual ~ResourceViewsImpl() = default;
 
 		virtual void CreateSRV(uint32_t idx, Ptr<GpuResource> resourceHandle) override;
 

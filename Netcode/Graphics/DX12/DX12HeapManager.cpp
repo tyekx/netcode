@@ -1,4 +1,10 @@
 #include "DX12HeapManager.h"
+#include <Netcode/Graphics/ResourceDesc.h>
+#include "DX12Includes.h"
+#include "DX12Helpers.h"
+#include "DX12Heap.h"
+#include "DX12Resource.h"
+#include "DX12ResourceDesc.h"
 
 namespace Netcode::Graphics::DX12 {
 
@@ -21,10 +27,6 @@ namespace Netcode::Graphics::DX12 {
 
 		return size;
 	}
-	
-	void HeapManager::SetDevice(com_ptr<ID3D12Device> dev) {
-		device = std::move(dev);
-	}
 
 	D3D12_HEAP_FLAGS GetHeapFlags(D3D12_RESOURCE_FLAGS f, D3D12_RESOURCE_DIMENSION dim) {
 		if((f & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) || (f & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)) {
@@ -38,7 +40,11 @@ namespace Netcode::Graphics::DX12 {
 		return D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES;
 	}
 
-	Ref<DX12::Resource> HeapManager::CreateResource(const ResourceDesc & d) {
+	HeapManager::HeapManager(com_ptr<ID3D12Device> device) : heaps{}, device{ std::move(device) } {
+
+	}
+
+	Ref<Resource> HeapManager::CreateResource(const ResourceDesc & d) {
 		using value_type = decltype(heaps)::value_type;
 
 		const D3D12_RESOURCE_DESC dxDesc = GetNativeDesc(d);
@@ -85,7 +91,7 @@ namespace Netcode::Graphics::DX12 {
 			return true;
 		});
 
-		Ref<DX12::Resource> resource;
+		Ref<Resource> resource;
 		if(it != std::end(heaps)) {
 			resource = (*it)->CreateResource(cpy, dxDesc, initState, optCv, dxAlloc);
 		} else {

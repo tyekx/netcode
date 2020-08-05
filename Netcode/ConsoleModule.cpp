@@ -1,5 +1,6 @@
 #include "ConsoleModule.h"
 #include <iostream>
+#include <Windows.h>
 
 namespace Netcode::Module {
 	void ConsoleModule::Start(AApp * app) {

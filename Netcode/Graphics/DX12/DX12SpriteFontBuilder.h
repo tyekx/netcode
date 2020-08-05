@@ -1,22 +1,22 @@
 #pragma once
 
-#include "../../HandleTypes.h"
-#include "../GraphicsContexts.h"
-#include "DX12Common.h"
-#include "DX12SpriteFontLibrary.h"
-#include "DX12Texture.h"
+#include <Netcode/HandleTypes.h>
+#include <memory>
 
 namespace Netcode::Graphics::DX12 {
 
-	class SpriteFontBuilder : public Netcode::SpriteFontBuilder {
-		Ref<DX12::SpriteFontLibrary> spriteFontLib;
-		Ref<DX12::SpriteFont> spriteFont;
+	class SpriteFontLibrary;
+	class SpriteFontImpl;
+
+	class SpriteFontBuilderImpl : public SpriteFontBuilder {
+		Ref<SpriteFontLibrary> spriteFontLib;
+		Ref<SpriteFontImpl> spriteFont;
 	public:
-		SpriteFontBuilder(Ref<DX12::SpriteFontLibrary> spriteFontLib);
+		SpriteFontBuilderImpl(Ref<SpriteFontLibrary> spriteFontLib);
 
 		virtual void LoadFont(const std::wstring & mediaPath) override;
 
-		virtual Ref<Netcode::SpriteFont> Build() override;
+		virtual Ref<SpriteFont> Build() override;
 	};
 
 }

@@ -1,23 +1,21 @@
 #pragma once
 
-#include "../../HandleTypes.h"
+#include <Netcode/HandleTypes.h>
 #include "DX12CPipelineState.h"
-#include "DX12CPipelineStateLibrary.h"
 
 namespace Netcode::Graphics::DX12 {
 
-	class CPipelineStateBuilder : public Netcode::CPipelineStateBuilder {
+	class CPipelineStateLibrary;
+
+	class CPipelineStateBuilderImpl : public Netcode::CPipelineStateBuilder {
 		CPipelineStateDesc cDesc;
-		DX12CPipelineStateLibraryRef cLib;
+		Ref<CPipelineStateLibrary> cLib;
 	public:
-		CPipelineStateBuilder(DX12CPipelineStateLibraryRef libRef);
+		CPipelineStateBuilderImpl(Ref<CPipelineStateLibrary> libRef);
 
-		virtual void SetRootSignature(RootSignatureRef rootSig) override;
-		virtual void SetComputeShader(ShaderBytecodeRef shader) override;
-		virtual PipelineStateRef Build() override;
+		virtual void SetRootSignature(Ref<RootSignature> rootSig) override;
+		virtual void SetComputeShader(Ref<ShaderBytecode> shader) override;
+		virtual Ref<PipelineState> Build() override;
 	};
-
-	using DX12CPipelineStateBuilder = Netcode::Graphics::DX12::CPipelineStateBuilder;
-	using DX12CPipelineStateBuilderRef = std::shared_ptr<DX12CPipelineStateBuilder>;
 
 }

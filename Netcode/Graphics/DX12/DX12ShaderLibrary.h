@@ -1,24 +1,32 @@
 #pragma once
 
-#include "../../Common.h"
-#include "DX12Common.h"
-#include "DX12ShaderVariant.h"
-#include "DX12ShaderCompiled.h"
-#include "DX12ShaderCompiler.h"
+#include <Netcode/HandleDecl.h>
+#include <vector>
 #include "DX12ShaderSourceLibrary.h"
+
+
+namespace Netcode::URI {
+
+	class Shader;
+
+}
 
 namespace Netcode::Graphics::DX12 {
 
+	struct ShaderVariantDesc;
+	class ShaderVariant;
+	class ShaderCompiled;
+
 	class ShaderLibrary {
-		std::vector<Ref<DX12::ShaderVariant>> shaderVariants;
-		std::vector<Ref<DX12::ShaderCompiled>> compiledShaders;
+		std::vector<Ref<ShaderVariant>> shaderVariants;
+		std::vector<Ref<ShaderCompiled>> compiledShaders;
 		ShaderSourceLibrary shaderSources;
 		
-		static Ref<DX12::ShaderCompiled> LoadCSO(std::wstring_view absolutePath);
+		static Ref<ShaderCompiled> LoadCSO(const std::wstring & absolutePath);
 
 	public:
-		Ref<DX12::ShaderCompiled> LoadShader(const URI::Shader & filePath);
-		Ref<DX12::ShaderVariant> GetShaderVariant(const ShaderVariantDesc & desc);
+		Ref<ShaderCompiled> LoadShader(const URI::Shader & filePath);
+		Ref<ShaderVariant> GetShaderVariant(const ShaderVariantDesc & desc);
 	};
 
 }

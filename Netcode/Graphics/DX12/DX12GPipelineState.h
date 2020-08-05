@@ -1,27 +1,33 @@
 #pragma once
 
-#include "../../HandleTypes.h"
-#include "../ResourceEnums.h"
+#include <Netcode/HandleTypes.h>
+#include "DX12Decl.h"
 #include "DX12Common.h"
+#include "DX12Platform.h"
+#include <wrl.h>
 
 namespace Netcode::Graphics::DX12 {
 
+	class StreamOutputImpl;
+	class InputLayoutImpl;
+	class RootSignatureImpl;
+
 	struct GPipelineStateDesc {
-		Ref<RootSignature> rootSignature;
 		DepthStencilDesc depthStencilState;
 		BlendDesc blendState;
-		Ref<StreamOutput> streamOutput;
-		Ref<InputLayout> inputLayout;
 		RasterizerDesc rasterizerState;
+		DXGI_FORMAT rtvFormats[Platform::SimultaneousRenderTargetCount];
+		DXGI_FORMAT dsvFormat;
+		PrimitiveTopologyType topologyType;
+		uint32_t numRenderTargets;
+		Ref<RootSignatureImpl> rootSignature;
+		Ref<StreamOutputImpl> streamOutput;
+		Ref<InputLayoutImpl> inputLayout;
 		Ref<ShaderBytecode> VS;
 		Ref<ShaderBytecode> PS;
 		Ref<ShaderBytecode> GS;
 		Ref<ShaderBytecode> HS;
 		Ref<ShaderBytecode> DS;
-		DXGI_FORMAT rtvFormats[D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT];
-		DXGI_FORMAT dsvFormat;
-		PrimitiveTopologyType topologyType;
-		uint32_t numRenderTargets;
 
 		void FillNativeDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC & psd);
 

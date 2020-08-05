@@ -1,18 +1,18 @@
 #pragma once
 
-#include "../../HandleTypes.h"
+#include <Netcode/HandleTypes.h>
 #include "DX12Common.h"
-#include <vector>
+#include "DX12Includes.h"
 
 namespace Netcode::Graphics::DX12 {
 
-	class StreamOutput : public Netcode::StreamOutput {
+	class StreamOutputImpl : public StreamOutput {
 		D3D12_STREAM_OUTPUT_DESC streamOutput;
 		BuilderContainer<D3D12_SO_DECLARATION_ENTRY> declarations;
-		BuilderContainer<UINT> strides;
+		BuilderContainer<uint32_t> strides;
 	public:
 
-		StreamOutput(const D3D12_STREAM_OUTPUT_DESC & so, BuilderContainer<D3D12_SO_DECLARATION_ENTRY> soDecl, BuilderContainer<UINT> strides);
+		StreamOutputImpl(const D3D12_STREAM_OUTPUT_DESC & so, BuilderContainer<D3D12_SO_DECLARATION_ENTRY> soDecl, BuilderContainer<uint32_t> strides);
 
 		const D3D12_STREAM_OUTPUT_DESC & GetNativeStreamOutput() const;
 

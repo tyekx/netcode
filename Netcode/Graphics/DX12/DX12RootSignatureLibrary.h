@@ -1,12 +1,17 @@
 #pragma once
 
-#include "DX12RootSignature.h"
+#include <Netcode/HandleDecl.h>
+#include "DX12Common.h"
+#include "DX12Decl.h"
+#include <wrl.h>
 
 namespace Netcode::Graphics::DX12 {
 
+	class RootSignatureImpl;
+
 	class RootSignatureLibrary {
 		Memory::ObjectAllocator objectAllocator;
-		BuilderContainer<Ref<DX12::RootSignature>> rootSigs;
+		BuilderContainer<Ref<RootSignatureImpl>> rootSigs;
 		com_ptr<ID3D12Device> device;
 
 		static bool IsCompatible(const D3D12_ROOT_SIGNATURE_DESC & lhs, const D3D12_ROOT_SIGNATURE_DESC & rhs);
@@ -28,8 +33,8 @@ namespace Netcode::Graphics::DX12 {
 	public:
 		RootSignatureLibrary(Memory::ObjectAllocator allocator, com_ptr<ID3D12Device> device);
 
-		Ref<DX12::RootSignature> GetRootSignature(Ref<Netcode::ShaderBytecode> blobWithRootSig);
+		Ref<DX12::RootSignatureImpl> GetRootSignature(Ref<Netcode::ShaderBytecode> blobWithRootSig);
 
-		Ref<DX12::RootSignature> GetRootSignature(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & desc);
+		Ref<DX12::RootSignatureImpl> GetRootSignature(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & desc);
 	};
 }

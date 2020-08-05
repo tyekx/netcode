@@ -1,13 +1,21 @@
 #include "DX12ShaderLibrary.h"
-
-#include "../../Utility.h"
-#include "../../IO/File.h"
-#include "../../IO/Path.h"
+#include <Netcode/Common.h>
+#include <Netcode/Utility.h>
+#include <Netcode/URI/Shader.h>
+#include <Netcode/IO/Path.h>
+#include <Netcode/IO/File.h>
+#include "DX12Common.h"
+#include "DX12ShaderCompiler.h"
+#include "DX12ShaderCompiled.h"
+#include "DX12ShaderVariant.h"
+#include "DX12Decl.h"
+#include "DX12Includes.h"
+#include <d3dcompiler.h>
 
 namespace Netcode::Graphics::DX12 {
 
-	Ref<DX12::ShaderCompiled> ShaderLibrary::LoadCSO(std::wstring_view absolutePath) {
-		IO::File shaderFile{ std::wstring{ absolutePath } };
+	Ref<DX12::ShaderCompiled> ShaderLibrary::LoadCSO(const std::wstring & absolutePath) {
+		IO::File shaderFile{ absolutePath };
 		IO::FileReader<IO::File> reader{ shaderFile, Netcode::IO::FileOpenMode::READ_BINARY };
 
 		size_t numBytes = reader->GetSize();

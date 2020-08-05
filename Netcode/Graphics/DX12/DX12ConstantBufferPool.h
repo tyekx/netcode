@@ -1,78 +1,43 @@
 #pragma once
 
-#include "DX12ResourceDesc.h"
-#include "DX12HeapManager.h"
-#include "DX12Resource.h"
-
-#include <deque>
-#include <array>
+#include <Netcode/HandleDecl.h>
+#include "DX12Decl.h"
+#include <vector>
+#include <list>
+#include <memory>
 
 namespace Netcode::Graphics::DX12 {
+
+	class Resource;
+	class HeapManager;
 
 	/*
 	Simple linear allocator designed to be reset every frame
 	*/
 	class ConstantBufferPool {
 
+		struct CBufferAllocation;
+		struct CBufferAllocationPage;
+		struct CBufferPage;
+
 		constexpr static size_t CBUFFER_PAGE_SIZE = 1 << 19;
 
-		// actual cbuffer page with GPU resource
-		struct CBufferPage {
-			Ref<DX12::Resource> resource;
-			UINT64 offset;
-			const D3D12_GPU_VIRTUAL_ADDRESS baseAddr;
-
-			CBufferPage(Ref<DX12::Resource> resource) : resource{ resource }, offset{ 0 }, baseAddr{ resource->resource->GetGPUVirtualAddress() } { }
-		};
-
-		// a single allocation for a cbuffer 32 bytes of management data
-		struct CBufferAllocation {
-			D3D12_GPU_VIRTUAL_ADDRESS address;
-			ID3D12Resource * resource;
-			UINT64 sizeInBytes;
-			UINT64 locationOffset;
-		};
-
-		/*
-		A bulk of allocations, does not invalidate the pointers to a CBufferAllocation object,
-		while maintaining the dynamically expanding nature
-		*/
-		struct CBufferAllocationPage {
-			constexpr static UINT PAGE_SIZE = 1024;
-			UINT nextId;
-			std::array<CBufferAllocation, PAGE_SIZE> allocations;
-
-			CBufferAllocation * Insert() {
-				return allocations.data() + nextId++;
-			}
-
-			bool IsFull() const {
-				return nextId == PAGE_SIZE;
-			}
-		};
-
-		std::deque<CBufferAllocationPage> allocationPages;
-
+		std::list<CBufferAllocationPage> allocationPages;
 		std::vector<CBufferPage> pages;
-
 		CBufferPage * currentPage;
-
 		CBufferAllocationPage * currentAllocationPage;
-
 		Ref<HeapManager> heapManager;
-
 		uint8_t * mappedPtr;
 
 		Ref<DX12::Resource> CreatePageResource();
-
 		void ValidateCurrentPageFor(size_t size);
-
 		void ValidateCurrentAllocationPage();
+
+		ConstantBufferPool() = default;
 
 	public:
 
-		void SetHeapManager(Ref<HeapManager> heapMan);
-
+		ConstantBufferPool(Ref<HeapManager> heapMan);
 		~ConstantBufferPool();
 
 		/*

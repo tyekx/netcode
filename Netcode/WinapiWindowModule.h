@@ -3,6 +3,8 @@
 #include "Modules.h"
 #include "Common.h"
 
+#include <Windows.h>
+
 namespace Netcode::Module {
 
 	class AApp;

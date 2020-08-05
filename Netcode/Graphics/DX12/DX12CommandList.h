@@ -1,18 +1,19 @@
 #pragma once
 
-#include "DX12Common.h"
+#include <Netcode/HandleDecl.h>
+#include "DX12Decl.h"
+#include <memory>
 
 namespace Netcode::Graphics::DX12 {
 
 	using CommandListType = ID3D12GraphicsCommandList3;
 
 	class CommandList {
-		// dont change the order!
-		std::shared_ptr<CommandListType> boundCl;
-		com_ptr<ID3D12CommandAllocator> boundAllocator;
+		Ref<CommandListType> boundCl;
+		Ref<ID3D12CommandAllocator> boundAllocator;
 
 	public:
-		CommandList(com_ptr<ID3D12CommandAllocator> alloc, std::shared_ptr<CommandListType> cl) : boundCl{ std::move(cl) },
+		CommandList(std::shared_ptr<ID3D12CommandAllocator> alloc, std::shared_ptr<CommandListType> cl) : boundCl{ std::move(cl) },
 			boundAllocator{ std::move(alloc) } { }
 
 		CommandListType * GetCommandList() const {

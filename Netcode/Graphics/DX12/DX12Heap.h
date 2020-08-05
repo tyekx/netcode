@@ -1,11 +1,14 @@
 #pragma once
 
-#include "DX12Resource.h"
+#include <Netcode/HandleDecl.h>
+#include "DX12Decl.h"
 #include <memory>
-#include <list>
-#include <cstdint>
+#include <vector>
+#include <wrl.h>
 
 namespace Netcode::Graphics::DX12 {
+
+	class Resource;
 
 	class Heap : public std::enable_shared_from_this<Heap> {
 		uint64_t sizeInBytes;
@@ -15,7 +18,7 @@ namespace Netcode::Graphics::DX12 {
 		D3D12_HEAP_FLAGS flags;
 		com_ptr<ID3D12Device> device;
 		com_ptr<ID3D12Heap> heap;
-		std::vector<std::unique_ptr<Resource>> freedResources;
+		std::vector<Unique<Resource>> freedResources;
 
 		void ReturnResource(Resource * rawPtr);
 
@@ -32,7 +35,7 @@ namespace Netcode::Graphics::DX12 {
 
 		void Defragment();
 
-		std::shared_ptr<Resource> CreateResource(
+		Ref<Resource> CreateResource(
 			const ResourceDesc & resourceDesc, 
 			const D3D12_RESOURCE_DESC & desc,
 			D3D12_RESOURCE_STATES initState,

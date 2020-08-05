@@ -1,4 +1,6 @@
 #include "DX12CPipelineStateLibrary.h" 
+#include "DX12CPipelineState.h"
+#include "DX12Includes.h"
 
 namespace Netcode::Graphics::DX12 {
 
@@ -18,7 +20,7 @@ namespace Netcode::Graphics::DX12 {
 			}
 		}
 
-		auto cpso = objectAllocator.MakeShared<DX12::CPipelineState>(device.Get(), std::move(cDesc));
+		auto cpso = objectAllocator.MakeShared<CPipelineState>(device.Get(), std::move(cDesc));
 
 		cpsos.emplace_back(cpso);
 

@@ -1,17 +1,15 @@
 #pragma once
 
+#include "HandleDecl.h"
+
 #include <memory>
-#include "HandleTypes.h"
 #include <string>
 #include <map>
 #include <vector>
 #include <future>
 
 #include "ModulesConfig.h"
-
-#include "Graphics/GraphicsContexts.h"
-#include "Network/GameSession.h"
-#include "Network/Cookie.h"
+#include <Netcode/Graphics/GraphicsContexts.h>
 
 namespace Netcode::Module {
 
@@ -150,15 +148,15 @@ namespace Netcode::Module {
 
 	class IGraphicsModule : public IModule {
 	public:
-		Netcode::Graphics::IDebugContext * debug;
-		Netcode::Graphics::IResourceContext * resources;
-		Netcode::Graphics::IFrameContext * frame;
+		Graphics::IDebugContext * debug;
+		Graphics::IResourceContext * resources;
+		Graphics::IFrameContext * frame;
 
 		virtual ~IGraphicsModule() = default;
 
 		virtual float GetAspectRatio() const = 0;
 		virtual Netcode::UInt2 GetBackbufferSize() const = 0;
-		virtual RECT GetDisplayRect() const = 0;
+		virtual Rect GetDisplayRect() const = 0;
 		virtual void * GetSwapChain() const = 0;
 		virtual DXGI_FORMAT GetBackbufferFormat() const = 0;
 		virtual DXGI_FORMAT GetDepthStencilFormat() const = 0;
@@ -189,12 +187,12 @@ namespace Netcode::Module {
 		virtual Network::Cookie GetCookie(const std::string & key) = 0;
 		virtual void SetCookie(const Network::Cookie & cookie) = 0;
 
-		virtual std::future<Response> Login(const std::wstring & username, const std::wstring & password) = 0;
-		virtual std::future<Response> QueryServers() = 0;
-		virtual std::future<Response> Status() = 0;
+		virtual std::future<Network::Response> Login(const std::wstring & username, const std::wstring & password) = 0;
+		virtual std::future<Network::Response> QueryServers() = 0;
+		virtual std::future<Network::Response> Status() = 0;
 
-		virtual Network::GameSessionRef CreateServer() = 0;
-		virtual Network::GameSessionRef CreateClient() = 0;
+		virtual Ref<Network::GameSession> CreateServer() = 0;
+		virtual Ref<Network::GameSession> CreateClient() = 0;
 	};
 
 	class IModuleFactory {

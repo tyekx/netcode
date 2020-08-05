@@ -1,10 +1,11 @@
 #include "DX12Texture.h"
+#include <Netcode/Graphics/ResourceEnums.h>
 
 namespace Netcode::Graphics::DX12 {
 
-	Texture::Texture(DirectX::ScratchImage && tData) : textureData{ std::move(tData) } { }
+	TextureImpl::TextureImpl(DirectX::ScratchImage && tData) : textureData{ std::move(tData) } { }
 
-	ResourceDimension Texture::GetDimension() const {
+	ResourceDimension TextureImpl::GetDimension() const {
 		switch(textureData.GetMetadata().dimension) {
 			case DirectX::TEX_DIMENSION_TEXTURE1D:
 				return ResourceDimension::TEXTURE1D;
@@ -17,19 +18,19 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 
-	uint16_t Texture::GetMipLevelCount() const {
+	uint16_t TextureImpl::GetMipLevelCount() const {
 		return static_cast<uint16_t>(textureData.GetMetadata().mipLevels);
 	}
 
-	const Image * Texture::GetImage(uint16_t mipIndex, uint16_t arrayIndex, uint32_t slice) {
+	const Image * TextureImpl::GetImage(uint16_t mipIndex, uint16_t arrayIndex, uint32_t slice) {
 		return textureData.GetImage(mipIndex, arrayIndex, slice);
 	}
 
-	const Image * Texture::GetImages() {
+	const Image * TextureImpl::GetImages() {
 		return textureData.GetImages();
 	}
 
-	uint16_t Texture::GetImageCount() {
+	uint16_t TextureImpl::GetImageCount() {
 		return static_cast<uint16_t>(textureData.GetImageCount());
 	}
 

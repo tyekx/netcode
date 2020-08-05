@@ -1,4 +1,5 @@
 #include "ScrollViewer.h"
+#include <Netcode/Graphics/SpriteDesc.h>
 #include <physx/PxPhysicsAPI.h>
 
 namespace Netcode::UI {
@@ -69,7 +70,7 @@ namespace Netcode::UI {
         }
     }
 
-    void ScrollViewer::Render(SpriteBatchPtr batch)
+    void ScrollViewer::Render(Ptr<SpriteBatch> batch)
     {
         if(children.empty()) {
             return;

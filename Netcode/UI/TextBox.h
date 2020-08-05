@@ -7,7 +7,7 @@ namespace Netcode::UI {
 
     class TextBox : public Input {
     protected:
-        static std::weak_ptr<Panel> globalCaret;
+        static Weak<Panel> globalCaret;
         Float4 selectionTextColor;
         Float4 selectionBackgroundColor;
         Float4 caretColor;
@@ -15,9 +15,9 @@ namespace Netcode::UI {
         int32_t caretPosition;
         int32_t selectionOffset;
         bool isPassword;
-        std::shared_ptr<Panel> caretRef;
+        Ref<Panel> caretRef;
 
-        static std::shared_ptr<Panel> CreateCaret(const Memory::ObjectAllocator & alloc);
+        static Ref<Panel> CreateCaret(const Memory::ObjectAllocator & alloc);
 
         std::wstring_view GetView() const;
         int32_t GetTargetedCaretPosition(float xWindowPos);
@@ -32,7 +32,7 @@ namespace Netcode::UI {
         virtual void PropagateOnMouseKeyReleased(MouseEventArgs & args) override;
         virtual void PropagateOnDrag(DragEventArgs & args) override;
 
-        virtual void Render(SpriteBatchPtr batch) override;
+        virtual void Render(Ptr<SpriteBatch> batch) override;
 
         void EraseSelection();
 

@@ -6,7 +6,7 @@ namespace Netcode::UI {
 
     class Label : public Panel {
     protected:
-        SpriteFontRef font;
+        Ref<SpriteFont> font;
         Float4 textColor;
         std::wstring text;
         Float2 textPosition;
@@ -28,8 +28,8 @@ namespace Netcode::UI {
 
         Label(const AllocType & allocator, PxPtr<physx::PxRigidDynamic> pxActor);
 
-        void Font(SpriteFontRef ref);
-        SpriteFontRef Font() const;
+        void Font(Ref<SpriteFont> ref);
+        Ref<SpriteFont> Font() const;
 
         Float4 TextColor() const;
 
@@ -47,7 +47,7 @@ namespace Netcode::UI {
 
         void Text(const std::wstring & ws);
 
-        virtual void Render(SpriteBatchPtr batch) override;
+        virtual void Render(Ptr<SpriteBatch> batch) override;
     };
 
 }

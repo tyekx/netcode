@@ -1,6 +1,13 @@
 #include "DX12ResourcePool.h"
+#include <Netcode/Common.h>
+#include <DirectXTex.h>
+#include <Netcode/Graphics/ResourceDesc.h>
+#include "DX12Includes.h"
 
 namespace Netcode::Graphics::DX12 {
+	ResourcePool::ResourcePool(Ref<HeapManager> heapMan) : heapManager { std::move(heapMan) } {
+
+	}
 
 	Ref<DX12::Resource> ResourcePool::CreateResource(const ResourceDesc & resource) {
 		return heapManager->CreateResource(resource);

@@ -563,7 +563,7 @@ namespace Netcode::UI {
         }
     }
 
-    void Control::Render(SpriteBatchPtr batch) {
+    void Control::Render(Ptr<SpriteBatch> batch) {
         for(auto & child : children) {
             child->Render(batch);
         }

@@ -1,13 +1,13 @@
 #include "DX12TextureBuilder.h"
 #include "DX12Common.h"
-
-#include "../../IO/Path.h"
-
+#include "DX12Texture.h"
+#include <Netcode/IO/Path.h>
+#include <NetcodeFoundation/ArrayView.hpp>
 #include <NetcodeFoundation/Exceptions.h>
 
 namespace Netcode::Graphics::DX12 {
 
-	void TextureBuilder::LoadTexture2D(const std::wstring & mediaPath) {
+	void TextureBuilderImpl::LoadTexture2D(const std::wstring & mediaPath) {
 		std::wstring cpy{ mediaPath };
 		cpy.insert(0, IO::Path::MediaRoot());
 
@@ -15,11 +15,11 @@ namespace Netcode::Graphics::DX12 {
 			DirectX::LoadFromWICFile(cpy.c_str(), 0, &metaData, scratchImage);
 	}
 	
-	void TextureBuilder::LoadTexture3D(const std::wstring & mediaPath) {
+	void TextureBuilderImpl::LoadTexture3D(const std::wstring & mediaPath) {
 		NotImplementedAssertion("Loading Texture3D is not supported yet");
 	}
 	
-	void TextureBuilder::LoadTextureCube(const std::wstring & mediaPath) {
+	void TextureBuilderImpl::LoadTextureCube(const std::wstring & mediaPath) {
 		std::wstring cpy{ mediaPath };
 		cpy.insert(0, IO::Path::MediaRoot());
 
@@ -27,28 +27,28 @@ namespace Netcode::Graphics::DX12 {
 			DirectX::LoadFromDDSFile(cpy.c_str(), 0, &metaData, scratchImage);
 	}
 
-	void TextureBuilder::LoadTexture2D(Netcode::ArrayView<uint8_t> data)
+	void TextureBuilderImpl::LoadTexture2D(Netcode::ArrayView<uint8_t> data)
 	{
 		DX_API("Failed to load image from memory")
 			DirectX::LoadFromWICMemory(data.Data(), data.Size(), 0, &metaData, scratchImage);
 	}
 
-	void TextureBuilder::LoadTexture3D(Netcode::ArrayView<uint8_t> data)
+	void TextureBuilderImpl::LoadTexture3D(Netcode::ArrayView<uint8_t> data)
 	{
 		NotImplementedAssertion("Loading Texture3D is not supported yet");
 	}
 
-	void TextureBuilder::LoadTextureCube(Netcode::ArrayView<uint8_t> data)
+	void TextureBuilderImpl::LoadTextureCube(Netcode::ArrayView<uint8_t> data)
 	{
 		DX_API("Failed to load DDS image from memory")
 			DirectX::LoadFromDDSMemory(data.Data(), data.Size(), 0, &metaData, scratchImage);
 	}
 	
-	uint16_t TextureBuilder::GetCurrentMipLevelCount() {
+	uint16_t TextureBuilderImpl::GetCurrentMipLevelCount() {
 		return static_cast<uint16_t>(metaData.mipLevels);
 	}
 	
-	void TextureBuilder::GenerateMipLevels(uint16_t mipLevelCount) {
+	void TextureBuilderImpl::GenerateMipLevels(uint16_t mipLevelCount) {
 		DirectX::ScratchImage outIm;
 
 		DX_API("Failed to generate mip levels")
@@ -57,8 +57,8 @@ namespace Netcode::Graphics::DX12 {
 		std::swap(outIm, scratchImage);
 	}
 	
-	Ref<Netcode::Texture> TextureBuilder::Build() {
-		return std::make_shared<DX12::Texture>(std::move(scratchImage));
+	Ref<Texture> TextureBuilderImpl::Build() {
+		return std::make_shared<TextureImpl>(std::move(scratchImage));
 	}
 
 }

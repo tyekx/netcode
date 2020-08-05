@@ -1,7 +1,6 @@
 #pragma once 
 
-#include <boost/asio/deadline_timer.hpp>
-
+#include "NetworkDecl.h"
 #include "NetworkCommon.h"
 #include "GameSession.h"
 #include "MysqlSession.h"

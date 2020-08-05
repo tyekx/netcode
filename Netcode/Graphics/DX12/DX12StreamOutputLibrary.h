@@ -1,19 +1,23 @@
 #pragma once
 
-#include "DX12StreamOutput.h"
+#include <Netcode/HandleDecl.h>
+#include "DX12Common.h"
+#include "DX12Decl.h"
 
 namespace Netcode::Graphics::DX12 {
 
+	class StreamOutputImpl;
+
 	class StreamOutputLibrary {
 		Memory::ObjectAllocator objectAllocator;
-		BuilderContainer<Ref<DX12::StreamOutput>> streamOutputs;
+		BuilderContainer<Ref<StreamOutputImpl>> streamOutputs;
 	public:
 
 		StreamOutputLibrary(Memory::ObjectAllocator allocator);
 
-		void Insert(Ref<DX12::StreamOutput> soRef);
+		void Insert(Ref<StreamOutputImpl> soRef);
 
-		Ref<Netcode::StreamOutput> GetStreamOutput(const D3D12_STREAM_OUTPUT_DESC & soDesc);
+		Ref<StreamOutputImpl> GetStreamOutput(const D3D12_STREAM_OUTPUT_DESC & soDesc);
 	};
 
 }

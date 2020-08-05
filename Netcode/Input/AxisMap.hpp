@@ -1,20 +1,13 @@
 #pragma once
 
+#include "AxisMapBase.h"
+#include "DefaultAxes.h"
 #include "Key.h"
 #include <Netcode/Common.h>
 #include <vector>
 #include <algorithm>
 
-
 namespace Netcode {
-
-	enum DefaultAxes {
-		VERTICAL,
-		HORIZONTAL,
-		FIRE1,
-		FIRE2,
-		JUMP
-	};
 
 	template<typename AxisEnum = DefaultAxes>
 	class AxisData {

@@ -1,5 +1,7 @@
 #include "DX12RootSignatureLibrary.h"
-#include "DX12Common.h"
+#include <Netcode/HandleTypes.h>
+#include "DX12RootSignature.h"
+#include "DX12Includes.h"
 
 namespace Netcode::Graphics::DX12 {
 
@@ -176,7 +178,7 @@ namespace Netcode::Graphics::DX12 {
 
 	}
 
-	Ref<DX12::RootSignature> RootSignatureLibrary::GetRootSignature(Ref<Netcode::ShaderBytecode> blobWithRootSig) {
+	Ref<DX12::RootSignatureImpl> RootSignatureLibrary::GetRootSignature(Ref<Netcode::ShaderBytecode> blobWithRootSig) {
 		com_ptr<ID3D12VersionedRootSignatureDeserializer> deserializer;
 
 		DX_API("Failed to create versioned root signature deserializer")
@@ -206,10 +208,10 @@ namespace Netcode::Graphics::DX12 {
 
 		rootSig->SetName(RootSigDebugName(blobWithRootSig->GetFileReference()).c_str());
 
-		return rootSigs.emplace_back(std::make_shared<Netcode::Graphics::DX12::RootSignature>(std::move(rootSig), *desc));
+		return rootSigs.emplace_back(std::make_shared<Netcode::Graphics::DX12::RootSignatureImpl>(std::move(rootSig), *desc));
 	}
 
-	Ref<DX12::RootSignature> RootSignatureLibrary::GetRootSignature(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & desc)
+	Ref<DX12::RootSignatureImpl> RootSignatureLibrary::GetRootSignature(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC & desc)
 	{
 		for(const auto & i : rootSigs) {
 			if(IsCompatible(i->GetDesc(), desc)) {
@@ -228,7 +230,7 @@ namespace Netcode::Graphics::DX12 {
 		DX_API("Failed to create root signature")
 			device->CreateRootSignature(0, serializedRootDesc->GetBufferPointer(), serializedRootDesc->GetBufferSize(), IID_PPV_ARGS(rootSig.GetAddressOf()));
 
-		return rootSigs.emplace_back(std::make_shared<Netcode::Graphics::DX12::RootSignature>(std::move(rootSig), desc));
+		return rootSigs.emplace_back(std::make_shared<Netcode::Graphics::DX12::RootSignatureImpl>(std::move(rootSig), desc));
 	}
 
 }

@@ -10,7 +10,6 @@ namespace Netcode::Graphics::DX12 {
 	public:
 
 		const std::string & GetSource(const std::wstring & key);
-
 	};
 
 }

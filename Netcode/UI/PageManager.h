@@ -6,14 +6,14 @@ namespace Netcode::UI {
 
 	class PageManager {
 		struct PageHistoryEntry {
-			Page * pagePtr;
+			Ptr<Page> pagePtr;
 			uint32_t groupIdx;
 		};
 
 		Memory::ObjectAllocator controlAllocator;
 		Memory::ObjectAllocator eventHandlerAllocator;
-		std::vector<std::shared_ptr<Page>> pages;
-		Page * drawBuffer[8];
+		std::vector<Ref<Page>> pages;
+		Ptr<Page> drawBuffer[8];
 		uint32_t numDrawnPages;
 		PageHistoryEntry pageHistory[16];
 		uint32_t historyDepth;
@@ -32,7 +32,7 @@ namespace Netcode::UI {
 	public:
 		PageManager();
 
-		void AddPage(std::shared_ptr<Page> page);
+		void AddPage(Ref<Page> page);
 
 		void Update(float dt);
 
@@ -62,14 +62,14 @@ namespace Netcode::UI {
 
 		UInt2 WindowSize() const;
 
-		void Render(Netcode::SpriteBatchPtr batch);
+		void Render(Ptr<SpriteBatch> batch);
 
 		void Destruct();
 
-		std::shared_ptr<Page> GetPage(uint32_t value);
+		Ref<Page> GetPage(uint32_t value);
 
 		template<typename PageType>
-		std::shared_ptr<PageType> CreatePage(physx::PxPhysics & px) {
+		Ref<PageType> CreatePage(physx::PxPhysics & px) {
 			return controlAllocator.MakeShared<PageType>(controlAllocator, eventHandlerAllocator, px);
 		}
 	};

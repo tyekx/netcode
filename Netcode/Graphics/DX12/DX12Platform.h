@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DX12Common.h"
+#include "DX12Decl.h"
 
 namespace Netcode::Graphics::DX12 {
 
@@ -17,6 +17,7 @@ namespace Netcode::Graphics::DX12 {
 		static uint32_t DepthStencilViewIncrementSize;
 		static uint32_t SamplerIncrementSize;
 
+		constexpr static uint32_t SimultaneousRenderTargetCount = 8;
 	};
 
 }

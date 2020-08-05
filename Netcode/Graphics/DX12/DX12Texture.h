@@ -1,14 +1,15 @@
 #pragma once
 
-#include "../../HandleTypes.h"
+#include <Netcode/HandleTypes.h>
+#include <DirectXTex.h>
 
 namespace Netcode::Graphics::DX12 {
 
-	class Texture : public Netcode::Texture {
+	class TextureImpl : public Netcode::Texture {
 		DirectX::ScratchImage textureData;
 	public:
 
-		Texture(DirectX::ScratchImage && tData);
+		TextureImpl(DirectX::ScratchImage && tData);
 
 		virtual Netcode::Graphics::ResourceDimension GetDimension() const override;
 

@@ -1,5 +1,8 @@
-#include "../../Utility.h"
 #include "DX12Common.h"
+
+#include "DX12Includes.h"
+#include <Netcode/Utility.h>
+
 #include <sstream>
 #include <cstdlib>
 #include <cstdio>

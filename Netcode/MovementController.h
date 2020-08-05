@@ -2,6 +2,8 @@
 
 #include "Input.h"
 
+#include <Netcode/Input/DefaultAxes.h>
+
 namespace Netcode {
 
 

@@ -1,5 +1,7 @@
 #include "Panel.h"
 #include <physx/PxRigidDynamic.h>
+#include <Netcode/Graphics/SpriteDesc.h>
+#include <Netcode/Graphics/BorderDesc.h>
 
 namespace Netcode::UI {
 
@@ -179,7 +181,7 @@ namespace Netcode::UI {
         backgroundColor.w = w;
     }
 
-    ResourceViewsRef Panel::BackgroundImage() const {
+    Ref<ResourceViews> Panel::BackgroundImage() const {
         return backgroundImage;
     }
 
@@ -188,7 +190,7 @@ namespace Netcode::UI {
         BackgroundType(Netcode::BackgroundType::SOLID);
     }
 
-    void Panel::BackgroundImage(ResourceViewsRef imageRef, const UInt2 & imageSize) {
+    void Panel::BackgroundImage(Ref<ResourceViews> imageRef, const UInt2 & imageSize) {
         backgroundImage = imageRef;
         BackgroundImageSize(imageSize);
         if(imageRef != nullptr) {
@@ -196,7 +198,7 @@ namespace Netcode::UI {
         }
     }
 
-    void Panel::Render(SpriteBatchPtr batch) {
+    void Panel::Render(Ptr<SpriteBatch> batch) {
         SpriteDesc spriteDesc = GetSpriteDesc();
         BorderDesc borderDesc = GetBorderDesc();
 

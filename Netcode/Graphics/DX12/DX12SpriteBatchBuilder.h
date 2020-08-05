@@ -9,17 +9,17 @@ namespace Netcode::Module {
 
 namespace Netcode::Graphics::DX12 {
 
-	class SpriteBatchBuilder : public Netcode::SpriteBatchBuilder {
+	class SpriteBatchBuilderImpl : public SpriteBatchBuilder {
 		Ptr<Module::IGraphicsModule> gModule;
-		Ref<Netcode::RootSignature> rootSig;
-		Ref<Netcode::PipelineState> pso;
+		Ref<RootSignature> rootSig;
+		Ref<PipelineState> pso;
 	public:
-		SpriteBatchBuilder(Ptr<Module::IGraphicsModule> gModule);
+		SpriteBatchBuilderImpl(Ptr<Module::IGraphicsModule> gModule);
 
-		virtual void SetPipelineState(Ref<Netcode::RootSignature> pipelineState) override;
-		virtual void SetRootSignature(Ref<Netcode::PipelineState> rootSignature) override;
+		virtual void SetPipelineState(Ref<PipelineState> pipelineState) override;
+		virtual void SetRootSignature(Ref<RootSignature> rootSignature) override;
 
-		virtual Ref<Netcode::SpriteBatch> Build() override;
+		virtual Ref<SpriteBatch> Build() override;
 	};
 
 }

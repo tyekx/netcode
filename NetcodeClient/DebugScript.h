@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GameObject.h"
+#include <Netcode/Input/Key.h>
 #include <Netcode/Input.h>
 
 class DebugBehavior : public IBehavior {
@@ -26,9 +27,9 @@ public:
 			if(curr != nullptr) {
 				float scale = 1.0f;
 
-				if((modifiers & Netcode::KeyModifier::CTRL) > 0) {
+				if(Netcode::KeyModifierContains(modifiers, Netcode::KeyModifier::CTRL)) {
 					scale *= 10.0f;
-				} else if((modifiers & Netcode::KeyModifier::ALT) > 0) {
+				} else if(Netcode::KeyModifierContains(modifiers, Netcode::KeyModifier::ALT)) {
 					scale /= 10.0f;
 				}
 

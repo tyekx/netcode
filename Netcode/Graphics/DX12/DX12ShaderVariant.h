@@ -1,13 +1,11 @@
 #pragma once
 
-#include "../../HandleTypes.h"
-
-#include <vector>
-#include <iostream>
-#include <string>
+#include <Netcode/HandleTypes.h>
+#include <Netcode/URI/Shader.h>
+#include "DX12Decl.h"
 #include <map>
-
-#include "DX12Common.h"
+#include <string>
+#include <wrl.h>
 
 namespace Netcode::Graphics::DX12 {
 
@@ -50,28 +48,21 @@ namespace Netcode::Graphics::DX12 {
 		}
 	};
 
-	class ShaderVariant : public Netcode::ShaderBytecode {
+	class ShaderVariant : public ShaderBytecode {
 		ShaderVariantDesc desc;
 		com_ptr<ID3DBlob> shaderByteCode;
 
 	public:
-		ShaderVariant(ShaderVariantDesc desc, com_ptr<ID3DBlob> shaderBytecode) : desc{ std::move(desc) }, shaderByteCode{ std::move(shaderBytecode) } {
-
-		}
+		ShaderVariant(ShaderVariantDesc desc, com_ptr<ID3DBlob> shaderBytecode);
 
 		virtual const std::wstring & GetFileReference() const override {
 			return desc.sourceFileUri.GetShaderPath();
 		}
 
-		const ShaderVariantDesc & GetDesc() const {
-			return desc;
-		}
+		const ShaderVariantDesc & GetDesc() const;
 
-		// Inherited via Shader
 		virtual uint8_t * GetBufferPointer() override;
-
 		virtual size_t GetBufferSize() override;
-
 	};
 
 }

@@ -8,12 +8,15 @@
 #include "DX12ResourcePool.h"
 #include "DX12DynamicDescriptorHeap.h"
 #include "DX12ConstantBufferPool.h"
+#include "DX12ResourceViews.h"
 
 namespace Netcode::Graphics::DX12 {
 
-	BaseRenderContext::BaseRenderContext(ResourcePool * resourcePool, ConstantBufferPool * cbufferPool, DynamicDescriptorHeap * dHeaps, ID3D12GraphicsCommandList * cl) :
-		resources{ resourcePool }, cbuffers{ cbufferPool }, descHeaps{ dHeaps }, commandList{ std::move(cl) }, barriers{}
-	{
+	BaseRenderContext::BaseRenderContext(Ptr<ResourcePool> resourcePool,
+		Ptr<ConstantBufferPool> cbufferPool,
+		Ptr<DynamicDescriptorHeap> dHeaps,
+		Ptr<ID3D12GraphicsCommandList> cl) :
+		resources{ resourcePool }, cbuffers{ cbufferPool }, descHeaps{ dHeaps }, commandList{ cl }, barriers{} {
 
 	}
 
@@ -54,16 +57,14 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 
-	GraphicsContext::GraphicsContext(
-		ResourcePool * resourcePool,
-		ConstantBufferPool * cbpool,
-		DynamicDescriptorHeap * dheaps,
-		ID3D12GraphicsCommandList * commandListRef,
-		const D3D12_CPU_DESCRIPTOR_HANDLE & backbuffer,
-		const D3D12_CPU_DESCRIPTOR_HANDLE & backbufferDepth,
-		const D3D12_VIEWPORT & viewPort,
-		const D3D12_RECT & scissorRect
-	) : BaseRenderContext(resourcePool, cbpool, dheaps, std::move(commandListRef)),
+	GraphicsContext::GraphicsContext(	Ptr<ResourcePool> resourcePool,
+										Ptr<ConstantBufferPool> cbufferPool,
+										Ptr<DynamicDescriptorHeap> dHeaps,
+										Ptr<ID3D12GraphicsCommandList> cl,
+										const D3D12_CPU_DESCRIPTOR_HANDLE & backbuffer,
+										const D3D12_CPU_DESCRIPTOR_HANDLE & backbufferDepth,
+										const D3D12_VIEWPORT & viewPort,
+										const D3D12_RECT & scissorRect) : BaseRenderContext{ resourcePool, cbufferPool, dHeaps, cl },
 		currentlyBoundDepth{},
 		currentlyBoundRenderTargets{},
 		streamOutput_FilledSizeLocation{},
@@ -71,8 +72,7 @@ namespace Netcode::Graphics::DX12 {
 		backbuffer { backbuffer },
 		backbufferDepth{ backbufferDepth },
 		defaultViewport { viewPort },
-		defaultScissorRect { scissorRect }
-	{
+		defaultScissorRect { scissorRect } {
 	}
 
 	void GraphicsContext::SetStencilReference(uint8_t stencilValue) {
@@ -128,11 +128,11 @@ namespace Netcode::Graphics::DX12 {
 		Netcode::NotImplementedAssertion("");
 	}
 
-	void GraphicsContext::SetRootSignature(Ref<RootSignature> rs) {
+	void GraphicsContext::SetRootSignature(Ref<Netcode::RootSignature> rs) {
 		commandList->SetGraphicsRootSignature(reinterpret_cast<ID3D12RootSignature *>(rs->GetImplDetail()));
 	}
 
-	void GraphicsContext::SetPipelineState(Ref<PipelineState> pso)
+	void GraphicsContext::SetPipelineState(Ref<Netcode::PipelineState> pso)
 	{
 		commandList->SetPipelineState(reinterpret_cast<ID3D12PipelineState*>(pso->GetImplDetail()));
 	}
@@ -258,19 +258,19 @@ namespace Netcode::Graphics::DX12 {
 
 	void GraphicsContext::SetRenderTargets(std::nullptr_t rt, Ref<Netcode::ResourceViews> ds)
 	{
-		SetRenderTargets(nullptr, std::move(ds));
+		SetRenderTargets(Ref<ResourceViews>{}, std::move(ds));
 	}
 
 	void GraphicsContext::SetRenderTargets(Ref<Netcode::ResourceViews> rt, std::nullptr_t ds)
 	{
-		SetRenderTargets(std::move(rt), nullptr);
+		SetRenderTargets(std::move(rt), Ref<ResourceViews>{});
 	}
 
 	void GraphicsContext::SetRenderTargets(Ref<Netcode::ResourceViews> renderTargets, Ref<Netcode::ResourceViews> depthStencil)
 	{
 		uint32_t numDescriptors;
 		if(renderTargets != nullptr) {
-			Ref<DX12::ResourceViews> rtvs = std::dynamic_pointer_cast<DX12::ResourceViews>(renderTargets);
+			Ref<DX12::ResourceViewsImpl> rtvs = std::dynamic_pointer_cast<DX12::ResourceViewsImpl>(renderTargets);
 			numDescriptors = rtvs->GetNumDescriptors();
 			for(uint32_t i = 0; i < numDescriptors; ++i) {
 				currentlyBoundRenderTargets[i] = rtvs->GetCpuVisibleCpuHandle(i);
@@ -281,7 +281,7 @@ namespace Netcode::Graphics::DX12 {
 		}
 
 		if(depthStencil != nullptr) {
-			Ref<DX12::ResourceViews> dsv = std::dynamic_pointer_cast<DX12::ResourceViews>(depthStencil);
+			Ref<DX12::ResourceViewsImpl> dsv = std::dynamic_pointer_cast<DX12::ResourceViewsImpl>(depthStencil);
 			currentlyBoundDepth = dsv->GetCpuVisibleCpuHandle(0);
 		} else {
 			currentlyBoundDepth = backbufferDepth;
@@ -367,7 +367,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void GraphicsContext::SetShaderResources(int slot, Ref<Netcode::ResourceViews> resourceView, int descriptorOffset)
 	{
-		Ref<DX12::ResourceViews> srv = std::dynamic_pointer_cast<DX12::ResourceViews>(resourceView);
+		Ref<DX12::ResourceViewsImpl> srv = std::dynamic_pointer_cast<DX12::ResourceViewsImpl>(resourceView);
 
 		commandList->SetGraphicsRootDescriptorTable(slot, srv->GetGpuHandle(descriptorOffset));
 	}
@@ -422,12 +422,12 @@ namespace Netcode::Graphics::DX12 {
 		ResetStreamOutput();
 	}
 
-	void ComputeContext::SetRootSignature(Ref<RootSignature> rs)
+	void ComputeContext::SetRootSignature(Ref<Netcode::RootSignature> rs)
 	{
 		commandList->SetComputeRootSignature(reinterpret_cast<ID3D12RootSignature *>(rs->GetImplDetail()));
 	}
 
-	void ComputeContext::SetPipelineState(Ref<PipelineState> pso)
+	void ComputeContext::SetPipelineState(Ref<Netcode::PipelineState> pso)
 	{
 		commandList->SetPipelineState(reinterpret_cast<ID3D12PipelineState *>(pso->GetImplDetail()));
 	}
@@ -624,7 +624,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void ComputeContext::SetShaderResources(int slot, Ref<Netcode::ResourceViews> resourceView, int descriptorOffset)
 	{
-		Ref<DX12::ResourceViews> srv = std::dynamic_pointer_cast<DX12::ResourceViews>(resourceView);
+		Ref<DX12::ResourceViewsImpl> srv = std::dynamic_pointer_cast<DX12::ResourceViewsImpl>(resourceView);
 
 		commandList->SetComputeRootDescriptorTable(slot, srv->GetGpuHandle(descriptorOffset));
 	}

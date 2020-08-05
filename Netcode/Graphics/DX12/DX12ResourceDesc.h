@@ -1,13 +1,11 @@
 #pragma once
 
-#include "../ResourceDesc.h"
-
-#include "DX12Common.h"
-#include <tuple>
+#include <Netcode/HandleDecl.h>
+#include "DX12Decl.h"
 
 namespace Netcode::Graphics::DX12 {
 
-	D3D12_PRIMITIVE_TOPOLOGY GetNativePrimitiveTopology(PrimitiveTopology t);
+	D3D_PRIMITIVE_TOPOLOGY GetNativePrimitiveTopology(PrimitiveTopology t);
 
 	D3D12_RESOURCE_FLAGS GetNativeFlags(ResourceFlags f);
 

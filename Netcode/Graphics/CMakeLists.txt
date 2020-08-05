@@ -7,10 +7,13 @@ PUBLIC
 	"ResourceDesc.h"
 	"ResourceEnums.h"
 	"UploadBatch.h"
+	"SpriteDesc.h"
+	"BorderDesc.h"
 
 PRIVATE
-	"FrameGraph.cpp"
 	"ResourceEnums.cpp"
+	"SpriteDesc.cpp"
+	"BorderDesc.cpp"
 )
 
 add_subdirectory(DX12)

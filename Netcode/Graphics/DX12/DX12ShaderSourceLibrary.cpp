@@ -1,7 +1,7 @@
 #include "DX12ShaderSourceLibrary.h"
 
-#include "../../IO/File.h"
-#include "../../IO/Path.h"
+#include <Netcode/IO/Path.h>
+#include <Netcode/IO/File.h>
 
 namespace Netcode::Graphics::DX12 {
 
