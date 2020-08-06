@@ -10,6 +10,10 @@
 
 #if defined(NETCODE_OS_WINDOWS)
 #include <Windows.h>
+
+#if defined(NETCODE_EDITOR_VARIANT)
+#include <fileapifromapp.h>
+#endif
 #endif
 
 namespace Netcode::IO {
@@ -48,7 +52,7 @@ namespace Netcode::IO {
 			const DWORD apiMode = ConvertMode(mode);
 			const DWORD shareMode = (mode == FileOpenMode::READ || mode == FileOpenMode::READ_BINARY) ? FILE_SHARE_READ : 0;
 
-			HANDLE f = CreateFileW(path.c_str(), apiMode, shareMode, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+			HANDLE f = CreateFileFromAppW(path.c_str(), apiMode, shareMode, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
 			if(f == INVALID_HANDLE_VALUE) {
 				Log::Error("Failed to open file: '{0}'", Utility::ToNarrowString(path));
@@ -251,10 +255,22 @@ namespace Netcode::IO {
 
 	bool File::Exists(const std::wstring & path)
 	{
-		DWORD attribs = GetFileAttributesW(path.c_str());
+#if defined(NETCODE_OS_WINDOWS)
+	#if defined(NETCODE_EDITOR_VARIANT)
+		WIN32_FILE_ATTRIBUTE_DATA attrData;
+
+		BOOL success = GetFileAttributesExFromAppW(path.c_str(), GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard, &attrData);
+
+		return success && (attrData.dwFileAttributes != INVALID_FILE_ATTRIBUTES) && !(attrData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+	#else
+		DWORD attribs = GetFileAttributesW(path.data());
 
 		return (attribs != INVALID_FILE_ATTRIBUTES) &&
-			  !(attribs & FILE_ATTRIBUTE_DIRECTORY);
+			!(attribs & FILE_ATTRIBUTE_DIRECTORY);
+	#endif
+#else
+
+#endif
 	}
 
 }

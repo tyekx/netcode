@@ -43,7 +43,7 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 	bool RootSignatureLibrary::IsCompatible(const D3D12_ROOT_PARAMETER & lhs, const D3D12_ROOT_PARAMETER & rhs) {
-		if(lhs.ParameterType != rhs.ParameterType) {
+		if(lhs.ParameterType != rhs.ParameterType || lhs.ShaderVisibility != rhs.ShaderVisibility) {
 			return false;
 		}
 
@@ -52,8 +52,8 @@ namespace Netcode::Graphics::DX12 {
 				return lhs.Constants.ShaderRegister == rhs.Constants.ShaderRegister &&
 					lhs.Constants.RegisterSpace == rhs.Constants.RegisterSpace &&
 					lhs.Constants.Num32BitValues > rhs.Constants.Num32BitValues;
-			case D3D12_ROOT_PARAMETER_TYPE_SRV:
-			case D3D12_ROOT_PARAMETER_TYPE_UAV:
+			case D3D12_ROOT_PARAMETER_TYPE_SRV: [[fallthrough]];
+			case D3D12_ROOT_PARAMETER_TYPE_UAV: [[fallthrough]];
 			case D3D12_ROOT_PARAMETER_TYPE_CBV:
 				return lhs.Descriptor.ShaderRegister == rhs.Descriptor.ShaderRegister &&
 					lhs.Descriptor.RegisterSpace == rhs.Descriptor.RegisterSpace;
@@ -87,7 +87,7 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 	bool RootSignatureLibrary::IsCompatible(const D3D12_ROOT_PARAMETER1 & lhs, const D3D12_ROOT_PARAMETER1 & rhs) {
-		if(lhs.ParameterType != rhs.ParameterType) {
+		if(lhs.ParameterType != rhs.ParameterType || lhs.ShaderVisibility != rhs.ShaderVisibility) {
 			return false;
 		}
 
@@ -96,8 +96,8 @@ namespace Netcode::Graphics::DX12 {
 				return lhs.Constants.ShaderRegister == rhs.Constants.ShaderRegister &&
 					lhs.Constants.RegisterSpace == rhs.Constants.RegisterSpace &&
 					lhs.Constants.Num32BitValues > rhs.Constants.Num32BitValues;
-			case D3D12_ROOT_PARAMETER_TYPE_SRV:
-			case D3D12_ROOT_PARAMETER_TYPE_UAV:
+			case D3D12_ROOT_PARAMETER_TYPE_SRV: [[fallthrough]];
+			case D3D12_ROOT_PARAMETER_TYPE_UAV: [[fallthrough]];
 			case D3D12_ROOT_PARAMETER_TYPE_CBV:
 				return lhs.Descriptor.ShaderRegister == rhs.Descriptor.ShaderRegister &&
 					lhs.Descriptor.RegisterSpace == rhs.Descriptor.RegisterSpace &&

@@ -4,6 +4,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <DirectXMath.h>
+#include <Netcode/Utility.h>
 #include <Netcode/FancyIterators.hpp>
 #include "BoundingBoxHelpers.h"
 
@@ -93,6 +94,7 @@ static std::tuple<std::vector<InputElement>, uint32_t> GetInputLayout(const aiMe
 		ie.semanticName = "BINORMAL";
 		inputLayout.push_back(ie);
 		vertexSize += sizeof(DirectX::XMFLOAT3);
+
 		ie.byteOffset = vertexSize;
 		ie.format = DXGI_FORMAT_R32G32B32_FLOAT;
 		ie.semanticIndex = 0;
@@ -504,7 +506,8 @@ static Material ImportMaterial(const aiMaterial * mat) {
 		aiString texPath;
 
 		if(AI_SUCCESS == mat->GetTexture(aiTextureType_DIFFUSE, 0, &texPath)) {
-			imat.diffuseMapReference = texPath.C_Str();
+			std::string s = texPath.C_Str();
+			imat.diffuseMapReference = Netcode::Utility::ToWideString(s);
 		} else {
 			OutputDebugStringW(L"Warning: failed to get diffuse texture path\r\n");
 		}
@@ -518,7 +521,8 @@ static Material ImportMaterial(const aiMaterial * mat) {
 
 		aiString texPath;
 		if(AI_SUCCESS == mat->GetTexture(aiTextureType_NORMALS, 0, &texPath)) {
-			imat.normalMapReference = texPath.C_Str();
+			std::string s = texPath.C_Str();
+			imat.normalMapReference = Netcode::Utility::ToWideString(s);
 		} else {
 			OutputDebugStringW(L"Warning: failed to get diffuse texture path\r\n");
 		}

@@ -43,7 +43,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <PreprocessorDefinitions>_NETCODE_SDK_VERSION=$(TargetPlatformVersion.Substring(5,5));%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NETCODE_EDITOR_VARIANT;_NETCODE_SDK_VERSION=$(TargetPlatformVersion.Substring(5,5));%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>

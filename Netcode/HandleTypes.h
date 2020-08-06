@@ -380,9 +380,9 @@ namespace Netcode {
 	class TextureBuilder {
 	public:
 		virtual ~TextureBuilder() = default;
-		virtual void LoadTexture2D(const std::wstring & mediaPath) = 0;
-		virtual void LoadTexture3D(const std::wstring & mediaPath) = 0;
-		virtual void LoadTextureCube(const std::wstring & mediaPath) = 0;
+		virtual void LoadTexture2D(const URI::Texture & mediaPath) = 0;
+		virtual void LoadTexture3D(const URI::Texture & mediaPath) = 0;
+		virtual void LoadTextureCube(const URI::Texture & mediaPath) = 0;
 
 		virtual void LoadTexture2D(Netcode::ArrayView<uint8_t> data) = 0;
 		virtual void LoadTexture3D(Netcode::ArrayView<uint8_t> data) = 0;

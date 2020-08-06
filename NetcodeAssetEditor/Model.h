@@ -72,11 +72,11 @@ struct Material {
 	Netcode::Float4 diffuseColor;
 	Netcode::Float3 fresnelR0;
 	float shininess;
-	std::string diffuseMapReference;
-	std::string normalMapReference;
-	std::string specularMapReference;
-	std::string ambientMapReference;
-	std::string roughnessMapReference;
+	std::wstring diffuseMapReference;
+	std::wstring normalMapReference;
+	std::wstring specularMapReference;
+	std::wstring ambientMapReference;
+	std::wstring roughnessMapReference;
 };
 
 enum class AnimationEdge {

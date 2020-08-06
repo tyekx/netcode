@@ -46,7 +46,7 @@
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
                     <TextBlock Text="Diffuse Color:" Margin="15,0,0,5"></TextBlock>
-                    <ColorPicker ColorSpectrumShape="Ring" IsAlphaEnabled="True" Color="{Binding SelectedItem.DiffuseColor, Mode=TwoWay, ElementName=materialsList}"></ColorPicker>
+                    <ColorPicker ColorChanged="ColorPicker_ColorChanged" ColorSpectrumShape="Ring" IsAlphaEnabled="True" Color="{Binding SelectedItem.DiffuseColor, Mode=TwoWay, ElementName=materialsList}"></ColorPicker>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
                     <TextBlock Text="Fresnel R0:" Margin="15,0,0,5"></TextBlock>
@@ -58,23 +58,23 @@
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
                     <TextBlock Margin="15,0,0,5" Text="Diffuse Texture Relative Path:"></TextBlock>
-                    <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.DiffuseMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
+                    <TextBox Margin="30,0,30,0" AllowDrop="True" Drop="TextBox_Drop" DragOver="TextBox_DragOver" Text="{Binding SelectedItem.DiffuseMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
                     <TextBlock Margin="15,0,0,5" Text="Normal Texture Relative Path:"></TextBlock>
-                    <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.NormalMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
+                    <TextBox Margin="30,0,30,0" AllowDrop="True" Drop="TextBox_Drop" DragOver="TextBox_DragOver" Text="{Binding SelectedItem.NormalMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
                     <TextBlock Margin="15,0,0,5" Text="Specular Texture Relative Path:"></TextBlock>
-                    <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.SpecularMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
+                    <TextBox Margin="30,0,30,0" AllowDrop="True" Drop="TextBox_Drop" DragOver="TextBox_DragOver" Text="{Binding SelectedItem.SpecularMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
                     <TextBlock Margin="15,0,0,5" Text="Roughtness Texture Relative Path:"></TextBlock>
-                    <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.RoughnessMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
+                    <TextBox Margin="30,0,30,0" AllowDrop="True" Drop="TextBox_Drop" DragOver="TextBox_DragOver" Text="{Binding SelectedItem.RoughnessMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
                     <TextBlock Margin="15,0,0,5" Text="Ambient Texture Relative Path:"></TextBlock>
-                    <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.AmbientMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
+                    <TextBox Margin="30,0,30,0" AllowDrop="True" Drop="TextBox_Drop" DragOver="TextBox_DragOver" Text="{Binding SelectedItem.AmbientMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
                 <!--<StackPanel Margin="0,15,0,0">
                     <TextBlock Margin="15,0,0,5" Text="Height Texture Relative Path:"></TextBlock>

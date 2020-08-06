@@ -2,29 +2,40 @@
 #include "DX12Common.h"
 #include "DX12Texture.h"
 #include <Netcode/IO/Path.h>
+#include <Netcode/IO/File.h>
+#include <Netcode/URI/Texture.h>
 #include <NetcodeFoundation/ArrayView.hpp>
 #include <NetcodeFoundation/Exceptions.h>
 
 namespace Netcode::Graphics::DX12 {
 
-	void TextureBuilderImpl::LoadTexture2D(const std::wstring & mediaPath) {
-		std::wstring cpy{ mediaPath };
-		cpy.insert(0, IO::Path::MediaRoot());
+	void TextureBuilderImpl::LoadTexture2D(const URI::Texture & mediaPath) {
 
-		DX_API("Failed to load image: %S", cpy.c_str())
-			DirectX::LoadFromWICFile(cpy.c_str(), 0, &metaData, scratchImage);
+		IO::File file{ mediaPath.GetTexturePath() };
+		IO::FileReader<IO::File> reader{ file, IO::FileOpenMode::READ_BINARY };
+		size_t size = reader->GetSize();
+		std::unique_ptr<uint8_t[]> tmpBuffer = std::make_unique<uint8_t[]>(size);
+		MutableArrayView<uint8_t> buffer{ tmpBuffer.get(), size };
+		reader->Read(buffer);
+		reader->Close();
+
+		LoadTexture2D(buffer);
 	}
 	
-	void TextureBuilderImpl::LoadTexture3D(const std::wstring & mediaPath) {
+	void TextureBuilderImpl::LoadTexture3D(const URI::Texture & mediaPath) {
 		NotImplementedAssertion("Loading Texture3D is not supported yet");
 	}
 	
-	void TextureBuilderImpl::LoadTextureCube(const std::wstring & mediaPath) {
-		std::wstring cpy{ mediaPath };
-		cpy.insert(0, IO::Path::MediaRoot());
+	void TextureBuilderImpl::LoadTextureCube(const URI::Texture & mediaPath) {
+		IO::File file{ mediaPath.GetTexturePath() };
+		IO::FileReader<IO::File> reader{ file, IO::FileOpenMode::READ_BINARY };
+		size_t size = reader->GetSize();
+		std::unique_ptr<uint8_t[]> tmpBuffer = std::make_unique<uint8_t[]>(size);
+		MutableArrayView<uint8_t> buffer{ tmpBuffer.get(), size };
+		reader->Read(buffer);
+		reader->Close();
 
-		DX_API("Failed to load image: %S", cpy.c_str())
-			DirectX::LoadFromDDSFile(cpy.c_str(), 0, &metaData, scratchImage);
+		LoadTextureCube(buffer);
 	}
 
 	void TextureBuilderImpl::LoadTexture2D(Netcode::ArrayView<uint8_t> data)

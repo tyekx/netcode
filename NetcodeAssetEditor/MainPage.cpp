@@ -17,9 +17,20 @@
 
 namespace winrt::NetcodeAssetEditor::implementation
 {
+    void MainPage::RenderTimer_OnTick(Windows::Foundation::IInspectable const & sender, Windows::Foundation::IInspectable const & e) {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(e);
+
+        if(Global::EditorApp != nullptr) {
+            Global::EditorApp->Run();
+        }
+    }
+
     MainPage::MainPage() {
-        
         InitializeComponent();
+
+        renderTimer.Interval(std::chrono::milliseconds{ 16 });
+        renderTimer.Tick(Windows::Foundation::EventHandler<Windows::Foundation::IInspectable>(this, &MainPage::RenderTimer_OnTick));
 
         pointerHeld = false;
     }
@@ -46,6 +57,9 @@ namespace winrt::NetcodeAssetEditor::implementation
 
     void MainPage::FileCtx_CreateManifest_Click(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e)
     {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(e);
+
         auto lifetime = get_strong();
 
         if(Global::Manifest != nullptr) {
@@ -60,11 +74,16 @@ namespace winrt::NetcodeAssetEditor::implementation
 
     void MainPage::CommandInvokeHandler(Windows::UI::Popups::IUICommand const & command)
     {
+        UNREFERENCED_PARAMETER(command);
+
         // ok
     }
 
     void MainPage::swapChainPanel_Loaded(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e)
     {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(e);
+
 
         Netcode::Module::EditorModuleFactory editorModuleFactory;
 
@@ -77,8 +96,7 @@ namespace winrt::NetcodeAssetEditor::implementation
         HRESULT hr = nativeSwapChainPanel->SetSwapChain(reinterpret_cast<IDXGISwapChain *>(Global::EditorApp->graphics->GetSwapChain()));
 
         if(SUCCEEDED(hr)) {
-            OutputDebugStringW(L"Ok\r\n");
-            Global::EditorApp->Run();
+            renderTimer.Start();
         }
     }
 
@@ -91,6 +109,9 @@ namespace winrt::NetcodeAssetEditor::implementation
     */
     void MainPage::swapChainPanel_PointerPressed(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs const & e)
     {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(e);
+
         DataContext().as<DC_MainPage>()->BoxedTestFloat4(box_value(Windows::Foundation::Numerics::float4{ 1.0f, 2.0f, 3.0f, 4.0f }));
 
         pointerHeld = true;
@@ -115,6 +136,9 @@ namespace winrt::NetcodeAssetEditor::implementation
 
     void MainPage::swapChainPanel_PointerReleased(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs const & e)
     {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(e);
+
         pointerHeld = false;
         Windows::UI::Xaml::Window::Current().CoreWindow().PointerCursor(Windows::UI::Core::CoreCursor{ Windows::UI::Core::CoreCursorType::Arrow, 1 });
         Windows::UI::Xaml::Window::Current().CoreWindow().PointerPosition(swapChain_PointerPressedAt_ScreenSpace);
@@ -122,6 +146,8 @@ namespace winrt::NetcodeAssetEditor::implementation
 
     void MainPage::swapChainPanel_PointerMoved(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs const & e)
     {
+        UNREFERENCED_PARAMETER(sender);
+
         if(pointerHeld) {
             auto pointerMovePosition_PanelSpace = e.GetCurrentPoint(swapChainPanel()).Position();
             auto windowSpaceTransform = swapChainPanel().TransformToVisual(Windows::UI::Xaml::Window::Current().Content());
@@ -140,11 +166,16 @@ namespace winrt::NetcodeAssetEditor::implementation
                                                                                                           bounds.Y + swapChainCenter_WindowSpace.Y });
 
             swapChain_LastPointerPosition_PanelSpace = swapChainCenter_PanelSpace;
+
+            Global::EditorApp->InvalidateFrame();
         }
     }
 
     void MainPage::Pivot_SelectionChanged(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs const & e)
     {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(e);
+
         uint32_t selectionIndex = mainPivot().SelectedIndex();
 
         switch(selectionIndex) {
@@ -158,6 +189,9 @@ namespace winrt::NetcodeAssetEditor::implementation
 
     fire_and_forget MainPage::AssetCtx_ImportFBX_Click(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e)
     {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(e);
+
         auto lifetime = get_strong();
 
         Windows::Storage::Pickers::FileOpenPicker fileOpenPicker;
@@ -165,7 +199,6 @@ namespace winrt::NetcodeAssetEditor::implementation
         fileOpenPicker.SuggestedStartLocation(Windows::Storage::Pickers::PickerLocationId::Objects3D);
 
 
-        /**/
         Windows::Storage::StorageFile file = co_await fileOpenPicker.PickSingleFileAsync();
 
         if(file != nullptr) {
@@ -204,6 +237,8 @@ namespace winrt::NetcodeAssetEditor::implementation
                 dcMainPage->Meshes().Append(dcMesh);
             }
 
+            Global::EditorApp->SetMaterials(Global::Model->meshes, Global::Model->materials);
+
             modelChanged(reinterpret_cast<uint64_t>(Global::Model.get()));
 
             if(Global::Manifest == nullptr) {
@@ -213,11 +248,14 @@ namespace winrt::NetcodeAssetEditor::implementation
             Global::Manifest->base.file = winrt::to_string(file.Path());
 
             Geometry_ListView_SelectAll();
-        }/**/
+        }
     }
 
     winrt::fire_and_forget MainPage::AssetCtx_ImportAnimation_Click(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e)
     {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(e);
+
         auto lifetime = get_strong();
 
         if(Global::Manifest == nullptr) {
@@ -229,7 +267,6 @@ namespace winrt::NetcodeAssetEditor::implementation
         
         fileOpenPicker.SuggestedStartLocation(Windows::Storage::Pickers::PickerLocationId::Objects3D);
 
-        /**/
         Windows::Foundation::Collections::IVectorView<Windows::Storage::StorageFile> files = co_await fileOpenPicker.PickMultipleFilesAsync();
 
         if(files != nullptr) {
@@ -270,7 +307,6 @@ namespace winrt::NetcodeAssetEditor::implementation
                 loadingScreenTitle().Text(L"Processed " + to_hstring(i + 1) +  L"/" + to_hstring(files.Size()) + L" file(s)");
             }
         }
-        /**/
 
         loadingScreen().Visibility(Windows::UI::Xaml::Visibility::Collapsed);
     }
@@ -278,12 +314,15 @@ namespace winrt::NetcodeAssetEditor::implementation
 
     winrt::fire_and_forget MainPage::FileCtx_SaveManifest_Click(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e)
     {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(e);
+
         auto lifetime = get_strong();
 
         if(Global::Manifest == nullptr || Global::Model == nullptr) {
             return;
         }
-        /**/
+
         Windows::Storage::Pickers::FileSavePicker fileSavePicker;
         fileSavePicker.SuggestedFileName(L"manifest");
         fileSavePicker.FileTypeChoices().Insert(L"JSON", winrt::single_threaded_vector<hstring>({ L".json" }));
@@ -309,13 +348,13 @@ namespace winrt::NetcodeAssetEditor::implementation
                 msg.ShowAsync();
             }
         }
-        /**/
-
-
     }
 
     fire_and_forget MainPage::FileCtx_LoadManifest_Click(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e)
     {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(e);
+
         auto lifetime = get_strong();
 
         Windows::Storage::Pickers::FileOpenPicker fileOpenPicker;
@@ -326,7 +365,6 @@ namespace winrt::NetcodeAssetEditor::implementation
         loadingScreen().Visibility(Windows::UI::Xaml::Visibility::Visible);
         loadingScreenTitle().Text(L"Waiting for manifest...");
 
-        /**/
         Windows::Storage::StorageFile file = co_await fileOpenPicker.PickSingleFileAsync();
 
         if(file != nullptr) {
@@ -419,20 +457,22 @@ namespace winrt::NetcodeAssetEditor::implementation
                 dcMainPage->Meshes().Append(dcMesh);
             }
 
-        }/**/
+        }
 
         loadingScreen().Visibility(Windows::UI::Xaml::Visibility::Collapsed);
     }
 
     winrt::fire_and_forget MainPage::FileCtx_Compile_Click(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e)
     {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(e);
+
         Windows::Storage::Pickers::FileSavePicker fileSavePicker;
 
         fileSavePicker.SuggestedFileName(L"asset");
         fileSavePicker.FileTypeChoices().Insert(L"NetcodeAsset", winrt::single_threaded_vector<hstring>({ L".ncasset" }));
         fileSavePicker.SuggestedStartLocation(Windows::Storage::Pickers::PickerLocationId::Objects3D);
 
-        /**/
         Windows::Storage::StorageFile file = co_await fileSavePicker.PickSaveFileAsync();
 
         if(file != nullptr) {
@@ -457,7 +497,27 @@ namespace winrt::NetcodeAssetEditor::implementation
                 msg.ShowAsync();
             }
         }
-        /**/
+    }
+
+
+    winrt::fire_and_forget MainPage::AssetCtx_SetMediaRoot_Click(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e) {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(e);
+
+        namespace st = Windows::Storage;
+
+        st::Pickers::FolderPicker folderPicker;
+
+        folderPicker.FileTypeFilter().ReplaceAll({ L".ncasset" });
+        st::StorageFolder folder = co_await folderPicker.PickSingleFolderAsync();
+
+        if(folder != nullptr) {
+            std::wstring path = folder.Path().c_str();
+
+            Netcode::IO::Path::FixDirectoryPath(path);
+
+            Netcode::IO::Path::SetMediaRoot(path);
+        }
     }
 
 }

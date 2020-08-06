@@ -259,22 +259,22 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Editor_BoneVisibilityPass_Vertex.hlsl">
+    <FxCompile Include="Shaders\Editor_BoneVisibilityPass_Vertex.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
     </FxCompile>
-    <FxCompile Include="Editor_ColliderPass_Pixel.hlsl">
+    <FxCompile Include="Shaders\Editor_ColliderPass_Pixel.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="Editor_ColliderPass_Vertex.hlsl">
+    <FxCompile Include="Shaders\Editor_ColliderPass_Vertex.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
     </FxCompile>
-    <FxCompile Include="Editor_GBufferPass_Pixel.hlsl">
+    <FxCompile Include="Shaders\Editor_GBufferPass_Pixel.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="Editor_GBufferPass_Vertex.hlsl">
+    <FxCompile Include="Shaders\Editor_GBufferPass_Vertex.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
     </FxCompile>
-    <FxCompile Include="Editor_BoneVisibilityPass_Pixel.hlsl">
+    <FxCompile Include="Shaders\Editor_BoneVisibilityPass_Pixel.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
     </FxCompile>
   </ItemGroup>

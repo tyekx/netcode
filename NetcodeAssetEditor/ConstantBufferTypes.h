@@ -33,8 +33,8 @@ struct PerObjectData {
 	Netcode::Float4x4 InvModel;
 };
 
-struct MaterialData {
-	Netcode::Float4 diffuseAlbedo;
+struct LightData {
+
 };
 
 struct ColliderData {

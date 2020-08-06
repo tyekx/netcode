@@ -105,7 +105,7 @@ namespace winrt::NetcodeAssetEditor::implementation
 
         UpdateAnimation(playbackTime, Global::Model->animations[selectedAnimation], Global::Model->skeleton, Global::EditorApp->GetBoneData());
 
-        Global::EditorApp->Run();
+        Global::EditorApp->InvalidateFrame();
     }
 
     void AnimationsPage::OnNavigatedTo(Windows::UI::Xaml::Navigation::NavigationEventArgs const & e) {

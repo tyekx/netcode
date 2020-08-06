@@ -27,6 +27,9 @@ namespace winrt::NetcodeAssetEditor::implementation
         winrt::event<NetcodeAssetEditor::ManifestChangedHandler> manifestChanged;
         winrt::event<NetcodeAssetEditor::ModelChangedHandler> modelChanged;
 
+        Windows::UI::Xaml::DispatcherTimer renderTimer;
+        void RenderTimer_OnTick(Windows::Foundation::IInspectable const & sender, Windows::Foundation::IInspectable const & e);
+
         bool pointerHeld;
 
         MainPage();
@@ -44,7 +47,7 @@ namespace winrt::NetcodeAssetEditor::implementation
 
         winrt::fire_and_forget AssetCtx_ImportFBX_Click(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
         winrt::fire_and_forget AssetCtx_ImportAnimation_Click(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
-        
+        winrt::fire_and_forget AssetCtx_SetMediaRoot_Click(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
 
         void CommandInvokeHandler(Windows::UI::Popups::IUICommand const & command);
 
@@ -55,6 +58,7 @@ namespace winrt::NetcodeAssetEditor::implementation
 
         void Geometry_ListView_SelectAll();
         void Pivot_SelectionChanged(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::Controls::SelectionChangedEventArgs const & e);
+        
     };
 }
 namespace winrt::NetcodeAssetEditor::factory_implementation

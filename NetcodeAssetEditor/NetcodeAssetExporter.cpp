@@ -135,11 +135,11 @@ std::tuple<std::unique_ptr<uint8_t[]>, size_t> NetcodeAssetExporter::Export(cons
 		NetcodeMat.diffuseColor = mat.diffuseColor;
 		NetcodeMat.ambientColor = Netcode::Float3{ 0.0f, 0.0f, 0.0f };
 		
-		strcpy_s(NetcodeMat.diffuseTexture, mat.diffuseMapReference.c_str());
-		strcpy_s(NetcodeMat.normalTexture, mat.normalMapReference.c_str());
-		strcpy_s(NetcodeMat.ambientTexture, mat.ambientMapReference.c_str());
-		strcpy_s(NetcodeMat.roughnessTexture, mat.roughnessMapReference.c_str());
-		strcpy_s(NetcodeMat.specularTexture, mat.specularMapReference.c_str());
+		//strcpy_s(NetcodeMat.diffuseTexture, mat.diffuseMapReference.c_str());
+		//strcpy_s(NetcodeMat.normalTexture, mat.normalMapReference.c_str());
+		//strcpy_s(NetcodeMat.ambientTexture, mat.ambientMapReference.c_str());
+		//strcpy_s(NetcodeMat.roughnessTexture, mat.roughnessMapReference.c_str());
+		//strcpy_s(NetcodeMat.specularTexture, mat.specularMapReference.c_str());
 
 		NetcodeMat.diffuseTexture[255] = '\0';
 		NetcodeMat.normalTexture[255] = '\0';

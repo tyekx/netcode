@@ -133,6 +133,14 @@ namespace Netcode::Network {
 
 }
 
+namespace Netcode::URI {
+
+	class Texture;
+	class Shader;
+	class Model;
+
+}
+
 namespace Netcode::Graphics {
 
 	enum class FrameGraphCullMode : uint32_t;

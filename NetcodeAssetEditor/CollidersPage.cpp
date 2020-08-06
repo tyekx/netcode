@@ -43,7 +43,7 @@ namespace winrt::NetcodeAssetEditor::implementation
                 DirectX::XMStoreFloat4(&collider.localRotation, localRotationQuat);
 
                 Global::EditorApp->UpdateColliderData(Global::Model->colliders);
-                Global::EditorApp->Run();
+                Global::EditorApp->InvalidateFrame();
             } else {
                 Netcode::Asset::ColliderType type = static_cast<Netcode::Asset::ColliderType>(dcCollider.Type());
                 collider.type = type;
@@ -70,7 +70,7 @@ namespace winrt::NetcodeAssetEditor::implementation
                 }
 
                 Global::EditorApp->SetColliders(Global::Model->colliders);
-                Global::EditorApp->Run();
+                Global::EditorApp->InvalidateFrame();
             }
         });
     }
@@ -174,7 +174,7 @@ namespace winrt::NetcodeAssetEditor::implementation
             }
 
             Global::EditorApp->SetColliders(Global::Model->colliders);
-            Global::EditorApp->Run();
+            Global::EditorApp->InvalidateFrame();
         }
 
         __super::OnNavigatedTo(e);
@@ -209,7 +209,7 @@ namespace winrt::NetcodeAssetEditor::implementation
             colliders.Append(ConvertCollider(dCollider));
 
             Global::EditorApp->SetColliders(Global::Model->colliders);
-            Global::EditorApp->Run();
+            Global::EditorApp->InvalidateFrame();
         }
     }
 

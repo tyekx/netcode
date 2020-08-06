@@ -1,5 +1,6 @@
 #include "Manifest.h"
 #include <algorithm>
+#include <iterator>
 #include "JsonUtility.h"
 
 

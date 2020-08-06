@@ -66,7 +66,7 @@ namespace winrt::NetcodeAssetEditor::implementation
         }
 
         Global::EditorApp->SetSelectedBones(selectedBoneIndices);
-        Global::EditorApp->Run();
+        Global::EditorApp->InvalidateFrame();
     }
 }
 

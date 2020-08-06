@@ -4,6 +4,7 @@
 #include <Netcode/Graphics/ResourceEnums.h>
 #include <Netcode/Graphics/UploadBatch.h>
 #include <Netcode/Modules.h>
+#include <Netcode/FancyIterators.hpp>
 #include <DirectXTex.h>
 
 #include "GBuffer.h"
@@ -74,6 +75,8 @@ class EditorFrameGraph {
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
+		//ilBuilder->AddInputElement("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT);
+		//ilBuilder->AddInputElement("BINORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("BONEIDS", DXGI_FORMAT_R32_UINT);
 		auto inputLayout = ilBuilder->Build();
@@ -265,10 +268,13 @@ class EditorFrameGraph {
 			ctx->SetRootSignature(gbufferPass_RootSignature);
 			ctx->SetPipelineState(gbufferPass_PipelineState);
 
-			for(GBuffer & gb : gbufferPass_Input) {
+			for(auto & [gb, mat] : Zip(gbufferPass_Input, gbufferPass_MaterialsInput)) {
 				ctx->SetConstants(0, *perFrameData);
 				ctx->SetConstants(1, *boneData);
 				ctx->SetConstants(2, *perObjectData);
+
+				mat->Apply(ctx);
+
 				ctx->SetVertexBuffer(gb.vertexBuffer);
 				ctx->SetIndexBuffer(gb.indexBuffer);
 				ctx->DrawIndexed(gb.indexCount);
@@ -356,6 +362,7 @@ public:
 	PerObjectData * perObjectData;
 
 	std::vector<GBuffer> gbufferPass_Input;
+	std::vector<Ref<BRDF_MaterialBase>> gbufferPass_MaterialsInput;
 	std::vector<GBuffer> colliderPass_Input;
 	std::vector<ColliderData> colliderPass_DataInput;
 

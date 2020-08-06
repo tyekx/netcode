@@ -6,6 +6,7 @@
 #include "Model.h"
 #include "BoundingBoxHelpers.h"
 #include <Netcode/BasicGeometry.h>
+#include <Netcode/URI/Texture.h>
 #include <Netcode/IO/Path.h>
 #include <Netcode/IO/Json.h>
 #include <Netcode/IO/File.h>
@@ -36,11 +37,99 @@ namespace Netcode::Module {
 		float cameraYaw;
 		float mouseSpeed;
 
+		bool frameValid;
+
+		struct MaterialTextures {
+			Ref<Netcode::ResourceViews> resourceView;
+			Ref<Netcode::GpuResource> resources[5];
+			std::wstring textures[5];
+
+			void SetTexture(Netcode::Module::IGraphicsModule * g, BRDF_TextureType idx, const std::wstring & textureRef) {
+
+			}
+		};
+
 		std::vector<GBuffer> gbuffers;
+		std::vector<Ref<BRDF_MaterialBase>> materials;
+		std::vector<Ref<BRDF_MaterialBase>> matAssoc;
 		std::vector<GBuffer> boneGbuffers;
 		std::vector<GBuffer> colliderGbuffers;
 		std::vector<ColliderData> colliderData;
-		
+
+		virtual void SetMaterials(const std::vector<Mesh> & meshes, const std::vector<Material> & mats) {
+			materials.clear();
+			materials.resize(mats.size());
+			matAssoc.reserve(meshes.size());
+
+			for(const auto & mesh : meshes) {
+				uint32_t materialIdx = mesh.materialIdx;
+
+				if(materials[materialIdx] == nullptr) {
+					Ref<BRDF_DefaultMaterial> dm = std::make_shared<BRDF_DefaultMaterial>();
+					dm->Initialize(graphics.get());
+					materials[materialIdx] = dm;
+					ApplyMaterial(materialIdx, mats[materialIdx]);
+				}
+
+				matAssoc.emplace_back(materials[materialIdx]);
+			}
+		}
+
+		void ApplyTexture(uint32_t materialIndex, BRDF_TextureType texType, const std::wstring & ref) {
+			if(ref.empty()) {
+				materials[materialIndex]->RemoveTexture(texType);
+				return;
+			}
+
+			Netcode::URI::Texture texUri{ ref };
+
+			if(!Netcode::IO::File::Exists(texUri.GetTexturePath())) {
+				return;
+			}
+
+			if(materials[materialIndex]->GetID(texType).GetFullPath() == texUri.GetFullPath()) {
+				return;
+			}
+
+			auto textureBuilder = graphics->CreateTextureBuilder();
+			textureBuilder->LoadTexture2D(texUri);
+			Ref<Netcode::Texture> texture = textureBuilder->Build();
+
+			Ref<Netcode::GpuResource> texResource = graphics->resources->CreateTexture2D(texture->GetImage(0, 0, 0));
+
+			auto uploadBatch = graphics->resources->CreateUploadBatch();
+			uploadBatch->Upload(texResource, texture);
+			uploadBatch->Barrier(texResource, Netcode::Graphics::ResourceState::COPY_DEST, Netcode::Graphics::ResourceState::ANY_READ);
+			graphics->frame->SyncUpload(uploadBatch);
+
+			materials[materialIndex]->SetTexture(texType, std::move(texUri), std::move(texResource));
+		}
+
+		virtual void ApplyMaterialData(uint32_t materialIndex, const Material & mat) {
+			if(materials.size() <= materialIndex) {
+				return;
+			}
+
+			Ptr<BRDF_MaterialBase> brdfMat = materials[materialIndex].get();
+			brdfMat->Data.diffuseColor = mat.diffuseColor;
+			brdfMat->Data.roughness = mat.shininess;
+			brdfMat->Data.fresnelR0 = mat.fresnelR0;
+		}
+
+		virtual void ApplyMaterial(uint32_t materialIndex, const Material & mat) {
+			if(materials.size() <= materialIndex) {
+				return;
+			}
+
+			ApplyMaterialData(materialIndex, mat);
+
+			ApplyTexture(materialIndex, BRDF_TextureType::DIFFUSE_TEXTURE, mat.diffuseMapReference);
+			ApplyTexture(materialIndex, BRDF_TextureType::NORMAL_TEXTURE, mat.normalMapReference);
+			ApplyTexture(materialIndex, BRDF_TextureType::AMBIENT_TEXTURE, mat.ambientMapReference);
+			ApplyTexture(materialIndex, BRDF_TextureType::ROUGHNESS_TEXTURE, mat.roughnessMapReference);
+			ApplyTexture(materialIndex, BRDF_TextureType::SPECULAR_TEXTURE, mat.specularMapReference);
+		}
+
 		virtual void UpdateColliderData(const std::vector<Collider> & colls) {
 			colliderData.clear();
 
@@ -161,6 +250,10 @@ namespace Netcode::Module {
 			return &boneData;
 		}
 
+		virtual void InvalidateFrame() {
+			frameValid = false;
+		}
+
 		virtual void SetDrawGeometry(std::vector<LOD*> lodRefs) {
 			gbuffers.clear();
 
@@ -181,7 +274,7 @@ namespace Netcode::Module {
 		*/
 		virtual void Setup(IModuleFactory * factory) override {
 			Netcode::IO::Path::SetShaderRoot(L"C:/work/directx12/Bin/v142-msvc/AppX/Shaders");
-			Netcode::IO::Path::SetMediaRoot(L"C:/work/directx12/Bin/v142-msvc/AppX/Media");
+			Netcode::IO::Path::SetMediaRoot(L"C:/work/directx12/Media");
 			Netcode::IO::Path::SetWorkingDirectiory(L"C:/work/directx12/Bin/v142-msvc/AppX");
 
 			Netcode::IO::File configFile{ L"config.json" };
@@ -272,24 +365,28 @@ namespace Netcode::Module {
 		Advance simulation, update modules
 		*/
 		virtual void Run() override {
-			graphics->frame->Prepare();
-		
-			editorFrameGraph.boneData = &boneData;
-			editorFrameGraph.perFrameData = &perFrameData;
-			editorFrameGraph.perObjectData = &perObjectData;
-			editorFrameGraph.boneVisibilityData = &boneVisibilityData;
-			editorFrameGraph.gbufferPass_Input = gbuffers;
-			editorFrameGraph.colliderPass_Input = colliderGbuffers;
-			editorFrameGraph.colliderPass_DataInput = colliderData;
+			if(!frameValid) {
+				graphics->frame->Prepare();
 
-			Ref<FrameGraphBuilder> builder = graphics->CreateFrameGraphBuilder();
-			editorFrameGraph.CreateFrameGraph(builder.get());
-			Ref<FrameGraph> graph = builder->Build();
+				editorFrameGraph.boneData = &boneData;
+				editorFrameGraph.perFrameData = &perFrameData;
+				editorFrameGraph.perObjectData = &perObjectData;
+				editorFrameGraph.boneVisibilityData = &boneVisibilityData;
+				editorFrameGraph.gbufferPass_Input = gbuffers;
+				editorFrameGraph.colliderPass_Input = colliderGbuffers;
+				editorFrameGraph.colliderPass_DataInput = colliderData;
+				editorFrameGraph.gbufferPass_MaterialsInput = matAssoc;
 
-			graphics->frame->Run(std::move(graph), Netcode::Graphics::FrameGraphCullMode::NONE);
-			graphics->frame->Present();
-			graphics->frame->DeviceSync();
-			graphics->frame->CompleteFrame();
+				Ref<FrameGraphBuilder> builder = graphics->CreateFrameGraphBuilder();
+				editorFrameGraph.CreateFrameGraph(builder.get());
+				Ref<FrameGraph> graph = builder->Build();
+
+				graphics->frame->Run(std::move(graph), Netcode::Graphics::FrameGraphCullMode::NONE);
+				graphics->frame->Present();
+				graphics->frame->DeviceSync();
+				graphics->frame->CompleteFrame();
+				frameValid = true;
+			}
 		}
 
 		/*

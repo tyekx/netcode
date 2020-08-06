@@ -34,7 +34,7 @@ namespace winrt::NetcodeAssetEditor::implementation
 
         if(selectedItemsCount == 0) {
             Global::EditorApp->SetDrawGeometry({});
-            Global::EditorApp->Run();
+            Global::EditorApp->InvalidateFrame();
             return;
         }
 
@@ -52,7 +52,7 @@ namespace winrt::NetcodeAssetEditor::implementation
         }
 
         Global::EditorApp->SetDrawGeometry(std::move(drawCandidates));
-        Global::EditorApp->Run();
+        Global::EditorApp->InvalidateFrame();
     }
 
     void GeometryPage::OnModelChanged(uint64_t value) {

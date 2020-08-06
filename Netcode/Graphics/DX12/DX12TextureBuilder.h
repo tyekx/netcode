@@ -10,11 +10,11 @@ namespace Netcode::Graphics::DX12 {
 		DirectX::TexMetadata metaData;
 	public:
 
-		virtual void LoadTexture2D(const std::wstring & mediaPath) override;
+		virtual void LoadTexture2D(const URI::Texture & mediaPath) override;
 
-		virtual void LoadTexture3D(const std::wstring & mediaPath) override;
+		virtual void LoadTexture3D(const URI::Texture & mediaPath) override;
 
-		virtual void LoadTextureCube(const std::wstring & mediaPath) override;
+		virtual void LoadTextureCube(const URI::Texture & mediaPath) override;
 
 		virtual void LoadTexture2D(ArrayView<uint8_t> data) override;
 
