@@ -62,7 +62,7 @@ namespace Netcode::Module {
 
 			UpdateColliderData(colls);
 
-			Netcode::Graphics::UploadBatch upload;
+			auto upload = graphics->resources->CreateUploadBatch();
 			std::vector<std::unique_ptr<Netcode::Float3[]>> data;
 
 			for(const Collider & c : colls) {
@@ -75,8 +75,8 @@ namespace Netcode::Module {
 						Netcode::Graphics::BasicGeometry::CreateBoxWireframe(boxVData.get(), sizeof(DirectX::XMFLOAT3), c.boxArgs);
 						g.vertexBuffer = graphics->resources->CreateVertexBuffer(24 * sizeof(DirectX::XMFLOAT3), sizeof(DirectX::XMFLOAT3), ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
 						g.vertexCount = 24;
-						upload.Upload(g.vertexBuffer, boxVData.get(), 24 * sizeof(DirectX::XMFLOAT3));
-						upload.ResourceBarrier(g.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
+						upload->Upload(g.vertexBuffer, boxVData.get(), 24 * sizeof(DirectX::XMFLOAT3));
+						upload->Barrier(g.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
 						data.emplace_back(std::move(boxVData));
 					}
 					break;
@@ -89,8 +89,8 @@ namespace Netcode::Module {
 						Netcode::Graphics::BasicGeometry::CreateCapsuleWireframe(boxVData.get(), stride, 12, c.capsuleArgs.x, c.capsuleArgs.y, 0);
 						g.vertexBuffer = graphics->resources->CreateVertexBuffer(sizeInBytes, stride, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
 						g.vertexCount = vCount;
-						upload.Upload(g.vertexBuffer, boxVData.get(), sizeInBytes);
-						upload.ResourceBarrier(g.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
+						upload->Upload(g.vertexBuffer, boxVData.get(), sizeInBytes);
+						upload->Barrier(g.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
 						data.emplace_back(std::move(boxVData));
 					}
 					break;
@@ -103,8 +103,8 @@ namespace Netcode::Module {
 						Netcode::Graphics::BasicGeometry::CreateSphereWireframe(boxVData.get(), stride, c.sphereArgs, 12, 0);
 						g.vertexBuffer = graphics->resources->CreateVertexBuffer(sizeInBytes, stride, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
 						g.vertexCount = numVertices;
-						upload.Upload(g.vertexBuffer, boxVData.get(), sizeInBytes);
-						upload.ResourceBarrier(g.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
+						upload->Upload(g.vertexBuffer, boxVData.get(), sizeInBytes);
+						upload->Barrier(g.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
 						data.emplace_back(std::move(boxVData));
 					}
 					break;
@@ -282,11 +282,11 @@ namespace Netcode::Module {
 			editorFrameGraph.colliderPass_Input = colliderGbuffers;
 			editorFrameGraph.colliderPass_DataInput = colliderData;
 
-			FrameGraphBuilderRef builder = graphics->CreateFrameGraphBuilder();
-			editorFrameGraph.CreateFrameGraph(builder);
-			FrameGraphRef graph = builder->Build();
+			Ref<FrameGraphBuilder> builder = graphics->CreateFrameGraphBuilder();
+			editorFrameGraph.CreateFrameGraph(builder.get());
+			Ref<FrameGraph> graph = builder->Build();
 
-			graphics->frame->Run(graph, Netcode::Graphics::FrameGraphCullMode::NONE);
+			graphics->frame->Run(std::move(graph), Netcode::Graphics::FrameGraphCullMode::NONE);
 			graphics->frame->Present();
 			graphics->frame->DeviceSync();
 			graphics->frame->CompleteFrame();

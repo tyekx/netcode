@@ -9,7 +9,7 @@ namespace std {
 	class allocator;
 
 	template<typename T>
-	class default_delete;
+	struct default_delete;
 
 	template<typename T>
 	class shared_ptr;

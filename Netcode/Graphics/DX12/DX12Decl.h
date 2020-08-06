@@ -45,10 +45,10 @@ struct ID3D12GraphicsCommandList;
 struct ID3D12GraphicsCommandList3;
 struct ID3D12CommandAllocator;
 
-class IDXGIOutput1;
-class IDXGIFactory5;
-class IDXGIAdapter3;
-class IDXGISwapChain4;
+struct IDXGIOutput1;
+struct IDXGIFactory5;
+struct IDXGIAdapter3;
+struct IDXGISwapChain4;
 
 using ID3DBlob = ID3D10Blob;
 using HRESULT = long;

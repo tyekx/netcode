@@ -1,7 +1,10 @@
 #pragma once
 
 #include <Netcode/Graphics/FrameGraph.h>
+#include <Netcode/Graphics/ResourceEnums.h>
+#include <Netcode/Graphics/UploadBatch.h>
 #include <Netcode/Modules.h>
+#include <DirectXTex.h>
 
 #include "GBuffer.h"
 #include "ConstantBufferTypes.h"
@@ -19,23 +22,23 @@ class EditorFrameGraph {
 
 	GBuffer fsQuad;
 
-	Netcode::RootSignatureRef gbufferPass_RootSignature;
-	Netcode::PipelineStateRef gbufferPass_PipelineState;
+	Ref<Netcode::RootSignature> gbufferPass_RootSignature;
+	Ref<Netcode::PipelineState> gbufferPass_PipelineState;
 
-	Netcode::RootSignatureRef boneVisibilityPass_RootSignature;
-	Netcode::PipelineStateRef boneVisibilityPass_PipelineState;
+	Ref<Netcode::RootSignature> boneVisibilityPass_RootSignature;
+	Ref<Netcode::PipelineState> boneVisibilityPass_PipelineState;
 
-	Netcode::RootSignatureRef envmapPass_RootSignature;
-	Netcode::PipelineStateRef envmapPass_PipelineState;
+	Ref<Netcode::RootSignature> envmapPass_RootSignature;
+	Ref<Netcode::PipelineState> envmapPass_PipelineState;
 
-	Netcode::RootSignatureRef colliderPass_RootSignature;
-	Netcode::PipelineStateRef colliderPass_PipelineState;
+	Ref<Netcode::RootSignature> colliderPass_RootSignature;
+	Ref<Netcode::PipelineState> colliderPass_PipelineState;
 
-	Netcode::GpuResourceRef cloudynoonTexture;
-	Netcode::ResourceViewsRef cloudynoonView;
+	Ref<Netcode::GpuResource> cloudynoonTexture;
+	Ref<Netcode::ResourceViews> cloudynoonView;
 
-	Netcode::GpuResourceRef gbufferPass_DepthStencil;
-	Netcode::ResourceViewsRef gbufferPass_DepthStencilView;
+	Ref<Netcode::GpuResource> gbufferPass_DepthStencil;
+	Ref<Netcode::ResourceViews> gbufferPass_DepthStencilView;
 
 
 
@@ -59,9 +62,9 @@ class EditorFrameGraph {
 		fsQuad.indexBuffer = 0;
 		fsQuad.indexCount = 0;
 
-		Netcode::Graphics::UploadBatch uploadBatch;
-		uploadBatch.Upload(fsQuad.vertexBuffer, vData, sizeof(vData));
-		uploadBatch.ResourceBarrier(fsQuad.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
+		auto uploadBatch = g->resources->CreateUploadBatch();
+		uploadBatch->Upload(fsQuad.vertexBuffer, vData, sizeof(vData));
+		uploadBatch->Barrier(fsQuad.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
 
 		g->frame->SyncUpload(uploadBatch);
 	}
@@ -73,12 +76,12 @@ class EditorFrameGraph {
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
 		ilBuilder->AddInputElement("WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("BONEIDS", DXGI_FORMAT_R32_UINT);
-		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
+		auto inputLayout = ilBuilder->Build();
 
 
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"Editor_GBufferPass_Vertex.cso");
-		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"Editor_GBufferPass_Pixel.cso");
+		auto vs = shaderBuilder->LoadBytecode(L"Editor_GBufferPass_Vertex.cso");
+		auto ps = shaderBuilder->LoadBytecode(L"Editor_GBufferPass_Pixel.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		gbufferPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
@@ -122,11 +125,11 @@ class EditorFrameGraph {
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
 		ilBuilder->AddInputElement("WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("BONEIDS", DXGI_FORMAT_R32_UINT);
-		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
+		auto inputLayout = ilBuilder->Build();
 
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"Editor_BoneVisibilityPass_Vertex.cso");
-		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"Editor_BoneVisibilityPass_Pixel.cso");
+		auto vs = shaderBuilder->LoadBytecode(L"Editor_BoneVisibilityPass_Vertex.cso");
+		auto ps = shaderBuilder->LoadBytecode(L"Editor_BoneVisibilityPass_Pixel.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		boneVisibilityPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
@@ -158,9 +161,9 @@ class EditorFrameGraph {
 	}
 
 	void Create_BackgroundPass_PermanentResources(Netcode::Module::IGraphicsModule * g) {
-		Netcode::TextureBuilderRef textureBuilder = g->CreateTextureBuilder();
+		Ref<Netcode::TextureBuilder> textureBuilder = g->CreateTextureBuilder();
 		textureBuilder->LoadTextureCube(L"cloudynoon.dds");
-		Netcode::TextureRef cloudynoon = textureBuilder->Build();
+		Ref<Netcode::Texture> cloudynoon = textureBuilder->Build();
 
 		const Netcode::Image * img = cloudynoon->GetImage(0, 0, 0);
 
@@ -168,25 +171,25 @@ class EditorFrameGraph {
 
 		g->resources->SetDebugName(cloudynoonTexture, L"Cloudynoon TextureCube");
 
-		Netcode::Graphics::UploadBatch batch;
-		batch.Upload(cloudynoonTexture, cloudynoon);
-		batch.ResourceBarrier(cloudynoonTexture, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
-		g->frame->SyncUpload(batch);
+		auto uploadBatch = g->resources->CreateUploadBatch();
+		uploadBatch->Upload(cloudynoonTexture, cloudynoon);
+		uploadBatch->Barrier(cloudynoonTexture, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
+		g->frame->SyncUpload(std::move(uploadBatch));
 
 		cloudynoonView = g->resources->CreateShaderResourceViews(1);
 		cloudynoonView->CreateSRV(0, cloudynoonTexture.get());
 
-		Netcode::ShaderBuilderRef shaderBuilder = g->CreateShaderBuilder();
-		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"envmapPass_Vertex.cso");
-		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"envmapPass_Pixel.cso");
-		Netcode::RootSignatureBuilderRef rootSigBuilder = g->CreateRootSignatureBuilder();
+		auto shaderBuilder = g->CreateShaderBuilder();
+		auto vs = shaderBuilder->LoadBytecode(L"envmapPass_Vertex.cso");
+		auto ps = shaderBuilder->LoadBytecode(L"envmapPass_Pixel.cso");
+		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 
 		envmapPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
 
 		auto ilBuilder = g->CreateInputLayoutBuilder();
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
-		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
+		auto inputLayout = ilBuilder->Build();
 
 		Netcode::DepthStencilDesc depthDesc;
 		depthDesc.depthEnable = false;
@@ -201,7 +204,7 @@ class EditorFrameGraph {
 		depthDesc.backFace = depthDesc.frontFace;
 		depthDesc.backFace.stencilFunc = Netcode::ComparisonFunc::NEVER;
 
-		Netcode::GPipelineStateBuilderRef psoBuilder = g->CreateGPipelineStateBuilder();
+		auto psoBuilder = g->CreateGPipelineStateBuilder();
 		psoBuilder->SetInputLayout(inputLayout);
 		psoBuilder->SetVertexShader(vs);
 		psoBuilder->SetPixelShader(ps);
@@ -217,11 +220,11 @@ class EditorFrameGraph {
 	void Create_ColliderPass_PermanentResource(Netcode::Module::IGraphicsModule * g) {
 		auto ilBuilder = g->CreateInputLayoutBuilder();
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
-		Netcode::InputLayoutRef inputLayout = ilBuilder->Build();
+		auto inputLayout = ilBuilder->Build();
 
 		auto shaderBuilder = g->CreateShaderBuilder();
-		Netcode::ShaderBytecodeRef vs = shaderBuilder->LoadBytecode(L"Editor_ColliderPass_Vertex.cso");
-		Netcode::ShaderBytecodeRef ps = shaderBuilder->LoadBytecode(L"Editor_ColliderPass_Pixel.cso");
+		auto vs = shaderBuilder->LoadBytecode(L"Editor_ColliderPass_Vertex.cso");
+		auto ps = shaderBuilder->LoadBytecode(L"Editor_ColliderPass_Pixel.cso");
 
 		auto rootSigBuilder = g->CreateRootSignatureBuilder();
 		colliderPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
@@ -243,10 +246,10 @@ class EditorFrameGraph {
 		colliderPass_PipelineState = psoBuilder->Build();
 	}
 
-	void CreateGbufferPass(Netcode::FrameGraphBuilderRef builder) {
+	void CreateGbufferPass(Ptr<Netcode::FrameGraphBuilder> builder) {
 		builder->CreateRenderPass("Gbuffer pass", [this](IResourceContext * ctx) ->void {
-			ctx->Writes(0);
-			ctx->Writes(gbufferPass_DepthStencil);
+			ctx->Writes(static_cast<uintptr_t>(0));
+			ctx->Writes(gbufferPass_DepthStencil.get());
 		},
 			[this](IRenderContext * ctx) -> void {
 
@@ -276,10 +279,10 @@ class EditorFrameGraph {
 		});
 	}
 
-	void CreateBoneVisibilityPass(Netcode::FrameGraphBuilderRef builder) {
+	void CreateBoneVisibilityPass(Ptr<Netcode::FrameGraphBuilder> builder) {
 		builder->CreateRenderPass("Bone visibility pass", [this](IResourceContext * ctx) ->void {
-			ctx->Reads(gbufferPass_DepthStencil);
-			ctx->Writes(0);
+			ctx->Reads(gbufferPass_DepthStencil.get());
+			ctx->Writes(static_cast<uintptr_t>(0));
 		},
 			[this](IRenderContext * ctx) -> void {
 
@@ -300,10 +303,10 @@ class EditorFrameGraph {
 		});
 	}
 
-	void CreateBackgroundPass(Netcode::FrameGraphBuilderRef builder) {
+	void CreateBackgroundPass(Ptr<Netcode::FrameGraphBuilder> builder) {
 		builder->CreateRenderPass("Background pass", [this](IResourceContext * ctx) ->void {
-			ctx->Reads(gbufferPass_DepthStencil);
-			ctx->Writes(0);
+			ctx->Reads(gbufferPass_DepthStencil.get());
+			ctx->Writes(static_cast<uintptr_t>(0));
 		},
 			[this](IRenderContext * ctx) -> void {
 
@@ -322,10 +325,10 @@ class EditorFrameGraph {
 	}
 
 
-	void CreateColliderPass(Netcode::FrameGraphBuilderRef builder) {
+	void CreateColliderPass(Ptr<Netcode::FrameGraphBuilder> builder) {
 		builder->CreateRenderPass("Collider pass", [this](IResourceContext * ctx) ->void {
-			ctx->Reads(gbufferPass_DepthStencil);
-			ctx->Writes(0);
+			ctx->Reads(gbufferPass_DepthStencil.get());
+			ctx->Writes(static_cast<uintptr_t>(0));
 		},
 			[this](IRenderContext * ctx) -> void {
 
@@ -364,7 +367,7 @@ public:
 		Create_ColliderPass_PermanentResource(g);
 	}
 
-	void CreateFrameGraph(Netcode::FrameGraphBuilderRef builder) {
+	void CreateFrameGraph(Ptr<Netcode::FrameGraphBuilder> builder) {
 		CreateGbufferPass(builder);
 		CreateBoneVisibilityPass(builder);
 		CreateBackgroundPass(builder);

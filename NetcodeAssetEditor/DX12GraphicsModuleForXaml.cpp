@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "DX12GraphicsModuleForXaml.h"
+#include <Netcode/Graphics/DX12/DX12Common.h>
 
 namespace Netcode::Graphics::DX12 {
 

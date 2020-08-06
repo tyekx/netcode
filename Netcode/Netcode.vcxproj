@@ -16,7 +16,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>ClangCL</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -69,9 +69,10 @@
     <ClInclude Include="DefaultModuleFactory.h" />
     <ClInclude Include="DestructiveCopyConstructible.hpp" />
     <ClInclude Include="Functions.h" />
-    <ClInclude Include="Graphics\Config.h" />
+    <ClInclude Include="Graphics\BorderDesc.h" />
     <ClInclude Include="Graphics\DX12\d3dx12.h" />
     <ClInclude Include="Graphics\DX12\DX12Builders.h" />
+    <ClInclude Include="Graphics\DX12\DX12CommandList.h" />
     <ClInclude Include="Graphics\DX12\DX12CommandListPool.h" />
     <ClInclude Include="Graphics\DX12\DX12Common.h" />
     <ClInclude Include="Graphics\DX12\DX12ConstantBufferPool.h" />
@@ -79,9 +80,11 @@
     <ClInclude Include="Graphics\DX12\DX12CPipelineStateBuilder.h" />
     <ClInclude Include="Graphics\DX12\DX12CPipelineStateLibrary.h" />
     <ClInclude Include="Graphics\DX12\DX12DebugContext.h" />
+    <ClInclude Include="Graphics\DX12\DX12Decl.h" />
     <ClInclude Include="Graphics\DX12\DX12DynamicDescriptorHeap.h" />
     <ClInclude Include="Graphics\DX12\DX12Fence.h" />
     <ClInclude Include="Graphics\DX12\DX12FrameGraph.h" />
+    <ClInclude Include="Graphics\DX12\DX12FrameGraphBuilder.h" />
     <ClInclude Include="Graphics\DX12\DX12FrameGraphExecutor.h" />
     <ClInclude Include="Graphics\DX12\DX12GPipelineState.h" />
     <ClInclude Include="Graphics\DX12\DX12GPipelineStateBuilder.h" />
@@ -91,11 +94,13 @@
     <ClInclude Include="Graphics\DX12\DX12Heap.h" />
     <ClInclude Include="Graphics\DX12\DX12HeapManager.h" />
     <ClInclude Include="Graphics\DX12\DX12Helpers.h" />
+    <ClInclude Include="Graphics\DX12\DX12Includes.h" />
     <ClInclude Include="Graphics\DX12\DX12InputLayout.h" />
     <ClInclude Include="Graphics\DX12\DX12InputLayoutBuilder.h" />
     <ClInclude Include="Graphics\DX12\DX12InputLayoutLibrary.h" />
     <ClInclude Include="Graphics\DX12\DX12Platform.h" />
     <ClInclude Include="Graphics\DX12\DX12RenderContext.h" />
+    <ClInclude Include="Graphics\DX12\DX12RenderPass.h" />
     <ClInclude Include="Graphics\DX12\DX12Resource.h" />
     <ClInclude Include="Graphics\DX12\DX12ResourceContext.h" />
     <ClInclude Include="Graphics\DX12\DX12ResourceDesc.h" />
@@ -120,12 +125,18 @@
     <ClInclude Include="Graphics\DX12\DX12StreamOutputLibrary.h" />
     <ClInclude Include="Graphics\DX12\DX12Texture.h" />
     <ClInclude Include="Graphics\DX12\DX12TextureBuilder.h" />
+    <ClInclude Include="Graphics\DX12\DX12UploadBatch.h" />
     <ClInclude Include="Graphics\FrameGraph.h" />
-    <ClInclude Include="Graphics\GraphicsConfig.h" />
     <ClInclude Include="Graphics\GraphicsContexts.h" />
     <ClInclude Include="Graphics\ResourceDesc.h" />
     <ClInclude Include="Graphics\ResourceEnums.h" />
+    <ClInclude Include="Graphics\SpriteDesc.h" />
     <ClInclude Include="Graphics\UploadBatch.h" />
+    <ClInclude Include="HandleDecl.h" />
+    <ClInclude Include="Input\AxisMap.hpp" />
+    <ClInclude Include="Input\AxisMapBase.h" />
+    <ClInclude Include="Input\DefaultAxes.h" />
+    <ClInclude Include="Input\Key.h" />
     <ClInclude Include="IO\BinaryReader.h" />
     <ClInclude Include="IO\BinaryWriter.h" />
     <ClInclude Include="IO\Config.h" />
@@ -155,9 +166,12 @@
     <ClInclude Include="Network\MysqlSession.h" />
     <ClInclude Include="Network\NetcodeNetworkModule.h" />
     <ClInclude Include="Network\NetworkCommon.h" />
+    <ClInclude Include="Network\NetworkDecl.h" />
+    <ClInclude Include="Network\Response.hpp" />
     <ClInclude Include="Network\ServerSession.h" />
     <ClInclude Include="PhysXWrapper.h" />
     <ClInclude Include="ProgramArgs.h" />
+    <ClInclude Include="PxPtr.hpp" />
     <ClInclude Include="Service.hpp" />
     <ClInclude Include="Stopwatch.h" />
     <ClInclude Include="UI\Animation.hpp" />
@@ -195,6 +209,7 @@
     <ClCompile Include="DebugPhysxActor.cpp" />
     <ClCompile Include="DefaultModuleFactory.cpp" />
     <ClCompile Include="Functions.cpp" />
+    <ClCompile Include="Graphics\BorderDesc.cpp" />
     <ClCompile Include="Graphics\DX12\DX12CommandListPool.cpp" />
     <ClCompile Include="Graphics\DX12\DX12Common.cpp" />
     <ClCompile Include="Graphics\DX12\DX12ConstantBufferPool.cpp" />
@@ -205,6 +220,7 @@
     <ClCompile Include="Graphics\DX12\DX12DynamicDescriptorHeap.cpp" />
     <ClCompile Include="Graphics\DX12\DX12Fence.cpp" />
     <ClCompile Include="Graphics\DX12\DX12FrameGraph.cpp" />
+    <ClCompile Include="Graphics\DX12\DX12FrameGraphBuilder.cpp" />
     <ClCompile Include="Graphics\DX12\DX12FrameGraphExecutor.cpp" />
     <ClCompile Include="Graphics\DX12\DX12GPipelineState.cpp" />
     <ClCompile Include="Graphics\DX12\DX12GPipelineStateBuilder.cpp" />
@@ -219,6 +235,7 @@
     <ClCompile Include="Graphics\DX12\DX12InputLayoutLibrary.cpp" />
     <ClCompile Include="Graphics\DX12\DX12Platform.cpp" />
     <ClCompile Include="Graphics\DX12\DX12RenderContext.cpp" />
+    <ClCompile Include="Graphics\DX12\DX12RenderPass.cpp" />
     <ClCompile Include="Graphics\DX12\DX12Resource.cpp" />
     <ClCompile Include="Graphics\DX12\DX12ResourceContext.cpp" />
     <ClCompile Include="Graphics\DX12\DX12ResourceDesc.cpp" />
@@ -237,14 +254,15 @@
     <ClCompile Include="Graphics\DX12\DX12SpriteBatchBuilder.cpp" />
     <ClCompile Include="Graphics\DX12\DX12SpriteFont.cpp" />
     <ClCompile Include="Graphics\DX12\DX12SpriteFontBuilder.cpp" />
+    <ClCompile Include="Graphics\DX12\DX12SpriteFontLibrary.cpp" />
     <ClCompile Include="Graphics\DX12\DX12StreamOutput.cpp" />
     <ClCompile Include="Graphics\DX12\DX12StreamOutputBuilder.cpp" />
     <ClCompile Include="Graphics\DX12\DX12StreamOutputLibrary.cpp" />
     <ClCompile Include="Graphics\DX12\DX12Texture.cpp" />
     <ClCompile Include="Graphics\DX12\DX12TextureBuilder.cpp" />
-    <ClCompile Include="Graphics\FrameGraph.cpp" />
+    <ClCompile Include="Graphics\DX12\DX12UploadBatch.cpp" />
     <ClCompile Include="Graphics\ResourceEnums.cpp" />
-    <ClCompile Include="Graphics\UploadBatch.cpp" />
+    <ClCompile Include="Graphics\SpriteDesc.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="IO\BinaryReader.cpp" />

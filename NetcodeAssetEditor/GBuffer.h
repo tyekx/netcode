@@ -4,8 +4,8 @@
 #include "ConstantBufferTypes.h"
 
 struct GBuffer {
-	Netcode::GpuResourceRef vertexBuffer;
-	Netcode::GpuResourceRef indexBuffer;
+	Ref<Netcode::GpuResource> vertexBuffer;
+	Ref<Netcode::GpuResource> indexBuffer;
 	uint64_t vertexCount;
 	uint64_t indexCount;
 };
@@ -33,10 +33,10 @@ struct BRDF_Data {
 
 class BRDF_MaterialBase : public MaterialBase {
 protected:
-	Netcode::PipelineStateRef pipelineState;
-	Netcode::RootSignatureRef rootSignature;
-	Netcode::ResourceViewsRef textures;
-	Netcode::GpuResourceRef resourceRefs[5];
+	Ref<Netcode::PipelineState> pipelineState;
+	Ref<Netcode::RootSignature> rootSignature;
+	Ref<Netcode::ResourceViews> textures;
+	Ref<Netcode::GpuResource> resourceRefs[5];
 	BRDF_Data data;
 
 	BRDF_MaterialBase() = default;
@@ -56,7 +56,7 @@ public:
 		renderContext->SetShaderResources(4, textures);
 	}
 
-	void SetTexture(BRDF_TextureType slot, Netcode::GpuResourceRef texture) {
+	void SetTexture(BRDF_TextureType slot, Ref<Netcode::GpuResource> texture) {
 		const uint32_t idx = static_cast<uint32_t>(slot);
 		textures->CreateSRV(static_cast<uint32_t>(idx), texture.get());
 		data.textures |= (1 << idx);
