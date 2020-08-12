@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.8)
 netcode_add_static_library(NetcodeAssetLib)
 
 find_package(assimp CONFIG REQUIRED)
-find_package(json11 CONFIG REQUIRED)
+find_package(RapidJSON CONFIG REQUIRED)
 
 target_include_directories(NetcodeAssetLib
 PRIVATE 
@@ -30,6 +30,11 @@ PRIVATE
 	"Manifest.cpp"
 	"Material.cpp"
 	"Model.cpp"
+)
+
+target_include_directories(NetcodeAssetLib SYSTEM
+PRIVATE
+	${RAPIDJSON_INCLUDE_DIRS}
 )
 
 target_link_libraries(NetcodeAssetLib

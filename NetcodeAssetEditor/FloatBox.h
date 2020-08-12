@@ -15,6 +15,10 @@ namespace winrt::NetcodeAssetEditor::implementation
             return static_cast<float>(v);
         }
 
+        float Value() const {
+            return value;
+        }
+
         void OnTextChanged(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::Controls::TextChangedEventArgs const & e) {
             value = TextToValue();
         }

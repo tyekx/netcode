@@ -165,7 +165,8 @@ namespace Netcode::Graphics::DX12 {
 		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "ResourceViews: invalid heap type");
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvd = {};
-		srvd.Format = DXGI_FORMAT_UNKNOWN;
+		srvd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;;
+		srvd.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 		switch(expectedResourceDimension) {
 			case Graphics::ResourceDimension::BUFFER:

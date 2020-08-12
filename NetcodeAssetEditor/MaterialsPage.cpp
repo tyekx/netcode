@@ -22,6 +22,24 @@ namespace winrt::NetcodeAssetEditor::implementation
         return materials;
     }
 
+
+    void MaterialsPage::Shininess_TextChanged(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::Controls::TextChangedEventArgs const & e)
+    {
+        int32_t matIdx = materialsList().SelectedIndex();
+
+        if(matIdx < 0) {
+            return;
+        }
+
+        auto floatBox = sender.try_as<NetcodeAssetEditor::FloatBox>();
+
+        if(floatBox != nullptr) {
+            Global::Model->materials[matIdx].shininess = std::clamp(floatBox.Value(), 0.0f, 256.0f);
+            Global::EditorApp->ApplyMaterialData(matIdx, Global::Model->materials[matIdx]);
+            Global::EditorApp->InvalidateFrame();
+        }
+    }
+
     void MaterialsPage::OnNavigatedTo(Windows::UI::Xaml::Navigation::NavigationEventArgs const & e) {
         materials.Clear();
 
@@ -37,6 +55,7 @@ namespace winrt::NetcodeAssetEditor::implementation
                 color.G = static_cast<uint8_t>(material.diffuseColor.y * 255.0f);
                 color.R = static_cast<uint8_t>(material.diffuseColor.x * 255.0f);
 
+                dcMat.Shininess(material.shininess);
                 dcMat.DiffuseColor(color);
                 dcMat.FresnelR0(Windows::Foundation::Numerics::float3(material.fresnelR0.x, material.fresnelR0.y, material.fresnelR0.z));
                 dcMat.AmbientMapReference(material.ambientMapReference);

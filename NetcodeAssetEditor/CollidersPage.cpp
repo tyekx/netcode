@@ -42,7 +42,7 @@ namespace winrt::NetcodeAssetEditor::implementation
                 collider.localPosition = Netcode::Float3{ lPos.x, lPos.y, lPos.z };
                 DirectX::XMStoreFloat4(&collider.localRotation, localRotationQuat);
 
-                Global::EditorApp->UpdateColliderData(Global::Model->colliders);
+                Global::EditorApp->SetColliders(Global::Model->colliders);
                 Global::EditorApp->InvalidateFrame();
             } else {
                 Netcode::Asset::ColliderType type = static_cast<Netcode::Asset::ColliderType>(dcCollider.Type());

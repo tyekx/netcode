@@ -7,6 +7,9 @@
 #include <Netcode/URI/Texture.h>
 #include "ConstantBufferTypes.h"
 
+
+
+
 struct GBuffer {
 	Ref<Netcode::GpuResource> vertexBuffer;
 	Ref<Netcode::GpuResource> indexBuffer;
@@ -24,14 +27,17 @@ enum class BRDF_TextureType {
 	NORMAL_TEXTURE,
 	AMBIENT_TEXTURE,
 	SPECULAR_TEXTURE,
-	ROUGHNESS_TEXTURE
+	ROUGHNESS_TEXTURE,
+	HEIGHT_TEXTURE
 };
 
 struct BRDF_Data {
 	Netcode::Float4 diffuseColor;
+	Netcode::Float4 ambientColor;
 	Netcode::Float3 fresnelR0;
 	float roughness;
-	int textures;
+	Netcode::Float2 textureTiles;
+	uint32_t textures;
 
 	BRDF_Data() = default;
 };
@@ -41,8 +47,8 @@ protected:
 	Ref<Netcode::PipelineState> pipelineState;
 	Ref<Netcode::RootSignature> rootSignature;
 	Ref<Netcode::ResourceViews> textures;
-	Ref<Netcode::GpuResource> resourceRefs[5];
-	Netcode::URI::Texture textureIds[5];
+	Ref<Netcode::GpuResource> resourceRefs[6];
+	Netcode::URI::Texture textureIds[6];
 
 	template<size_t N>
 	static bool CheckInputLayoutElements(const char * (&cArray)[N], const std::vector<InputElement> & elements) {
@@ -75,6 +81,12 @@ public:
 
 	virtual void Initialize(Netcode::Module::IGraphicsModule * graphics) {
 		textures = graphics->resources->CreateShaderResourceViews(ARRAYSIZE(resourceRefs));
+		textures->RemoveSRV(0, Netcode::Graphics::ResourceDimension::TEXTURE2D);
+		textures->RemoveSRV(1, Netcode::Graphics::ResourceDimension::TEXTURE2D);
+		textures->RemoveSRV(2, Netcode::Graphics::ResourceDimension::TEXTURE2D);
+		textures->RemoveSRV(3, Netcode::Graphics::ResourceDimension::TEXTURE2D);
+		textures->RemoveSRV(4, Netcode::Graphics::ResourceDimension::TEXTURE2D);
+		textures->RemoveSRV(5, Netcode::Graphics::ResourceDimension::TEXTURE2D);
 	}
 
 	virtual bool MeshIsCompatible(const Mesh & mesh) const = 0;
@@ -82,8 +94,8 @@ public:
 	virtual void Apply(Netcode::Graphics::IRenderContext * renderContext) override {
 		renderContext->SetRootSignature(rootSignature);
 		renderContext->SetPipelineState(pipelineState);
-		renderContext->SetConstants(3, Data);
-		renderContext->SetShaderResources(4, textures);
+		renderContext->SetConstants(4, Data);
+		renderContext->SetShaderResources(5, textures);
 	}
 
 	const Netcode::URI::Texture & GetID(BRDF_TextureType slot) {
@@ -125,6 +137,8 @@ public:
 		inputLayoutBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		inputLayoutBuilder->AddInputElement("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
 		inputLayoutBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
+		inputLayoutBuilder->AddInputElement("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT);
+		inputLayoutBuilder->AddInputElement("BINORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
 		inputLayoutBuilder->AddInputElement("WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT);
 		inputLayoutBuilder->AddInputElement("BONEIDS", DXGI_FORMAT_R32_UINT);
 		auto inputLayout = inputLayoutBuilder->Build();

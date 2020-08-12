@@ -162,6 +162,8 @@ namespace NetcodeAssetEditor
     [default_interface]
     runtimeclass FloatBox : Windows.UI.Xaml.Controls.TextBox {
         FloatBox();
+
+        Single Value{ get; };
     }
 
     delegate void ManifestChangedHandler(UInt64 manifestPtr);

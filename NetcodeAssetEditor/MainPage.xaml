@@ -13,7 +13,7 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="2*" MaxWidth="450"/>
             <ColumnDefinition Width="4*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
@@ -80,7 +80,8 @@
                             Loaded="swapChainPanel_Loaded"
                             PointerPressed="swapChainPanel_PointerPressed"
                             PointerReleased="swapChainPanel_PointerReleased"
-                            PointerMoved="swapChainPanel_PointerMoved"></SwapChainPanel>
+                            PointerMoved="swapChainPanel_PointerMoved"
+                            SizeChanged="swapChainPanel_SizeChanged"></SwapChainPanel>
         </Grid>
 
     </Grid>

@@ -7,9 +7,8 @@ namespace Netcode::Graphics::DX12 {
 	void DX12GraphicsModuleForXaml::CreateSwapChain() {
 		swapChainFlags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 		DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
-		// if you specify width/height as 0, the CreateSwapChainForHwnd will query it from the output window
-		swapChainDesc.Width = 887;
-		swapChainDesc.Height = 779;
+		swapChainDesc.Width = 640;
+		swapChainDesc.Height = 480;
 		swapChainDesc.Format = renderTargetFormat;
 		swapChainDesc.Stereo = false;
 		swapChainDesc.SampleDesc.Count = 1;

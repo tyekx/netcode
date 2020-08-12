@@ -15,9 +15,9 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
-            <RowDefinition Height="3*"/>
+            <RowDefinition Height="2*"/>
             <RowDefinition Height="40"/>
-            <RowDefinition Height="7*"/>
+            <RowDefinition Height="8*"/>
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Vertical" Background="{ThemeResource SystemAccentColor}" Grid.Row="0" Grid.Column="0">
@@ -54,7 +54,7 @@
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0" HorizontalAlignment="Left">
                     <TextBlock Text="Shininess:" Margin="15,0,0,5"></TextBlock>
-                    <local:FloatBox Margin="30,0,30,0" Text="{Binding SelectedItem.Shininess, Mode=TwoWay, ElementName=materialsList}" MaxWidth="240"></local:FloatBox>
+                    <local:FloatBox Margin="30,0,30,0" TextChanged="Shininess_TextChanged" Text="{Binding SelectedItem.Shininess, Mode=TwoWay, ElementName=materialsList}" MaxWidth="240"></local:FloatBox>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
                     <TextBlock Margin="15,0,0,5" Text="Diffuse Texture Relative Path:"></TextBlock>

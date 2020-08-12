@@ -1,6 +1,58 @@
 #pragma once
 
-#include <DirectXMath.h>
+#include <NetcodeFoundation/Math.h>
+
+namespace Netcode {
+
+	__declspec(align(16)) struct Light {
+		Float4 intensity;
+		/*
+		* For directional light set position.w to 0.
+		*/
+		Float4 position;
+
+		float falloffStart;
+		float falloffEnd;
+		float spotPower;
+		float __structPad0;
+		Float4 direction;
+
+	};
+
+	struct PointLight : public Netcode::Light {
+		PointLight(const Float3 & intensity, const Float4 & position, float falloffStart, float falloffEnd)
+		{
+			Light::intensity = Float4{ intensity.x, intensity.y, intensity.z, 0.0f };
+			Light::position = position;
+			Light::falloffStart = falloffStart;
+			Light::falloffEnd = falloffEnd;
+		}
+	};
+
+	struct DirectionalLight : public Netcode::Light {
+		/*
+		* For directional light set position.w to 0.
+		*/
+		DirectionalLight(const  Float3 & intensity, const Float4 & position)
+		{
+			Light::intensity = Float4{ intensity.x, intensity.y, intensity.z, 0.0f };
+			Light::position = position;
+		}
+	};
+
+	struct SpotLight : public Netcode::Light {
+		SpotLight(const Float3 & intensity, const Float4 & position, const Float3 & direction, float falloffStart, float falloffEnd, float spotPower)
+		{
+			Light::intensity = Float4{ intensity.x, intensity.y, intensity.z, 0.0f };
+			Light::position = position;
+			Light::falloffStart = falloffStart;
+			Light::falloffEnd = falloffEnd;
+			Light::spotPower = spotPower;
+			Light::direction = Float4{ direction.x, direction.y, direction.z, 0.0f };
+		}
+	};
+
+}
 
 struct PerFrameData {
 	Netcode::Float4x4 ViewProj;
@@ -34,11 +86,7 @@ struct PerObjectData {
 };
 
 struct LightData {
-
-};
-
-struct ColliderData {
-	Netcode::Float4x4 LocalTransform;
-	Netcode::Float4 Color;
-	uint32_t BoneReference;
+	Netcode::Light lights[4];
+	Netcode::Float4 ambientLightIntensity;
+	int numLights;
 };

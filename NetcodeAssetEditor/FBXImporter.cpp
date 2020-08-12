@@ -53,7 +53,7 @@ static std::tuple<std::vector<InputElement>, uint32_t> GetInputLayout(const aiMe
 		ie.semanticIndex = 0;
 		ie.semanticName = "POSITION";
 		inputLayout.push_back(ie);
-		vertexSize += sizeof(DirectX::XMFLOAT3);
+		vertexSize += sizeof(Netcode::Float3);
 	}
 
 	if(mesh->HasNormals()) {
@@ -63,7 +63,7 @@ static std::tuple<std::vector<InputElement>, uint32_t> GetInputLayout(const aiMe
 		ie.semanticIndex = 0;
 		ie.semanticName = "NORMAL";
 		inputLayout.push_back(ie);
-		vertexSize += sizeof(DirectX::XMFLOAT3);
+		vertexSize += sizeof(Netcode::Float3);
 	}
 
 	for(int i = 0; mesh->HasTextureCoords(i); ++i) {
@@ -93,14 +93,14 @@ static std::tuple<std::vector<InputElement>, uint32_t> GetInputLayout(const aiMe
 		ie.semanticIndex = 0;
 		ie.semanticName = "BINORMAL";
 		inputLayout.push_back(ie);
-		vertexSize += sizeof(DirectX::XMFLOAT3);
+		vertexSize += sizeof(Netcode::Float3);
 
 		ie.byteOffset = vertexSize;
 		ie.format = DXGI_FORMAT_R32G32B32_FLOAT;
 		ie.semanticIndex = 0;
 		ie.semanticName = "TANGENT";
 		inputLayout.push_back(ie);
-		vertexSize += sizeof(DirectX::XMFLOAT3);
+		vertexSize += sizeof(Netcode::Float3);
 	}
 
 	if(mesh->HasBones()) {
@@ -110,7 +110,7 @@ static std::tuple<std::vector<InputElement>, uint32_t> GetInputLayout(const aiMe
 		ie.semanticIndex = 0;
 		ie.semanticName = "WEIGHTS";
 		inputLayout.push_back(ie);
-		vertexSize += sizeof(DirectX::XMFLOAT3);
+		vertexSize += sizeof(Netcode::Float3);
 		ie.byteOffset = vertexSize;
 		ie.format = DXGI_FORMAT_R32_UINT;
 		ie.semanticIndex = 0;
@@ -528,19 +528,18 @@ static Material ImportMaterial(const aiMaterial * mat) {
 		}
 	}
 
-	aiColor3D diffuseColor;
-	if(AI_SUCCESS != mat->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor)) {
-		OutputDebugStringW(L"Failed to get diffuseColor\r\n");
-	} else {
-		imat.diffuseColor.x = diffuseColor.r;
-		imat.diffuseColor.y = diffuseColor.g;
-		imat.diffuseColor.z = diffuseColor.b;
-		imat.diffuseColor.w = 1.0f;
-	}
+	aiColor3D diffuseColor{ 0.5f, 0.5f, 0.5f };
+	mat->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
+	imat.diffuseColor.x = diffuseColor.r;
+	imat.diffuseColor.y = diffuseColor.g;
+	imat.diffuseColor.z = diffuseColor.b;
+	imat.diffuseColor.w = 1.0f;
 
-	if(AI_SUCCESS != mat->Get(AI_MATKEY_SHININESS, imat.shininess)) {
-		OutputDebugStringW(L"Failed to get shininess\r\n");
-	}
+	imat.fresnelR0 = Netcode::Float3{ 0.05f, 0.05f, 0.05f };
+
+	float shininess = 0.0f;
+	mat->Get(AI_MATKEY_SHININESS, shininess);
+	imat.shininess = std::clamp(shininess, 0.0f, 256.0f);
 
 	return imat;
 }
@@ -689,7 +688,7 @@ std::vector<Animation> FBXImporter::ImportAnimationsFromMemory(const uint8_t * s
 	
 	Assimp::Importer importer;
 
-	uint32_t flags = aiProcess_Triangulate | aiProcess_FlipWindingOrder | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeMeshes;
+	uint32_t flags = aiProcess_Triangulate | aiProcess_FlipWindingOrder | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeMeshes;
 
 	const aiScene * scene = importer.ReadFileFromMemory(source, sizeInBytes, flags, ".fbx");
 

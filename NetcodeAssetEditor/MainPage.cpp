@@ -95,10 +95,29 @@ namespace winrt::NetcodeAssetEditor::implementation
 
         HRESULT hr = nativeSwapChainPanel->SetSwapChain(reinterpret_cast<IDXGISwapChain *>(Global::EditorApp->graphics->GetSwapChain()));
 
+        auto f2 = swapChainPanel().ActualSize();
+
+        Netcode::Module::AppEvent appEvent;
+        appEvent.resizeArgs = Netcode::Int2{ static_cast<int32_t>(f2.x), static_cast<int32_t>(f2.y) };
+        appEvent.type = Netcode::Module::EAppEventType::RESIZED;
+        Global::EditorApp->events->Broadcast(appEvent);
+
         if(SUCCEEDED(hr)) {
             renderTimer.Start();
         }
     }
+
+
+    void MainPage::swapChainPanel_SizeChanged(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::SizeChangedEventArgs const & e) {
+        if(Global::EditorApp != nullptr) {
+            auto newSize = e.NewSize();
+            Netcode::Module::AppEvent appEvent;
+            appEvent.resizeArgs = Netcode::Int2{ static_cast<int32_t>(newSize.Width), static_cast<int32_t>(newSize.Height) };
+            appEvent.type = Netcode::Module::EAppEventType::RESIZED;
+            Global::EditorApp->events->PostEvent(appEvent);
+        }
+    }
+
 
     void MainPage::Geometry_ListView_SelectAll() {
         //geometryListView().SelectAll();
@@ -335,6 +354,9 @@ namespace winrt::NetcodeAssetEditor::implementation
 
             Global::Manifest->colliders.clear();
             Global::Manifest->colliders = Global::Model->colliders;
+
+            Global::Manifest->materials;
+
             co_await Windows::Storage::FileIO::WriteTextAsync(file, winrt::to_hstring(Global::Manifest->Store().dump()));
 
             Windows::Storage::Provider::FileUpdateStatus status = co_await Windows::Storage::CachedFileManager::CompleteUpdatesAsync(file);

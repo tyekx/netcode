@@ -77,6 +77,7 @@ struct Material {
 	std::wstring specularMapReference;
 	std::wstring ambientMapReference;
 	std::wstring roughnessMapReference;
+	std::wstring heightMapReference;
 };
 
 enum class AnimationEdge {

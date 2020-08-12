@@ -59,6 +59,7 @@ namespace winrt::NetcodeAssetEditor::implementation
         void Geometry_ListView_SelectAll();
         void Pivot_SelectionChanged(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::Controls::SelectionChangedEventArgs const & e);
         
+        void swapChainPanel_SizeChanged(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::SizeChangedEventArgs const & e);
     };
 }
 namespace winrt::NetcodeAssetEditor::factory_implementation

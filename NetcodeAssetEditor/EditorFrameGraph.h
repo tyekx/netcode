@@ -21,10 +21,12 @@ using Netcode::Graphics::IResourceContext;
 
 class EditorFrameGraph {
 
+	Netcode::UInt2 backbufferSize;
+
 	GBuffer fsQuad;
 
-	Ref<Netcode::RootSignature> gbufferPass_RootSignature;
-	Ref<Netcode::PipelineState> gbufferPass_PipelineState;
+	//Ref<Netcode::RootSignature> gbufferPass_RootSignature;
+	//Ref<Netcode::PipelineState> gbufferPass_PipelineState;
 
 	Ref<Netcode::RootSignature> boneVisibilityPass_RootSignature;
 	Ref<Netcode::PipelineState> boneVisibilityPass_PipelineState;
@@ -70,13 +72,21 @@ class EditorFrameGraph {
 		g->frame->SyncUpload(uploadBatch);
 	}
 
+	void Create_GBufferPass_SizeDependentResources() {
+		gbufferPass_DepthStencil.reset();
+
+		gbufferPass_DepthStencil = graphics->resources->CreateDepthStencil(DXGI_FORMAT_D32_FLOAT_S8X24_UINT, ResourceType::PERMANENT_DEFAULT, ResourceState::DEPTH_READ);
+
+		gbufferPass_DepthStencilView->CreateDSV(gbufferPass_DepthStencil.get());
+	}
+
 	void Create_GBufferPass_PermanentResources(Netcode::Module::IGraphicsModule * g) {
-		auto ilBuilder = g->CreateInputLayoutBuilder();
+		/*auto ilBuilder = g->CreateInputLayoutBuilder();
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
-		//ilBuilder->AddInputElement("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT);
-		//ilBuilder->AddInputElement("BINORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
+		ilBuilder->AddInputElement("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT);
+		ilBuilder->AddInputElement("BINORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("BONEIDS", DXGI_FORMAT_R32_UINT);
 		auto inputLayout = ilBuilder->Build();
@@ -114,11 +124,10 @@ class EditorFrameGraph {
 		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
 		psoBuilder->SetDepthStencilFormat(DXGI_FORMAT_D32_FLOAT_S8X24_UINT);
 		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::TRIANGLE);
-		gbufferPass_PipelineState = psoBuilder->Build();
-
-		gbufferPass_DepthStencil = g->resources->CreateDepthStencil(DXGI_FORMAT_D32_FLOAT_S8X24_UINT, ResourceType::PERMANENT_DEFAULT, ResourceState::DEPTH_READ);
+		gbufferPass_PipelineState = psoBuilder->Build();*/
 		gbufferPass_DepthStencilView = g->resources->CreateDepthStencilView();
-		gbufferPass_DepthStencilView->CreateDSV(gbufferPass_DepthStencil.get());
+
+		Create_GBufferPass_SizeDependentResources();
 	}
 
 	void Create_BoneVisibilityPass_PermanentResources(Netcode::Module::IGraphicsModule * g) {
@@ -265,15 +274,17 @@ class EditorFrameGraph {
 			ctx->ClearDepthStencil();
 			ctx->SetStencilReference(0xFF);
 			ctx->SetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
-			ctx->SetRootSignature(gbufferPass_RootSignature);
-			ctx->SetPipelineState(gbufferPass_PipelineState);
+			//ctx->SetRootSignature(gbufferPass_RootSignature);
+			//ctx->SetPipelineState(gbufferPass_PipelineState);
 
 			for(auto & [gb, mat] : Zip(gbufferPass_Input, gbufferPass_MaterialsInput)) {
+				mat->Apply(ctx);
+
 				ctx->SetConstants(0, *perFrameData);
 				ctx->SetConstants(1, *boneData);
 				ctx->SetConstants(2, *perObjectData);
-
-				mat->Apply(ctx);
+				ctx->SetConstants(3, *lightData);
+				ctx->SetShaderResources(6, cloudynoonView);
 
 				ctx->SetVertexBuffer(gb.vertexBuffer);
 				ctx->SetIndexBuffer(gb.indexBuffer);
@@ -312,9 +323,10 @@ class EditorFrameGraph {
 	void CreateBackgroundPass(Ptr<Netcode::FrameGraphBuilder> builder) {
 		builder->CreateRenderPass("Background pass", [this](IResourceContext * ctx) ->void {
 			ctx->Reads(gbufferPass_DepthStencil.get());
+			ctx->Reads(static_cast<uintptr_t>(1));
 			ctx->Writes(static_cast<uintptr_t>(0));
 		},
-			[this](IRenderContext * ctx) -> void {
+		[this](IRenderContext * ctx) -> void {
 
 			ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencilView);
 			ctx->SetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
@@ -330,43 +342,82 @@ class EditorFrameGraph {
 		});
 	}
 
+	void CreateDebugPass(Ptr<Netcode::FrameGraphBuilder> builder) {
+		uint32_t numLines = 10;
 
-	void CreateColliderPass(Ptr<Netcode::FrameGraphBuilder> builder) {
-		builder->CreateRenderPass("Collider pass", [this](IResourceContext * ctx) ->void {
-			ctx->Reads(gbufferPass_DepthStencil.get());
-			ctx->Writes(static_cast<uintptr_t>(0));
+		for(int32_t i = 0; i <= numLines; ++i) {
+			float w = cameraWorldDistance;
+			float z = -w / (2.0f) + ((static_cast<float>(i) / static_cast<float>(numLines)) * (w));
+			float x0 = -w / 2.0f;
+			float x1 = w / 2.0f;
+
+			Netcode::Float3 p0{ x0, 0.0f, z };
+			Netcode::Float3 p1{ x1, 0.0f, z };
+
+			Netcode::Float3 p2{ z, 0.0f, x0 };
+			Netcode::Float3 p3{ z, 0.0f, x1 };
+
+			graphics->debug->DrawLine(p0, p1, Netcode::Float3{ 0.8f, 0.2f, 0.1f });
+			graphics->debug->DrawLine(p2, p3, Netcode::Float3{ 0.8f, 0.2f, 0.1f });
+		}
+
+		builder->CreateRenderPass("Debug Pass", [this](IResourceContext * ctx) -> void {
+			ctx->Writes(static_cast<uintptr_t>(1));
+			graphics->debug->UploadResources(ctx);
 		},
-			[this](IRenderContext * ctx) -> void {
-
-			ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencilView);
-			ctx->SetPrimitiveTopology(PrimitiveTopology::LINELIST);
-			ctx->SetRootSignature(colliderPass_RootSignature);
-			ctx->SetPipelineState(colliderPass_PipelineState);
-
-			uint32_t idx = 0;
-			for(GBuffer & gb : colliderPass_Input) {
-				ctx->SetConstants(0, colliderPass_DataInput.at(idx++));
-				ctx->SetConstants(1, *perFrameData);
-				ctx->SetConstants(2, *boneData);
-				ctx->SetConstants(3, *perObjectData);
-				ctx->SetVertexBuffer(gb.vertexBuffer);
-				ctx->Draw(gb.vertexCount);
-			}
+		[this](IRenderContext * ctx) -> void {
+			ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencil);
+			graphics->debug->Draw(ctx, perFrameData->ViewProj);
 		});
 	}
+
+	void CreateColliderPass(Ptr<Netcode::FrameGraphBuilder> builder) {
+		for(const Collider & collider : colliderPass_Input) {
+			using CT = Netcode::Asset::ColliderType;
+
+			switch(collider.type) {
+				case CT::BOX:
+					graphics->debug->DrawBox(collider.localRotation, collider.localPosition, collider.boxArgs);
+					break;
+				case CT::SPHERE:
+					graphics->debug->DrawSphere(collider.localPosition, collider.sphereArgs);
+					break;
+				case CT::CAPSULE:
+					graphics->debug->DrawCapsule(collider.localRotation, collider.localPosition, collider.capsuleArgs.x, collider.capsuleArgs.y);
+					break;
+				default: break;
+			}
+		}
+	}
 public:
+	Netcode::Module::IGraphicsModule * graphics;
+
+
+	void OnResized(int x, int y) {
+		Netcode::UInt2 newSize{ static_cast<uint32_t>(x), static_cast<uint32_t>(y) };
+
+		if(newSize.x != backbufferSize.x || newSize.y != backbufferSize.y) {
+			backbufferSize = newSize;
+			if(backbufferSize.x != 0 && backbufferSize.y != 0) {
+
+				Create_GBufferPass_SizeDependentResources();
+			}
+		}
+	}
 
 	PerFrameData * perFrameData;
 	BoneData * boneData;
 	BoneVisibilityData * boneVisibilityData;
 	PerObjectData * perObjectData;
+	LightData * lightData;
+	float cameraWorldDistance;
 
 	std::vector<GBuffer> gbufferPass_Input;
 	std::vector<Ref<BRDF_MaterialBase>> gbufferPass_MaterialsInput;
-	std::vector<GBuffer> colliderPass_Input;
-	std::vector<ColliderData> colliderPass_DataInput;
+	std::vector<Collider> colliderPass_Input;
 
 	void CreatePermanentResources(Netcode::Module::IGraphicsModule * g) {
+		graphics = g;
 		CreateFSQuad(g);
 		Create_GBufferPass_PermanentResources(g);
 		Create_BackgroundPass_PermanentResources(g);
@@ -379,6 +430,7 @@ public:
 		CreateBoneVisibilityPass(builder);
 		CreateBackgroundPass(builder);
 		CreateColliderPass(builder);
+		CreateDebugPass(builder);
 	}
 
 };

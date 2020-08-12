@@ -14,12 +14,13 @@
 
 namespace Netcode::Module {
 
-	class EditorApp : public AApp {
+	class EditorApp : public AApp, TAppEventHandler {
 	public:
 		BoneData boneData;
 		PerFrameData perFrameData;
 		PerObjectData perObjectData;
 		BoneVisibilityData boneVisibilityData;
+		LightData lightData;
 
 		EditorFrameGraph editorFrameGraph;
 
@@ -39,22 +40,11 @@ namespace Netcode::Module {
 
 		bool frameValid;
 
-		struct MaterialTextures {
-			Ref<Netcode::ResourceViews> resourceView;
-			Ref<Netcode::GpuResource> resources[5];
-			std::wstring textures[5];
-
-			void SetTexture(Netcode::Module::IGraphicsModule * g, BRDF_TextureType idx, const std::wstring & textureRef) {
-
-			}
-		};
-
 		std::vector<GBuffer> gbuffers;
 		std::vector<Ref<BRDF_MaterialBase>> materials;
 		std::vector<Ref<BRDF_MaterialBase>> matAssoc;
 		std::vector<GBuffer> boneGbuffers;
-		std::vector<GBuffer> colliderGbuffers;
-		std::vector<ColliderData> colliderData;
+		std::vector<Collider> colliders;
 
 		virtual void SetMaterials(const std::vector<Mesh> & meshes, const std::vector<Material> & mats) {
 			materials.clear();
@@ -112,7 +102,7 @@ namespace Netcode::Module {
 
 			Ptr<BRDF_MaterialBase> brdfMat = materials[materialIndex].get();
 			brdfMat->Data.diffuseColor = mat.diffuseColor;
-			brdfMat->Data.roughness = mat.shininess;
+			brdfMat->Data.roughness = 1.0f - (mat.shininess / 256.0f);
 			brdfMat->Data.fresnelR0 = mat.fresnelR0;
 		}
 
@@ -128,82 +118,11 @@ namespace Netcode::Module {
 			ApplyTexture(materialIndex, BRDF_TextureType::AMBIENT_TEXTURE, mat.ambientMapReference);
 			ApplyTexture(materialIndex, BRDF_TextureType::ROUGHNESS_TEXTURE, mat.roughnessMapReference);
 			ApplyTexture(materialIndex, BRDF_TextureType::SPECULAR_TEXTURE, mat.specularMapReference);
-		}
-
-		virtual void UpdateColliderData(const std::vector<Collider> & colls) {
-			colliderData.clear();
-
-			for(const Collider & c : colls) {
-				ColliderData cd;
-				cd.Color = Netcode::Float4{ 0.0f, 0.0f, 1.0f, 1.0f };
-				cd.BoneReference = c.boneReference;
-
-				Netcode::Matrix R = Netcode::RotationMatrix(c.localRotation);
-				Netcode::Matrix T = Netcode::TranslationMatrix(c.localPosition);
-				cd.LocalTransform = (R * T).Transpose();
-
-				colliderData.push_back(cd);
-			}
+			ApplyTexture(materialIndex, BRDF_TextureType::HEIGHT_TEXTURE, mat.heightMapReference);
 		}
 
 		virtual void SetColliders(std::vector<Collider> colls) {
-			colliderGbuffers.clear();
-
-			UpdateColliderData(colls);
-
-			auto upload = graphics->resources->CreateUploadBatch();
-			std::vector<std::unique_ptr<Netcode::Float3[]>> data;
-
-			for(const Collider & c : colls) {
-				GBuffer g;
-
-				switch(c.type) {
-					case ColliderType::BOX:
-					{
-						std::unique_ptr<Netcode::Float3[]> boxVData = std::make_unique<Netcode::Float3[]>(24);
-						Netcode::Graphics::BasicGeometry::CreateBoxWireframe(boxVData.get(), sizeof(DirectX::XMFLOAT3), c.boxArgs);
-						g.vertexBuffer = graphics->resources->CreateVertexBuffer(24 * sizeof(DirectX::XMFLOAT3), sizeof(DirectX::XMFLOAT3), ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
-						g.vertexCount = 24;
-						upload->Upload(g.vertexBuffer, boxVData.get(), 24 * sizeof(DirectX::XMFLOAT3));
-						upload->Barrier(g.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
-						data.emplace_back(std::move(boxVData));
-					}
-					break;
-					case ColliderType::CAPSULE:
-					{
-						const uint32_t vCount = Netcode::Graphics::BasicGeometry::GetCapsuleWireframeSize(12);
-						constexpr uint32_t stride = sizeof(Netcode::Float3);
-						uint32_t sizeInBytes = vCount * stride;
-						std::unique_ptr<Netcode::Float3[]> boxVData = std::make_unique<Netcode::Float3[]>(vCount);
-						Netcode::Graphics::BasicGeometry::CreateCapsuleWireframe(boxVData.get(), stride, 12, c.capsuleArgs.x, c.capsuleArgs.y, 0);
-						g.vertexBuffer = graphics->resources->CreateVertexBuffer(sizeInBytes, stride, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
-						g.vertexCount = vCount;
-						upload->Upload(g.vertexBuffer, boxVData.get(), sizeInBytes);
-						upload->Barrier(g.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
-						data.emplace_back(std::move(boxVData));
-					}
-					break;
-					case ColliderType::SPHERE:
-					{
-						const uint32_t numVertices = Netcode::Graphics::BasicGeometry::GetSphereWireframeSize(12);
-						constexpr uint32_t stride = sizeof(Netcode::Float3);
-						uint32_t sizeInBytes = numVertices * stride;
-						std::unique_ptr<Netcode::Float3[]> boxVData = std::make_unique<Netcode::Float3[]>(numVertices);
-						Netcode::Graphics::BasicGeometry::CreateSphereWireframe(boxVData.get(), stride, c.sphereArgs, 12, 0);
-						g.vertexBuffer = graphics->resources->CreateVertexBuffer(sizeInBytes, stride, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
-						g.vertexCount = numVertices;
-						upload->Upload(g.vertexBuffer, boxVData.get(), sizeInBytes);
-						upload->Barrier(g.vertexBuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
-						data.emplace_back(std::move(boxVData));
-					}
-					break;
-					default:
-						continue;
-				}
-				colliderGbuffers.push_back(g);
-			}
-
-			graphics->frame->SyncUpload(upload);
+			colliders = std::move(colls);
 		}
 
 		virtual void SetSelectedBones(std::vector<uint32_t> boneIndices) {
@@ -269,6 +188,12 @@ namespace Netcode::Module {
 			}
 		}
 
+		virtual void OnResized(int32_t x, int32_t y) override {
+			cameraAspect = graphics->GetAspectRatio();
+			editorFrameGraph.OnResized(x, y);
+			InvalidateFrame();
+		}
+
 		/*
 		Initialize modules
 		*/
@@ -294,11 +219,18 @@ namespace Netcode::Module {
 			graphics = factory->CreateGraphicsModule(this, 0);
 
 			StartModule(graphics.get());
+			AddAppEventHandlers(events.get());
+			events->AddHandler(this);
 
 			for(uint32_t i = 0; i < 128; ++i) {
 				boneData.BindTransform[i] = Netcode::Float4x4::Identity;
 				boneData.ToRootTransform[i] = Netcode::Float4x4::Identity;
 			}
+
+			memset(&lightData, 0, sizeof(lightData));
+			lightData.lights[0] = Netcode::DirectionalLight{ Netcode::Float3::One, Netcode::Float4{ 0.0f, 0.0f, -1.0f, 0.0f} };
+			lightData.ambientLightIntensity = Float4{ 0.2f, 0.2f, 0.2f, 1.0f };
+			lightData.numLights = 1;
 
 			cameraNearZ = 1.0f;
 			cameraFarZ = 1000.0f;
@@ -320,12 +252,13 @@ namespace Netcode::Module {
 		}
 
 		void UpdatePerFrameData() {
-			perFrameData.eyePos = Netcode::Float4{ cameraPosition.x, cameraPosition.y, cameraPosition.z, 1.0f };
-
 			Netcode::Matrix proj = Netcode::PerspectiveFovMatrix(cameraFov, cameraAspect, cameraNearZ, cameraFarZ);
 			Netcode::Vector3 ahead = cameraAhead;
+
+			cameraPosition = ahead * cameraWorldDistance;
+			lightData.lights[0].position = Netcode::Float4{ cameraPosition.x, cameraPosition.y, cameraPosition.z, 0.0f };
 			
-			Netcode::Matrix view = Netcode::LookAtMatrix(ahead * cameraWorldDistance, Netcode::Float3::Zero, cameraUp);
+			Netcode::Matrix view = Netcode::LookAtMatrix(cameraPosition, Netcode::Float3::Zero, cameraUp);
 			Netcode::Matrix viewFromOrigo = Netcode::LookToMatrix(Netcode::Float3::Zero, -ahead, cameraUp);
 
 			perFrameData.Proj = proj.Transpose();
@@ -336,6 +269,7 @@ namespace Netcode::Module {
 			perFrameData.farZ = cameraFarZ;
 			perFrameData.fov = cameraFov;
 			perFrameData.aspectRatio = cameraAspect;
+			perFrameData.eyePos = Netcode::Float4{ cameraPosition.x, cameraPosition.y, cameraPosition.z, 1.0f };
 		}
 
 		void MouseMoved(const DirectX::XMFLOAT2 & mouseDelta) {
@@ -351,7 +285,7 @@ namespace Netcode::Module {
 				cameraYaw -= DirectX::XM_2PI;
 			}
 
-			Netcode::Quaternion cameraYawQuat{ 0.0f, cameraYaw, 0.0f };
+			Netcode::Quaternion cameraYawQuat{ cameraPitch, cameraYaw, 0.0f };
 			Netcode::Vector3 minusUnitZ = Netcode::Float3{ 0.0f, 0.0f, -1.0f };
 
 			cameraAhead = minusUnitZ.Rotate(cameraYawQuat).Normalize();
@@ -365,6 +299,8 @@ namespace Netcode::Module {
 		Advance simulation, update modules
 		*/
 		virtual void Run() override {
+			events->Dispatch();
+
 			if(!frameValid) {
 				graphics->frame->Prepare();
 
@@ -372,10 +308,11 @@ namespace Netcode::Module {
 				editorFrameGraph.perFrameData = &perFrameData;
 				editorFrameGraph.perObjectData = &perObjectData;
 				editorFrameGraph.boneVisibilityData = &boneVisibilityData;
+				editorFrameGraph.lightData = &lightData;
 				editorFrameGraph.gbufferPass_Input = gbuffers;
-				editorFrameGraph.colliderPass_Input = colliderGbuffers;
-				editorFrameGraph.colliderPass_DataInput = colliderData;
+				editorFrameGraph.colliderPass_Input = colliders;
 				editorFrameGraph.gbufferPass_MaterialsInput = matAssoc;
+				editorFrameGraph.cameraWorldDistance = cameraWorldDistance;
 
 				Ref<FrameGraphBuilder> builder = graphics->CreateFrameGraphBuilder();
 				editorFrameGraph.CreateFrameGraph(builder.get());

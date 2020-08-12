@@ -39,6 +39,7 @@ namespace Netcode::Graphics::DX12 {
 		Netcode::DepthStencilDesc depthStencilDesc;
 		Netcode::RasterizerDesc rasterizerDesc;
 		rasterizerDesc.antialiasedLineEnable = true;
+		depthStencilDesc.depthWriteMaskZero = true;
 
 		Ref<Netcode::ShaderBuilder> shaderBuilder = graphics->CreateShaderBuilder();
 		Ref<Netcode::ShaderBytecode> vertexShader = shaderBuilder->LoadBytecode(L"Netcode_DebugPrimVS.cso");
@@ -99,7 +100,6 @@ namespace Netcode::Graphics::DX12 {
 
 		viewProj = viewProjMatrix;
 
-		context->SetRenderTargets(nullptr, nullptr);
 		context->SetPrimitiveTopology(PrimitiveTopology::LINELIST);
 		context->SetScissorRect();
 		context->SetViewport();
