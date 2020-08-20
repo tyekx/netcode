@@ -31,7 +31,9 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void EraseRenderPasses(Vector<Ref<RenderPass>> rps) override;
 
-		virtual Vector<Ref<RenderPass>> QueryCompleteRenderPasses() override;
+		virtual Ref<RenderPass> QueryFrontRenderPass() override;
+
+		virtual void PopRenderPass() override;
 
 		virtual bool UsingBackbuffer() const override;
 	};

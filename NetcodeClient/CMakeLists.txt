@@ -61,7 +61,7 @@ PRIVATE
 	
 	"Light.h"
 	"main.cpp"
-	"Material.h"
+	
 	"Mesh.h"
 	"PhysxHelpers.cpp"
 	"PhysxHelpers.h"
@@ -82,7 +82,7 @@ PRIVATE
 	"ProgramOptions.h"
 	"ProgramOptions.cpp"
  "UITest.h"
- "UITest.cpp")
+ "UITest.cpp" "GraphicsEngine.cpp")
 
 target_link_libraries(NetcodeClient
 PRIVATE

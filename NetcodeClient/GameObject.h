@@ -8,7 +8,6 @@
 #include <memory>
 #include <Netcode/Logger.h>
 #include <Netcode/Input.h>
-#include "Material.h"
 #include "Mesh.h"
 #include <Netcode/PhysXWrapper.h>
 #include "ComponentStorage.hpp"

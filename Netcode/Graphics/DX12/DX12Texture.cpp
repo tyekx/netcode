@@ -31,7 +31,7 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 	uint16_t TextureImpl::GetImageCount() {
-		return static_cast<uint16_t>(textureData.GetImageCount());
+		return static_cast<uint16_t>(textureData.GetMetadata().arraySize);
 	}
 
 }

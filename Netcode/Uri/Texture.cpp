@@ -24,6 +24,10 @@ namespace Netcode::URI {
 	}
 
 	Texture::Texture(std::wstring fullPath, FullPathToken) : AssetBase{} {
+		if(fullPath.empty()) {
+			return;
+		}
+
 		IO::Path::UnifySlashes(fullPath, L'/');
 
 		constexpr auto globalId = Texture::GetGlobalId();

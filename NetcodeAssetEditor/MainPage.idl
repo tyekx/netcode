@@ -56,12 +56,14 @@ namespace NetcodeAssetEditor
         Windows.UI.Color DiffuseColor;
         Windows.Foundation.Numerics.Vector3 FresnelR0;
         Single Shininess;
+        Single DisplacementScale;
+        Windows.Foundation.Numerics.Vector2 Tiling;
         String DiffuseMapReference;
         String NormalMapReference;
         String SpecularMapReference;
         String RoughnessMapReference;
         String AmbientMapReference;
-        String HeightMapReference;
+        String DisplacementMapReference;
     }
 
     [default_interface]

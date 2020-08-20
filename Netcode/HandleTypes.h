@@ -384,13 +384,13 @@ namespace Netcode {
 		virtual void LoadTexture3D(const URI::Texture & mediaPath) = 0;
 		virtual void LoadTextureCube(const URI::Texture & mediaPath) = 0;
 
-		virtual void LoadTexture2D(Netcode::ArrayView<uint8_t> data) = 0;
-		virtual void LoadTexture3D(Netcode::ArrayView<uint8_t> data) = 0;
-		virtual void LoadTextureCube(Netcode::ArrayView<uint8_t> data) = 0;
+		virtual void LoadTexture2D(ArrayView<uint8_t> data) = 0;
+		virtual void LoadTexture3D(ArrayView<uint8_t> data) = 0;
+		virtual void LoadTextureCube(ArrayView<uint8_t> data) = 0;
 
-		virtual uint16_t GetCurrentMipLevelCount() = 0;
-		virtual void GenerateMipLevels(uint16_t mipLevelCount) = 0;
-		virtual Ref<Texture> Build() = 0;
+		virtual void SetStateAfterUpload(Graphics::ResourceState state) = 0;
+		virtual void SetMipLevels(uint16_t mipLevels) = 0;
+		virtual Ref<GpuResource> Build() = 0;
 	};
 
 	class ResourceViews {
@@ -403,7 +403,7 @@ namespace Netcode {
 		virtual void CreateUAV(uint32_t idx, Ptr<GpuResource> resourceHandle) = 0;
 		virtual void CreateSampler(uint32_t idx, Ptr<GpuResource> resourceHandle) = 0;
 
-		virtual void RemoveSRV(uint32_t idx, Graphics::ResourceDimension expectedResourceDimension) = 0;
+		virtual void ClearSRV(uint32_t idx, Graphics::ResourceDimension expectedResourceDimension) = 0;
 	};
 
 	class SpriteBatch {

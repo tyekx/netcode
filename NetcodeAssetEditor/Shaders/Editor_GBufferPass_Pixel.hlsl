@@ -42,10 +42,12 @@ cbuffer LightingData : register(b3) {
 
 struct Material {
 	float4 diffuseColor;
-	float4 ambientColor;
 	float3 fresnelR0;
 	float roughness;
 	float2 tiles;
+	float2 tilesOffset;
+	float displacementScale;
+	float displacementBias;
 	uint texturesFlags;
 };
 
@@ -56,7 +58,7 @@ Texture2D<float3> normalTexture : register(t1);
 Texture2D<float> ambientTexture : register(t2);
 Texture2D<float> specularTexture : register(t3);
 Texture2D<float> roughnessTexture : register(t4);
-Texture2D<float> heightTexture : register(t5);
+Texture2D<float> displacementTexture : register(t5);
 
 TextureCube<float3> envmap : register(t6);
 
@@ -67,7 +69,7 @@ SamplerState linearWrapSampler : register(s0);
 #define AMBIENT_TEXTURE 2
 #define SPECULAR_TEXTURE 3
 #define ROUGHNESS_TEXTURE 4
-#define HEIGHT_TEXTURE 5
+#define DISPLACEMENT_TEXTURE 5
 
 bool IsBitSet(int value, int nthBit) {
 	return (value & (1 << nthBit)) > 0;
@@ -135,41 +137,91 @@ float3 ComputeDirectionalLight(Material mat, float2 texCoord, float3 lightIntens
 	return BlinnPhong(mat, texCoord, lightIntensity * ndotl, toLight, normal, toEye);
 }
 
-float3 NormalSampleToWorldSpace(float3 normalMapSample, float3 unitNormalW, float3 tangentW)
+float SampleDisplacement(float2 texCoord) {
+	return displacementTexture.Sample(linearWrapSampler, texCoord).x;
+}
+
+float2 SimpleParallax(float2 texCoord, float3 viewDir) {
+	float height = SampleDisplacement(texCoord);
+
+	height = height * material.displacementScale - material.displacementScale / 2.0f;
+
+	viewDir.z += 0.42f;
+	float2 texCoordOffset = height * (viewDir.xy / viewDir.z);
+
+	return texCoord + texCoordOffset;
+}
+
+struct ParallaxOut {
+	float2 texCoord;
+	float depthAtTexCoords;
+	float depthAtStart;
+};
+
+ParallaxOut OcclusionParallax(float2 texCoord, float3 viewDir)
 {
-	// Uncompress each component from [0,1] to [-1,1].
-	float3 normalT = 2.0f * normalMapSample - 1.0f;
+	const int numMaxLayers = 32;
+	const float minLayers = 8.0f;
+	const float maxLayers = float(numMaxLayers);
+	float numLayers = lerp(maxLayers, minLayers, abs(dot(float3(0.0f, 0.0f, 1.0f), viewDir)));
 
-	// Build orthonormal basis.
-	float3 N = unitNormalW;
-	float3 T = normalize(tangentW - dot(tangentW, N) * N);
-	float3 B = cross(N, T);
+	float layerDepth = 1.0f / numLayers;
+	float currentLayerDepth = 0.0f;
 
-	float3x3 TBN = float3x3(T, B, N);
+	float2 P = viewDir.xy / viewDir.z * material.displacementScale;
+	float2 deltaTexCoords = P / numLayers;
 
-	// Transform from tangent space to world space.
-	float3 bumpedNormalW = mul(normalT, TBN);
+	float2 currentTexCoords = texCoord;
+	const float depthAtStart = SampleDisplacement(currentTexCoords);
+	float currentDepthMapValue = depthAtStart;
 
-	return bumpedNormalW;
+	for(int i = 0; i < numMaxLayers && currentLayerDepth < currentDepthMapValue; i++) {
+		currentTexCoords -= deltaTexCoords;
+		currentDepthMapValue = SampleDisplacement(currentTexCoords);
+		currentLayerDepth += layerDepth;
+	}
+
+	float2 prevTexCoords = currentTexCoords + deltaTexCoords;
+
+	float afterDepth = currentDepthMapValue - currentLayerDepth;
+	float beforeDepth = SampleDisplacement(currentTexCoords) - currentLayerDepth + layerDepth;
+
+	float weight = afterDepth / (afterDepth - beforeDepth);
+	float2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0f - weight);
+
+	ParallaxOut output;
+	output.texCoord = finalTexCoords;
+	output.depthAtTexCoords = lerp(beforeDepth, afterDepth, weight);
+	output.depthAtStart = depthAtStart;
+
+	return output;
 }
 
 float4 main(GBufferPass_PixelInput input) : SV_TARGET
 {
-	float2 texCoord = input.texCoord;
+	float2 texCoord = input.texCoord * material.tiles;
 	float3 normal = normalize(input.normal);
+	float3 tangent = normalize(input.tangent - dot(input.tangent, normal) * normal);
+	float3 binormal = cross(normal, tangent);
+	float3x3 tbn = float3x3(tangent, binormal, normal);
 
 	Light l = lights[0];
 
 	float3 toLight = normalize((l.position.xyz - input.worldPosition * l.position.w));
 	float3 toEye = normalize(eyePos.xyz - input.worldPosition);
 
+	float parallaxWeight = 1.0f;
+
+	if(IsBitSet(material.texturesFlags, DISPLACEMENT_TEXTURE) &&
+	   IsBitSet(material.texturesFlags, NORMAL_TEXTURE)) {
+		ParallaxOut parallaxResult = OcclusionParallax(texCoord, mul(tbn, toEye));
+
+		texCoord = parallaxResult.texCoord;
+	}
+
 	if(IsBitSet(material.texturesFlags, NORMAL_TEXTURE)) {
-		float3 tangent = normalize(input.tangent - dot(input.tangent, normal) * normal);
-		float3 binormal = cross(normal, tangent);
-		float3x3 tbn = float3x3(tangent, binormal, normal);
-
-		float3 normalSample = 2.0f * normalTexture.Sample(linearWrapSampler, texCoord) - 1.0f;
-
+		float3 normalSample = normalize(2.0f * normalTexture.Sample(linearWrapSampler, texCoord) - 1.0f);
+		normalSample.y = -normalSample.y;
 		normal = mul(normalSample, tbn);
 	}
 
@@ -183,7 +235,7 @@ float4 main(GBufferPass_PixelInput input) : SV_TARGET
 	}
 
 	float3 shaded =
-		(1.0f - metallicWeight) * ComputeDirectionalLight(material, texCoord, l.intensity.xyz, toLight, normal, toEye) +
+		parallaxWeight * (1.0f - metallicWeight) * ComputeDirectionalLight(material, texCoord, l.intensity.xyz, toLight, normal, toEye) +
 				metallicWeight  * envMapSample;
 
 	return float4(shaded, 1.0f);

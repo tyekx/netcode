@@ -57,6 +57,10 @@ void Netcode::Utility::Debugf(const char * format, ...) {
 }
 
 std::string Netcode::Utility::ToNarrowString(const std::wstring & wideString) {
+	if(wideString.empty()) {
+		return "";
+	}
+
 	std::string str;
 	str.resize(wideString.size());
 	BOOL usedDefault = FALSE;
@@ -66,6 +70,10 @@ std::string Netcode::Utility::ToNarrowString(const std::wstring & wideString) {
 }
 
 std::wstring Netcode::Utility::ToWideString(const std::string & narrowString) {
+	if(narrowString.empty()) {
+		return L"";
+	}
+
 	std::wstring ws;
 	ws.resize(narrowString.size());
 	MultiByteToWideChar(0, 0, narrowString.c_str(), (int)narrowString.size(), &(ws.at(0)), (int)ws.size());

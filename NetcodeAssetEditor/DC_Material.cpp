@@ -37,6 +37,17 @@ namespace winrt::NetcodeAssetEditor::implementation
         propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"FresnelR0"));
     }
 
+    Windows::Foundation::Numerics::float2 DC_Material::Tiling()
+    {
+        return tiling;
+    }
+
+    void DC_Material::Tiling(Windows::Foundation::Numerics::float2 const& value)
+    {
+        tiling = value;
+        propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"Tiling"));
+    }
+
     float DC_Material::Shininess()
     {
         return shininess;
@@ -46,6 +57,14 @@ namespace winrt::NetcodeAssetEditor::implementation
     {
         shininess = value;
         propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"Shininess"));
+    }
+
+    float DC_Material::DisplacementScale() {
+        return displacementScale;
+    }
+
+    void DC_Material::DisplacementScale(float value) {
+        displacementScale = value;
     }
 
     hstring DC_Material::DiffuseMapReference()
@@ -103,15 +122,15 @@ namespace winrt::NetcodeAssetEditor::implementation
         propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"AmbientMapReference"));
     }
 
-    hstring DC_Material::HeightMapReference()
+    hstring DC_Material::DisplacementMapReference()
     {
-        return heightMapReference;
+        return displacementMapReference;
     }
 
-    void DC_Material::HeightMapReference(hstring const& value)
+    void DC_Material::DisplacementMapReference(hstring const& value)
     {
-        heightMapReference = value;
-        propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"HeightMapReference"));
+        displacementMapReference = value;
+        propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"DisplacementMapReference"));
     }
 
     winrt::event_token DC_Material::PropertyChanged(Windows::UI::Xaml::Data::PropertyChangedEventHandler const& handler)

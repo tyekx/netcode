@@ -42,15 +42,6 @@ cbuffer ObjectData : register(b2) {
 	float4x4 modelInv;
 };
 
-cbuffer MaterialData : register(b3) {
-	float4 diffuseColor;
-	float4 ambientColor;
-	float3 fresnelR0;
-	float roughness;
-	float2 tiles;
-	int texturesFlags;
-};
-
 #define GBUFFER_PASS_ROOT_SIG "RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT ), " \
 "CBV(b0, Visibility = SHADER_VISIBILITY_ALL), " \
 "CBV(b1, Visibility = SHADER_VISIBILITY_VERTEX), " \
@@ -59,7 +50,7 @@ cbuffer MaterialData : register(b3) {
 "CBV(b4, Visibility = SHADER_VISIBILITY_PIXEL), " \
 "DescriptorTable(SRV(t0, NumDescriptors = 6), Visibility = SHADER_VISIBILITY_PIXEL), " \
 "DescriptorTable(SRV(t6, NumDescriptors = 1), Visibility = SHADER_VISIBILITY_PIXEL), " \
-"StaticSampler(s0, AddressU = TEXTURE_ADDRESS_WRAP, AddressV = TEXTURE_ADDRESS_WRAP, Filter = FILTER_MIN_MAG_MIP_LINEAR, Visibility = SHADER_VISIBILITY_PIXEL)"
+"StaticSampler(s0, AddressU = TEXTURE_ADDRESS_WRAP, AddressV = TEXTURE_ADDRESS_WRAP, Filter = FILTER_ANISOTROPIC, mipLODBias = 0.0f, maxAnisotropy = 16, minLOD=0.0f, Visibility = SHADER_VISIBILITY_PIXEL)"
 
 [RootSignature(GBUFFER_PASS_ROOT_SIG)]
 GBufferPass_VertexOutput main(GBufferPass_VertexInput input)

@@ -24,6 +24,7 @@ namespace Netcode::Module {
 
 		EditorFrameGraph editorFrameGraph;
 
+		Netcode::Float3 cameraLookAt;
 		Netcode::Float3 cameraAhead;
 		Netcode::Float3 cameraPosition;
 		Netcode::Float3 cameraUp;
@@ -41,84 +42,72 @@ namespace Netcode::Module {
 		bool frameValid;
 
 		std::vector<GBuffer> gbuffers;
-		std::vector<Ref<BRDF_MaterialBase>> materials;
-		std::vector<Ref<BRDF_MaterialBase>> matAssoc;
-		std::vector<GBuffer> boneGbuffers;
+		std::vector<Ref<Netcode::Material>> materials;
+		std::vector<Ref<Netcode::Material>> matAssoc;
 		std::vector<Collider> colliders;
 
-		virtual void SetMaterials(const std::vector<Mesh> & meshes, const std::vector<Material> & mats) {
-			materials.clear();
-			materials.resize(mats.size());
+		Netcode::Float4x4 currentOfflineTransform;
+
+		virtual void SetMaterials(const std::vector<Mesh> & meshes, const std::vector<Ref<Material>> & mats, bool forceUpdate = false) {
 			matAssoc.reserve(meshes.size());
+			materials = mats;
+
+			using P = MaterialParamId;
 
 			for(const auto & mesh : meshes) {
 				uint32_t materialIdx = mesh.materialIdx;
 
-				if(materials[materialIdx] == nullptr) {
-					Ref<BRDF_DefaultMaterial> dm = std::make_shared<BRDF_DefaultMaterial>();
-					dm->Initialize(graphics.get());
-					materials[materialIdx] = dm;
-					ApplyMaterial(materialIdx, mats[materialIdx]);
+				Ptr<Material> mat = materials[materialIdx].get();
+
+				Ref<ResourceViews> view = mat->GetResourceView(0);
+				if(view == nullptr) {
+					view = graphics->resources->CreateShaderResourceViews(6);
+					for(uint32_t i = 0; i < 6; i++) {
+						view->ClearSRV(i, Graphics::ResourceDimension::TEXTURE2D);
+					}
+					mat->SetResourceView(0, view);
 				}
 
+				ApplyTexture(materialIdx, P::TEXTURE_DIFFUSE, P::TEXTURE_DIFFUSE_PATH, materials[materialIdx]->GetRequiredParameter<URI::Texture>(P::TEXTURE_DIFFUSE_PATH), forceUpdate);
+				ApplyTexture(materialIdx, P::TEXTURE_NORMAL, P::TEXTURE_NORMAL_PATH, materials[materialIdx]->GetRequiredParameter<URI::Texture>(P::TEXTURE_NORMAL_PATH), forceUpdate);
+				ApplyTexture(materialIdx, P::TEXTURE_AMBIENT, P::TEXTURE_AMBIENT_PATH, materials[materialIdx]->GetRequiredParameter<URI::Texture>(P::TEXTURE_AMBIENT_PATH), forceUpdate);
+				ApplyTexture(materialIdx, P::TEXTURE_ROUGHNESS, P::TEXTURE_ROUGHNESS_PATH, materials[materialIdx]->GetRequiredParameter<URI::Texture>(P::TEXTURE_ROUGHNESS_PATH), forceUpdate);
+				ApplyTexture(materialIdx, P::TEXTURE_SPECULAR, P::TEXTURE_SPECULAR_PATH, materials[materialIdx]->GetRequiredParameter<URI::Texture>(P::TEXTURE_SPECULAR_PATH), forceUpdate);
+				ApplyTexture(materialIdx, P::TEXTURE_DISPLACEMENT, P::TEXTURE_DISPLACEMENT_PATH, materials[materialIdx]->GetRequiredParameter<URI::Texture>(P::TEXTURE_DISPLACEMENT_PATH), forceUpdate);
 				matAssoc.emplace_back(materials[materialIdx]);
 			}
 		}
 
-		void ApplyTexture(uint32_t materialIndex, BRDF_TextureType texType, const std::wstring & ref) {
-			if(ref.empty()) {
-				materials[materialIndex]->RemoveTexture(texType);
+		void ApplyTexture(uint32_t materialIndex, Netcode::MaterialParamId texType, Netcode::MaterialParamId texPath, const URI::Texture & texUri, bool forceUpdate = false) {
+			Ptr<Material> mat = materials[materialIndex].get();
+
+			const Netcode::URI::Texture & existingUri = mat->GetRequiredParameter<Netcode::URI::Texture>(texPath);
+
+			if(!forceUpdate && texUri.GetFullPath() == existingUri.GetFullPath()) {
 				return;
 			}
 
-			Netcode::URI::Texture texUri{ ref };
+			uint32_t texIdx = static_cast<uint32_t>(texType) - static_cast<uint32_t>(MaterialParamId::TEXTURE_DIFFUSE);
+
+			if(texUri.Empty()) {
+				mat->SetParameter(texType, nullptr);
+				mat->SetParameter(texPath, texUri);
+				mat->GetResourceView(0)->ClearSRV(texIdx, Graphics::ResourceDimension::TEXTURE2D);
+				return;
+			}
 
 			if(!Netcode::IO::File::Exists(texUri.GetTexturePath())) {
 				return;
 			}
 
-			if(materials[materialIndex]->GetID(texType).GetFullPath() == texUri.GetFullPath()) {
-				return;
-			}
-
 			auto textureBuilder = graphics->CreateTextureBuilder();
 			textureBuilder->LoadTexture2D(texUri);
-			Ref<Netcode::Texture> texture = textureBuilder->Build();
+			textureBuilder->SetMipLevels(6);
 
-			Ref<Netcode::GpuResource> texResource = graphics->resources->CreateTexture2D(texture->GetImage(0, 0, 0));
-
-			auto uploadBatch = graphics->resources->CreateUploadBatch();
-			uploadBatch->Upload(texResource, texture);
-			uploadBatch->Barrier(texResource, Netcode::Graphics::ResourceState::COPY_DEST, Netcode::Graphics::ResourceState::ANY_READ);
-			graphics->frame->SyncUpload(uploadBatch);
-
-			materials[materialIndex]->SetTexture(texType, std::move(texUri), std::move(texResource));
-		}
-
-		virtual void ApplyMaterialData(uint32_t materialIndex, const Material & mat) {
-			if(materials.size() <= materialIndex) {
-				return;
-			}
-
-			Ptr<BRDF_MaterialBase> brdfMat = materials[materialIndex].get();
-			brdfMat->Data.diffuseColor = mat.diffuseColor;
-			brdfMat->Data.roughness = 1.0f - (mat.shininess / 256.0f);
-			brdfMat->Data.fresnelR0 = mat.fresnelR0;
-		}
-
-		virtual void ApplyMaterial(uint32_t materialIndex, const Material & mat) {
-			if(materials.size() <= materialIndex) {
-				return;
-			}
-
-			ApplyMaterialData(materialIndex, mat);
-
-			ApplyTexture(materialIndex, BRDF_TextureType::DIFFUSE_TEXTURE, mat.diffuseMapReference);
-			ApplyTexture(materialIndex, BRDF_TextureType::NORMAL_TEXTURE, mat.normalMapReference);
-			ApplyTexture(materialIndex, BRDF_TextureType::AMBIENT_TEXTURE, mat.ambientMapReference);
-			ApplyTexture(materialIndex, BRDF_TextureType::ROUGHNESS_TEXTURE, mat.roughnessMapReference);
-			ApplyTexture(materialIndex, BRDF_TextureType::SPECULAR_TEXTURE, mat.specularMapReference);
-			ApplyTexture(materialIndex, BRDF_TextureType::HEIGHT_TEXTURE, mat.heightMapReference);
+			Ref<Netcode::GpuResource> texResource = textureBuilder->Build();
+			mat->SetParameter(texType, texResource);
+			mat->SetParameter(texPath, texUri);
+			mat->GetResourceView(0)->CreateSRV(texIdx, texResource.get());
 		}
 
 		virtual void SetColliders(std::vector<Collider> colls) {
@@ -151,11 +140,7 @@ namespace Netcode::Module {
 
 			DirectX::BoundingSphere bs{ boundingBox.Center, len };
 
-
-			Netcode::Matrix modelMat = Netcode::TranslationMatrix(Netcode::Float3{ -bs.Center.x, -bs.Center.y, -bs.Center.z });
-
-			perObjectData.Model = modelMat.Transpose();
-			perObjectData.InvModel = modelMat.Invert().Transpose();
+			cameraLookAt = Netcode::Float3{ bs.Center.x, bs.Center.y, bs.Center.z };
 
 			float worldDepthDistance = 3.0f * 1.25f * len;
 			cameraWorldDistance = 2.0f * len;
@@ -238,11 +223,15 @@ namespace Netcode::Module {
 			cameraAspect = graphics->GetAspectRatio();
 
 			cameraWorldDistance = 1.0f;
+			cameraLookAt = Netcode::Float3::Zero;
 			cameraPosition = Netcode::Float3{ 0.0f, 0.0f, 180.0f };
 			cameraAhead = Netcode::Float3{ 0.0f, 0.0f, -1.0f };
 			cameraUp = Netcode::Float3{ 0.0f, 1.0f, 0.0f };
 
 			mouseSpeed = 0.0005f;
+
+			perObjectData.Model = Netcode::Float4x4::Identity;
+			perObjectData.InvModel = Netcode::Float4x4::Identity;
 
 			memset(boneVisibilityData.BoneVisibility, 0, sizeof(BoneVisibilityData));
 
@@ -255,10 +244,10 @@ namespace Netcode::Module {
 			Netcode::Matrix proj = Netcode::PerspectiveFovMatrix(cameraFov, cameraAspect, cameraNearZ, cameraFarZ);
 			Netcode::Vector3 ahead = cameraAhead;
 
-			cameraPosition = ahead * cameraWorldDistance;
+			cameraPosition = ahead * cameraWorldDistance + cameraLookAt;
 			lightData.lights[0].position = Netcode::Float4{ cameraPosition.x, cameraPosition.y, cameraPosition.z, 0.0f };
 			
-			Netcode::Matrix view = Netcode::LookAtMatrix(cameraPosition, Netcode::Float3::Zero, cameraUp);
+			Netcode::Matrix view = Netcode::LookAtMatrix(cameraPosition, cameraLookAt, cameraUp);
 			Netcode::Matrix viewFromOrigo = Netcode::LookToMatrix(Netcode::Float3::Zero, -ahead, cameraUp);
 
 			perFrameData.Proj = proj.Transpose();
@@ -292,7 +281,7 @@ namespace Netcode::Module {
 
 			UpdatePerFrameData();
 
-			Run();
+			InvalidateFrame();
 		}
 
 		/*
@@ -304,6 +293,7 @@ namespace Netcode::Module {
 			if(!frameValid) {
 				graphics->frame->Prepare();
 
+
 				editorFrameGraph.boneData = &boneData;
 				editorFrameGraph.perFrameData = &perFrameData;
 				editorFrameGraph.perObjectData = &perObjectData;
@@ -311,7 +301,7 @@ namespace Netcode::Module {
 				editorFrameGraph.lightData = &lightData;
 				editorFrameGraph.gbufferPass_Input = gbuffers;
 				editorFrameGraph.colliderPass_Input = colliders;
-				editorFrameGraph.gbufferPass_MaterialsInput = matAssoc;
+				editorFrameGraph.gbufferPass_InputMaterials = matAssoc;
 				editorFrameGraph.cameraWorldDistance = cameraWorldDistance;
 
 				Ref<FrameGraphBuilder> builder = graphics->CreateFrameGraphBuilder();

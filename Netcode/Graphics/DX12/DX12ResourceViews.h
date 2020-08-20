@@ -48,7 +48,7 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void CreateSampler(uint32_t idx, Ptr<GpuResource> resourceHandle)  override;
 
-		virtual void RemoveSRV(uint32_t idx, Graphics::ResourceDimension expectedResourceDimension) override;
+		virtual void ClearSRV(uint32_t idx, Graphics::ResourceDimension expectedResourceDimension) override;
 	};
 
 }

@@ -15,6 +15,9 @@ namespace Netcode::URI {
 	public:
 		using UriBase::UriBase;
 
+		AssetBase(const AssetBase & rhs);
+		AssetBase & operator=(const AssetBase & rhs);
+
 		std::wstring_view GetAssetDirectory() const;
 
 		const std::wstring & GetAssetPath() const;

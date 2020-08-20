@@ -27,6 +27,8 @@
 #include "RemoteAvatarScript.h"
 #include "UITest.h"
 
+#include <Netcode/Graphics/Material.h>
+
 using Netcode::Graphics::ResourceType;
 using Netcode::Graphics::ResourceState;
 using Netcode::Graphics::FrameGraphCullMode;
@@ -167,12 +169,9 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 		renderSystem.renderer.ui_Input = &pageManager;
 
-		GameObject * testbox = gameScene->Create();
-		
-		LoadComponents(assetManager->Import(L"testbox.ncasset"), testbox);
-
-
-		gameScene->Spawn(testbox);
+		GameObject * wall = gameScene->Create();
+		LoadComponents(assetManager->Import(L"wall_.ncasset"), wall);
+		gameScene->Spawn(wall);
 	}
 
 	void CreateRemoteAvatar() {
@@ -181,12 +180,13 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		GameObject * avatarController = gameScene->Create();
 		GameObject * avatarHitboxes = gameScene->Create();
 
-		Netcode::Asset::Model * avatarModel = assetManager->Import(L"ybot.ncasset");
+		Netcode::Asset::Model * avatarModel = assetManager->Import(L"ybot2.ncasset");
 
 		if(ybotAnimationSet == nullptr) {
 			ybotAnimationSet = std::make_shared<AnimationSet>(graphics.get(), avatarModel->animations, avatarModel->bones);
 		}
 
+		/*
 		GameObject * gunRootObj = gameScene->Create();
 		GameObject * gunObj = gameScene->Create();
 		LoadComponents(assetManager->Import(L"gun.ncasset"), gunObj);
@@ -196,20 +196,8 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 		gunRootTransform->position = Netcode::Float3{ 0.0f, 130.0f, 0.0f };
 		gunTransform->scale = Netcode::Float3{ 18.0f, 18.0f, 18.0f };
-
-		LoadComponents(avatarModel, avatarHitboxes);
-		Animation* anim = avatarHitboxes->AddComponent<Animation>();
-		CreateYbotAnimationComponent(avatarModel, anim);
-		anim->blackboard->BindController(&movCtrl);
-		anim->controller = ybotAnimationSet->CreateController();
-
-		physx::PxController * pxController = gameScene->CreateController();
-		avatarController->AddComponent<Transform>();
-		avatarHitboxes->Parent(avatarController);
 		gunRootObj->Parent(avatarController);
 		gunObj->Parent(gunRootObj);
-
-		avatarController->AddComponent<Script>()->SetBehavior(std::make_unique<RemoteAvatarScript>(pxController));
 
 		Netcode::Quaternion gunRotation{ -Netcode::C_PIDIV2, -Netcode::C_PIDIV2, 0.0f };
 
@@ -231,11 +219,23 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		);
 		gunScript->Setup(gunObj);
 
-		gameScene->Spawn(avatarController);
-		gameScene->Spawn(avatarHitboxes);
 		gameScene->Spawn(gunRootObj);
 		gameScene->Spawn(gunObj);
 		gameScene->Spawn(debugObj);
+		*/
+		LoadComponents(avatarModel, avatarHitboxes);
+		Animation* anim = avatarHitboxes->AddComponent<Animation>();
+		CreateYbotAnimationComponent(avatarModel, anim);
+		anim->blackboard->BindController(&movCtrl);
+		anim->controller = ybotAnimationSet->CreateController();
+
+		physx::PxController * pxController = gameScene->CreateController();
+		avatarController->AddComponent<Transform>();
+		avatarController->AddComponent<Script>()->SetBehavior(std::make_unique<RemoteAvatarScript>(pxController));
+		avatarHitboxes->Parent(avatarController);
+
+		gameScene->Spawn(avatarController);
+		gameScene->Spawn(avatarHitboxes);
 	}
 
 	void CreateLocalAvatar() {
@@ -410,15 +410,33 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 			appMesh->selectedLod = 0;
 			appMesh->boundingBox = mesh->boundingBox;
 
-			auto material = std::make_shared<TestMaterial>();
-
-			material->data.diffuseColor = Netcode::Float4{ mat->diffuseColor.x, mat->diffuseColor.y,mat->diffuseColor.z, 1.0f };
-			material->data.fresnelR0 = Netcode::Float3{ 0.05f, 0.05f, 0.05f };
-			material->data.shininess = mat->shininess;
-
 			graphics->frame->SyncUpload(std::move(batch));
 
-			modelComponent->AddShadedMesh(appMesh, material);
+			std::string ncMatName{ std::string_view{ mat->name, 48 } };
+			Ref<Netcode::Material> ncMat = std::make_shared<Netcode::BrdfMaterial>(static_cast<Netcode::MaterialType>(mat->type), ncMatName);
+
+			for(uint32_t j = 0; j < mat->indicesLength; ++j) {
+				Netcode::Asset::MaterialParamIndex param = mat->indices[j];
+				void * pptr = ncMat->GetParameterPointer(param.id);
+
+				if(param.id < static_cast<uint32_t>(Netcode::MaterialParamId::SENTINEL_TEXTURE_PATHS_BEGIN)) {
+					memcpy(pptr, mat->data + param.offset, param.size);
+				} else if(param.id < static_cast<uint32_t>(Netcode::MaterialParamId::SENTINEL_TEXTURE_PATHS_END)) {
+					if(param.size > 0) {
+						std::wstring fullUriPath{ std::wstring_view{
+							reinterpret_cast<wchar_t *>(mat->data + param.offset),
+							param.size / sizeof(wchar_t)
+							}
+						};
+
+						Netcode::URI::Texture texUri{ std::move(fullUriPath), Netcode::FullPathToken{} };
+
+						(*reinterpret_cast<Netcode::URI::Texture *>(pptr)) = std::move(texUri);
+					}
+				}
+			}
+
+			modelComponent->AddShadedMesh(appMesh, ncMat);
 		}
 
 	}

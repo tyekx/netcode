@@ -25,6 +25,7 @@ namespace Netcode::Graphics::DX12 {
 	class RootSignatureLibrary;
 	class SpriteFontLibrary;
 	class ShaderLibrary;
+	class TextureLibrary;
 
 
 	class FrameResource {
@@ -48,8 +49,7 @@ namespace Netcode::Graphics::DX12 {
 	private:
 		void CullFrameGraph(Ptr<FrameGraph> frameGraph);
 		void ExecuteFrameGraph(Ref<FrameGraph> frameGraph);
-
-	protected:
+	public:
 		Module::AppEventSystem * eventSystem;
 		HWND hwnd;
 		com_ptr<ID3D12Debug3> debugController;
@@ -109,6 +109,7 @@ namespace Netcode::Graphics::DX12 {
 		Ref<InputLayoutLibrary> inputLayoutLibrary;
 		Ref<GPipelineStateLibrary> gPipelineLibrary;
 		Ref<CPipelineStateLibrary> cPipelineLibrary;
+		Ref<TextureLibrary> textureLibrary;
 
 		Ref<DebugContext> debugContext;
 		Ref<ResourceContext> resourceContext;

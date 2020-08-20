@@ -5,6 +5,7 @@
 #endif
 
 #include "XamlGlobal.h"
+#include <Netcode/Utility.h>
 
 using namespace winrt;
 using namespace Windows::UI::Xaml;
@@ -16,6 +17,50 @@ namespace winrt::NetcodeAssetEditor::implementation
         InitializeComponent();
 
         materials = winrt::single_threaded_observable_vector<NetcodeAssetEditor::DC_Material>();
+    }
+
+    static const wchar_t * GetTextureReference(bool isEnabled, const hstring & str) {
+        return (isEnabled) ? str.c_str() : L"";
+    }
+
+    static void CopyTextureReference(Ptr<Netcode::Material> mat, int32_t idx, Netcode::MaterialParamId id, bool isChecked, const hstring & str) {
+        std::wstring texRef = GetTextureReference(isChecked, str);
+        Netcode::URI::Texture texUri{ std::move(texRef) };
+
+        Netcode::MaterialParamId texId = static_cast<Netcode::MaterialParamId>(static_cast<uint32_t>(id)
+            + (static_cast<uint32_t>(Netcode::MaterialParamId::TEXTURE_DIFFUSE) - static_cast<uint32_t>(Netcode::MaterialParamId::TEXTURE_DIFFUSE_PATH)));
+        Global::EditorApp->ApplyTexture(idx, texId, id, texUri);
+    }
+
+    void MaterialsPage::UpdateMaterial(int32_t idx)
+    {
+        if(idx < 0) {
+            return;
+        }
+        auto materialsView = materials.GetView();
+
+        if(idx >= materialsView.Size()) {
+            return;
+        }
+
+        auto selectedMaterial = materialsView.GetAt(idx);
+
+        Ptr<Netcode::Material> mat = Global::Model->materials[idx].get();
+
+        CopyTextureReference(mat, idx, Netcode::MaterialParamId::TEXTURE_DIFFUSE_PATH, diffuseTextureCheckBox().IsChecked().GetBoolean(), selectedMaterial.DiffuseMapReference());
+        CopyTextureReference(mat, idx, Netcode::MaterialParamId::TEXTURE_NORMAL_PATH, normalTextureCheckBox().IsChecked().GetBoolean(), selectedMaterial.NormalMapReference());
+        CopyTextureReference(mat, idx, Netcode::MaterialParamId::TEXTURE_AMBIENT_PATH, ambientTextureCheckBox().IsChecked().GetBoolean(), selectedMaterial.AmbientMapReference());
+        CopyTextureReference(mat, idx, Netcode::MaterialParamId::TEXTURE_ROUGHNESS_PATH, roughnessTextureCheckBox().IsChecked().GetBoolean(), selectedMaterial.RoughnessMapReference());
+        CopyTextureReference(mat, idx, Netcode::MaterialParamId::TEXTURE_SPECULAR_PATH, specularTextureCheckBox().IsChecked().GetBoolean(), selectedMaterial.SpecularMapReference());
+        CopyTextureReference(mat, idx, Netcode::MaterialParamId::TEXTURE_DISPLACEMENT_PATH, displacementTextureCheckBox().IsChecked().GetBoolean(), selectedMaterial.DisplacementMapReference());
+
+        Netcode::Float2 tiling{ selectedMaterial.Tiling().x, selectedMaterial.Tiling().y };
+        float displacementScale = selectedMaterial.DisplacementScale();
+        
+        mat->SetParameter(Netcode::MaterialParamId::TEXTURE_TILES, tiling);
+        mat->SetParameter(Netcode::MaterialParamId::DISPLACEMENT_SCALE, displacementScale);
+
+        Global::EditorApp->InvalidateFrame();
     }
 
     Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Material> MaterialsPage::Materials() {
@@ -34,8 +79,48 @@ namespace winrt::NetcodeAssetEditor::implementation
         auto floatBox = sender.try_as<NetcodeAssetEditor::FloatBox>();
 
         if(floatBox != nullptr) {
-            Global::Model->materials[matIdx].shininess = std::clamp(floatBox.Value(), 0.0f, 256.0f);
-            Global::EditorApp->ApplyMaterialData(matIdx, Global::Model->materials[matIdx]);
+            Ptr<Netcode::Material> mat = Global::Model->materials[matIdx].get();
+
+            mat->SetParameter(Netcode::MaterialParamId::ROUGHNESS, std::clamp(256.0f - floatBox.Value(), 0.0f, 256.0f));
+            Global::EditorApp->InvalidateFrame();
+        }
+    }
+
+    void MaterialsPage::Name_TextChanged(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::Controls::TextChangedEventArgs const & e)
+    {
+        UNREFERENCED_PARAMETER(e);
+
+        auto textBox = sender.try_as<Windows::UI::Xaml::Controls::TextBox>();
+
+        if(textBox != nullptr) {
+            int32_t matIdx = materialsList().SelectedIndex();
+
+            if(matIdx < 0) {
+                return;
+            }
+
+            hstring text = textBox.Text();
+            std::wstring wstr = text.c_str();
+
+            Ptr<Netcode::Material> mat = Global::Model->materials[matIdx].get();
+
+            mat->SetName(Netcode::Utility::ToNarrowString(wstr));
+        }
+    }
+
+    void MaterialsPage::DisplacementScale_TextChanged(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::Controls::TextChangedEventArgs const & e) {
+        int32_t matIdx = materialsList().SelectedIndex();
+
+        if(matIdx < 0) {
+            return;
+        }
+
+        auto floatBox = sender.try_as<NetcodeAssetEditor::FloatBox>();
+
+        if(floatBox != nullptr) {
+            Ptr<Netcode::Material> mat = Global::Model->materials[matIdx].get();
+
+            mat->SetParameter(Netcode::MaterialParamId::DISPLACEMENT_SCALE, std::clamp(floatBox.Value(), 0.0f, 1.0f));
             Global::EditorApp->InvalidateFrame();
         }
     }
@@ -44,25 +129,34 @@ namespace winrt::NetcodeAssetEditor::implementation
         materials.Clear();
 
         if(Global::Model != nullptr && !Global::Model->materials.empty()) {
-            for(const auto & material : Global::Model->materials) {
+            for(const Ref<Netcode::Material> & material : Global::Model->materials) {
                 auto dcMat = winrt::make<NetcodeAssetEditor::implementation::DC_Material>();
 
-                dcMat.Name(to_hstring(material.name));
+                dcMat.Name(to_hstring(material->GetName()));
+
+                using P = Netcode::MaterialParamId;
 
                 Windows::UI::Color color;
-                color.A = static_cast<uint8_t>(material.diffuseColor.w * 255.0f);
-                color.B = static_cast<uint8_t>(material.diffuseColor.z * 255.0f);
-                color.G = static_cast<uint8_t>(material.diffuseColor.y * 255.0f);
-                color.R = static_cast<uint8_t>(material.diffuseColor.x * 255.0f);
+                Netcode::Float4 diffuseColor = material->GetOptionalParameter<Netcode::Float4>(P::DIFFUSE_ALBEDO, Netcode::Float4::Zero);
+                Netcode::Float2 tiling = material->GetOptionalParameter(P::TEXTURE_TILES, Netcode::Float2::One);
+                Netcode::Float3 fresnelR0 = material->GetOptionalParameter(P::FRESNEL_R0, Netcode::Float3{ 0.05f, 0.05f, 0.05f});
 
-                dcMat.Shininess(material.shininess);
+                color.A = static_cast<uint8_t>(diffuseColor.w * 255.0f);
+                color.B = static_cast<uint8_t>(diffuseColor.z * 255.0f);
+                color.G = static_cast<uint8_t>(diffuseColor.y * 255.0f);
+                color.R = static_cast<uint8_t>(diffuseColor.x * 255.0f);
+
+                dcMat.DisplacementScale(material->GetOptionalParameter(P::DISPLACEMENT_SCALE, 0.01f));
+                dcMat.Shininess(256.0f - material->GetOptionalParameter(P::ROUGHNESS, 220.0f));
                 dcMat.DiffuseColor(color);
-                dcMat.FresnelR0(Windows::Foundation::Numerics::float3(material.fresnelR0.x, material.fresnelR0.y, material.fresnelR0.z));
-                dcMat.AmbientMapReference(material.ambientMapReference);
-                dcMat.DiffuseMapReference(material.diffuseMapReference);
-                dcMat.NormalMapReference(material.normalMapReference);
-                dcMat.RoughnessMapReference(material.roughnessMapReference);
-                dcMat.SpecularMapReference(material.specularMapReference);
+                dcMat.Tiling(Windows::Foundation::Numerics::float2(tiling.x, tiling.y));
+                dcMat.FresnelR0(Windows::Foundation::Numerics::float3(fresnelR0.x, fresnelR0.y, fresnelR0.z));
+                dcMat.AmbientMapReference(material->GetOptionalParameter<Netcode::URI::Texture>(P::TEXTURE_AMBIENT_PATH, Netcode::URI::Texture{}).GetFullPath());
+                dcMat.DiffuseMapReference(material->GetOptionalParameter<Netcode::URI::Texture>(P::TEXTURE_DIFFUSE_PATH, Netcode::URI::Texture{}).GetFullPath());
+                dcMat.NormalMapReference(material->GetOptionalParameter<Netcode::URI::Texture>(P::TEXTURE_NORMAL_PATH, Netcode::URI::Texture{}).GetFullPath());
+                dcMat.RoughnessMapReference(material->GetOptionalParameter<Netcode::URI::Texture>(P::TEXTURE_ROUGHNESS_PATH, Netcode::URI::Texture{}).GetFullPath());
+                dcMat.SpecularMapReference(material->GetOptionalParameter<Netcode::URI::Texture>(P::TEXTURE_SPECULAR_PATH, Netcode::URI::Texture{}).GetFullPath());
+                dcMat.DisplacementMapReference(material->GetOptionalParameter<Netcode::URI::Texture>(P::TEXTURE_DISPLACEMENT_PATH, Netcode::URI::Texture{}).GetFullPath());
 
                 materials.Append(dcMat);
             }
@@ -73,32 +167,11 @@ namespace winrt::NetcodeAssetEditor::implementation
 
     void MaterialsPage::PropertiesButton_Click(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e)
     {
-        int32_t selectedIndex = materialsList().SelectedIndex();
+        UpdateMaterial(materialsList().SelectedIndex());
+    }
 
-        if(selectedIndex < 0) {
-            return;
-        }
-
-        auto materialsView = materials.GetView();
-
-        if(materialsView.Size() <= selectedIndex ||
-            Global::Model == nullptr ||
-            Global::Model->materials.size() <= selectedIndex) {
-            return;
-        }
-
-        auto selectedMaterial = materialsView.GetAt(selectedIndex);
-
-        auto & materialData = Global::Model->materials.at(static_cast<size_t>(selectedIndex));
-
-        materialData.diffuseMapReference = selectedMaterial.DiffuseMapReference().c_str();
-        materialData.ambientMapReference = selectedMaterial.AmbientMapReference().c_str();
-        materialData.normalMapReference = selectedMaterial.NormalMapReference().c_str();
-        materialData.roughnessMapReference = selectedMaterial.RoughnessMapReference().c_str();
-        materialData.specularMapReference = selectedMaterial.SpecularMapReference().c_str();
-
-        Global::EditorApp->ApplyMaterial(static_cast<uint32_t>(selectedIndex), materialData);
-        Global::EditorApp->InvalidateFrame();
+    void MaterialsPage::CheckBox_Checked(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e) {
+        UpdateMaterial(materialsList().SelectedIndex());
     }
 
 
@@ -118,8 +191,9 @@ namespace winrt::NetcodeAssetEditor::implementation
         color.w = static_cast<float>(rgba.A) / 255.0f;
 
         if(Global::EditorApp != nullptr) {
-            Global::Model->materials[selectedIndex].diffuseColor = color;
-            Global::EditorApp->ApplyMaterialData(selectedIndex, Global::Model->materials[selectedIndex]);
+            Ptr<Netcode::Material> mat = Global::Model->materials[selectedIndex].get();
+
+            mat->SetParameter(Netcode::MaterialParamId::DIFFUSE_ALBEDO, color);
             Global::EditorApp->InvalidateFrame();
         }
     }
@@ -176,5 +250,3 @@ namespace winrt::NetcodeAssetEditor::implementation
         }
     }
 }
-
-

@@ -9,11 +9,13 @@ PUBLIC
 	"UploadBatch.h"
 	"SpriteDesc.h"
 	"BorderDesc.h"
+	"Material.h"
 
 PRIVATE
 	"ResourceEnums.cpp"
 	"SpriteDesc.cpp"
 	"BorderDesc.cpp"
+	"Material.cpp"
 )
 
 add_subdirectory(DX12)

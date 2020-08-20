@@ -8,6 +8,11 @@
 
 namespace Netcode::Graphics::DX12 {
 
+	static inline Vector3 HTransform(Vector4 v, Matrix m) {
+		v = v.Transform(m);
+		return (v / v.Swizzle<3, 3, 3, 3>()).XYZ();
+	}
+
 	void DebugContext::PushVertex(const PC_Vertex & vertex, bool depthEnabled) {
 		// assert: bufferSize > (numNoDepthVertices + numDepthVertices)
 		if(depthEnabled) {
@@ -121,29 +126,41 @@ namespace Netcode::Graphics::DX12 {
 		numNoDepthVertices = 0;
 	}
 
-	void DebugContext::DrawPoint(const Netcode::Float3 & point, float extent) {
-		DrawPoint(point, extent, true);
+	void DebugContext::DrawPoint(const Float3 & point, float extent) {
+		DrawPoint(point, extent, Float4x4::Identity, true);
 	}
 
-	void DebugContext::DrawPoint(const Netcode::Float3 & point, float extent, bool depthEnabled) {
+	void DebugContext::DrawPoint(const Float3 & point, float extent, bool depthEnabled) {
+		DrawPoint(point, extent, Float4x4::Identity, depthEnabled);
+	}
+
+	void DebugContext::DrawPoint(const Float3 & point, float extent, const Float4x4 & transform)
+	{
+		DrawPoint(point, extent, transform, true);
+	}
+
+	void DebugContext::DrawPoint(const Float3 & worldPos, float extent, const Float4x4 & transform, bool depthEnabled)
+	{
+		Float3 point = HTransform(Vector3{ worldPos }.XYZ1(), transform);
+
 		DrawLine(
-			Netcode::Float3(point.x - extent, point.y, point.z),
-			Netcode::Float3(point.x + extent, point.y, point.z),
-			Netcode::Float3(1.0f, 0.0f, 0.0f),
+			Float3{ point.x - extent, point.y, point.z },
+			Float3{ point.x + extent, point.y, point.z },
+			Float3{ 1.0f, 0.0f, 0.0f },
 			depthEnabled
 		);
 
 		DrawLine(
-			Netcode::Float3(point.x, point.y - extent, point.z),
-		    Netcode::Float3(point.x, point.y + extent, point.z),
-			Netcode::Float3(0.0f, 1.0f, 0.0f),
+			Float3{ point.x, point.y - extent, point.z },
+			Float3{ point.x, point.y + extent, point.z },
+			Float3{ 0.0f, 1.0f, 0.0f },
 			depthEnabled
 		);
 
 		DrawLine(
-			Netcode::Float3(point.x, point.y, point.z - extent),
-			Netcode::Float3(point.x, point.y, point.z + extent),
-			Netcode::Float3(0.0f, 0.0f, 1.0f),
+			Float3{ point.x, point.y, point.z - extent },
+			Float3{ point.x, point.y, point.z + extent },
+			Float3{ 0.0f, 0.0f, 1.0f },
 			depthEnabled
 		);
 	}
@@ -161,12 +178,31 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 	void DebugContext::DrawLine(const Netcode::Float3 & worldPosStart, const Netcode::Float3 & worldPosEnd, const Netcode::Float3 & color, bool depthEnabled) {
-		Netcode::PC_Vertex vert0;
+		PC_Vertex vert0;
 		vert0.position = worldPosStart;
 		vert0.color = color;
 
-		Netcode::PC_Vertex vert1;
+		PC_Vertex vert1;
 		vert1.position = worldPosEnd;
+		vert1.color = color;
+
+		PushVertex(vert0, depthEnabled);
+		PushVertex(vert1, depthEnabled);
+	}
+
+	void DebugContext::DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, const Float3 & color, const Float4x4 & transform)
+	{
+		DrawLine(worldPosStart, worldPosEnd, color, transform, true);
+	}
+
+	void DebugContext::DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, const Float3 & color, const Float4x4 & transform, bool depthEnabled)
+	{
+		PC_Vertex vert0;
+		vert0.position = HTransform(Vector3{ worldPosStart }.XYZ1(), transform);
+		vert0.color = color;
+
+		PC_Vertex vert1;
+		vert1.position = HTransform(Vector3{ worldPosEnd }.XYZ1(), transform);
 		vert1.color = color;
 
 		PushVertex(vert0, depthEnabled);
@@ -204,6 +240,27 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 
+	void DebugContext::DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color, const Float4x4 & transform)
+	{
+		DrawSphere(worldPosOrigin, radius, color, transform, true);
+	}
+
+	void DebugContext::DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color, const Float4x4 & transform, bool depthEnabled)
+	{
+		const uint32_t numSlices = Config::Get<uint32_t>("graphics.debug.sphereSlices:u32");
+
+		uint32_t numVertices = BasicGeometry::GetSphereWireframeSize(numSlices);
+
+		PC_Vertex * vData = GetBufferForVertices(numVertices, depthEnabled);
+
+		BasicGeometry::CreateSphereWireframe(vData, sizeof(PC_Vertex), radius, numSlices, 0);
+
+		for(uint32_t i = 0; i < numVertices; ++i) {
+			vData[i].position = HTransform((worldPosOrigin + vData[i].position).XYZ1(), transform);
+			vData[i].color = color;
+		}
+	}
+
 	void DebugContext::DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents)
 	{
 		DrawBoundingBox(worldPosOrigin, halfExtents, defaultColor, true);
@@ -222,6 +279,16 @@ namespace Netcode::Graphics::DX12 {
 	void DebugContext::DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, bool depthEnabled)
 	{
 		DrawBox(Quaternion{}, worldPosOrigin, halfExtents, color, depthEnabled);
+	}
+
+	void DebugContext::DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, const Float4x4 & transform)
+	{
+		DrawBox(Quaternion{}, worldPosOrigin, halfExtents, color, transform, true);
+	}
+
+	void DebugContext::DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, const Float4x4 & transform, bool depthEnabled)
+	{
+		DrawBox(Quaternion{}, worldPosOrigin, halfExtents, color, transform, depthEnabled);
 	}
 
 	void DebugContext::DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents)
@@ -271,6 +338,43 @@ namespace Netcode::Graphics::DX12 {
 				 worldPosOrigin + halfExtents.Permute<3, 4, 5>(negExt).Rotate(orientation), color, depthEnabled);
 	}
 
+	void DebugContext::DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, const Float4x4 & transform)
+	{
+		DrawBox(orientation, worldPosOrigin, halfExtents, color, transform, true);
+	}
+
+	void DebugContext::DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, const Float4x4 & transform, bool depthEnabled)
+	{
+		const Vector3 negExt = -halfExtents;
+
+		DrawLine(worldPosOrigin + halfExtents.Permute<0, 1, 2>(negExt).Rotate(orientation),
+			worldPosOrigin + halfExtents.Permute<3, 1, 2>(negExt).Rotate(orientation), color, transform, depthEnabled);
+		DrawLine(worldPosOrigin + halfExtents.Permute<3, 1, 2>(negExt).Rotate(orientation),
+			worldPosOrigin + halfExtents.Permute<3, 4, 2>(negExt).Rotate(orientation), color, transform, depthEnabled);
+		DrawLine(worldPosOrigin + halfExtents.Permute<0, 1, 2>(negExt).Rotate(orientation),
+			worldPosOrigin + halfExtents.Permute<0, 4, 2>(negExt).Rotate(orientation), color, transform, depthEnabled);
+		DrawLine(worldPosOrigin + halfExtents.Permute<0, 4, 2>(negExt).Rotate(orientation),
+			worldPosOrigin + halfExtents.Permute<3, 4, 2>(negExt).Rotate(orientation), color, transform, depthEnabled);
+
+		DrawLine(worldPosOrigin + halfExtents.Permute<0, 1, 5>(negExt).Rotate(orientation),
+			worldPosOrigin + halfExtents.Permute<3, 1, 5>(negExt).Rotate(orientation), color, transform, depthEnabled);
+		DrawLine(worldPosOrigin + halfExtents.Permute<3, 1, 5>(negExt).Rotate(orientation),
+			worldPosOrigin + halfExtents.Permute<3, 4, 5>(negExt).Rotate(orientation), color, transform, depthEnabled);
+		DrawLine(worldPosOrigin + halfExtents.Permute<0, 1, 5>(negExt).Rotate(orientation),
+			worldPosOrigin + halfExtents.Permute<0, 4, 5>(negExt).Rotate(orientation), color, transform, depthEnabled);
+		DrawLine(worldPosOrigin + halfExtents.Permute<0, 4, 5>(negExt).Rotate(orientation),
+			worldPosOrigin + halfExtents.Permute<3, 4, 5>(negExt).Rotate(orientation), color, transform, depthEnabled);
+
+		DrawLine(worldPosOrigin + halfExtents.Permute<0, 1, 2>(negExt).Rotate(orientation),
+			worldPosOrigin + halfExtents.Permute<0, 1, 5>(negExt).Rotate(orientation), color, transform, depthEnabled);
+		DrawLine(worldPosOrigin + halfExtents.Permute<0, 4, 2>(negExt).Rotate(orientation),
+			worldPosOrigin + halfExtents.Permute<0, 4, 5>(negExt).Rotate(orientation), color, transform, depthEnabled);
+		DrawLine(worldPosOrigin + halfExtents.Permute<3, 1, 2>(negExt).Rotate(orientation),
+			worldPosOrigin + halfExtents.Permute<3, 1, 5>(negExt).Rotate(orientation), color, transform, depthEnabled);
+		DrawLine(worldPosOrigin + halfExtents.Permute<3, 4, 2>(negExt).Rotate(orientation),
+			worldPosOrigin + halfExtents.Permute<3, 4, 5>(negExt).Rotate(orientation), color, transform, depthEnabled);
+	}
+
 	void DebugContext::DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight)
 	{
 		DrawCapsule(rotation, position, radius, halfHeight, defaultColor, true);
@@ -298,6 +402,27 @@ namespace Netcode::Graphics::DX12 {
 
 		for(uint32_t i = 0; i < numVertices; ++i) {
 			vData[i].position = Vector3(vData[i].position).Rotate(rotation) + position;
+			vData[i].color = color;
+		}
+	}
+
+	void DebugContext::DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, const Float4x4 & transform)
+	{
+		DrawCapsule(rotation, position, radius, halfHeight, color, transform, true);
+	}
+
+	void DebugContext::DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, const Float4x4 & transform, bool depthEnabled)
+	{
+		const uint32_t numSlices = Config::Get<uint32_t>("graphics.debug.capsuleSlices:u32");
+
+		uint32_t numVertices = BasicGeometry::GetCapsuleWireframeSize(numSlices);
+
+		PC_Vertex * vData = GetBufferForVertices(numVertices, depthEnabled);
+
+		BasicGeometry::CreateCapsuleWireframe(vData, sizeof(PC_Vertex), numSlices, radius, halfHeight, 0);
+
+		for(uint32_t i = 0; i < numVertices; ++i) {
+			vData[i].position = HTransform((Vector3(vData[i].position).Rotate(rotation) + position).XYZ1(), transform);
 			vData[i].color = color;
 		}
 	}

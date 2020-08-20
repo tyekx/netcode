@@ -77,9 +77,9 @@ namespace Netcode::Graphics::DX12 {
 		DX_API("Failed to initialize texture2d")
 			imageData.Initialize2D(textureFormat, textureWidth, textureHeight, 1, 1);
 
-		memcpy(imageData.GetImage(0, 0, 0)->pixels, textureData.Data(), imageData.GetImage(0, 0, 0)->slicePitch);
+		memcpy(imageData.GetImage(0, 0, 0)->pixels, textureData.Data(), size_t(textureStride) * size_t(textureRows));
 
-		textureResource = resourceContext->CreateTexture2D(textureWidth, textureHeight, textureFormat, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST, ResourceFlags::NONE);
+		textureResource = resourceContext->CreateTexture2D(textureWidth, textureHeight, imageData.GetMetadata().mipLevels, textureFormat, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST, ResourceFlags::NONE);
 		shaderResourceView = resourceContext->CreateShaderResourceViews(1);
 		shaderResourceView->CreateSRV(0, textureResource.get());
 

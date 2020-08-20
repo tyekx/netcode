@@ -7,6 +7,7 @@
 #include <dxgiformat.h>
 #include <NetcodeAssetLib/Collider.h>
 #include <NetcodeAssetLib/Animation.h>
+#include <Netcode/Graphics/Material.h>
 
 struct LOD {
 	size_t vertexDataSizeInBytes;
@@ -67,17 +68,19 @@ struct Mesh {
 	void ApplyTransformation(const Netcode::Float4x4 & mat);
 };
 
-struct Material {
+struct FbxMaterial {
 	std::string name;
 	Netcode::Float4 diffuseColor;
 	Netcode::Float3 fresnelR0;
+	Netcode::Float2 tiling;
 	float shininess;
+	float displacementScale;
 	std::wstring diffuseMapReference;
 	std::wstring normalMapReference;
 	std::wstring specularMapReference;
 	std::wstring ambientMapReference;
 	std::wstring roughnessMapReference;
-	std::wstring heightMapReference;
+	std::wstring displacementMapReference;
 };
 
 enum class AnimationEdge {
@@ -163,8 +166,9 @@ using Netcode::Asset::Collider;
 class Model {
 public:
 	std::vector<Mesh> meshes;
-	std::vector<Material> materials;
+	std::vector<Ref<Netcode::Material>> materials;
 	std::vector<OptimizedAnimation> animations;
 	std::vector<Collider> colliders;
 	Skeleton skeleton;
+	Netcode::Float4x4 offlineTransform;
 };

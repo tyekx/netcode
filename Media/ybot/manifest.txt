@@ -1,3 +1,0 @@
---name=ybot
---lods=ybot.fbx
---animations=Gunplay.fbx,IdleMenu.fbx,JumpDown.fbx,JumpLoop.fbx,RifleIdle.fbx,JumpUp.fbx,RifleRun.fbx,RifleRunBackward.fbx,RunBackwardLeft.fbx,RunBackwardRight.fbx,RunForwardLeft.fbx,RunForwardRight.fbx,StrafeLeft.fbx,StrafeRight.fbx

@@ -3,6 +3,7 @@
 #include <NetcodeAssetLib/Exporter.h>
 #include <NetcodeFoundation/ArrayView.hpp>
 #include <NetcodeAssetLib/Model.h>
+#include <DirectXTex.h>
 
 std::tuple<std::unique_ptr<uint8_t[]>, size_t> NetcodeAssetExporter::Export(const Model & model) {
 
@@ -11,6 +12,7 @@ std::tuple<std::unique_ptr<uint8_t[]>, size_t> NetcodeAssetExporter::Export(cons
 	std::vector<Netcode::Asset::InputElement> NetcodeInputElements;
 	std::vector<Netcode::Asset::LODLevel> NetcodeLods;
 	std::vector<Netcode::Asset::Mesh> NetcodeMeshes;
+	std::vector<Netcode::Asset::Material> NetcodeMaterials;
 
 	NetcodeMeshes.reserve(model.meshes.size());
 	uint32_t numLods = 0;
@@ -37,16 +39,19 @@ std::tuple<std::unique_ptr<uint8_t[]>, size_t> NetcodeAssetExporter::Export(cons
 		uint32_t vOffset = 0;
 		uint32_t vTotalSize = 0;
 		uint32_t iTotalSize = 0;
+		uint32_t vertexStride = 0;
 
 		for(const auto & inputElement : mesh.inputLayout) {
 			Netcode::Asset::InputElement NetcodeIE;
 			NetcodeIE.format = inputElement.format;
-			NetcodeIE.byteOffset = inputElement.byteOffset;
+			NetcodeIE.byteOffset = vertexStride;
 			NetcodeIE.semanticIndex = inputElement.semanticIndex;
+			memset(NetcodeIE.semanticName, 0, sizeof(NetcodeIE.semanticName));
 			strcpy_s(NetcodeIE.semanticName, inputElement.semanticName.c_str());
 			NetcodeIE.semanticName[31] = '\0';
 			NetcodeInputElements.emplace_back(NetcodeIE);
 			NetcodeElementIdx += 1;
+			vertexStride += DirectX::BitsPerPixel(NetcodeIE.format) / 8;
 		}
 
 		for(const auto & lod : mesh.lods) {
@@ -56,10 +61,10 @@ std::tuple<std::unique_ptr<uint8_t[]>, size_t> NetcodeAssetExporter::Export(cons
 			NetcodeLod.indexBufferSizeInBytes = lod.indexDataSizeInBytes;
 			NetcodeLod.vertexCount = lod.vertexCount;
 			NetcodeLod.vertexBufferByteOffset = vOffset;
-			NetcodeLod.vertexBufferSizeInBytes = lod.vertexDataSizeInBytes;
+			NetcodeLod.vertexBufferSizeInBytes = lod.vertexCount * vertexStride;
 			iOffset += lod.indexDataSizeInBytes;
-			vOffset += lod.vertexDataSizeInBytes;
-			vTotalSize += lod.vertexDataSizeInBytes;
+			vOffset += NetcodeLod.vertexBufferSizeInBytes;
+			vTotalSize += NetcodeLod.vertexBufferSizeInBytes;
 			iTotalSize += lod.indexDataSizeInBytes;
 			NetcodeLods.push_back(NetcodeLod);
 			++NetcodeLodIdx;
@@ -72,9 +77,21 @@ std::tuple<std::unique_ptr<uint8_t[]>, size_t> NetcodeAssetExporter::Export(cons
 		vOffset = 0;
 
 		for(const auto & lod : mesh.lods) {
-			memcpy(vbuffer.get() + vOffset, lod.vertexData.get(), lod.vertexDataSizeInBytes);
 			memcpy(ibuffer.get() + iOffset, lod.indexData.get(), lod.indexDataSizeInBytes);
-			vOffset += lod.vertexDataSizeInBytes;
+
+			uint32_t iterStride = 0;
+			for(const auto & ie : mesh.inputLayout) {
+				uint32_t numBytes = DirectX::BitsPerPixel(ie.format) / 8;
+
+				for(uint32_t i = 0; i < lod.vertexCount; ++i) {
+					uint8_t * vData = vbuffer.get() + vOffset + i * vertexStride + iterStride;
+					memcpy(vData, lod.vertexData.get() + i * mesh.vertexStride + ie.byteOffset, numBytes);
+				}
+
+				iterStride += numBytes;
+			}
+
+			vOffset += lod.vertexCount * vertexStride;
 			iOffset += lod.indexDataSizeInBytes;
 		}
 
@@ -86,7 +103,7 @@ std::tuple<std::unique_ptr<uint8_t[]>, size_t> NetcodeAssetExporter::Export(cons
 		NetcodeMesh.vertices = reinterpret_cast<void *>(vbuffer.get());
 		NetcodeMesh.lodLevels = NetcodeLods.data() + cLodIdx;
 		NetcodeMesh.lodLevelsLength = static_cast<uint32_t>(mesh.lods.size());
-		NetcodeMesh.vertexSize = mesh.vertexStride;
+		NetcodeMesh.vertexSize = vertexStride;
 		NetcodeMesh.inputElements = NetcodeInputElements.data() + cIEIdx;
 		NetcodeMesh.inputElementsLength = static_cast<uint32_t>(mesh.inputLayout.size());
 		NetcodeMesh.materialId = mesh.materialIdx;
@@ -129,29 +146,71 @@ std::tuple<std::unique_ptr<uint8_t[]>, size_t> NetcodeAssetExporter::Export(cons
 	NetcodeModel.colliders = Netcode::ArrayView<Netcode::Asset::Collider>(NetcodeColliders.data(), NetcodeColliders.size());
 
 	std::vector<Netcode::Asset::Material> NetcodeMats;
+	std::vector<std::unique_ptr<uint8_t[]>> materialStorage;
+	std::vector<std::vector<Netcode::Asset::MaterialParamIndex>> materialIndicies;
 
 	for(const auto & mat : model.materials) {
 		Netcode::Asset::Material NetcodeMat = {};
-		NetcodeMat.diffuseColor = mat.diffuseColor;
-		NetcodeMat.ambientColor = Netcode::Float3{ 0.0f, 0.0f, 0.0f };
-		
-		//strcpy_s(NetcodeMat.diffuseTexture, mat.diffuseMapReference.c_str());
-		//strcpy_s(NetcodeMat.normalTexture, mat.normalMapReference.c_str());
-		//strcpy_s(NetcodeMat.ambientTexture, mat.ambientMapReference.c_str());
-		//strcpy_s(NetcodeMat.roughnessTexture, mat.roughnessMapReference.c_str());
-		//strcpy_s(NetcodeMat.specularTexture, mat.specularMapReference.c_str());
+		const uint32_t paramCount = mat->GetParameterCount();
 
-		NetcodeMat.diffuseTexture[255] = '\0';
-		NetcodeMat.normalTexture[255] = '\0';
-		NetcodeMat.ambientTexture[255] = '\0';
-		NetcodeMat.roughnessTexture[255] = '\0';
-		NetcodeMat.specularTexture[255] = '\0';
+		std::vector<Netcode::Asset::MaterialParamIndex> indices;
+		std::unique_ptr<uint8_t[]> dataStorage = std::make_unique<uint8_t[]>(65536);
+
+		uint64_t offset = 0;
+		for(uint32_t i = 0; i < paramCount; ++i) {
+			Netcode::MaterialParam param = mat->GetParameterByIndex(i);
+			Netcode::Asset::MaterialParamIndex pi;
+			pi.id = param.id;
+			pi.size = param.size;
+			pi.offset = static_cast<uint16_t>(offset);
+
+			if(param.id < static_cast<uint32_t>(Netcode::MaterialParamId::SENTINEL_TEXTURE_PATHS_BEGIN)) {
+				const void * ptr = mat->GetParameterPointerByIndex(i);
+
+				if(ptr == nullptr) {
+					pi.size = 0;
+					continue;
+				}
+
+				memcpy(dataStorage.get() + offset, ptr, param.size);
+				pi.offset = static_cast<uint16_t>(offset);
+				offset += param.size;
+				indices.push_back(pi);
+			} else if(param.id < static_cast<uint32_t>(Netcode::MaterialParamId::SENTINEL_TEXTURE_PATHS_END)) {
+				const Netcode::URI::Texture & uri = mat->GetRequiredParameter<Netcode::URI::Texture>(param.id);
+
+				
+				if(uri.Empty()) {
+					pi.size = 0;
+					continue;
+				}
+
+				const std::wstring & v = uri.GetFullPath();
+
+				pi.size = static_cast<uint16_t>(v.size() * sizeof(wchar_t));
+				memcpy(dataStorage.get() + offset, v.data(), pi.size);
+				offset += static_cast<uint32_t>(pi.size);
+				indices.push_back(pi);
+			}
+
+			Netcode::OutOfRangeAssertion(offset < std::numeric_limits<uint16_t>::max());
+		}
+
+		memset(NetcodeMat.name, 0, sizeof(NetcodeMat.name));
+		strcpy_s(NetcodeMat.name, mat->GetName().c_str());
+		NetcodeMat.type = static_cast<uint32_t>(mat->GetType());
+		NetcodeMat.dataSizeInBytes = offset;
+		NetcodeMat.indicesLength = static_cast<uint32_t>(indices.size());
+		NetcodeMat.indices = indices.data();
+		NetcodeMat.data = dataStorage.get();
+
+		materialStorage.emplace_back(std::move(dataStorage));
+		materialIndicies.emplace_back(std::move(indices));
 
 		NetcodeMats.push_back(NetcodeMat);
 	}
 
 	NetcodeModel.materials = Netcode::ArrayView<Netcode::Asset::Material>(NetcodeMats.data(), NetcodeMats.size());
-	
 
 	std::vector<Netcode::Asset::Bone> NetcodeBones;
 

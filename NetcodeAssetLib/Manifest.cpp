@@ -21,8 +21,9 @@ namespace Netcode::Asset {
 	};
 
 	static json11::Json::shape jsonShape_Material = {
-		{ "source", json11::Json::Type::OBJECT },
-		{ "modified_props", json11::Json::Type::OBJECT }
+		{ "name", json11::Json::Type::STRING },
+		{ "type", json11::Json::Type::NUMBER },
+		{ "parameters", json11::Json::Type::OBJECT }
 	};
 
 	static json11::Json::shape jsonShape_Collider = {
@@ -43,6 +44,7 @@ namespace Netcode::Asset {
 		{ "file", json11::Json::Type::STRING },
 		{ "reference", json11::Json::Type::STRING }
 	};
+
 	void Manifest::Reset() {
 
 	}
@@ -60,10 +62,6 @@ namespace Netcode::Asset {
 
 		for(const auto & matJson : json["materials"].array_items()) {
 			if(!matJson.has_shape(jsonShape_Material, err)) {
-				return false;
-			}
-
-			if(!matJson["source"].has_shape(jsonShape_FbxReference, err)) {
 				return false;
 			}
 		}
@@ -96,10 +94,14 @@ namespace Netcode::Asset {
 			}
 		}
 
-		// otherwise its a valid json and read to be committed into this object
-
 		name = json["name"].string_value();
 		base.Load(json["base"]);
+
+		if(json.object_items().find("offlineTransform") != json.object_items().end()) {
+			offlineTransform = LoadFloat4x4(json["offlineTransform"]);
+		} else {
+			offlineTransform = Netcode::Float4x4::Identity;
+		}
 
 		meshes.clear();
 		materials.clear();
@@ -109,7 +111,7 @@ namespace Netcode::Asset {
 		for(const auto & matJson : json["materials"].array_items()) {
 			Manifest::Material manMat;
 			manMat.Load(matJson);
-			materials.push_back(manMat);
+			materials.emplace_back(std::move(manMat));
 		}
 
 		for(const auto & geomJson : json["geometry"].array_items()) {
@@ -166,6 +168,7 @@ namespace Netcode::Asset {
 		obj["animations"] = animationsJson;
 		obj["colliders"] = collidersJson;
 		obj["geometry"] = geometryJson;
+		obj["offlineTransform"] = StoreFloat4x4(offlineTransform);
 
 		return obj;
 	}
@@ -183,11 +186,17 @@ namespace Netcode::Asset {
 	}
 
 	json11::Json Manifest::Material::Store() const {
-		return json11::Json::object();
+		json11::Json::object obj;
+		obj["name"] = name;
+		obj["type"] = type;
+		obj["parameters"] = parameters;
+		return obj;
 	}
 
 	void Manifest::Material::Load(const json11::Json & json) {
-
+		name = json["name"].string_value();
+		type = json["type"].int_value();
+		parameters = json["parameters"].object_items();
 	}
 
 	json11::Json Manifest::Animation::Store() const {

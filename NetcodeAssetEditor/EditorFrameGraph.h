@@ -25,8 +25,8 @@ class EditorFrameGraph {
 
 	GBuffer fsQuad;
 
-	//Ref<Netcode::RootSignature> gbufferPass_RootSignature;
-	//Ref<Netcode::PipelineState> gbufferPass_PipelineState;
+	Ref<Netcode::RootSignature> gbufferPass_RootSignature;
+	Ref<Netcode::PipelineState> gbufferPass_PipelineState;
 
 	Ref<Netcode::RootSignature> boneVisibilityPass_RootSignature;
 	Ref<Netcode::PipelineState> boneVisibilityPass_PipelineState;
@@ -81,50 +81,37 @@ class EditorFrameGraph {
 	}
 
 	void Create_GBufferPass_PermanentResources(Netcode::Module::IGraphicsModule * g) {
-		/*auto ilBuilder = g->CreateInputLayoutBuilder();
-		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
-		ilBuilder->AddInputElement("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
-		ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
-		ilBuilder->AddInputElement("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT);
-		ilBuilder->AddInputElement("BINORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
-		ilBuilder->AddInputElement("WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT);
-		ilBuilder->AddInputElement("BONEIDS", DXGI_FORMAT_R32_UINT);
-		auto inputLayout = ilBuilder->Build();
+		auto inputLayoutBuilder = graphics->CreateInputLayoutBuilder();
+		inputLayoutBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
+		inputLayoutBuilder->AddInputElement("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
+		inputLayoutBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
+		inputLayoutBuilder->AddInputElement("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT);
+		inputLayoutBuilder->AddInputElement("BINORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
+		inputLayoutBuilder->AddInputElement("WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT);
+		inputLayoutBuilder->AddInputElement("BONEIDS", DXGI_FORMAT_R32_UINT);
+		auto inputLayout = inputLayoutBuilder->Build();
 
-
-		auto shaderBuilder = g->CreateShaderBuilder();
+		auto shaderBuilder = graphics->CreateShaderBuilder();
 		auto vs = shaderBuilder->LoadBytecode(L"Editor_GBufferPass_Vertex.cso");
 		auto ps = shaderBuilder->LoadBytecode(L"Editor_GBufferPass_Pixel.cso");
 
-		auto rootSigBuilder = g->CreateRootSignatureBuilder();
+		auto rootSigBuilder = graphics->CreateRootSignatureBuilder();
 		gbufferPass_RootSignature = rootSigBuilder->BuildFromShader(vs);
 
 		Netcode::DepthStencilDesc depthStencilDesc;
-		depthStencilDesc.backFace.stencilDepthFailOp = Netcode::StencilOp::KEEP;
-		depthStencilDesc.backFace.stencilFailOp = Netcode::StencilOp::KEEP;
-		depthStencilDesc.backFace.stencilPassOp = Netcode::StencilOp::KEEP;
-		depthStencilDesc.backFace.stencilFunc = Netcode::ComparisonFunc::NEVER;
-
-		depthStencilDesc.frontFace.stencilDepthFailOp = Netcode::StencilOp::KEEP;
-		depthStencilDesc.frontFace.stencilFailOp = Netcode::StencilOp::KEEP;
-		depthStencilDesc.frontFace.stencilPassOp = Netcode::StencilOp::REPLACE;
-		depthStencilDesc.frontFace.stencilFunc = Netcode::ComparisonFunc::ALWAYS;
-
 		depthStencilDesc.depthEnable = true;
-		depthStencilDesc.stencilEnable = true;
-		depthStencilDesc.stencilWriteMask = 0xFF;
-		depthStencilDesc.stencilReadMask = 0xFF;
 
-		auto psoBuilder = g->CreateGPipelineStateBuilder();
-		psoBuilder->SetRootSignature(gbufferPass_RootSignature);
+		auto psoBuilder = graphics->CreateGPipelineStateBuilder();
 		psoBuilder->SetInputLayout(inputLayout);
+		psoBuilder->SetDepthStencilFormat(graphics->GetDepthStencilFormat());
+		psoBuilder->SetNumRenderTargets(1);
+		psoBuilder->SetRenderTargetFormat(0, graphics->GetBackbufferFormat());
+		psoBuilder->SetDepthStencilState(depthStencilDesc);
+		psoBuilder->SetRootSignature(gbufferPass_RootSignature);
 		psoBuilder->SetVertexShader(vs);
 		psoBuilder->SetPixelShader(ps);
-		psoBuilder->SetDepthStencilState(depthStencilDesc);
-		psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM });
-		psoBuilder->SetDepthStencilFormat(DXGI_FORMAT_D32_FLOAT_S8X24_UINT);
 		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::TRIANGLE);
-		gbufferPass_PipelineState = psoBuilder->Build();*/
+		gbufferPass_PipelineState = psoBuilder->Build();
 		gbufferPass_DepthStencilView = g->resources->CreateDepthStencilView();
 
 		Create_GBufferPass_SizeDependentResources();
@@ -174,19 +161,11 @@ class EditorFrameGraph {
 
 	void Create_BackgroundPass_PermanentResources(Netcode::Module::IGraphicsModule * g) {
 		Ref<Netcode::TextureBuilder> textureBuilder = g->CreateTextureBuilder();
-		textureBuilder->LoadTextureCube(L"cloudynoon.dds");
-		Ref<Netcode::Texture> cloudynoon = textureBuilder->Build();
+		textureBuilder->LoadTextureCube(L"compiled/textures/envmaps/cloudynoon.dds");
+		textureBuilder->SetStateAfterUpload(ResourceState::PIXEL_SHADER_RESOURCE);
 
-		const Netcode::Image * img = cloudynoon->GetImage(0, 0, 0);
-
-		cloudynoonTexture = g->resources->CreateTextureCube(img->width, img->height, img->format, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST, ResourceFlags::NONE);
-
+		cloudynoonTexture = textureBuilder->Build();
 		g->resources->SetDebugName(cloudynoonTexture, L"Cloudynoon TextureCube");
-
-		auto uploadBatch = g->resources->CreateUploadBatch();
-		uploadBatch->Upload(cloudynoonTexture, cloudynoon);
-		uploadBatch->Barrier(cloudynoonTexture, ResourceState::COPY_DEST, ResourceState::PIXEL_SHADER_RESOURCE);
-		g->frame->SyncUpload(std::move(uploadBatch));
 
 		cloudynoonView = g->resources->CreateShaderResourceViews(1);
 		cloudynoonView->CreateSRV(0, cloudynoonTexture.get());
@@ -274,16 +253,52 @@ class EditorFrameGraph {
 			ctx->ClearDepthStencil();
 			ctx->SetStencilReference(0xFF);
 			ctx->SetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
-			//ctx->SetRootSignature(gbufferPass_RootSignature);
-			//ctx->SetPipelineState(gbufferPass_PipelineState);
+			ctx->SetRootSignature(gbufferPass_RootSignature);
+			ctx->SetPipelineState(gbufferPass_PipelineState);
 
-			for(auto & [gb, mat] : Zip(gbufferPass_Input, gbufferPass_MaterialsInput)) {
-				mat->Apply(ctx);
+			for(auto & [gb, mat] : Zip(gbufferPass_Input, gbufferPass_InputMaterials)) {
+
+				if(mat->GetType() != Netcode::MaterialType::BRDF) {
+					continue;
+				}
 
 				ctx->SetConstants(0, *perFrameData);
 				ctx->SetConstants(1, *boneData);
 				ctx->SetConstants(2, *perObjectData);
 				ctx->SetConstants(3, *lightData);
+
+				struct BrdfConstBuffer {
+					Netcode::Float4 diffuseAlbedo;
+					Netcode::Float3 fresnelR0;
+					float roughness;
+					Netcode::Float2 tiles;
+					Netcode::Float2 tilesOffset;
+					float displacementScale;
+					float displacementBias;
+					uint32_t texturesFlags;
+				};
+
+				using ParamId = Netcode::MaterialParamId;
+
+				BrdfConstBuffer buffer;
+				buffer.diffuseAlbedo = mat->GetOptionalParameter<Netcode::Float4>(ParamId::DIFFUSE_ALBEDO, Netcode::Float4::Zero);
+				buffer.fresnelR0 = mat->GetOptionalParameter<Netcode::Float3>(ParamId::FRESNEL_R0, Netcode::Float3{ 0.05f, 0.05f, 0.05f });
+				buffer.roughness = mat->GetOptionalParameter<float>(ParamId::ROUGHNESS, 36.0f);
+				buffer.tiles = mat->GetOptionalParameter<Netcode::Float2>(ParamId::TEXTURE_TILES, Netcode::Float2::One);
+				buffer.tilesOffset = mat->GetOptionalParameter<Netcode::Float2>(ParamId::TEXTURE_TILES_OFFSET, Netcode::Float2::Zero);
+				buffer.displacementScale = mat->GetOptionalParameter<float>(ParamId::DISPLACEMENT_SCALE, 0.01f);
+				buffer.displacementBias = mat->GetOptionalParameter<float>(ParamId::DISPLACEMENT_BIAS, 0.42f);
+				buffer.texturesFlags = 0;
+
+				for(uint32_t i = 0; i < 6; ++i) {
+					auto res = mat->GetResource(i);
+					if(res != nullptr) {
+						buffer.texturesFlags |= (1 << i);
+					}
+				}
+
+				ctx->SetConstants(4, buffer);
+				ctx->SetShaderResources(5, mat->GetResourceView(0));
 				ctx->SetShaderResources(6, cloudynoonView);
 
 				ctx->SetVertexBuffer(gb.vertexBuffer);
@@ -346,7 +361,7 @@ class EditorFrameGraph {
 		uint32_t numLines = 10;
 
 		for(int32_t i = 0; i <= numLines; ++i) {
-			float w = cameraWorldDistance;
+			float w = 100.0f;
 			float z = -w / (2.0f) + ((static_cast<float>(i) / static_cast<float>(numLines)) * (w));
 			float x0 = -w / 2.0f;
 			float x1 = w / 2.0f;
@@ -358,7 +373,7 @@ class EditorFrameGraph {
 			Netcode::Float3 p3{ z, 0.0f, x1 };
 
 			graphics->debug->DrawLine(p0, p1, Netcode::Float3{ 0.8f, 0.2f, 0.1f });
-			graphics->debug->DrawLine(p2, p3, Netcode::Float3{ 0.8f, 0.2f, 0.1f });
+			graphics->debug->DrawLine(p2, p3, Netcode::Float3{ 0.1f, 0.2f, 0.8f });
 		}
 
 		builder->CreateRenderPass("Debug Pass", [this](IResourceContext * ctx) -> void {
@@ -375,15 +390,23 @@ class EditorFrameGraph {
 		for(const Collider & collider : colliderPass_Input) {
 			using CT = Netcode::Asset::ColliderType;
 
+			Netcode::Float4x4 transform = Netcode::Float4x4::Identity;
+
+			if(boneData != nullptr) {
+				if(collider.boneReference >= 0 && collider.boneReference < 128) {
+					transform = Netcode::Matrix{ boneData->ToRootTransform[collider.boneReference] }.Transpose();
+				}
+			}
+
 			switch(collider.type) {
 				case CT::BOX:
-					graphics->debug->DrawBox(collider.localRotation, collider.localPosition, collider.boxArgs);
+					graphics->debug->DrawBox(collider.localRotation, collider.localPosition, collider.boxArgs, Netcode::Float3{ 0.7f, 0.7f, 0.7f }, transform);
 					break;
 				case CT::SPHERE:
-					graphics->debug->DrawSphere(collider.localPosition, collider.sphereArgs);
+					graphics->debug->DrawSphere(collider.localPosition, collider.sphereArgs, Netcode::Float3{ 0.7f, 0.7f, 0.7f }, transform);
 					break;
 				case CT::CAPSULE:
-					graphics->debug->DrawCapsule(collider.localRotation, collider.localPosition, collider.capsuleArgs.x, collider.capsuleArgs.y);
+					graphics->debug->DrawCapsule(collider.localRotation, collider.localPosition, collider.capsuleArgs.y, collider.capsuleArgs.x, Netcode::Float3{ 0.7f, 0.7f, 0.7f }, transform);
 					break;
 				default: break;
 			}
@@ -413,7 +436,7 @@ public:
 	float cameraWorldDistance;
 
 	std::vector<GBuffer> gbufferPass_Input;
-	std::vector<Ref<BRDF_MaterialBase>> gbufferPass_MaterialsInput;
+	std::vector<Ref<Netcode::Material>> gbufferPass_InputMaterials;
 	std::vector<Collider> colliderPass_Input;
 
 	void CreatePermanentResources(Netcode::Module::IGraphicsModule * g) {

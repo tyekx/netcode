@@ -96,6 +96,7 @@ namespace Netcode {
 	struct SpriteDesc;
 	struct BorderDesc;
 
+	class Material;
 	class GpuResource;
 	class ShaderBytecode;
 	class ShaderBuilder;

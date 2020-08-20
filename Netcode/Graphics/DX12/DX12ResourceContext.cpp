@@ -109,14 +109,14 @@ namespace Netcode::Graphics::DX12 {
 		return resources->CreateResource(desc);
 	}
 
-	Ref<GpuResource> ResourceContext::CreateTexture2D(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags)
+	Ref<GpuResource> ResourceContext::CreateTexture2D(uint32_t width, uint32_t height, uint16_t mipLevels, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags)
 	{
 		ASSERT(resourceType == ResourceType::PERMANENT_DEFAULT || resourceType == ResourceType::TRANSIENT_DEFAULT, "Texture2D must be in default heap");
 		ResourceDesc desc;
 		desc.depth = 1;
 		desc.dimension = ResourceDimension::TEXTURE2D;
 		desc.width = width;
-		desc.mipLevels = 1;
+		desc.mipLevels = mipLevels;
 		desc.format = format;
 		desc.flags = flags;
 		desc.type = resourceType;
@@ -128,14 +128,14 @@ namespace Netcode::Graphics::DX12 {
 		return resources->CreateResource(desc);
 	}
 
-	Ref<GpuResource> ResourceContext::CreateTextureCube(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags)
+	Ref<GpuResource> ResourceContext::CreateTextureCube(uint32_t width, uint32_t height, uint16_t mipLevels, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags)
 	{
 		ASSERT(resourceType == ResourceType::PERMANENT_DEFAULT || resourceType == ResourceType::TRANSIENT_DEFAULT, "TextureCube must be in default heap");
 		ResourceDesc desc;
 		desc.depth = 6;
 		desc.dimension = ResourceDimension::TEXTURE2D;
 		desc.width = width;
-		desc.mipLevels = 1;
+		desc.mipLevels = mipLevels;
 		desc.format = format;
 		desc.flags = flags;
 		desc.type = resourceType;
@@ -154,19 +154,17 @@ namespace Netcode::Graphics::DX12 {
 
 	Ref<GpuResource> ResourceContext::CreateTexture2D(const Image * images, ResourceType resourceType)
 	{
-		return CreateTexture2D(static_cast<uint32_t>(images->width), static_cast<uint32_t>(images->height), images->format, resourceType, ResourceState::COPY_DEST, ResourceFlags::NONE);
+		return CreateTexture2D(static_cast<uint32_t>(images->width), static_cast<uint32_t>(images->height), 1, images->format, resourceType, ResourceState::COPY_DEST, ResourceFlags::NONE);
 	}
 
 	Ref<GpuResource> ResourceContext::CreateTexture2D(const Image * images, uint32_t mipLevels)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
-		return nullptr;
+		return CreateTexture2D(static_cast<uint32_t>(images->width), static_cast<uint32_t>(images->height), mipLevels, images->format, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST, ResourceFlags::NONE);
 	}
 
 	Ref<GpuResource> ResourceContext::CreateTexture2D(const Image * images, uint32_t mipLevels, ResourceType resourceType)
 	{
-		//Log::Debug("call to " __FUNCTION__ " is ignored");
-		return nullptr;
+		return CreateTexture2D(static_cast<uint32_t>(images->width), static_cast<uint32_t>(images->height), mipLevels, images->format, resourceType, ResourceState::COPY_DEST, ResourceFlags::NONE);
 	}
 
 	Ref<Netcode::ResourceViews> ResourceContext::CreateShaderResourceViews(uint32_t numDescriptors)

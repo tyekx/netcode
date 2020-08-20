@@ -87,6 +87,7 @@
     <ClInclude Include="Platform.h" />
     <ClInclude Include="Sal.h" />
     <ClInclude Include="UriBase.h" />
+    <ClInclude Include="Json.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Memory\Common.cpp">

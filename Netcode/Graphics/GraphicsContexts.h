@@ -38,8 +38,8 @@ namespace Netcode::Graphics {
 		virtual Ref<GpuResource> CreateReadbackBuffer(size_t size, ResourceType type, ResourceFlags flags) = 0;
 		virtual Ref<GpuResource> CreateTypedBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
 		virtual Ref<GpuResource> CreateStructuredBuffer(size_t size, uint32_t stride, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
-		virtual Ref<GpuResource> CreateTexture2D(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) = 0;
-		virtual Ref<GpuResource> CreateTextureCube(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) = 0;
+		virtual Ref<GpuResource> CreateTexture2D(uint32_t width, uint32_t height, uint16_t mipLevels, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) = 0;
+		virtual Ref<GpuResource> CreateTextureCube(uint32_t width, uint32_t height, uint16_t mipLevels, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) = 0;
 
 		virtual Ref<GpuResource> CreateTexture2D(const Image * images) = 0;
 		virtual Ref<GpuResource> CreateTexture2D(const Image * images, ResourceType resourceType) = 0;
@@ -184,31 +184,43 @@ namespace Netcode::Graphics {
 
 		virtual void DrawPoint(const Float3 & worldPos, float extents) = 0;
 		virtual void DrawPoint(const Float3 & worldPos, float extents, bool depthEnabled) = 0;
+		virtual void DrawPoint(const Float3 & worldPos, float extents, const Float4x4 & transform) = 0;
+		virtual void DrawPoint(const Float3 & worldPos, float extents, const Float4x4 & transform, bool depthEnabled) = 0;
 
 		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd) = 0;
 		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, bool depthEnabled) = 0;
 		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, const Float3 & color) = 0;
 		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, const Float3 & color, bool depthEnabled) = 0;
+		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, const Float3 & color, const Float4x4 & transform) = 0;
+		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, const Float3 & color, const Float4x4 & transform,  bool depthEnabled) = 0;
 
 		virtual void DrawSphere(Vector3 worldPosOrigin, float radius) = 0;
 		virtual void DrawSphere(Vector3 worldPosOrigin, float radius, bool depthEnabled) = 0;
 		virtual void DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color) = 0;
 		virtual void DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color, bool depthEnabled) = 0;
+		virtual void DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color, const Float4x4 & transform) = 0;
+		virtual void DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color, const Float4x4 & transform, bool depthEnabled) = 0;
 
 		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents) = 0;
 		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, bool depthEnabled) = 0;
 		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color) = 0;
 		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, bool depthEnabled) = 0;
+		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, const Float4x4 & transform) = 0;
+		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, const Float4x4 & transform, bool depthEnabled) = 0;
 
 		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents) = 0;
 		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, bool depthEnabled) = 0;
 		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color) = 0;
 		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, bool depthEnabled) = 0;
+		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, const Float4x4 & transform) = 0;
+		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, const Float4x4 & transform, bool depthEnabled) = 0;
 
 		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight) = 0;
 		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, bool depthEnabled) = 0;
 		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color) = 0;
 		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, bool depthEnabled) = 0;
+		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, const Float4x4 & transform) = 0;
+		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, const Float4x4 & transform, bool depthEnabled) = 0;
 
 		virtual void UploadResources(IResourceContext * context) = 0;
 		virtual void Draw(IRenderContext* context, const Float4x4 & viewProjMatrix) = 0;

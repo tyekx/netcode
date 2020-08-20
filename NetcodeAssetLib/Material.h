@@ -1,35 +1,23 @@
 #pragma once
 
 #include <NetcodeFoundation/Math.h>
+#include <NetcodeFoundation/ArrayView.hpp>
 
 namespace Netcode::Asset {
 
+	struct MaterialParamIndex {
+		uint32_t id;
+		uint16_t size;
+		uint16_t offset;
+	};
+
 	struct Material {
-		Netcode::Float4 diffuseColor;
-		Netcode::Float3 ambientColor;
-		Netcode::Float3 specularColor;
-		float shininess;
-
-		char diffuseTexture[256];
-		char normalTexture[256];
-		char specularTexture[256];
-		char ambientTexture[256];
-		char roughnessTexture[256];
-
-		Material();
-
-		bool HasTextures() const;
-
-		bool HasDiffuseTexture() const;
-
-		bool HasNormalTexture() const;
-
-		bool HasAmbientTexture() const;
-
-		bool HasSpecularTexture() const;
-
-		bool HasRoughnessTexture() const;
-
+		char name[48];
+		uint32_t type;
+		uint32_t indicesLength;
+		uint64_t dataSizeInBytes;
+		MaterialParamIndex * indices;
+		uint8_t * data;
 	};
 
 }

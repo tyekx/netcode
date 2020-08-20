@@ -16,8 +16,6 @@ namespace Netcode {
 
 		uint32_t CalculateBonesSize(const Asset::Model & m);
 
-		uint32_t ExportModel(const char* path, const Asset::Model & m);
-
 		void ExportModelToMemory(uint8_t * dst, const Asset::Model & m);
 
 		uint32_t CalculateTotalSize(const Asset::Model & m);

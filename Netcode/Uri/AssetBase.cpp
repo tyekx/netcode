@@ -2,6 +2,25 @@
 #include <Netcode/IO/Path.h>
 
 namespace Netcode::URI {
+	
+	AssetBase::AssetBase(const AssetBase & rhs) : UriBase{ rhs }, assetPath{ rhs.assetPath }, assetDirectory{  } {
+		if(!assetPath.empty()) {
+			assetDirectory = std::wstring_view{ assetPath.c_str(), rhs.assetDirectory.size() };
+		}
+	}
+
+	AssetBase & AssetBase::operator=(const AssetBase & rhs)
+	{
+		UriBase::operator=(rhs);
+		if(rhs.Empty()) {
+			assetPath = rhs.assetPath;
+			assetDirectory = std::wstring_view{};
+		} else {
+			assetPath = rhs.assetPath;
+			assetDirectory = std::wstring_view{ assetPath.c_str(), rhs.assetDirectory.size() };
+		}
+		return *this;
+	}
 
 	void AssetBase::ConstructPaths(std::wstring_view localPath, std::wstring_view globalId, std::wstring_view rootDir)
 	{

@@ -17,6 +17,7 @@
     <ClInclude Include="Exception\UndefinedBehaviourException.h" />
     <ClInclude Include="Formats.h" />
     <ClInclude Include="Foundation.h" />
+    <ClInclude Include="Json.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Math\Common.h" />
     <ClInclude Include="Math\GramSchmidt.h" />

@@ -125,9 +125,11 @@
     <ClInclude Include="Graphics\DX12\DX12StreamOutputLibrary.h" />
     <ClInclude Include="Graphics\DX12\DX12Texture.h" />
     <ClInclude Include="Graphics\DX12\DX12TextureBuilder.h" />
+    <ClInclude Include="Graphics\DX12\DX12TextureLibrary.h" />
     <ClInclude Include="Graphics\DX12\DX12UploadBatch.h" />
     <ClInclude Include="Graphics\FrameGraph.h" />
     <ClInclude Include="Graphics\GraphicsContexts.h" />
+    <ClInclude Include="Graphics\Material.h" />
     <ClInclude Include="Graphics\ResourceDesc.h" />
     <ClInclude Include="Graphics\ResourceEnums.h" />
     <ClInclude Include="Graphics\SpriteDesc.h" />
@@ -260,7 +262,9 @@
     <ClCompile Include="Graphics\DX12\DX12StreamOutputLibrary.cpp" />
     <ClCompile Include="Graphics\DX12\DX12Texture.cpp" />
     <ClCompile Include="Graphics\DX12\DX12TextureBuilder.cpp" />
+    <ClCompile Include="Graphics\DX12\DX12TextureLibrary.cpp" />
     <ClCompile Include="Graphics\DX12\DX12UploadBatch.cpp" />
+    <ClCompile Include="Graphics\Material.cpp" />
     <ClCompile Include="Graphics\ResourceEnums.cpp" />
     <ClCompile Include="Graphics\SpriteDesc.cpp" />
     <ClCompile Include="Input.cpp" />

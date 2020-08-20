@@ -53,8 +53,9 @@ static std::tuple<std::vector<InputElement>, uint32_t> GetInputLayout(const aiMe
 		ie.semanticIndex = 0;
 		ie.semanticName = "POSITION";
 		inputLayout.push_back(ie);
-		vertexSize += sizeof(Netcode::Float3);
 	}
+
+	vertexSize += sizeof(Netcode::Float3);
 
 	if(mesh->HasNormals()) {
 		InputElement ie;
@@ -63,8 +64,9 @@ static std::tuple<std::vector<InputElement>, uint32_t> GetInputLayout(const aiMe
 		ie.semanticIndex = 0;
 		ie.semanticName = "NORMAL";
 		inputLayout.push_back(ie);
-		vertexSize += sizeof(Netcode::Float3);
 	}
+
+	vertexSize += sizeof(Netcode::Float3);
 
 	for(int i = 0; mesh->HasTextureCoords(i); ++i) {
 		uint32_t uvwCount = mesh->mNumUVComponents[i];
@@ -93,15 +95,15 @@ static std::tuple<std::vector<InputElement>, uint32_t> GetInputLayout(const aiMe
 		ie.semanticIndex = 0;
 		ie.semanticName = "BINORMAL";
 		inputLayout.push_back(ie);
-		vertexSize += sizeof(Netcode::Float3);
 
-		ie.byteOffset = vertexSize;
+		ie.byteOffset = vertexSize + sizeof(Netcode::Float3);
 		ie.format = DXGI_FORMAT_R32G32B32_FLOAT;
 		ie.semanticIndex = 0;
 		ie.semanticName = "TANGENT";
 		inputLayout.push_back(ie);
-		vertexSize += sizeof(Netcode::Float3);
 	}
+
+	vertexSize += 2 * sizeof(Netcode::Float3);
 
 	if(mesh->HasBones()) {
 		InputElement ie;
@@ -110,14 +112,15 @@ static std::tuple<std::vector<InputElement>, uint32_t> GetInputLayout(const aiMe
 		ie.semanticIndex = 0;
 		ie.semanticName = "WEIGHTS";
 		inputLayout.push_back(ie);
-		vertexSize += sizeof(Netcode::Float3);
-		ie.byteOffset = vertexSize;
+		ie.byteOffset = vertexSize + sizeof(Netcode::Float3);
 		ie.format = DXGI_FORMAT_R32_UINT;
 		ie.semanticIndex = 0;
 		ie.semanticName = "BONEIDS";
 		inputLayout.push_back(ie);
-		vertexSize += sizeof(uint32_t);
 	}
+
+	vertexSize += sizeof(Netcode::Float3);
+	vertexSize += sizeof(uint32_t);
 
 	return std::tie(inputLayout, vertexSize);
 }
@@ -191,25 +194,29 @@ static std::vector<Mesh> ImportMeshes(const aiScene * scene) {
 			vPtr = vertexDataPtr + vertexIter * vertexStride;
 			byteOffset = 0;
 
+			Netcode::Float3 * positionPtr = reinterpret_cast<Netcode::Float3 *>(vPtr + byteOffset);
 			if(mesh->HasPositions()) {
-				Netcode::Float3 * positionPtr = reinterpret_cast<Netcode::Float3 *>(vPtr + byteOffset);
 				positionPtr->x = mesh->mVertices[vertexIter].x;
 				positionPtr->y = mesh->mVertices[vertexIter].y;
 				positionPtr->z = mesh->mVertices[vertexIter].z;
 
 				boundingBoxGen.UpdateForPoint(*positionPtr);
-
-				byteOffset += sizeof(DirectX::XMFLOAT3);
+			} else {
+				*positionPtr = Netcode::Float3::Zero;
 			}
 
+			byteOffset += sizeof(Netcode::Float3);
+
+			Netcode::Float3 * normalPtr = reinterpret_cast<Netcode::Float3 *>(vPtr + byteOffset);
 			if(mesh->HasNormals()) {
-				Netcode::Float3 * normalPtr = reinterpret_cast<Netcode::Float3 *>(vPtr + byteOffset);
 				normalPtr->x = mesh->mNormals[vertexIter].x;
 				normalPtr->y = mesh->mNormals[vertexIter].y;
 				normalPtr->z = mesh->mNormals[vertexIter].z;
-
-				byteOffset += sizeof(Netcode::Float3);
+			} else {
+				*normalPtr = Netcode::Float3::Zero;
 			}
+
+			byteOffset += sizeof(Netcode::Float3);
 
 			for(int texCoordIter = 0; mesh->HasTextureCoords(texCoordIter); ++texCoordIter) {
 				float * texCoordPtr = reinterpret_cast<float *>(vPtr + byteOffset);
@@ -218,38 +225,37 @@ static std::vector<Mesh> ImportMeshes(const aiScene * scene) {
 				for(uint32_t uvwIter = 0; uvwIter < uvwCount; ++uvwIter) {
 					*texCoordPtr++ = mesh->mTextureCoords[texCoordIter][vertexIter][uvwIter];
 				}
-
-				byteOffset += sizeof(float) * uvwCount;
 			}
+
+			byteOffset += sizeof(Netcode::Float2);
+
+			Netcode::Float3 * tangent = reinterpret_cast<Netcode::Float3 *>(vPtr + byteOffset);
+			Netcode::Float3 * binormal = reinterpret_cast<Netcode::Float3 *>(vPtr + byteOffset + sizeof(Netcode::Float3));
 
 			if(mesh->HasTangentsAndBitangents()) {
-				float * tanbinormal = reinterpret_cast<float *>(vPtr + byteOffset);
-				
-				*tanbinormal++ = mesh->mTangents[vertexIter].x;
-				*tanbinormal++ = mesh->mTangents[vertexIter].y;
-				*tanbinormal++ = mesh->mTangents[vertexIter].z;
+				tangent->x = mesh->mTangents[vertexIter].x;
+				tangent->y = mesh->mTangents[vertexIter].y;
+				tangent->z = mesh->mTangents[vertexIter].z;
 
-				*tanbinormal++ = mesh->mBitangents[vertexIter].x;
-				*tanbinormal++ = mesh->mBitangents[vertexIter].y;
-				*tanbinormal++ = mesh->mBitangents[vertexIter].z;
-
-				byteOffset += sizeof(float) * 6;
+				binormal->x = mesh->mBitangents[vertexIter].x;
+				binormal->y = mesh->mBitangents[vertexIter].y;
+				binormal->z = mesh->mBitangents[vertexIter].z;
+			} else {
+				*tangent = Netcode::Float3::Zero;
+				*binormal = Netcode::Float3::Zero;
 			}
 
-			if(mesh->HasBones()) {
-				float * weightsPtr = reinterpret_cast<float *>(vPtr + byteOffset);
-				uint32_t * boneIdsPtr = reinterpret_cast<uint32_t *>(vPtr + byteOffset + 3 * sizeof(float));
+			byteOffset += 2 * sizeof(Netcode::Float3);
 
-				*weightsPtr++ = 0;
-				*weightsPtr++ = 0;
-				*weightsPtr++ = 0;
-				*boneIdsPtr = 0xFFFFFFFF;
-
-				boneDataByteOffset = byteOffset;
-				byteOffset += sizeof(Netcode::Float3);
-				byteOffset += sizeof(uint32_t);
-			}
-
+			float * weightsPtr = reinterpret_cast<float *>(vPtr + byteOffset);
+			uint32_t * boneIdsPtr = reinterpret_cast<uint32_t *>(vPtr + byteOffset + 3 * sizeof(float));
+			*weightsPtr++ = 0;
+			*weightsPtr++ = 0;
+			*weightsPtr++ = 0;
+			*boneIdsPtr = 0xFFFFFFFF;
+			boneDataByteOffset = byteOffset;
+			byteOffset += sizeof(Netcode::Float3);
+			byteOffset += sizeof(uint32_t);
 		}
 
 		Mesh importedMesh;
@@ -324,8 +330,8 @@ static Skeleton CreateSkeleton(const Model & partiallyImportedModel, const aiSce
 		while(!parentBoneFound && parentBoneNode != nullptr) {
 			for(const Bone & b : uniqueImportedBones) {
 				if(b.boneName == parentBoneNode->mName.C_Str()) {
-					parentBoneFound = true;
-					break;
+parentBoneFound = true;
+break;
 				}
 			}
 
@@ -422,14 +428,23 @@ static void FillVertexWeights(const Model & model) {
 	}
 }
 
+static Netcode::MaterialType GetMaterialType(const aiMaterial * mat) {
+	//aiShadingMode mode;
+	//if(mat->Get(AI_MATKEY_SHADING_MODEL, mode) != AI_SUCCESS) {
+	//	return Netcode::MaterialType::BRDF;
+	//}
+	return Netcode::MaterialType::BRDF;
+}
 
-static Material ImportMaterial(const aiMaterial * mat) {
-	Material imat;
+static Ref<Netcode::Material> ImportMaterial(const aiMaterial * mat) {
 	aiString str;
-
+	std::string name;
 	if(AI_SUCCESS == mat->Get(AI_MATKEY_NAME, str)) {
-		imat.name = str.C_Str();
+		name = str.C_Str();
 	}
+	Netcode::MaterialType type = GetMaterialType(mat);
+
+	Ref<Netcode::Material> imat = std::make_shared<Netcode::BrdfMaterial>(type, name);
 
 	unsigned int diffuseCount = mat->GetTextureCount(aiTextureType_DIFFUSE);
 	unsigned int normalCount = mat->GetTextureCount(aiTextureType_NORMALS);
@@ -507,7 +522,7 @@ static Material ImportMaterial(const aiMaterial * mat) {
 
 		if(AI_SUCCESS == mat->GetTexture(aiTextureType_DIFFUSE, 0, &texPath)) {
 			std::string s = texPath.C_Str();
-			imat.diffuseMapReference = Netcode::Utility::ToWideString(s);
+			imat->SetParameter(Netcode::MaterialParamId::TEXTURE_DIFFUSE_PATH, Netcode::Utility::ToWideString(s));
 		} else {
 			OutputDebugStringW(L"Warning: failed to get diffuse texture path\r\n");
 		}
@@ -522,7 +537,7 @@ static Material ImportMaterial(const aiMaterial * mat) {
 		aiString texPath;
 		if(AI_SUCCESS == mat->GetTexture(aiTextureType_NORMALS, 0, &texPath)) {
 			std::string s = texPath.C_Str();
-			imat.normalMapReference = Netcode::Utility::ToWideString(s);
+			imat->SetParameter(Netcode::MaterialParamId::TEXTURE_NORMAL_PATH, Netcode::Utility::ToWideString(s));
 		} else {
 			OutputDebugStringW(L"Warning: failed to get diffuse texture path\r\n");
 		}
@@ -530,22 +545,23 @@ static Material ImportMaterial(const aiMaterial * mat) {
 
 	aiColor3D diffuseColor{ 0.5f, 0.5f, 0.5f };
 	mat->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
-	imat.diffuseColor.x = diffuseColor.r;
-	imat.diffuseColor.y = diffuseColor.g;
-	imat.diffuseColor.z = diffuseColor.b;
-	imat.diffuseColor.w = 1.0f;
-
-	imat.fresnelR0 = Netcode::Float3{ 0.05f, 0.05f, 0.05f };
+	Netcode::Float4 ncDiffuseColor{ diffuseColor.r, diffuseColor.g, diffuseColor.b, 1.0f };
+	imat->SetParameter(Netcode::MaterialParamId::DIFFUSE_ALBEDO, ncDiffuseColor);
+	imat->SetParameter(Netcode::MaterialParamId::FRESNEL_R0, Netcode::Float3{ 0.05f, 0.05f, 0.05f });
+	imat->SetParameter(Netcode::MaterialParamId::TEXTURE_TILES, Netcode::Float2::One);
+	imat->SetParameter(Netcode::MaterialParamId::TEXTURE_TILES_OFFSET, Netcode::Float2::Zero);
+	imat->SetParameter(Netcode::MaterialParamId::DISPLACEMENT_SCALE, 0.01f);
+	imat->SetParameter(Netcode::MaterialParamId::DISPLACEMENT_BIAS, 0.42f);
 
 	float shininess = 0.0f;
 	mat->Get(AI_MATKEY_SHININESS, shininess);
-	imat.shininess = std::clamp(shininess, 0.0f, 256.0f);
+	imat->SetParameter(Netcode::MaterialParamId::ROUGHNESS, std::clamp(256.0f - shininess, 0.0f, 256.0f));
 
 	return imat;
 }
 
-static std::vector<Material> ImportMaterials(const aiScene * scene) {
-	std::vector<Material> materials;
+static std::vector<Ref<Netcode::Material>> ImportMaterials(const aiScene * scene) {
+	std::vector<Ref<Netcode::Material>> materials;
 
 	for(uint32_t i = 0; i < scene->mNumMaterials; ++i) {
 		materials.push_back(ImportMaterial(scene->mMaterials[i]));
@@ -556,6 +572,8 @@ static std::vector<Material> ImportMaterials(const aiScene * scene) {
 
 static Model ImportModel(const aiScene * scene) {
 	Model importedModel;
+
+	importedModel.offlineTransform = Netcode::Float4x4::Identity;
 
 	if(scene != nullptr) {
 		importedModel.meshes = ImportMeshes(scene);
@@ -688,7 +706,7 @@ std::vector<Animation> FBXImporter::ImportAnimationsFromMemory(const uint8_t * s
 	
 	Assimp::Importer importer;
 
-	uint32_t flags = aiProcess_Triangulate | aiProcess_FlipWindingOrder | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeMeshes;
+	uint32_t flags = aiProcess_Triangulate | aiProcess_FlipWindingOrder | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeMeshes;
 
 	const aiScene * scene = importer.ReadFileFromMemory(source, sizeInBytes, flags, ".fbx");
 

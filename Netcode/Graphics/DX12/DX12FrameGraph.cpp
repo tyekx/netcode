@@ -74,6 +74,15 @@ namespace Netcode::Graphics::DX12 {
 		}
 	}
 
+	Ref<RenderPass> FrameGraphImpl::QueryFrontRenderPass()
+	{
+		if(renderPasses.empty()) {
+			return nullptr;
+		}
+		return renderPasses.front();
+	}
+
+	/*
 	Vector<Ref<RenderPass>> FrameGraphImpl::QueryCompleteRenderPasses() {
 		Vector<Ref<RenderPass>> runnable;
 
@@ -95,6 +104,12 @@ namespace Netcode::Graphics::DX12 {
 		}
 
 		return runnable;
+	}
+	*/
+
+	void FrameGraphImpl::PopRenderPass()
+	{
+		renderPasses.pop_front();
 	}
 
 	bool FrameGraphImpl::UsingBackbuffer() const {

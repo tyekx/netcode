@@ -19,8 +19,9 @@ namespace Netcode::Asset {
 		};
 
 		struct Material {
-			FbxReference source;
-			json11::Json modifiedProps;
+			std::string name;
+			int32_t type;
+			json11::Json::object parameters;
 
 			json11::Json Store() const;
 
@@ -49,6 +50,7 @@ namespace Netcode::Asset {
 
 		std::string name;
 		FbxReference base;
+		Netcode::Float4x4 offlineTransform;
 		std::vector<Manifest::Geometry> meshes;
 		std::vector<Manifest::Material> materials;
 		std::vector<Manifest::Animation> animations;

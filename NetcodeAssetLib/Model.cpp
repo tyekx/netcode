@@ -46,9 +46,18 @@ namespace Netcode::Asset {
 		materialsAlloc.reset(ptr);
 
 		uint32_t len = Detail::InterpretAs<uint32_t>(&ptr);
+
 		Material * mats = Detail::InterpretAsArray<Material>(&ptr, len);
 
 		materials = ArrayView<Material>(mats, static_cast<size_t>(len));
+
+		for(uint32_t i = 0; i < len; ++i) {
+			mats[i].indices = Detail::InterpretAsArray<MaterialParamIndex>(&ptr, mats[i].indicesLength);
+		}
+
+		for(uint32_t i = 0; i < len; ++i) {
+			mats[i].data = Detail::InterpretAsArray<uint8_t>(&ptr, mats[i].dataSizeInBytes);
+		}
 	}
 
 	void Model::SetMeshes(void * ptr) {

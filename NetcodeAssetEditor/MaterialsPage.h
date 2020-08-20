@@ -12,6 +12,8 @@ namespace winrt::NetcodeAssetEditor::implementation
 
         MaterialsPage();
 
+        void UpdateMaterial(int32_t idx);
+
         Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Material> Materials();
 
         void OnNavigatedTo(Windows::UI::Xaml::Navigation::NavigationEventArgs const & e);
@@ -20,6 +22,9 @@ namespace winrt::NetcodeAssetEditor::implementation
         winrt::fire_and_forget TextBox_Drop(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::DragEventArgs const & e);
         winrt::fire_and_forget TextBox_DragOver(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::DragEventArgs const & e);
         void Shininess_TextChanged(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::Controls::TextChangedEventArgs const & e);
+        void DisplacementScale_TextChanged(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::Controls::TextChangedEventArgs const & e);
+        void CheckBox_Checked(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
+        void Name_TextChanged(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::Controls::TextChangedEventArgs const & e);
     };
 }
 

@@ -39,7 +39,14 @@ namespace Netcode {
 		uint32_t CalculateMaterialsSize(const Asset::Model & m) {
 			uint32_t acc = 0;
 			acc += sizeof(uint32_t);
-			acc += static_cast<uint32_t>(sizeof(Asset::Material) * m.materials.Size());
+
+			acc += m.materials.Size() * sizeof(Asset::Material);
+
+			for(size_t i = 0; i < m.materials.Size(); ++i) {
+				acc += m.materials[i].indicesLength * sizeof(Asset::MaterialParamIndex);
+				acc += m.materials[i].dataSizeInBytes;
+			}
+
 			return acc;
 		}
 
@@ -122,73 +129,28 @@ namespace Netcode {
 			}
 
 			bw.Write(materialsLength);
-			bw.Write(*m.materials.Data(), materialsLength);
+
+			for(uint32_t i = 0; i < materialsLength; ++i) {
+				bw.Write(m.materials[i].name);
+				bw.Write(m.materials[i].type);
+				bw.Write(m.materials[i].indicesLength);
+				bw.Write(m.materials[i].dataSizeInBytes);
+				bw.Write((Asset::MaterialParamIndex *)nullptr);
+				bw.Write((uint8_t *)nullptr);
+			}
+
+			for(uint32_t i = 0; i < materialsLength; ++i) {
+				bw.Write(*m.materials[i].indices, m.materials[i].indicesLength);
+			}
+
+			for(uint32_t i = 0; i < materialsLength; ++i) {
+				bw.Write(*m.materials[i].data, m.materials[i].dataSizeInBytes);
+			}
+
 			bw.Write(bonesLength);
 			bw.Write(*m.bones.Data(), bonesLength);
 			bw.Write(collidersLength);
 			bw.Write(*m.colliders.Data(), collidersLength);
-		}
-
-		// here be dragons
-		uint32_t ExportModel(const char * path, const  Asset::Model & m) {
-			return -1;
-
-			FILE * file;
-			fopen_s(&file, path, "wb");
-
-			if(file == nullptr) {
-				return -1;
-			}
-
-			uint32_t meshesSize = CalculateMeshesSize(m);
-			uint32_t materialsSize = CalculateMaterialsSize(m);
-			uint32_t animDataSize = CalculateAnimDataSize(m);
-			uint32_t colliderDataSize = CalculateCollidersSize(m);
-			uint32_t boneDataSize = CalculateBonesSize(m);
-
-			size_t writtenSize = 0;
-
-			writtenSize += sizeof(uint32_t) * fwrite(&meshesSize, sizeof(uint32_t), 1, file);
-			writtenSize += sizeof(uint32_t) * fwrite(&animDataSize, sizeof(uint32_t), 1, file);
-			writtenSize += sizeof(uint32_t) * fwrite(&materialsSize, sizeof(uint32_t), 1, file);
-			writtenSize += sizeof(uint32_t) * fwrite(&boneDataSize, sizeof(uint32_t), 1, file);
-			writtenSize += sizeof(uint32_t) * fwrite(&colliderDataSize, sizeof(uint32_t), 1, file);
-
-			uint32_t meshesLength = static_cast<uint32_t>(m.meshes.Size());
-			uint32_t materialsLength = static_cast<uint32_t>(m.materials.Size());
-			uint32_t animsLength = static_cast<uint32_t>(m.animations.Size());
-			uint32_t bonesLength = static_cast<uint32_t>(m.bones.Size());
-			uint32_t collidersLength = static_cast<uint32_t>(m.colliders.Size());
-
-			writtenSize += sizeof(uint32_t) * fwrite(&meshesLength, sizeof(uint32_t), 1, file);
-			writtenSize += sizeof(Asset::Mesh) * fwrite(m.meshes.Data(), sizeof(Asset::Mesh), meshesLength, file);
-
-			for(uint32_t i = 0; i < meshesLength; ++i) {
-				writtenSize += fwrite(m.meshes[i].vertices, 1, m.meshes[i].verticesSizeInBytes, file);
-				writtenSize += fwrite(m.meshes[i].indices, 1, m.meshes[i].indicesSizeInBytes, file);
-				writtenSize += sizeof(Asset::LODLevel) * fwrite(m.meshes[i].lodLevels, sizeof(Asset::LODLevel), m.meshes[i].lodLevelsLength, file);
-			}
-
-			writtenSize += sizeof(uint32_t) * fwrite(&animsLength, sizeof(uint32_t), 1, file);
-			writtenSize += sizeof(Asset::Animation) * fwrite(m.animations.Data(), sizeof(Asset::Animation), animsLength, file);
-
-			for(uint32_t i = 0; i < animsLength; ++i) {
-				writtenSize += sizeof(float) * fwrite(m.animations[i].times, sizeof(float), m.animations[i].keysLength, file);
-				writtenSize += sizeof(Asset::AnimationKey) * fwrite(m.animations[i].keys, sizeof(Asset::AnimationKey), m.animations[i].keysLength * m.animations[i].bonesLength, file);
-			}
-
-			writtenSize += sizeof(uint32_t) * fwrite(&materialsLength, sizeof(uint32_t), 1, file);
-			writtenSize += sizeof(Asset::Material) * fwrite(m.materials.Data(), sizeof(Asset::Material), materialsLength, file);
-
-			writtenSize += sizeof(uint32_t) * fwrite(&bonesLength, sizeof(uint32_t), 1, file);
-			writtenSize += sizeof(Asset::Bone) * fwrite(m.bones.Data(), sizeof(Asset::Bone), bonesLength, file);
-
-			writtenSize += sizeof(uint32_t) * fwrite(&collidersLength, sizeof(uint32_t), 1, file);
-			writtenSize += sizeof(Asset::Collider) * fwrite(m.colliders.Data(), sizeof(Asset::Collider), collidersLength, file);
-
-			fclose(file);
-
-			return writtenSize;
 		}
 
 	}

@@ -222,27 +222,25 @@ namespace Netcode::Graphics::DX12 {
 
 		BeginFrame();
 
-		std::vector<Ref<RenderPass>> runnable = frameGraph->QueryCompleteRenderPasses();
+		Ref<RenderPass> rp;
 
-		while(!runnable.empty()) {
+		while((rp = frameGraph->QueryFrontRenderPass()) != nullptr) {
 			bool directSyncSubmission = false;
 			bool computeSyncSubmission = false;
 
-			for(auto & rp : runnable) {
-				// step#1: determine dependencies
-				if(HasResourceReadDependency(rp)) {
-					if(rp->Type() == RenderPassType::GRAPHICS) {
-						computeSyncSubmission = true;
-					}
-
-					if(rp->Type() == RenderPassType::COMPUTE) {
-						directSyncSubmission = true;
-					}
+			// step#1: determine dependencies
+			if(HasResourceReadDependency(rp)) {
+				if(rp->Type() == RenderPassType::GRAPHICS) {
+					computeSyncSubmission = true;
 				}
 
-				// step#2:
-				InvokeRenderFunction(rp);
+				if(rp->Type() == RenderPassType::COMPUTE) {
+					directSyncSubmission = true;
+				}
 			}
+
+			// step#2:
+			InvokeRenderFunction(rp);
 
 			// step#3: process submissions
 			if(directSyncSubmission) {
@@ -257,8 +255,7 @@ namespace Netcode::Graphics::DX12 {
 				mainFence->Wait(directCommandQueue);
 			}
 
-			frameGraph->EraseRenderPasses(std::move(runnable));
-			runnable = frameGraph->QueryCompleteRenderPasses();
+			frameGraph->PopRenderPass();
 		}
 	}
 

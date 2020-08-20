@@ -1,3 +1,0 @@
---name=railgun
---lods=Railgun.fbx
---animations=Railgun.fbx,RailgunIdle.fbx

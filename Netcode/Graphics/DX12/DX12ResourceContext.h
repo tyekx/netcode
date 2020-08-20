@@ -47,8 +47,8 @@ namespace Netcode::Graphics::DX12 {
 		virtual Ref<GpuResource> CreateTexture2D(const Image * images, ResourceType resourceType) override;
 		virtual Ref<GpuResource> CreateTexture2D(const Image * images, uint32_t mipLevels) override;
 		virtual Ref<GpuResource> CreateTexture2D(const Image * images, uint32_t mipLevels, ResourceType resourceType) override;
-		virtual Ref<GpuResource> CreateTexture2D(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) override;
-		virtual Ref<GpuResource> CreateTextureCube(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) override;
+		virtual Ref<GpuResource> CreateTexture2D(uint32_t width, uint32_t height, uint16_t mipLevels, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) override;
+		virtual Ref<GpuResource> CreateTextureCube(uint32_t width, uint32_t height, uint16_t mipLevels, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) override;
 
 		virtual Ref<Netcode::ResourceViews> CreateShaderResourceViews(uint32_t numDescriptors) override;
 		virtual Ref<Netcode::ResourceViews> CreateRenderTargetViews(uint32_t numDescriptors) override;

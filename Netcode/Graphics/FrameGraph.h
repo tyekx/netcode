@@ -66,9 +66,14 @@ namespace Netcode {
 		virtual void EraseRenderPasses(Vector<Ref<RenderPass>> rps) = 0;
 
 		/*
-		Returns the set of render passes, that are ready to be executed
+		Returns the next render pass
 		*/
-		virtual Vector<Ref<RenderPass>> QueryCompleteRenderPasses() = 0;
+		virtual Ref<RenderPass> QueryFrontRenderPass() = 0;
+
+		/*
+		Pops the front render pass
+		*/
+		virtual void PopRenderPass() = 0;
 
 		/*
 		Returns true if the currently remaining render passes write the null resource (backbuffer)

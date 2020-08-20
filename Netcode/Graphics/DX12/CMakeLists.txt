@@ -56,6 +56,7 @@ PUBLIC
 	"DX12StreamOutputLibrary.h"
 	"DX12Texture.h"
 	"DX12TextureBuilder.h"
+	"DX12TextureLibrary.h"
 	"DX12FrameGraphExecutor.h"
 	"DX12UploadBatch.h"
 
@@ -109,6 +110,7 @@ PRIVATE
 	"DX12StreamOutputLibrary.cpp"
 	"DX12Texture.cpp"
 	"DX12TextureBuilder.cpp"
+	"DX12TextureLibrary.cpp"
 	"DX12FrameGraphExecutor.cpp"
 	"DX12UploadBatch.cpp"
 )

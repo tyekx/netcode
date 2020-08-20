@@ -14,6 +14,8 @@ namespace NetcodeAssetEditor
         Single ValueW;
     }
 
+   // delegate void Vector4ChangedDelegate(Windows.Foundation.Numerics.Vector4 newValue);
+
     [default_interface]
     runtimeclass Vector4Control : Windows.UI.Xaml.Controls.UserControl
     {
@@ -21,6 +23,8 @@ namespace NetcodeAssetEditor
 
         static Windows.UI.Xaml.DependencyProperty ValueProperty{ get; };
         static Windows.UI.Xaml.DependencyProperty IsReadOnlyProperty{ get; };
+
+        //event Vector4ChangedDelegate ValueChanged;
 
         IInspectable Value;
         Boolean IsReadOnly;

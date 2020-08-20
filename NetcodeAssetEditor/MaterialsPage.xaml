@@ -24,7 +24,7 @@
             <TextBlock Text="Materials" FontSize="20" Margin="15,7,15,7" VerticalAlignment="Center"></TextBlock>
         </StackPanel>
 
-        <ScrollViewer Grid.Row="1" Grid.Column="0" VerticalScrollBarVisibility="Visible" Grid.RowSpan="2">
+        <ScrollViewer Grid.Row="1" Grid.Column="0" VerticalScrollBarVisibility="Visible">
             <ListView x:Name="materialsList" ItemsSource="{x:Bind Materials}" SelectionMode="Single">
                 <ListView.ItemTemplate>
                     <DataTemplate>
@@ -42,7 +42,7 @@
             <StackPanel Orientation="Vertical" Visibility="{Binding SelectedIndex, Converter={StaticResource SelectionToVisibility}, ElementName=materialsList}">
                 <StackPanel Margin="0,15,0,0">
                     <TextBlock Text="Name:" Margin="15,0,0,5"></TextBlock>
-                    <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.Name, Mode=TwoWay, ElementName=materialsList}"></TextBox>
+                    <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.Name, Mode=TwoWay, ElementName=materialsList}" TextChanged="Name_TextChanged"></TextBox>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
                     <TextBlock Text="Diffuse Color:" Margin="15,0,0,5"></TextBlock>
@@ -52,34 +52,44 @@
                     <TextBlock Text="Fresnel R0:" Margin="15,0,0,5"></TextBlock>
                     <local:Vector3Control Margin="30,0,30,0" Value="{Binding SelectedItem.FresnelR0, Mode=TwoWay, ElementName=materialsList}"></local:Vector3Control>
                 </StackPanel>
-                <StackPanel Margin="0,15,0,0" HorizontalAlignment="Left">
-                    <TextBlock Text="Shininess:" Margin="15,0,0,5"></TextBlock>
-                    <local:FloatBox Margin="30,0,30,0" TextChanged="Shininess_TextChanged" Text="{Binding SelectedItem.Shininess, Mode=TwoWay, ElementName=materialsList}" MaxWidth="240"></local:FloatBox>
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Margin="0,15,0,15" HorizontalAlignment="Left">
+                        <TextBlock Text="Shininess:" Margin="15,0,0,5"></TextBlock>
+                        <local:FloatBox Margin="30,0,30,0" TextChanged="Shininess_TextChanged" Text="{Binding SelectedItem.Shininess, Mode=TwoWay, ElementName=materialsList}" MaxWidth="240"></local:FloatBox>
+                    </StackPanel>
+                    <StackPanel Margin="0,15,0,15" HorizontalAlignment="Left">
+                        <TextBlock Text="Displacement Scale:" Margin="15,0,15,5"></TextBlock>
+                        <local:FloatBox HorizontalAlignment="Right" TextChanged="DisplacementScale_TextChanged" Text="{Binding SelectedItem.DisplacementScale, Mode=TwoWay, ElementName=materialsList}" MaxWidth="240"></local:FloatBox>
+                    </StackPanel>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
-                    <TextBlock Margin="15,0,0,5" Text="Diffuse Texture Relative Path:"></TextBlock>
+                    <TextBlock Text="Tiling:" Margin="15,0,0,5"></TextBlock>
+                    <local:Vector2Control Margin="30,0,30,0" Value="{Binding SelectedItem.Tiling, Mode=TwoWay, ElementName=materialsList}"></local:Vector2Control>
+                </StackPanel>
+                <StackPanel Margin="0,15,0,0">
+                    <CheckBox x:Name="diffuseTextureCheckBox" IsChecked="True" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked" Margin="15,0,0,0" Content="Diffuse Texture Relative Path:"></CheckBox>
                     <TextBox Margin="30,0,30,0" AllowDrop="True" Drop="TextBox_Drop" DragOver="TextBox_DragOver" Text="{Binding SelectedItem.DiffuseMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
-                    <TextBlock Margin="15,0,0,5" Text="Normal Texture Relative Path:"></TextBlock>
+                    <CheckBox x:Name="normalTextureCheckBox" IsChecked="True" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked" Margin="15,0,0,0" Content="Normal Texture Relative Path:"></CheckBox>
                     <TextBox Margin="30,0,30,0" AllowDrop="True" Drop="TextBox_Drop" DragOver="TextBox_DragOver" Text="{Binding SelectedItem.NormalMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
-                    <TextBlock Margin="15,0,0,5" Text="Specular Texture Relative Path:"></TextBlock>
+                    <CheckBox x:Name="specularTextureCheckBox" IsChecked="True" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked" Margin="15,0,0,0" Content="Specular Texture Relative Path:"></CheckBox>
                     <TextBox Margin="30,0,30,0" AllowDrop="True" Drop="TextBox_Drop" DragOver="TextBox_DragOver" Text="{Binding SelectedItem.SpecularMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
-                    <TextBlock Margin="15,0,0,5" Text="Roughtness Texture Relative Path:"></TextBlock>
+                    <CheckBox  x:Name="roughnessTextureCheckBox" IsChecked="True" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked" Margin="15,0,0,0" Content="Roughness Texture Relative Path:"></CheckBox>
                     <TextBox Margin="30,0,30,0" AllowDrop="True" Drop="TextBox_Drop" DragOver="TextBox_DragOver" Text="{Binding SelectedItem.RoughnessMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
-                    <TextBlock Margin="15,0,0,5" Text="Ambient Texture Relative Path:"></TextBlock>
+                    <CheckBox x:Name="ambientTextureCheckBox" IsChecked="True" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked" Margin="15,0,0,0" Content="Ambient Texture Relative Path:"></CheckBox>
                     <TextBox Margin="30,0,30,0" AllowDrop="True" Drop="TextBox_Drop" DragOver="TextBox_DragOver" Text="{Binding SelectedItem.AmbientMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
                 </StackPanel>
-                <!--<StackPanel Margin="0,15,0,0">
-                    <TextBlock Margin="15,0,0,5" Text="Height Texture Relative Path:"></TextBlock>
-                    <TextBox  Margin="30,0,30,0" Text="{Binding SelectedItem.HeightMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
-                </StackPanel>-->
+                <StackPanel Margin="0,15,0,0">
+                    <CheckBox x:Name="displacementTextureCheckBox" IsChecked="True" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked" Margin="15,0,0,0" Content="Displacement Texture Relative Path:"></CheckBox>
+                    <TextBox Margin="30,0,30,0" AllowDrop="True" Drop="TextBox_Drop" DragOver="TextBox_DragOver" Text="{Binding SelectedItem.DisplacementMapReference, Mode=TwoWay, ElementName=materialsList}"></TextBox>
+                </StackPanel>
                 <StackPanel HorizontalAlignment="Right"  Margin="0,15,0,15">
                     <Button Margin="30,0,30,0" Content="Save Changes" Click="PropertiesButton_Click"></Button>
                 </StackPanel>

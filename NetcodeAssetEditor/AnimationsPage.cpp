@@ -45,7 +45,6 @@ namespace winrt::NetcodeAssetEditor::implementation
         Netcode::Vector3 stScale;
         Netcode::Vector3 endScale;
 
-        Netcode::Matrix bindTrans;
         Netcode::Matrix toRoot[128];
         int parentId;
 
@@ -84,11 +83,10 @@ namespace winrt::NetcodeAssetEditor::implementation
                  toRoot[i] = toRoot[i] * toRoot[parentId];
              }
 
-             bindTrans = skeleton.bones[i].transform;
-             bindTrans = bindTrans * toRoot[i];
+             Netcode::Matrix bindTrans = skeleton.bones[i].transform;
 
              destBuffer->ToRootTransform[i] = toRoot[i].Transpose();
-             destBuffer->BindTransform[i] = bindTrans.Transpose();
+             destBuffer->BindTransform[i] = (bindTrans * toRoot[i]).Transpose();
          }
     }
     

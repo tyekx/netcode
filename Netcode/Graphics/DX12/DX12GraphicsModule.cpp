@@ -11,6 +11,7 @@
 #include "DX12InputLayoutLibrary.h"
 #include "DX12GPipelineStateLibrary.h"
 #include "DX12CPipelineStateLibrary.h"
+#include "DX12TextureLibrary.h"
 #include "DX12ResourceContext.h"
 #include "DX12DebugContext.h"
 #include "DX12UploadBatch.h"
@@ -201,6 +202,8 @@ namespace Netcode::Graphics::DX12 {
 		cPipelineLibrary = stackAllocator.MakeShared<CPipelineStateLibrary>(objectAllocator, device);
 
 		spriteFontLibrary = stackAllocator.MakeShared<SpriteFontLibrary>(objectAllocator, resources, frame);
+
+		textureLibrary = stackAllocator.MakeShared<TextureLibrary>(objectAllocator, this);
 	}
 
 	void DX12GraphicsModule::SetContextReferences()
@@ -480,11 +483,14 @@ namespace Netcode::Graphics::DX12 {
 			if(std::holds_alternative<TextureUploadTask>(task)) {
 				Ref<Netcode::Texture> tex = std::get<TextureUploadTask>(task).texture;
 				uint16_t imgCount = tex->GetImageCount();
+				uint16_t mipCount = tex->GetMipLevelCount();
 
 				size_t sum = 0;
-				for(uint16_t imgI = 0; imgI < imgCount; ++imgI) {
-					const Image * imgR = tex->GetImage(0, imgI, 0);
-					sum += imgR->slicePitch;
+				for(uint16_t mip = 0; mip < mipCount; ++mip) {
+					for(uint16_t imgI = 0; imgI < imgCount; ++imgI) {
+						const Image * imgR = tex->GetImage(mip, imgI, 0);
+						sum += imgR->slicePitch;
+					}
 				}
 				totalSize += Utility::Align64K<size_t>(sum);
 			}
@@ -543,19 +549,24 @@ namespace Netcode::Graphics::DX12 {
 
 					Ref<Netcode::Texture> tex = textureTask.texture;
 					uint16_t imgCount = tex->GetImageCount();
+					uint16_t mipCount = tex->GetMipLevelCount();
 
 					size_t sum = 0;
-					std::unique_ptr<D3D12_SUBRESOURCE_DATA[]> subResData = std::make_unique<D3D12_SUBRESOURCE_DATA[]>(imgCount);
+					std::unique_ptr<D3D12_SUBRESOURCE_DATA[]> subResData = std::make_unique<D3D12_SUBRESOURCE_DATA[]>(mipCount * imgCount);
 
+					uint16_t ii = 0;
 					for(uint16_t imgI = 0; imgI < imgCount; ++imgI) {
-						const Image * imgR = tex->GetImage(0, imgI, 0);
-						subResData[imgI].pData = imgR->pixels;
-						subResData[imgI].RowPitch = imgR->rowPitch;
-						subResData[imgI].SlicePitch = imgR->slicePitch;
-						sum += imgR->slicePitch;
+						for(uint16_t mipI = 0; mipI < mipCount; ++mipI) {
+							const Image * imgR = tex->GetImage(mipI, imgI, 0);
+							subResData[ii].pData = imgR->pixels;
+							subResData[ii].RowPitch = imgR->rowPitch;
+							subResData[ii].SlicePitch = imgR->slicePitch;
+							ii++;
+							sum += imgR->slicePitch;
+						}
 					}
 
-					UpdateSubresources(directCl.GetCommandList(), resource->resource.Get(), uploadResource.Get(), offset, 0u, imgCount, subResData.get());
+					UpdateSubresources(directCl.GetCommandList(), resource->resource.Get(), uploadResource.Get(), offset, 0u, ii, subResData.get());
 
 					offset += Utility::Align64K<size_t>(sum);
 				}
@@ -725,7 +736,7 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 	Ref<TextureBuilder> DX12GraphicsModule::CreateTextureBuilder() {
-		return objectAllocator.MakeShared<TextureBuilderImpl>();
+		return objectAllocator.MakeShared<TextureBuilderImpl>(textureLibrary);
 	}
 
 	Ref<FrameGraphBuilder> DX12GraphicsModule::CreateFrameGraphBuilder()

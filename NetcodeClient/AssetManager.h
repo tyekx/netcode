@@ -14,6 +14,8 @@
 #include <Netcode/Graphics/UploadBatch.h>
 #include <Netcode/Graphics/ResourceEnums.h>
 
+#include <Netcode/URI/Texture.h>
+
 class AssetManager {
 
 	Netcode::Module::IGraphicsModule * graphics;
@@ -54,17 +56,10 @@ public:
 
 	Ref<Netcode::GpuResource> ImportTexture2D(const std::wstring & relativeMediaPath) {
 		Ref<Netcode::TextureBuilder> builder = graphics->CreateTextureBuilder();
-		builder->LoadTexture2D(relativeMediaPath);
-		Ref<Netcode::Texture> texture = builder->Build();
 
-		Ref<Netcode::GpuResource> texResource = graphics->resources->CreateTexture2D(texture->GetImage(0, 0, 0));
+		builder->LoadTexture2D(Netcode::URI::Texture{ relativeMediaPath });
 
-		auto uploadBatch = graphics->resources->CreateUploadBatch();
-		uploadBatch->Upload(texResource, texture);
-		uploadBatch->Barrier(texResource, Netcode::Graphics::ResourceState::COPY_DEST, Netcode::Graphics::ResourceState::ANY_READ);
-		graphics->frame->SyncUpload(uploadBatch);
-
-		return texResource;
+		return builder->Build();
 	}
 
 	Ref<Netcode::ResourceViews> CreateTextureRV(Ref<Netcode::GpuResource> resourceRef) {

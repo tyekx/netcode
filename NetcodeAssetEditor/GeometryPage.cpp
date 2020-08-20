@@ -60,16 +60,15 @@ namespace winrt::NetcodeAssetEditor::implementation
             transformedMeshes.clear();
             transformedMeshes.reserve(Global::Model->meshes.size());
 
-
-            auto dc = DataContext().as<DC_GeometryPage>();
-            dc->TransformBuffer().Clear();
-
             for(const Mesh & m : Global::Model->meshes) {
                 transformedMeshes.emplace_back(std::move(m.Clone()));
             }
 
+            auto dc = DataContext().as<DC_GeometryPage>();
+            dc->TransformBuffer().Clear();
+
             if(!Global::Model->meshes.empty()) {
-                auto boundingBox = CalculateBoundingBoxForModel(Global::Model->meshes);
+                auto boundingBox = CalculateBoundingBoxForModel(transformedMeshes);
 
                 dc->BoundingBoxSize(Windows::Foundation::Numerics::float3{
                     2.0f * boundingBox.Extents.x,
@@ -96,10 +95,6 @@ namespace winrt::NetcodeAssetEditor::implementation
     void GeometryPage::OnTransformBufferChanged(Windows::Foundation::Collections::IObservableVector<Windows::Foundation::Numerics::float4x4> sender, Windows::Foundation::Collections::IVectorChangedEventArgs args) {
         namespace wn = Windows::Foundation::Numerics;
 
-        if(sender.Size() == 0) {
-            return;
-        }
-
         wn::float4x4 transform = wn::float4x4::identity();
 
         for(wn::float4x4 i : sender) {
@@ -111,6 +106,10 @@ namespace winrt::NetcodeAssetEditor::implementation
         Netcode::Float4x4 v{
             &transform.m11
         };
+
+        Global::EditorApp->currentOfflineTransform = v;
+
+        v = Netcode::Matrix{ Global::Model->offlineTransform } *v;
 
         std::vector<Mesh> cloned;
         cloned.reserve(Global::Model->meshes.size());

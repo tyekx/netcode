@@ -8,15 +8,17 @@ namespace winrt::NetcodeAssetEditor::implementation
         hstring name;
         Windows::UI::Color diffuseColor;
         Windows::Foundation::Numerics::float3 fresnelR0;
+        Windows::Foundation::Numerics::float2 tiling;
 
         float shininess;
+        float displacementScale;
 
         hstring diffuseMapReference;
         hstring normalMapReference;
         hstring specularMapReference;
         hstring roughnessMapReference;
         hstring ambientMapReference;
-        hstring heightMapReference;
+        hstring displacementMapReference;
 
         winrt::event<Windows::UI::Xaml::Data::PropertyChangedEventHandler> propertyChanged;
 
@@ -31,8 +33,14 @@ namespace winrt::NetcodeAssetEditor::implementation
         Windows::Foundation::Numerics::float3 FresnelR0();
         void FresnelR0(Windows::Foundation::Numerics::float3 const& value);
 
+        Windows::Foundation::Numerics::float2 Tiling();
+        void Tiling(Windows::Foundation::Numerics::float2 const& value);
+
         float Shininess();
         void Shininess(float value);
+
+        float DisplacementScale();
+        void DisplacementScale(float value);
 
         hstring DiffuseMapReference();
         void DiffuseMapReference(hstring const& value);
@@ -49,8 +57,8 @@ namespace winrt::NetcodeAssetEditor::implementation
         hstring AmbientMapReference();
         void AmbientMapReference(hstring const& value);
 
-        hstring HeightMapReference();
-        void HeightMapReference(hstring const& value);
+        hstring DisplacementMapReference();
+        void DisplacementMapReference(hstring const& value);
 
         winrt::event_token PropertyChanged(Windows::UI::Xaml::Data::PropertyChangedEventHandler const& handler);
         void PropertyChanged(winrt::event_token const& token) noexcept;

@@ -482,6 +482,12 @@
     <ClInclude Include="HandleDecl.h">
       <Filter>Modules</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Material.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DX12\DX12TextureLibrary.h">
+      <Filter>Graphics\DX12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Stopwatch.cpp">
@@ -799,6 +805,12 @@
       <Filter>Graphics\DX12</Filter>
     </ClCompile>
     <ClCompile Include="Graphics\DX12\DX12UploadBatch.cpp">
+      <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Material.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DX12\DX12TextureLibrary.cpp">
       <Filter>Graphics\DX12</Filter>
     </ClCompile>
   </ItemGroup>

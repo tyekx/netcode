@@ -52,7 +52,11 @@ namespace Netcode::IO {
 			const DWORD apiMode = ConvertMode(mode);
 			const DWORD shareMode = (mode == FileOpenMode::READ || mode == FileOpenMode::READ_BINARY) ? FILE_SHARE_READ : 0;
 
+#if defined(NETCODE_EDITOR_VARIANT) 
 			HANDLE f = CreateFileFromAppW(path.c_str(), apiMode, shareMode, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+#else
+			HANDLE f = CreateFileW(path.c_str(), apiMode, shareMode, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+#endif
 
 			if(f == INVALID_HANDLE_VALUE) {
 				Log::Error("Failed to open file: '{0}'", Utility::ToNarrowString(path));

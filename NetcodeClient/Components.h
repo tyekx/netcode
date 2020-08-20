@@ -13,12 +13,12 @@
 #include <Netcode/HandleTypes.h>
 #include <Netcode/PhysXWrapper.h>
 #include "Mesh.h"
-#include "Material.h"
 #include "AnimationController.h"
 
 #include <Netcode/Animation/IK.h>
 #include <Netcode/Animation/Blackboard.h>
 #include <Netcode/Animation/Blender.h>
+#include <Netcode/Graphics/Material.h>
 
 enum AxisEnum : uint32_t {
 	VERTICAL,
@@ -85,9 +85,9 @@ public:
 
 struct ShadedMesh {
 	Ref<Mesh> mesh;
-	Ref<Material> material;
+	Ref<Netcode::Material> material;
 
-	ShadedMesh(Ref<Mesh> m, Ref<Material> mat) : mesh{ std::move(m) }, material{ std::move(mat) } {
+	ShadedMesh(Ref<Mesh> m, Ref<Netcode::Material> mat) : mesh{ std::move(m) }, material{ std::move(mat) } {
 
 	}
 
@@ -103,7 +103,7 @@ public:
 	int32_t boneDataOffset;
 	std::vector<ShadedMesh> meshes;
 
-	ShadedMesh & AddShadedMesh(Ref<Mesh> m, Ref<Material> mat) {
+	ShadedMesh & AddShadedMesh(Ref<Mesh> m, Ref<Netcode::Material> mat) {
 		return meshes.emplace_back(std::move(m), std::move(mat));
 	}
 };

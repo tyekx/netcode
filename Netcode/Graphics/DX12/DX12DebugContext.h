@@ -39,31 +39,43 @@ namespace Netcode::Graphics::DX12 {
 
 		virtual void DrawPoint(const Float3 & point, float extent) override;
 		virtual void DrawPoint(const Float3 & point, float extent, bool depthEnabled) override;
+		virtual void DrawPoint(const Float3 & worldPos, float extents, const Float4x4 & transform) override;
+		virtual void DrawPoint(const Float3 & worldPos, float extents, const Float4x4 & transform, bool depthEnabled) override;
 
 		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd) override;
 		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, bool depthEnabled) override;
 		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, const Float3 & color) override;
 		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, const Float3 & color, bool depthEnabled) override;
+		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, const Float3 & color, const Float4x4 & transform) override;
+		virtual void DrawLine(const Float3 & worldPosStart, const Float3 & worldPosEnd, const Float3 & color, const Float4x4 & transform, bool depthEnabled) override;
 
 		virtual void DrawSphere(Vector3 worldPosOrigin, float radius) override;
 		virtual void DrawSphere(Vector3 worldPosOrigin, float radius, bool depthEnabled) override;
 		virtual void DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color) override;
 		virtual void DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color, bool depthEnabled) override;
+		virtual void DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color, const Float4x4 & transform) override;
+		virtual void DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color, const Float4x4 & transform, bool depthEnabled) override;
 
 		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents) override;
 		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, bool depthEnabled) override;
 		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color) override;
 		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, bool depthEnabled) override;
+		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, const Float4x4 & transform) override;
+		virtual void DrawBoundingBox(Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, const Float4x4 & transform, bool depthEnabled) override;
 
 		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents) override;
 		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, bool depthEnabled) override;
 		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color) override;
 		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, bool depthEnabled) override;
+		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, const Float4x4 & transform) override;
+		virtual void DrawBox(Quaternion orientation, Vector3 worldPosOrigin, Vector3 halfExtents, const Float3 & color, const Float4x4 & transform, bool depthEnabled) override;
 	
 		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight) override;
 		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, bool depthEnabled) override;
 		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color) override;
 		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, bool depthEnabled) override;
+		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, const Float4x4 & transform) override;
+		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, const Float4x4 & transform, bool depthEnabled) override;
 	};
 
 }

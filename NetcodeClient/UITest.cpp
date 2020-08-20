@@ -294,7 +294,7 @@ void PageBase::DebugDump()
 void PageBase::InitializeComponents() {
 	AssetManager * assets = Service::Get<AssetManager>();
 
-	textFont = assets->ImportFont(L"titillium18.spritefont");
+	textFont = assets->ImportFont(L"compiled/fonts/titillium18.spritefont");
 }
 
 void LoginPage::InitializeComponents() {
@@ -302,7 +302,7 @@ void LoginPage::InitializeComponents() {
 
 	AssetManager * assets = Service::Get<AssetManager>();
 	/*
-	aenami = assets->ImportTexture2D(L"aenami_dreamer.jpg");
+	aenami = assets->ImportTexture2D(L"compiled/textures/ui/aenami_dreamer.jpg");
 	Ref<Netcode::ResourceViews> aenamiRv = assets->CreateTextureRV(aenami);
 	Netcode::UInt2 aenamiSize = Netcode::UInt2{ static_cast<uint32_t>(aenami->GetDesc().width), aenami->GetDesc().height };
 	*/
@@ -331,7 +331,7 @@ void LoginPage::InitializeComponents() {
 	titleLabel->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
 	titleLabel->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
 	titleLabel->TextColor(COLOR_ACCENT);
-	titleLabel->Font(assets->ImportFont(L"titillium48bold.spritefont"));
+	titleLabel->Font(assets->ImportFont(L"compiled/fonts/titillium48bold.spritefont"));
 	titleLabel->Text(L"Netcode");
 	titleLabel->Margin(Netcode::Float4{ 0.0f, 0.0f, 0.0f, 64.0f });
 
@@ -347,7 +347,7 @@ void LoginPage::InitializeComponents() {
 	usernameLabel->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
 	usernameLabel->Margin(Netcode::Float4{ 0.0f, 0.0f, 10.0f, 0.0f });
 	usernameLabel->TextColor(COLOR_ACCENT);
-	usernameLabel->Font(assets->ImportFont(L"titillium18.spritefont"));
+	usernameLabel->Font(assets->ImportFont(L"compiled/fonts/titillium18.spritefont"));
 	usernameLabel->Text(L"Username:");
 
 	Ref<ui::TextBox> usernameTextBox = CreateTextBox();
@@ -364,7 +364,7 @@ void LoginPage::InitializeComponents() {
 	passwordLabel->HorizontalContentAlignment(ui::HorizontalAnchor::RIGHT);
 	passwordLabel->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
 	passwordLabel->TextColor(COLOR_ACCENT);
-	passwordLabel->Font(assets->ImportFont(L"titillium18.spritefont"));
+	passwordLabel->Font(assets->ImportFont(L"compiled/fonts/titillium18.spritefont"));
 	passwordLabel->Text(L"Password:");
 
 	Ref<ui::StackPanel> buttonField = controlAllocator.MakeShared<ui::StackPanel>(eventAllocator, CreatePhysxActor());
@@ -490,11 +490,11 @@ void LoadingPage::InitializeComponents() {
 
 	AssetManager * assets = Service::Get<AssetManager>();
 
-	loadingIcon = assets->ImportTexture2D(L"loading_icon.png");
+	loadingIcon = assets->ImportTexture2D(L"compiled/textures/ui/loading_icon.png");
 	Ref<Netcode::ResourceViews> loadingIconRv = assets->CreateTextureRV(loadingIcon);
 	Netcode::UInt2 loadingIconSize = Netcode::UInt2{ static_cast<uint32_t>(loadingIcon->GetDesc().width), loadingIcon->GetDesc().height };
 
-	warningIcon = assets->ImportTexture2D(L"warning_icon.png");
+	warningIcon = assets->ImportTexture2D(L"compiled/textures/ui/warning_icon.png");
 	Ref<Netcode::ResourceViews> warningIconRv = assets->CreateTextureRV(warningIcon);
 	Netcode::UInt2 warningIconSize = Netcode::UInt2{ static_cast<uint32_t>(warningIcon->GetDesc().width), warningIcon->GetDesc().height };
 
