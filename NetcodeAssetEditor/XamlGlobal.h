@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Model.h"
+#include <NetcodeAssetLib/IntermediateModel.h>
 #include <NetcodeAssetLib/Manifest.h>
 #include "EditorApp.h"
 
@@ -12,7 +12,7 @@ class Global {
 public:
 
 	static std::unique_ptr<Netcode::Asset::Manifest> Manifest;
-	static std::unique_ptr<Model> Model;
+	static std::unique_ptr<Netcode::Intermediate::Model> Model;
 	static std::unique_ptr<EditorApp> EditorApp;
 
 

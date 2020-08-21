@@ -3,7 +3,7 @@
 #include <Netcode/Modules.h>
 #include "EditorFrameGraph.h"
 #include <algorithm>
-#include "Model.h"
+#include <NetcodeAssetLib/IntermediateModel.h>
 #include "BoundingBoxHelpers.h"
 #include <Netcode/BasicGeometry.h>
 #include <Netcode/URI/Texture.h>
@@ -44,11 +44,11 @@ namespace Netcode::Module {
 		std::vector<GBuffer> gbuffers;
 		std::vector<Ref<Netcode::Material>> materials;
 		std::vector<Ref<Netcode::Material>> matAssoc;
-		std::vector<Collider> colliders;
+		std::vector<Intermediate::Collider> colliders;
 
 		Netcode::Float4x4 currentOfflineTransform;
 
-		virtual void SetMaterials(const std::vector<Mesh> & meshes, const std::vector<Ref<Material>> & mats, bool forceUpdate = false) {
+		virtual void SetMaterials(const std::vector<Intermediate::Mesh> & meshes, const std::vector<Ref<Material>> & mats, bool forceUpdate = false) {
 			matAssoc.reserve(meshes.size());
 			materials = mats;
 
@@ -110,7 +110,7 @@ namespace Netcode::Module {
 			mat->GetResourceView(0)->CreateSRV(texIdx, texResource.get());
 		}
 
-		virtual void SetColliders(std::vector<Collider> colls) {
+		virtual void SetColliders(std::vector<Intermediate::Collider> colls) {
 			colliders = std::move(colls);
 		}
 
@@ -158,10 +158,10 @@ namespace Netcode::Module {
 			frameValid = false;
 		}
 
-		virtual void SetDrawGeometry(std::vector<LOD*> lodRefs) {
+		virtual void SetDrawGeometry(std::vector<Intermediate::LOD*> lodRefs) {
 			gbuffers.clear();
 
-			for(LOD * lod : lodRefs) {
+			for(Intermediate::LOD * lod : lodRefs) {
 				GBuffer gbuffer;
 			    gbuffer.indexBuffer = graphics->resources->CreateIndexBuffer(lod->indexDataSizeInBytes, DXGI_FORMAT_R32_UINT, ResourceType::PERMANENT_UPLOAD, ResourceState::ANY_READ);
 				gbuffer.vertexBuffer = graphics->resources->CreateVertexBuffer(lod->vertexDataSizeInBytes, lod->vertexDataSizeInBytes / lod->vertexCount, ResourceType::PERMANENT_UPLOAD, ResourceState::ANY_READ);

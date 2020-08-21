@@ -3,7 +3,7 @@
 #include "DC_GeometryPage.h"
 #include "UC_Mesh.h"
 #include "GeometryPage.g.h"
-#include "Model.h"
+#include <NetcodeAssetLib/IntermediateModel.h>
 #include "EditorApp.h"
 #include "GCommandTransform.h"
 
@@ -11,7 +11,7 @@ namespace winrt::NetcodeAssetEditor::implementation
 {
     struct GeometryPage : GeometryPageT<GeometryPage>
     {
-        std::vector<Mesh> transformedMeshes;
+        std::vector<Netcode::Intermediate::Mesh> transformedMeshes;
         bool firstNavigation;
 
         void UpdateRenderedModel();

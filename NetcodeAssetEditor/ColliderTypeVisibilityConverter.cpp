@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "ColliderTypeVisibilityConverter.h"
 #include "ColliderTypeVisibilityConverter.g.cpp"
-#include "Model.h"
-
 
 namespace winrt::NetcodeAssetEditor::implementation
 {

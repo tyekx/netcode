@@ -22,6 +22,11 @@ PUBLIC
 	"Material.h"
 	"Mesh.h"
 	"Model.h"
+	"AssetExporter.h"
+	"BoundingBoxHelpers.h"
+	"FBXImporter.h"
+	"IntermediateModel.h"
+	"MaterialConverter.h"
 
 PRIVATE
 	"Exporter.cpp"
@@ -30,6 +35,11 @@ PRIVATE
 	"Manifest.cpp"
 	"Material.cpp"
 	"Model.cpp"
+	"AssetExporter.cpp"
+	"BoundingBoxHelpers.cpp"
+	"FBXImporter.cpp"
+	"IntermediateModel.cpp"
+	"MaterialConverter.cpp"
 )
 
 target_include_directories(NetcodeAssetLib SYSTEM

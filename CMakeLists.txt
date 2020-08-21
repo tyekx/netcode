@@ -163,6 +163,7 @@ endmacro()
 
 add_subdirectory("NetcodeFoundation")
 add_subdirectory("NetcodeAssetLib")
+add_subdirectory("NetcodeAssetCompiler")
 add_subdirectory("NetcodeProtocol")
 add_subdirectory("Netcode")
 add_subdirectory("NetcodeClient")

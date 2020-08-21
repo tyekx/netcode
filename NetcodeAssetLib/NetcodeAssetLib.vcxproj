@@ -59,22 +59,32 @@
   <ItemGroup>
     <ClInclude Include="Animation.h" />
     <ClInclude Include="Bone.h" />
+    <ClInclude Include="BoundingBoxHelpers.h" />
     <ClInclude Include="Collider.h" />
     <ClInclude Include="Exporter.h" />
+    <ClInclude Include="FBXImporter.h" />
     <ClInclude Include="Importer.h" />
+    <ClInclude Include="IntermediateModel.h" />
     <ClInclude Include="JsonUtility.h" />
     <ClInclude Include="Manifest.h" />
     <ClInclude Include="Material.h" />
+    <ClInclude Include="MaterialConverter.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="AssetExporter.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BoundingBoxHelpers.cpp" />
     <ClCompile Include="Exporter.cpp" />
+    <ClCompile Include="FBXImporter.cpp" />
     <ClCompile Include="Importer.cpp" />
+    <ClCompile Include="IntermediateModel.cpp" />
     <ClCompile Include="JsonUtility.cpp" />
     <ClCompile Include="Manifest.cpp" />
     <ClCompile Include="Material.cpp" />
+    <ClCompile Include="MaterialConverter.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="AssetExporter.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

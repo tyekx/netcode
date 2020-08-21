@@ -11,7 +11,7 @@ namespace winrt::NetcodeAssetEditor::implementation
 
     void DC_Collider::Type(uint32_t value)
     {
-        type = static_cast<ColliderType>( value);
+        type = static_cast<Netcode::Asset::ColliderType>( value);
         propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"Type"));
     }
 
@@ -56,7 +56,7 @@ namespace winrt::NetcodeAssetEditor::implementation
     void DC_Collider::SphereArg(float value)
     {
         sphereArg = value;
-        Type(static_cast<uint32_t>(ColliderType::SPHERE));
+        Type(static_cast<uint32_t>(Netcode::Asset::ColliderType::SPHERE));
         propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"SphereArg"));
     }
 
@@ -68,7 +68,7 @@ namespace winrt::NetcodeAssetEditor::implementation
     void DC_Collider::CapsuleArgs(Windows::Foundation::Numerics::float2 const& value)
     {
         capsuleArgs = value;
-        Type(static_cast<uint32_t>(ColliderType::CAPSULE));
+        Type(static_cast<uint32_t>(Netcode::Asset::ColliderType::CAPSULE));
         propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"CapsuleArgs"));
     }
 
@@ -80,7 +80,7 @@ namespace winrt::NetcodeAssetEditor::implementation
     void DC_Collider::BoxArgs(Windows::Foundation::Numerics::float3 const& value)
     {
         boxArgs = value;
-        Type(static_cast<uint32_t>(ColliderType::BOX));
+        Type(static_cast<uint32_t>(Netcode::Asset::ColliderType::BOX));
         propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"BoxArgs"));
     }
 

@@ -6,6 +6,8 @@
 #include <Netcode/Modules.h>
 #include <Netcode/FancyIterators.hpp>
 #include <DirectXTex.h>
+#include <NetcodeAssetLib/IntermediateModel.h>
+#include <Netcode/HandleTypes.h>
 
 #include "GBuffer.h"
 #include "ConstantBufferTypes.h"
@@ -387,7 +389,7 @@ class EditorFrameGraph {
 	}
 
 	void CreateColliderPass(Ptr<Netcode::FrameGraphBuilder> builder) {
-		for(const Collider & collider : colliderPass_Input) {
+		for(const Netcode::Intermediate::Collider & collider : colliderPass_Input) {
 			using CT = Netcode::Asset::ColliderType;
 
 			Netcode::Float4x4 transform = Netcode::Float4x4::Identity;
@@ -437,7 +439,7 @@ public:
 
 	std::vector<GBuffer> gbufferPass_Input;
 	std::vector<Ref<Netcode::Material>> gbufferPass_InputMaterials;
-	std::vector<Collider> colliderPass_Input;
+	std::vector<Netcode::Intermediate::Collider> colliderPass_Input;
 
 	void CreatePermanentResources(Netcode::Module::IGraphicsModule * g) {
 		graphics = g;

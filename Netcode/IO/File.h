@@ -61,4 +61,18 @@ namespace Netcode::IO {
 		}
 	};
 
+	template<typename T>
+	class FileWriter {
+		T & tRef;
+	public:
+		FileWriter(T & tr) : tRef{ tr } {
+			tRef.Open(FileOpenMode::WRITE);
+		}
+		~FileWriter() { tRef.Close(); }
+
+		T * operator->() {
+			return &tRef;
+		}
+	};
+
 }

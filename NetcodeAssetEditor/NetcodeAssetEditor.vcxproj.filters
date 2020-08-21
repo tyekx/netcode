@@ -35,9 +35,6 @@
     <ClCompile Include="DC_Mesh.cpp">
       <Filter>Data</Filter>
     </ClCompile>
-    <ClCompile Include="FBXImporter.cpp">
-      <Filter>Import</Filter>
-    </ClCompile>
     <ClCompile Include="DC_MainPage.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -90,9 +87,6 @@
     <ClCompile Include="DepthToMarginConverter.cpp">
       <Filter>XAML\Converters</Filter>
     </ClCompile>
-    <ClCompile Include="NetcodeAssetExporter.cpp">
-      <Filter>Export</Filter>
-    </ClCompile>
     <ClCompile Include="BonesPage.cpp">
       <Filter>XAML</Filter>
     </ClCompile>
@@ -135,22 +129,15 @@
     <ClCompile Include="Generated Files\module.g.cpp" />
     <ClCompile Include="GCommandTransform.cpp" />
     <ClCompile Include="DC_GeometryPage.cpp" />
-    <ClCompile Include="Model.cpp" />
     <ClCompile Include="BoundingBoxHelpers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Model.h">
-      <Filter>Data</Filter>
-    </ClInclude>
     <ClInclude Include="DC_Lod.h">
       <Filter>Data</Filter>
     </ClInclude>
     <ClInclude Include="DC_Mesh.h">
       <Filter>Data</Filter>
-    </ClInclude>
-    <ClInclude Include="FBXImporter.h">
-      <Filter>Import</Filter>
     </ClInclude>
     <ClInclude Include="DC_MainPage.h">
       <Filter>Data</Filter>
@@ -218,9 +205,6 @@
     </ClInclude>
     <ClInclude Include="DepthToMarginConverter.h">
       <Filter>XAML\Converters</Filter>
-    </ClInclude>
-    <ClInclude Include="NetcodeAssetExporter.h">
-      <Filter>Export</Filter>
     </ClInclude>
     <ClInclude Include="BonesPage.h">
       <Filter>XAML</Filter>

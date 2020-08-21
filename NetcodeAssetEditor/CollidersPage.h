@@ -16,7 +16,7 @@ namespace winrt::NetcodeAssetEditor::implementation
         Windows::Foundation::Collections::IVector<winrt::event_token> tokens;
 
         winrt::event_token AddCallbackFor(uint32_t idx);
-        NetcodeAssetEditor::DC_Collider ConvertCollider(const Collider & collider);
+        NetcodeAssetEditor::DC_Collider ConvertCollider(const Netcode::Asset::Collider & collider);
 
         CollidersPage();
 

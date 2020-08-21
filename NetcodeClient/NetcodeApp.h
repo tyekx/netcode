@@ -170,7 +170,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		renderSystem.renderer.ui_Input = &pageManager;
 
 		GameObject * wall = gameScene->Create();
-		LoadComponents(assetManager->Import(L"wall_.ncasset"), wall);
+		LoadComponents(assetManager->Import(L"compiled/models/wall.ncasset"), wall);
 		gameScene->Spawn(wall);
 	}
 
@@ -180,7 +180,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 		GameObject * avatarController = gameScene->Create();
 		GameObject * avatarHitboxes = gameScene->Create();
 
-		Netcode::Asset::Model * avatarModel = assetManager->Import(L"ybot2.ncasset");
+		Netcode::Asset::Model * avatarModel = assetManager->Import(L"compiled/models/ybot.ncasset");
 
 		if(ybotAnimationSet == nullptr) {
 			ybotAnimationSet = std::make_shared<AnimationSet>(graphics.get(), avatarModel->animations, avatarModel->bones);

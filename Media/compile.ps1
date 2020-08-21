@@ -7,12 +7,15 @@ Provide switches to compile less, otherwise a full recompilation will happen
 if supplied, textures will be compiled
 .PARAMETER Fonts
 if supplied, fonts will be compiled
+.PARAMETER Models
+if supplied, models will be compiled
 .PARAMETER OnlyNew
 a compilation will be skipped, if the destination file exists
 #>
 Param(
     [Parameter(ValuefromPipeline=$true,Mandatory=$false)][switch]$Textures,
     [Parameter(ValuefromPipeline=$true,Mandatory=$false)][switch]$Fonts,
+    [Parameter(ValuefromPipeline=$true,Mandatory=$false)][switch]$Models,
     [Parameter(ValuefromPipeline=$true,Mandatory=$false)][switch]$OnlyNew
 )
 
@@ -89,6 +92,25 @@ function Compile-SpriteFont {
     ..\Tools\dxtex\MakeSpriteFont.exe /CharacterRegion:0x20-0x7F /FontSize:$fontSize /FontStyle:$fontStyle /NoPremultiply /Sharp /TextureFormat:Rgba32 $fontFamily $outPath
 }
 
+function Compile-Model {
+    param(
+        [string]$manifest,
+        [string]$outputName
+    )
+
+    $outPath = [IO.Path]::Combine("compiled\models", $outputName)
+
+    if($OnlyNew.IsPresent) {
+        $exists = Test-Path $outPath -PathType Leaf
+
+        if($exists) {
+            return
+        }
+    }
+
+    ..\Build\x64-Debug-clang\NetcodeAssetCompiler\NetcodeAssetCompiler.exe --manifest $manifest --output $outPath --overwrite
+}
+
 if($compileAll -OR $Textures.IsPresent) {
     Compile-Texture-Into-DDS "textures/scifi_panel/Scifi_Panel_1K_albedo.tif" 11 "BC7_UNORM"
     Compile-Texture-Into-DDS "textures/scifi_panel/Scifi_Panel_1K_normal.tif" 11 "BC6H_UF16"
@@ -121,4 +143,9 @@ if($compileAll -OR $Fonts.IsPresent) {
     Compile-SpriteFont "titillium18.spritefont" "Titillium Web" 18 "Regular"
     Compile-SpriteFont "titillium24.spritefont" "Titillium Web" 24 "Regular"
     Compile-SpriteFont "titillium48bold.spritefont" "Titillium Web" 48 "Bold"
+}
+
+if($compileAll -OR $Models.IsPresent) {
+    Compile-Model "wall_manifest.json" "wall.ncasset"
+    Compile-Model "ybot_manifest.json" "ybot.ncasset"
 }

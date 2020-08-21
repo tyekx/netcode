@@ -129,7 +129,6 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     <ClInclude Include="EditorApp.h" />
     <ClInclude Include="EditorFrameGraph.h" />
     <ClInclude Include="EditorModuleFactory.h" />
-    <ClInclude Include="FBXImporter.h" />
     <ClInclude Include="FloatBox.h" />
     <ClInclude Include="GBuffer.h" />
     <ClInclude Include="GCommandTransform.h" />
@@ -142,8 +141,6 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     <ClInclude Include="MaterialsPage.h">
       <DependentUpon>MaterialsPage.xaml</DependentUpon>
     </ClInclude>
-    <ClInclude Include="Model.h" />
-    <ClInclude Include="NetcodeAssetExporter.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="SelectionToVisibilityConverter.h" />
     <ClInclude Include="UC_Lod.h">
@@ -213,7 +210,6 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     <ClCompile Include="DepthToMarginConverter.cpp" />
     <ClCompile Include="DX12GraphicsModuleForXaml.cpp" />
     <ClCompile Include="EditorModuleFactory.cpp" />
-    <ClCompile Include="FBXImporter.cpp" />
     <ClCompile Include="FloatBox.cpp" />
     <ClCompile Include="GCommandTransform.cpp" />
     <ClCompile Include="Generated Files\module.g.cpp" />
@@ -226,8 +222,6 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     <ClCompile Include="MaterialsPage.cpp">
       <DependentUpon>MaterialsPage.xaml</DependentUpon>
     </ClCompile>
-    <ClCompile Include="Model.cpp" />
-    <ClCompile Include="NetcodeAssetExporter.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

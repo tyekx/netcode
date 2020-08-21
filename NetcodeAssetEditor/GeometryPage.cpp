@@ -3,14 +3,14 @@
 #if __has_include("GeometryPage.g.cpp")
 #include "GeometryPage.g.cpp"
 #endif
-#include "Model.h"
+
 #include "XamlGlobal.h"
 
 
 using namespace winrt;
 using namespace Windows::UI::Xaml;
 
-static DirectX::BoundingBox CalculateBoundingBoxForModel(const std::vector<Mesh> & meshes) {
+static DirectX::BoundingBox CalculateBoundingBoxForModel(const std::vector<Netcode::Intermediate::Mesh> & meshes) {
     if(meshes.empty()) {
         return DirectX::BoundingBox{};
     }
@@ -38,14 +38,14 @@ namespace winrt::NetcodeAssetEditor::implementation
             return;
         }
 
-        std::vector<LOD *> drawCandidates;
+        std::vector<Netcode::Intermediate::LOD *> drawCandidates;
         drawCandidates.reserve(selectedItemsCount);
 
         for(uint32_t i = 0; i < inspectableVector.Size(); ++i) {
             auto range = inspectableVector.GetAt(i);
 
             for(uint32_t j = range.FirstIndex(); j <= range.LastIndex(); ++j) {
-                LOD * lodRef = &transformedMeshes[j].lods.at(0);
+                Netcode::Intermediate::LOD * lodRef = &transformedMeshes[j].lods.at(0);
 
                 drawCandidates.push_back(lodRef);
             }
@@ -60,7 +60,7 @@ namespace winrt::NetcodeAssetEditor::implementation
             transformedMeshes.clear();
             transformedMeshes.reserve(Global::Model->meshes.size());
 
-            for(const Mesh & m : Global::Model->meshes) {
+            for(const Netcode::Intermediate::Mesh & m : Global::Model->meshes) {
                 transformedMeshes.emplace_back(std::move(m.Clone()));
             }
 
@@ -111,11 +111,11 @@ namespace winrt::NetcodeAssetEditor::implementation
 
         v = Netcode::Matrix{ Global::Model->offlineTransform } *v;
 
-        std::vector<Mesh> cloned;
+        std::vector<Netcode::Intermediate::Mesh> cloned;
         cloned.reserve(Global::Model->meshes.size());
 
-        for(const Mesh & m : Global::Model->meshes) {
-            Mesh cMesh = m.Clone();
+        for(const Netcode::Intermediate::Mesh & m : Global::Model->meshes) {
+            Netcode::Intermediate::Mesh cMesh = m.Clone();
             cMesh.ApplyTransformation(v);
             cloned.emplace_back(std::move(cMesh));
         }

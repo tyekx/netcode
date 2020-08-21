@@ -16,6 +16,9 @@
     <Filter Include="Serialization">
       <UniqueIdentifier>{7cdc9146-2fef-44e2-888e-a3d34c05eb93}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Moved">
+      <UniqueIdentifier>{d4ad0b75-f053-4a38-9302-30700200ab83}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Model.h">
@@ -48,6 +51,21 @@
     <ClInclude Include="Exporter.h">
       <Filter>Serialization</Filter>
     </ClInclude>
+    <ClInclude Include="BoundingBoxHelpers.h">
+      <Filter>Moved</Filter>
+    </ClInclude>
+    <ClInclude Include="FBXImporter.h">
+      <Filter>Moved</Filter>
+    </ClInclude>
+    <ClInclude Include="IntermediateModel.h">
+      <Filter>Moved</Filter>
+    </ClInclude>
+    <ClInclude Include="AssetExporter.h">
+      <Filter>Moved</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialConverter.h">
+      <Filter>Moved</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Model.cpp">
@@ -67,6 +85,21 @@
     </ClCompile>
     <ClCompile Include="Exporter.cpp">
       <Filter>Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="FBXImporter.cpp">
+      <Filter>Moved</Filter>
+    </ClCompile>
+    <ClCompile Include="IntermediateModel.cpp">
+      <Filter>Moved</Filter>
+    </ClCompile>
+    <ClCompile Include="BoundingBoxHelpers.cpp">
+      <Filter>Moved</Filter>
+    </ClCompile>
+    <ClCompile Include="AssetExporter.cpp">
+      <Filter>Moved</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialConverter.cpp">
+      <Filter>Moved</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -6,6 +6,7 @@
 #include "XamlGlobal.h"
 #include "XamlHelpers.h"
 #include "DC_Bone.h"
+#include <NetcodeAssetLib/Collider.h>
 
 using namespace winrt;
 using namespace Windows::UI::Xaml;
@@ -76,7 +77,7 @@ namespace winrt::NetcodeAssetEditor::implementation
     }
 
 
-    NetcodeAssetEditor::DC_Collider CollidersPage::ConvertCollider(const Collider & collider) {
+    NetcodeAssetEditor::DC_Collider CollidersPage::ConvertCollider(const Netcode::Asset::Collider & collider) {
         auto dcCollider = winrt::make<NetcodeAssetEditor::implementation::DC_Collider>();
 
         DirectX::XMVECTOR localRotationQuat = DirectX::XMLoadFloat4(&collider.localRotation);
@@ -96,17 +97,17 @@ namespace winrt::NetcodeAssetEditor::implementation
         dcCollider.BoneReference(collider.boneReference);
 
         switch(collider.type) {
-            case ColliderType::BOX:
+            case Netcode::Asset::ColliderType::BOX:
                 dcCollider.BoxArgs(Windows::Foundation::Numerics::float3(collider.boxArgs.x, collider.boxArgs.y, collider.boxArgs.z));
                 break;
-            case ColliderType::CAPSULE:
+            case Netcode::Asset::ColliderType::CAPSULE:
                 dcCollider.CapsuleArgs(Windows::Foundation::Numerics::float2(collider.capsuleArgs.x, collider.capsuleArgs.y));
                 break;
-            case ColliderType::SPHERE:
+            case Netcode::Asset::ColliderType::SPHERE:
                 dcCollider.SphereArg(collider.sphereArgs);
                 break;
-            case ColliderType::MESH:
-                dcCollider.Type(static_cast<uint32_t>(ColliderType::MESH));
+            case Netcode::Asset::ColliderType::MESH:
+                dcCollider.Type(static_cast<uint32_t>(Netcode::Asset::ColliderType::MESH));
                 break;
         }
 
@@ -198,10 +199,10 @@ namespace winrt::NetcodeAssetEditor::implementation
     void CollidersPage::AddCollider_Click(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e)
     {
         if(Global::Model != nullptr) {
-            Collider dCollider;
+            Netcode::Asset::Collider dCollider;
             dCollider.boneReference = 0xFF;
             dCollider.boxArgs = Netcode::Float3{ 10.0f, 10.0f, 10.0f };
-            dCollider.type = ColliderType::BOX;
+            dCollider.type = Netcode::Asset::ColliderType::BOX;
             dCollider.localPosition = Netcode::Float3{};
             dCollider.localRotation = Netcode::Float4{ 0.0f, 0.0f, 0.0f, 1.0f };
             

@@ -1,6 +1,6 @@
 #pragma once
 #include "DC_Collider.g.h"
-#include "Model.h"
+#include <NetcodeAssetLib/Collider.h>
 
 namespace winrt::NetcodeAssetEditor::implementation
 {
@@ -17,7 +17,7 @@ namespace winrt::NetcodeAssetEditor::implementation
         Windows::Foundation::Numerics::float3 localPosition;
         Windows::Foundation::Numerics::float3 localRotation;
 
-        ColliderType type;
+        Netcode::Asset::ColliderType type;
         int32_t boneReference;
 
         winrt::event<Windows::UI::Xaml::Data::PropertyChangedEventHandler> propertyChanged;

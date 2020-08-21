@@ -4,6 +4,7 @@
 #include "AnimationsPage.g.cpp"
 #endif
 #include "XamlGlobal.h"
+#include <NetcodeAssetLib/IntermediateModel.h>
 
 using namespace winrt;
 using namespace Windows::UI::Xaml;
@@ -35,7 +36,7 @@ namespace winrt::NetcodeAssetEditor::implementation
         animations = value;
     }
 
-    static void UpdateAnimation(float t, const OptimizedAnimation & anim, const Skeleton & skeleton, BoneData* destBuffer) {
+    static void UpdateAnimation(float t, const Netcode::Intermediate::OptimizedAnimation & anim, const Netcode::Intermediate::Skeleton & skeleton, BoneData* destBuffer) {
         Netcode::Vector3 stPos;
         Netcode::Vector3 endPos;
 
@@ -115,7 +116,7 @@ namespace winrt::NetcodeAssetEditor::implementation
             return;
         }
 
-        for(const OptimizedAnimation & optAnim : Global::Model->animations) {
+        for(const Netcode::Intermediate::OptimizedAnimation & optAnim : Global::Model->animations) {
             auto dcAnim = winrt::make<DC_Animation>();
             
             dcAnim.Timescale(1.0f);

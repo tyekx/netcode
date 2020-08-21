@@ -37,6 +37,8 @@ namespace Netcode::IO {
 				case FileOpenMode::WRITE:
 					return GENERIC_WRITE;
 			}
+
+			return 0;
 		}
 	public:
 		~detail() noexcept {
@@ -51,11 +53,12 @@ namespace Netcode::IO {
 
 			const DWORD apiMode = ConvertMode(mode);
 			const DWORD shareMode = (mode == FileOpenMode::READ || mode == FileOpenMode::READ_BINARY) ? FILE_SHARE_READ : 0;
+			const DWORD openMode = (mode == FileOpenMode::WRITE || mode == FileOpenMode::WRITE_BINARY) ? CREATE_ALWAYS : OPEN_EXISTING;
 
 #if defined(NETCODE_EDITOR_VARIANT) 
 			HANDLE f = CreateFileFromAppW(path.c_str(), apiMode, shareMode, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 #else
-			HANDLE f = CreateFileW(path.c_str(), apiMode, shareMode, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+			HANDLE f = CreateFileW(path.c_str(), apiMode, shareMode, nullptr, openMode, FILE_ATTRIBUTE_NORMAL, nullptr);
 #endif
 
 			if(f == INVALID_HANDLE_VALUE) {

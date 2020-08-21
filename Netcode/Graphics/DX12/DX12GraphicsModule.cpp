@@ -269,7 +269,7 @@ namespace Netcode::Graphics::DX12 {
 			hwnd = reinterpret_cast<HWND>(app->window->GetUnderlyingPointer());
 		}
 		backbufferDepth = 2;
-		depthStencilFormat = Config::Get<DXGI_FORMAT>("graphics.depthStencil:Format");;
+		depthStencilFormat = Config::Get<DXGI_FORMAT>("graphics.depthStencil:Format");
 		Float4 cColor = Config::Get<Float4>("graphics.clearColor:Float4");
 		clearColor.r = cColor.x;
 		clearColor.g = cColor.y;

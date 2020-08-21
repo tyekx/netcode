@@ -1,24 +1,24 @@
 #include "pch.h"
 #include "ColliderTypeConverter.h"
 #include "ColliderTypeConverter.g.cpp"
-#include "Model.h"
+#include <NetcodeAssetLib/Collider.h>
 
 namespace winrt::NetcodeAssetEditor::implementation
 {
     Windows::Foundation::IInspectable ColliderTypeConverter::Convert(Windows::Foundation::IInspectable const& value, Windows::UI::Xaml::Interop::TypeName const& targetType, Windows::Foundation::IInspectable const& parameter, hstring const& language)
     {
-        ColliderType type = static_cast<ColliderType>(unbox_value<uint32_t>(value));
+        Netcode::Asset::ColliderType type = static_cast<Netcode::Asset::ColliderType>(unbox_value<uint32_t>(value));
 
         switch(type) {
-            case ColliderType::BOX:
+            case Netcode::Asset::ColliderType::BOX:
                 return box_value(L"Box");
-            case ColliderType::CAPSULE:
+            case Netcode::Asset::ColliderType::CAPSULE:
                 return box_value(L"Capsule");
-            case ColliderType::MESH:
+            case Netcode::Asset::ColliderType::MESH:
                 return box_value(L"Mesh");
-            case ColliderType::PLANE:
+            case Netcode::Asset::ColliderType::PLANE:
                 return box_value(L"Plane");
-            case ColliderType::SPHERE:
+            case Netcode::Asset::ColliderType::SPHERE:
                 return box_value(L"Sphere");
             default:
                 return box_value(L"Undefined");

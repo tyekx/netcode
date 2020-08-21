@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "XamlHelpers.h"
 #include "XamlHelpers.g.cpp"
-#include "Model.h"
+#include <NetcodeAssetLib/IntermediateModel.h>
 #include "XamlGlobal.h"
 #include "DC_Bone.h"
 
@@ -14,7 +14,7 @@ namespace winrt::NetcodeAssetEditor::implementation
         winrt::Windows::Foundation::Collections::IObservableVector<NetcodeAssetEditor::DC_Bone> bones =
             winrt::single_threaded_observable_vector<NetcodeAssetEditor::DC_Bone>();
 
-        for(const SkeletonBone & bone : sk.bones) {
+        for(const Netcode::Intermediate::SkeletonBone & bone : sk.bones) {
             auto dcBone = winrt::make<DC_Bone>();
             dcBone.Name(winrt::to_hstring(bone.boneName));
             dcBone.Depth(0);
