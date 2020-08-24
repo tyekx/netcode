@@ -464,9 +464,6 @@ namespace Netcode {
 		unsigned int shininessCount = mat->GetTextureCount(aiTextureType_SHININESS);
 		unsigned int opacity = mat->GetTextureCount(aiTextureType_OPACITY);
 
-		uint32_t sum = diffuseCount + normalCount + emissiveColorCount + emissiveCount + displacementCount + ambientCount + ambientOccCount + lightmapCount
-			+ heightCount + reflectionCount + kd + metalnessCount + unknownTexCount + shininessCount + opacity;
-
 		char buffer[256];
 
 		for(unsigned int i = 0; i < mat->mNumProperties; ++i) {
@@ -509,6 +506,7 @@ namespace Netcode {
 					}
 				}
 				break;
+				default:break;
 			}
 
 			OutputDebugStringA(buffer);

@@ -160,6 +160,7 @@ namespace Netcode::Module {
 		virtual void * GetSwapChain() const = 0;
 		virtual DXGI_FORMAT GetBackbufferFormat() const = 0;
 		virtual DXGI_FORMAT GetDepthStencilFormat() const = 0;
+		virtual void ClearImportCache() = 0;
 
 		virtual Ref<Fence> CreateFence(uint64_t initialValue) = 0;
 		virtual Ref<ShaderBuilder> CreateShaderBuilder() = 0;

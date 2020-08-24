@@ -36,6 +36,15 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 	Ref<DX12::ShaderCompiled> ShaderLibrary::LoadShader(const URI::Shader & filePath) {
+#if defined(NETCODE_EDITOR_VARIANT)
+		Log::Debug("[DX12] Loading shader object: {0}", Netcode::Utility::ToNarrowString(filePath.GetFullPath()));
+
+		Ref<ShaderCompiled> compiledRef = LoadCSO(filePath.GetShaderPath());
+
+		ASSERT(compiledRef != nullptr, "Failed to load cso");
+
+		return compiledRef;
+#else 
 		auto it = std::find_if(std::begin(compiledShaders), std::end(compiledShaders), [&filePath](const Ref<DX12::ShaderCompiled> & ref) -> bool {
 			if(ref->GetFileReference() == filePath.GetShaderPath()) {
 				return true;
@@ -56,6 +65,7 @@ namespace Netcode::Graphics::DX12 {
 		} else {
 			return *it;
 		}
+#endif
 	}
 	
 	Ref<DX12::ShaderVariant>  ShaderLibrary::GetShaderVariant(const ShaderVariantDesc & desc) {

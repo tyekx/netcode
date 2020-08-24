@@ -150,6 +150,8 @@ namespace Netcode::Graphics::DX12 {
 
 	public:
 
+		virtual void ClearImportCache() override;
+
 		virtual void * GetSwapChain() const override;
 
 		virtual void Prepare() override;

@@ -22,8 +22,6 @@ class GameSceneSimulationEventCallback : public physx::PxSimulationEventCallback
 
 __declspec(align(16)) class GameScene : public Scene<GameObject> {
 protected:
-	physx::PxControllerManager * controllerManager;
-	physx::PxMaterial * controllerMaterial;
 	std::unique_ptr<GameSceneSimulationEventCallback> sceneCallback;
 	void * __structPadding0;
 	GameScene() = default;
@@ -125,10 +123,43 @@ public:
 	void Spawn(GameObject * obj) {
 		if(!obj->IsDeletable()) {
 			if(obj->HasComponent<Collider>()) {
-				SpawnPhysxActor(obj->GetComponent<Collider>()->actorRef);
+				SpawnPhysxActor(obj->GetComponent<Collider>()->actor.Get());
 			}
 			obj->Spawn();
 		}
+	}
+
+	GameObject * Clone(GameObject * src) {
+		GameObject *obj = Create();
+
+		if(src->HasComponent<Transform>()) {
+			*obj->AddComponent<Transform>() = *src->GetComponent<Transform>();
+		}
+
+		if(src->HasComponent<Collider>()) {
+			Collider * dstCollider = obj->AddComponent<Collider>();
+			Collider * srcCollider = src->GetComponent<Collider>();
+
+			physx::PxTransform t{ physx::PxIdentity };
+			if(obj->HasComponent<Transform>()) {
+				Transform * transform = obj->GetComponent<Transform>();
+				t = physx::PxTransform{
+					Netcode::ToPxVec3(transform->position), Netcode::ToPxQuat(transform->rotation)
+				};
+			}
+
+			auto * ptr = physx::PxCloneDynamic(pxScene->getPhysics(), t, *static_cast<physx::PxRigidDynamic *>(srcCollider->actor.Get()));
+			ptr->userData = nullptr;
+			dstCollider->actor.Reset(ptr);
+		}
+
+		if(src->HasComponent<Model>()) {
+			Model * m = obj->AddComponent<Model>();
+			Model * s = src->GetComponent<Model>();
+			m->meshes = s->meshes;
+		}
+
+		return obj;
 	}
 
 	void UpdatePerFrameCb() {
@@ -180,8 +211,8 @@ public:
 		cd.contactOffset = 0.1f;
 		cd.density = 10.0f;
 		cd.invisibleWallHeight = 0.0f;
-		cd.material = controllerMaterial;
-		cd.position = physx::PxExtendedVec3{ 0.0, 200.0, 0.0 };
+		cd.material = controllerMaterial.Get();
+		cd.position = physx::PxExtendedVec3{ 0.0, 300.0, 0.0 };
 		cd.nonWalkableMode = physx::PxControllerNonWalkableMode::ePREVENT_CLIMBING;
 		cd.registerDeletionListener = true;
 		cd.reportCallback = NULL;

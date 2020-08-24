@@ -22,7 +22,7 @@ using Netcode::Graphics::IRenderContext;
 using Netcode::Graphics::IResourceContext;
 
 class EditorFrameGraph {
-
+public:
 	Netcode::UInt2 backbufferSize;
 
 	GBuffer fsQuad;
@@ -82,7 +82,7 @@ class EditorFrameGraph {
 		gbufferPass_DepthStencilView->CreateDSV(gbufferPass_DepthStencil.get());
 	}
 
-	void Create_GBufferPass_PermanentResources(Netcode::Module::IGraphicsModule * g) {
+	void Create_GBufferPass_PipelineState() {
 		auto inputLayoutBuilder = graphics->CreateInputLayoutBuilder();
 		inputLayoutBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		inputLayoutBuilder->AddInputElement("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
@@ -114,8 +114,11 @@ class EditorFrameGraph {
 		psoBuilder->SetPixelShader(ps);
 		psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::TRIANGLE);
 		gbufferPass_PipelineState = psoBuilder->Build();
-		gbufferPass_DepthStencilView = g->resources->CreateDepthStencilView();
+	}
 
+	void Create_GBufferPass_PermanentResources(Netcode::Module::IGraphicsModule * g) {
+		Create_GBufferPass_PipelineState();
+		gbufferPass_DepthStencilView = graphics->resources->CreateDepthStencilView();
 		Create_GBufferPass_SizeDependentResources();
 	}
 
@@ -277,6 +280,7 @@ class EditorFrameGraph {
 					Netcode::Float2 tilesOffset;
 					float displacementScale;
 					float displacementBias;
+					float textureSpaceHandednessFactor;
 					uint32_t texturesFlags;
 				};
 
@@ -285,11 +289,12 @@ class EditorFrameGraph {
 				BrdfConstBuffer buffer;
 				buffer.diffuseAlbedo = mat->GetOptionalParameter<Netcode::Float4>(ParamId::DIFFUSE_ALBEDO, Netcode::Float4::Zero);
 				buffer.fresnelR0 = mat->GetOptionalParameter<Netcode::Float3>(ParamId::FRESNEL_R0, Netcode::Float3{ 0.05f, 0.05f, 0.05f });
-				buffer.roughness = mat->GetOptionalParameter<float>(ParamId::ROUGHNESS, 36.0f);
+				buffer.roughness = mat->GetOptionalParameter<float>(ParamId::ROUGHNESS, 36.0f) / 256.0f;
 				buffer.tiles = mat->GetOptionalParameter<Netcode::Float2>(ParamId::TEXTURE_TILES, Netcode::Float2::One);
 				buffer.tilesOffset = mat->GetOptionalParameter<Netcode::Float2>(ParamId::TEXTURE_TILES_OFFSET, Netcode::Float2::Zero);
 				buffer.displacementScale = mat->GetOptionalParameter<float>(ParamId::DISPLACEMENT_SCALE, 0.01f);
 				buffer.displacementBias = mat->GetOptionalParameter<float>(ParamId::DISPLACEMENT_BIAS, 0.42f);
+				buffer.textureSpaceHandednessFactor = 1.0f;
 				buffer.texturesFlags = 0;
 
 				for(uint32_t i = 0; i < 6; ++i) {

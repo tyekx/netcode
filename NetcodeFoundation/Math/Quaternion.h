@@ -63,6 +63,10 @@ namespace Netcode {
 			DirectX::XMStoreFloat4(&f, q);
 			return f;
 		}
+
+		static Quaternion NC_MATH_CALLCONV FromPitchYawRollVector(Vector3 v) noexcept;
+
+		static Quaternion NC_MATH_CALLCONV FromEulerAngles(const Netcode::Float3 & eulerAngles) noexcept;
 	};
 
 	

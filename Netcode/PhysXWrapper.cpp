@@ -4,25 +4,21 @@
 
 namespace Netcode::Physics {
 
-	void PhysX::UpdateDebugCamera(const Float3 & pos, const Float3 & up, const Float3 & lookAt)
-	{/*
-		physx::PxPvdSceneClient * pvdClient = scene->getScenePvdClient();
-		if(pvdClient) {
-			pvdClient->updateCamera("default", ToPxVec3(pos), ToPxVec3(up), ToPxVec3(lookAt));
-		}*/
-	}
-
 	void PhysX::CreateResources() {
 		foundation.Reset(PxCreateFoundation(PX_PHYSICS_VERSION, allocator, errorCallback));
+
+#if defined(NETCODE_DEBUG)
 		debugger.Reset(PxCreatePvd(*foundation));
-		physx::PxPvdTransport * transport = physx::PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
-		bool isDebuggerConnected = debugger->connect(*transport, physx::PxPvdInstrumentationFlag::eALL);
+		const int port = 5425;
+		physx::PxPvdTransport * transport = physx::PxDefaultPvdSocketTransportCreate("127.0.0.1", port, 10);
+		bool isDebuggerConnected = debugger->connect(*transport, physx::PxPvdInstrumentationFlag::eDEBUG);
 
 		if(!isDebuggerConnected) {
-			Netcode::Utility::Debugf("Notice: Failed to connect to Physx Visual Debugger\r\n");
+			Log::Warn("Failed to connect to PhysX Visual Debugger");
 		} else {
-			Netcode::Utility::Debugf("PVD Connected on socket 5425\r\n");
+			Log::Info("Connected to PVD:{0}", port);
 		}
+#endif
 
 		physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, physx::PxTolerancesScale{ }, true, debugger.Get());
 		dispatcher = physx::PxDefaultCpuDispatcherCreate(2);

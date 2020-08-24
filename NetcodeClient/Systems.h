@@ -11,6 +11,49 @@
 
 class TransformSystem {
 public:
+	static inline void SyncFromTransformToCollider(physx::PxRigidDynamic * actor, Transform * transform) {
+		physx::PxTransform actorTransform = transform->WorldToPhysX();
+		actor->setKinematicTarget(actorTransform);
+	}
+
+	static inline void SyncFromColliderToTransform(physx::PxRigidDynamic * actor, Transform *parentTransform, Transform * transform) {
+		physx::PxTransform pose = actor->getGlobalPose();
+
+		transform->worldPosition = Netcode::ToFloat3(pose.p);
+		transform->worldRotation = Netcode::ToFloat4(pose.q);
+
+		if(parentTransform != nullptr) {
+			Netcode::Quaternion worldRot = transform->worldRotation;
+			Netcode::Vector3 worldPos = transform->worldPosition;
+
+			Netcode::Quaternion parentWorldRot = parentTransform->worldRotation;
+			Netcode::Vector3 parentWorldPos = parentTransform->worldPosition;
+
+			Netcode::Quaternion parentInvRot = parentWorldRot.Conjugate();
+			Netcode::Vector3 rotatedLocalPosition = worldPos - parentWorldPos;
+
+			transform->position = rotatedLocalPosition.Rotate(parentInvRot);
+			transform->rotation = worldRot * parentInvRot;
+		} else {
+			transform->position = transform->worldPosition;
+			transform->rotation = transform->worldRotation;
+		}
+	}
+
+	static inline void SyncTransformWithCollider(Transform * parentTransform, Transform * transform, Collider * collider) {
+		if(physx::PxRigidDynamic * rigidDynamic = collider->actor->is<physx::PxRigidDynamic>(); rigidDynamic != nullptr) {
+			auto rigidBodyFlags = rigidDynamic->getRigidBodyFlags();
+
+			if(rigidBodyFlags.isSet(physx::PxRigidBodyFlag::eKINEMATIC)) {
+				// sync NETCODE -> PHYSX
+				SyncFromTransformToCollider(rigidDynamic, transform);
+			} else {
+				// sync PHYSX -> NETCODE
+				SyncFromColliderToTransform(rigidDynamic, parentTransform, transform);
+			}
+		}
+	}
+
 	static inline Netcode::Quaternion GetWorldRotation(Transform * transform, Transform * parentTransform) {
 		Netcode::Quaternion worldRotation{ transform->rotation };
 		if(parentTransform != nullptr) {
@@ -36,22 +79,19 @@ public:
 	void Run(GameObject * gameObject);
 
 	void operator()(GameObject * gameObject, Transform * transform) {
-		Netcode::Vector3 worldPos;
-		Netcode::Quaternion worldRot;
-
 		GameObject * parent = gameObject->Parent();
+		Transform * parentTransform = (parent != nullptr) ? parent->GetComponent<Transform>() : nullptr;
 
-		if(parent != nullptr) {
-			Transform * parentTransform = parent->GetComponent<Transform>();
-			worldPos = GetWorldPosition(transform, parentTransform);
-			worldRot = GetWorldRotation(transform, parentTransform);
-		} else {
-			worldPos = GetWorldPosition(transform, nullptr);
-			worldRot = GetWorldRotation(transform, nullptr);
+		transform->worldPosition = GetWorldPosition(transform, parentTransform);
+		transform->worldRotation = GetWorldRotation(transform, parentTransform);
+
+		if(gameObject->HasComponent<Collider>()) {
+			Collider * collider = gameObject->GetComponent<Collider>();
+
+			if(collider->actor != nullptr) {
+				SyncTransformWithCollider(parentTransform, transform, collider);
+			}
 		}
-
-		transform->worldPosition = worldPos;
-		transform->worldRotation = worldRot;
 	}
 };
 
@@ -215,7 +255,7 @@ class PhysXSystem {
 	}
 
 	void UpdateBoneAttachedShapes(Model * model, Collider * collider, Animation * anim) {
-		if(auto * rigidBody = collider->actorRef->is<physx::PxRigidDynamic>()) {
+		if(auto * rigidBody = collider->actor->is<physx::PxRigidDynamic>()) {
 			constexpr static uint32_t SHAPES_BUFFER_SIZE = 8;
 
 			physx::PxShape * shapes[SHAPES_BUFFER_SIZE] = {};
@@ -235,14 +275,14 @@ class PhysXSystem {
 	}
 
 	void UpdateModel(Model * model, Collider * collider) {
-
+		
 	}
 
 public:
 	void Run(GameObject * gameObject);
 
 	void operator()(GameObject * gameObject, Model * model, Collider * collider) {
-		if(collider->actorRef == nullptr) {
+		if(collider->actor == nullptr) {
 			return;
 		}
 

@@ -34,6 +34,8 @@ namespace Netcode::Graphics::DX12 {
 
 		TextureLibrary(Memory::ObjectAllocator allocator, Module::IGraphicsModule* graphics);
 
+		void ClearCache();
+
 		Ref<GpuResource> GetTexture(const URI::Texture & uri, uint16_t mipLevels);
 
 		Ref<GpuResource> CreateTexture2D(const URI::Texture & uri, ResourceState stateAfterUpload, DirectX::ScratchImage scratchImage, DirectX::TexMetadata metaData);

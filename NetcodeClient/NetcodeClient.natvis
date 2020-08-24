@@ -2,33 +2,39 @@
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
   <!-- So far only the core components are supported, extension components are subject to change -->
   <Type Name="GameObject">
-    <DisplayString>{{ Owner={ parent }, Signature={ components.signature } }}</DisplayString>
+    <DisplayString>{{ Name={ debugName }, Owner={ parent }, Signature={ components.signature } }}</DisplayString>
     <Expand>
       <Item Name="[Transform]" Condition="(components.signature &amp; 1) == 1">((Transform*)components.storage)</Item>
       <Item Name="[Model]" Condition="(components.signature &amp; 2) == 2">((Model*)(components.storage + sizeof(Transform)))</Item>
       <Item Name="[Script]" Condition="(components.signature &amp; 4) == 4">((Script*)(components.storage + sizeof(Model) + sizeof(Transform)))</Item>
-      <Item Name="[Script]" Condition="(components.signature &amp; 8) == 8">((Collider*)(components.storage + sizeof(Model) + sizeof(Transform) + sizeof(Script)))</Item>
+      <Item Name="[Collider]" Condition="(components.signature &amp; 8) == 8">((Collider*)(components.storage + sizeof(Model) + sizeof(Transform) + sizeof(Script)))</Item>
       <Item Name="[Camera]" Condition="(components.signature &amp; 16) == 16">((Camera*)(components.extendedStorage))</Item>
       <Item Name="[Animation]" Condition="(components.signature &amp; 32) == 32">((Animation*)(components.extendedStorage + sizeof(Camera)))</Item>
     </Expand>
   </Type>
-  <Type Name="UIObject">
-    <DisplayString>{{ Signature = { components.signature } }}</DisplayString>
-    <Expand>
-      <Item Name="[SpawnableFlag]">(flags &amp; 1) != 0</Item>
-      <Item Name="[ActivityFlag]">(flags &amp; 2) != 0</Item>
-      <Item Name="[Transform]" Condition="(components.signature &amp; 1) == 1">((Transform*)components.storage)</Item>
-      <Item Name="[UIElement]" Condition="(components.signature &amp; 2) == 2">((UIElement*)(components.storage + sizeof(Transform)))</Item>
-      <Item Name="[Sprite]" Condition="(components.signature &amp; 4) == 4">((Sprite*)(components.storage + sizeof(UIElement) + sizeof(Transform)))</Item>
-      <Item Name="[Button]" Condition="(components.signature &amp; 8) == 8">((Button*)(components.storage + sizeof(Sprite) + sizeof(UIElement) + sizeof(Transform)))</Item>
-      <Item Name="[Text]" Condition="(components.signature &amp; 16) == 16">((Text*)(components.storage + sizeof(Button)+ sizeof(Sprite) + sizeof(UIElement) + sizeof(Transform)))</Item>
-      <Item Name="[TextBox]" Condition="(components.signature &amp; 32) == 32">((TextBox*)(components.storage + sizeof(Text) + sizeof(Button)+ sizeof(Sprite) + sizeof(UIElement) + sizeof(Transform)))</Item>
-      <Item Name="[UIScript]" Condition="(components.signature &amp; 64) == 64">((UIScript*)(components.extendedStorage))</Item>
-      <Item Name="[Camera]" Condition="(components.signature &amp; 128) == 128">((Camera*)(components.extendedStorage))</Item>
-    </Expand>
+  <Type Name="Netcode::Float3">
+    <DisplayString>{{ X={x,g}, Y={y,g}, Z={z,g} }}</DisplayString>
+  </Type>
+  <Type Name="Netcode::Float4">
+    <DisplayString>{{ X={x,g}, Y={y,g}, Z={z,g}, W={w,g} }}</DisplayString>
   </Type>
   <Type Name="Transform">
     <DisplayString>{{ Position={position}, Rotation={rotation}, Scale={scale} }}</DisplayString>
+  </Type>
+  <Type Name="Script">
+    <Expand>
+      <ExpandedItem>behavior._Mypair._Myval2</ExpandedItem>
+    </Expand>
+  </Type>
+  <Type Name="Netcode::BulkVector&lt;*,*&gt;">
+    <DisplayString></DisplayString>
+    <Expand>
+      <LinkedListItems>
+        <HeadPointer>head</HeadPointer>
+        <NextPointer>next</NextPointer>
+        <ValueNode>storage,512</ValueNode>
+      </LinkedListItems>
+    </Expand>
   </Type>
   <Type Name="Egg::Graphics::DX12::HeapManager::ResourceHash">
     <DisplayString Condition="(hash >> 6) == 0">{{ Type = { D3D12_HEAP_TYPE_DEFAULT } }}</DisplayString>

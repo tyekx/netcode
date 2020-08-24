@@ -12,6 +12,10 @@ namespace Netcode::Graphics::DX12 {
 	{
 	}
 
+	void TextureLibrary::ClearCache() {
+		entries.clear();
+	}
+
 	Ref<GpuResource> TextureLibrary::GetTexture(const URI::Texture & uri, uint16_t mipLevels)
 	{
 		if(uri.Empty()) {

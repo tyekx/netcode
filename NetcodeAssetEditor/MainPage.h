@@ -28,7 +28,7 @@ namespace winrt::NetcodeAssetEditor::implementation
         winrt::event<NetcodeAssetEditor::ModelChangedHandler> modelChanged;
 
         Windows::UI::Xaml::DispatcherTimer renderTimer;
-        void RenderTimer_OnTick(Windows::Foundation::IInspectable const & sender, Windows::Foundation::IInspectable const & e);
+        Windows::UI::Xaml::DispatcherTimer shaderScanTimer;
 
         bool pointerHeld;
 
@@ -47,7 +47,7 @@ namespace winrt::NetcodeAssetEditor::implementation
 
         winrt::fire_and_forget AssetCtx_ImportFBX_Click(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
         winrt::fire_and_forget AssetCtx_ImportAnimation_Click(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
-        winrt::fire_and_forget AssetCtx_SetMediaRoot_Click(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
+        void EditCtx_ReloadShaders(winrt::Windows::Foundation::IInspectable const & sender, winrt::Windows::UI::Xaml::RoutedEventArgs const & e);
 
         void CommandInvokeHandler(Windows::UI::Popups::IUICommand const & command);
 

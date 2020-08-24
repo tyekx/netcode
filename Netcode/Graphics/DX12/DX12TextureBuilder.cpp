@@ -21,13 +21,13 @@ namespace Netcode::Graphics::DX12 {
 	void TextureBuilderImpl::LoadDDSFromMemory(ArrayView<uint8_t> data)
 	{
 		DX_API("Failed to load DDS image from memory")
-			DirectX::LoadFromDDSMemory(data.Data(), data.Size(), 0, &metaData, scratchImage);
+			DirectX::LoadFromDDSMemory(data.Data(), data.Size(), DirectX::DDS_FLAGS_NONE, &metaData, scratchImage);
 	}
 
 	void TextureBuilderImpl::LoadWICFromMemory(ArrayView<uint8_t> data)
 	{
 		DX_API("Failed to load image from memory")
-			DirectX::LoadFromWICMemory(data.Data(), data.Size(), 0, &metaData, scratchImage);
+			DirectX::LoadFromWICMemory(data.Data(), data.Size(), DirectX::WIC_FLAGS_NONE, &metaData, scratchImage);
 	}
 
 	TextureBuilderImpl::TextureBuilderImpl(Ref<TextureLibrary> texLib) : textureLibrary{ std::move(texLib) },

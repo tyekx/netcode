@@ -181,11 +181,17 @@ namespace Netcode::Graphics::DX12 {
 		swapChainFlags = (allowTearing) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 	}
 
+	void DX12GraphicsModule::ClearImportCache() {
+		textureLibrary->ClearCache();
+	}
+
 	void * DX12GraphicsModule::GetSwapChain() const {
 		return swapChain.Get();
 	}
 
-	void DX12GraphicsModule::CreateSwapChain() { }
+	void DX12GraphicsModule::CreateSwapChain() {
+		
+	}
 
 	void DX12GraphicsModule::CreateLibraries()
 	{

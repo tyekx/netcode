@@ -6,7 +6,7 @@ class PlayerBehavior : public IBehavior {
 	Transform * transform;
 	Camera * camera;
 	Collider * collider;
-	physx::PxController * controller;
+	Netcode::PxPtr<physx::PxController> controller;
 	float cameraPitch;
 	float cameraYaw;
 	float mouseSpeed;
@@ -47,9 +47,9 @@ class PlayerBehavior : public IBehavior {
 
 public:
 
-	PlayerBehavior(physx::PxController * ctrl, Camera * cam) {
+	PlayerBehavior(Netcode::PxPtr<physx::PxController> ctrl, Camera * cam) {
 		camera = cam;
-		controller = ctrl;
+		controller = std::move(ctrl);
 		cameraPitch = 0.6f;
 		cameraYaw = 3.14f;
 		mouseSpeed = 1.0f;
@@ -82,7 +82,7 @@ public:
 
 		velocity = velocityVector + gravityDeltaVelocity;
 
-		Netcode::Float3 movementDelta = movementDeltaSpeedScaled + velocityVector * dt;
+		Netcode::Vector3 movementDelta = movementDeltaSpeedScaled + velocityVector * dt;
 		
 		const physx::PxControllerCollisionFlags moveResult = controller->move(ToPxVec3(movementDelta), 0.0f, dt, physx::PxControllerFilters{});
 
@@ -90,23 +90,14 @@ public:
 			velocity.y = 0.0f;
 		}
 
-		auto p = controller->getPosition();
+		auto footPos = controller->getFootPosition();
 
-		transform->position = Netcode::Float3 {
-			static_cast<float>(p.x),
-			static_cast<float>(p.y),
-			static_cast<float>(p.z)
+		transform->position = Netcode::Float3{
+			static_cast<float>(footPos.x),
+			static_cast<float>(footPos.y),
+			static_cast<float>(footPos.z)
 		};
 
-		transform->rotation = cameraYawQuat;
-		
-		if(collider != nullptr) {
-			if(auto * rigidBody = collider->actorRef->is<physx::PxRigidDynamic>()) {
-				physx::PxTransform pxT;
-				pxT.p = ToPxVec3(transform->position);
-				pxT.q = ToPxQuat(transform->rotation);
-				rigidBody->setKinematicTarget(pxT);
-			}
-		}
+		transform->rotation = cameraQuat;
 	}
 };

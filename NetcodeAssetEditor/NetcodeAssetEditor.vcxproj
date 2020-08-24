@@ -81,12 +81,12 @@
       <SuppressStartupBanner Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</SuppressStartupBanner>
     </ClCompile>
     <Link>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Netcode.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Netcode.lib;C:\work\vcpkg\installed\x64-windows\debug\lib\DirectXTex.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">comsuppwd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">xcopy $(OutDir)Shaders\* $(OutDir)AppX\Shaders\* /Y
-xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </Command>
     </PostBuildEvent>
     <Midl>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -209,6 +209,7 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
     <ClCompile Include="DC_Vector4Control.cpp" />
     <ClCompile Include="DepthToMarginConverter.cpp" />
     <ClCompile Include="DX12GraphicsModuleForXaml.cpp" />
+    <ClCompile Include="EditorApp.cpp" />
     <ClCompile Include="EditorModuleFactory.cpp" />
     <ClCompile Include="FloatBox.cpp" />
     <ClCompile Include="GCommandTransform.cpp" />
@@ -248,6 +249,7 @@ xcopy $(SolutionDir)Media\* $(OutDir)AppX\Media\* /Y</Command>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="PropertySheet.props" />
+    <None Include="Shaders\compile.bat" />
     <Text Include="readme.txt">
       <DeploymentContent>false</DeploymentContent>
     </Text>

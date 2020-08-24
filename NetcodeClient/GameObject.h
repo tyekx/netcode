@@ -33,6 +33,8 @@ protected:
 	uint32_t flags;
 
 public:
+	const char * debugName;
+
 	inline SignatureType GetSignature() const {
 		return components.signature;
 	}

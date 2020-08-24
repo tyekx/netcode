@@ -62,7 +62,7 @@ namespace Netcode {
 					axisData.value = 1.0f;
 				}
 
-				if(posKey.IsReleased() && negKey.IsReleased()) {
+				if(posKey.IsReleased() && negKey.IsPressed()) {
 					axisData.value = -1.0f;
 				}
 

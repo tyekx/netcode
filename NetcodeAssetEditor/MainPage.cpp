@@ -20,7 +20,7 @@
 
 namespace winrt::NetcodeAssetEditor::implementation
 {
-    void MainPage::RenderTimer_OnTick(Windows::Foundation::IInspectable const & sender, Windows::Foundation::IInspectable const & e) {
+    static void RenderTimer_OnTick(Windows::Foundation::IInspectable const & sender, Windows::Foundation::IInspectable const & e) {
         UNREFERENCED_PARAMETER(sender);
         UNREFERENCED_PARAMETER(e);
 
@@ -29,11 +29,25 @@ namespace winrt::NetcodeAssetEditor::implementation
         }
     }
 
+    static void ShaderScanTick(Windows::Foundation::IInspectable const & sender, Windows::Foundation::IInspectable const & e) {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(e);
+
+        if(Global::EditorApp != nullptr) {
+            Global::EditorApp->ReloadShaders();
+        }
+    }
+
     MainPage::MainPage() {
         InitializeComponent();
 
         renderTimer.Interval(std::chrono::milliseconds{ 7 });
-        renderTimer.Tick(Windows::Foundation::EventHandler<Windows::Foundation::IInspectable>(this, &MainPage::RenderTimer_OnTick));
+        renderTimer.Tick(Windows::Foundation::EventHandler<Windows::Foundation::IInspectable>(&RenderTimer_OnTick));
+
+        shaderScanTimer.Interval(std::chrono::seconds{ 1 });
+        shaderScanTimer.Tick(Windows::Foundation::EventHandler<Windows::Foundation::IInspectable>(&ShaderScanTick));
+
+        shaderScanTimer.Start();
 
         pointerHeld = false;
     }
@@ -549,23 +563,12 @@ namespace winrt::NetcodeAssetEditor::implementation
     }
 
 
-    winrt::fire_and_forget MainPage::AssetCtx_SetMediaRoot_Click(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e) {
+    void MainPage::EditCtx_ReloadShaders(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & e) {
         UNREFERENCED_PARAMETER(sender);
         UNREFERENCED_PARAMETER(e);
 
-        namespace st = Windows::Storage;
-
-        st::Pickers::FolderPicker folderPicker;
-
-        folderPicker.FileTypeFilter().ReplaceAll({ L".ncasset" });
-        st::StorageFolder folder = co_await folderPicker.PickSingleFolderAsync();
-
-        if(folder != nullptr) {
-            std::wstring path = folder.Path().c_str();
-
-            Netcode::IO::Path::FixDirectoryPath(path);
-
-            Netcode::IO::Path::SetMediaRoot(path);
+        if(Global::EditorApp) {
+            Global::EditorApp->ReloadShaders();
         }
     }
 

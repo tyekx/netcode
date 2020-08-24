@@ -130,6 +130,7 @@
     <ClCompile Include="GCommandTransform.cpp" />
     <ClCompile Include="DC_GeometryPage.cpp" />
     <ClCompile Include="BoundingBoxHelpers.cpp" />
+    <ClCompile Include="EditorApp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -318,6 +319,7 @@
   <ItemGroup>
     <None Include="PropertySheet.props" />
     <None Include="packages.config" />
+    <None Include="Shaders\compile.bat" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="readme.txt" />

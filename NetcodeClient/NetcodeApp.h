@@ -11,23 +11,17 @@
 #include <Netcode/Service.hpp>
 #include <Netcode/UI/PageManager.h>
 
-#include <Netcode/Input/AxisMap.hpp>
-
 #include "Asset.h"
 #include "GameObject.h"
 #include "Systems.h"
 #include "Scene.h"
-#include "DevCameraScript.h"
-#include "PlayerBehavior.h"
-#include "GunScript.h"
-#include "DebugScript.h"
-#include "Snippets.h"
 #include "PhysxHelpers.h"
 #include "Services.h"
-#include "RemoteAvatarScript.h"
 #include "UITest.h"
 
+#include <Netcode/URI/Model.h>
 #include <Netcode/Graphics/Material.h>
+#include <json11.hpp>
 
 using Netcode::Graphics::ResourceType;
 using Netcode::Graphics::ResourceState;
@@ -37,415 +31,61 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	Netcode::Stopwatch stopwatch;
 	Netcode::Physics::PhysX px;
 	Netcode::PxPtr<physx::PxMaterial> defaultPhysxMaterial;
-	
 	Netcode::MovementController movCtrl;
-
 	TransformSystem transformSystem;
 	ScriptSystem scriptSystem;
 	RenderSystem renderSystem;
 	AnimationSystem animSystem;
 	PhysXSystem pxSystem;
 	Netcode::UI::PageManager pageManager;
-
 	GameScene * gameScene;
-
 	Ref<AnimationSet> ybotAnimationSet;
 	Ref<Netcode::Network::GameSession> gameSession;
+	Netcode::URI::Model mapAsset;
 
 	float totalTime;
 
-	void LoadSystems() {
+	void LoadGameObjectFromJson(const json11::Json::object & values);
 
-	}
+	void LoadSystems();
 
-	void Render() {
-		graphics->frame->Prepare();
+	void ReloadMap();
 
-		auto cfgBuilder = graphics->CreateFrameGraphBuilder();
-		renderSystem.renderer.CreateComputeFrameGraph(cfgBuilder.get());
-		graphics->frame->Run(cfgBuilder->Build(), FrameGraphCullMode::NONE);
+	void LoadMap(const Netcode::URI::Model & path);
 
-		graphics->frame->DeviceSync();
+	void Render();
 
-		renderSystem.renderer.ReadbackComputeResults();
-		renderSystem.renderer.perFrameData = &gameScene->perFrameData;
-		renderSystem.renderer.ssaoData = &gameScene->ssaoData;
+	void Simulate(float dt);
 
-		gameScene->Foreach([this](GameObject * gameObject) -> void {
-			if(gameObject->IsActive()) {
-				transformSystem.Run(gameObject);
-				pxSystem.Run(gameObject);
-				renderSystem.Run(gameObject);
-			}
-		});
-
-		gameScene->UpdatePerFrameCb();
-
-		auto builder = graphics->CreateFrameGraphBuilder();
-		renderSystem.renderer.CreateFrameGraph(builder.get());
-
-		graphics->frame->Run(builder->Build(), FrameGraphCullMode::ANY);
-		graphics->frame->Present();
-		graphics->frame->DeviceSync();
-		graphics->frame->CompleteFrame();
-		
-		renderSystem.renderer.Reset();
-	}
-
-	void Simulate(float dt) {
-		totalTime += dt;
-
-		pageManager.Update(dt);
-
-		gameScene->GetPhysXScene()->simulate(dt);
-		gameScene->GetPhysXScene()->fetchResults(true);
-
-		gameScene->Foreach([this, dt](GameObject * gameObject)->void {
-			if(gameObject->IsActive()) {
-				scriptSystem.Run(gameObject, dt);
-				animSystem.Run(gameObject, dt);
-			}
-		});
-	}
-
-	void LoadServices() {
-		Service::Init<AssetManager>(graphics.get());
-		Service::Init<GameScene>(px);
-
-		gameScene = Service::Get<GameScene>();
-
-		gameScene->Setup();
-	}
+	void LoadServices();
 
 	void ConnectServer() {
 		gameSession = network->CreateClient();
 	}
 
-	void LoadAssets() {
-		AssetManager * assetManager = Service::Get<AssetManager>();
+	void CreateUI();
 
-		Ref<Netcode::AxisMapBase> axisMap = std::make_shared<Netcode::AxisMap<AxisEnum>>(std::initializer_list<Netcode::AxisData<AxisEnum>> {
-			Netcode::AxisData<AxisEnum> { AxisEnum::VERTICAL,		Netcode::KeyCode::W,			Netcode::KeyCode::S },
-			Netcode::AxisData<AxisEnum> { AxisEnum::HORIZONTAL,	Netcode::KeyCode::D,			Netcode::KeyCode::A },
-			Netcode::AxisData<AxisEnum> { AxisEnum::FIRE1,			Netcode::KeyCode::MOUSE_LEFT,	Netcode::KeyCode::UNDEFINED },
-			Netcode::AxisData<AxisEnum> { AxisEnum::FIRE2,			Netcode::KeyCode::MOUSE_RIGHT,	Netcode::KeyCode::UNDEFINED },
-			Netcode::AxisData<AxisEnum> { AxisEnum::JUMP,			Netcode::KeyCode::SPACE,		Netcode::KeyCode::UNDEFINED },
-			Netcode::AxisData<AxisEnum> { AxisEnum::DEV_CAM_X,		Netcode::KeyCode::NUM_6,		Netcode::KeyCode::NUM_4 },
-			Netcode::AxisData<AxisEnum> { AxisEnum::DEV_CAM_Y,		Netcode::KeyCode::NUM_9,		Netcode::KeyCode::NUM_7 },
-			Netcode::AxisData<AxisEnum> { AxisEnum::DEV_CAM_Z,		Netcode::KeyCode::NUM_8,		Netcode::KeyCode::NUM_5 },
-		});
+	void CreateAxisMapping();
 
-		Netcode::Input::SetAxisMap(std::move(axisMap));
+	void LoadAssets();
 
-		renderSystem.CreatePermanentResources(graphics.get());
-		defaultPhysxMaterial = px.physics->createMaterial(0.5f, 0.5f, 0.5f);
-		animSystem.renderer = &renderSystem.renderer;
+	void CreateRemoteAvatar();
 
-		CreateLocalAvatar();
-		CreateRemoteAvatar();
+	void CreateLocalAvatar();
 
-		animSystem.SetMovementController(&movCtrl);
+	void LoadComponents(Netcode::Asset::Model * model, GameObject * gameObject);
 
-		{
-			auto planeActor = physx::PxCreatePlane(*px.physics, physx::PxPlane{ 0.0f, 1.0f, 0.0f, 200.0f }, *defaultPhysxMaterial);
-			gameScene->SpawnPhysxActor(planeActor);
-		}
+	void LoadColliderComponent(Netcode::Asset::Model * model, Collider * colliderComponent);
 
-
-		Ref<LoginPage> loginPage = pageManager.CreatePage<LoginPage>(*px.physics);
-		Ref<ServerBrowserPage> serverBrowserPage = pageManager.CreatePage<ServerBrowserPage>(*px.physics);
-		Ref<LoadingPage> loadingPage = pageManager.CreatePage<LoadingPage>(*px.physics);
-
-		loginPage->InitializeComponents();
-		serverBrowserPage->InitializeComponents();
-		loadingPage->InitializeComponents();
-
-		pageManager.AddPage(loginPage);
-		pageManager.AddPage(serverBrowserPage);
-		pageManager.AddPage(loadingPage);
-
-		pageManager.NavigateTo(PagesEnum::LOGIN_PAGE);
-		pageManager.NavigateTo(PagesEnum::LOADING_PAGE);
-
-		renderSystem.renderer.ui_Input = &pageManager;
-
-		GameObject * wall = gameScene->Create();
-		LoadComponents(assetManager->Import(L"compiled/models/wall.ncasset"), wall);
-		gameScene->Spawn(wall);
-	}
-
-	void CreateRemoteAvatar() {
-		AssetManager * assetManager = Service::Get<AssetManager>();
-
-		GameObject * avatarController = gameScene->Create();
-		GameObject * avatarHitboxes = gameScene->Create();
-
-		Netcode::Asset::Model * avatarModel = assetManager->Import(L"compiled/models/ybot.ncasset");
-
-		if(ybotAnimationSet == nullptr) {
-			ybotAnimationSet = std::make_shared<AnimationSet>(graphics.get(), avatarModel->animations, avatarModel->bones);
-		}
-
-		/*
-		GameObject * gunRootObj = gameScene->Create();
-		GameObject * gunObj = gameScene->Create();
-		LoadComponents(assetManager->Import(L"gun.ncasset"), gunObj);
-
-		Transform * gunRootTransform = gunRootObj->AddComponent<Transform>();
-		Transform * gunTransform = gunObj->GetComponent<Transform>();
-
-		gunRootTransform->position = Netcode::Float3{ 0.0f, 130.0f, 0.0f };
-		gunTransform->scale = Netcode::Float3{ 18.0f, 18.0f, 18.0f };
-		gunRootObj->Parent(avatarController);
-		gunObj->Parent(gunRootObj);
-
-		Netcode::Quaternion gunRotation{ -Netcode::C_PIDIV2, -Netcode::C_PIDIV2, 0.0f };
-
-		Script * gunScript = gunObj->AddComponent<Script>();
-
-		auto behav = std::make_unique<GunBehavior>(avatarHitboxes, gunRootObj, Netcode::Float4{ 0.0f, 0.0f, 40.0f, 0.0f }, gunRotation, 28);
-
-		GameObject * debugObj = gameScene->Create();
-		Script * debugScript = debugObj->AddComponent<Script>();
-		debugScript->SetBehavior(std::make_unique<DebugBehavior>(
-				//&behav->localPosition.x, &behav->localPosition.y, &behav->localPosition.z
-			&anim->effectors[0].position.x, &anim->effectors[0].position.y, &anim->effectors[0].position.z
-			));
-		debugScript->Setup(debugObj);
-
-
-		gunScript->SetBehavior(
-			std::move(behav)
-		);
-		gunScript->Setup(gunObj);
-
-		gameScene->Spawn(gunRootObj);
-		gameScene->Spawn(gunObj);
-		gameScene->Spawn(debugObj);
-		*/
-		LoadComponents(avatarModel, avatarHitboxes);
-		Animation* anim = avatarHitboxes->AddComponent<Animation>();
-		CreateYbotAnimationComponent(avatarModel, anim);
-		anim->blackboard->BindController(&movCtrl);
-		anim->controller = ybotAnimationSet->CreateController();
-
-		physx::PxController * pxController = gameScene->CreateController();
-		avatarController->AddComponent<Transform>();
-		avatarController->AddComponent<Script>()->SetBehavior(std::make_unique<RemoteAvatarScript>(pxController));
-		avatarHitboxes->Parent(avatarController);
-
-		gameScene->Spawn(avatarController);
-		gameScene->Spawn(avatarHitboxes);
-	}
-
-	void CreateLocalAvatar() {
-		GameObject * avatarController = gameScene->Create();
-		GameObject * avatarCamera = gameScene->Create();
-
-		avatarCamera->Parent(avatarController);
-
-		Transform* avatarCamTransform =  avatarCamera->AddComponent<Transform>();
-		avatarCamTransform->position.y = 180.0f;
-
-		Camera * fpsCam = avatarCamera->AddComponent<Camera>();
-		fpsCam->ahead = Netcode::Float3{ 0.0f, 0.0f, 1.0f };
-		fpsCam->aspect = graphics->GetAspectRatio();
-		fpsCam->farPlane = 10000.0f;
-		fpsCam->nearPlane = 1.0f;
-		fpsCam->up = Netcode::Float3{ 0.0f, 1.0f, 0.0f };
-
-		physx::PxController * pxController = gameScene->CreateController();
-
-		Transform * act = avatarController->AddComponent<Transform>();
-		act->position = Netcode::Float3{ 0.0f, 0.0f, 200.0f };
-
-		Script* scriptComponent = avatarController->AddComponent<Script>();
-		scriptComponent->SetBehavior(std::make_unique<PlayerBehavior>(pxController, fpsCam));
-		scriptComponent->Setup(avatarController);
-
-		gameScene->Spawn(avatarController);
-		gameScene->Spawn(avatarCamera);
-
-		gameScene->SetCamera(avatarCamera);
-	}
-
-	void LoadComponents(Netcode::Asset::Model * model, GameObject * gameObject) {
-		gameObject->AddComponent<Transform>();
-
-		if(model->meshes.Size() > 0) {
-			Model * modelComponent = gameObject->AddComponent<Model>();
-			LoadModelComponent(model, modelComponent);
-
-			if(model->bones.Size() > 0 && model->animations.Size() > 0) {
-
-			}
-		}
-
-		if(model->colliders.Size() > 0) {
-			Collider * colliderComponent = gameObject->AddComponent<Collider>();
-			LoadColliderComponent(model, colliderComponent);
-			colliderComponent->actorRef->userData = gameObject;
-		}
-	}
-
-	void LoadColliderComponent(Netcode::Asset::Model * model, Collider * colliderComponent) {
-		if(model->colliders.Size() == 0) {
-			return;
-		}
-
-		physx::PxPhysics * pxp = px.physics.Get();
-		physx::PxRigidDynamic * actor = pxp->createRigidDynamic(physx::PxTransform(physx::PxIdentity));
-		actor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, true);
-		std::vector<ColliderShape> netcodeShapes;
-		netcodeShapes.reserve(model->colliders.Size());
-
-		for(size_t i = 0; i < model->colliders.Size(); ++i) {
-			const Netcode::Asset::Collider * netcodeCollider = model->colliders.Data() + i;
-			netcodeShapes.push_back(*netcodeCollider);
-			physx::PxShape * shape = nullptr;
-			physx::PxShapeFlags shapeFlags;
-			physx::PxFilterData filterData;
-
-			if(netcodeCollider->boneReference >= 0 && netcodeCollider->boneReference < 0x7F) {
-				shapeFlags = physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eTRIGGER_SHAPE | physx::PxShapeFlag::eVISUALIZATION;
-
-				filterData.word0 = PHYSX_COLLIDER_TYPE_HITBOX;
-			} else {
-				shapeFlags = physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eSIMULATION_SHAPE | physx::PxShapeFlag::eVISUALIZATION;
-				filterData.word0 = PHYSX_COLLIDER_TYPE_WORLD;
-			}
-
-			if(netcodeCollider->type == Netcode::Asset::ColliderType::MESH) {
-				const auto & mesh = model->meshes[0];
-				physx::PxConvexMeshDesc cmd;
-				cmd.points.count = mesh.lodLevels[0].vertexCount;
-				cmd.points.data = mesh.vertices;
-				cmd.points.stride = mesh.vertexSize;
-				cmd.vertexLimit = 255;
-				cmd.flags = physx::PxConvexFlag::eCOMPUTE_CONVEX | physx::PxConvexFlag::eFAST_INERTIA_COMPUTATION;
-				cmd.indices.data = mesh.indices;
-				cmd.indices.count = mesh.lodLevels[0].indexCount;
-				cmd.indices.stride = 4;
-
-				physx::PxDefaultMemoryOutputStream buf;
-				physx::PxConvexMeshCookingResult::Enum r;
-				px.cooking->cookConvexMesh(cmd, buf, &r);
-
-				physx::PxDefaultMemoryInputData input(buf.getData(), buf.getSize());
-				physx::PxConvexMesh * convexMesh = pxp->createConvexMesh(input);
-
-				physx::PxConvexMeshGeometry pcmg{ convexMesh };
-
-				shape = pxp->createShape(pcmg, *defaultPhysxMaterial, true, shapeFlags);
-
-			} else {
-				shape = CreatePrimitiveShapeFromAsset(*netcodeCollider, pxp, defaultPhysxMaterial.Get(), shapeFlags);
-			}
-
-			shape->setQueryFilterData(filterData);
-			shape->userData = &netcodeShapes.at(i);
-			actor->attachShape(*shape);
-		}
-
-		colliderComponent->actorRef = actor;
-		colliderComponent->shapes = std::move(netcodeShapes);
-	}
-
-	void LoadModelComponent(Netcode::Asset::Model * model, Model * modelComponent) {
-		for(size_t meshIdx = 0; meshIdx < model->meshes.Size(); ++meshIdx) {
-			const Netcode::Asset::Material * mat = model->materials.Data() + model->meshes[meshIdx].materialId;
-			const Netcode::Asset::Mesh * mesh = model->meshes.Data() + meshIdx;
-
-			DirectX::XMStoreFloat4x4(&modelComponent->perObjectData.Model, DirectX::XMMatrixIdentity());
-			DirectX::XMStoreFloat4x4(&modelComponent->perObjectData.InvModel, DirectX::XMMatrixIdentity());
-
-			Ref<Netcode::InputLayoutBuilder> inputLayoutBuilder = graphics->CreateInputLayoutBuilder();
-
-			for(uint32_t ilIdx = 0; ilIdx < mesh->inputElementsLength; ++ilIdx) {
-				inputLayoutBuilder->AddInputElement(mesh->inputElements[ilIdx].semanticName,
-					mesh->inputElements[ilIdx].semanticIndex,
-					mesh->inputElements[ilIdx].format,
-					mesh->inputElements[ilIdx].byteOffset);
-			}
-
-			Ref<Netcode::InputLayout> inputLayout = inputLayoutBuilder->Build();
-
-			auto batch = graphics->resources->CreateUploadBatch();
-
-			auto appMesh = std::make_shared<Mesh>();
-
-			uint8_t * const vBasePtr = reinterpret_cast<uint8_t *>(mesh->vertices);
-			uint8_t * const iBasePtr = reinterpret_cast<uint8_t *>(mesh->indices);
-
-			for(unsigned int i = 0; i < mesh->lodLevelsLength; ++i) {
-				uint8_t * vData = vBasePtr + mesh->lodLevels[i].vertexBufferByteOffset;
-				uint8_t * iData = nullptr;
-				Ref<Netcode::GpuResource> vbuffer = graphics->resources->CreateVertexBuffer(mesh->lodLevels[i].vertexBufferSizeInBytes, mesh->vertexSize, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
-				uint64_t vCount = mesh->lodLevels[i].vertexCount;
-				Ref<Netcode::GpuResource> ibuffer{ nullptr };
-				uint64_t iCount = 0;
-
-				batch->Upload(vbuffer, vData, mesh->lodLevels[i].vertexBufferSizeInBytes);
-				batch->Barrier(vbuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
-
-				if(mesh->indices != nullptr) {
-					ibuffer = graphics->resources->CreateIndexBuffer(mesh->lodLevels[i].indexBufferSizeInBytes, DXGI_FORMAT_R32_UINT, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
-					iData = iBasePtr + mesh->lodLevels[i].indexBufferByteOffset;
-					iCount = mesh->lodLevels[i].indexCount;
-
-					batch->Upload(ibuffer, iData, mesh->lodLevels[i].indexBufferSizeInBytes);
-					batch->Barrier(ibuffer, ResourceState::COPY_DEST, ResourceState::INDEX_BUFFER);
-				}
-
-				GBuffer lod;
-				lod.indexBuffer = ibuffer;
-				lod.vertexBuffer = vbuffer;
-				lod.indexCount = iCount;
-				lod.vertexCount = vCount;
-
-				appMesh->AddLOD(lod);
-				appMesh->vertexSize = mesh->vertexSize;
-			}
-
-			appMesh->selectedLod = 0;
-			appMesh->boundingBox = mesh->boundingBox;
-
-			graphics->frame->SyncUpload(std::move(batch));
-
-			std::string ncMatName{ std::string_view{ mat->name, 48 } };
-			Ref<Netcode::Material> ncMat = std::make_shared<Netcode::BrdfMaterial>(static_cast<Netcode::MaterialType>(mat->type), ncMatName);
-
-			for(uint32_t j = 0; j < mat->indicesLength; ++j) {
-				Netcode::Asset::MaterialParamIndex param = mat->indices[j];
-				void * pptr = ncMat->GetParameterPointer(param.id);
-
-				if(param.id < static_cast<uint32_t>(Netcode::MaterialParamId::SENTINEL_TEXTURE_PATHS_BEGIN)) {
-					memcpy(pptr, mat->data + param.offset, param.size);
-				} else if(param.id < static_cast<uint32_t>(Netcode::MaterialParamId::SENTINEL_TEXTURE_PATHS_END)) {
-					if(param.size > 0) {
-						std::wstring fullUriPath{ std::wstring_view{
-							reinterpret_cast<wchar_t *>(mat->data + param.offset),
-							param.size / sizeof(wchar_t)
-							}
-						};
-
-						Netcode::URI::Texture texUri{ std::move(fullUriPath), Netcode::FullPathToken{} };
-
-						(*reinterpret_cast<Netcode::URI::Texture *>(pptr)) = std::move(texUri);
-					}
-				}
-			}
-
-			modelComponent->AddShadedMesh(appMesh, ncMat);
-		}
-
-	}
+	void LoadModelComponent(Netcode::Asset::Model * model, Model * modelComponent);
 
 public:
 
 	virtual void OnResized(int w, int h) override {
 		float asp = graphics->GetAspectRatio();
-		gameScene->GetCamera()->GetComponent<Camera>()->aspect = asp;
+		if(gameScene->GetCamera() != nullptr) {
+			gameScene->GetCamera()->GetComponent<Camera>()->aspect = asp;
+		}
 		pageManager.WindowResized(Netcode::UInt2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
 		renderSystem.renderer.OnResize(w, h);
 	}
@@ -484,7 +124,9 @@ public:
 
 		LoadServices();
 		LoadSystems();
-		LoadAssets();
+		CreateAxisMapping();
+		CreateUI();
+		LoadMap(L"test_map.json");
 	}
 
 	/*
@@ -497,6 +139,8 @@ public:
 			events->Dispatch();
 
 			float dt = stopwatch.Restart();
+			Netcode::Input::UpdateAxisMap(dt);
+
 			Simulate(dt);
 
 			Render();

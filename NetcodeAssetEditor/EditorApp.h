@@ -48,35 +48,7 @@ namespace Netcode::Module {
 
 		Netcode::Float4x4 currentOfflineTransform;
 
-		virtual void SetMaterials(const std::vector<Intermediate::Mesh> & meshes, const std::vector<Ref<Material>> & mats, bool forceUpdate = false) {
-			matAssoc.reserve(meshes.size());
-			materials = mats;
-
-			using P = MaterialParamId;
-
-			for(const auto & mesh : meshes) {
-				uint32_t materialIdx = mesh.materialIdx;
-
-				Ptr<Material> mat = materials[materialIdx].get();
-
-				Ref<ResourceViews> view = mat->GetResourceView(0);
-				if(view == nullptr) {
-					view = graphics->resources->CreateShaderResourceViews(6);
-					for(uint32_t i = 0; i < 6; i++) {
-						view->ClearSRV(i, Graphics::ResourceDimension::TEXTURE2D);
-					}
-					mat->SetResourceView(0, view);
-				}
-
-				ApplyTexture(materialIdx, P::TEXTURE_DIFFUSE, P::TEXTURE_DIFFUSE_PATH, materials[materialIdx]->GetRequiredParameter<URI::Texture>(P::TEXTURE_DIFFUSE_PATH), forceUpdate);
-				ApplyTexture(materialIdx, P::TEXTURE_NORMAL, P::TEXTURE_NORMAL_PATH, materials[materialIdx]->GetRequiredParameter<URI::Texture>(P::TEXTURE_NORMAL_PATH), forceUpdate);
-				ApplyTexture(materialIdx, P::TEXTURE_AMBIENT, P::TEXTURE_AMBIENT_PATH, materials[materialIdx]->GetRequiredParameter<URI::Texture>(P::TEXTURE_AMBIENT_PATH), forceUpdate);
-				ApplyTexture(materialIdx, P::TEXTURE_ROUGHNESS, P::TEXTURE_ROUGHNESS_PATH, materials[materialIdx]->GetRequiredParameter<URI::Texture>(P::TEXTURE_ROUGHNESS_PATH), forceUpdate);
-				ApplyTexture(materialIdx, P::TEXTURE_SPECULAR, P::TEXTURE_SPECULAR_PATH, materials[materialIdx]->GetRequiredParameter<URI::Texture>(P::TEXTURE_SPECULAR_PATH), forceUpdate);
-				ApplyTexture(materialIdx, P::TEXTURE_DISPLACEMENT, P::TEXTURE_DISPLACEMENT_PATH, materials[materialIdx]->GetRequiredParameter<URI::Texture>(P::TEXTURE_DISPLACEMENT_PATH), forceUpdate);
-				matAssoc.emplace_back(materials[materialIdx]);
-			}
-		}
+		virtual void SetMaterials(const std::vector<Intermediate::Mesh> & meshes, const std::vector<Ref<Material>> & mats, bool forceUpdate = false);
 
 		void ApplyTexture(uint32_t materialIndex, Netcode::MaterialParamId texType, Netcode::MaterialParamId texPath, const URI::Texture & texUri, bool forceUpdate = false) {
 			Ptr<Material> mat = materials[materialIndex].get();
@@ -179,73 +151,25 @@ namespace Netcode::Module {
 			InvalidateFrame();
 		}
 
+		void ReloadShadersDetail();
+
+		virtual void ReloadShaders();
+
 		/*
 		Initialize modules
 		*/
-		virtual void Setup(IModuleFactory * factory) override {
-			Netcode::IO::Path::SetShaderRoot(L"C:/work/directx12/Bin/v142-msvc/AppX/Shaders");
-			Netcode::IO::Path::SetMediaRoot(L"C:/work/directx12/Media");
-			Netcode::IO::Path::SetWorkingDirectiory(L"C:/work/directx12/Bin/v142-msvc/AppX");
-
-			Netcode::IO::File configFile{ L"config.json" };
-
-			if(!Netcode::IO::File::Exists(configFile.GetFullPath())) {
-				Log::Error("File does not exist");
-				return;
-			}
-
-			rapidjson::Document doc;
-			Netcode::IO::ParseJson(doc, configFile.GetFullPath());
-
-			Netcode::Config::LoadJson(doc);
-
-			events = std::make_unique<Netcode::Module::AppEventSystem>();
-
-			graphics = factory->CreateGraphicsModule(this, 0);
-
-			StartModule(graphics.get());
-			AddAppEventHandlers(events.get());
-			events->AddHandler(this);
-
-			for(uint32_t i = 0; i < 128; ++i) {
-				boneData.BindTransform[i] = Netcode::Float4x4::Identity;
-				boneData.ToRootTransform[i] = Netcode::Float4x4::Identity;
-			}
-
-			memset(&lightData, 0, sizeof(lightData));
-			lightData.lights[0] = Netcode::DirectionalLight{ Netcode::Float3::One, Netcode::Float4{ 0.0f, 0.0f, -1.0f, 0.0f} };
-			lightData.ambientLightIntensity = Float4{ 0.2f, 0.2f, 0.2f, 1.0f };
-			lightData.numLights = 1;
-
-			cameraNearZ = 1.0f;
-			cameraFarZ = 1000.0f;
-			cameraFov = DirectX::XM_PIDIV4;
-			cameraAspect = graphics->GetAspectRatio();
-
-			cameraWorldDistance = 1.0f;
-			cameraLookAt = Netcode::Float3::Zero;
-			cameraPosition = Netcode::Float3{ 0.0f, 0.0f, 180.0f };
-			cameraAhead = Netcode::Float3{ 0.0f, 0.0f, -1.0f };
-			cameraUp = Netcode::Float3{ 0.0f, 1.0f, 0.0f };
-
-			mouseSpeed = 0.0005f;
-
-			perObjectData.Model = Netcode::Float4x4::Identity;
-			perObjectData.InvModel = Netcode::Float4x4::Identity;
-
-			memset(boneVisibilityData.BoneVisibility, 0, sizeof(BoneVisibilityData));
-
-			UpdatePerFrameData();
-
-			editorFrameGraph.CreatePermanentResources(graphics.get());
-		}
+		virtual void Setup(IModuleFactory * factory) override;
 
 		void UpdatePerFrameData() {
 			Netcode::Matrix proj = Netcode::PerspectiveFovMatrix(cameraFov, cameraAspect, cameraNearZ, cameraFarZ);
 			Netcode::Vector3 ahead = cameraAhead;
 
 			cameraPosition = ahead * cameraWorldDistance + cameraLookAt;
-			lightData.lights[0].position = Netcode::Float4{ cameraPosition.x, cameraPosition.y, cameraPosition.z, 0.0f };
+			//lightData.lights[0].position = Netcode::Float4{ cameraPosition.x, cameraPosition.y, cameraPosition.z, 0.0f };
+
+			Netcode::Vector3 lp = lightData.lights[0].position;
+			lp *= 3.0f;
+			graphics->debug->DrawPoint(lp, 0.2f);
 			
 			Netcode::Matrix view = Netcode::LookAtMatrix(cameraPosition, cameraLookAt, cameraUp);
 			Netcode::Matrix viewFromOrigo = Netcode::LookToMatrix(Netcode::Float3::Zero, -ahead, cameraUp);
@@ -319,9 +243,7 @@ namespace Netcode::Module {
 		/*
 		Properly shutdown the application
 		*/
-		virtual void Exit() override {
-			ShutdownModule(graphics.get());
-		}
+		virtual void Exit() override;
 	};
 
 }

@@ -55,13 +55,18 @@
                 <MenuFlyoutSeparator />
                 <MenuFlyoutItem Text="Close" Icon="Cancel"></MenuFlyoutItem>
             </MenuBarItem>
+            <MenuBarItem Title="Edit">
+                <MenuFlyoutItem Text="Reload Shaders" Click="EditCtx_ReloadShaders">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="None" Key="F5"></KeyboardAccelerator>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+            </MenuBarItem>
             <MenuBarItem Title="Assets">
                 <MenuFlyoutItem Text="Import FBX" Icon="Import" Click="AssetCtx_ImportFBX_Click"></MenuFlyoutItem>
                 <MenuFlyoutItem Text="Import Animation" Icon="Import" Click="AssetCtx_ImportAnimation_Click"></MenuFlyoutItem>
                 <MenuFlyoutItem Text="Import Mesh" Icon="Import"></MenuFlyoutItem>
                 <MenuFlyoutItem Text="Import Material" Icon="Import"></MenuFlyoutItem>
-                <MenuFlyoutSeparator />
-                <MenuFlyoutItem Text="Set Media Root" Click="AssetCtx_SetMediaRoot_Click"></MenuFlyoutItem>
             </MenuBarItem>
         </MenuBar>
 

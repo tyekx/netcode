@@ -22,8 +22,6 @@ namespace Netcode::Physics {
 		PxPtr<physx::PxDefaultCpuDispatcher> dispatcher;
 		PxPtr<physx::PxCooking> cooking;
 
-		void UpdateDebugCamera(const Float3 & pos, const Float3 & up, const Float3 & lookAt);
-
 		void CreateResources();
 
 		void ReleaseResources();

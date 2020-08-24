@@ -3,10 +3,10 @@
 #include "GameObject.h"
 
 class RemoteAvatarScript : public IBehavior {
-	physx::PxController * controller;
+	Netcode::PxPtr<physx::PxController> controller;
 
 public:
-	RemoteAvatarScript(physx::PxController * ctrl) : controller{ ctrl } { }
+	RemoteAvatarScript(Netcode::PxPtr<physx::PxController> ctrl) : controller{ std::move(ctrl) } { }
 
 	virtual void Setup(GameObject * gameObject) override;
 	virtual void Update(float dt) override;

@@ -35,13 +35,6 @@ using ColliderShape = Netcode::Asset::Collider;
 
 #define COMPONENT_ALIGN __declspec(align(16))
 
-COMPONENT_ALIGN struct Sprite {
-	Ref<Netcode::ResourceViews> texture;
-	Netcode::UInt2 textureSize;
-	Netcode::Float4 diffuseColor;
-	Netcode::Float4 hoverColor;
-};
-
 class GameObject;
 
 class IBehavior {
@@ -73,27 +66,20 @@ public:
 	Netcode::Float3 worldPosition;
 	Netcode::Float4 worldRotation;
 
-	Transform() : position{ 0.0f, 0.0f, 0.0f }, rotation{ 0.0f, 0.0f, 0.0f, 1.0f }, scale{ 1.0f, 1.0f, 1.0f }, worldPosition{ position }, worldRotation{ rotation } {
+	Transform();
 
-	}
-
-	Transform(Transform &&) noexcept = default;
-	Transform & operator=(const Transform &) = default;
-	Transform & operator=(Transform &&) noexcept = default;
-	~Transform() noexcept = default;
+	physx::PxTransform LocalToPhysX() const;
+	physx::PxTransform WorldToPhysX() const;
 };
 
 struct ShadedMesh {
 	Ref<Mesh> mesh;
 	Ref<Netcode::Material> material;
 
+	ShadedMesh() = default;
 	ShadedMesh(Ref<Mesh> m, Ref<Netcode::Material> mat) : mesh{ std::move(m) }, material{ std::move(mat) } {
 
 	}
-
-	ShadedMesh(ShadedMesh &&) noexcept = default;
-	~ShadedMesh() noexcept = default;
-	ShadedMesh & operator=(ShadedMesh && sm) noexcept = default;
 };
 
 COMPONENT_ALIGN class Model {
@@ -149,11 +135,8 @@ public:
 
 COMPONENT_ALIGN class Collider {
 public:
-	physx::PxActor * actorRef;
+	Netcode::PxPtr<physx::PxActor> actor;
 	std::vector<ColliderShape> shapes;
 
 	Collider() = default;
-	Collider(Collider &&) noexcept = default;
-
-	Collider & operator=(Collider && c) noexcept = default;
 };

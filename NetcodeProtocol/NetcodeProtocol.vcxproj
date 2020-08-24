@@ -51,9 +51,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <CustomBuildStep>
-      <Command>C:\work\vcpkg\packages\protobuf_x64-windows\tools\protobuf\protoc shared.proto --proto_path=$(ProjectDir) --cpp_out=$(ProjectDir) control.proto client.proto server.proto netcode.proto</Command>
+      <Command>C:\work\vcpkg\installed\x64-windows\tools\protobuf\protoc.exe --proto_path=$(ProjectDir) --cpp_out=$(ProjectDir) shared.proto control.proto client.proto server.proto netcode.proto</Command>
       <Message>Compiling protobuf</Message>
       <Outputs>client.pb.cc;client.pb.h;control.pb.cc;control.pb.h;netcode.pb.cc;netcode.pb.h;server.pb.cc;server.pb.h;shared.pb.cc;shared.pb.h</Outputs>
+      <Inputs>client.proto;shared.proto;control.proto;netcode.proto;server.proto</Inputs>
+      <RootFolder>
+      </RootFolder>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>

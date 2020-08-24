@@ -32,7 +32,7 @@ namespace Netcode {
 			rhs.ptr = nullptr;
 		}
 
-		PxPtr & operator=(PxPtr<T> && rhs) noexcept {
+		PxPtr & operator=(PxPtr<T> rhs) noexcept {
 			std::swap(ptr, rhs.ptr);
 			return *this;
 		}
@@ -56,6 +56,12 @@ namespace Netcode {
 
 		T * Get() {
 			return ptr;
+		}
+
+		T * Release() {
+			auto * p = ptr;
+			ptr = nullptr;
+			return p;
 		}
 
 		T & operator*() {

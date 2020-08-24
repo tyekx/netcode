@@ -49,6 +49,10 @@
     </ClCompile>
     <Lib />
     <Lib />
+    <Lib>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Animation\Blackboard.h" />

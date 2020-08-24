@@ -49,7 +49,7 @@ function Compile-Texture-Into-DDS {
         }
     }
 
-    ..\Tools\dxtex\texconv.exe -f $outFormat -m $mipLevels -ft dds -y -o $outDir $relativePath
+    ..\Tools\dxtex\texconv.exe -if CUBIC -f $outFormat -m $mipLevels -ft dds -y -o $outDir $relativePath
 
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <NetcodeFoundation/Platform.h>
 
 namespace Netcode {
 
@@ -149,7 +150,7 @@ namespace Netcode {
 				}
 			}
 
-	#if _DEBUG
+	#if defined(NETCODE_DEBUG)
 			// should never reach this code
 			throw std::exception("unexpected control flow");
 	#endif
@@ -236,11 +237,14 @@ namespace Netcode {
 			}
 
 			Bulk * iter = head;
-			while(iter != nullptr) {
+			while(iter->next != nullptr) {
 				Bulk * tmp = iter->next;
 				delete iter;
 				iter = tmp;
 			}
+
+			head = iter;
+			head->nextIndex = 0;
 
 			freeListHead = nullptr;
 			freeListTail = nullptr;
