@@ -401,6 +401,7 @@ namespace Netcode {
 		virtual void CreateRTV(uint32_t idx, Ptr<GpuResource> resourceHandle) = 0;
 		virtual void CreateDSV(Ptr<GpuResource> resourceHandle) = 0;
 		virtual void CreateUAV(uint32_t idx, Ptr<GpuResource> resourceHandle) = 0;
+		virtual void CreateUAV(uint32_t idx, Ptr<GpuResource> resourceHandle, uint32_t mipSlice) = 0;
 		virtual void CreateSampler(uint32_t idx, Ptr<GpuResource> resourceHandle) = 0;
 
 		virtual void ClearSRV(uint32_t idx, Graphics::ResourceDimension expectedResourceDimension) = 0;

@@ -3,13 +3,13 @@
 #include "GameObject.h"
 
 class DevCameraScript : public IBehavior {
+public:
 	Transform * transform;
 	Camera * camera;
 	float mouseSpeed;
 	float cameraSpeed;
 	float cameraPitch;
 	float cameraYaw;
-public:
 
 
 	// Inherited via IBehavior

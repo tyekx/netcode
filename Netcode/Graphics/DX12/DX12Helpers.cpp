@@ -140,20 +140,38 @@ namespace Netcode::Graphics::DX12 {
 		return srvd;
 	}
 
-	D3D12_UNORDERED_ACCESS_VIEW_DESC GetUnorderedAccessViewDesc(const ResourceDesc & resource)
+	D3D12_UNORDERED_ACCESS_VIEW_DESC GetUnorderedAccessViewDesc(const ResourceDesc & resource, uint32_t mipSlice)
 	{
 		D3D12_UNORDERED_ACCESS_VIEW_DESC uavd;
 		uavd.Format = resource.format;
-		uavd.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-		uavd.Buffer.CounterOffsetInBytes = 0;
-		uavd.Buffer.StructureByteStride = (uavd.Format == DXGI_FORMAT_UNKNOWN) ? resource.strideInBytes : 0;
-		uavd.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
-		uavd.Buffer.FirstElement = 0;
 
-		if(uavd.Buffer.StructureByteStride > 0) {
-			uavd.Buffer.NumElements = static_cast<UINT>(resource.sizeInBytes) / uavd.Buffer.StructureByteStride;
-		} else {
-			uavd.Buffer.NumElements = (static_cast<UINT>(resource.sizeInBytes) / static_cast<UINT>(DirectX::BitsPerPixel(uavd.Format) / 8));
+		switch(resource.dimension) {
+			case ResourceDimension::BUFFER:
+				uavd.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+				uavd.Buffer.CounterOffsetInBytes = 0;
+				uavd.Buffer.StructureByteStride = (uavd.Format == DXGI_FORMAT_UNKNOWN) ? resource.strideInBytes : 0;
+				uavd.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+				uavd.Buffer.FirstElement = 0;
+
+				if(uavd.Buffer.StructureByteStride > 0) {
+					uavd.Buffer.NumElements = static_cast<UINT>(resource.sizeInBytes) / uavd.Buffer.StructureByteStride;
+				} else {
+					uavd.Buffer.NumElements = (static_cast<UINT>(resource.sizeInBytes) / static_cast<UINT>(DirectX::BitsPerPixel(uavd.Format) / 8));
+				}
+				break;
+			case ResourceDimension::TEXTURE2D:
+				if(resource.depth > 1) {
+					uavd.Texture2DArray.ArraySize = resource.depth;
+					uavd.Texture2DArray.MipSlice = mipSlice;
+					uavd.Texture2DArray.PlaneSlice = 0;
+					uavd.Texture2DArray.FirstArraySlice = 0;
+					uavd.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+				} else {
+					uavd.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+					uavd.Texture2D.MipSlice = mipSlice;
+					uavd.Texture2D.PlaneSlice = 0;
+				}
+				break;
 		}
 
 		return uavd;

@@ -25,6 +25,14 @@ namespace Netcode {
 			return bitCount == 1;
 		}
 
+		constexpr inline uint32_t HighestActiveBitIndex(uint32_t x) {
+			uint32_t pow = 0;
+			for(pow = 0; x > 1; pow++) {
+				x >>= 1;
+			}
+			return pow;
+		}
+
 		template<typename T>
 		bool IsWeakRefEmpty(const std::weak_ptr<T> & weak) {
 			return !weak.owner_before(std::weak_ptr<T>{}) && !std::weak_ptr<T>{}.owner_before(weak);

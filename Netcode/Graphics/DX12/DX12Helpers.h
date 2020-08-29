@@ -17,7 +17,7 @@ namespace Netcode::Graphics::DX12 {
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC GetShaderResourceViewDesc(const ResourceDesc & resource);
 
-	D3D12_UNORDERED_ACCESS_VIEW_DESC GetUnorderedAccessViewDesc(const ResourceDesc & resource);
+	D3D12_UNORDERED_ACCESS_VIEW_DESC GetUnorderedAccessViewDesc(const ResourceDesc & resource, uint32_t mipSlice);
 
 	D3D12_RENDER_TARGET_VIEW_DESC GetRenderTargetViewDesc(const ResourceDesc & resource);
 

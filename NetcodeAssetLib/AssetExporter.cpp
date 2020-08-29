@@ -3,6 +3,7 @@
 #include <NetcodeFoundation/ArrayView.hpp>
 #include <NetcodeAssetLib/Model.h>
 #include <DirectXTex.h>
+#include <iostream>
 
 namespace Netcode {
 
@@ -20,7 +21,10 @@ namespace Netcode {
 		uint32_t numIEs = 0;
 		for(const auto & mesh : model.meshes) {
 			numLods += static_cast<uint32_t>(mesh.lods.size());
-			numIEs += static_cast<uint32_t>(mesh.inputLayout.size());
+			for(const auto & ie : mesh.inputLayout) {
+				if(ie.semanticName == "BINORMAL") continue;
+				numIEs += 1;
+			}
 		}
 
 		NetcodeLods.reserve(numLods);
@@ -33,7 +37,7 @@ namespace Netcode {
 		std::vector<std::unique_ptr<uint8_t[]>> ibuffers;
 
 		for(const auto & mesh : model.meshes) {
-
+			uint32_t cNumIEs = 0;
 			uint32_t cIEIdx = NetcodeElementIdx;
 			uint32_t cLodIdx = NetcodeLodIdx;
 			uint32_t iOffset = 0;
@@ -43,6 +47,9 @@ namespace Netcode {
 			uint32_t vertexStride = 0;
 
 			for(const auto & inputElement : mesh.inputLayout) {
+				if(inputElement.semanticName == "BINORMAL") {
+					continue;
+				}
 				Netcode::Asset::InputElement NetcodeIE;
 				NetcodeIE.format = inputElement.format;
 				NetcodeIE.byteOffset = vertexStride;
@@ -52,6 +59,7 @@ namespace Netcode {
 				NetcodeIE.semanticName[31] = '\0';
 				NetcodeInputElements.emplace_back(NetcodeIE);
 				NetcodeElementIdx += 1;
+				cNumIEs += 1;
 				vertexStride += static_cast<uint32_t>(DirectX::BitsPerPixel(NetcodeIE.format) / 8);
 			}
 
@@ -84,6 +92,8 @@ namespace Netcode {
 				for(const auto & ie : mesh.inputLayout) {
 					uint32_t numBytes = static_cast<uint32_t>(DirectX::BitsPerPixel(ie.format) / 8);
 
+					if(ie.semanticName == "BINORMAL") continue;
+
 					for(uint32_t i = 0; i < lod.vertexCount; ++i) {
 						uint8_t * vData = vbuffer.get() + vOffset + i * vertexStride + iterStride;
 						memcpy(vData, lod.vertexData.get() + i * mesh.vertexStride + ie.byteOffset, numBytes);
@@ -106,7 +116,7 @@ namespace Netcode {
 			NetcodeMesh.lodLevelsLength = static_cast<uint32_t>(mesh.lods.size());
 			NetcodeMesh.vertexSize = vertexStride;
 			NetcodeMesh.inputElements = NetcodeInputElements.data() + cIEIdx;
-			NetcodeMesh.inputElementsLength = static_cast<uint32_t>(mesh.inputLayout.size());
+			NetcodeMesh.inputElementsLength = cNumIEs;
 			NetcodeMesh.materialId = mesh.materialIdx;
 
 			NetcodeMeshes.push_back(NetcodeMesh);

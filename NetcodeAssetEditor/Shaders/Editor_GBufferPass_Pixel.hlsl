@@ -42,19 +42,20 @@ cbuffer LightingData : register(b3) {
 	int numLights;
 };
 
-struct Material {
-	float4 diffuseColor;
-	float3 fresnelR0;
+struct BrdfMaterialData {
+	float3 diffuseColor;
+	float reflectance;
+	float3 specularColor;
 	float roughness;
 	float2 tiles;
 	float2 tilesOffset;
 	float displacementScale;
 	float displacementBias;
-	float textureSpaceHandednessFactor;
-	uint texturesFlags;
+	float textureSpaceChirality;
+	uint textureFlags;
 };
 
-ConstantBuffer<Material> material : register(b4);
+ConstantBuffer<BrdfMaterialData> material : register(b4);
 
 Texture2D<float4> diffuseTexture : register(t0);
 Texture2D<float3> normalTexture : register(t1);
@@ -80,35 +81,35 @@ bool IsBitSet(int value, int nthBit) {
 	return (value & (1 << nthBit)) > 0;
 }
 
-float4 SampleDiffuseColor(Material mat, float2 texCoord) {
-	float4 clr = mat.diffuseColor;
+float3 SampleDiffuseColor(BrdfMaterialData mat, float2 texCoord) {
+	float3 clr = mat.diffuseColor;
 
-	if(IsBitSet(mat.texturesFlags, DIFFUSE_TEXTURE)) {
+	if(IsBitSet(mat.textureFlags, DIFFUSE_TEXTURE)) {
 		clr *= diffuseTexture.Sample(linearWrapSampler, texCoord);
 	}
 
 	return saturate(clr);
 }
 
-float3 SampleNormal(Material mat, float2 texCoord) {
-	if(IsBitSet(material.texturesFlags, NORMAL_TEXTURE)) {
+float3 SampleNormal(BrdfMaterialData mat, float2 texCoord) {
+	if(IsBitSet(material.textureFlags, NORMAL_TEXTURE)) {
 		return normalize(2.0f * normalTexture.Sample(linearWrapSampler, texCoord) - 1.0f);
 	} else {
 		return float3(0.0f, 0.0f, 1.0f);
 	}
 }
 
-float SampleRoughness(Material mat, float2 texCoord) {
-	if(IsBitSet(mat.texturesFlags, ROUGHNESS_TEXTURE)) {
+float SampleRoughness(BrdfMaterialData mat, float2 texCoord) {
+	if(IsBitSet(mat.textureFlags, ROUGHNESS_TEXTURE)) {
 		return saturate(roughnessTexture.Sample(linearWrapSampler, texCoord).x);
 	} else {
 		return mat.roughness;
 	}
 }
 
-float3 SampleAmbientAccess(Material mat, float2 texCoord) {
+float3 SampleAmbientAccess(BrdfMaterialData mat, float2 texCoord) {
 	float3 ambientAccess = float3(1.0f, 1.0f, 1.0f);
-	if(IsBitSet(mat.texturesFlags, AMBIENT_TEXTURE)) {
+	if(IsBitSet(mat.textureFlags, AMBIENT_TEXTURE)) {
 		ambientAccess *= ambientTexture.Sample(linearWrapSampler, texCoord);
 	}
 	return saturate(ambientAccess);
@@ -124,13 +125,14 @@ float4 main(GBufferPass_PixelInput input) : SV_TARGET
 
 	float3 toEye = normalize(eyePos.xyz - input.worldPosition * eyePos.w);
 
-	const float3 kd = SampleDiffuseColor(material, texCoord).xyz;
+	const float3 diffuseColor = SampleDiffuseColor(material, texCoord).xyz;
 	const float roughness = SampleRoughness(material, texCoord);
+
 	float alphaG = roughness * roughness;
 	const float ambientAccess = SampleAmbientAccess(material, texCoord).x;
-	float3 f0Approx = F0_ApproximateFromAir(2.0f);
+	float3 f0 = 0.16f * material.reflectance * material.reflectance;
 	float3 V = mul(tbn, toEye);
-	float3 N = SampleNormal(material, texCoord, normal, tbn);
+	float3 N = SampleNormal(material, texCoord);
 	float NdotV = abs(dot(N, V)) + 0.0001f;
 
 	float3 litColor = float3(0.0f, 0.0f, 0.0f);
@@ -161,25 +163,24 @@ float4 main(GBufferPass_PixelInput input) : SV_TARGET
 		float attenuation = 1.0f;
 
 		if(l.type == 1) { // POINT LIGHT
-			attenuation = LightAttenuation(toLightWorldLength, l.referenceDistance, l.minDistance, l.maxDistance);
+			attenuation = DistanceAttenuation(toLightWorldLength, l.referenceDistance, l.minDistance, l.maxDistance);
 		}
 	
 		if(l.type == 2) { // SPOT LIGHT
 			float cosU = dot(-toLight, l.direction);
 
-			attenuation = LightAttenuation(toLightWorldLength, l.referenceDistance, l.minDistance, l.maxDistance) *
-			 				SpotLightAttenuation(cosU, l.angleScale, l.angleOffset);
+			attenuation = DistanceAttenuation(toLightWorldLength, l.referenceDistance, l.minDistance, l.maxDistance) *
+						  AngleAttenuation(cosU, l.angleScale, l.angleOffset);
 		}
 		
 		float D = D_GGX(NdotH, alphaG);
 		float G = G_SmithGGXCorrelated(NdotL, NdotV, alphaG);
-		float3 F = F_SchlickFresnel(f0Approx, 1.0f, LdotH);
-		float3 Fspec = F * G * D / PI;
+		float3 F = F_SchlickFresnel(f0, 1.0f, LdotH);
+		float3 Fspec = F * G * D; // / PI 
+		float3 Fdiff = diffuseColor * R_DisneyDiffuse(NdotV, NdotL, LdotH, roughness); // /PI
 
-		float3 Fdiff = kd * R_DisneyDiffuse(NdotV, NdotL, LdotH, roughness);
-
-		litColor += attenuation * NdotL * l.intensity * (Fspec + Fdiff);
+		litColor += attenuation * NdotL * l.intensity * (Fdiff + Fspec); // * PI => PI terms cancel
 	}
 
-	return float4(litColor + kd * ambientAccess * ambientLightIntensity.xyz, 1.0f);
+	return float4(litColor + diffuseColor * ambientAccess * ambientLightIntensity.xyz, 1.0f);
 }

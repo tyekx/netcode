@@ -13,20 +13,28 @@
 
 #include <Netcode/Graphics/UploadBatch.h>
 #include <Netcode/Graphics/ResourceEnums.h>
+#include <Netcode/Graphics/Material.h>
 
 #include <Netcode/URI/Texture.h>
+#include <Netcode/URI/Model.h>
 
 class AssetManager {
 
 	Netcode::Module::IGraphicsModule * graphics;
-	std::map<std::wstring, std::unique_ptr<Netcode::Asset::Model>> storage;
 
-	Netcode::Asset::Model * ImportFromFile(std::wstring str) {
+	struct StorageItem {
+		Netcode::URI::Model uri;
+		std::unique_ptr<Netcode::Asset::Model> model;
+	};
+
+	std::vector<StorageItem> storage;
+
+	Netcode::Asset::Model * ImportFromFile(const Netcode::URI::Model & uri) {
 		std::unique_ptr<Netcode::Asset::Model> model = std::make_unique<Netcode::Asset::Model>();
 
 		Netcode::Asset::Model * rawPtr = model.get();
 
-		Netcode::IO::File modelFile{ Netcode::IO::Path::MediaRoot(), str };
+		Netcode::IO::File modelFile{ uri.GetModelPath() };
 		Netcode::IO::FileReader<Netcode::IO::File> reader{ modelFile, Netcode::IO::FileOpenMode::READ };
 		size_t n = reader->GetSize();
 		std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(n);
@@ -37,7 +45,11 @@ class AssetManager {
 
 		Netcode::Asset::ImportModel(mutableView, *rawPtr);
 
-		storage.emplace(std::move(str), std::move(model));
+		StorageItem si;
+		si.model = std::move(model);
+		si.uri = uri;
+
+		storage.emplace_back(std::move(si));
 
 		return rawPtr;
 	}
@@ -68,14 +80,18 @@ public:
 		return rv;
 	}
 
-	Netcode::Asset::Model * Import(std::wstring relativeMediaPath) {
-		const auto it = storage.find(relativeMediaPath);
+	Netcode::Asset::Model * Import(const Netcode::URI::Model & uri) {
+		auto it = std::find_if(std::cbegin(storage), std::cend(storage), [&uri](const StorageItem & si) -> bool {
+			return si.uri.GetFullPath() == uri.GetFullPath();
+		});
 
-		if(it != std::end(storage)) {
-			return it->second.get();
+		if(it != std::cend(storage)) {
+			return it->model.get();
 		}
 
-		return ImportFromFile(std::move(relativeMediaPath));
+		auto *model = ImportFromFile(uri);
+
+		return model;
 	}
 
 	void Clear() {

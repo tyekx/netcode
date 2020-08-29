@@ -144,9 +144,21 @@ namespace Netcode::Graphics::DX12 {
 
 		Ptr<DX12::Resource> resource = static_cast<Ptr<DX12::Resource>>(resourceHandle);
 
-		D3D12_UNORDERED_ACCESS_VIEW_DESC uavd = GetUnorderedAccessViewDesc(resource->desc);
+		D3D12_UNORDERED_ACCESS_VIEW_DESC uavd = GetUnorderedAccessViewDesc(resource->desc, 0);
 
-		device->CreateUnorderedAccessView(resource->resource.Get(), nullptr, &uavd, CD3DX12_CPU_DESCRIPTOR_HANDLE{ baseCpuHandle_CpuVisible, offset, Platform::ShaderResourceViewIncrementSize });
+		device->CreateUnorderedAccessView(resource->resource.Get(), nullptr, &uavd, CD3DX12_CPU_DESCRIPTOR_HANDLE{ baseCpuHandle_ShaderVisible, offset, Platform::ShaderResourceViewIncrementSize });
+	}
+
+	void ResourceViewsImpl::CreateUAV(uint32_t idx, Ptr<GpuResource> resourceHandle, uint32_t mipSlice)
+	{
+		INT offset = static_cast<INT>(idx);
+		ASSERT(idx < numDescriptors, "ResourceViews: idx is out of range");
+		ASSERT(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "ResourceViews: invalid heap type");
+
+		Ptr<DX12::Resource> resource = static_cast<Ptr<DX12::Resource>>(resourceHandle);
+
+		D3D12_UNORDERED_ACCESS_VIEW_DESC uavd = GetUnorderedAccessViewDesc(resource->desc, mipSlice);
+
 		device->CreateUnorderedAccessView(resource->resource.Get(), nullptr, &uavd, CD3DX12_CPU_DESCRIPTOR_HANDLE{ baseCpuHandle_ShaderVisible, offset, Platform::ShaderResourceViewIncrementSize });
 	}
 

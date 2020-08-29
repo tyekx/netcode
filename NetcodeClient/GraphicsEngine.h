@@ -16,12 +16,6 @@
 
 using Netcode::GpuResource;
 
-using Netcode::Graphics::ResourceDesc;
-using Netcode::Graphics::ResourceType;
-using Netcode::Graphics::ResourceState;
-using Netcode::Graphics::ResourceFlags;
-using Netcode::Graphics::PrimitiveTopology;
-
 using Netcode::Graphics::IResourceContext;
 using Netcode::Graphics::IRenderContext;
 
@@ -48,13 +42,18 @@ struct RenderItem {
 class GraphicsEngine {
 public:
 	Ref<GpuResource> gbufferPass_DepthBuffer;
-	Ref<GpuResource> gbufferPass_ColorRenderTarget;
-	Ref<GpuResource> gbufferPass_NormalsRenderTarget;
-	Ref<GpuResource> gbufferPass_SpecularRenderTarget;
+	Ref<GpuResource> lightingData_StructuredBuffer;
+	//Ref<GpuResource> gbufferPass_ColorRenderTarget;
+	//Ref<GpuResource> gbufferPass_NormalsRenderTarget;
+	//Ref<GpuResource> gbufferPass_SpecularRenderTarget;
 
 	Ref<GpuResource> ssaoPass_BlurRenderTarget;
 	Ref<GpuResource> ssaoPass_OcclusionRenderTarget;
 	Ref<GpuResource> ssaoPass_RandomVectorTexture;
+
+	Ref<GpuResource> prefilteredEnvmap;
+	Ref<GpuResource> preIntegratedBrdf;
+	Ref<Netcode::ResourceViews> prefilteredSplitSumViews;
 
 	GBuffer fsQuad;
 
@@ -65,9 +64,7 @@ public:
 
 	Netcode::Module::IGraphicsModule * graphics;
 
-	Ref<GpuResource> cloudynoonTexture;
-	Ref<Netcode::ResourceViews> cloudynoonView;
-	Ref<Netcode::ResourceViews> gbufferPass_RenderTargetViews;
+	//Ref<Netcode::ResourceViews> gbufferPass_RenderTargetViews;
 	Ref<Netcode::ResourceViews> gbufferPass_DepthStencilView;
 	Ref<Netcode::ResourceViews> lightingPass_ShaderResourceViews;
 
@@ -95,6 +92,12 @@ public:
 	Ref<Netcode::RootSignature> envmapPass_RootSignature;
 	Ref<Netcode::PipelineState> envmapPass_PipelineState;
 
+	Ref<Netcode::RootSignature> IBLPreFilterPass_RootSignature;
+	Ref<Netcode::PipelineState> IBLPreFilterPass_PipelineState;
+
+	Ref<Netcode::RootSignature> IBLPreIntegratePass_RootSignature;
+	Ref<Netcode::PipelineState> IBLPreIntegratePass_PipelineState;
+
 	Ref<Netcode::SpriteBatch> uiPass_SpriteBatch;
 
 	uint64_t perFrameCbuffer;
@@ -109,6 +112,7 @@ public:
 	std::vector<Ref<AnimationSet>> skinningPass_Input;
 	std::vector<RenderItem> skinnedGbufferPass_Input;
 	std::vector<RenderItem> gbufferPass_Input;
+	std::vector<Netcode::Light> * sceneLights;
 	Netcode::UI::PageManager* ui_Input;
 
 private:
@@ -131,11 +135,11 @@ private:
 
 	void CreateSSAOOcclusionPassSizeDependentResources();
 
-	void CreateLightingPassPermanentResources();
+	//void CreateLightingPassPermanentResources();
 
 	void CreateBackgroundPassPermanentResources();
 
-	void CreateLightingPassResourceViews();
+	//void CreateLightingPassResourceViews();
 
 	void CreateUIPassPermanentResources();
 
@@ -145,11 +149,11 @@ private:
 
 	void CreateGbufferPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder);
 
-	void CreateSSAOOcclusionPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder);
+	//void CreateSSAOOcclusionPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder);
 
-	void CreateSSAOBlurPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder);
+	//void CreateSSAOBlurPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder);
 
-	void CreateLightingPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder);
+	//void CreateLightingPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder);
 
 	void CreateUIPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder);
 
@@ -170,6 +174,12 @@ public:
 	void CreateFrameGraph(Ptr<Netcode::FrameGraphBuilder> builder);
 
 	void CreateComputeFrameGraph(Ptr<Netcode::FrameGraphBuilder> builder);
+
+	Ref<GpuResource> PreIntegrateBrdf(Ptr<Netcode::FrameGraphBuilder> builder);
+
+	Ref<GpuResource> PrefilterEnvMap(Ptr<Netcode::FrameGraphBuilder> builder, Ref<GpuResource> sourceTexture);
+
+	void SetGlobalEnvMap(Ref<GpuResource> preEnvMap, Ref<GpuResource> preBrdfIntegral);
 
 	void ReadbackComputeResults();
 

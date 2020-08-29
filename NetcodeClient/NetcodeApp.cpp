@@ -8,102 +8,55 @@
 #include "Snippets.h"
 #include <NetcodeAssetLib/JsonUtility.h>
 
+
 void GameApp::ReloadMap() {
-	gameScene->Clear();
+	GameSceneManager * gsm = Service::Get<GameSceneManager>();
+	gsm->CloseScene();
 	graphics->ClearImportCache();
-
-	LoadMap(mapAsset);
-}
-
-void GameApp::LoadGameObjectFromJson(const json11::Json::object & values) {
-	AssetManager * assetManager = Service::Get<AssetManager>();
-	GameObject * gameObj = nullptr;
-
-	if(auto it = values.find("asset"); it != values.end()) {
-		if(it->second.is_string()) {
-			std::wstring assetPath = Netcode::Utility::ToWideString(it->second.string_value());
-
-			gameObj = gameScene->Create();
-			LoadComponents(assetManager->Import(std::move(assetPath)), gameObj);
-		}
-	}
-
-	if(gameObj == nullptr) {
-		return;
-	}
-
-	if(Transform * tr = gameObj->GetComponent<Transform>(); tr != nullptr) {
-		if(auto it = values.find("position"); it != values.end() && it->second.is_array()) {
-			tr->position = Netcode::Asset::LoadFloat3(it->second);
-		}
-
-		if(auto it = values.find("eulerAngles"); it != values.end() && it->second.is_array()) {
-			tr->rotation = Netcode::Quaternion::FromEulerAngles(Netcode::Asset::LoadFloat3(it->second));
-		}
-	}
-
-	gameScene->Spawn(gameObj);
+	
+	LoadAssets();
+	gsm->ReloadScene();
 }
 
 void GameApp::LoadMap(const Netcode::URI::Model & path)
 {
-	mapAsset = path;
-
-	json11::Json json = LoadJsonFile(mapAsset.GetModelPath());
-
-	if(!json.is_object()) {
-		return;
-	}
-
 	LoadAssets();
-
-	const auto & rootObject = json.object_items();
-
-	if(auto it = rootObject.find("objects"); it != rootObject.end()) {
-		if(it->second.is_array()) {
-			const auto & objArray = it->second.array_items();
-
-			for(const auto & obj : objArray) {
-				if(obj.is_object()) {
-					LoadGameObjectFromJson(obj.object_items());
-				}
-			}
-		}
-	}
+	GameSceneManager * gsm = Service::Get<GameSceneManager>();
+	gsm->LoadScene(path);
 }
 
 void GameApp::Render() {
 	graphics->frame->Prepare();
 
 	auto cfgBuilder = graphics->CreateFrameGraphBuilder();
-	renderSystem.renderer.CreateComputeFrameGraph(cfgBuilder.get());
+	renderer.CreateComputeFrameGraph(cfgBuilder.get());
 	graphics->frame->Run(cfgBuilder->Build(), FrameGraphCullMode::NONE);
 
 	graphics->frame->DeviceSync();
 
-	renderSystem.renderer.ReadbackComputeResults();
-	renderSystem.renderer.perFrameData = &gameScene->perFrameData;
-	renderSystem.renderer.ssaoData = &gameScene->ssaoData;
+	renderer.ReadbackComputeResults();
+	renderer.perFrameData = &gameScene->perFrameData;
 
 	gameScene->Foreach([this](GameObject * gameObject) -> void {
 		if(gameObject->IsActive()) {
 			transformSystem.Run(gameObject);
 			pxSystem.Run(gameObject);
 			renderSystem.Run(gameObject);
+			lightSystem.Run(gameObject);
 		}
 	});
 
 	gameScene->UpdatePerFrameCb();
 
 	auto builder = graphics->CreateFrameGraphBuilder();
-	renderSystem.renderer.CreateFrameGraph(builder.get());
+	renderer.CreateFrameGraph(builder.get());
 
 	graphics->frame->Run(builder->Build(), FrameGraphCullMode::ANY);
 	graphics->frame->Present();
 	graphics->frame->DeviceSync();
 	graphics->frame->CompleteFrame();
 
-	renderSystem.renderer.Reset();
+	renderer.Reset();
 }
 
 void GameApp::Simulate(float dt) {
@@ -124,17 +77,24 @@ void GameApp::Simulate(float dt) {
 
 void GameApp::LoadServices() {
 	Service::Init<AssetManager>(graphics.get());
-	Service::Init<GameScene>(px);
+	Service::Init<Netcode::Physics::PhysX>();
+	Service::Init<Netcode::Module::IGraphicsModule *>(graphics.get());
 
-	gameScene = Service::Get<GameScene>();
+	pxService = Service::Get<Netcode::Physics::PhysX>();
+	pxService->CreateResources();
+
+	Service::Init<GameSceneManager>();
+
+
+	gameScene = Service::Get<GameSceneManager>()->GetScene();
 
 	gameScene->Setup();
 }
 
 void GameApp::CreateUI() {
-	Ref<LoginPage> loginPage = pageManager.CreatePage<LoginPage>(*px.physics);
-	Ref<ServerBrowserPage> serverBrowserPage = pageManager.CreatePage<ServerBrowserPage>(*px.physics);
-	Ref<LoadingPage> loadingPage = pageManager.CreatePage<LoadingPage>(*px.physics);
+	Ref<LoginPage> loginPage = pageManager.CreatePage<LoginPage>(*pxService->physics);
+	Ref<ServerBrowserPage> serverBrowserPage = pageManager.CreatePage<ServerBrowserPage>(*pxService->physics);
+	Ref<LoadingPage> loadingPage = pageManager.CreatePage<LoadingPage>(*pxService->physics);
 
 	loginPage->InitializeComponents();
 	serverBrowserPage->InitializeComponents();
@@ -144,7 +104,7 @@ void GameApp::CreateUI() {
 	pageManager.AddPage(serverBrowserPage);
 	pageManager.AddPage(loadingPage);
 
-	renderSystem.renderer.ui_Input = &pageManager;
+	renderer.ui_Input = &pageManager;
 }
 
 void GameApp::CreateAxisMapping() {
@@ -154,9 +114,9 @@ void GameApp::CreateAxisMapping() {
 		Netcode::AxisData<AxisEnum> { AxisEnum::FIRE1, Netcode::KeyCode::MOUSE_LEFT, Netcode::KeyCode::UNDEFINED },
 		Netcode::AxisData<AxisEnum> { AxisEnum::FIRE2, Netcode::KeyCode::MOUSE_RIGHT, Netcode::KeyCode::UNDEFINED },
 		Netcode::AxisData<AxisEnum> { AxisEnum::JUMP, Netcode::KeyCode::SPACE, Netcode::KeyCode::UNDEFINED },
-		Netcode::AxisData<AxisEnum> { AxisEnum::DEV_CAM_X, Netcode::KeyCode::NUM_6, Netcode::KeyCode::NUM_4 },
-		Netcode::AxisData<AxisEnum> { AxisEnum::DEV_CAM_Y, Netcode::KeyCode::NUM_9, Netcode::KeyCode::NUM_7 },
-		Netcode::AxisData<AxisEnum> { AxisEnum::DEV_CAM_Z, Netcode::KeyCode::NUM_8, Netcode::KeyCode::NUM_5 },
+		Netcode::AxisData<AxisEnum> { AxisEnum::DEV_CAM_X, Netcode::KeyCode::RIGHT, Netcode::KeyCode::LEFT },
+		Netcode::AxisData<AxisEnum> { AxisEnum::DEV_CAM_Z, Netcode::KeyCode::HOME, Netcode::KeyCode::PAGE_UP },
+		Netcode::AxisData<AxisEnum> { AxisEnum::DEV_CAM_Y, Netcode::KeyCode::DOWN, Netcode::KeyCode::UP },
 	});
 
 	Netcode::Input::SetAxisMap(std::move(axisMap));
@@ -173,10 +133,12 @@ void GameApp::CreateAxisMapping() {
 
 
 void GameApp::LoadSystems() {
-	renderSystem.CreatePermanentResources(graphics.get());
-	defaultPhysxMaterial = px.physics->createMaterial(0.5f, 0.5f, 0.5f);
+	renderer.CreatePermanentResources(graphics.get());
 	animSystem.SetMovementController(&movCtrl);
-	animSystem.renderer = &renderSystem.renderer;
+	animSystem.renderer = &renderer;
+	renderSystem.renderer = &renderer;
+	lightSystem.renderer = &renderer;
+	renderer.sceneLights = &lightSystem.lights;
 }
 
 void GameApp::LoadAssets() {
@@ -184,9 +146,25 @@ void GameApp::LoadAssets() {
 
 	CreateLocalAvatar();
 	//CreateRemoteAvatar();
+	
+	{
+		Ref<Netcode::TextureBuilder> textureBuilder = graphics->CreateTextureBuilder();
+		textureBuilder->LoadTextureCube(L"compiled/textures/envmaps/cloudynoon.dds");
+		Ref<Netcode::GpuResource> cloudynoonTexture = textureBuilder->Build();
+		graphics->resources->SetDebugName(cloudynoonTexture, L"Cloudynoon TextureCube");
+
+		Ref<Netcode::FrameGraphBuilder> frameGraphBuilder = graphics->CreateFrameGraphBuilder();
+
+		Ref<Netcode::GpuResource> prefilteredEnvMap = renderer.PrefilterEnvMap(frameGraphBuilder.get(), cloudynoonTexture);
+		Ref<Netcode::GpuResource> preIntegratedBrdf = renderer.PreIntegrateBrdf(frameGraphBuilder.get());
+		graphics->frame->Run(frameGraphBuilder->Build(), Netcode::Graphics::FrameGraphCullMode::NONE);
+		graphics->frame->DeviceSync();
+
+		renderer.SetGlobalEnvMap(prefilteredEnvMap, preIntegratedBrdf);
+	}
 
 	{
-		auto planeActor = physx::PxCreatePlane(*px.physics, physx::PxPlane{ 0.0f, 1.0f, 0.0f, 0.0f }, *defaultPhysxMaterial);
+		auto planeActor = physx::PxCreatePlane(*pxService->physics, physx::PxPlane{ 0.0f, 1.0f, 0.0f, 0.0f }, *pxService->defaultMaterial);
 		gameScene->SpawnPhysxActor(planeActor);
 	}
 }
@@ -240,7 +218,7 @@ void GameApp::CreateRemoteAvatar() {
 	gameScene->Spawn(gunObj);
 	gameScene->Spawn(debugObj);
 	*/
-	LoadComponents(avatarModel, avatarHitboxes);
+
 	Animation * anim = avatarHitboxes->AddComponent<Animation>();
 	CreateYbotAnimationComponent(avatarModel, anim);
 	anim->blackboard->BindController(&movCtrl);
@@ -286,169 +264,4 @@ void GameApp::CreateLocalAvatar() {
 	gameScene->Spawn(avatarCamera);
 
 	gameScene->SetCamera(avatarCamera);
-}
-
-void GameApp::LoadComponents(Netcode::Asset::Model * model, GameObject * gameObject) {
-	gameObject->AddComponent<Transform>();
-
-	if(model->meshes.Size() > 0) {
-		Model * modelComponent = gameObject->AddComponent<Model>();
-		LoadModelComponent(model, modelComponent);
-
-		if(model->bones.Size() > 0 && model->animations.Size() > 0) {
-
-		}
-	}
-
-	if(model->colliders.Size() > 0) {
-		Collider * colliderComponent = gameObject->AddComponent<Collider>();
-		LoadColliderComponent(model, colliderComponent);
-		colliderComponent->actor->userData = gameObject;
-	}
-}
-
-void GameApp::LoadColliderComponent(Netcode::Asset::Model * model, Collider * colliderComponent) {
-	if(model->colliders.Size() == 0) {
-		return;
-	}
-
-	physx::PxPhysics * pxp = px.physics.Get();
-	Netcode::PxPtr<physx::PxRigidDynamic> actor = pxp->createRigidDynamic(physx::PxTransform(physx::PxIdentity));
-	actor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, true);
-	std::vector<ColliderShape> netcodeShapes;
-	netcodeShapes.reserve(model->colliders.Size());
-
-	for(size_t i = 0; i < model->colliders.Size(); ++i) {
-		const Netcode::Asset::Collider * netcodeCollider = model->colliders.Data() + i;
-		netcodeShapes.push_back(*netcodeCollider);
-		Netcode::PxPtr<physx::PxShape> shape{ nullptr };
-		physx::PxShapeFlags shapeFlags;
-		physx::PxFilterData filterData;
-
-		if(netcodeCollider->boneReference >= 0 && netcodeCollider->boneReference < 0x7F) {
-			shapeFlags = physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eTRIGGER_SHAPE | physx::PxShapeFlag::eVISUALIZATION;
-			filterData.word0 = PHYSX_COLLIDER_TYPE_HITBOX;
-		} else {
-			shapeFlags = physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eSIMULATION_SHAPE | physx::PxShapeFlag::eVISUALIZATION;
-			filterData.word0 = PHYSX_COLLIDER_TYPE_WORLD;
-		}
-
-		if(netcodeCollider->type == Netcode::Asset::ColliderType::MESH) {
-			const auto & mesh = model->meshes[0];
-			physx::PxConvexMeshDesc cmd;
-			cmd.points.count = mesh.lodLevels[0].vertexCount;
-			cmd.points.data = mesh.vertices;
-			cmd.points.stride = mesh.vertexSize;
-			cmd.vertexLimit = 255;
-			cmd.flags = physx::PxConvexFlag::eCOMPUTE_CONVEX | physx::PxConvexFlag::eFAST_INERTIA_COMPUTATION;
-			cmd.indices.data = mesh.indices;
-			cmd.indices.count = mesh.lodLevels[0].indexCount;
-			cmd.indices.stride = 4;
-
-			physx::PxDefaultMemoryOutputStream buf;
-			physx::PxConvexMeshCookingResult::Enum r;
-			px.cooking->cookConvexMesh(cmd, buf, &r);
-
-			physx::PxDefaultMemoryInputData input(buf.getData(), buf.getSize());
-			Netcode::PxPtr<physx::PxConvexMesh> convexMesh = pxp->createConvexMesh(input);
-
-			physx::PxConvexMeshGeometry pcmg{ convexMesh.Get() };
-
-			shape = pxp->createShape(pcmg, *defaultPhysxMaterial, true, shapeFlags);
-
-		} else {
-			shape = CreatePrimitiveShapeFromAsset(*netcodeCollider, pxp, defaultPhysxMaterial.Get(), shapeFlags);
-		}
-
-		shape->setLocalPose(physx::PxTransform{
-				Netcode::ToPxVec3(netcodeCollider->localPosition),
-				Netcode::ToPxQuat(netcodeCollider->localRotation)
-			});
-
-		shape->setQueryFilterData(filterData);
-		shape->userData = nullptr;
-		actor->attachShape(*shape);
-	}
-
-	colliderComponent->actor = actor.Release();
-	colliderComponent->shapes = std::move(netcodeShapes);
-}
-
-void GameApp::LoadModelComponent(Netcode::Asset::Model * model, Model * modelComponent) {
-	for(size_t meshIdx = 0; meshIdx < model->meshes.Size(); ++meshIdx) {
-		const Netcode::Asset::Material * mat = model->materials.Data() + model->meshes[meshIdx].materialId;
-		const Netcode::Asset::Mesh * mesh = model->meshes.Data() + meshIdx;
-
-		modelComponent->perObjectData.Model = Netcode::Float4x4::Identity;
-		modelComponent->perObjectData.InvModel = Netcode::Float4x4::Identity;
-
-		auto batch = graphics->resources->CreateUploadBatch();
-
-		auto appMesh = std::make_shared<Mesh>();
-
-		uint8_t * const vBasePtr = reinterpret_cast<uint8_t *>(mesh->vertices);
-		uint8_t * const iBasePtr = reinterpret_cast<uint8_t *>(mesh->indices);
-
-		for(unsigned int i = 0; i < mesh->lodLevelsLength; ++i) {
-			uint8_t * vData = vBasePtr + mesh->lodLevels[i].vertexBufferByteOffset;
-			uint8_t * iData = nullptr;
-			Ref<Netcode::GpuResource> vbuffer = graphics->resources->CreateVertexBuffer(mesh->lodLevels[i].vertexBufferSizeInBytes, mesh->vertexSize, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
-			uint64_t vCount = mesh->lodLevels[i].vertexCount;
-			Ref<Netcode::GpuResource> ibuffer{ nullptr };
-			uint64_t iCount = 0;
-
-			batch->Upload(vbuffer, vData, mesh->lodLevels[i].vertexBufferSizeInBytes);
-			batch->Barrier(vbuffer, ResourceState::COPY_DEST, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
-
-			if(mesh->indices != nullptr) {
-				ibuffer = graphics->resources->CreateIndexBuffer(mesh->lodLevels[i].indexBufferSizeInBytes, DXGI_FORMAT_R32_UINT, ResourceType::PERMANENT_DEFAULT, ResourceState::COPY_DEST);
-				iData = iBasePtr + mesh->lodLevels[i].indexBufferByteOffset;
-				iCount = mesh->lodLevels[i].indexCount;
-
-				batch->Upload(ibuffer, iData, mesh->lodLevels[i].indexBufferSizeInBytes);
-				batch->Barrier(ibuffer, ResourceState::COPY_DEST, ResourceState::INDEX_BUFFER);
-			}
-
-			GBuffer lod;
-			lod.indexBuffer = ibuffer;
-			lod.vertexBuffer = vbuffer;
-			lod.indexCount = iCount;
-			lod.vertexCount = vCount;
-
-			appMesh->AddLOD(lod);
-			appMesh->vertexSize = mesh->vertexSize;
-		}
-
-		appMesh->selectedLod = 0;
-		appMesh->boundingBox = mesh->boundingBox;
-
-		graphics->frame->SyncUpload(std::move(batch));
-
-		std::string ncMatName{ std::string_view{ mat->name, 48 } };
-		Ref<Netcode::Material> ncMat = std::make_shared<Netcode::BrdfMaterial>(static_cast<Netcode::MaterialType>(mat->type), ncMatName);
-
-		for(uint32_t j = 0; j < mat->indicesLength; ++j) {
-			Netcode::Asset::MaterialParamIndex param = mat->indices[j];
-			void * pptr = ncMat->GetParameterPointer(param.id);
-
-			if(param.id < static_cast<uint32_t>(Netcode::MaterialParamId::SENTINEL_TEXTURE_PATHS_BEGIN)) {
-				memcpy(pptr, mat->data + param.offset, param.size);
-			} else if(param.id < static_cast<uint32_t>(Netcode::MaterialParamId::SENTINEL_TEXTURE_PATHS_END)) {
-				if(param.size > 0) {
-					std::wstring fullUriPath{ std::wstring_view{
-						reinterpret_cast<wchar_t *>(mat->data + param.offset),
-						param.size / sizeof(wchar_t)
-					}
-					};
-
-					Netcode::URI::Texture texUri{ std::move(fullUriPath), Netcode::FullPathToken{ } };
-
-					(*reinterpret_cast<Netcode::URI::Texture *>(pptr)) = std::move(texUri);
-				}
-			}
-		}
-
-		modelComponent->AddShadedMesh(appMesh, ncMat);
-	}
-
 }

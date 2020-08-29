@@ -9,5 +9,5 @@ SamplerState linearWrap : register(s0);
 
 float4 main(EnvmapPass_PixelInput input) : SV_TARGET
 {
-	return float4(envTexture.Sample(linearWrap, input.ray), 1.0f);
+	return float4(envTexture.SampleLevel(linearWrap, input.ray, 0), 1.0f);
 }

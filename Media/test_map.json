@@ -9,34 +9,32 @@
   ],
   "lights": [
     {
-      "type": 0,
-      "direction": [ 0, 0, 1 ],
-      "intensity": [ 1, 1, 1 ]
-    },
-    {
       "type": 1,
-      "position": [ 0, 0, 0 ],
-      "intensity": [ 1, 0.5, 0.1 ],
-      "minDist": 1,
-      "maxDist": 1000,
-      "reference": 100
+      "position": [ 0, 100, 250 ],
+      "intensity": [ 1, 0.7, 0.2 ],
+      "minDist": 100,
+      "maxDist": 5000,
+      "reference": 255
     }
   ],
   "objects": [
     {
-      "asset": "compiled/models/wall.ncasset",
-      "position": [ 240, 0, 0 ],
-      "eulerAngles": [ 0, 0, 0 ]
-    },
-    {
-      "asset": "compiled/models/wall.ncasset",
-      "position": [ 480, 0, 0 ],
-      "eulerAngles": [ 0, 0, 0 ]
-    },
-    {
+      "name": "Test",
       "asset": "compiled/models/wall.ncasset",
       "position": [ 0, 0, 0 ],
-      "eulerAngles": [ 0, 0, 0 ]
+      "eulerAngles": [ 0, 0, 0 ],
+      "children": [
+        {
+          "asset": "compiled/models/wall.ncasset",
+          "position": [ -240, 0, 60 ],
+          "eulerAngles": [ 0, 30, 0 ]
+        },
+        {
+          "asset": "compiled/models/wall.ncasset",
+          "position": [ 240, 0, 60 ],
+          "eulerAngles": [ 0, -30, 0 ]
+        }
+      ]
     }
   ]
 }

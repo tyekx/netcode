@@ -8,6 +8,10 @@ void DevCameraScript::Setup(GameObject * gameObject) {
 	cameraPitch = 0.0f;
 	cameraYaw = 0.0f;
 	cameraSpeed = 250.0f;
+	camera->up = Netcode::Float3::UnitY;
+	camera->ahead = Netcode::Float3::UnitZ;
+	camera->nearPlane = 1.0f;
+	camera->farPlane = 10000.0f;
 	mouseSpeed = 1.0f;
 }
 
@@ -16,12 +20,21 @@ void DevCameraScript::Update(float dt) {
 	float devCamZ = Netcode::Input::GetAxis(AxisEnum::DEV_CAM_Y);
 	float devCamY = Netcode::Input::GetAxis(AxisEnum::DEV_CAM_Z);
 
-	DirectX::XMINT2 mouseDelta = Netcode::Input::GetMouseDelta();
+	Netcode::Int2 mouseDelta = Netcode::Input::GetMouseDelta();
 
-	DirectX::XMFLOAT2A normalizedMouseDelta{ -(float)(mouseDelta.x), -(float)(mouseDelta.y) };
-	cameraPitch += mouseSpeed * normalizedMouseDelta.y * dt;
-	cameraPitch = std::clamp(cameraPitch, -(DirectX::XM_PIDIV2 - 0.00001f), (DirectX::XM_PIDIV2 - 0.00001f));
+	Netcode::Float2 normalizedMouseDelta{ -(float)(mouseDelta.x), (float)(mouseDelta.y) };
+	cameraPitch -= mouseSpeed * normalizedMouseDelta.y * dt;
+	cameraPitch = std::clamp(cameraPitch, -(DirectX::XM_PIDIV2 - 0.0001f), (DirectX::XM_PIDIV2 - 0.0001f));
+
 	cameraYaw += mouseSpeed * normalizedMouseDelta.x * dt;
+
+	if(cameraYaw < (-DirectX::XM_PI)) {
+		cameraYaw += DirectX::XM_2PI;
+	}
+
+	if(cameraYaw > (DirectX::XM_PI)) {
+		cameraYaw -= DirectX::XM_2PI;
+	}
 
 	if(cameraYaw < (-DirectX::XM_PI)) {
 		cameraYaw += DirectX::XM_2PI;

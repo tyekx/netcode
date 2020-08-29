@@ -19,6 +19,12 @@ namespace NetcodeAssetEditor
 
         static Windows.UI.Xaml.DependencyProperty ValueProperty{ get; };
         static Windows.UI.Xaml.DependencyProperty IsReadOnlyProperty{ get; };
+        static Windows.UI.Xaml.DependencyProperty MinValueProperty{ get; };
+        static Windows.UI.Xaml.DependencyProperty MaxValueProperty{ get; };
+        static Windows.UI.Xaml.DependencyProperty StepScaleProperty{ get; };
+        Double MinValue;
+        Double MaxValue;
+        Double StepScale;
 
         Windows.Foundation.Numerics.Vector2 Value;
         Boolean IsReadOnly;

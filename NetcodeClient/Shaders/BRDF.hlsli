@@ -1,6 +1,7 @@
 /*
 Small shader library with BRDF functions
 */
+static const float NC_PI = 3.1415926535f;
 
 // F0 approximation for F_ functions
 float F0_ApproximateFromAir(float ior) {
@@ -69,4 +70,31 @@ float DistanceAttenuation(float r, float r0, float rMin, float rMax) {
 float AngleAttenuation(float cosU, float angleScale, float angleOffset) {
 	float att = saturate(cosU * angleScale - angleOffset);
 	return att * att;
+}
+
+// low discrepancy sequence with fixed sequence length
+float2 Hammersley2(uint idx, uint numSamples) {
+	// 1 * 2^-32
+	const float twoOnThePowerOfMinus32 = asfloat(0x2F800000);
+
+	float xCoord = float(idx) / float(numSamples);
+	float yCoord = reversebits(idx) * twoOnThePowerOfMinus32;
+	return float2(xCoord, yCoord);
+}
+
+// Karis importance sample GGX
+float3 ImportanceSampleGGX(float2 xi, float roughness, float3 N)
+{
+	float a = roughness * roughness;
+	float phi = 2 * NC_PI * xi.x;
+	float cosTheta = sqrt((1 - xi.y) / (1 + (a * a - 1) * xi.y));
+	float sinTheta = sqrt(1 - cosTheta * cosTheta);
+	float3 H;
+	H.x = sinTheta * cos(phi);
+	H.y = sinTheta * sin(phi);
+	H.z = cosTheta;
+	float3 upVector = abs(N.z) < 0.999f ? float3(0, 0, 1) : float3(1, 0, 0);
+	float3 tangentX = normalize(cross(upVector, N));
+	float3 tangentY = cross(N, tangentX);
+	return tangentX * H.x + tangentY * H.y + N * H.z;
 }

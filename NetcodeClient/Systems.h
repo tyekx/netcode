@@ -95,6 +95,21 @@ public:
 	}
 };
 
+class LightSystem {
+public:
+	std::vector<Netcode::Light> lights;
+	GraphicsEngine * renderer;
+
+	void Run(GameObject * gameObject);
+	
+	void operator()(GameObject * gameObject, Transform * transform, Netcode::Light * light) {
+		/*
+		TODO: calculate transformations
+		*/
+		lights.push_back(*light);
+	}
+};
+
 class ScriptSystem {
 public:
 	void Run(GameObject * gameObject, float dt);
@@ -106,11 +121,7 @@ public:
 
 class RenderSystem {
 public:
-	GraphicsEngine renderer;
-
-	void CreatePermanentResources(Netcode::Module::IGraphicsModule * graphics) {
-		renderer.CreatePermanentResources(graphics);
-	}
+	GraphicsEngine* renderer;
 
 	void Run(GameObject * gameObject);
 
@@ -134,10 +145,10 @@ public:
 		for(const auto & i : model->meshes) {
 
 			if(model->boneData != nullptr || hasDebugData) {
-				renderer.skinnedGbufferPass_Input.push_back(RenderItem(i, &model->perObjectData, model->boneData, model->boneDataOffset,
+				renderer->skinnedGbufferPass_Input.push_back(RenderItem(i, &model->perObjectData, model->boneData, model->boneDataOffset,
 					gameObject->GetComponent<Animation>()->debugBoneData.get()));
 			} else {
-				renderer.gbufferPass_Input.push_back(RenderItem(i, &model->perObjectData, nullptr, 0, nullptr));
+				renderer->gbufferPass_Input.push_back(RenderItem(i, &model->perObjectData, nullptr, 0, nullptr));
 			}
 		}
 	}

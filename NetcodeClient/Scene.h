@@ -13,12 +13,17 @@ class Scene {
 protected:
 	Netcode::PxPtr<physx::PxScene> pxScene;
 	Netcode::PxPtr<physx::PxControllerManager> controllerManager;
-	Netcode::PxPtr<physx::PxMaterial> controllerMaterial;
 	Netcode::BulkVector<T, 512> storage;
-	T * cameraRef;
+	T * activeCamera;
+	T * defaultCamera;
 
 public:
 	virtual ~Scene() = default;
+	Scene() = default;
+	Scene(Scene<T> && rhs) noexcept = default;
+	Scene & operator=(Scene<T> &&) noexcept = default;
+	Scene(const Scene<T> &) = delete;
+	Scene & operator=(const Scene<T> &) = delete;
 
 	physx::PxScene * GetPhysXScene() {
 		return pxScene.Get();
@@ -33,11 +38,15 @@ public:
 	}
 
 	T * GetCamera() const {
-		return cameraRef;
+		return (activeCamera == nullptr) ? defaultCamera : activeCamera;
 	}
 
 	void SetCamera(T * camera) {
-		cameraRef = camera;
+		activeCamera = camera;
+	}
+
+	void SetDefaultCamera(T * defCam) {
+		defaultCamera = defCam;
 	}
 
 	void Foreach(std::function<void(T *)> callback) {
@@ -60,13 +69,13 @@ public:
 		return storage.Emplace();
 	}
 
-	inline T * Create(const char * debugName) {
+	inline T * Create(const char * name) {
 #if defined(NETCODE_DEBUG)
 		T * t = Create();
-		t->debugName = debugName;
+		t->name = name;
 		return t;
 #else
-		UNREFERENCED_PARAMETER(debugName);
+		UNREFERENCED_PARAMETER(name);
 		return Create();
 #endif
 	}

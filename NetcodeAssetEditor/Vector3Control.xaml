@@ -9,10 +9,10 @@
 
     <StackPanel x:Name="wrapper" Orientation="Horizontal" VerticalAlignment="Center">
         <TextBlock Text="X:" Margin="5,0,5,0" VerticalAlignment="Center"></TextBlock>
-        <local:FloatBox IsReadOnly="{x:Bind IsReadOnly}" Text="{Binding ValueX, Mode=TwoWay}"></local:FloatBox>
+        <local:FloatBox MinValue="{x:Bind MinValue}" MaxValue="{x:Bind MaxValue}" StepScale="{x:Bind StepScale}" IsReadOnly="{x:Bind IsReadOnly}" Text="{Binding ValueX, Mode=TwoWay}"></local:FloatBox>
         <TextBlock Text="Y:" Margin="5,0,5,0" VerticalAlignment="Center"></TextBlock>
-        <local:FloatBox IsReadOnly="{x:Bind IsReadOnly}" Text="{Binding ValueY, Mode=TwoWay}"></local:FloatBox>
+        <local:FloatBox MinValue="{x:Bind MinValue}" MaxValue="{x:Bind MaxValue}" StepScale="{x:Bind StepScale}" IsReadOnly="{x:Bind IsReadOnly}" Text="{Binding ValueY, Mode=TwoWay}"></local:FloatBox>
         <TextBlock Text="Z:" Margin="5,0,5,0" VerticalAlignment="Center"></TextBlock>
-        <local:FloatBox IsReadOnly="{x:Bind IsReadOnly}" Text="{Binding ValueZ, Mode=TwoWay}"></local:FloatBox>
+        <local:FloatBox MinValue="{x:Bind MinValue}" MaxValue="{x:Bind MaxValue}" StepScale="{x:Bind StepScale}" IsReadOnly="{x:Bind IsReadOnly}" Text="{Binding ValueZ, Mode=TwoWay}"></local:FloatBox>
     </StackPanel>
 </UserControl>

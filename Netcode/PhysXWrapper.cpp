@@ -3,7 +3,10 @@
 #include "MathExt.h"
 
 namespace Netcode::Physics {
-
+	PhysX::~PhysX()
+	{
+		ReleaseResources();
+	}
 	void PhysX::CreateResources() {
 		foundation.Reset(PxCreateFoundation(PX_PHYSICS_VERSION, allocator, errorCallback));
 
@@ -27,9 +30,12 @@ namespace Netcode::Physics {
 		physx::PxCookingParams defaultCookingParams{ defaultToleranceScale };
 
 		cooking = PxCreateCooking(PX_PHYSICS_VERSION, *foundation, defaultCookingParams);
+
+		defaultMaterial = physics->createMaterial(0.5f, 0.5f, 0.5f);
 	}
 
 	void PhysX::ReleaseResources() {
+		defaultMaterial.Reset();
 		cooking.Reset();
 		dispatcher.Reset();
 		physics.Reset();

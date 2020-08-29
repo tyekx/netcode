@@ -45,9 +45,9 @@ public:
 };
 
 COMPONENT_ALIGN class Script {
-protected:
-	std::unique_ptr<IBehavior> behavior;
 public:
+	std::unique_ptr<IBehavior> behavior;
+
 	void SetBehavior(std::unique_ptr<IBehavior> behavior);
 	void Setup(GameObject * owner);
 	void Update(float dt);
@@ -88,6 +88,7 @@ public:
 	Ref<Netcode::ResourceViews> boneData;
 	int32_t boneDataOffset;
 	std::vector<ShadedMesh> meshes;
+	std::vector<Ref<Netcode::Material>> materials;
 
 	ShadedMesh & AddShadedMesh(Ref<Mesh> m, Ref<Netcode::Material> mat) {
 		return meshes.emplace_back(std::move(m), std::move(mat));

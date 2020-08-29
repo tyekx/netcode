@@ -14,6 +14,7 @@ struct PerFrameData {
 	Netcode::Float4x4 ProjTex;
 	Netcode::Float4x4 RayDir;
 	Netcode::Float4 eyePos;
+	Netcode::Float4 ambientLightIntensity;
 	float nearZ;
 	float farZ;
 	float aspectRatio;
@@ -68,24 +69,11 @@ struct SsaoData {
 struct PerObjectData {
 	Netcode::Float4x4 Model;
 	Netcode::Float4x4 InvModel;
-};
-
-struct MaterialData {
-	Netcode::Float4 diffuseColor;
-	Netcode::Float3 fresnelR0;
-	float shininess;
+	int lightsCount;
+	int lightsOffset;
 };
 
 struct DebugPhysxShapeData {
 	Netcode::Float4x4 local;
 	Netcode::Float4x4 offset;
-};
-
-struct ControlDisplayData {
-	float borderRadius;
-	float borderWidth;
-	Netcode::Float2 spriteSize;
-	Netcode::Float2 screenSize;
-	Netcode::Float2 screenPosition;
-	Netcode::Float4 borderColor;
 };

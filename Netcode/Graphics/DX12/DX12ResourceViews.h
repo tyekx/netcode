@@ -45,6 +45,7 @@ namespace Netcode::Graphics::DX12 {
 		virtual void CreateDSV(Ptr<GpuResource> resourceHandle)  override;
 
 		virtual void CreateUAV(uint32_t idx, Ptr<GpuResource> resourceHandle) override;
+		virtual void CreateUAV(uint32_t idx, Ptr<GpuResource> resourceHandle, uint32_t mipSlice) override;
 
 		virtual void CreateSampler(uint32_t idx, Ptr<GpuResource> resourceHandle)  override;
 

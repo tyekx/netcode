@@ -17,3 +17,6 @@ void Script::Update(float dt)
 		behavior->Update(dt);
 	}
 }
+
+NatvisComponentObject instanceForPDB;
+NatvisExtComponentObject instanceForPDB2;

@@ -21,12 +21,13 @@ namespace Netcode::Physics {
 		PxPtr<physx::PxPvd> debugger;
 		PxPtr<physx::PxDefaultCpuDispatcher> dispatcher;
 		PxPtr<physx::PxCooking> cooking;
+		PxPtr<physx::PxMaterial> defaultMaterial;
+
+		~PhysX();
 
 		void CreateResources();
 
 		void ReleaseResources();
-
-
 	};
 
 }

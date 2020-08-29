@@ -156,12 +156,14 @@ namespace Netcode::Graphics {
 
 		// for frame-constant constant buffers only that are allocated with CreateConstantBuffer
 		virtual void SetRootConstants(int slot, const void * srcData, uint32_t numConstants) = 0;
+		virtual void SetRootConstants(int slot, const void * srcData, uint32_t num32bitConstants, uint32_t offsetIn32BitConstants) = 0;
 		virtual void SetConstantBuffer(int slot, Ref<GpuResource> cbufferHandle) = 0;
 		virtual void SetConstants(int slot, uint64_t constantHandle) = 0;
 		virtual uint64_t SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) = 0;
 		virtual void SetShaderResources(int slot, std::initializer_list<Ref<GpuResource>> shaderResourceHandles) = 0;
 		virtual void SetShaderResources(int slot, Ref<ResourceViews> resourceView) = 0;
 		virtual void SetShaderResources(int slot, Ref<ResourceViews> resourceView, int descriptorOffset) = 0;
+		virtual void SetShaderResources(int slot, Ref<GpuResource> nonTextureResource) = 0;
 		virtual void CopyBufferRegion(Ref<GpuResource> dstResource, Ref<GpuResource> srcResource, size_t sizeInBytes) = 0;
 		virtual void CopyBufferRegion(Ref<GpuResource> dstResource, size_t dstOffset, Ref<GpuResource> srcResource, size_t srcOffset, size_t sizeInBytes) = 0;
 

@@ -371,9 +371,20 @@ namespace Netcode::Graphics::DX12 {
 
 		commandList->SetGraphicsRootDescriptorTable(slot, srv->GetGpuHandle(descriptorOffset));
 	}
+
+	void GraphicsContext::SetShaderResources(int slot, Ref<GpuResource> nonTextureResource) {
+		Ref<DX12::Resource> resource = std::dynamic_pointer_cast<DX12::Resource>(nonTextureResource);
+
+		commandList->SetGraphicsRootShaderResourceView(slot, resource->resource->GetGPUVirtualAddress());
+	}
 	
 	void GraphicsContext::SetRootConstants(int slot, const void * srcData, uint32_t numConstants) {
 		commandList->SetGraphicsRoot32BitConstants(slot, numConstants, srcData, 0);
+	}
+
+	void GraphicsContext::SetRootConstants(int slot, const void * srcData, uint32_t num32bitConstants, uint32_t offsetIn32BitConstants)
+	{
+		commandList->SetGraphicsRoot32BitConstants(slot, num32bitConstants, srcData, offsetIn32BitConstants);
 	}
 
 	void GraphicsContext::SetConstantBuffer(int slot, Ref<GpuResource> cbufferHandle)
@@ -603,6 +614,11 @@ namespace Netcode::Graphics::DX12 {
 		commandList->SetComputeRoot32BitConstants(slot, numConstants, srcData, 0);
 	}
 
+	void ComputeContext::SetRootConstants(int slot, const void * srcData, uint32_t num32bitConstants, uint32_t offsetIn32BitConstants)
+	{
+		commandList->SetComputeRoot32BitConstants(slot, num32bitConstants, srcData, offsetIn32BitConstants);
+	}
+
 	void ComputeContext::SetShaderResources(int slot, std::initializer_list<Ref<GpuResource>> shaderResourceHandles) {
 		D3D12_GPU_DESCRIPTOR_HANDLE descriptor;
 		descriptor.ptr = 0;
@@ -627,6 +643,12 @@ namespace Netcode::Graphics::DX12 {
 		Ref<DX12::ResourceViewsImpl> srv = std::dynamic_pointer_cast<DX12::ResourceViewsImpl>(resourceView);
 
 		commandList->SetComputeRootDescriptorTable(slot, srv->GetGpuHandle(descriptorOffset));
+	}
+
+	void ComputeContext::SetShaderResources(int slot, Ref<GpuResource> nonTextureResource) {
+		Ref<DX12::Resource> resource = std::dynamic_pointer_cast<DX12::Resource>(nonTextureResource);
+
+		commandList->SetComputeRootShaderResourceView(slot, resource->resource->GetGPUVirtualAddress());
 	}
 
 	void ComputeContext::SetConstantBuffer(int slot, Ref<GpuResource> cbufferHandle)

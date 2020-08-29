@@ -97,8 +97,8 @@ namespace Netcode::Asset {
 		name = json["name"].string_value();
 		base.Load(json["base"]);
 
-		if(json.object_items().find("offlineTransform") != json.object_items().end()) {
-			offlineTransform = LoadFloat4x4(json["offlineTransform"]);
+		if(json.object_items().find("offline_transform") != json.object_items().end()) {
+			offlineTransform = LoadFloat4x4(json["offline_transform"]);
 		} else {
 			offlineTransform = Netcode::Float4x4::Identity;
 		}
@@ -168,7 +168,7 @@ namespace Netcode::Asset {
 		obj["animations"] = animationsJson;
 		obj["colliders"] = collidersJson;
 		obj["geometry"] = geometryJson;
-		obj["offlineTransform"] = StoreFloat4x4(offlineTransform);
+		obj["offline_transform"] = StoreFloat4x4(offlineTransform);
 
 		return obj;
 	}

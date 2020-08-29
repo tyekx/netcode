@@ -103,7 +103,7 @@ void ScriptSystem::Run(GameObject * gameObject, float dt) {
 }
 
 void RenderSystem::Run(GameObject * gameObject) {
-	 TryInvoke(gameObject, this);
+	TryInvoke(gameObject, this);
 }
 
 void AnimationSystem::Run(GameObject * gameObject, float dt) {
@@ -111,5 +111,9 @@ void AnimationSystem::Run(GameObject * gameObject, float dt) {
 }
 
 void PhysXSystem::Run(GameObject * gameObject) {
+	TryInvoke(gameObject, this);
+}
+
+void LightSystem::Run(GameObject * gameObject) {
 	TryInvoke(gameObject, this);
 }

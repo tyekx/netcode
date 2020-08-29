@@ -19,7 +19,7 @@ Param(
     [Parameter(ValuefromPipeline=$true,Mandatory=$false)][switch]$OnlyNew
 )
 
-$compileAll = !$Textures.IsPresent -AND !$Fonts.IsPresent
+$compileAll = !$Textures.IsPresent -AND !$Fonts.IsPresent -AND !$Models.IsPresent
 
 function Compile-Texture-Into-DDS {
 
@@ -108,7 +108,7 @@ function Compile-Model {
         }
     }
 
-    ..\Build\x64-Debug-clang\NetcodeAssetCompiler\NetcodeAssetCompiler.exe --manifest $manifest --output $outPath --overwrite
+    ..\Build\x64-Debug-clang\NetcodeAssetCompiler\NetcodeAssetCompiler.exe --manifest $manifest --output $outPath --overwrite --verbose
 }
 
 if($compileAll -OR $Textures.IsPresent) {
@@ -148,4 +148,6 @@ if($compileAll -OR $Fonts.IsPresent) {
 if($compileAll -OR $Models.IsPresent) {
     Compile-Model "wall_manifest.json" "wall.ncasset"
     Compile-Model "ybot_manifest.json" "ybot.ncasset"
+    Compile-Model "chest_01_manifest.json" "chest_01.ncasset"
+    Compile-Model "smooth_sphere_manifest.json" "smooth_sphere.ncasset"
 }

@@ -15,7 +15,7 @@ namespace Netcode::Graphics::DX12 {
 
 		const uint32_t srvId_cpuVisible = srvOffset_CpuVisible;
 		const uint32_t srvId_shaderVisible = srvOffset_ShaderVisible;
-		const D3D12_UNORDERED_ACCESS_VIEW_DESC uavd = GetUnorderedAccessViewDesc(resource->desc);
+		const D3D12_UNORDERED_ACCESS_VIEW_DESC uavd = GetUnorderedAccessViewDesc(resource->desc, 0);
 		const CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpuHandle_CpuVisible{ srvDheap_CpuVisible->GetCPUDescriptorHandleForHeapStart(), static_cast<int>(srvId_cpuVisible), Platform::ShaderResourceViewIncrementSize };
 		const CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpuHandle_ShaderVisible{ srvDheap_ShaderVisible->GetCPUDescriptorHandleForHeapStart(), static_cast<int>(srvId_shaderVisible), Platform::ShaderResourceViewIncrementSize };
 		const CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpuHandle_ShaderVisible{ srvDheap_ShaderVisible->GetGPUDescriptorHandleForHeapStart(), static_cast<int>(srvId_shaderVisible), Platform::ShaderResourceViewIncrementSize };

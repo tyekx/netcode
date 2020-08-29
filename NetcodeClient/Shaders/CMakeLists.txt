@@ -29,6 +29,8 @@ set(NETCODE_DS "")
 set(NETCODE_CS 
 	"skinningPassBlend_Compute.hlsl"
 	"skinningPassInterpolate_Compute.hlsl" 
+	"IBL_brdfEnvmapFilter_Compute.hlsl"
+	"IBL_brdfPreIntegrate_Compute.hlsl"
 )
 
 

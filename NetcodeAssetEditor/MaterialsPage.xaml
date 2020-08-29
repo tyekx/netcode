@@ -10,6 +10,7 @@
     <Page.Resources>
         <local:VectorConverter x:Name="VectorConverter" />
         <local:SelectionToVisibilityConverter x:Name="SelectionToVisibility" />
+        
     </Page.Resources>
 
     <Grid>
@@ -40,31 +41,45 @@
 
         <ScrollViewer Grid.Row="3" Grid.Column="0">
             <StackPanel Orientation="Vertical" Visibility="{Binding SelectedIndex, Converter={StaticResource SelectionToVisibility}, ElementName=materialsList}">
-                <StackPanel Margin="0,15,0,0">
+                <StackPanel Margin="0,15,0,5">
                     <TextBlock Text="Name:" Margin="15,0,0,5"></TextBlock>
                     <TextBox Margin="30,0,30,0" Text="{Binding SelectedItem.Name, Mode=TwoWay, ElementName=materialsList}" TextChanged="Name_TextChanged"></TextBox>
                 </StackPanel>
-                <StackPanel Margin="0,15,0,0">
+                <StackPanel Margin="0,15,0,5">
                     <TextBlock Text="Diffuse Color:" Margin="15,0,0,5"></TextBlock>
-                    <ColorPicker ColorChanged="ColorPicker_ColorChanged" ColorSpectrumShape="Ring" IsAlphaEnabled="True" Color="{Binding SelectedItem.DiffuseColor, Mode=TwoWay, ElementName=materialsList}"></ColorPicker>
+                    <ColorPicker Margin="30,0,30,0" ColorChanged="ColorPicker_ColorChanged" ColorSpectrumShape="Ring" IsAlphaEnabled="True" Color="{Binding SelectedItem.DiffuseColor, Mode=TwoWay, ElementName=materialsList}"></ColorPicker>
                 </StackPanel>
-                <StackPanel Margin="0,15,0,0">
-                    <TextBlock Text="Fresnel R0:" Margin="15,0,0,5"></TextBlock>
-                    <local:Vector3Control Margin="30,0,30,0" Value="{Binding SelectedItem.FresnelR0, Mode=TwoWay, ElementName=materialsList}"></local:Vector3Control>
+                <StackPanel>
+                    <TextBlock Text="Metal Mask:" Margin="15,0,0,5" ToolTipService.ToolTip="Metal mask globally metallic, except if a metallic texture is specified. Then their AND-product will determine if a pixel is evaluated as a conductor or a dielectric"></TextBlock>
+                    <CheckBox x:Name="metalMaskCheckBox" Margin="30,0,30,0" IsChecked="{Binding SelectedItem.MetalMask, Mode=TwoWay, ElementName=materialsList}"></CheckBox>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <StackPanel Margin="0,15,0,15" HorizontalAlignment="Left">
-                        <TextBlock Text="Shininess:" Margin="15,0,0,5"></TextBlock>
-                        <local:FloatBox Margin="30,0,30,0" TextChanged="Shininess_TextChanged" Text="{Binding SelectedItem.Shininess, Mode=TwoWay, ElementName=materialsList}" MaxWidth="240"></local:FloatBox>
-                    </StackPanel>
-                    <StackPanel Margin="0,15,0,15" HorizontalAlignment="Left">
-                        <TextBlock Text="Displacement Scale:" Margin="15,0,15,5"></TextBlock>
-                        <local:FloatBox HorizontalAlignment="Right" TextChanged="DisplacementScale_TextChanged" Text="{Binding SelectedItem.DisplacementScale, Mode=TwoWay, ElementName=materialsList}" MaxWidth="240"></local:FloatBox>
-                    </StackPanel>
+                <StackPanel Margin="0,15,0,5">
+                    <TextBlock Text="Fresnel F0:" Margin="15,0,0,5" ToolTipService.ToolTip="F0 value for conductors"></TextBlock>
+                    <local:Vector3Control Margin="30,0,30,0" MaxValue="1.0" MinValue="0.0" StepScale="0.01" Value="{Binding SelectedItem.FresnelR0, Mode=TwoWay, ElementName=materialsList}"></local:Vector3Control>
+                </StackPanel>
+                <StackPanel Margin="0,15,0,5">
+                    <TextBlock Text="Reflectance:" Margin="15,0,0,5" ToolTipService.ToolTip="f0 = 0.16 * refl * refl for dielectrics"></TextBlock>
+                    <local:FloatBox Margin="30,0,30,0" MaxValue="1.0" MinValue="0.0" StepScale="0.01" Text="{Binding SelectedItem.Reflectance, Mode=TwoWay, ElementName=materialsList}"></local:FloatBox>
+                </StackPanel>
+                <StackPanel Margin="0,15,0,5">
+                    <TextBlock Text="Shininess:" Margin="15,0,0,5"></TextBlock>
+                    <local:FloatBox Margin="30,0,30,0" MaxValue="1.0" MinValue="0.0" StepScale="0.01" Text="{Binding SelectedItem.Shininess, Mode=TwoWay, ElementName=materialsList}"></local:FloatBox>
+                </StackPanel>
+                <StackPanel Margin="0,15,0,5">
+                    <TextBlock Text="Displacement Scale:" Margin="15,0,0,5"></TextBlock>
+                    <local:FloatBox Margin="30,0,30,0" MaxValue="1.0" MinValue="0.0" StepScale="0.01" Text="{Binding SelectedItem.DisplacementScale, Mode=TwoWay, ElementName=materialsList}"></local:FloatBox>
+                </StackPanel>
+                <StackPanel Margin="0,15,0,5">
+                    <TextBlock Text="Displacement Bias:" Margin="15,0,0,5"></TextBlock>
+                    <local:FloatBox Margin="30,0,30,0" MaxValue="1.0" MinValue="0.0" StepScale="0.01" Text="{Binding SelectedItem.DisplacementBias, Mode=TwoWay, ElementName=materialsList}"></local:FloatBox>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
                     <TextBlock Text="Tiling:" Margin="15,0,0,5"></TextBlock>
-                    <local:Vector2Control Margin="30,0,30,0" Value="{Binding SelectedItem.Tiling, Mode=TwoWay, ElementName=materialsList}"></local:Vector2Control>
+                    <local:Vector2Control Margin="30,0,30,0" MinValue="-5000" MaxValue="5000" StepScale="1" Value="{Binding SelectedItem.Tiling, Mode=TwoWay, ElementName=materialsList}"></local:Vector2Control>
+                </StackPanel>
+                <StackPanel Margin="0,15,0,0">
+                    <TextBlock Text="Tiling offset:" Margin="15,0,0,5"></TextBlock>
+                    <local:Vector2Control Margin="30,0,30,0" MinValue="0" MaxValue="1" StepScale="0.01" Value="{Binding SelectedItem.TilingOffset, Mode=TwoWay, ElementName=materialsList}"></local:Vector2Control>
                 </StackPanel>
                 <StackPanel Margin="0,15,0,0">
                     <CheckBox x:Name="diffuseTextureCheckBox" IsChecked="True" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked" Margin="15,0,0,0" Content="Diffuse Texture Relative Path:"></CheckBox>

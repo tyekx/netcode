@@ -4,6 +4,12 @@
 
 namespace winrt::NetcodeAssetEditor::implementation
 {
+    bool DC_Material::MetalMask() {
+        return metalMask;
+    }
+    void DC_Material::MetalMask(bool value) {
+        metalMask = value;
+    }
     hstring DC_Material::Name()
     {
         return name;
@@ -48,6 +54,16 @@ namespace winrt::NetcodeAssetEditor::implementation
         propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"Tiling"));
     }
 
+    Windows::Foundation::Numerics::float2 DC_Material::TilingOffset()
+    {
+        return tilingOffset;
+    }
+
+    void DC_Material::TilingOffset(Windows::Foundation::Numerics::float2 const & value)
+    {
+        tilingOffset = value;
+    }
+
     float DC_Material::Shininess()
     {
         return shininess;
@@ -59,12 +75,32 @@ namespace winrt::NetcodeAssetEditor::implementation
         propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs(L"Shininess"));
     }
 
+    float DC_Material::Reflectance()
+    {
+        return reflectance;
+    }
+
+    void DC_Material::Reflectance(float value)
+    {
+        reflectance = value;
+    }
+
     float DC_Material::DisplacementScale() {
         return displacementScale;
     }
 
     void DC_Material::DisplacementScale(float value) {
         displacementScale = value;
+    }
+
+    float DC_Material::DisplacementBias()
+    {
+        return displacementBias;
+    }
+
+    void DC_Material::DisplacementBias(float value)
+    {
+        displacementBias = value;
     }
 
     hstring DC_Material::DiffuseMapReference()

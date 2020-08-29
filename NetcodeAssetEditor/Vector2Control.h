@@ -15,6 +15,51 @@ namespace winrt::NetcodeAssetEditor::implementation
 
         static Windows::UI::Xaml::DependencyProperty valueProperty;
         static Windows::UI::Xaml::DependencyProperty isReadOnlyProperty;
+        static Windows::UI::Xaml::DependencyProperty minValueProperty;
+        static Windows::UI::Xaml::DependencyProperty maxValueProperty;
+        static Windows::UI::Xaml::DependencyProperty stepScaleProperty;
+        double minValue;
+        double maxValue;
+        double stepScale;
+
+        double StepScale() const {
+            return unbox_value<double>(GetValue(stepScaleProperty));
+        }
+
+        void StepScale(double v) {
+            stepScale = v;
+            SetValue(stepScaleProperty, box_value(v));
+        }
+
+        static Windows::UI::Xaml::DependencyProperty StepScaleProperty() {
+            return stepScaleProperty;
+        }
+
+        double MaxValue() const {
+            return unbox_value<double>(GetValue(maxValueProperty));
+        }
+
+        void MaxValue(double v) {
+            maxValue = v;
+            SetValue(maxValueProperty, box_value(v));
+        }
+
+        static Windows::UI::Xaml::DependencyProperty MaxValueProperty() {
+            return maxValueProperty;
+        }
+
+        double MinValue() const {
+            return unbox_value<double>(GetValue(minValueProperty));
+        }
+
+        void MinValue(double v) {
+            minValue = v;
+            SetValue(minValueProperty, box_value(v));
+        }
+
+        static Windows::UI::Xaml::DependencyProperty MinValueProperty() {
+            return minValueProperty;
+        }
 
         bool IsReadOnly() const {
             return unbox_value<bool>(GetValue(isReadOnlyProperty));

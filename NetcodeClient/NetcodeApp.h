@@ -28,24 +28,23 @@ using Netcode::Graphics::ResourceState;
 using Netcode::Graphics::FrameGraphCullMode;
 
 class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler {
+	GraphicsEngine renderer;
 	Netcode::Stopwatch stopwatch;
-	Netcode::Physics::PhysX px;
-	Netcode::PxPtr<physx::PxMaterial> defaultPhysxMaterial;
 	Netcode::MovementController movCtrl;
 	TransformSystem transformSystem;
 	ScriptSystem scriptSystem;
 	RenderSystem renderSystem;
 	AnimationSystem animSystem;
+	LightSystem lightSystem;
 	PhysXSystem pxSystem;
 	Netcode::UI::PageManager pageManager;
+	Netcode::Physics::PhysX * pxService;
 	GameScene * gameScene;
 	Ref<AnimationSet> ybotAnimationSet;
 	Ref<Netcode::Network::GameSession> gameSession;
 	Netcode::URI::Model mapAsset;
 
 	float totalTime;
-
-	void LoadGameObjectFromJson(const json11::Json::object & values);
 
 	void LoadSystems();
 
@@ -73,21 +72,18 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 
 	void CreateLocalAvatar();
 
-	void LoadComponents(Netcode::Asset::Model * model, GameObject * gameObject);
-
-	void LoadColliderComponent(Netcode::Asset::Model * model, Collider * colliderComponent);
-
-	void LoadModelComponent(Netcode::Asset::Model * model, Model * modelComponent);
-
 public:
 
 	virtual void OnResized(int w, int h) override {
 		float asp = graphics->GetAspectRatio();
-		if(gameScene->GetCamera() != nullptr) {
-			gameScene->GetCamera()->GetComponent<Camera>()->aspect = asp;
+		if(GameObject * cameraObj = gameScene->GetCamera(); cameraObj != nullptr) {
+			Camera * cam = cameraObj->GetComponent<Camera>();
+			if(cam != nullptr) {
+				cam->aspect = asp;
+			}
 		}
 		pageManager.WindowResized(Netcode::UInt2{ static_cast<uint32_t>(w), static_cast<uint32_t>(h) });
-		renderSystem.renderer.OnResize(w, h);
+		renderer.OnResize(w, h);
 	}
 
 	virtual void AddAppEventHandlers(Netcode::Module::AppEventSystem * eventSystem) override {
@@ -120,13 +116,11 @@ public:
 
 		stopwatch.Start();
 
-		px.CreateResources();
-
 		LoadServices();
 		LoadSystems();
 		CreateAxisMapping();
 		CreateUI();
-		LoadMap(L"test_map.json");
+		LoadMap(L"mat_test_map.json");
 	}
 
 	/*
@@ -153,11 +147,9 @@ public:
 	Properly shutdown the application
 	*/
 	virtual void Exit() override {
-		defaultPhysxMaterial.Reset();
-		renderSystem.renderer.ui_Input = nullptr;
+		renderer.ui_Input = nullptr;
 		pageManager.Destruct();
 		Service::Clear();
-		px.ReleaseResources();
 		ShutdownModule(network.get());
 		ShutdownModule(audio.get());
 		ShutdownModule(graphics.get());

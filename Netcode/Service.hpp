@@ -35,12 +35,16 @@ namespace Netcode {
 		}
 
 		template<typename T>
-		static T * Get() {
+		static typename std::remove_pointer<T>::type * Get() {
 			static_assert(TupleContainsType<T, TUPLE_T>::value, "Can not initialize a service that is not declared up front");
 
 			constexpr uint32_t offsetOf = TupleOffsetOf<T, TUPLE_T>::value;
 
-			return reinterpret_cast<T *>(data + offsetOf);
+			if constexpr(std::is_pointer<T>::value) {
+				return *reinterpret_cast<T *>(data + offsetOf);
+			} else {
+				return reinterpret_cast<T *>(data + offsetOf);
+			}
 		}
 
 	};

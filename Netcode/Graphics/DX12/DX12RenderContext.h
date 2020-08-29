@@ -11,13 +11,12 @@ namespace Netcode::Graphics::DX12 {
 	class DynamicDescriptorHeap;
 
 	class BaseRenderContext : public Netcode::Graphics::IRenderContext {
-	protected:
+	public:
 		Ptr<ResourcePool> resources;
 		Ptr<ConstantBufferPool> cbuffers;
 		Ptr<DynamicDescriptorHeap> descHeaps;
 		Ptr<ID3D12GraphicsCommandList> commandList;
 		std::vector<D3D12_RESOURCE_BARRIER> barriers;
-	public:
 
 		BaseRenderContext(Ptr<ResourcePool> resourcePool,
 			Ptr<ConstantBufferPool> cbufferPool,
@@ -105,6 +104,7 @@ namespace Netcode::Graphics::DX12 {
 		virtual void SetRenderTargets(Ref<GpuResource> renderTarget, Ref<GpuResource> depthStencil) override;
 
 		virtual void SetRootConstants(int slot, const void * srcData, uint32_t numConstants) override;
+		virtual void SetRootConstants(int slot, const void * srcData, uint32_t num32bitConstants, uint32_t offsetIn32BitConstants) override;
 		virtual void SetConstantBuffer(int slot, Ref<GpuResource> cbufferHandle) override;
 		virtual void SetConstants(int slot, uint64_t constantHandle) override;
 		virtual uint64_t SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) override;
@@ -112,6 +112,7 @@ namespace Netcode::Graphics::DX12 {
 		virtual void SetShaderResources(int slot, std::initializer_list<Ref<GpuResource>> shaderResourceHandles) override;
 		virtual void SetShaderResources(int slot, Ref<Netcode::ResourceViews> resourceView) override;
 		virtual void SetShaderResources(int slot, Ref<Netcode::ResourceViews> resourceView, int descriptorOffset) override;
+		virtual void SetShaderResources(int slot, Ref<GpuResource> nonTextureResource) override;
 
 		virtual void CopyBufferRegion(Ref<GpuResource> dstResource, Ref<GpuResource> srcResource, size_t sizeInBytes) override;
 		
@@ -204,9 +205,10 @@ namespace Netcode::Graphics::DX12 {
 		virtual void SetShaderResources(int slot, std::initializer_list<Ref<GpuResource>> shaderResourceHandles) override;
 		virtual void SetShaderResources(int slot, Ref<Netcode::ResourceViews> resourceView) override;
 		virtual void SetShaderResources(int slot, Ref<Netcode::ResourceViews> resourceView, int descriptorOffset) override;
-
+		virtual void SetShaderResources(int slot, Ref<GpuResource> nonTextureResource) override;
 
 		virtual void SetRootConstants(int slot, const void * srcData, uint32_t numConstants) override;
+		virtual void SetRootConstants(int slot, const void * srcData, uint32_t num32bitConstants, uint32_t offsetIn32BitConstants) override;
 		virtual void SetConstantBuffer(int slot, Ref<GpuResource> cbufferHandle) override;
 
 		virtual void SetConstants(int slot, uint64_t constantHandle) override;

@@ -1,54 +1,24 @@
 #pragma once
 
-/*
-Credits: a chunk of the SSAO implementation was based on the book "3D Game Programming with DirectX 12"
-ISBN: 978-1942270065
-*/
-
+#include <Netcode/URI/Model.h>
 #include <Netcode/PhysXWrapper.h>
 #include <Netcode/MathExt.h>
 #include "GameObject.h"
 #include "Scene.h"
 #include "PhysxHelpers.h"
+#include "Snippets.h"
+#include "DevCameraScript.h"
 
-class GameSceneSimulationEventCallback : public physx::PxSimulationEventCallback {
-	virtual void onConstraintBreak(physx::PxConstraintInfo * constraints, physx::PxU32 count) override;
-	virtual void onWake(physx::PxActor ** actors, physx::PxU32 count) override;
-	virtual void onSleep(physx::PxActor ** actors, physx::PxU32 count) override;
-	virtual void onContact(const physx::PxContactPairHeader & pairHeader, const physx::PxContactPair * pairs, physx::PxU32 nbPairs) override;
-	virtual void onTrigger(physx::PxTriggerPair * pairs, physx::PxU32 count) override;
-	virtual void onAdvance(const physx::PxRigidBody * const * bodyBuffer, const physx::PxTransform * poseBuffer, const physx::PxU32 count) override;
-};
-
-__declspec(align(16)) class GameScene : public Scene<GameObject> {
-protected:
-	std::unique_ptr<GameSceneSimulationEventCallback> sceneCallback;
-	void * __structPadding0;
-	GameScene() = default;
+class GameScene : public Scene<GameObject> {
 public:
 	PerFrameData perFrameData;
-	SsaoData ssaoData;
 
-	GameScene(Netcode::Physics::PhysX & px) : GameScene() {
-		sceneCallback = std::make_unique<GameSceneSimulationEventCallback>();
-		physx::PxSceneDesc sceneDesc{ px.physics->getTolerancesScale() };
-		sceneDesc.gravity = physx::PxVec3{ 0.0f, -981.0f, 0.0f };
-		sceneDesc.cpuDispatcher = px.dispatcher.Get();
-		sceneDesc.filterShader = SimulationFilterShader;
-		sceneDesc.simulationEventCallback = sceneCallback.get();
-		controllerMaterial = px.physics->createMaterial(0.5f, 0.6f, 0.6f);
-
-		physx::PxScene * pScene = px.physics->createScene(sceneDesc);
-		controllerManager = PxCreateControllerManager(*pScene);
-		physx::PxPvdSceneClient * pvdClient = pScene->getScenePvdClient();
-		if(pvdClient) {
-			pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
-			pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
-			pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
-		}
-
-		Scene::SetPhysXScene(pScene);
-	}
+	GameScene();
+	GameScene(GameScene &&) = default;
+	GameScene & operator=(GameScene &&) noexcept = default;
+	~GameScene() = default;
+	GameScene(const GameScene &) = delete;
+	GameScene & operator=(const GameScene &) = delete;
 
 	std::vector<float> CalcGaussWeights(float sigma)
 	{
@@ -79,7 +49,7 @@ public:
 	}
 
 	void Setup() {
-		ssaoData.Offsets[0] = Netcode::Float4(+1.0f, +1.0f, +1.0f, 0.0f);
+		/*ssaoData.Offsets[0] = Netcode::Float4(+1.0f, +1.0f, +1.0f, 0.0f);
 		ssaoData.Offsets[1] = Netcode::Float4(-1.0f, -1.0f, -1.0f, 0.0f);
 
 		ssaoData.Offsets[2] = Netcode::Float4(-1.0f, +1.0f, +1.0f, 0.0f);
@@ -117,7 +87,7 @@ public:
 		auto blurWeights = CalcGaussWeights(2.5f);
 		ssaoData.weights[0] = Netcode::Float4(&blurWeights[0]);
 		ssaoData.weights[1] = Netcode::Float4(&blurWeights[4]);
-		ssaoData.weights[2] = Netcode::Float4(&blurWeights[8]);
+		ssaoData.weights[2] = Netcode::Float4(&blurWeights[8]);*/
 	}
 
 	void Spawn(GameObject * obj) {
@@ -129,42 +99,13 @@ public:
 		}
 	}
 
-	GameObject * Clone(GameObject * src) {
-		GameObject *obj = Create();
+	GameObject * CloneWithHierarchy(GameObject * src);
 
-		if(src->HasComponent<Transform>()) {
-			*obj->AddComponent<Transform>() = *src->GetComponent<Transform>();
-		}
-
-		if(src->HasComponent<Collider>()) {
-			Collider * dstCollider = obj->AddComponent<Collider>();
-			Collider * srcCollider = src->GetComponent<Collider>();
-
-			physx::PxTransform t{ physx::PxIdentity };
-			if(obj->HasComponent<Transform>()) {
-				Transform * transform = obj->GetComponent<Transform>();
-				t = physx::PxTransform{
-					Netcode::ToPxVec3(transform->position), Netcode::ToPxQuat(transform->rotation)
-				};
-			}
-
-			auto * ptr = physx::PxCloneDynamic(pxScene->getPhysics(), t, *static_cast<physx::PxRigidDynamic *>(srcCollider->actor.Get()));
-			ptr->userData = nullptr;
-			dstCollider->actor.Reset(ptr);
-		}
-
-		if(src->HasComponent<Model>()) {
-			Model * m = obj->AddComponent<Model>();
-			Model * s = src->GetComponent<Model>();
-			m->meshes = s->meshes;
-		}
-
-		return obj;
-	}
+	GameObject * Clone(GameObject * src);
 
 	void UpdatePerFrameCb() {
-		Transform * transform = cameraRef->GetComponent<Transform>();
-		Camera * camComponent = cameraRef->GetComponent<Camera>();
+		Transform * transform = GetCamera()->GetComponent<Transform>();
+		Camera * camComponent = GetCamera()->GetComponent<Camera>();
 
 		const Netcode::Vector3 eyePos = transform->worldPosition;
 
@@ -193,6 +134,7 @@ public:
 		perFrameData.ViewProj = vp.Transpose();
 		perFrameData.ViewProjInv = invVp.Transpose();
 
+		perFrameData.ambientLightIntensity = Netcode::Float4{ 0.1f, 0.1f, 0.1f, 1.0f };
 		perFrameData.eyePos = eyePos.XYZ1();
 
 		Netcode::Matrix projInv = invVp * view;
@@ -204,25 +146,56 @@ public:
 	}
 
 
-	physx::PxController * CreateController() {
-		physx::PxCapsuleControllerDesc cd;
-		cd.behaviorCallback = NULL;
-		cd.climbingMode = physx::PxCapsuleClimbingMode::eEASY;
-		cd.contactOffset = 0.1f;
-		cd.density = 10.0f;
-		cd.invisibleWallHeight = 0.0f;
-		cd.material = controllerMaterial.Get();
-		cd.position = physx::PxExtendedVec3{ 0.0, 300.0, 0.0 };
-		cd.nonWalkableMode = physx::PxControllerNonWalkableMode::ePREVENT_CLIMBING;
-		cd.registerDeletionListener = true;
-		cd.reportCallback = NULL;
-		cd.scaleCoeff = 0.8f;
-		cd.slopeLimit = 0.7071f;
-		cd.stepOffset = 5.0f;
-		cd.upDirection = physx::PxVec3{ 0.0f, 1.0f, 0.0f };
-		cd.volumeGrowth = 1.5f;
-		cd.height = 80.0f;
-		cd.radius = 60.0f;
-		return controllerManager->createController(cd);
+	physx::PxController * CreateController();
+};
+
+class GameSceneManager {
+
+	struct GameObjectMetadata {
+		GameObject * gameObject;
+		Netcode::URI::Model uri;
+		int touched;
+	};
+
+	std::vector<GameObjectMetadata> gameObjectCatalog;
+	GameScene activeScene;
+	GameObject * devCam;
+
+	struct CamState {
+		Transform tr;
+		Camera cam;
+		DevCameraScript dcs;
+	} cameraState;
+
+	Netcode::URI::Model activeSceneUri;
+
+	void CompleteSceneLoading();
+
+	GameObject * LoadLightFromJson(GameScene * scene, const json11::Json::object & obj);
+
+	GameObject * LoadGameObjectFromJson(GameScene * scene, const json11::Json::object & values);
+
+	void LoadSceneDetail(const json11::Json::object & json);
+
+	void LoadSceneDetail(const Netcode::URI::Model & uri);
+
+public:
+
+	Netcode::URI::Model GetActiveSceneUri() const {
+		return activeSceneUri;
+	}
+
+	void CloseScene();
+
+	void ClearCache() {
+		gameObjectCatalog.clear();
+	}
+
+	void ReloadScene();
+
+	void LoadScene(const Netcode::URI::Model & uri);
+
+	GameScene* GetScene() {
+		return &activeScene;
 	}
 };

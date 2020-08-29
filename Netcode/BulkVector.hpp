@@ -213,6 +213,24 @@ namespace Netcode {
 		}
 
 	public:
+		BulkVector() : freeListHead{ nullptr }, freeListTail{ nullptr }, head{ nullptr } { }
+		BulkVector(BulkVector && rhs) : BulkVector{} {
+			std::swap(freeListHead, rhs.freeListHead);
+			std::swap(freeListTail, rhs.freeListTail);
+			std::swap(head, rhs.head);
+		}
+		BulkVector & operator=(BulkVector && rhs) noexcept {
+			std::swap(freeListHead, rhs.freeListHead);
+			std::swap(freeListTail, rhs.freeListTail);
+			std::swap(head, rhs.head);
+			return *this;
+		}
+
+		BulkVector(const BulkVector &) = delete;
+		BulkVector & operator=(const BulkVector &) = delete;
+		~BulkVector() noexcept {
+			Clear();
+		}
 
 		template<typename ... U>
 		T * Emplace(U && ... args) {
@@ -231,6 +249,10 @@ namespace Netcode {
 		}
 
 		void Clear() {
+			if(head == nullptr) {
+				return;
+			}
+
 			for(auto it = begin(); it != nullptr; ++it) {
 				T * ptr = it.operator->();
 				ptr->~T();
@@ -248,10 +270,6 @@ namespace Netcode {
 
 			freeListHead = nullptr;
 			freeListTail = nullptr;
-		}
-
-		~BulkVector() noexcept {
-			Clear();
 		}
 
 		void Remove(T * ptr) {

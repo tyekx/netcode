@@ -546,15 +546,18 @@ namespace Netcode {
 		mat->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
 		Netcode::Float4 ncDiffuseColor{ diffuseColor.r, diffuseColor.g, diffuseColor.b, 1.0f };
 		imat->SetParameter(Netcode::MaterialParamId::DIFFUSE_ALBEDO, ncDiffuseColor);
-		imat->SetParameter(Netcode::MaterialParamId::FRESNEL_R0, Netcode::Float3{ 0.05f, 0.05f, 0.05f });
+		imat->SetParameter(Netcode::MaterialParamId::SPECULAR_ALBEDO, Netcode::Float3{ 0.05f, 0.05f, 0.05f });
+		imat->SetParameter(Netcode::MaterialParamId::REFLECTANCE, 0.1f);
+		imat->SetParameter(Netcode::MaterialParamId::METAL_MASK, false);
 		imat->SetParameter(Netcode::MaterialParamId::TEXTURE_TILES, Netcode::Float2::One);
 		imat->SetParameter(Netcode::MaterialParamId::TEXTURE_TILES_OFFSET, Netcode::Float2::Zero);
 		imat->SetParameter(Netcode::MaterialParamId::DISPLACEMENT_SCALE, 0.01f);
 		imat->SetParameter(Netcode::MaterialParamId::DISPLACEMENT_BIAS, 0.42f);
+		imat->SetParameter(Netcode::MaterialParamId::TEXTURE_FLAGS, 0);
 
 		float shininess = 0.0f;
 		mat->Get(AI_MATKEY_SHININESS, shininess);
-		imat->SetParameter(Netcode::MaterialParamId::ROUGHNESS, std::clamp(256.0f - shininess, 0.0f, 256.0f));
+		imat->SetParameter(Netcode::MaterialParamId::ROUGHNESS, std::clamp((256.0f - shininess) / 256.0f, 0.0f, 1.0f));
 
 		return imat;
 	}
@@ -606,7 +609,7 @@ namespace Netcode {
 	{
 		Assimp::Importer importer;
 
-		uint32_t flags = aiProcess_Triangulate | aiProcess_FlipWindingOrder | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeMeshes;
+		uint32_t flags = aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_FlipWindingOrder | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeMeshes;
 
 		const aiScene * scene = importer.ReadFileFromMemory(source, sizeInBytes, flags, ".fbx");
 

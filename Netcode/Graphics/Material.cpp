@@ -7,13 +7,15 @@ namespace Netcode {
 
 	MaterialParam BrdfMaterial::brdfReflectionData[] = {
 		REGISTER_CONSTANT(MaterialParamId::DIFFUSE_ALBEDO, BrdfMaterial, brdfData.diffuseAlbedo),
-		REGISTER_CONSTANT(MaterialParamId::FRESNEL_R0, BrdfMaterial, brdfData.fresnelR0),
+		REGISTER_CONSTANT(MaterialParamId::SPECULAR_ALBEDO, BrdfMaterial, brdfData.fresnelR0),
 		REGISTER_CONSTANT(MaterialParamId::ROUGHNESS, BrdfMaterial, brdfData.roughness),
 		REGISTER_CONSTANT(MaterialParamId::TEXTURE_TILES, BrdfMaterial, brdfData.textureTiles),
 		REGISTER_CONSTANT(MaterialParamId::TEXTURE_TILES_OFFSET, BrdfMaterial, brdfData.textureOffset),
 		REGISTER_CONSTANT(MaterialParamId::DISPLACEMENT_SCALE, BrdfMaterial, brdfData.displacementScale),
 		REGISTER_CONSTANT(MaterialParamId::DISPLACEMENT_BIAS, BrdfMaterial, brdfData.displacementBias),
 		REGISTER_CONSTANT(MaterialParamId::TEXTURE_FLAGS, BrdfMaterial, brdfData.textureFlags),
+		REGISTER_CONSTANT(MaterialParamId::REFLECTANCE, BrdfMaterial, brdfData.reflectivity),
+		REGISTER_CONSTANT(MaterialParamId::METAL_MASK, BrdfMaterial, brdfData.metalMask),
 		REGISTER_CONSTANT(MaterialParamId::TEXTURE_DIFFUSE, BrdfMaterial, resources[0]),
 		REGISTER_CONSTANT(MaterialParamId::TEXTURE_NORMAL, BrdfMaterial, resources[1]),
 		REGISTER_CONSTANT(MaterialParamId::TEXTURE_AMBIENT, BrdfMaterial, resources[2]),
@@ -38,6 +40,24 @@ namespace Netcode {
 			static_cast<decltype(MaterialParam::offset)>(offset),
 			static_cast<decltype(MaterialParam::size)>(size)
 		};
+	}
+
+	Ref<Material> BrdfMaterial::Clone() const {
+		Ref<BrdfMaterial> clone = std::make_shared<BrdfMaterial>(type, name);
+		clone->brdfData = brdfData;
+		for(uint32_t i = 0; i < Utility::ArraySize(brdfPathData); ++i) {
+			clone->brdfPathData[i] = brdfPathData[i];
+		}
+
+		for(uint32_t i = 0; i < Utility::ArraySize(resources); ++i) {
+			clone->resources[i] = resources[i];
+		}
+
+		for(uint32_t i = 0; i < Utility::ArraySize(views); ++i) {
+			clone->views[i] = views[i];
+		}
+
+		return clone;
 	}
 
 	uint32_t BrdfMaterial::GetParameterCount() const {

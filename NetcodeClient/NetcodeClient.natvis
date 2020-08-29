@@ -2,15 +2,24 @@
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
   <!-- So far only the core components are supported, extension components are subject to change -->
   <Type Name="GameObject">
-    <DisplayString>{{ Name={ debugName }, Owner={ parent }, Signature={ components.signature } }}</DisplayString>
+    <DisplayString>{{ Name={ name }, Owner={ parent }, Signature={ components.signature } }}</DisplayString>
     <Expand>
-      <Item Name="[Transform]" Condition="(components.signature &amp; 1) == 1">((Transform*)components.storage)</Item>
-      <Item Name="[Model]" Condition="(components.signature &amp; 2) == 2">((Model*)(components.storage + sizeof(Transform)))</Item>
-      <Item Name="[Script]" Condition="(components.signature &amp; 4) == 4">((Script*)(components.storage + sizeof(Model) + sizeof(Transform)))</Item>
-      <Item Name="[Collider]" Condition="(components.signature &amp; 8) == 8">((Collider*)(components.storage + sizeof(Model) + sizeof(Transform) + sizeof(Script)))</Item>
-      <Item Name="[Camera]" Condition="(components.signature &amp; 16) == 16">((Camera*)(components.extendedStorage))</Item>
-      <Item Name="[Animation]" Condition="(components.signature &amp; 32) == 32">((Animation*)(components.extendedStorage + sizeof(Camera)))</Item>
+      <ExpandedItem>(NatvisComponentObject*)(components.storage)</ExpandedItem>
     </Expand>
+  </Type>
+  <Type Name="NatvisComponentObject">
+    <Expand>
+      <Item Name="[Transform]" Condition="signature &amp; 1">transform</Item>
+      <Item Name="[Model]" Condition="signature &amp; 2">model</Item>
+      <Item Name="[Light]" Condition="signature &amp; 4">light</Item>
+      <Item Name="[Script]" Condition="signature &amp; 8">script</Item>
+      <Item Name="[Collider]" Condition="signature &amp; 16">collider</Item>
+      <Item Name="[Camera]" Condition="signature &amp; 32">((NatvisExtComponentObject*)rawExtended)-&gt;camera</Item>
+      <Item Name="[Animation]" Condition="signature &amp; 64">((NatvisExtComponentObject*)rawExtended)-&gt;animation</Item>
+    </Expand>
+  </Type>
+  <Type Name="Netcode::Float2">
+    <DisplayString>{{ X={x,g}, Y={y,g} }}</DisplayString>
   </Type>
   <Type Name="Netcode::Float3">
     <DisplayString>{{ X={x,g}, Y={y,g}, Z={z,g} }}</DisplayString>

@@ -55,9 +55,13 @@ namespace NetcodeAssetEditor
         String Name;
         Windows.UI.Color DiffuseColor;
         Windows.Foundation.Numerics.Vector3 FresnelR0;
+        Boolean MetalMask;
+        Single Reflectance;
         Single Shininess;
         Single DisplacementScale;
+        Single DisplacementBias;
         Windows.Foundation.Numerics.Vector2 Tiling;
+        Windows.Foundation.Numerics.Vector2 TilingOffset;
         String DiffuseMapReference;
         String NormalMapReference;
         String SpecularMapReference;
@@ -164,8 +168,15 @@ namespace NetcodeAssetEditor
     [default_interface]
     runtimeclass FloatBox : Windows.UI.Xaml.Controls.TextBox {
         FloatBox();
+        
+    static Windows.UI.Xaml.DependencyProperty MinValueProperty{ get; };
+    static Windows.UI.Xaml.DependencyProperty MaxValueProperty{ get; };
+    static Windows.UI.Xaml.DependencyProperty StepScaleProperty{ get; };
 
         Single Value{ get; };
+        Double MinValue;
+        Double MaxValue;
+        Double StepScale;
     }
 
     delegate void ManifestChangedHandler(UInt64 manifestPtr);

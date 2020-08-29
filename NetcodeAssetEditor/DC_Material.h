@@ -9,9 +9,12 @@ namespace winrt::NetcodeAssetEditor::implementation
         Windows::UI::Color diffuseColor;
         Windows::Foundation::Numerics::float3 fresnelR0;
         Windows::Foundation::Numerics::float2 tiling;
+        Windows::Foundation::Numerics::float2 tilingOffset;
 
         float shininess;
         float displacementScale;
+        float displacementBias;
+        float reflectance;
 
         hstring diffuseMapReference;
         hstring normalMapReference;
@@ -20,9 +23,14 @@ namespace winrt::NetcodeAssetEditor::implementation
         hstring ambientMapReference;
         hstring displacementMapReference;
 
+        bool metalMask;
+
         winrt::event<Windows::UI::Xaml::Data::PropertyChangedEventHandler> propertyChanged;
 
         DC_Material() = default;
+
+        bool MetalMask();
+        void MetalMask(bool value);
 
         hstring Name();
         void Name(hstring const& value);
@@ -36,11 +44,20 @@ namespace winrt::NetcodeAssetEditor::implementation
         Windows::Foundation::Numerics::float2 Tiling();
         void Tiling(Windows::Foundation::Numerics::float2 const& value);
 
+        Windows::Foundation::Numerics::float2 TilingOffset();
+        void TilingOffset(Windows::Foundation::Numerics::float2 const & value);
+
         float Shininess();
         void Shininess(float value);
 
+        float Reflectance();
+        void Reflectance(float value);
+
         float DisplacementScale();
         void DisplacementScale(float value);
+
+        float DisplacementBias();
+        void DisplacementBias(float value);
 
         hstring DiffuseMapReference();
         void DiffuseMapReference(hstring const& value);

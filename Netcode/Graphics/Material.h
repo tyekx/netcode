@@ -18,13 +18,15 @@ namespace Netcode {
 
 	enum class MaterialParamId {
 		DIFFUSE_ALBEDO,
-		FRESNEL_R0,
+		SPECULAR_ALBEDO,
 		ROUGHNESS,
+		REFLECTANCE,
 		TEXTURE_TILES,
 		TEXTURE_TILES_OFFSET,
 		TEXTURE_FLAGS,
 		DISPLACEMENT_SCALE,
 		DISPLACEMENT_BIAS,
+		METAL_MASK,
 
 		SENTINEL_TEXTURE_PATHS_BEGIN = 0x0800,
 		TEXTURE_DIFFUSE_PATH = 0x0800,
@@ -93,6 +95,8 @@ namespace Netcode {
 		MaterialType GetType() const {
 			return type;
 		}
+
+		virtual Ref<Material> Clone() const = 0;
 
 		const std::string & GetName() const {
 			return name;
@@ -170,6 +174,11 @@ namespace Netcode {
 			float displacementScale;
 			float displacementBias;
 			uint32_t textureFlags;
+			float reflectivity;
+			bool metalMask;
+
+			BrdfData() = default;
+			BrdfData & operator=(const BrdfData & rhs) = default;
 		};
 
 		BrdfData brdfData;
@@ -178,6 +187,8 @@ namespace Netcode {
 
 	public:
 		using Material::Material;
+
+		virtual Ref<Material> Clone() const override;
 
 		virtual uint32_t GetParameterCount() const override;
 

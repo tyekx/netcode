@@ -8,19 +8,21 @@ namespace Netcode {
     static void LoadParameters(Ptr<Netcode::Material> mat, const json11::Json::object & params) {
         switch(mat->GetType()) {
             case Netcode::MaterialType::BRDF: {
-                mat->SetParameter(Netcode::MaterialParamId::DIFFUSE_ALBEDO, Netcode::Asset::LoadFloat4(params.find("diffuseAlbedo")->second));
-                mat->SetParameter(Netcode::MaterialParamId::FRESNEL_R0, Netcode::Asset::LoadFloat3(params.find("fresnelR0")->second));
+                mat->SetParameter(Netcode::MaterialParamId::DIFFUSE_ALBEDO, Netcode::Asset::LoadFloat4(params.find("diffuse_albedo")->second));
+                mat->SetParameter(Netcode::MaterialParamId::SPECULAR_ALBEDO, Netcode::Asset::LoadFloat3(params.find("specular_albedo")->second));
                 mat->SetParameter(Netcode::MaterialParamId::ROUGHNESS, static_cast<float>(params.find("roughness")->second.number_value()));
-                mat->SetParameter(Netcode::MaterialParamId::TEXTURE_TILES, Netcode::Asset::LoadFloat2(params.find("textureTiles")->second));
-                mat->SetParameter(Netcode::MaterialParamId::TEXTURE_TILES_OFFSET, Netcode::Asset::LoadFloat2(params.find("textureTilesOffset")->second));
-                mat->SetParameter(Netcode::MaterialParamId::DISPLACEMENT_SCALE, static_cast<float>(params.find("displacementScale")->second.number_value()));
-                mat->SetParameter(Netcode::MaterialParamId::DISPLACEMENT_BIAS, static_cast<float>(params.find("displacementBias")->second.number_value()));
-                mat->SetParameter(Netcode::MaterialParamId::TEXTURE_DIFFUSE_PATH, Netcode::URI::Texture{ Netcode::Utility::ToWideString(params.find("diffusePath")->second.string_value()), Netcode::FullPathToken{} });
-                mat->SetParameter(Netcode::MaterialParamId::TEXTURE_NORMAL_PATH, Netcode::URI::Texture{ Netcode::Utility::ToWideString(params.find("normalPath")->second.string_value()), Netcode::FullPathToken{} });
-                mat->SetParameter(Netcode::MaterialParamId::TEXTURE_AMBIENT_PATH, Netcode::URI::Texture{ Netcode::Utility::ToWideString(params.find("ambientPath")->second.string_value()), Netcode::FullPathToken{} });
-                mat->SetParameter(Netcode::MaterialParamId::TEXTURE_SPECULAR_PATH, Netcode::URI::Texture{ Netcode::Utility::ToWideString(params.find("specularPath")->second.string_value()), Netcode::FullPathToken{} });
-                mat->SetParameter(Netcode::MaterialParamId::TEXTURE_ROUGHNESS_PATH, Netcode::URI::Texture{ Netcode::Utility::ToWideString(params.find("roughnessPath")->second.string_value()), Netcode::FullPathToken{} });
-                mat->SetParameter(Netcode::MaterialParamId::TEXTURE_DISPLACEMENT_PATH, Netcode::URI::Texture{ Netcode::Utility::ToWideString(params.find("displacementPath")->second.string_value()), Netcode::FullPathToken{} });
+                mat->SetParameter(Netcode::MaterialParamId::REFLECTANCE, static_cast<float>(params.find("reflectance")->second.number_value()));
+                mat->SetParameter(Netcode::MaterialParamId::METAL_MASK, params.find("metal_mask")->second.bool_value());
+                mat->SetParameter(Netcode::MaterialParamId::TEXTURE_TILES, Netcode::Asset::LoadFloat2(params.find("texture_tiles")->second));
+                mat->SetParameter(Netcode::MaterialParamId::TEXTURE_TILES_OFFSET, Netcode::Asset::LoadFloat2(params.find("texture_tiles_offset")->second));
+                mat->SetParameter(Netcode::MaterialParamId::DISPLACEMENT_SCALE, static_cast<float>(params.find("displacement_scale")->second.number_value()));
+                mat->SetParameter(Netcode::MaterialParamId::DISPLACEMENT_BIAS, static_cast<float>(params.find("displacement_bias")->second.number_value()));
+                mat->SetParameter(Netcode::MaterialParamId::TEXTURE_DIFFUSE_PATH, Netcode::URI::Texture{ Netcode::Utility::ToWideString(params.find("diffuse_path")->second.string_value()), Netcode::FullPathToken{} });
+                mat->SetParameter(Netcode::MaterialParamId::TEXTURE_NORMAL_PATH, Netcode::URI::Texture{ Netcode::Utility::ToWideString(params.find("normal_path")->second.string_value()), Netcode::FullPathToken{} });
+                mat->SetParameter(Netcode::MaterialParamId::TEXTURE_AMBIENT_PATH, Netcode::URI::Texture{ Netcode::Utility::ToWideString(params.find("ambient_path")->second.string_value()), Netcode::FullPathToken{} });
+                mat->SetParameter(Netcode::MaterialParamId::TEXTURE_SPECULAR_PATH, Netcode::URI::Texture{ Netcode::Utility::ToWideString(params.find("specular_path")->second.string_value()), Netcode::FullPathToken{} });
+                mat->SetParameter(Netcode::MaterialParamId::TEXTURE_ROUGHNESS_PATH, Netcode::URI::Texture{ Netcode::Utility::ToWideString(params.find("roughness_path")->second.string_value()), Netcode::FullPathToken{} });
+                mat->SetParameter(Netcode::MaterialParamId::TEXTURE_DISPLACEMENT_PATH, Netcode::URI::Texture{ Netcode::Utility::ToWideString(params.find("displacement_path")->second.string_value()), Netcode::FullPathToken{} });
             } break;
 
             default: break;
@@ -32,19 +34,21 @@ namespace Netcode {
 
         switch(mat->GetType()) {
             case Netcode::MaterialType::BRDF: {
-                convertedParams["diffuseAlbedo"] = Netcode::Asset::StoreFloat4(mat->GetRequiredParameter<Netcode::Float4>(Netcode::MaterialParamId::DIFFUSE_ALBEDO));
-                convertedParams["fresnelR0"] = Netcode::Asset::StoreFloat3(mat->GetRequiredParameter<Netcode::Float3>(Netcode::MaterialParamId::FRESNEL_R0));
+                convertedParams["diffuse_albedo"] = Netcode::Asset::StoreFloat4(mat->GetRequiredParameter<Netcode::Float4>(Netcode::MaterialParamId::DIFFUSE_ALBEDO));
+                convertedParams["specular_albedo"] = Netcode::Asset::StoreFloat3(mat->GetRequiredParameter<Netcode::Float3>(Netcode::MaterialParamId::SPECULAR_ALBEDO));
                 convertedParams["roughness"] = mat->GetRequiredParameter<float>(Netcode::MaterialParamId::ROUGHNESS);
-                convertedParams["textureTiles"] = Netcode::Asset::StoreFloat2(mat->GetRequiredParameter<Netcode::Float2>(Netcode::MaterialParamId::TEXTURE_TILES));
-                convertedParams["textureTilesOffset"] = Netcode::Asset::StoreFloat2(mat->GetRequiredParameter<Netcode::Float2>(Netcode::MaterialParamId::TEXTURE_TILES_OFFSET));
-                convertedParams["displacementScale"] = mat->GetRequiredParameter<float>(Netcode::MaterialParamId::DISPLACEMENT_SCALE);
-                convertedParams["displacementBias"] = mat->GetRequiredParameter<float>(Netcode::MaterialParamId::DISPLACEMENT_BIAS);
-                convertedParams["diffusePath"] = Netcode::Utility::ToNarrowString(mat->GetRequiredParameter<Netcode::URI::Texture>(Netcode::MaterialParamId::TEXTURE_DIFFUSE_PATH).GetFullPath());
-                convertedParams["normalPath"] = Netcode::Utility::ToNarrowString(mat->GetRequiredParameter<Netcode::URI::Texture>(Netcode::MaterialParamId::TEXTURE_NORMAL_PATH).GetFullPath());
-                convertedParams["ambientPath"] = Netcode::Utility::ToNarrowString(mat->GetRequiredParameter<Netcode::URI::Texture>(Netcode::MaterialParamId::TEXTURE_AMBIENT_PATH).GetFullPath());
-                convertedParams["specularPath"] = Netcode::Utility::ToNarrowString(mat->GetRequiredParameter<Netcode::URI::Texture>(Netcode::MaterialParamId::TEXTURE_SPECULAR_PATH).GetFullPath());
-                convertedParams["roughnessPath"] = Netcode::Utility::ToNarrowString(mat->GetRequiredParameter<Netcode::URI::Texture>(Netcode::MaterialParamId::TEXTURE_ROUGHNESS_PATH).GetFullPath());
-                convertedParams["displacementPath"] = Netcode::Utility::ToNarrowString(mat->GetRequiredParameter<Netcode::URI::Texture>(Netcode::MaterialParamId::TEXTURE_DISPLACEMENT_PATH).GetFullPath());
+                convertedParams["reflectance"] = mat->GetRequiredParameter<float>(Netcode::MaterialParamId::REFLECTANCE);
+                convertedParams["metal_mask"] = mat->GetRequiredParameter<bool>(Netcode::MaterialParamId::METAL_MASK);
+                convertedParams["texture_tiles"] = Netcode::Asset::StoreFloat2(mat->GetRequiredParameter<Netcode::Float2>(Netcode::MaterialParamId::TEXTURE_TILES));
+                convertedParams["texture_tiles_offset"] = Netcode::Asset::StoreFloat2(mat->GetRequiredParameter<Netcode::Float2>(Netcode::MaterialParamId::TEXTURE_TILES_OFFSET));
+                convertedParams["displacement_scale"] = mat->GetRequiredParameter<float>(Netcode::MaterialParamId::DISPLACEMENT_SCALE);
+                convertedParams["displacement_bias"] = mat->GetRequiredParameter<float>(Netcode::MaterialParamId::DISPLACEMENT_BIAS);
+                convertedParams["diffuse_path"] = Netcode::Utility::ToNarrowString(mat->GetRequiredParameter<Netcode::URI::Texture>(Netcode::MaterialParamId::TEXTURE_DIFFUSE_PATH).GetFullPath());
+                convertedParams["normal_path"] = Netcode::Utility::ToNarrowString(mat->GetRequiredParameter<Netcode::URI::Texture>(Netcode::MaterialParamId::TEXTURE_NORMAL_PATH).GetFullPath());
+                convertedParams["ambient_path"] = Netcode::Utility::ToNarrowString(mat->GetRequiredParameter<Netcode::URI::Texture>(Netcode::MaterialParamId::TEXTURE_AMBIENT_PATH).GetFullPath());
+                convertedParams["specular_path"] = Netcode::Utility::ToNarrowString(mat->GetRequiredParameter<Netcode::URI::Texture>(Netcode::MaterialParamId::TEXTURE_SPECULAR_PATH).GetFullPath());
+                convertedParams["roughness_path"] = Netcode::Utility::ToNarrowString(mat->GetRequiredParameter<Netcode::URI::Texture>(Netcode::MaterialParamId::TEXTURE_ROUGHNESS_PATH).GetFullPath());
+                convertedParams["displacement_path"] = Netcode::Utility::ToNarrowString(mat->GetRequiredParameter<Netcode::URI::Texture>(Netcode::MaterialParamId::TEXTURE_DISPLACEMENT_PATH).GetFullPath());
             } break;
             default: break;
         }

@@ -3,8 +3,8 @@
 struct BrdfMaterial_VertexInput {
 	float3 position : POSITION;
 	float3 normal : NORMAL;
-	float3 tangent : TANGENT;
 	float2 texCoord : TEXCOORD;
+	float3 tangent : TANGENT;
 }; 
 
 struct BrdfMaterial_VertexOutput {
@@ -23,8 +23,10 @@ ConstantBuffer<FrameData> perFrame : register(b2);
 "CBV(b1, Visibility = SHADER_VISIBILITY_ALL), " \
 "CBV(b2, Visibility = SHADER_VISIBILITY_ALL), " \
 "DescriptorTable(SRV(t0, NumDescriptors = 6), Visibility = SHADER_VISIBILITY_PIXEL), " \
-"DescriptorTable(SRV(t6, NumDescriptors = 1), SRV(t7, NumDescriptors = 1), Visibility = SHADER_VISIBILITY_PIXEL), " \
-"StaticSampler(s0, AddressU = TEXTURE_ADDRESS_WRAP, AddressV = TEXTURE_ADDRESS_WRAP, Filter = FILTER_ANISOTROPIC, mipLODBias = 0.0f, maxAnisotropy = 8, minLOD=0.0f, Visibility = SHADER_VISIBILITY_PIXEL)"
+"SRV(t6, Visibility = SHADER_VISIBILITY_PIXEL), " \
+"DescriptorTable(SRV(t7, NumDescriptors = 2), Visibility = SHADER_VISIBILITY_PIXEL), " \
+"StaticSampler(s0, AddressU = TEXTURE_ADDRESS_WRAP, AddressV = TEXTURE_ADDRESS_WRAP, Filter = FILTER_ANISOTROPIC, mipLODBias = 0.0f, maxAnisotropy = 8, minLOD=0.0f, Visibility = SHADER_VISIBILITY_PIXEL), " \
+"StaticSampler(s1, AddressU = TEXTURE_ADDRESS_CLAMP, AddressV = TEXTURE_ADDRESS_CLAMP, Filter = FILTER_MIN_MAG_MIP_LINEAR, Visibility = SHADER_VISIBILITY_PIXEL)"
 
 
 [RootSignature(BRDF_MATERIAL_ROOTSIG)]
