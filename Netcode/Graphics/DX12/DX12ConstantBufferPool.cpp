@@ -12,9 +12,11 @@ namespace Netcode::Graphics::DX12 {
 	struct ConstantBufferPool::CBufferPage {
 		Ref<DX12::Resource> resource;
 		UINT64 offset;
-		const D3D12_GPU_VIRTUAL_ADDRESS baseAddr;
+		D3D12_GPU_VIRTUAL_ADDRESS baseAddr;
 
 		CBufferPage(Ref<DX12::Resource> resource) : resource{ resource }, offset{ 0 }, baseAddr{ resource->resource->GetGPUVirtualAddress() } { }
+		CBufferPage & operator=(CBufferPage &&) noexcept = default;
+		CBufferPage(CBufferPage &&) noexcept = default;
 	};
 
 	// a single allocation for a cbuffer 32 bytes of management data
@@ -64,13 +66,26 @@ namespace Netcode::Graphics::DX12 {
 		const CD3DX12_RANGE readRange{ 0,0 };
 
 		if(currentPage == nullptr) {
-			currentPage = &pages.emplace_back(CreatePageResource());
-			currentPage->resource->resource->Map(0, &readRange, reinterpret_cast<void **>(&mappedPtr));
+			if(pages.empty()) {
+				pages.emplace_back(CreatePageResource());
+			}
+
+			currentPage = &pages.at(currentPageIdx);
+
+			DX_API("Failed to map resource")
+				currentPage->resource->resource->Map(0, &readRange, reinterpret_cast<void **>(&mappedPtr));
 		} else {
 			if((CBUFFER_PAGE_SIZE - currentPage->offset) < size) {
 				currentPage->resource->resource->Unmap(0, nullptr);
-				currentPage = &pages.emplace_back(CreatePageResource());
-				currentPage->resource->resource->Map(0, &readRange, reinterpret_cast<void **>(&mappedPtr));
+
+				currentPageIdx += 1;
+				if(currentPageIdx == pages.size()) {
+					pages.emplace_back(CreatePageResource());
+				}
+				currentPage = &pages.at(currentPageIdx);
+
+				DX_API("Failed to map resource")
+					currentPage->resource->resource->Map(0, &readRange, reinterpret_cast<void **>(&mappedPtr));
 			}
 		}
 	}
@@ -97,7 +112,11 @@ namespace Netcode::Graphics::DX12 {
 	void ConstantBufferPool::Reset() {
 		allocationPages.clear();
 		currentAllocationPage = nullptr;
-		currentPage = nullptr;
+		if(currentPage != nullptr) {
+			currentPage->resource->resource->Unmap(0, nullptr);
+			currentPage = nullptr;
+		}
+		currentPageIdx = 0;
 		pages.clear();
 	}
 
@@ -113,10 +132,11 @@ namespace Netcode::Graphics::DX12 {
 		}
 		currentAllocationPage = nullptr;
 
-		if(pages.empty()) {
-			currentPage = nullptr;
-		} else {
+		// if we used more pages than 1, then we swap the currently mapped page to the front
+		if(currentPage != nullptr && currentPageIdx > 0) {
+			std::swap(pages.front(), pages.at(currentPageIdx));
 			currentPage = &pages.front();
+			currentPageIdx = 0;
 		}
 	}
 

@@ -2,7 +2,7 @@
 
 struct GBufferPass_PixelInput {
 	float4 position : SV_POSITION;
-	float3 worldPosition : POSITION;
+	float3 worldPos : POSITION;
 	float3 normal : NORMAL;
 	float3 tangent : TANGENT;
 	float2 texCoord : TEXCOORD;
@@ -64,9 +64,11 @@ Texture2D<float> specularTexture : register(t3);
 Texture2D<float> roughnessTexture : register(t4);
 Texture2D<float> displacementTexture : register(t5);
 
-TextureCube<float3> envmap : register(t6);
+TextureCube<float3> prefilteredEnvMap : register(t6);
+Texture2D<float2> preIntegratedBrdf : register(t7);
 
 SamplerState linearWrapSampler : register(s0);
+SamplerState linearClampSampler : register(s1);
 
 #define DIFFUSE_TEXTURE 0
 #define NORMAL_TEXTURE 1
@@ -74,10 +76,11 @@ SamplerState linearWrapSampler : register(s0);
 #define SPECULAR_TEXTURE 3
 #define ROUGHNESS_TEXTURE 4
 #define DISPLACEMENT_TEXTURE 5
+#define METALLIC_BIT 31
 
 static const float PI = 3.1415926535f;
 
-bool IsBitSet(int value, int nthBit) {
+bool IsBitSet(uint value, uint nthBit) {
 	return (value & (1 << nthBit)) > 0;
 }
 
@@ -96,6 +99,18 @@ float3 SampleNormal(BrdfMaterialData mat, float2 texCoord) {
 		return normalize(2.0f * normalTexture.Sample(linearWrapSampler, texCoord) - 1.0f);
 	} else {
 		return float3(0.0f, 0.0f, 1.0f);
+	}
+}
+
+bool SampleMetalMask(BrdfMaterialData mat, float2 texCoord) {
+	if(IsBitSet(mat.textureFlags, METALLIC_BIT)) {
+		if(IsBitSet(mat.textureFlags, SPECULAR_TEXTURE)) {
+			return specularTexture.Sample(linearWrapSampler, texCoord).x > 0.5f;
+		} else {
+			return true;
+		}
+	} else {
+		return false;
 	}
 }
 
@@ -123,7 +138,8 @@ float4 main(GBufferPass_PixelInput input) : SV_TARGET
 	float3 binormal = cross(normal, tangent);
 	float3x3 tbn = float3x3(tangent, -binormal, normal);
 
-	float3 toEye = normalize(eyePos.xyz - input.worldPosition * eyePos.w);
+	float3 toEye = normalize(eyePos.xyz - input.worldPos * eyePos.w);
+
 
 	const float3 diffuseColor = SampleDiffuseColor(material, texCoord).xyz;
 	const float roughness = SampleRoughness(material, texCoord);
@@ -135,51 +151,93 @@ float4 main(GBufferPass_PixelInput input) : SV_TARGET
 	float3 N = SampleNormal(material, texCoord);
 	float NdotV = abs(dot(N, V)) + 0.0001f;
 
+	float3 reflectedDir = mul(2.0f * dot(N, V) * N - V, tbn);
+
 	float3 litColor = float3(0.0f, 0.0f, 0.0f);
 
-	for(int i = 0; i < numLights; i++) {
+	if(SampleMetalMask(material, texCoord)) {
 
-		Light l = lights[i];
-		float3 toLightWorld = l.position;
+		float3 specularColor = prefilteredEnvMap.SampleLevel(linearWrapSampler, reflectedDir, roughness * 6.0f).xyz;
+		float3 lightSum = 0;
+		f0 = material.specularColor;
 
-		if(l.type != 0) {
-			toLightWorld -= input.worldPosition;
+		for(int i = 0; i < numLights; i++) {
+			Light l = lights[i];
+
+			float3 toLightWorld = l.position;
+
+			if(l.type > 0) {
+				// homogenous w does not fit into the Light struct for now
+				// if it does: toLightWorld = l.position - input.worldPos * l.position.w;
+				toLightWorld -= input.worldPos;
+			}
+
+			float surfaceToLightDistance = length(toLightWorld);
+			float3 toLight = toLightWorld / surfaceToLightDistance;
+
+			float3 L = mul(tbn, toLight);
+			float3 H = normalize(L + V);
+
+			float LdotH = saturate(dot(L, H));
+			float NdotH = saturate(dot(N, H));
+			float NdotL = saturate(dot(N, L));
+
+			float2 preDFG = preIntegratedBrdf.SampleLevel(linearClampSampler, float2(NdotV, roughness), 0);
+
+			// reconstruct f_spec = D(h)GGX(l,v,h)F(h) but
+			// F(h) was preintegrated with GGX(l,v,h).
+
+
+			lightSum += (f0 * preDFG.x + preDFG.y) * NdotL;
 		}
-		
-		float toLightWorldLength = length(toLightWorld);
-		float3 toLight = toLightWorld / toLightWorldLength;
 
-		if(dot(toLight, normal) < 0.0f) {
-			continue;
+		return float4(NC_PI * specularColor * lightSum, 1.0f);
+	} else {
+		for(int i = 0; i < numLights; i++) {
+
+
+			Light l = lights[i];
+			float3 toLightWorld = l.position;
+
+			if(l.type != 0) {
+				toLightWorld -= input.worldPos;
+			}
+
+			float toLightWorldLength = length(toLightWorld);
+			float3 toLight = toLightWorld / toLightWorldLength;
+
+			if(dot(toLight, normal) < 0.0f) {
+				continue;
+			}
+
+			float3 L = mul(tbn, toLight);
+			float3 H = normalize(L + V);
+
+			float LdotH = saturate(dot(L, H));
+			float NdotH = saturate(dot(N, H));
+			float NdotL = saturate(dot(N, L));
+
+			float attenuation = 1.0f;
+
+			if(l.type == 1) { // POINT LIGHT
+				attenuation = DistanceAttenuation(toLightWorldLength, l.referenceDistance, l.minDistance, l.maxDistance);
+			}
+
+			if(l.type == 2) { // SPOT LIGHT
+				float cosU = dot(-toLight, l.direction);
+
+				attenuation = DistanceAttenuation(toLightWorldLength, l.referenceDistance, l.minDistance, l.maxDistance) *
+					AngleAttenuation(cosU, l.angleScale, l.angleOffset);
+			}
+
+			float D = D_GGX(NdotH, alphaG);
+			float G = G_SmithGGXCorrelated(NdotL, NdotV, alphaG);
+			float3 F = F_SchlickFresnel(f0, 1.0f, LdotH);
+			float3 Fspec = F * G * D; // / PI 
+			float3 Fdiff = diffuseColor * R_DisneyDiffuse(NdotV, NdotL, LdotH, roughness); // /PI
+
+			litColor += attenuation * NdotL * l.intensity * (Fdiff + Fspec); // * PI => PI terms cancel
 		}
-
-		float3 L = mul(tbn, toLight);
-		float3 H = normalize(L + V);
-
-		float LdotH = saturate(dot(L, H));
-		float NdotH = saturate(dot(N, H));
-		float NdotL = saturate(dot(N, L));
-
-		float attenuation = 1.0f;
-
-		if(l.type == 1) { // POINT LIGHT
-			attenuation = DistanceAttenuation(toLightWorldLength, l.referenceDistance, l.minDistance, l.maxDistance);
-		}
-	
-		if(l.type == 2) { // SPOT LIGHT
-			float cosU = dot(-toLight, l.direction);
-
-			attenuation = DistanceAttenuation(toLightWorldLength, l.referenceDistance, l.minDistance, l.maxDistance) *
-						  AngleAttenuation(cosU, l.angleScale, l.angleOffset);
-		}
-		
-		float D = D_GGX(NdotH, alphaG);
-		float G = G_SmithGGXCorrelated(NdotL, NdotV, alphaG);
-		float3 F = F_SchlickFresnel(f0, 1.0f, LdotH);
-		float3 Fspec = F * G * D; // / PI 
-		float3 Fdiff = diffuseColor * R_DisneyDiffuse(NdotV, NdotL, LdotH, roughness); // /PI
-
-		litColor += attenuation * NdotL * l.intensity * (Fdiff + Fspec); // * PI => PI terms cancel
 	}
 
 	return float4(litColor + diffuseColor * ambientAccess * ambientLightIntensity.xyz, 1.0f);

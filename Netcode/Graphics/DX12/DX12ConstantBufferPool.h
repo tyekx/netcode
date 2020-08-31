@@ -25,6 +25,7 @@ namespace Netcode::Graphics::DX12 {
 		std::list<CBufferAllocationPage> allocationPages;
 		std::vector<CBufferPage> pages;
 		CBufferPage * currentPage;
+		size_t currentPageIdx;
 		CBufferAllocationPage * currentAllocationPage;
 		Ref<HeapManager> heapManager;
 		uint8_t * mappedPtr;

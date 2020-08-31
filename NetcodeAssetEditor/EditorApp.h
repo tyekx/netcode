@@ -130,20 +130,7 @@ namespace Netcode::Module {
 			frameValid = false;
 		}
 
-		virtual void SetDrawGeometry(std::vector<Intermediate::LOD*> lodRefs) {
-			gbuffers.clear();
-
-			for(Intermediate::LOD * lod : lodRefs) {
-				GBuffer gbuffer;
-			    gbuffer.indexBuffer = graphics->resources->CreateIndexBuffer(lod->indexDataSizeInBytes, DXGI_FORMAT_R32_UINT, ResourceType::PERMANENT_UPLOAD, ResourceState::ANY_READ);
-				gbuffer.vertexBuffer = graphics->resources->CreateVertexBuffer(lod->vertexDataSizeInBytes, lod->vertexDataSizeInBytes / lod->vertexCount, ResourceType::PERMANENT_UPLOAD, ResourceState::ANY_READ);
-				gbuffer.vertexCount = lod->vertexCount;
-				gbuffer.indexCount = lod->indexCount;
-				gbuffers.push_back(gbuffer);
-				graphics->resources->CopyConstants(gbuffer.indexBuffer, lod->indexData.get(), lod->indexDataSizeInBytes);
-				graphics->resources->CopyConstants(gbuffer.vertexBuffer, lod->vertexData.get(), lod->vertexDataSizeInBytes);
-			}
-		}
+		virtual void SetDrawGeometry(std::vector<Intermediate::LOD *> lodRefs);
 
 		virtual void OnResized(int32_t x, int32_t y) override {
 			cameraAspect = graphics->GetAspectRatio();

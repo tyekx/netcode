@@ -2,18 +2,23 @@
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/msvc_sink.h>
 
 namespace Log {
 
 	
 
 	void Setup(bool isVerbose) {
+#if defined(NETCODE_EDITOR_VARIANT)
+		auto console = std::make_shared<spdlog::logger>("msvc", std::make_shared<spdlog::sinks::msvc_sink_st>());
+#else
 		auto console = spdlog::stdout_color_mt("console");
+#endif
 
 		if(isVerbose) {
-			spdlog::set_level(spdlog::level::debug);
+			console->set_level(spdlog::level::debug);
 		} else {
-			spdlog::set_level(spdlog::level::info);
+			console->set_level(spdlog::level::info);
 		}
 
 		/*
@@ -60,6 +65,7 @@ namespace Log {
 	template void Debug<float, float, float>(const char * message, const float & value, const float & value2, const float & value3);
 	template void Debug<float, float, float, float>(const char * message, const float & value, const float & value2, const float & value3, const float & value4);
 	template void Debug<>(const char * message);
+	template void Debug<void *, uint64_t, uint64_t>(const char * message, void * const & value, const uint64_t & value2, const uint64_t & value3);
 
 	template void Info<>(const char * message);
 	template void Info<std::string>(const char * message, const std::string & value);
@@ -70,6 +76,7 @@ namespace Log {
 	template void Info<uint16_t, uint16_t>(const char * message, const uint16_t & value, const uint16_t & value2);
 	template void Info<int32_t, int32_t, int32_t>(const char * message, const int32_t & x, const int32_t & y, const int32_t & z);
 	template void Info<uint64_t>(const char * message, const uint64_t & value);
+
 
 	template void Warn<>(const char * message);
 

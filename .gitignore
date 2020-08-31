@@ -7,3 +7,4 @@ SDK.props
 CMakeSDK.txt
 NetcodeProtocol/*.pb.h
 NetcodeProtocol/*.pb.cc
+*.diagsession

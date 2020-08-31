@@ -40,6 +40,34 @@ namespace Netcode::Module {
 		return v;
 	}
 
+	void EditorApp::SetDrawGeometry(std::vector<Intermediate::LOD *> lodRefs) {
+		gbuffers.clear();
+
+		int id = 0;
+
+		for(Intermediate::LOD * lod : lodRefs) {
+			GBuffer gbuffer;
+			gbuffer.indexBuffer = graphics->resources->CreateIndexBuffer(lod->indexDataSizeInBytes, DXGI_FORMAT_R32_UINT, ResourceType::PERMANENT_UPLOAD, ResourceState::ANY_READ);
+			gbuffer.vertexBuffer = graphics->resources->CreateVertexBuffer(lod->vertexDataSizeInBytes, lod->vertexDataSizeInBytes / lod->vertexCount, ResourceType::PERMANENT_UPLOAD, ResourceState::ANY_READ);
+
+			std::wstringstream wss;
+			wss << "VB#" << id << ":" << (void *)(lod->vertexData.get()) << ":" << lod->vertexDataSizeInBytes;
+			graphics->resources->SetDebugName(gbuffer.vertexBuffer, wss.str().c_str());
+
+			std::wstringstream wss2;
+			wss2 << "IB#" << id << ":" << (void *)(lod->indexData.get()) << ":" << lod->indexDataSizeInBytes;
+			graphics->resources->SetDebugName(gbuffer.indexBuffer, wss2.str().c_str());
+
+			id++;
+
+			gbuffer.vertexCount = lod->vertexCount;
+			gbuffer.indexCount = lod->indexCount;
+			gbuffers.push_back(gbuffer);
+			graphics->resources->CopyConstants(gbuffer.indexBuffer, lod->indexData.get(), lod->indexDataSizeInBytes);
+			graphics->resources->CopyConstants(gbuffer.vertexBuffer, lod->vertexData.get(), lod->vertexDataSizeInBytes);
+		}
+	}
+
 	void EditorApp::ReloadShadersDetail()
 	{
 		editorFrameGraph.Create_GBufferPass_PipelineState();
@@ -99,6 +127,8 @@ namespace Netcode::Module {
 	*/
 
 	void EditorApp::Setup(IModuleFactory * factory) {
+		Log::Setup(true);
+
 		Netcode::IO::Path::SetShaderRoot(L"C:/work/directx12/Bin/v142-msvc/Shaders");
 		Netcode::IO::Path::SetMediaRoot(L"C:/work/directx12/Media");
 		Netcode::IO::Path::SetWorkingDirectiory(L"C:/work/directx12/Bin/v142-msvc/AppX");
@@ -158,6 +188,19 @@ namespace Netcode::Module {
 		UpdatePerFrameData();
 
 		editorFrameGraph.CreatePermanentResources(graphics.get());
+
+		Ref<Netcode::FrameGraphBuilder> frameGraphBuilder = graphics->CreateFrameGraphBuilder();
+
+		Ref<Netcode::TextureBuilder> textureBuilder = graphics->CreateTextureBuilder();
+		textureBuilder->LoadTextureCube(L"compiled/textures/envmaps/cloudynoon.dds");
+		Ref<Netcode::GpuResource> cloudynoonTexture = textureBuilder->Build();
+		Ref<Netcode::GpuResource> preIntegratedBrdf = editorFrameGraph.PreIntegrateBrdf(frameGraphBuilder.get());
+		Ref<Netcode::GpuResource> preFilteredEnvmap = editorFrameGraph.PrefilterEnvMap(frameGraphBuilder.get(), cloudynoonTexture);
+
+		graphics->frame->Run(frameGraphBuilder->Build(), Netcode::Graphics::FrameGraphCullMode::NONE);
+		graphics->frame->DeviceSync();
+
+		editorFrameGraph.SetGlobalEnvMap(preFilteredEnvmap, preIntegratedBrdf);
 	}
 
 	/*

@@ -26,6 +26,7 @@ namespace Netcode::Graphics::DX12 {
 
 		void LoadDDSFromMemory(ArrayView<uint8_t> data);
 		void LoadWICFromMemory(ArrayView<uint8_t> data);
+		void GenerateMipLevels();
 
 	public:
 

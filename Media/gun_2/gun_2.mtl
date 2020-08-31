@@ -1,0 +1,23 @@
+# File produced by Open Asset Import Library (http://www.assimp.sf.net)
+# (assimp v3.1.166252288)
+
+newmtl matalic
+kd 0.128239 0.128239 0.128239
+illum 1
+
+newmtl Material.001
+kd 0.0122169 0.0122169 0.0122169
+illum 1
+
+newmtl plastic_gray
+kd 0.0204078 0.0204341 0.0219794
+illum 1
+
+newmtl plastic_darkgray
+kd 0.00364217 0.00364217 0.00364217
+illum 1
+
+newmtl Material.002
+kd 1 0.217255 0.124692
+illum 1
+

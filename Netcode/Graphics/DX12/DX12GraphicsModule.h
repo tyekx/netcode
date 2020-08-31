@@ -61,6 +61,7 @@ namespace Netcode::Graphics::DX12 {
 
 		com_ptr<IDXGISwapChain4> swapChain;
 		UINT swapChainFlags;
+		HANDLE swapChainWaitableObject;
 
 		com_ptr<ID3D12Device5> device;
 		com_ptr<ID3D12CommandQueue> commandQueue;

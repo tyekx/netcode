@@ -49,8 +49,10 @@ cbuffer ObjectData : register(b2) {
 "CBV(b3, Visibility = SHADER_VISIBILITY_PIXEL), " \
 "CBV(b4, Visibility = SHADER_VISIBILITY_PIXEL), " \
 "DescriptorTable(SRV(t0, NumDescriptors = 6), Visibility = SHADER_VISIBILITY_PIXEL), " \
-"DescriptorTable(SRV(t6, NumDescriptors = 1), Visibility = SHADER_VISIBILITY_PIXEL), " \
-"StaticSampler(s0, AddressU = TEXTURE_ADDRESS_WRAP, AddressV = TEXTURE_ADDRESS_WRAP, Filter = FILTER_ANISOTROPIC, mipLODBias = 0.0f, maxAnisotropy = 16, minLOD=0.0f, Visibility = SHADER_VISIBILITY_PIXEL)"
+"DescriptorTable(SRV(t6, NumDescriptors = 2), Visibility = SHADER_VISIBILITY_PIXEL), " \
+"StaticSampler(s0, AddressU = TEXTURE_ADDRESS_WRAP, AddressV = TEXTURE_ADDRESS_WRAP, Filter = FILTER_ANISOTROPIC, mipLODBias = 0.0f, maxAnisotropy = 8, minLOD=0.0f, Visibility = SHADER_VISIBILITY_PIXEL), " \
+"StaticSampler(s1, AddressU = TEXTURE_ADDRESS_CLAMP, AddressV = TEXTURE_ADDRESS_CLAMP, Filter = FILTER_MIN_MAG_MIP_LINEAR, Visibility = SHADER_VISIBILITY_PIXEL)"
+
 
 [RootSignature(GBUFFER_PASS_ROOT_SIG)]
 GBufferPass_VertexOutput main(GBufferPass_VertexInput input)

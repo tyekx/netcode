@@ -157,6 +157,7 @@ namespace Netcode {
 
 	static std::vector<Intermediate::Mesh> ImportMeshes(const aiScene * scene) {
 		std::vector<Intermediate::Mesh> meshes;
+		meshes.reserve(scene->mNumMeshes);
 
 		BoundingBoxGenerator boundingBoxGen;
 
@@ -572,6 +573,113 @@ namespace Netcode {
 		return materials;
 	}
 
+	static bool CompareInputLayouts(const std::vector<Intermediate::InputElement> & il1, const std::vector<Intermediate::InputElement> & il2) {
+		if(il1.size() != il2.size()) {
+			return false;
+		}
+
+		for(const auto & [a, b] : ZipConst(il1, il2)) {
+			if(a.semanticName != b.semanticName || 
+			   a.format != b.format ||
+			   a.semanticIndex != b.semanticIndex ||
+			   a.byteOffset != b.byteOffset) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	static void MergeIdenticalMeshes(std::vector<Intermediate::Mesh> & meshes, const std::vector<Ref<Netcode::Material>> & materials) {
+		struct Metadata {
+			size_t cumulatedVBufferSize;
+			size_t cumulatedIBufferSize;
+			std::vector<Intermediate::InputElement> inputLayout;
+			int meshIdx;
+			bool identicalMeshes;
+
+			Metadata() : cumulatedVBufferSize{ 0 }, cumulatedIBufferSize{ 0 }, inputLayout{}, meshIdx{ -1 }, identicalMeshes{ false } { }
+		};
+
+		if(meshes.size() <= materials.size()) {
+			return;
+		}
+
+		std::vector<Metadata> metadata;
+		metadata.resize(materials.size());
+
+		for(const Intermediate::Mesh & mesh : meshes) {
+			auto & mData = metadata.at(mesh.materialIdx);
+
+			if(mData.inputLayout.empty()) {
+				mData.inputLayout = mesh.inputLayout;
+				mData.identicalMeshes = true;
+			} else {
+				if(mData.identicalMeshes) {
+					mData.identicalMeshes &= CompareInputLayouts(mData.inputLayout, mesh.inputLayout);
+				}
+			}
+
+			mData.cumulatedIBufferSize += mesh.lods.at(0).indexDataSizeInBytes;
+			mData.cumulatedVBufferSize += mesh.lods.at(0).vertexDataSizeInBytes;
+		}
+
+		std::vector<Intermediate::Mesh> dstMeshes;
+		dstMeshes.reserve(meshes.size());
+
+		for(Intermediate::Mesh & mesh : meshes) {
+			auto & mData = metadata.at(mesh.materialIdx);
+
+			if(!mData.identicalMeshes) {
+				dstMeshes.emplace_back(std::move(mesh));
+				continue;
+			}
+
+			if(mData.meshIdx == -1) {
+				Intermediate::Mesh initMesh;
+				initMesh.inputLayout = mData.inputLayout;
+				initMesh.materialIdx = mesh.materialIdx;
+				initMesh.name = mesh.name;
+				initMesh.bones = mesh.bones;
+				initMesh.vertexStride = mesh.vertexStride;
+				mData.meshIdx = static_cast<int>(dstMeshes.size());
+				// TODO: foreach lods
+				Intermediate::LOD lod0;
+				lod0.indexDataSizeInBytes = 0;
+				lod0.vertexDataSizeInBytes = 0;
+				lod0.indexCount = 0;
+				lod0.vertexCount = 0;
+				lod0.indexData = std::make_unique<uint8_t[]>(mData.cumulatedIBufferSize);
+				lod0.vertexData = std::make_unique<uint8_t[]>(mData.cumulatedVBufferSize);
+				initMesh.lods.emplace_back(std::move(lod0));
+				dstMeshes.emplace_back(std::move(initMesh));
+			}
+
+			auto & dstMesh = dstMeshes.at(mData.meshIdx);
+
+			// TODO: foreach lods 
+			Intermediate::LOD & dstLod = dstMesh.lods.at(0);
+			const Intermediate::LOD & srcLod = mesh.lods.at(0);
+			memcpy(dstLod.vertexData.get() + dstLod.vertexDataSizeInBytes, srcLod.vertexData.get(), srcLod.vertexDataSizeInBytes);
+			memcpy(dstLod.indexData.get() + dstLod.indexDataSizeInBytes, srcLod.indexData.get(), srcLod.indexDataSizeInBytes);
+
+			uint32_t * rawIndexBuffer = reinterpret_cast<uint32_t *>(dstLod.indexData.get() + dstLod.indexDataSizeInBytes);
+			const uint32_t currentIndexCount = srcLod.indexDataSizeInBytes / 4;
+			const uint32_t vOffset = dstLod.vertexCount;
+
+			for(uint32_t i = 0; i < currentIndexCount; i++) {
+				rawIndexBuffer[i] += vOffset;
+			}
+
+			dstLod.vertexDataSizeInBytes += srcLod.vertexDataSizeInBytes;
+			dstLod.indexDataSizeInBytes += srcLod.indexDataSizeInBytes;
+			dstLod.vertexCount += srcLod.vertexCount;
+			dstLod.indexCount += srcLod.indexCount;
+		}
+
+		std::swap(dstMeshes, meshes);
+	}
+
 	static Intermediate::Model ImportModel(const aiScene * scene) {
 		Intermediate::Model importedModel;
 
@@ -581,37 +689,27 @@ namespace Netcode {
 			importedModel.meshes = ImportMeshes(scene);
 		}
 
+		importedModel.materials = ImportMaterials(scene);
+
 		importedModel.skeleton = CreateSkeleton(importedModel, scene);
 
 		FillVertexWeights(importedModel);
 
-		importedModel.materials = ImportMaterials(scene);
+		/*
+		after filling the vertex data completely, we can merge without issues
+		*/
+		MergeIdenticalMeshes(importedModel.meshes, importedModel.materials);
 
 		return importedModel;
 	}
 
-	Intermediate::Model FBXImporter::FromFile(const std::string & file) {
-		Assimp::Importer importer;
-
-		uint32_t flags = aiProcess_Triangulate | aiProcess_FlipWindingOrder | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeMeshes;
-
-		const aiScene * scene = importer.ReadFile(file, flags);
-
-		if(scene == nullptr) {
-			const char * err = importer.GetErrorString();
-			OutputDebugStringA(err);
-		}
-
-		return ImportModel(scene);
-	}
-
-	Intermediate::Model FBXImporter::FromMemory(const uint8_t * source, uint32_t sizeInBytes)
+	Intermediate::Model FBXImporter::FromMemory(const uint8_t * source, uint32_t sizeInBytes, const char * pHint)
 	{
 		Assimp::Importer importer;
 
 		uint32_t flags = aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_FlipWindingOrder | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeMeshes;
 
-		const aiScene * scene = importer.ReadFileFromMemory(source, sizeInBytes, flags, ".fbx");
+		const aiScene * scene = importer.ReadFileFromMemory(source, sizeInBytes, flags, pHint);
 
 		return ImportModel(scene);
 	}

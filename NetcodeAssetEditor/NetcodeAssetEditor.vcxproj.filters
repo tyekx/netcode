@@ -343,6 +343,8 @@
     <FxCompile Include="Shaders\Editor_GBufferPass_Vertex.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="Shaders\Editor_IBL_brdfEnvmapFilter_Compute.hlsl" />
+    <FxCompile Include="Shaders\Editor_IBL_brdfPreIntegrate_Compute.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="MaterialsPage.xaml">

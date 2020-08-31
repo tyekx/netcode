@@ -118,8 +118,7 @@ namespace Netcode::Graphics::DX12 {
 			DX_API("Failed to query adapter desc")
 				adapters[adaptersLength]->GetDesc2(&adapterDesc);
 
-			Log::Info("Graphics adapter: {0}", Netcode::Utility::ToNarrowString(adapterDesc.Description));
-
+			Log::Info("          Graphics adapter: {0}", Netcode::Utility::ToNarrowString(adapterDesc.Description));
 			Log::Info("    Adapter dedicated VRAM: {0}", adapterDesc.DedicatedVideoMemory);
 			Log::Info("        Adapter system RAM: {0}", adapterDesc.DedicatedSystemMemory);
 			Log::Info("        Adapter shared RAM: {0}", adapterDesc.SharedSystemMemory);
@@ -282,6 +281,7 @@ namespace Netcode::Graphics::DX12 {
 		clearColor.b = cColor.z;
 		clearColor.a = cColor.w;
 
+#if defined(NETCODE_DEBUG)
 		const bool debugEnabled = Config::Get<bool>("graphics.debug.enabled:bool");
 		if(IsDebuggerPresent() && debugEnabled) {
 			DX_API("Failed to create debug layer")
@@ -293,6 +293,7 @@ namespace Netcode::Graphics::DX12 {
 				debugController->SetEnableGPUBasedValidation(TRUE);
 			}
 		}
+#endif
 
 		// triple buffering is the max allowed
 		frameResources.reserve(3);
@@ -304,6 +305,8 @@ namespace Netcode::Graphics::DX12 {
 		QueryAdapters();
 
 		QuerySyncSupport();
+
+		swapChainFlags |= DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
 		CreateDevice();
 
@@ -322,7 +325,20 @@ namespace Netcode::Graphics::DX12 {
 
 		CreateLibraries();
 
+		DX_API("Failed to set maximum frame latency")
+			swapChain->SetMaximumFrameLatency(1);
+
+		swapChainWaitableObject = swapChain->GetFrameLatencyWaitableObject();
+
 		CreateSwapChainResources();
+
+		// wait for first swap chain
+
+		DWORD waitResult = WaitForSingleObjectEx(swapChainWaitableObject, 1000, TRUE);
+
+		if(waitResult != WAIT_OBJECT_0) {
+			Log::Warn("First swap chain wait returned unexpected code");
+		}
 
 #if defined(NETCODE_DEBUG)
 		if(debugEnabled) {

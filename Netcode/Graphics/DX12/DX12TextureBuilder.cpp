@@ -30,6 +30,20 @@ namespace Netcode::Graphics::DX12 {
 			DirectX::LoadFromWICMemory(data.Data(), data.Size(), DirectX::WIC_FLAGS_NONE, &metaData, scratchImage);
 	}
 
+	void TextureBuilderImpl::GenerateMipLevels()
+	{
+		if(mipLevels > static_cast<uint16_t>(metaData.mipLevels)) {
+			DirectX::ScratchImage outIm;
+
+			DX_API("Failed to generate mip levels")
+				DirectX::GenerateMipMaps(scratchImage.GetImages(), scratchImage.GetImageCount(), scratchImage.GetMetadata(), DirectX::TEX_FILTER_BOX, static_cast<size_t>(mipLevels), outIm);
+
+			metaData = outIm.GetMetadata();
+
+			std::swap(outIm, scratchImage);
+		}
+	}
+
 	TextureBuilderImpl::TextureBuilderImpl(Ref<TextureLibrary> texLib) : textureLibrary{ std::move(texLib) },
 		uri{},
 		scratchImage{},
@@ -87,6 +101,7 @@ namespace Netcode::Graphics::DX12 {
 	
 	Ref<GpuResource> TextureBuilderImpl::Build() {
 		Ref<GpuResource> existingResource = textureLibrary->GetTexture(uri, mipLevels);
+
 		if(existingResource != nullptr) {
 			return existingResource;
 		}
@@ -107,16 +122,7 @@ namespace Netcode::Graphics::DX12 {
 			}
 		}
 
-		if(mipLevels > static_cast<uint16_t>(metaData.mipLevels)) {
-			DirectX::ScratchImage outIm;
-
-			DX_API("Failed to generate mip levels")
-				DirectX::GenerateMipMaps(scratchImage.GetImages(), scratchImage.GetImageCount(), scratchImage.GetMetadata(), DirectX::TEX_FILTER_BOX, static_cast<size_t>(mipLevels), outIm);
-
-			metaData = outIm.GetMetadata();
-
-			std::swap(outIm, scratchImage);
-		}
+		GenerateMipLevels();
 
 		Ref<GpuResource> resource;
 

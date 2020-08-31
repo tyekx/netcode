@@ -231,7 +231,7 @@ namespace winrt::NetcodeAssetEditor::implementation
         auto lifetime = get_strong();
 
         Windows::Storage::Pickers::FileOpenPicker fileOpenPicker;
-        fileOpenPicker.FileTypeFilter().ReplaceAll({ L".fbx" });
+        fileOpenPicker.FileTypeFilter().ReplaceAll({ L".fbx", L".obj" });
         fileOpenPicker.SuggestedStartLocation(Windows::Storage::Pickers::PickerLocationId::Objects3D);
 
 
@@ -250,7 +250,13 @@ namespace winrt::NetcodeAssetEditor::implementation
 
             buffer = co_await readStream.ReadAsync(buffer, static_cast<uint32_t>(size), Windows::Storage::Streams::InputStreamOptions::None);
 
-            *Global::Model = Netcode::FBXImporter::FromMemory(buffer.data(), buffer.Length());
+            const char * pHint = ".fbx";
+
+            if(file.FileType() == L".obj") {
+                pHint = ".obj";
+            }
+
+            *Global::Model = Netcode::FBXImporter::FromMemory(buffer.data(), buffer.Length(), pHint);
 
             std::vector<DirectX::BoundingBox> boundingBoxes;
             boundingBoxes.reserve(Global::Model->meshes.size());
@@ -450,7 +456,9 @@ namespace winrt::NetcodeAssetEditor::implementation
 
             baseBuffer = co_await baseReadStream.ReadAsync(baseBuffer, static_cast<uint32_t>(baseReadStream.Size()), Windows::Storage::Streams::InputStreamOptions::None);
 
-            *Global::Model = Netcode::FBXImporter::FromMemory(baseBuffer.data(), baseBuffer.Length());
+            std::string extHint = Netcode::Utility::ToNarrowString(baseFile.FileType().c_str());
+
+            *Global::Model = Netcode::FBXImporter::FromMemory(baseBuffer.data(), baseBuffer.Length(), extHint.c_str());
 
             for(const auto & animRef : Global::Manifest->animations) {
                 hstring animFile = to_hstring(animRef.source.file);

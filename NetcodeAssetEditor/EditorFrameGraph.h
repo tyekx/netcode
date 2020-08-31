@@ -2,7 +2,9 @@
 
 #include <Netcode/Graphics/FrameGraph.h>
 #include <Netcode/Graphics/ResourceEnums.h>
+#include <Netcode/Graphics/ResourceDesc.h>
 #include <Netcode/Graphics/UploadBatch.h>
+#include <Netcode/Utility.h>
 #include <Netcode/Modules.h>
 #include <Netcode/FancyIterators.hpp>
 #include <DirectXTex.h>
@@ -12,6 +14,8 @@
 #include "GBuffer.h"
 #include "ConstantBufferTypes.h"
 
+using Netcode::GpuResource;
+using Netcode::ResourceViews;
 using Netcode::Graphics::ResourceState;
 using Netcode::Graphics::ResourceType;
 using Netcode::Graphics::ResourceFlags;
@@ -39,11 +43,18 @@ public:
 	Ref<Netcode::RootSignature> colliderPass_RootSignature;
 	Ref<Netcode::PipelineState> colliderPass_PipelineState;
 
-	Ref<Netcode::GpuResource> cloudynoonTexture;
-	Ref<Netcode::ResourceViews> cloudynoonView;
-
 	Ref<Netcode::GpuResource> gbufferPass_DepthStencil;
 	Ref<Netcode::ResourceViews> gbufferPass_DepthStencilView;
+
+	Ref<Netcode::RootSignature> IBLPreFilterPass_RootSignature;
+	Ref<Netcode::PipelineState> IBLPreFilterPass_PipelineState;
+
+	Ref<Netcode::RootSignature> IBLPreIntegratePass_RootSignature;
+	Ref<Netcode::PipelineState> IBLPreIntegratePass_PipelineState;
+
+	Ref<GpuResource> prefilteredEnvmap;
+	Ref<GpuResource> preIntegratedBrdf;
+	Ref<Netcode::ResourceViews> prefilteredSplitSumViews;
 
 
 
@@ -165,15 +176,6 @@ public:
 	}
 
 	void Create_BackgroundPass_PermanentResources(Netcode::Module::IGraphicsModule * g) {
-		Ref<Netcode::TextureBuilder> textureBuilder = g->CreateTextureBuilder();
-		textureBuilder->LoadTextureCube(L"compiled/textures/envmaps/cloudynoon.dds");
-		textureBuilder->SetStateAfterUpload(ResourceState::PIXEL_SHADER_RESOURCE);
-
-		cloudynoonTexture = textureBuilder->Build();
-		g->resources->SetDebugName(cloudynoonTexture, L"Cloudynoon TextureCube");
-
-		cloudynoonView = g->resources->CreateShaderResourceViews(1);
-		cloudynoonView->CreateSRV(0, cloudynoonTexture.get());
 
 		auto shaderBuilder = g->CreateShaderBuilder();
 		auto vs = shaderBuilder->LoadBytecode(L"envmapPass_Vertex.cso");
@@ -261,6 +263,8 @@ public:
 			ctx->SetRootSignature(gbufferPass_RootSignature);
 			ctx->SetPipelineState(gbufferPass_PipelineState);
 
+			int id = 0;
+
 			for(auto & [gb, mat] : Zip(gbufferPass_Input, gbufferPass_InputMaterials)) {
 
 				if(mat->GetType() != Netcode::MaterialType::BRDF) {
@@ -316,11 +320,13 @@ public:
 
 				ctx->SetConstants(4, buffer);
 				ctx->SetShaderResources(5, mat->GetResourceView(0));
-				ctx->SetShaderResources(6, cloudynoonView);
+				ctx->SetShaderResources(6, prefilteredSplitSumViews);
 
 				ctx->SetVertexBuffer(gb.vertexBuffer);
 				ctx->SetIndexBuffer(gb.indexBuffer);
 				ctx->DrawIndexed(gb.indexCount);
+
+				id++;
 			}
 
 			ctx->ResourceBarrier(gbufferPass_DepthStencil, ResourceState::DEPTH_WRITE, ResourceState::DEPTH_READ);
@@ -340,7 +346,9 @@ public:
 			ctx->SetRootSignature(boneVisibilityPass_RootSignature);
 			ctx->SetPipelineState(boneVisibilityPass_PipelineState);
 
+			int i = 0;
 			for(GBuffer & gb : gbufferPass_Input) {
+				i++;
 				ctx->SetConstants(0, *perFrameData);
 				ctx->SetConstants(1, *boneData);
 				ctx->SetConstants(2, *perObjectData);
@@ -367,7 +375,7 @@ public:
 			ctx->SetPipelineState(envmapPass_PipelineState);
 
 			ctx->SetConstants(0, *perFrameData);
-			ctx->SetShaderResources(1, cloudynoonView);
+			ctx->SetShaderResources(1, prefilteredSplitSumViews);
 
 			ctx->SetVertexBuffer(fsQuad.vertexBuffer);
 			ctx->Draw(fsQuad.vertexCount);
@@ -456,6 +464,145 @@ public:
 	std::vector<Ref<Netcode::Material>> gbufferPass_InputMaterials;
 	std::vector<Netcode::Intermediate::Collider> colliderPass_Input;
 
+
+
+	Ref<GpuResource> PreIntegrateBrdf(Ptr<Netcode::FrameGraphBuilder> builder)
+	{
+		if(IBLPreIntegratePass_RootSignature == nullptr) {
+			Ref<Netcode::ShaderBuilder> shaderBuilder = graphics->CreateShaderBuilder();
+			Ref<Netcode::ShaderBytecode> prefilterShader = shaderBuilder->LoadBytecode(L"Editor_IBL_brdfPreIntegrate_Compute.cso");
+			Ref<Netcode::CPipelineStateBuilder> cBuilder = graphics->CreateCPipelineStateBuilder();
+			Ref<Netcode::RootSignatureBuilder> rootSigBuilder = graphics->CreateRootSignatureBuilder();
+			IBLPreIntegratePass_RootSignature = rootSigBuilder->BuildFromShader(prefilterShader);
+			cBuilder->SetComputeShader(prefilterShader);
+			cBuilder->SetRootSignature(IBLPreIntegratePass_RootSignature);
+			IBLPreIntegratePass_PipelineState = cBuilder->Build();
+		}
+
+		const uint32_t SIZE = 512;
+
+		Ref<GpuResource> resource = graphics->resources->CreateTexture2D(SIZE, SIZE, 1,
+			DXGI_FORMAT_R16G16_FLOAT, ResourceType::PERMANENT_DEFAULT, ResourceState::UNORDERED_ACCESS, ResourceFlags::ALLOW_UNORDERED_ACCESS);
+
+		Ref<ResourceViews> tempViews = graphics->resources->CreateShaderResourceViews(1);
+		tempViews->CreateUAV(0, resource.get());
+
+
+
+		builder->CreateRenderPass("CubemapPrefilter",
+			[resource](IResourceContext * ctx) -> void {
+			ctx->UseComputeContext();
+			ctx->Writes(resource.get());
+		},
+			[this, SIZE, tempViews, resource](IRenderContext * ctx) -> void {
+
+			ctx->SetPipelineState(IBLPreIntegratePass_PipelineState);
+			ctx->SetRootSignature(IBLPreIntegratePass_RootSignature);
+			ctx->SetShaderResources(0, tempViews);
+			ctx->Dispatch(SIZE / 8, SIZE / 8, 1);
+
+		});
+
+		builder->CreateRenderPass("CubemapPrefilter:StateChange",
+			[resource](IResourceContext * ctx) -> void {
+			ctx->Reads(resource.get());
+		},
+			[resource](IRenderContext * ctx) -> void {
+			ctx->ResourceBarrier(resource, ResourceState::UNORDERED_ACCESS, ResourceState::PIXEL_SHADER_RESOURCE);
+			ctx->FlushResourceBarriers();
+		});
+
+		return resource;
+	}
+
+	Ref<Netcode::GpuResource> PrefilterEnvMap(Ptr<Netcode::FrameGraphBuilder> builder, Ref<Netcode::GpuResource> sourceTexture)
+	{
+		if(IBLPreFilterPass_RootSignature == nullptr) {
+			Ref<Netcode::ShaderBuilder> shaderBuilder = graphics->CreateShaderBuilder();
+			Ref<Netcode::ShaderBytecode> prefilterShader = shaderBuilder->LoadBytecode(L"Editor_IBL_brdfEnvmapFilter_Compute.cso");
+			Ref<Netcode::CPipelineStateBuilder> cBuilder = graphics->CreateCPipelineStateBuilder();
+			Ref<Netcode::RootSignatureBuilder> rootSigBuilder = graphics->CreateRootSignatureBuilder();
+			IBLPreFilterPass_RootSignature = rootSigBuilder->BuildFromShader(prefilterShader);
+			cBuilder->SetComputeShader(prefilterShader);
+			cBuilder->SetRootSignature(IBLPreFilterPass_RootSignature);
+			IBLPreFilterPass_PipelineState = cBuilder->Build();
+		}
+
+		ResourceDesc resourceDesc = sourceTexture->GetDesc();
+
+		if((resourceDesc.width != resourceDesc.height) ||
+			!Netcode::Utility::IsPowerOf2(resourceDesc.width)) {
+			Log::Error("PrefilterEnvMap: The faces of the texture cube must be quadratic and a power of 2.");
+			return nullptr;
+		}
+
+		if(resourceDesc.depth % 6 != 0 || resourceDesc.dimension != ResourceDimension::TEXTURE2D) {
+			Log::Error("PrefilterEnvMap: input resource is not a TextureCube");
+			return nullptr;
+		}
+
+		uint32_t minWidth = std::max(resourceDesc.height, 8u);
+		int possibleMipCount = static_cast<int>(Netcode::Utility::HighestActiveBitIndex(resourceDesc.width)) - 3;
+		uint16_t mipCount = static_cast<uint16_t>(std::clamp(possibleMipCount, 1, 12));
+
+		Ref<GpuResource> texResource = graphics->resources->CreateTextureCube(minWidth, minWidth, mipCount, DXGI_FORMAT_R8G8B8A8_UNORM,
+			ResourceType::PERMANENT_DEFAULT, ResourceState::UNORDERED_ACCESS, ResourceFlags::ALLOW_UNORDERED_ACCESS);
+
+		Ref<ResourceViews> srv = graphics->resources->CreateShaderResourceViews(mipCount + 1);
+
+		for(uint16_t i = 0; i < mipCount; i++) {
+			srv->CreateUAV(i, texResource.get(), i);
+		}
+
+		srv->CreateSRV(mipCount, sourceTexture.get());
+
+		builder->CreateRenderPass("CubemapPrefilter",
+			[texResource](IResourceContext * ctx) -> void {
+			ctx->UseComputeContext();
+			ctx->Writes(texResource.get());
+		},
+			[this, srv, minWidth, mipCount](IRenderContext * ctx) -> void {
+			ctx->SetPipelineState(IBLPreFilterPass_PipelineState);
+			ctx->SetRootSignature(IBLPreFilterPass_RootSignature);
+
+			uint32_t groupSize = minWidth / 8;
+			uint32_t numMipLevels = mipCount;
+			ctx->SetRootConstants(2, &numMipLevels, 1, 0);
+			for(uint32_t i = 0; i < mipCount; i++) {
+				ctx->SetShaderResources(0, srv, static_cast<int>(i));
+				ctx->SetShaderResources(1, srv, static_cast<int>(mipCount));
+				ctx->SetRootConstants(2, &i, 1, 1);
+				ctx->Dispatch(groupSize, groupSize, 1);
+				groupSize >>= 1;
+			}
+
+		});
+
+		builder->CreateRenderPass("CubemapPrefilter:StateChange",
+			[texResource](IResourceContext * ctx) -> void {
+			ctx->Reads(texResource.get());
+		},
+			[=](IRenderContext * ctx) -> void {
+			ctx->ResourceBarrier(texResource, ResourceState::UNORDERED_ACCESS, ResourceState::PIXEL_SHADER_RESOURCE);
+			ctx->FlushResourceBarriers();
+		});
+
+		return texResource;
+	}
+
+	void SetGlobalEnvMap(Ref<GpuResource> preEnvMap, Ref<GpuResource> preBrdfIntegral)
+	{
+		if(prefilteredSplitSumViews == nullptr) {
+			prefilteredSplitSumViews = graphics->resources->CreateShaderResourceViews(2);
+		}
+
+		prefilteredEnvmap = preEnvMap;
+		prefilteredSplitSumViews->CreateSRV(0, preEnvMap.get());
+
+		preIntegratedBrdf = preBrdfIntegral;
+		prefilteredSplitSumViews->CreateSRV(1, preBrdfIntegral.get());
+	}
+
 	void CreatePermanentResources(Netcode::Module::IGraphicsModule * g) {
 		graphics = g;
 		CreateFSQuad(g);
@@ -467,7 +614,7 @@ public:
 
 	void CreateFrameGraph(Ptr<Netcode::FrameGraphBuilder> builder) {
 		CreateGbufferPass(builder);
-		CreateBoneVisibilityPass(builder);
+		//CreateBoneVisibilityPass(builder);
 		CreateBackgroundPass(builder);
 		CreateColliderPass(builder);
 		CreateDebugPass(builder);
