@@ -8,6 +8,8 @@
 #include <Netcode/Config.h>
 #include <NetcodeFoundation/Platform.h>
 #include <boost/program_options.hpp>
+#include <NetcodeFoundation/Json.h>
+#include <Netcode/Network/ReplicationContext.h>
 
 struct MainConfig {
 	std::wstring shaderRoot;
@@ -239,6 +241,393 @@ TEST(UriTest, Shader) {
 	EXPECT_EQ(parsed.GetAssetDirectory(), io::Path::ShaderRoot());
 }
 
+TEST(Replication, Conversion) {
+	Netcode::JsonDocument doc;
+	doc.SetObject();
+
+	Netcode::JsonValue v;
+	Netcode::JsonValueConverter<>::ConvertToJson(-10, v, doc.GetAllocator());
+	EXPECT_TRUE(v.IsInt());
+	
+	Netcode::JsonValueConverter<>::ConvertToJson(10u, v, doc.GetAllocator());
+	EXPECT_TRUE(v.IsUint());
+
+	Netcode::JsonValueConverter<>::ConvertToJson(10.0f, v, doc.GetAllocator());
+	EXPECT_TRUE(v.IsFloat());
+
+	Netcode::JsonValueConverter<>::ConvertToJson(10.0, v, doc.GetAllocator());
+	EXPECT_TRUE(v.IsDouble());
+
+	{
+		Netcode::Float4 f4Input{ 1.0f, 2.0f, 3.0f, 4.0f };
+		Netcode::Float4 f4Output;
+
+		Netcode::JsonValueConverter<>::ConvertToJson(f4Input, v, doc.GetAllocator());
+		EXPECT_TRUE(v.IsArray());
+		EXPECT_TRUE(v.GetArray().Size() == 4);
+
+		Netcode::JsonValueConverter<>::ConvertFromJson(v, f4Output);
+		EXPECT_TRUE(f4Input.x == f4Output.x);
+		EXPECT_TRUE(f4Input.y == f4Output.y);
+		EXPECT_TRUE(f4Input.z == f4Output.z);
+		EXPECT_TRUE(f4Input.w == f4Output.w);
+	}
+
+	{
+		Netcode::Float3 f3Input{ 5.0f, 6.0f, 7.0f };
+		Netcode::Float3 f3Output;
+
+		Netcode::JsonValueConverter<>::ConvertToJson(f3Input, v, doc.GetAllocator());
+		EXPECT_TRUE(v.IsArray());
+		EXPECT_TRUE(v.GetArray().Size() == 3);
+
+		Netcode::JsonValueConverter<>::ConvertFromJson(v, f3Output);
+		EXPECT_TRUE(f3Input.x == f3Output.x);
+		EXPECT_TRUE(f3Input.y == f3Output.y);
+		EXPECT_TRUE(f3Input.z == f3Output.z);
+	}
+
+	{
+		Netcode::Float2 f2Input{ 8.0f, 9.0f };
+		Netcode::Float2 f2Output;
+
+		Netcode::JsonValueConverter<>::ConvertToJson(f2Input, v, doc.GetAllocator());
+		EXPECT_TRUE(v.IsArray());
+		EXPECT_TRUE(v.GetArray().Size() == 2);
+
+		Netcode::JsonValueConverter<>::ConvertFromJson(v, f2Output);
+		EXPECT_TRUE(f2Input.x == f2Output.x);
+		EXPECT_TRUE(f2Input.y == f2Output.y);
+	}
+
+	{
+		Netcode::Int4 i4Input{ -1,-2,-3,-4 };
+		Netcode::Int4 i4Output;
+
+		Netcode::JsonValueConverter<>::ConvertToJson(i4Input, v, doc.GetAllocator());
+		EXPECT_TRUE(v.IsArray());
+		EXPECT_TRUE(v.GetArray().Size() == 4);
+
+		Netcode::JsonValueConverter<>::ConvertFromJson(v, i4Output);
+		EXPECT_TRUE(i4Input.x == i4Output.x);
+		EXPECT_TRUE(i4Input.y == i4Output.y);
+		EXPECT_TRUE(i4Input.z == i4Output.z);
+		EXPECT_TRUE(i4Input.w == i4Output.w);
+	}
+
+	{
+		Netcode::Int3 i3Input{ -5,-6,-7 };
+		Netcode::Int3 i3Output;
+
+		Netcode::JsonValueConverter<>::ConvertToJson(i3Input, v, doc.GetAllocator());
+		EXPECT_TRUE(v.IsArray());
+		EXPECT_TRUE(v.GetArray().Size() == 3);
+
+		Netcode::JsonValueConverter<>::ConvertFromJson(v, i3Output);
+		EXPECT_TRUE(i3Input.x == i3Output.x);
+		EXPECT_TRUE(i3Input.y == i3Output.y);
+		EXPECT_TRUE(i3Input.z == i3Output.z);
+	}
+
+	{
+		Netcode::Int2 i2Input{ -8, -9 };
+		Netcode::Int2 i2Output;
+
+		Netcode::JsonValueConverter<>::ConvertToJson(i2Input, v, doc.GetAllocator());
+		EXPECT_TRUE(v.IsArray());
+		EXPECT_TRUE(v.GetArray().Size() == 2);
+
+		Netcode::JsonValueConverter<>::ConvertFromJson(v, i2Output);
+		EXPECT_TRUE(i2Input.x == i2Output.x);
+		EXPECT_TRUE(i2Input.y == i2Output.y);
+	}
+
+	{
+		Netcode::UInt4 i4Input{ 1000, 1001, 1002, 1003 };
+		Netcode::UInt4 i4Output;
+
+		Netcode::JsonValueConverter<>::ConvertToJson(i4Input, v, doc.GetAllocator());
+		EXPECT_TRUE(v.IsArray());
+		EXPECT_TRUE(v.GetArray().Size() == 4);
+
+		Netcode::JsonValueConverter<>::ConvertFromJson(v, i4Output);
+		EXPECT_TRUE(i4Input.x == i4Output.x);
+		EXPECT_TRUE(i4Input.y == i4Output.y);
+		EXPECT_TRUE(i4Input.z == i4Output.z);
+		EXPECT_TRUE(i4Input.w == i4Output.w);
+	}
+
+	{
+		Netcode::UInt3 i3Input{ 1004, 1005, 1006 };
+		Netcode::UInt3 i3Output;
+
+		Netcode::JsonValueConverter<>::ConvertToJson(i3Input, v, doc.GetAllocator());
+		EXPECT_TRUE(v.IsArray());
+		EXPECT_TRUE(v.GetArray().Size() == 3);
+
+		Netcode::JsonValueConverter<>::ConvertFromJson(v, i3Output);
+		EXPECT_TRUE(i3Input.x == i3Output.x);
+		EXPECT_TRUE(i3Input.y == i3Output.y);
+		EXPECT_TRUE(i3Input.z == i3Output.z);
+	}
+
+	{
+		Netcode::UInt2 i2Input{ 1007, 1008 };
+		Netcode::UInt2 i2Output;
+
+		Netcode::JsonValueConverter<>::ConvertToJson(i2Input, v, doc.GetAllocator());
+		EXPECT_TRUE(v.IsArray());
+		EXPECT_TRUE(v.GetArray().Size() == 2);
+
+		Netcode::JsonValueConverter<>::ConvertFromJson(v, i2Output);
+		EXPECT_TRUE(i2Input.x == i2Output.x);
+		EXPECT_TRUE(i2Input.y == i2Output.y);
+	}
+
+	{
+		std::wstring strInput = L"Hello World";
+		std::wstring strOutput;
+		
+		Netcode::JsonValueConverter<>::ConvertToJson(strInput, v, doc.GetAllocator());
+		EXPECT_TRUE(v.IsString());
+
+		Netcode::JsonValueConverter<>::ConvertFromJson(v, strOutput);
+		EXPECT_EQ(strInput, strOutput);
+	}
+
+	{
+		Netcode::JsonValueConverter<>::ConvertToJson(Netcode::UInt2{ 1995, 2020 }, v, doc.GetAllocator());
+
+		int32_t i;
+		uint32_t ui;
+		float f;
+		double d;
+		Netcode::Float2 f2;
+		Netcode::Float3 f3;
+		Netcode::Float4 f4;
+		Netcode::Int2 i2;
+		Netcode::Int3 i3;
+		Netcode::Int4 i4;
+		Netcode::UInt2 ui2;
+		Netcode::UInt3 ui3;
+		Netcode::UInt4 ui4;
+		std::wstring str;
+		
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, d), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f3), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f4), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i3), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i4), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui3), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui4), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, str), Netcode::UndefinedBehaviourException);
+
+		EXPECT_NO_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i2));
+		EXPECT_NO_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui2));
+		EXPECT_NO_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f2));
+
+		Netcode::JsonValueConverter<>::ConvertToJson(Netcode::Float2{ 1995.0909f, 2020.0905f }, v, doc.GetAllocator());
+
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, d), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f3), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f4), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i3), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i4), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui3), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui4), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, str), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i2), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui2), Netcode::UndefinedBehaviourException);
+		
+		EXPECT_NO_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f2));
+
+		Netcode::JsonValueConverter<>::ConvertToJson(Netcode::Float3{ 1.0f, 2.0f, 3.0f }, v, doc.GetAllocator());
+
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, d), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f2), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f4), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i2), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i3), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i4), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui2), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui3), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui4), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, str), Netcode::UndefinedBehaviourException);
+
+		EXPECT_NO_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f3));
+
+		Netcode::JsonValueConverter<>::ConvertToJson(Netcode::Float4{ 1.0f, 2.0f, 3.0f, 4.0f }, v, doc.GetAllocator());
+
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, d), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f2), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f3), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i2), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i3), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i4), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui2), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui3), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui4), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, str), Netcode::UndefinedBehaviourException);
+		
+		EXPECT_NO_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f4));
+
+		Netcode::JsonValueConverter<>::ConvertToJson(Netcode::Int2{ -1995, -2020 }, v, doc.GetAllocator());
+
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, d), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f3), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f4), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i3), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i4), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui3), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui4), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, str), Netcode::UndefinedBehaviourException);
+		EXPECT_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, ui2), Netcode::UndefinedBehaviourException);
+
+		EXPECT_NO_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, i2));
+		EXPECT_NO_THROW(Netcode::JsonValueConverter<>::ConvertFromJson(v, f2));
+	}
+}
+
+TEST(Replication, Context) {
+	Netcode::JsonDocument doc;
+	doc.SetObject();
+	Netcode::Network::ReplicationContext<Netcode::JsonDocument> ctx{ doc.GetAllocator(), &doc };
+
+	int x;
+	EXPECT_THROW(ctx.Get(0ull, x), Netcode::UndefinedBehaviourException);
+	EXPECT_THROW(ctx.Get(L"asd", x), Netcode::OutOfRangeException);
+
+	{ // pops on empty object
+		EXPECT_TRUE(ctx.GetScopedValue() == &doc);
+
+		ctx.Reset();
+		EXPECT_TRUE(ctx.GetScopedValue() == &doc);
+		ctx.Pop();
+		EXPECT_TRUE(ctx.GetScopedValue() == &doc);
+		
+		ctx.Pop();
+		ctx.Pop();
+		ctx.Reset();
+		ctx.Pop();
+		ctx.Pop();
+		EXPECT_TRUE(ctx.GetScopedValue() == &doc);
+	}
+
+	{ // push pop push reset push test
+		ctx.Push(L"XYZ", rapidjson::Type::kNumberType);
+		EXPECT_TRUE(ctx.GetScopedValue() != &doc);
+		ctx.Set(30);
+		auto * value = ctx.GetScopedValue();
+		EXPECT_TRUE(value->IsNumber());
+		EXPECT_TRUE(value->GetInt() == 30);
+
+		ctx.Reset();
+		EXPECT_TRUE(ctx.GetScopedValue() == &doc);
+		
+		ctx.Push(L"XYZ", rapidjson::Type::kNumberType);
+		EXPECT_EQ(value, ctx.GetScopedValue());
+
+		ctx.Pop();
+		EXPECT_TRUE(ctx.GetScopedValue() == &doc);
+		
+		ctx.Push(L"XYZ", rapidjson::Type::kNumberType);
+		EXPECT_EQ(value, ctx.GetScopedValue());
+
+		EXPECT_THROW(ctx.Push(L"abc"), Netcode::UndefinedBehaviourException);
+		
+		ctx.Pop();
+		EXPECT_TRUE(ctx.GetScopedValue() == &doc);
+		EXPECT_THROW(ctx.Push(L"XYZ", rapidjson::Type::kObjectType), Netcode::UndefinedBehaviourException);
+	}
+	
+	{
+		ctx.Push(L"AAA", rapidjson::Type::kArrayType);
+
+		auto * scopedValue = ctx.GetScopedValue();
+		EXPECT_NE(scopedValue, &doc);
+
+		ctx.Add(100);
+		ctx.Add(3.0f);
+		ctx.Add(200.0);
+
+		EXPECT_EQ(scopedValue, ctx.GetScopedValue());
+		EXPECT_TRUE(scopedValue->IsArray());
+		EXPECT_EQ(scopedValue->GetArray().Size(), 3);
+		EXPECT_TRUE((*scopedValue)[0].IsInt());
+		EXPECT_TRUE((*scopedValue)[1].IsFloat());
+		EXPECT_TRUE((*scopedValue)[2].IsDouble());
+		
+		EXPECT_EQ((*scopedValue)[0].GetInt(), 100);
+		EXPECT_EQ((*scopedValue)[1].GetFloat(), 3.0f);
+		EXPECT_EQ((*scopedValue)[2].GetDouble(), 200.0);
+
+		ctx.Pop();
+		EXPECT_EQ(ctx.GetScopedValue(), &doc);
+	}
+
+	{
+		ctx.Push(L"BBB");
+		auto * ptr1 = ctx.GetScopedValue();
+		ctx.Push(L"CCC");
+		auto * ptr2 = ctx.GetScopedValue();
+
+		EXPECT_NE(ptr1, ptr2);
+
+		ctx.Pop();
+		EXPECT_EQ(ptr1, ctx.GetScopedValue());
+
+		ctx.Push(L"CCC");
+		EXPECT_EQ(ptr2, ctx.GetScopedValue());
+
+		ctx.Set(L"DDD", Netcode::Float4::One);
+		ctx.Set(L"EEE", Netcode::Float2::Zero);
+
+		EXPECT_TRUE(ptr1->IsObject());
+		EXPECT_EQ(ptr1->GetObject().MemberCount(), 1);
+		EXPECT_NE(ptr1->FindMember(L"CCC"), ptr1->MemberEnd());
+		
+		
+		EXPECT_TRUE(ptr2->IsObject());
+		EXPECT_NE(ptr2->FindMember(L"DDD"), ptr2->MemberEnd());
+		EXPECT_NE(ptr2->FindMember(L"EEE"), ptr2->MemberEnd());
+		EXPECT_EQ(ptr2->GetObject().MemberCount(), 2);
+
+		ctx.Reset();
+		EXPECT_EQ(ctx.GetScopedValue(), &doc);
+
+		ctx.Push(L"FFF", rapidjson::kArrayType);
+		ptr1 = ctx.GetScopedValue();
+		EXPECT_TRUE(ptr1->IsArray());
+
+		ctx.Push(rapidjson::kObjectType);
+		ptr2 = ctx.GetScopedValue();
+
+		ctx.Pop();
+		EXPECT_EQ(ptr1, ctx.GetScopedValue());
+
+		ctx.Push(0ull);
+		EXPECT_EQ(ptr2, ctx.GetScopedValue());
+		EXPECT_TRUE(ptr2->IsObject());
+		ctx.Pop();
+		
+		EXPECT_THROW(ctx.Push(1ull), Netcode::OutOfRangeException);
+	}
+}
 
 int wmain(int argc, wchar_t * argv[]) {
 	std::wstring workingDirectory = Netcode::IO::Path::CurrentWorkingDirectory();

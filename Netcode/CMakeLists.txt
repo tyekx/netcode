@@ -20,8 +20,8 @@ PRIVATE
 	${PROJECT_SOURCE_DIR}
 )
 
-target_include_directories(Netcode SYSTEM
-PRIVATE
+target_include_directories(Netcode 
+PRIVATE SYSTEM
 	${PHYSX_INCLUDE_DIR}
 	${MYSQL_INCLUDE_DIR}
 	${RAPIDJSON_INCLUDE_DIRS}

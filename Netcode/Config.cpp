@@ -27,6 +27,13 @@ if(valueType == strRep) { \
 
 		CHECK_POD_TYPE("bool", bool, value.GetBool());
 
+		if(valueType == "string") {
+			std::string v = std::string{ std::string_view{ value.GetString(), value.GetStringLength() } };
+
+			Set<std::string>(path, std::move(v));
+			return;
+		}
+
 		CHECK_POD_TYPE("float", float, value.GetFloat());
 		CHECK_POD_TYPE("double", double, value.GetDouble());
 		CHECK_POD_TYPE("Format", DXGI_FORMAT, value.GetUint());

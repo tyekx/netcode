@@ -1,11 +1,12 @@
 #pragma once
 
 #include <string>
-#include <any>
+#include <boost/any.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <rapidjson/document.h>
 
 namespace Netcode {
+	/*
 	class Property {
 	private:
 		std::any storage;
@@ -29,16 +30,21 @@ namespace Netcode {
 
 		template<typename T>
 		inline const T & Get() const {
-			return *(std::any_cast<T>(&storage));
+			return std::any_cast<const T &>(storage);
 		}
 
 		template<typename T>
 		inline void Set(const T & rhs) {
-			*(std::any_cast<T>(&storage)) = rhs;
+			if(storage.has_value()) {
+				std::any_cast<T &>(storage) = rhs;
+			} else {
+				storage = rhs;
+			}
 		}
-	};
+	};*/
 
-	using Ptree = boost::property_tree::basic_ptree<std::string, Property>;
+	// std::any wouldnt compile with clang
+	using Ptree = boost::property_tree::basic_ptree<std::string, boost::any>;
 
 	class Config {
 	public:
@@ -51,13 +57,13 @@ namespace Netcode {
 		static void LoadJson(const rapidjson::Document & document);
 
 		template<typename T>
-		static inline const T & Get(const boost::property_tree::path & key) {
-			return storage.get<Property>(key).Get<T>();
+		static inline const T & Get(const std::string & key) {
+			return boost::any_cast<const T &>(storage.get_child(key).data());
 		}
 
 		template<typename T>
-		static inline void Set(const boost::property_tree::path & key, const T & value) {
-			storage.put<Property>(key, Property{ value });
+		static inline void Set(const std::string & key, const T & value) {
+			storage.put(key, boost::any{ value });
 		}
 	};
 

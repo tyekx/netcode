@@ -5,6 +5,7 @@
 #include "GameSession.h"
 #include "MysqlSession.h"
 #include "../DestructiveCopyConstructible.hpp"
+#include <boost/asio/deadline_timer.hpp>
 
 namespace Netcode::Network {
 

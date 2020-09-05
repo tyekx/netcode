@@ -105,7 +105,9 @@ namespace Netcode::Network {
 		const int32_t start = static_cast<int32_t>(portHint);
 		int32_t sign = 1;
 		
-		boost::asio::ip::address serverAddr = boost::asio::ip::address::from_string(Config::Get<std::string>("network.server.selfAddress:string"), ec);
+		std::string selfAddress = Config::Get<std::string>("network.server.selfAddress:string");
+
+		boost::asio::ip::address serverAddr = boost::asio::ip::address::from_string(std::move(selfAddress), ec);
 
 		RETURN_VALUE_ON_ERROR(ec, "[Network] The supplied ip address (srv.address) is invalid: {0}", std::numeric_limits<uint32_t>::max());
 

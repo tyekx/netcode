@@ -17,3 +17,7 @@ message Message {
         Netcode.Protocol.Server.Update server_update = 7;
     }
 }
+
+service ServerService {
+    rpc Connect(Netcode.Protocol.Control.Request) returns (Netcode.Protocol.Control.Response) {} 
+}

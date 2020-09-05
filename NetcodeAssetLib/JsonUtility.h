@@ -12,11 +12,6 @@ Helper functions for primitive type serialization
 
 namespace Netcode::Asset {
 
-	Netcode::Json::Value Store(const Netcode::Float4& value, Netcode::Json::Document::AllocatorType & allocator);
-	Netcode::Json::Value Store(const Netcode::Float3& value, Netcode::Json::Document::AllocatorType & allocator);
-	Netcode::Json::Value Store(const Netcode::Float2& value, Netcode::Json::Document::AllocatorType & allocator);
-	Netcode::Json::Value Store(const Collider & collider, Netcode::Json::Document::AllocatorType & allocator);
-
 	float LoadFloat1(const json11::Json & obj);
 
 	Netcode::Float2 LoadFloat2(const json11::Json & obj);

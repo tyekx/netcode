@@ -12,6 +12,7 @@ PUBLIC
 	"MysqlSession.h"
 	"NetworkDecl.h"
 	"Response.hpp"
+	"ReplicationContext.h"
 	
 PRIVATE
 	"GameSession.cpp"
@@ -22,4 +23,5 @@ PRIVATE
 	"HttpSession.cpp"
 	"ServerSession.cpp"
 	"MysqlSession.cpp"
+	"ReplicationContext.cpp"
 )

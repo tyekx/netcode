@@ -1,7 +1,4 @@
 #include "GraphicsEngine.h"
-#include "GraphicsEngine.h"
-#include "GraphicsEngine.h"
-#include "GraphicsEngine.h"
 
 using ParamId = Netcode::MaterialParamId;
 
@@ -1051,7 +1048,7 @@ void GraphicsEngine::SetGlobalEnvMap(Ref<GpuResource> preEnvMap, Ref<GpuResource
 
 	prefilteredEnvmap = preEnvMap;
 	prefilteredSplitSumViews->CreateSRV(0, preEnvMap.get());
-	
+
 	preIntegratedBrdf = preBrdfIntegral;
 	prefilteredSplitSumViews->CreateSRV(1, preBrdfIntegral.get());
 }

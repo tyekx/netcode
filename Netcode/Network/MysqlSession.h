@@ -2,8 +2,6 @@
 
 #include "NetworkCommon.h"
 
-#include <mysqlx/xdevapi.h>
-
 namespace Netcode::Network {
 
 	class DefaultMysqlCompletionHandler {
@@ -12,20 +10,19 @@ namespace Netcode::Network {
 	};
 
 	/*
-	wrapper for all the mysql statements that will be used during the lifetime of a server
+	wrapper for all the mysql statements that will be used during the lifetime of a server,
+	must hide implementation detail because mysqlx library defines "INTERNAL" as a macro and
+	it collides with gRPC.
 	*/
 	class MysqlSession  {
-		uint64_t serverId;
-		std::unique_ptr<mysqlx::Session> session;
-		std::unique_ptr<mysqlx::SqlStatement> queryUserByHash;
-		std::unique_ptr<mysqlx::SqlStatement> insertServer;
-		std::unique_ptr<mysqlx::SqlStatement> modifyServer;
-		std::unique_ptr<mysqlx::SqlStatement> insertGameSession;
-		std::unique_ptr<mysqlx::SqlStatement> modifyGameSession;
-		std::unique_ptr<mysqlx::SqlStatement> closeRemainingGameSessions;
-		std::mutex mutex;
+
+		struct detail;
+
+		std::unique_ptr<detail> impl;
+		
 	public:
-		MysqlSession() = default;
+		MysqlSession();
+		~MysqlSession();
 
 		ErrorCode QueryUserByHash(const std::string & hash, UserRow & output);
 

@@ -25,7 +25,7 @@ set(NETCODE_COMPILE_DEFINITIONS
 	"-D_DEBUG"
 	"-DWIN32_LEAN_AND_MEAN"
 	"-DNOMINMAX"
-	"-D_CXX17_DEPRECATE_ITERATOR_BASE_CLASS"
+	"-D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING"
 	"-DBOOST_BIND_NO_PLACEHOLDERS"
 	"-D_WIN32_WINNT=0x0A00"
 	"-D_CRT_SECURE_NO_WARNINGS"
@@ -71,10 +71,17 @@ if(NOT FXC)
 	message(FATAL_ERROR "Shader compiler was not found")
 endif()
 
-find_program(PROTOC protoc PATHS "C:\\work\\vcpkg\\packages\\protobuf_x64-windows\\tools\\protobuf")
+set(NETCODE_VCPKG_TOOLS_PATH "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools")
+
+find_program(PROTOC protoc PATHS "${NETCODE_VCPKG_TOOLS_PATH}/protobuf")
+find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin PATHS "${NETCODE_VCPKG_TOOLS_PATH}/grpc")
 
 if(NOT PROTOC)
 	message(FATAL_ERROR "Protobuf compiler was not found")
+endif()
+
+if(NOT GRPC_CPP_PLUGIN)
+	message(FATAL_ERROR "gRPC plugin was not found")
 endif()
 
 function(netcode_compile_proto var_generated_headers var_generated_source source_path_list)
@@ -88,18 +95,31 @@ function(netcode_compile_proto var_generated_headers var_generated_source source
 		
 		set(cpp_file ${source_filename}.pb.cc)
 		set(h_file ${source_filename}.pb.h)
+		set(grpc_cpp_file ${source_filename}.grpc.pb.cc)
+		set(grpc_h_file ${source_filename}.grpc.pb.h)
 		
-		list(APPEND generated_header_files ${h_file})
-		list(APPEND generated_source_files ${cpp_file})
+		list(APPEND generated_header_files ${h_file} ${grpc_h_file})
+		list(APPEND generated_source_files ${cpp_file} ${grpc_cpp_file})
 		list(APPEND abs_path_generated_files ${CMAKE_CURRENT_SOURCE_DIR}/${cpp_file} ${CMAKE_CURRENT_SOURCE_DIR}/${h_file})
+		list(APPEND abs_path_grpc_generated_files ${CMAKE_CURRENT_SOURCE_DIR}/${grpc_cpp_file} ${CMAKE_CURRENT_SOURCE_DIR}/${grpc_h_file})
 		list(APPEND abs_path_proto_files ${CMAKE_CURRENT_SOURCE_DIR}/${proto_file})
 	endforeach(proto_file)
 	add_custom_command(OUTPUT ${abs_path_generated_files} 
 		COMMENT "Generating protobuf files..."
-		COMMAND ${PROTOC} --proto_path=\"${CMAKE_CURRENT_SOURCE_DIR}\" --cpp_out=\"${CMAKE_CURRENT_SOURCE_DIR}\" ${abs_path_proto_files}
+		COMMAND ${PROTOC} --proto_path=${CMAKE_CURRENT_SOURCE_DIR} --cpp_out=${CMAKE_CURRENT_SOURCE_DIR} ${abs_path_proto_files}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		DEPENDS ${abs_path_proto_files}
 	)
+
+	add_custom_command(OUTPUT ${abs_path_grpc_generated_files} 
+		COMMENT "Generating protobuf files..."
+		COMMAND ${PROTOC} --proto_path=${CMAKE_CURRENT_SOURCE_DIR} --grpc_out=${CMAKE_CURRENT_SOURCE_DIR} --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN} ${abs_path_proto_files}
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		DEPENDS ${abs_path_proto_files}
+		USES_TERMINAL
+	)
+
+	# 
 	set(${var_generated_headers} ${generated_header_files} PARENT_SCOPE)
 	set(${var_generated_source} ${generated_source_files} PARENT_SCOPE)
 endfunction()
@@ -127,14 +147,6 @@ function(netcode_add_cp_command source_path dest_file)
 		USES_TERMINAL
 	)
 endfunction()
-
-macro(netcode_increment_build_number dependent_target)
-	IF(NOT DEFINED ENV{BUILD_NUMBER_INCREMENTED})
-		set(ENV{BUILD_NUMBER_INCREMENTED} "TRUE")
-		set(SRC_DIR "${PROJECT_SOURCE_DIR}/NetcodeFoundation")
-		add_custom_command(TARGET ${dependent_target} PRE_BUILD COMMAND ${CMAKE_COMMAND} -DSRC_DIR="${SRC_DIR}" -DVERSIONED_BINARY="$<TARGET_FILE:${dependent_target}>" -P "${SRC_DIR}/increment_version.cmake")
-	ENDIF()
-endmacro()
 
 set(NETCODE_SHADER_MODEL "5_1")
 
