@@ -80,8 +80,8 @@ namespace Netcode::Graphics::DX12 {
 		gpsoBuilder->SetRootSignature(rootSignature);
 		noDepthPso = gpsoBuilder->Build();
 
-		defaultColor = Config::Get<Float3>("graphics.debug.defaultColor:Float3");
-		bufferSize = Config::Get<uint32_t>("graphics.debug.primitiveBufferDepth:u32");
+		defaultColor = Config::Get<Float3>(L"graphics.debug.defaultColor:Float3");
+		bufferSize = Config::Get<uint32_t>(L"graphics.debug.primitiveBufferDepth:u32");
 		uploadBuffer = graphics->resources->CreateVertexBuffer(bufferSize * sizeof(PC_Vertex),
 			sizeof(PC_Vertex),
 			ResourceType::PERMANENT_UPLOAD,
@@ -226,7 +226,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void DebugContext::DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color, bool depthEnabled)
 	{
-		const uint32_t numSlices = Config::Get<uint32_t>("graphics.debug.sphereSlices:u32");
+		const uint32_t numSlices = Config::Get<uint32_t>(L"graphics.debug.sphereSlices:u32");
 
 		uint32_t numVertices = BasicGeometry::GetSphereWireframeSize(numSlices);
 
@@ -247,7 +247,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void DebugContext::DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color, const Float4x4 & transform, bool depthEnabled)
 	{
-		const uint32_t numSlices = Config::Get<uint32_t>("graphics.debug.sphereSlices:u32");
+		const uint32_t numSlices = Config::Get<uint32_t>(L"graphics.debug.sphereSlices:u32");
 
 		uint32_t numVertices = BasicGeometry::GetSphereWireframeSize(numSlices);
 
@@ -392,7 +392,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void DebugContext::DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, bool depthEnabled)
 	{
-		const uint32_t numSlices = Config::Get<uint32_t>("graphics.debug.capsuleSlices:u32");
+		const uint32_t numSlices = Config::Get<uint32_t>(L"graphics.debug.capsuleSlices:u32");
 
 		uint32_t numVertices = BasicGeometry::GetCapsuleWireframeSize(numSlices);
 
@@ -413,7 +413,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void DebugContext::DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, const Float4x4 & transform, bool depthEnabled)
 	{
-		const uint32_t numSlices = Config::Get<uint32_t>("graphics.debug.capsuleSlices:u32");
+		const uint32_t numSlices = Config::Get<uint32_t>(L"graphics.debug.capsuleSlices:u32");
 
 		uint32_t numVertices = BasicGeometry::GetCapsuleWireframeSize(numSlices);
 

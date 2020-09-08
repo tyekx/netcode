@@ -5,15 +5,21 @@
 
 namespace Netcode {
 
-	using Exception = std::exception;
-
-	class BaseException : public Exception {
-		const char * s;
+	class ExceptionBase : public std::exception {
+	protected:
+		const char * message;
 	public:
-		BaseException(const char * s) : s{ s } {}
+		ExceptionBase(const char * s) : message{ s } {}
 
-		virtual const char * what() const override {
-			return s;
+		// default format: {what_type()}: {what()}
+		[[nodiscard]] virtual std::string ToString() const;
+		
+		[[nodiscard]] virtual const char * what_type() const {
+			return "ExceptionBase";
+		}
+		
+		[[nodiscard]] virtual const char * what() const override {
+			return message;
 		}
 	};
 

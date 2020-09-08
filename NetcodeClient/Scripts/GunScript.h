@@ -1,9 +1,9 @@
 #pragma once
 
-#include "GameObject.h"
+#include "../GameObject.h"
 #include <Netcode/Input.h>
 
-class GunBehavior : public IBehavior {
+class GunScript : public ScriptBase {
 
 public:
 	Animation * animComponent;
@@ -14,7 +14,7 @@ public:
 	int socketId;
 	float cameraPitch;
 
-	GunBehavior(GameObject * avatarObject, GameObject * gunRootObj, const Netcode::Float4 & lp, const Netcode::Float4 & lq, int socket) {
+	GunScript(GameObject * avatarObject, GameObject * gunRootObj, const Netcode::Float4 & lp, const Netcode::Float4 & lq, int socket) {
 		localPosition = lp;
 		localRotation = lq;
 		animComponent = avatarObject->GetComponent<Animation>();
@@ -23,7 +23,7 @@ public:
 		rootTransform = gunRootObj->GetComponent<Transform>();
 	}
 
-	virtual void Setup(GameObject * owner) override {
+	virtual void BeginPlay(GameObject * owner) override {
 		selfTransform = owner->GetComponent<Transform>();
 		selfTransform->rotation = localRotation;
 		selfTransform->position = Netcode::Float3{ localPosition.x, localPosition.y, localPosition.z };

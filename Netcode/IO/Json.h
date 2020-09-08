@@ -1,9 +1,9 @@
 #pragma once
 
-#include <rapidjson/document.h>
+#include <NetcodeFoundation/Json.h>
 
 namespace Netcode::IO {
 
-	void ParseJson(rapidjson::Document & doc, std::wstring_view path);
+	void ParseJsonFromFile(JsonDocument & doc, const std::wstring & path);
 
 }

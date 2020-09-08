@@ -4,9 +4,13 @@
 
 namespace Netcode {
 
-	class UndefinedBehaviourException : public BaseException {
+	class UndefinedBehaviourException : public ExceptionBase {
 	public:
-		using BaseException::BaseException;
+		using ExceptionBase::ExceptionBase;
+
+		virtual const char * what_type() const {
+			return "UndefinedBehaviourException";
+		}
 	};
 
 }

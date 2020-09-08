@@ -108,7 +108,7 @@ namespace Netcode::Graphics::DX12 {
 
 		if(!uri.Empty()) {
 			IO::File file{ uri.GetTexturePath() };
-			IO::FileReader<IO::File> reader{ file, IO::FileOpenMode::READ_BINARY };
+			IO::FileReader<IO::File> reader{ file };
 			size_t size = reader->GetSize();
 			std::unique_ptr<uint8_t[]> tmpBuffer = std::make_unique<uint8_t[]>(size);
 			MutableArrayView<uint8_t> buffer{ tmpBuffer.get(), size };

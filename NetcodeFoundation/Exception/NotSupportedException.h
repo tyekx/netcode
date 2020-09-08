@@ -3,14 +3,22 @@
 
 namespace Netcode {
 
-	class NotSupportedException : public BaseException {
+	class NotSupportedException : public ExceptionBase {
 	public:
-		using BaseException::BaseException;
+		using ExceptionBase::ExceptionBase;
+
+		virtual const char * what_type() const {
+			return "NotSupportedException";
+		}
 	};
 
-	class NotImplementedException : public BaseException {
+	class NotImplementedException : public ExceptionBase {
 	public:
-		using BaseException::BaseException;
+		using ExceptionBase::ExceptionBase;
+
+		virtual const char * what_type() const {
+			return "NotImplementedException";
+		}
 	};
 
 

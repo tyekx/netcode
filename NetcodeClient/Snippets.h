@@ -7,5 +7,3 @@
 #include "GameObject.h"
 
 void CreateYbotAnimationComponent(Netcode::Asset::Model * model, Animation * anim);
-
-json11::Json LoadJsonFile(const std::wstring & absolutePath);

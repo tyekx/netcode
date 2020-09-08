@@ -2,34 +2,6 @@
 #include <Netcode/MovementController.h>
 #include <Netcode/IO/File.h>
 
-
-json11::Json LoadJsonFile(const std::wstring & absolutePath)
-{
-	Netcode::IO::File file{ absolutePath };
-	Netcode::IO::FileReader<Netcode::IO::File> reader{ file, Netcode::IO::FileOpenMode::READ_BINARY };
-	size_t size = reader->GetSize();
-	std::string buffer;
-	buffer.resize(size);
-
-	Netcode::MutableArrayView<uint8_t> mutableView { 
-		reinterpret_cast<uint8_t*>(buffer.data()),
-		size
-	};
-
-	reader->Read(mutableView);
-	reader->Close();
-
-	std::string error;
-	auto json = json11::Json::parse(buffer, error);
-
-	if(!error.empty()) {
-		Log::Error("Error while parsing json: {0}", error);
-	}
-
-	return json;
-}
-
-
 #define CLIP_ARGS(id) id, model->animations[ id ].duration, model->animations[ id ].ticksPerSecond
 
 void CreateYbotAnimationComponent(Netcode::Asset::Model * model, Animation * anim) {

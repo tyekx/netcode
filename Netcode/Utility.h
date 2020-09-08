@@ -63,6 +63,9 @@ namespace Netcode {
 		constexpr INT_T Align(INT_T v) {
 			return (v + (alignment - 1)) & (~(alignment - 1));
 		}
+		
+		// returns true if data is possibly UTF16-LE encoded
+		bool CheckBinaryDataForUTF16LE(ArrayView<uint8_t> data);
 
 		/*
 		formats a wide string into a std::wstring

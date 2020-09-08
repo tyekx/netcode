@@ -1,8 +1,9 @@
 #pragma once
 
-#include "GameObject.h"
+#include "../GameObject.h"
+#include <Netcode/MathExt.h>
 
-class PlayerBehavior : public IBehavior {
+class LocalPlayerScript : public ScriptBase {
 	Transform * transform;
 	Camera * camera;
 	Collider * collider;
@@ -37,7 +38,7 @@ class PlayerBehavior : public IBehavior {
 		float dz = Netcode::Input::GetAxis(AxisEnum::VERTICAL);
 
 		Netcode::Vector3 dxdzVec = Netcode::Float3{ dx, 0.0f, dz };
-		
+
 		if(dxdzVec.AllZero()) {
 			return dxdzVec;
 		}
@@ -47,7 +48,7 @@ class PlayerBehavior : public IBehavior {
 
 public:
 
-	PlayerBehavior(Netcode::PxPtr<physx::PxController> ctrl, Camera * cam) {
+	LocalPlayerScript(Netcode::PxPtr<physx::PxController> ctrl, Camera * cam) {
 		camera = cam;
 		controller = std::move(ctrl);
 		cameraPitch = 0.6f;
@@ -58,7 +59,7 @@ public:
 		velocity = Netcode::Float3{ 0.0f, 0.0f, 0.0f };
 	}
 
-	virtual void Setup(GameObject * owner) override {
+	virtual void BeginPlay(GameObject * owner) override {
 		transform = owner->GetComponent<Transform>();
 		controller->setPosition(physx::PxExtendedVec3{ transform->position.x, transform->position.y, transform->position.z });
 		collider = owner->GetComponent<Collider>();
@@ -76,14 +77,14 @@ public:
 		Netcode::Vector3 movementDeltaWorldSpace = lDirectionalMovement.Rotate(cameraYawQuat);
 		Netcode::Vector3 movementDeltaSpeedScaled = movementDeltaWorldSpace * avatarSpeed * dt;
 
-		Netcode::Vector3 gravityDeltaVelocity = Netcode::Vector3{ gravity } * dt;
+		Netcode::Vector3 gravityDeltaVelocity = Netcode::Vector3{ gravity } *dt;
 
 		Netcode::Vector3 velocityVector = velocity;
 
 		velocity = velocityVector + gravityDeltaVelocity;
 
 		Netcode::Vector3 movementDelta = movementDeltaSpeedScaled + velocityVector * dt;
-		
+
 		const physx::PxControllerCollisionFlags moveResult = controller->move(ToPxVec3(movementDelta), 0.0f, dt, physx::PxControllerFilters{});
 
 		if(moveResult == physx::PxControllerCollisionFlag::eCOLLISION_DOWN) {

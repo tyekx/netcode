@@ -8,8 +8,15 @@
 namespace Netcode::IO {
 
 	enum class FileOpenMode : uint32_t {
-		READ, WRITE, READ_BINARY, WRITE_BINARY
+		READ_ONLY = 0x0001,
+		WRITE_ONLY = 0x0002,
+		CREATE_OR_OVERWRITE = 0x1000,
+		OPEN = 0x2000
 	};
+
+	FileOpenMode operator|(FileOpenMode lhs, FileOpenMode rhs);
+	FileOpenMode operator&(FileOpenMode lhs, FileOpenMode rhs);
+	bool operator!=(FileOpenMode lhs, uint32_t value);
 
 	class File {
 		struct detail;
@@ -25,7 +32,7 @@ namespace Netcode::IO {
 		File(const File &) = delete;
 		File & operator=(const File &) = delete;
 
-		bool Open(FileOpenMode mode);
+		void Open(FileOpenMode mode);
 
 		size_t Read(MutableArrayView<uint8_t> buffer);
 
@@ -35,17 +42,17 @@ namespace Netcode::IO {
 
 		size_t GetSize() const;
 
-		const std::wstring & GetFullPath() const;
+		const std::wstring & GetFullPath() const noexcept;
 
-		std::wstring_view GetFullName() const;
+		std::wstring_view GetFullName() const noexcept;
 
-		std::wstring_view GetName() const;
+		std::wstring_view GetName() const noexcept;
 
-		std::wstring_view GetExtension() const;
+		std::wstring_view GetExtension() const noexcept;
 
-		std::wstring_view GetParentDirectory() const;
+		std::wstring_view GetParentDirectory() const noexcept;
 
-		static bool Exists(const std::wstring & path);
+		static bool Exists(const std::wstring & path) noexcept;
 	};
 
 	template<typename T>
@@ -53,7 +60,7 @@ namespace Netcode::IO {
 		T & tRef;
 
 	public:
-		FileReader(T & tr, FileOpenMode mode) : tRef{ tr } { tr.Open(mode); }
+		FileReader(T & tr) : tRef{ tr } { tr.Open(FileOpenMode::READ_ONLY | FileOpenMode::OPEN); }
 		~FileReader() { tRef.Close(); }
 
 		T * operator->() {
@@ -65,8 +72,8 @@ namespace Netcode::IO {
 	class FileWriter {
 		T & tRef;
 	public:
-		FileWriter(T & tr) : tRef{ tr } {
-			tRef.Open(FileOpenMode::WRITE);
+		FileWriter(T & tr, FileOpenMode openMode = FileOpenMode::OPEN) : tRef{ tr } {
+			tRef.Open(FileOpenMode::WRITE_ONLY);
 		}
 		~FileWriter() { tRef.Close(); }
 

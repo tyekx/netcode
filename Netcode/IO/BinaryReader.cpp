@@ -6,7 +6,7 @@ namespace Netcode::IO {
 
     BinaryReader::BinaryReader(File & f) : pos{ nullptr }, end{ nullptr }, ownedData{ nullptr }
     {
-        FileReader<File> reader{ f, FileOpenMode::READ };
+        FileReader<File> reader{ f };
         size_t numBytes = reader->GetSize();
         ownedData = std::make_unique<uint8_t[]>(numBytes);
         reader->Read(MutableArrayView<uint8_t>{ ownedData.get(), numBytes });

@@ -142,12 +142,12 @@ namespace Netcode::Network {
 		{
 			try {
 				mysqlx::SessionSettings settings(
-					mysqlx::SessionOption::USER, Config::Get<std::string>("network.database.username:string"),
-					mysqlx::SessionOption::PWD, Config::Get<std::string>("network.database.password:string"),
-					mysqlx::SessionOption::HOST, Config::Get<std::string>("network.database.hostname:string"),
-					mysqlx::SessionOption::PORT, Config::Get<std::string>("network.database.port:u16"),
-					mysqlx::SessionOption::DB, Config::Get<std::string>("network.database.schema:string"),
-					mysqlx::SessionOption::CONNECT_TIMEOUT, std::chrono::seconds(Config::Get<uint32_t>("network.database.timeout:u32"))
+					mysqlx::SessionOption::USER, Config::Get<std::wstring>(L"network.database.username:string"),
+					mysqlx::SessionOption::PWD, Config::Get<std::wstring>(L"network.database.password:string"),
+					mysqlx::SessionOption::HOST, Config::Get<std::wstring>(L"network.database.hostname:string"),
+					mysqlx::SessionOption::PORT, Config::Get<std::wstring>(L"network.database.port:u16"),
+					mysqlx::SessionOption::DB, Config::Get<std::wstring>(L"network.database.schema:string"),
+					mysqlx::SessionOption::CONNECT_TIMEOUT, std::chrono::seconds(Config::Get<uint32_t>(L"network.database.timeout:u32"))
 				);
 
 				session = std::make_unique<mysqlx::Session>(settings);

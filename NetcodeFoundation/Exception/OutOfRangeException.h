@@ -3,14 +3,22 @@
 
 namespace Netcode {
 
-	class OutOfRangeException : public BaseException {
+	class OutOfRangeException : public ExceptionBase {
 	public:
-		using BaseException::BaseException;
+		using ExceptionBase::ExceptionBase;
+
+		virtual const char * what_type() const {
+			return "OutOfRangeException";
+		}
 	};
 
-	class OutOfMemoryException : public BaseException {
+	class OutOfMemoryException : public ExceptionBase {
 	public:
-		using BaseException::BaseException;
+		using ExceptionBase::ExceptionBase;
+
+		virtual const char * what_type() const {
+			return "OutOfMemoryException";
+		}
 	};
 
 

@@ -21,13 +21,13 @@ namespace Netcode::Module {
 
 	Ref<Network::GameSession> NetcodeNetworkModule::CreateServer()
 	{
-		context.Start(Config::Get<uint32_t>("network.server.workerThreadCount:u32"));
+		context.Start(Config::Get<uint32_t>(L"network.server.workerThreadCount:u32"));
 		return std::make_shared<Network::ServerSession>(context.GetImpl());
 	}
 
 	Ref<Network::GameSession> NetcodeNetworkModule::CreateClient()
 	{
-		context.Start(Config::Get<uint32_t>("network.client.workerThreadCount:u32"));
+		context.Start(Config::Get<uint32_t>(L"network.client.workerThreadCount:u32"));
 		return std::make_shared<Network::ClientSession>(context.GetImpl());
 	}
 
@@ -70,7 +70,7 @@ namespace Netcode::Module {
 
 		std::string body = json.dump();
 
-		return httpSession->MakeRequest(Config::Get<std::string>("network.web.hostname:string"), std::to_string(Config::Get<uint16_t>("network.web.port:u16")), "/api/login", Network::http::verb::post, cookiesCache, std::move(body));
+		return httpSession->MakeRequest(Config::Get<std::string>(L"network.web.hostname:string"), std::to_string(Config::Get<uint16_t>(L"network.web.port:u16")), "/api/login", Network::http::verb::post, cookiesCache, std::move(body));
 	}
 
 	std::future<Network::Response> NetcodeNetworkModule::QueryServers()
@@ -79,7 +79,7 @@ namespace Netcode::Module {
 			httpSession = std::make_shared<Network::HttpSession>(context.GetImpl());
 		}
 
-		return httpSession->MakeRequest(Config::Get<std::string>("network.web.hostname:string"), std::to_string(Config::Get<uint16_t>("network.web.port:u16")), "/api/list-sessions", Network::http::verb::post, cookiesCache, "");
+		return httpSession->MakeRequest(Config::Get<std::string>(L"network.web.hostname:string"), std::to_string(Config::Get<uint16_t>(L"network.web.port:u16")), "/api/list-sessions", Network::http::verb::post, cookiesCache, "");
 	}
 
 	std::future<Network::Response> NetcodeNetworkModule::Status()
@@ -88,7 +88,7 @@ namespace Netcode::Module {
 			httpSession = std::make_shared<Network::HttpSession>(context.GetImpl());
 		}
 
-		return httpSession->MakeRequest(Config::Get<std::string>("network.web.hostname:string"), std::to_string(Config::Get<uint16_t>("network.web.port:u16")), "/api/status", Network::http::verb::post, cookiesCache, "");
+		return httpSession->MakeRequest(Config::Get<std::string>(L"network.web.hostname:string"), std::to_string(Config::Get<uint16_t>(L"network.web.port:u16")), "/api/status", Network::http::verb::post, cookiesCache, "");
 	}
 
 }

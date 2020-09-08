@@ -26,6 +26,12 @@ std::wstring Netcode::Utility::WFormat(const wchar_t * format, ...) {
 	return wstr;
 }
 
+bool Netcode::Utility::CheckBinaryDataForUTF16LE(ArrayView<uint8_t> data) {
+	INT lp = IS_TEXT_UNICODE_SIGNATURE | IS_TEXT_UNICODE_NULL_BYTES;
+	
+	return IsTextUnicode(data.Data(), data.Size(), &lp) > 0;
+}
+
 // prints a formatted wide string to the VS output window
 void Netcode::Utility::WDebugf(const wchar_t * format, ...) {
 	va_list va;

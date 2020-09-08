@@ -35,7 +35,7 @@ class AssetManager {
 		Netcode::Asset::Model * rawPtr = model.get();
 
 		Netcode::IO::File modelFile{ uri.GetModelPath() };
-		Netcode::IO::FileReader<Netcode::IO::File> reader{ modelFile, Netcode::IO::FileOpenMode::READ };
+		Netcode::IO::FileReader<Netcode::IO::File> reader{ modelFile };
 		size_t n = reader->GetSize();
 		std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(n);
 

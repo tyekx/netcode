@@ -67,30 +67,26 @@ namespace Netcode {
 		uint16_t size;
 
 		MaterialParam() = default;
-		MaterialParam(uint32_t id, uint16_t offset, uint16_t size) : 
+		constexpr MaterialParam(uint32_t id, uint16_t offset, uint16_t size) : 
 			id{ id }, offset{ offset }, size{ size } {
 
 		}
-
-		static MaterialParam SafeCast(MaterialParamId id, size_t offset, size_t size);
 	};
 
 	class Material {
 	protected:
 		MaterialType type;
 		std::string name;
-		Ref<GpuResource> resources[8];
-		Ref<ResourceViews> views[8];
 
 	public:
 		virtual ~Material() = default;
-		Material(MaterialType type, const std::string & name) : type{ type }, name{ name }, resources{}, views{} { }
+		Material(MaterialType type, const std::string & name) : type{ type }, name{ name } { }
 
-		Ref<GpuResource> GetResource(uint32_t resourceIndex) const;
-		void SetResource(uint32_t resourceIndex, Ref<GpuResource> resource);
+		virtual Ref<GpuResource> GetResource(uint32_t resourceIndex) const = 0;
+		virtual void SetResource(uint32_t resourceIndex, Ref<GpuResource> resource) = 0;
 
-		Ref<ResourceViews> GetResourceView(uint32_t viewIndex) const;
-		void SetResourceView(uint32_t viewIndex, Ref<ResourceViews> resource);
+		virtual Ref<ResourceViews> GetResourceView(uint32_t viewIndex) const = 0;
+		virtual void SetResourceView(uint32_t viewIndex, Ref<ResourceViews> resource) = 0;
 
 		MaterialType GetType() const {
 			return type;
@@ -111,7 +107,7 @@ namespace Netcode {
 		}
 
 		virtual MaterialParam GetParameterByIndex(uint32_t idx) const {
-			return MaterialParam::SafeCast(MaterialParamId::INVALID_PARAMETER, 0, 0);
+			return MaterialParam{ static_cast<uint32_t>(MaterialParamId::INVALID_PARAMETER), 0, 0 };
 		}
 		
 		virtual const void * GetParameterPointerByIndex(uint32_t idx) const {
@@ -161,10 +157,7 @@ namespace Netcode {
 	};
 
 	class BrdfMaterial : public Material {
-	private:
-		static MaterialParam brdfReflectionData[];
-
-	protected:
+	public:
 		struct BrdfData {
 			Netcode::Float4 diffuseAlbedo;
 			Netcode::Float3 fresnelR0;
@@ -184,9 +177,18 @@ namespace Netcode {
 		BrdfData brdfData;
 
 		URI::Texture brdfPathData[6];
-
-	public:
+		Ref<GpuResource> resources[8];
+		Ref<ResourceViews> views[8];
+		
 		using Material::Material;
+
+		virtual Ref<GpuResource> GetResource(uint32_t resourceIndex) const override;
+		
+		virtual void SetResource(uint32_t resourceIndex, Ref<GpuResource> resource)override;
+
+		virtual Ref<ResourceViews> GetResourceView(uint32_t viewIndex) const override;
+		
+		virtual void SetResourceView(uint32_t viewIndex, Ref<ResourceViews> resource)override;
 
 		virtual Ref<Material> Clone() const override;
 

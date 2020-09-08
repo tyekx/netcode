@@ -1,10 +1,10 @@
 #include "NetcodeApp.h"
 #include <Netcode/Input/AxisMap.hpp>
-#include "DevCameraScript.h"
-#include "PlayerBehavior.h"
-#include "GunScript.h"
-#include "DebugScript.h"
-#include "RemoteAvatarScript.h"
+#include "Scripts/DebugScript.h"
+#include "Scripts/RemotePlayerScript.h"
+#include "Scripts/DevCameraScript.h"
+#include "Scripts/LocalPlayerScript.h"
+#include "Scripts/GunScript.h"
 #include "Snippets.h"
 #include <NetcodeAssetLib/JsonUtility.h>
 
@@ -226,7 +226,7 @@ void GameApp::CreateRemoteAvatar() {
 
 	Netcode::PxPtr<physx::PxController> pxController = gameScene->CreateController();
 	avatarController->AddComponent<Transform>();
-	avatarController->AddComponent<Script>()->SetBehavior(std::make_unique<RemoteAvatarScript>(std::move(pxController)));
+	avatarController->AddComponent<Script>()->AddScript(std::make_unique<RemotePlayerScript>(std::move(pxController)));
 	avatarHitboxes->Parent(avatarController);
 
 	gameScene->Spawn(avatarController);
@@ -257,8 +257,7 @@ void GameApp::CreateLocalAvatar() {
 	act->position = Netcode::Float3{ 0.0f, 0.0f, 200.0f };
 
 	Script * scriptComponent = avatarController->AddComponent<Script>();
-	scriptComponent->SetBehavior(std::make_unique<PlayerBehavior>(std::move(pxController), fpsCam));
-	scriptComponent->Setup(avatarController);
+	scriptComponent->AddScript(std::make_unique<LocalPlayerScript>(std::move(pxController), fpsCam));
 
 	gameScene->Spawn(avatarController);
 	gameScene->Spawn(avatarCamera);

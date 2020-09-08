@@ -3,9 +3,13 @@
 
 namespace Netcode {
 
-	class ArithmeticException : public BaseException {
+	class ArithmeticException : public ExceptionBase {
 	public:
-		using BaseException::BaseException;
+		using ExceptionBase::ExceptionBase;
+
+		virtual const char * what_type() const {
+			return "ArithmeticException";
+		}
 	};
 
 }

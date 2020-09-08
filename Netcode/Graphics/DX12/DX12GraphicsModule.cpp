@@ -274,22 +274,22 @@ namespace Netcode::Graphics::DX12 {
 			hwnd = reinterpret_cast<HWND>(app->window->GetUnderlyingPointer());
 		}
 		backbufferDepth = 2;
-		depthStencilFormat = Config::Get<DXGI_FORMAT>("graphics.depthStencil:Format");
-		Float4 cColor = Config::Get<Float4>("graphics.clearColor:Float4");
+		depthStencilFormat = Config::Get<DXGI_FORMAT>(L"graphics.depthStencil:Format");
+		Float4 cColor = Config::Get<Float4>(L"graphics.clearColor:Float4");
 		clearColor.r = cColor.x;
 		clearColor.g = cColor.y;
 		clearColor.b = cColor.z;
 		clearColor.a = cColor.w;
 
 #if defined(NETCODE_DEBUG)
-		const bool debugEnabled = Config::Get<bool>("graphics.debug.enabled:bool");
+		const bool debugEnabled = Config::Get<bool>(L"graphics.debug.enabled:bool");
 		if(IsDebuggerPresent() && debugEnabled) {
 			DX_API("Failed to create debug layer")
 				D3D12GetDebugInterface(IID_PPV_ARGS(debugController.GetAddressOf()));
 
 			debugController->EnableDebugLayer();
 
-			if(Config::Get<bool>("graphics.debug.gpuBasedValidation:bool")) {
+			if(Config::Get<bool>(L"graphics.debug.gpuBasedValidation:bool")) {
 				debugController->SetEnableGPUBasedValidation(TRUE);
 			}
 		}
@@ -298,7 +298,7 @@ namespace Netcode::Graphics::DX12 {
 		// triple buffering is the max allowed
 		frameResources.reserve(3);
 
-		renderTargetFormat = Config::Get<DXGI_FORMAT>("graphics.backbuffer:Format");
+		renderTargetFormat = Config::Get<DXGI_FORMAT>(L"graphics.backbuffer:Format");
 
 		CreateFactory();
 

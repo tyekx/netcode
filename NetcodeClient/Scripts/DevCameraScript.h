@@ -1,8 +1,8 @@
 #pragma once
 
-#include "GameObject.h"
+#include "../GameObject.h"
 
-class DevCameraScript : public IBehavior {
+class DevCameraScript : public ScriptBase {
 public:
 	Transform * transform;
 	Camera * camera;
@@ -12,8 +12,7 @@ public:
 	float cameraYaw;
 
 
-	// Inherited via IBehavior
-	virtual void Setup(GameObject * gameObject) override;
+	virtual void BeginPlay(GameObject * gameObject) override;
 
 	virtual void Update(float dt) override;
 

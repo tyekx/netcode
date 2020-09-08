@@ -3,11 +3,13 @@
 #include <Netcode/URI/Model.h>
 #include <Netcode/PhysXWrapper.h>
 #include <Netcode/MathExt.h>
+#include <NetcodeFoundation/Json.h>
 #include "GameObject.h"
 #include "Scene.h"
 #include "PhysxHelpers.h"
 #include "Snippets.h"
-#include "DevCameraScript.h"
+#include "Scripts/DevCameraScript.h"
+#include "Asset/GameObjectCatalog.h"
 
 class GameScene : public Scene<GameObject> {
 public:
@@ -95,6 +97,12 @@ public:
 			if(obj->HasComponent<Collider>()) {
 				SpawnPhysxActor(obj->GetComponent<Collider>()->actor.Get());
 			}
+
+			if(!obj->IsActive()) {
+				if(obj->HasComponent<Script>()) {
+					obj->GetComponent<Script>()->BeginPlay(obj);
+				}
+			}
 			obj->Spawn();
 		}
 	}
@@ -150,16 +158,10 @@ public:
 };
 
 class GameSceneManager {
-
-	struct GameObjectMetadata {
-		GameObject * gameObject;
-		Netcode::URI::Model uri;
-		int touched;
-	};
-
-	std::vector<GameObjectMetadata> gameObjectCatalog;
 	GameScene activeScene;
+	GameObjectCatalog catalog;
 	GameObject * devCam;
+	
 
 	struct CamState {
 		Transform tr;
@@ -169,26 +171,18 @@ class GameSceneManager {
 
 	Netcode::URI::Model activeSceneUri;
 
-	void CompleteSceneLoading();
-
-	GameObject * LoadLightFromJson(GameScene * scene, const json11::Json::object & obj);
-
-	GameObject * LoadGameObjectFromJson(GameScene * scene, const json11::Json::object & values);
-
-	void LoadSceneDetail(const json11::Json::object & json);
-
 	void LoadSceneDetail(const Netcode::URI::Model & uri);
 
 public:
 
-	Netcode::URI::Model GetActiveSceneUri() const {
+ 	[[nodiscard]] const Netcode::URI::Model & GetActiveSceneUri() const {
 		return activeSceneUri;
 	}
 
 	void CloseScene();
 
 	void ClearCache() {
-		gameObjectCatalog.clear();
+		catalog.Clear();
 	}
 
 	void ReloadScene();

@@ -10,11 +10,11 @@
 #include <Netcode/Config.h>
 #include "ProgramOptions.h"
 
-void ListConfigEntries(const std::string & prefix, const Netcode::Ptree & tree) {
+void ListConfigEntries(const std::wstring & prefix, const Netcode::Ptree & tree) {
 	for(const auto & i : tree) {
-		std::string s = (!prefix.empty() ? prefix + "." : "") + i.first;
-		OutputDebugString(s.c_str());
-		OutputDebugString("\n");
+		std::wstring s = (!prefix.empty() ? prefix + L"." : L"") + i.first;
+		OutputDebugStringW(s.c_str());
+		OutputDebugStringW(L"\n");
 		ListConfigEntries(s, i.second);
 	}
 }
@@ -50,11 +50,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		return 1;
 	}
 
-	rapidjson::Document doc;
-	Netcode::IO::ParseJson(doc, configFile.GetFullPath());
+	Netcode::JsonDocument doc;
+	Netcode::IO::ParseJsonFromFile(doc, configFile.GetFullPath());
 	Netcode::Config::LoadJson(doc);
 
-	ListConfigEntries("", Netcode::Config::storage);
+	ListConfigEntries(L"", Netcode::Config::storage);
 
 	Netcode::Input::Initialize();
 

@@ -23,11 +23,11 @@ namespace Netcode::Network {
 		udp_socket_t controlSocket{ ioc };
 		udp_socket_t gameSocket{ ioc };
 
-		const uint32_t controlPort = ServerSession::BindToPort(controlSocket, Config::Get<uint16_t>("network.server.controlPort:u16"));
+		const uint32_t controlPort = ServerSession::BindToPort(controlSocket, Config::Get<uint16_t>(L"network.server.controlPort:u16"));
 
 		RETURN_IF(lastError);
 
-		const uint32_t gamePort = ServerSession::BindToPort(gameSocket, Config::Get<uint16_t>("network.server.gamePort:u16"));
+		const uint32_t gamePort = ServerSession::BindToPort(gameSocket, Config::Get<uint16_t>(L"network.server.gamePort:u16"));
 
 		RETURN_IF(lastError);
 
@@ -37,8 +37,8 @@ namespace Netcode::Network {
 			return;
 		}
 
-		Config::Set<uint16_t>("network.server.controlPort:u16", controlPort);
-		Config::Set<uint16_t>("network.server.gamePort:u16", gamePort);
+		Config::Set<uint16_t>(L"network.server.controlPort:u16", controlPort);
+		Config::Set<uint16_t>(L"network.server.gamePort:u16", gamePort);
 
 		controlStream = std::make_shared<UdpStream>(std::move(controlSocket));
 		gameStream = std::make_shared<UdpStream>(std::move(gameSocket));
@@ -56,8 +56,8 @@ namespace Netcode::Network {
 		GameSocketReadInit();
 
 		Log::Info("[Network] [Server] Started on ports {0}, {1}", 
-			Config::Get<uint16_t>("network.server.controlPort:u16"),
-			Config::Get<uint16_t>("network.server.gamePort:u16"));
+			Config::Get<uint16_t>(L"network.server.controlPort:u16"),
+			Config::Get<uint16_t>(L"network.server.gamePort:u16"));
 	}
 
 	void ServerSession::Stop()
@@ -81,7 +81,7 @@ namespace Netcode::Network {
 		ParseControlMessages(control, controlSockPackets);
 		ParseGameMessages(game, gameSockPackets);
 
-		controlStorage.CheckTimeouts(Config::Get<uint32_t>("network.protocol.gracePeriodMs:u32"));
+		controlStorage.CheckTimeouts(Config::Get<uint32_t>(L"network.protocol.gracePeriodMs:u32"));
 	}
 
 	bool ServerSession::IsRunning() const {
@@ -105,7 +105,7 @@ namespace Netcode::Network {
 		const int32_t start = static_cast<int32_t>(portHint);
 		int32_t sign = 1;
 		
-		std::string selfAddress = Config::Get<std::string>("network.server.selfAddress:string");
+		std::string selfAddress = Config::Get<std::string>(L"network.server.selfAddress:string");
 
 		boost::asio::ip::address serverAddr = boost::asio::ip::address::from_string(std::move(selfAddress), ec);
 
@@ -181,7 +181,7 @@ namespace Netcode::Network {
 	void ServerSession::SendAll() {
 		controlStorage.ForeachExpired([this](UdpPacket & packet)-> void {
 			controlQueue.Send(packet);
-		}, Config::Get<uint32_t>("network.protocol.resendTimeoutMs:u32"));
+		}, Config::Get<uint32_t>(L"network.protocol.resendTimeoutMs:u32"));
 
 		std::vector<UdpPacket> controlPackets;
 		std::vector<UdpPacket> gamePackets;

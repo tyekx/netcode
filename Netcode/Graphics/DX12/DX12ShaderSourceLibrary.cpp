@@ -11,7 +11,7 @@ namespace Netcode::Graphics::DX12 {
 
 		if(it == lib.end()) {
 			IO::File shaderFile{ IO::Path::ShaderRoot(), key };
-			IO::FileReader<IO::File> reader{ shaderFile, IO::FileOpenMode::READ };
+			IO::FileReader<IO::File> reader{ shaderFile };
 
 			size_t numBytes = reader->GetSize();
 

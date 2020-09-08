@@ -1,8 +1,7 @@
 #include "DevCameraScript.h"
 #include <algorithm>
-#include <Windows.h>
 
-void DevCameraScript::Setup(GameObject * gameObject) {
+void DevCameraScript::BeginPlay(GameObject * gameObject) {
 	transform = gameObject->GetComponent<Transform>();
 	camera = gameObject->GetComponent<Camera>();
 	cameraPitch = 0.0f;

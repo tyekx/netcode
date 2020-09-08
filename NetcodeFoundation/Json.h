@@ -1,14 +1,64 @@
 #pragma once
 
 #include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 #include "Math.h"
-#include "Exception/UndefinedBehaviourException.h"
+#include "Exceptions.h"
+#include "ArrayView.hpp"
 
 namespace Netcode {
 
 	using JsonDocument = rapidjson::GenericDocument<rapidjson::UTF16LE<wchar_t>>;
 	using JsonValue = JsonDocument::ValueType;
+
+	inline const JsonValue& GetMember(const JsonValue & json, const JsonDocument::Ch * str) {
+		if(!json.IsObject()) {
+			throw OutOfRangeException{ "JSON is not an object" };
+		}
+
+		if(const auto it = json.FindMember(str); it != json.MemberEnd()) {
+			return it->value;
+		}
+
+		throw OutOfRangeException{ "JSON member was not found" };
+	}
+	
+	template<typename ChType>
+	class JsonStringBuffer final {
+	public:
+		using Ch = ChType;
+
+	private:
+		std::basic_string<Ch> & strRef;
+
+	public:
+		JsonStringBuffer(std::basic_string<Ch> & stringRef) : strRef{ stringRef } {
+			strRef.reserve(4096);
+		}
+
+		void Flush() { }
+
+		void Put(Ch c) {
+			strRef.push_back(c);
+		}
+	};
+
+	template<typename DocType>
+	class JsonSerializer {
+	public:
+		static void Store(std::basic_string<typename DocType::Ch> & dest, const DocType & jsonToStore) {
+			JsonStringBuffer<typename DocType::Ch> buffer{ dest };
+			rapidjson::Writer<typename DocType::Ch, typename DocType::EncodingType, typename DocType::EncodingType> writer{ buffer };
+			jsonToStore.Accept(writer);
+		}
+
+		template<typename SourceEncoding = rapidjson::UTF16LE<wchar_t>>
+		static void Load(DocType & jsonToLoad, ArrayView<uint8_t> buffer) {
+			rapidjson::MemoryStream memoryStream{ reinterpret_cast<const char *>(buffer.Data()), buffer.Size() };
+			rapidjson::EncodedInputStream<SourceEncoding, rapidjson::MemoryStream> encodedInputStream{ memoryStream };
+			jsonToLoad.template ParseStream<rapidjson::kParseDefaultFlags, SourceEncoding>(encodedInputStream);
+		}
+	};
 
 	template<typename DocType = JsonDocument>
 	class JsonValueConverter {

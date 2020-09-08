@@ -50,8 +50,6 @@ PRIVATE
 	"Components.cpp"
 	"ComponentStorage.hpp"
 	"ConstantBufferTypes.h"
-	"DevCameraScript.h"
-	"DevCameraScript.cpp"
 	"NetcodeApp.h"
 	"NetcodeApp.cpp"
 	"GameObject.h"
@@ -65,9 +63,6 @@ PRIVATE
 	"Mesh.h"
 	"PhysxHelpers.h"
 	"PhysxHelpers.cpp"
-	"PlayerBehavior.h"
-	"RemoteAvatarScript.h"
-	"RemoteAvatarScript.cpp"
 	"Scene.h"
 	"Scene.cpp"
 	"Services.h"
@@ -103,6 +98,8 @@ PRIVATE
 	${DX12_LIBRARIES})
 
 add_subdirectory(Shaders)
+add_subdirectory(Scripts)
+add_subdirectory(Asset)
 
 add_dependencies(NetcodeClient NetcodeClientShaders)
 

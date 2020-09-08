@@ -3,9 +3,12 @@
 
 namespace Netcode {
 
-#define REGISTER_CONSTANT(id, className, variableMember) MaterialParam::SafeCast((id), offsetof(className, variableMember), sizeof(className::variableMember))
+#define REGISTER_CONSTANT(id, className, variableMember) MaterialParam(static_cast<uint32_t>(id), \
+		static_cast<uint16_t>(offsetof(className, variableMember)), static_cast<uint16_t>(sizeof(className::variableMember)))
 
-	MaterialParam BrdfMaterial::brdfReflectionData[] = {
+	static constexpr MaterialParam INVALID_MATERIAL{ static_cast<uint32_t>(MaterialParamId::INVALID_PARAMETER), 0, 0 };
+	
+	static constexpr MaterialParam brdfReflectionData[] = {
 		REGISTER_CONSTANT(MaterialParamId::DIFFUSE_ALBEDO, BrdfMaterial, brdfData.diffuseAlbedo),
 		REGISTER_CONSTANT(MaterialParamId::SPECULAR_ALBEDO, BrdfMaterial, brdfData.fresnelR0),
 		REGISTER_CONSTANT(MaterialParamId::ROUGHNESS, BrdfMaterial, brdfData.roughness),
@@ -29,18 +32,6 @@ namespace Netcode {
 		REGISTER_CONSTANT(MaterialParamId::TEXTURE_ROUGHNESS_PATH, BrdfMaterial, brdfPathData[4]),
 		REGISTER_CONSTANT(MaterialParamId::TEXTURE_DISPLACEMENT_PATH, BrdfMaterial, brdfPathData[5]),
 	};
-
-	MaterialParam MaterialParam::SafeCast(MaterialParamId id, size_t offset, size_t size) {
-		UndefinedBehaviourAssertion(offset <= std::numeric_limits<decltype(MaterialParam::offset)>::max());
-		UndefinedBehaviourAssertion(size <= std::numeric_limits<decltype(MaterialParam::size)>::max());
-		UndefinedBehaviourAssertion(static_cast<size_t>(id) <= std::numeric_limits<decltype(MaterialParam::id)>::max());
-
-		return MaterialParam{
-			static_cast<decltype(MaterialParam::id)>(id),
-			static_cast<decltype(MaterialParam::offset)>(offset),
-			static_cast<decltype(MaterialParam::size)>(size)
-		};
-	}
 
 	Ref<Material> BrdfMaterial::Clone() const {
 		Ref<BrdfMaterial> clone = std::make_shared<BrdfMaterial>(type, name);
@@ -102,35 +93,42 @@ namespace Netcode {
 		return Material::GetParameterPointer(id);
 	}
 
-	const void * BrdfMaterial::GetParameterPointer(uint32_t id) const {
+	constexpr const MaterialParam & FindParameter(uint32_t id) {
 		for(uint32_t i = 0; i < Utility::ArraySize(brdfReflectionData); i++) {
-			MaterialParam param = brdfReflectionData[i];
-
-			if(param.id == id) {
-				return reinterpret_cast<const uint8_t *>(this) + param.offset;
+			if(brdfReflectionData[i].id == id) {
+				return brdfReflectionData[i];
 			}
+		}
+		return INVALID_MATERIAL;
+	}
+
+	const void * BrdfMaterial::GetParameterPointer(uint32_t id) const {
+		const MaterialParam & param = FindParameter(id);
+		
+		if(param.id == id) {
+			return reinterpret_cast<const uint8_t *>(this) + param.offset;
 		}
 
 		return Material::GetParameterPointer(id);
 	}
 
-	Ref<GpuResource> Material::GetResource(uint32_t resourceIndex) const {
-		Netcode::OutOfRangeAssertion(resourceIndex < Utility::ArraySize(Material::resources));
+	Ref<GpuResource> BrdfMaterial::GetResource(uint32_t resourceIndex) const {
+		Netcode::OutOfRangeAssertion(resourceIndex < Utility::ArraySize(resources));
 		return resources[resourceIndex];
 	}
 
-	void Material::SetResource(uint32_t resourceIndex, Ref<GpuResource> resource) {
-		Netcode::OutOfRangeAssertion(resourceIndex < Utility::ArraySize(Material::resources));
+	void BrdfMaterial::SetResource(uint32_t resourceIndex, Ref<GpuResource> resource) {
+		Netcode::OutOfRangeAssertion(resourceIndex < Utility::ArraySize(resources));
 		std::swap(resources[resourceIndex], resource);
 	}
 
-	Ref<ResourceViews> Material::GetResourceView(uint32_t viewIndex) const {
-		Netcode::OutOfRangeAssertion(viewIndex < Utility::ArraySize(Material::views));
+	Ref<ResourceViews> BrdfMaterial::GetResourceView(uint32_t viewIndex) const {
+		Netcode::OutOfRangeAssertion(viewIndex < Utility::ArraySize(views));
 		return views[viewIndex];
 	}
 
-	void Material::SetResourceView(uint32_t viewIndex, Ref<ResourceViews> view) {
-		Netcode::OutOfRangeAssertion(viewIndex < Utility::ArraySize(Material::views));
+	void BrdfMaterial::SetResourceView(uint32_t viewIndex, Ref<ResourceViews> view) {
+		Netcode::OutOfRangeAssertion(viewIndex < Utility::ArraySize(views));
 		std::swap(views[viewIndex], view);
 	}
 

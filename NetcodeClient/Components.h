@@ -20,6 +20,10 @@
 #include <Netcode/Animation/Blender.h>
 #include <Netcode/Graphics/Material.h>
 
+namespace Netcode::Network {
+	class ReplicationContext;
+}
+
 enum AxisEnum : uint32_t {
 	VERTICAL,
 	HORIZONTAL,
@@ -37,25 +41,36 @@ using ColliderShape = Netcode::Asset::Collider;
 
 class GameObject;
 
-class IBehavior {
+class ScriptBase {
 public:
-	virtual ~IBehavior() = default;
-	virtual void Setup(GameObject * gameObject) = 0;
+	virtual ~ScriptBase() = default;
+	virtual void Construction(GameObject * gameObject) { }
+	virtual void BeginPlay(GameObject * gameObject) { }
+	virtual void EndPlay() { }
 	virtual void Update(float dt) = 0;
+	virtual void ReplicateSend(Netcode::Network::ReplicationContext * ctx) { }
+	virtual void ReplicateReceive(Netcode::Network::ReplicationContext * ctx) { }
 };
 
 COMPONENT_ALIGN class Script {
 public:
-	std::unique_ptr<IBehavior> behavior;
+	std::vector<std::unique_ptr<ScriptBase>> scripts;
 
-	void SetBehavior(std::unique_ptr<IBehavior> behavior);
-	void Setup(GameObject * owner);
-	void Update(float dt);
+	void AddScript(std::unique_ptr<ScriptBase> script) {
+		scripts.emplace_back(std::move(script));
+	}
 
-	Script() = default;
-
-	Script(Script &&) noexcept = default;
-	Script & operator=(Script &&) noexcept = default;
+	void BeginPlay(GameObject * owner) {
+		for(auto it = std::begin(scripts); it != std::end(scripts); it++) {
+			(*it)->BeginPlay(owner);
+		}
+	}
+	
+	void Update(float dt) {
+		for(auto it = std::begin(scripts); it != std::end(scripts); it++) {
+			(*it)->Update(dt);
+		}
+	}
 };
 
 COMPONENT_ALIGN class Transform {

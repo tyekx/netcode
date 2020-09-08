@@ -16,7 +16,7 @@ namespace Netcode::Graphics::DX12 {
 
 	Ref<DX12::ShaderCompiled> ShaderLibrary::LoadCSO(const std::wstring & absolutePath) {
 		IO::File shaderFile{ absolutePath };
-		IO::FileReader<IO::File> reader{ shaderFile, Netcode::IO::FileOpenMode::READ_BINARY };
+		IO::FileReader<IO::File> reader{ shaderFile };
 
 		size_t numBytes = reader->GetSize();
 

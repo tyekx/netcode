@@ -8,4 +8,7 @@ PUBLIC
 	"NotSupportedException.h"
 	"OutOfRangeException.h"
 	"UndefinedBehaviourException.h"
+
+PRIVATE
+	"Exception.cpp"	
 )

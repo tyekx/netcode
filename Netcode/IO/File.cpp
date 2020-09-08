@@ -1,4 +1,5 @@
 #include <NetcodeFoundation/Platform.h>
+#include <NetcodeFoundation/Exception/IOException.h>
 
 #include "File.h"
 #include "Path.h"
@@ -18,6 +19,18 @@
 
 namespace Netcode::IO {
 
+	FileOpenMode operator|(FileOpenMode lhs, FileOpenMode rhs) {
+		return static_cast<FileOpenMode>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
+	}
+
+	FileOpenMode operator&(FileOpenMode lhs, FileOpenMode rhs) {
+		return static_cast<FileOpenMode>(static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs));
+	}
+
+	bool operator!=(FileOpenMode lhs, uint32_t value) {
+		return static_cast<uint32_t>(lhs) != value;
+	}
+
 	struct File::detail {
 	private:
 		std::wstring path;
@@ -27,15 +40,25 @@ namespace Netcode::IO {
 		std::wstring_view parentDir;
 		HANDLE handle;
 
-		DWORD ConvertMode(FileOpenMode mode) {
-			switch(mode) {
-				case FileOpenMode::READ_BINARY: [[fallthrough]];
-				case FileOpenMode::READ:
-					return GENERIC_READ;
+		static DWORD ConvertAccess(FileOpenMode mode) {
+			if((mode & FileOpenMode::READ_ONLY) != 0) {
+				return GENERIC_READ;
+			}
 
-				case FileOpenMode::WRITE_BINARY: [[fallthrough]];
-				case FileOpenMode::WRITE:
-					return GENERIC_WRITE;
+			if((mode & FileOpenMode::WRITE_ONLY) != 0) {
+				return GENERIC_WRITE;
+			}
+
+			return 0;
+		}
+
+		static DWORD ConvertMode(FileOpenMode mode) {
+			if((mode & FileOpenMode::CREATE_OR_OVERWRITE) != 0) {
+				return CREATE_ALWAYS;
+			}
+
+			if((mode & FileOpenMode::OPEN) != 0) {
+				return OPEN_EXISTING;
 			}
 
 			return 0;
@@ -45,48 +68,42 @@ namespace Netcode::IO {
 			Close();
 		}
 
-		bool Open(FileOpenMode mode) {
+		void Open(FileOpenMode mode) {
 			if(handle != INVALID_HANDLE_VALUE) {
-				// AssertOrException: file already open
-				return false;
+				Close();
 			}
 
-			const DWORD apiMode = ConvertMode(mode);
-			const DWORD shareMode = (mode == FileOpenMode::READ || mode == FileOpenMode::READ_BINARY) ? FILE_SHARE_READ : 0;
-			const DWORD openMode = (mode == FileOpenMode::WRITE || mode == FileOpenMode::WRITE_BINARY) ? CREATE_ALWAYS : OPEN_EXISTING;
+			const DWORD apiAccess = ConvertAccess(mode);
+			const DWORD openMode = ConvertMode(mode);
+			const DWORD shareMode = ((mode & FileOpenMode::READ_ONLY) != 0) ? FILE_SHARE_READ : 0;
 
 #if defined(NETCODE_EDITOR_VARIANT) 
 			HANDLE f = CreateFileFromAppW(path.c_str(), apiMode, shareMode, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 #else
-			HANDLE f = CreateFileW(path.c_str(), apiMode, shareMode, nullptr, openMode, FILE_ATTRIBUTE_NORMAL, nullptr);
+			HANDLE f = CreateFileW(path.c_str(), apiAccess, shareMode, nullptr, openMode, FILE_ATTRIBUTE_NORMAL, nullptr);
 #endif
 
 			if(f == INVALID_HANDLE_VALUE) {
-				Log::Error("Failed to open file: '{0}'", Utility::ToNarrowString(path));
-				return false;
+				throw IOException{ "Failed to open file", Utility::ToNarrowString(path) };
 			}
 
 			handle = f;
-			return true;
 		}
 
 		size_t Read(MutableArrayView<uint8_t> buffer) {
 			if(handle == INVALID_HANDLE_VALUE) {
-				Log::Warn("Trying to read a file with an invalid handle.");
-				return 0;
+				throw IOException{ "Trying to read from an invalid handle" };
 			}
 
 			if(buffer.Size() == 0) {
-				Log::Warn("Trying to read a file with an empty buffer.");
-				return 0;
+				throw IOException{ "Buffer is empty" };
 			}
 
 			DWORD readBytes = 0;
 			BOOL readResult = ReadFile(handle, buffer.Data(), buffer.Size(), &readBytes, nullptr);
 
 			if(!readResult) {
-				Log::Error("Failed to read from file: {0}", Utility::ToNarrowString(path));
-				return 0;
+				throw IOException{ "Failed to read from file", Utility::ToNarrowString(path) };
 			}
 
 			return readBytes;
@@ -94,16 +111,14 @@ namespace Netcode::IO {
 
 		size_t Write(ArrayView<uint8_t> buffer) {
 			if(handle == INVALID_HANDLE_VALUE) {
-				Log::Warn("Trying to write a file with an invalid handle.");
-				return 0;
+				throw IOException{ "Trying to write to an invalid handle" };
 			}
 
 			DWORD writtenBytes = 0;
 			BOOL writeResult = WriteFile(handle, buffer.Data(), buffer.Size(), &writtenBytes, nullptr);
 
 			if(!writeResult) {
-				Log::Error("Failed to write to file: {0}", Utility::ToNarrowString(path));
-				return 0;
+				throw IOException{ "Failed to write to file", Utility::ToNarrowString(path) };
 			}
 
 			return writtenBytes;
@@ -123,27 +138,27 @@ namespace Netcode::IO {
 			return GetFileSize(handle, nullptr);
 		}
 
-		const std::wstring & GetFullPath() const
+		const std::wstring & GetFullPath() const noexcept
 		{
 			return path;
 		}
 
-		std::wstring_view GetFullName() const
+		std::wstring_view GetFullName() const noexcept
 		{
 			return fullName;
 		}
 
-		std::wstring_view GetName() const
+		std::wstring_view GetName() const noexcept
 		{
 			return name;
 		}
 
-		std::wstring_view GetExtension() const
+		std::wstring_view GetExtension() const noexcept
 		{
 			return extension;
 		}
 
-		std::wstring_view GetParentDirectory() const
+		std::wstring_view GetParentDirectory() const noexcept
 		{
 			return parentDir;
 		}
@@ -210,9 +225,9 @@ namespace Netcode::IO {
 		impl.reset();
 	}
 
-	bool File::Open(FileOpenMode mode)
+	void File::Open(FileOpenMode mode)
 	{
-		return impl->Open(mode);
+		impl->Open(mode);
 	}
 
 	size_t File::Read(MutableArrayView<uint8_t> buffer)
@@ -235,32 +250,32 @@ namespace Netcode::IO {
 		return impl->GetSize();
 	}
 
-	const std::wstring & File::GetFullPath() const
+	const std::wstring & File::GetFullPath() const noexcept
 	{
 		return impl->GetFullPath();
 	}
 
-	std::wstring_view File::GetFullName() const
+	std::wstring_view File::GetFullName() const noexcept
 	{
 		return impl->GetFullName();
 	}
 
-	std::wstring_view File::GetName() const
+	std::wstring_view File::GetName() const noexcept
 	{
 		return impl->GetName();
 	}
 
-	std::wstring_view File::GetExtension() const
+	std::wstring_view File::GetExtension() const noexcept
 	{
 		return impl->GetExtension();
 	}
 
-	std::wstring_view File::GetParentDirectory() const
+	std::wstring_view File::GetParentDirectory() const noexcept
 	{
 		return impl->GetParentDirectory();
 	}
 
-	bool File::Exists(const std::wstring & path)
+	bool File::Exists(const std::wstring & path) noexcept
 	{
 #if defined(NETCODE_OS_WINDOWS)
 	#if defined(NETCODE_EDITOR_VARIANT)
