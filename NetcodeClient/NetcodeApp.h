@@ -11,6 +11,8 @@
 #include <Netcode/Service.hpp>
 #include <Netcode/UI/PageManager.h>
 
+#include "Asset/ClientConverters.h"
+
 #include "Asset.h"
 #include "GameObject.h"
 #include "Systems.h"

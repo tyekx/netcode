@@ -5,6 +5,7 @@
 
 class LocalPlayerScript : public ScriptBase {
 	Transform * transform;
+	Transform * attachmentTransform;
 	Camera * camera;
 	Collider * collider;
 	Netcode::PxPtr<physx::PxController> controller;
@@ -48,8 +49,9 @@ class LocalPlayerScript : public ScriptBase {
 
 public:
 
-	LocalPlayerScript(Netcode::PxPtr<physx::PxController> ctrl, Camera * cam) {
-		camera = cam;
+	LocalPlayerScript(Netcode::PxPtr<physx::PxController> ctrl, GameObject * camObj, GameObject * attachmentNode) {
+		camera = camObj->GetComponent<Camera>();
+		attachmentTransform = attachmentNode->GetComponent<Transform>();
 		controller = std::move(ctrl);
 		cameraPitch = 0.6f;
 		cameraYaw = 3.14f;
@@ -99,6 +101,7 @@ public:
 			static_cast<float>(footPos.z)
 		};
 
-		transform->rotation = cameraQuat;
+		transform->rotation = cameraYawQuat;
+		attachmentTransform->rotation = Netcode::Quaternion{ cameraPitch, 0.0f, 0.0f };
 	}
 };

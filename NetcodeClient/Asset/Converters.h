@@ -23,10 +23,12 @@ protected:
 	/*
 	 * Converters from JSON to Netcode 
 	 */
-	virtual Ref<Netcode::Material> ConvertMaterial(const Netcode::JsonValue & values, Ptr<const Netcode::Material> sourceMaterial = nullptr) = 0;
+	virtual Ref<Netcode::Material> ConvertMaterial(const Netcode::JsonValue & values, Ref<Netcode::Material> sourceMaterial) = 0;
 	virtual GameObject * ConvertColliderComponent(GameObject * gameObject, const Netcode::JsonValue & values) = 0;
 	virtual GameObject * ConvertModelComponent(GameObject * gameObject, const Netcode::JsonValue & values) = 0;
 	virtual GameObject * ConvertLightComponent(GameObject * gameObject, const Netcode::JsonValue & values) = 0;
+	virtual GameObject * ConvertTransformComponent(GameObject * gameObject, const Netcode::JsonValue & values) = 0;
+	virtual void ConvertScriptComponent(GameObject * gameObject, const Netcode::JsonValue & values) = 0;
 	virtual GameObject * ConvertGameObject(const Netcode::JsonValue & values) = 0;
 
 	/*

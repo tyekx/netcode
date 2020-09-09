@@ -102,6 +102,7 @@ public:
 	PerObjectData perObjectData;
 	Ref<Netcode::ResourceViews> boneData;
 	int32_t boneDataOffset;
+	int32_t renderLayer;
 	std::vector<ShadedMesh> meshes;
 	std::vector<Ref<Netcode::Material>> materials;
 

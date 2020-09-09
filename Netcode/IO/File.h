@@ -72,8 +72,8 @@ namespace Netcode::IO {
 	class FileWriter {
 		T & tRef;
 	public:
-		FileWriter(T & tr, FileOpenMode openMode = FileOpenMode::OPEN) : tRef{ tr } {
-			tRef.Open(FileOpenMode::WRITE_ONLY);
+		FileWriter(T & tr, FileOpenMode openMode = FileOpenMode::CREATE_OR_OVERWRITE | FileOpenMode::WRITE_ONLY) : tRef{ tr } {
+			tRef.Open(openMode);
 		}
 		~FileWriter() { tRef.Close(); }
 

@@ -159,18 +159,20 @@ namespace Netcode {
 	class BrdfMaterial : public Material {
 	public:
 		struct BrdfData {
-			Netcode::Float4 diffuseAlbedo;
-			Netcode::Float3 fresnelR0;
+			Float4 diffuseAlbedo;
+			Float3 fresnelR0;
 			float roughness;
-			Netcode::Float2 textureTiles;
-			Netcode::Float2 textureOffset;
+			Float2 textureTiles;
+			Float2 textureOffset;
 			float displacementScale;
 			float displacementBias;
 			uint32_t textureFlags;
 			float reflectivity;
 			bool metalMask;
 
-			BrdfData() = default;
+			BrdfData() : diffuseAlbedo{}, fresnelR0{}, roughness{}, textureTiles{ Float2::One },
+				textureOffset{}, displacementScale{ 0.025f }, displacementBias{ 0.5f }, textureFlags{ 0 },
+				reflectivity{}, metalMask{ false } { }
 			BrdfData & operator=(const BrdfData & rhs) = default;
 		};
 

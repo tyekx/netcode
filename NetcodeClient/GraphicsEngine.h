@@ -39,6 +39,12 @@ struct RenderItem {
 	}
 };
 
+/*
+ * decides where to connect the item to the render pipeline and what LOD to use based on the content of the components
+ * void AddRenderInput(Ptr<Transform> transformComponent, Ptr<Model> modelComponent, Ptr<Animatiom> animationComponent) 
+ * renderLayer: decides if we need to put it in a special bucket
+ */
+
 class GraphicsEngine {
 public:
 	Ref<GpuResource> gbufferPass_DepthBuffer;

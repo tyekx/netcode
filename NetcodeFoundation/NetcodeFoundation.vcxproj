@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Exceptions.cpp" />
+    <ClCompile Include="Exception\Exception.cpp" />
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Math\Common.cpp" />
     <ClCompile Include="Math\GramSchmidt.cpp" />

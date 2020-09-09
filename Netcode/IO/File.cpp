@@ -78,7 +78,7 @@ namespace Netcode::IO {
 			const DWORD shareMode = ((mode & FileOpenMode::READ_ONLY) != 0) ? FILE_SHARE_READ : 0;
 
 #if defined(NETCODE_EDITOR_VARIANT) 
-			HANDLE f = CreateFileFromAppW(path.c_str(), apiMode, shareMode, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+			HANDLE f = CreateFileFromAppW(path.c_str(), apiAccess, shareMode, nullptr, openMode, FILE_ATTRIBUTE_NORMAL, nullptr);
 #else
 			HANDLE f = CreateFileW(path.c_str(), apiAccess, shareMode, nullptr, openMode, FILE_ATTRIBUTE_NORMAL, nullptr);
 #endif

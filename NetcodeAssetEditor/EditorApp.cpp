@@ -142,8 +142,8 @@ namespace Netcode::Module {
 			return;
 		}
 
-		rapidjson::Document doc;
-		Netcode::IO::ParseJson(doc, configFile.GetFullPath());
+		Netcode::JsonDocument doc;
+		Netcode::IO::ParseJsonFromFile(doc, configFile.GetFullPath());
 
 		Netcode::Config::LoadJson(doc);
 

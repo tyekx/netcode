@@ -49,7 +49,7 @@ public:
 		defaultCamera = defCam;
 	}
 
-	void Foreach(std::function<void(T *)> callback) {
+	constexpr void Foreach(std::function<void(T *)> callback) {
 		for(auto it = storage.begin(); it != nullptr; ++it) {
 			callback(it.operator->());
 		}

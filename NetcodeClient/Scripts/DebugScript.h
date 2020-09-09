@@ -4,6 +4,22 @@
 #include <Netcode/Input/Key.h>
 #include <Netcode/Input.h>
 
+class TransformDebugScript : public ScriptBase {
+	Transform * tr;
+	float rotY;
+public:
+	virtual void BeginPlay(GameObject* gameObject) override {
+		tr = gameObject->GetComponent<Transform>();
+		rotY = 0.0f;
+	}
+
+	virtual void Update(float dt) override {
+		rotY = std::fmodf(rotY + dt, Netcode::C_2PI);
+
+		tr->rotation = Netcode::Quaternion{ 0.0f, rotY, 0.0f };
+	}
+};
+
 class DebugScript : public ScriptBase {
 	float * refs[4];
 	float * curr;

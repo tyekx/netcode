@@ -4,14 +4,51 @@
 #include <Netcode/Graphics/ResourceEnums.h>
 #include "../GameObject.h"
 #include "../Services.h"
+#include "../Scripts/DebugScript.h"
 
 ClientAssetConverter::ClientAssetConverter(GameObjectCatalog * catalog, Netcode::JsonValue * json, GameScene * scene) : AssetConverterBase{ scene, json },
 	catalog{ catalog } {
 
 }
 
-Ref<Netcode::Material> ClientAssetConverter::ConvertMaterial(const Netcode::JsonValue & values, Ptr<const Netcode::Material> sourceMaterial) {
-	throw Netcode::NotImplementedException{ "Converting from JSON to material is not implemented" };
+Ref<Netcode::Material> ClientAssetConverter::ConvertMaterial(const Netcode::JsonValue & values, Ref<Netcode::Material> sourceMaterial) {
+	class MaterialProxy {
+		Ref<Netcode::Material> mat;
+		Ref<Netcode::Material> sourceMat;
+
+	public:
+		MaterialProxy(Ref<Netcode::Material> srcMat) : mat { }, sourceMat{ std::move(srcMat) } { }
+
+		Ptr<Netcode::Material> operator->() {
+			if(mat == nullptr) {
+				mat = sourceMat->Clone();
+			}
+			return mat.get();
+		}
+
+		Ref<Netcode::Material> GetInstance() const {
+			if(mat == nullptr) {
+				return sourceMat;
+			}
+			return mat;
+		}
+	};
+
+	MaterialProxy proxy{ std::move(sourceMaterial) };
+
+	if(const auto it = values.FindMember(L"roughness"); it != values.MemberEnd() && it->value.IsNumber()) {
+		proxy->SetParameter(Netcode::MaterialParamId::ROUGHNESS, it->value.GetFloat());
+	}
+
+	if(const auto it = values.FindMember(L"reflectance"); it != values.MemberEnd() && it->value.IsNumber()) {
+		proxy->SetParameter(Netcode::MaterialParamId::REFLECTANCE, it->value.GetFloat());
+	}
+
+	if(const auto it = values.FindMember(L"metal_mask"); it != values.MemberEnd() && it->value.IsBool()) {
+		proxy->SetParameter(Netcode::MaterialParamId::METAL_MASK, it->value.GetBool());
+	}
+	
+	return proxy.GetInstance();
 }
 
 GameObject * ClientAssetConverter::ConvertColliderComponent(GameObject * gameObject, const Netcode::JsonValue & values) {
@@ -48,14 +85,14 @@ GameObject * ClientAssetConverter::ConvertModelComponent(GameObject * gameObject
 				throw Netcode::OutOfRangeException{ "material_index is out of range" };
 			}
 			
-			Ptr<const Netcode::Material> existingMaterial = modelComponent->materials[materialIndex].get();
+			auto existingMaterial = modelComponent->materials[materialIndex];
 
 			Ref<Netcode::Material> material = ConvertMaterial(mat, existingMaterial);
 
 			modelComponent->materials[materialIndex] = material;
 
 			for(auto & shadedMesh : modelComponent->meshes) {
-				if(shadedMesh.material.get() == existingMaterial) {
+				if(shadedMesh.material == existingMaterial) {
 					shadedMesh.material = material;
 				}
 			}
@@ -121,6 +158,34 @@ GameObject * ClientAssetConverter::ConvertTransformComponent(GameObject * gameOb
 	return gameObject;
 }
 
+template<typename T>
+class ComponentProxy {
+	GameObject * gameObj;
+public:
+	ComponentProxy(GameObject* obj) : gameObj{ obj } { }
+	
+	T * operator->() {
+		if(gameObj->HasComponent<T>()) {
+			return gameObj->GetComponent<T>();
+		}
+		return gameObj->AddComponent<T>();
+	}
+};
+
+void ClientAssetConverter::ConvertScriptComponent(GameObject* gameObject, const Netcode::JsonValue& values) {
+	ComponentProxy<Script> proxy { gameObject };
+
+	std::wstring typeString;
+	Netcode::JsonValueConverter<>::ConvertFromJson(Netcode::GetMember(values, L"type"), typeString);
+
+	if(typeString == L"TransformDebugScript") {
+		proxy->AddScript(std::make_unique<TransformDebugScript>());
+		return;
+	}
+
+	Log::Error("Script type: {0} is not registered", Netcode::Utility::ToNarrowString(typeString));
+}
+
 GameObject * ClientAssetConverter::ConvertGameObject(const Netcode::JsonValue & values) {
 	if(!values.IsObject()) {
 		throw Netcode::UndefinedBehaviourException{ "Trying to convert a non object" };
@@ -145,6 +210,20 @@ GameObject * ClientAssetConverter::ConvertGameObject(const Netcode::JsonValue & 
 			throw Netcode::UndefinedBehaviourException{ "light must be a json object" };
 		}
 		gameObj = ConvertLightComponent(gameObj, it->value);
+	}
+
+	if(const auto it = values.FindMember(L"script"); it != values.MemberEnd()) {
+		if(!it->value.IsArray()) {
+			throw Netcode::UndefinedBehaviourException{ "script must be a json array" };
+		}
+
+		for(const auto & scriptJson : it->value.GetArray()) {
+			try {
+				ConvertScriptComponent(gameObj, scriptJson);
+			} catch(Netcode::ExceptionBase & e) {
+				Log::Error("While loading script: {0}", e.ToString());
+			}
+		}
 	}
 
 	if(const auto it = values.FindMember(L"children"); it != values.MemberEnd()) {
@@ -175,6 +254,7 @@ Ref<Netcode::Material> ClientAssetConverter::ConvertMaterial(const Netcode::Asse
 	std::string ncMatName{ std::string_view{ mat->name, Netcode::Utility::ArraySize(mat->name) } };
 	Ref<Netcode::Material> ncMat = std::make_shared<Netcode::BrdfMaterial>(static_cast<Netcode::MaterialType>(mat->type), ncMatName);
 	uint32_t texFlags = 0;
+	ncMat->SetParameter<bool>(Netcode::MaterialParamId::METAL_MASK, false);
 
 	for(uint32_t j = 0; j < mat->indicesLength; ++j) {
 		Netcode::Asset::MaterialParamIndex param = mat->indices[j];
@@ -227,10 +307,7 @@ Ref<Netcode::Material> ClientAssetConverter::ConvertMaterial(const Netcode::Asse
 			}
 		}
 	}
-
 	ncMat->SetParameter<uint32_t>(Netcode::MaterialParamId::TEXTURE_FLAGS, texFlags);
-	ncMat->SetParameter<bool>(Netcode::MaterialParamId::METAL_MASK, false);
-	ncMat->SetParameter<float>(Netcode::MaterialParamId::ROUGHNESS, ncMat->GetRequiredParameter<float>(Netcode::MaterialParamId::ROUGHNESS) / 255.0f);
 
 	return ncMat;
 }

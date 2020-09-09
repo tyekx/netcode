@@ -21,7 +21,7 @@ struct Blob {
 
 Blob SlurpFile(const std::wstring & path) {
 	Netcode::IO::File file{ path };
-	Netcode::IO::FileReader<Netcode::IO::File> reader{ file, Netcode::IO::FileOpenMode::READ };
+	Netcode::IO::FileReader<Netcode::IO::File> reader{ file };
 	size_t size = reader->GetSize();
 	std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(size);
 	Netcode::MutableArrayView<uint8_t> mutableView{ buffer.get(), size };
@@ -61,7 +61,6 @@ static int CompileImage(const std::wstring & inputImage, const std::wstring & ou
 	Netcode::IO::File inputFile{ inputImage };
 
 	std::wstring_view ext = inputFile.GetExtension();
-	std::wstring_view fileName = inputFile.GetName();
 
 	std::string extension = Netcode::Utility::ToNarrowString(std::wstring{ ext });
 
@@ -172,7 +171,12 @@ static int CompileAsset(const std::wstring & inputManifest, const std::wstring &
 
 	{
 		Blob baseFbx = SlurpFile(Netcode::Utility::ToWideString(manifest.base.file));
-		model = Netcode::FBXImporter::FromMemory(baseFbx.buffer.get(), baseFbx.size);
+		size_t idx = manifest.base.file.find_last_of('.');
+		std::string hint = ".fbx";
+		if(idx != std::string::npos) {
+			hint = manifest.base.file.substr(idx);
+		}
+		model = Netcode::FBXImporter::FromMemory(baseFbx.buffer.get(), baseFbx.size, hint.c_str());
 	}
 
 	DebugLog("Base FBX loaded, loading referenced FBX files");
@@ -217,6 +221,8 @@ static int CompileAsset(const std::wstring & inputManifest, const std::wstring &
 	writer->Close();
 
 	std::wcout << L"Compilation successful. Written file: '" << outputPath << L"', size: " << rawDataSize << std::endl;
+
+	return 0;
 }
 
 int wmain(int argc, wchar_t * argv[]) {

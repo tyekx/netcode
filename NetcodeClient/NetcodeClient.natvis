@@ -27,14 +27,6 @@
   <Type Name="Netcode::Float4">
     <DisplayString>{{ X={x,g}, Y={y,g}, Z={z,g}, W={w,g} }}</DisplayString>
   </Type>
-  <Type Name="Transform">
-    <DisplayString>{{ Position={position}, Rotation={rotation}, Scale={scale} }}</DisplayString>
-  </Type>
-  <Type Name="Script">
-    <Expand>
-      <ExpandedItem>behavior._Mypair._Myval2</ExpandedItem>
-    </Expand>
-  </Type>
   <Type Name="Netcode::BulkVector&lt;*,*&gt;">
     <DisplayString></DisplayString>
     <Expand>

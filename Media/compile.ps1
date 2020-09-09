@@ -150,4 +150,5 @@ if($compileAll -OR $Models.IsPresent) {
     Compile-Model "ybot_manifest.json" "ybot.ncasset"
     Compile-Model "chest_01_manifest.json" "chest_01.ncasset"
     Compile-Model "smooth_sphere_manifest.json" "smooth_sphere.ncasset"
+    Compile-Model "gun_2_manifest.json" "gun_2.ncasset"
 }

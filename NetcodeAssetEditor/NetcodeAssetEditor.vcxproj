@@ -85,7 +85,7 @@
       <SuppressStartupBanner Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</SuppressStartupBanner>
     </ClCompile>
     <Link>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Netcode.lib;C:\work\vcpkg\installed\x64-windows\debug\lib\DirectXTex.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Netcode.lib;Advapi32.lib;C:\work\vcpkg\installed\x64-windows\debug\lib\DirectXTex.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">comsuppwd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>

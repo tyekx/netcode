@@ -8,6 +8,8 @@
 #include "Snippets.h"
 #include <NetcodeAssetLib/JsonUtility.h>
 
+#include "Scripts/LocalPlayerWeaponScript.h"
+
 
 void GameApp::ReloadMap() {
 	GameSceneManager * gsm = Service::Get<GameSceneManager>();
@@ -62,6 +64,7 @@ void GameApp::Render() {
 void GameApp::Simulate(float dt) {
 	totalTime += dt;
 
+	movCtrl.Update();
 	pageManager.Update(dt);
 
 	gameScene->GetPhysXScene()->simulate(dt);
@@ -128,6 +131,18 @@ void GameApp::CreateAxisMapping() {
 				Log::Debug("Map reloaded");
 			}
 		}
+
+		if(modifiers == Netcode::KeyModifier::CTRL && key == Netcode::KeyCode::C) {
+			GameSceneManager * gsm = Service::Get<GameSceneManager>();
+			GameScene * scene = gsm->GetScene();
+			GameObject * obj = scene->FindByName("localAvatarCamera");
+			if(obj != nullptr) {
+				scene->SetCamera(obj);
+				Log::Debug("Entering avatar");
+			} else {
+				Log::Debug("localAvatarCamera was not found");
+			}
+		}
 	});
 }
 
@@ -181,44 +196,6 @@ void GameApp::CreateRemoteAvatar() {
 		ybotAnimationSet = std::make_shared<AnimationSet>(graphics.get(), avatarModel->animations, avatarModel->bones);
 	}
 
-	/*
-	GameObject * gunRootObj = gameScene->Create();
-	GameObject * gunObj = gameScene->Create();
-	LoadComponents(assetManager->Import(L"gun.ncasset"), gunObj);
-
-	Transform * gunRootTransform = gunRootObj->AddComponent<Transform>();
-	Transform * gunTransform = gunObj->GetComponent<Transform>();
-
-	gunRootTransform->position = Netcode::Float3{ 0.0f, 130.0f, 0.0f };
-	gunTransform->scale = Netcode::Float3{ 18.0f, 18.0f, 18.0f };
-	gunRootObj->Parent(avatarController);
-	gunObj->Parent(gunRootObj);
-
-	Netcode::Quaternion gunRotation{ -Netcode::C_PIDIV2, -Netcode::C_PIDIV2, 0.0f };
-
-	Script * gunScript = gunObj->AddComponent<Script>();
-
-	auto behav = std::make_unique<GunBehavior>(avatarHitboxes, gunRootObj, Netcode::Float4{ 0.0f, 0.0f, 40.0f, 0.0f }, gunRotation, 28);
-
-	GameObject * debugObj = gameScene->Create();
-	Script * debugScript = debugObj->AddComponent<Script>();
-	debugScript->SetBehavior(std::make_unique<DebugBehavior>(
-	//&behav->localPosition.x, &behav->localPosition.y, &behav->localPosition.z
-	&anim->effectors[0].position.x, &anim->effectors[0].position.y, &anim->effectors[0].position.z
-	));
-	debugScript->Setup(debugObj);
-
-
-	gunScript->SetBehavior(
-	std::move(behav)
-	);
-	gunScript->Setup(gunObj);
-
-	gameScene->Spawn(gunRootObj);
-	gameScene->Spawn(gunObj);
-	gameScene->Spawn(debugObj);
-	*/
-
 	Animation * anim = avatarHitboxes->AddComponent<Animation>();
 	CreateYbotAnimationComponent(avatarModel, anim);
 	anim->blackboard->BindController(&movCtrl);
@@ -233,16 +210,37 @@ void GameApp::CreateRemoteAvatar() {
 	gameScene->Spawn(avatarHitboxes);
 }
 
-
-
 void GameApp::CreateLocalAvatar() {
-	GameObject * avatarController = gameScene->Create("localAvatarController");
+	GameObject * avatarRoot = gameScene->Create("localAvatarRoot");
 	GameObject * avatarCamera = gameScene->Create("localAvatarCamera");
+	GameObject * avatarAttachmentNode = gameScene->Create("localAvatarAttachmentNode");
+	GameObject * avatarWeaponOffset = gameScene->Create("localAvatarWeaponOffset");
+	GameObject * avatarWeapon = gameScene->Create("localAvatarWeapon");
 
-	avatarCamera->Parent(avatarController);
+	avatarRoot->AddChild(avatarCamera);
+	avatarCamera->AddChild(avatarAttachmentNode);
+	avatarAttachmentNode->AddChild(avatarWeaponOffset);
+	avatarWeaponOffset->AddChild(avatarWeapon);
+
+	avatarWeaponOffset->AddComponent<Transform>()->position = Netcode::Float3{ -12.0f, -13.0f, 33.0f };
+	
+	{
+		Transform * wTr = avatarWeapon->AddComponent<Transform>();
+		wTr->rotation = Netcode::Quaternion{ 0.0f, -Netcode::C_PIDIV2, 0.0f };
+		
+		GameObject * debugObject = gameScene->Create("debugHelper");
+		debugObject->AddComponent<Script>()->AddScript(std::make_unique<DebugScript>(&wTr->position.x, &wTr->position.y, &wTr->position.z));
+		gameScene->Spawn(debugObject);
+		
+		AssetManager * assetManager = Service::Get<AssetManager>();
+		ClientAssetConverter cac{ nullptr, nullptr, nullptr };
+		cac.ConvertComponents(avatarWeapon, assetManager->Import(L"compiled/models/gun_2.ncasset"));
+
+		avatarWeapon->AddComponent<Script>()->AddScript(std::make_unique<LocalPlayerWeaponScript>(wTr, &movCtrl));
+	}
 
 	Transform * avatarCamTransform = avatarCamera->AddComponent<Transform>();
-	avatarCamTransform->position.y = 180.0f;
+	avatarCamTransform->position.y = 90.0f;
 
 	Camera * fpsCam = avatarCamera->AddComponent<Camera>();
 	fpsCam->ahead = Netcode::Float3{ 0.0f, 0.0f, 1.0f };
@@ -251,16 +249,22 @@ void GameApp::CreateLocalAvatar() {
 	fpsCam->nearPlane = 1.0f;
 	fpsCam->up = Netcode::Float3{ 0.0f, 1.0f, 0.0f };
 
+	avatarAttachmentNode->AddComponent<Transform>();
+
 	Netcode::PxPtr<physx::PxController> pxController = gameScene->CreateController();
 
-	Transform * act = avatarController->AddComponent<Transform>();
+	Transform * act = avatarRoot->AddComponent<Transform>();
 	act->position = Netcode::Float3{ 0.0f, 0.0f, 200.0f };
 
-	Script * scriptComponent = avatarController->AddComponent<Script>();
-	scriptComponent->AddScript(std::make_unique<LocalPlayerScript>(std::move(pxController), fpsCam));
+	Script * scriptComponent = avatarRoot->AddComponent<Script>();
+	scriptComponent->AddScript(std::make_unique<LocalPlayerScript>(std::move(pxController), avatarCamera, avatarAttachmentNode));
 
-	gameScene->Spawn(avatarController);
+	gameScene->Spawn(avatarRoot);
 	gameScene->Spawn(avatarCamera);
-
-	gameScene->SetCamera(avatarCamera);
+	gameScene->Spawn(avatarAttachmentNode);
+	gameScene->Spawn(avatarWeaponOffset);
+	gameScene->Spawn(avatarWeapon);
 }
+
+
+

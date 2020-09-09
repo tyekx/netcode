@@ -73,6 +73,15 @@ GameObject * GameScene::Clone(GameObject * src) {
 	return obj;
 }
 
+GameObject* GameScene::FindByName(const std::string& name) {
+	for(auto it = storage.begin(); it != nullptr; ++it) {
+		if(it->name == name) {
+			return it.operator->();
+		}
+	}
+	return nullptr;
+}
+
 physx::PxController * GameScene::CreateController() {
 	auto * pxService = Service::Get<Netcode::Physics::PhysX>();
 	physx::PxCapsuleControllerDesc cd;

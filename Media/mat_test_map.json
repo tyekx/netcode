@@ -7,327 +7,268 @@
       "maxCosDelta": 0
     }
   ],
-  "lights": [
-    {
-      "type": 0,
-      "direction": [ -0.2, -1.0, 1.0 ],
-      "intensity": [ 1, 1, 1 ]
-    }
-  ],
   "objects": [
     {
-      "asset": "compiled/models/chest_01.ncasset",
-      "position": [ 0, 0, -200 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
+      "name": "SunLight",
+      "transform": {},
+      "light": {
+        "type": 0,
+        "direction": [ -0.2, -1.0, 1.0 ],
+        "intensity": [ 1, 1, 1 ]
+      }
+    },
+    {
+      "name": "Chest",
+      "model": {
+        "asset": "compiled/models/chest_01.ncasset",
+        "materials": [
+          {
+            "material_index": 1,
+            "metal_mask": true
+          },
+          {
+            "material_index": 2,
+            "metal_mask": true
+          }
+        ]
+      },
+      "transform": {
+        "position": [ 0, 0, -200 ],
+        "euler_angles": [ 0, 0, 0 ]
+      }
+    },
+    {
+      "name": "TestWall",
+      "model": {
+        "asset": "compiled/models/wall.ncasset",
+        "materials": [
+          {
+            "material_index": 0,
+            "reflectance": 0.4,
+            "metal_mask": false
+          }
+        ]
+      },
+      "transform": {
+        "position": [ -160, -120, 0 ]
+      }
+    },
+    {
+      "model": {
+        "asset": "compiled/models/smooth_sphere.ncasset",
+        "materials": [
+          {
+            "material_index": 0,
+            "roughness": 0,
+            "reflectance": 0.4,
+            "metal_mask": false
+          }
+        ]
+      },
+      "transform": {
+        "position": [ 0, 0, 200 ]
+      },
+      "script": [
         {
-          "materialIndex": 1,
-          "metal_mask": true
-        },
+          "type": "TransformDebugScript"
+        }
+      ],
+      "children": [
         {
-          "materialIndex": 2,
-          "metal_mask": true
+          "model": {
+            "asset": "compiled/models/smooth_sphere.ncasset",
+            "materials": [
+              {
+                "material_index": 0,
+                "roughness": 0.1,
+                "reflectance": 0.4,
+                "metal_mask": false
+              }
+            ]
+          },
+          "transform": {
+            "position": [ 160, 0, 0 ]
+          },
+          "script": [
+            {
+              "type": "TransformDebugScript"
+            }
+          ],
+          "children": [
+            {
+              "model": {
+                "asset": "compiled/models/smooth_sphere.ncasset",
+                "materials": [
+                  {
+                    "material_index": 0,
+                    "roughness": 0.1,
+                    "reflectance": 0.4,
+                    "metal_mask": false
+                  }
+                ]
+              },
+              "transform": {
+                "position": [ 80, 0, 0 ]
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name": "Test",
-      "asset": "compiled/models/wall.ncasset",
-      "position": [ -160, -120, 0 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "reflectance": 0.4,
-          "metal_mask": false
-        }
-      ]
+      "model": {
+        "asset": "compiled/models/smooth_sphere.ncasset",
+        "materials": [
+          {
+            "material_index": 0,
+            "roughness": 0.1,
+            "reflectance": 0.4,
+            "metal_mask": false
+          }
+        ]
+      },
+      "transform": {
+        "position": [ 80, 0, 0 ]
+      }
     },
     {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 0, 0, 0 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0,
-          "reflectance": 0.4,
-          "metal_mask": false
-        }
-      ]
+      "model": {
+        "asset": "compiled/models/smooth_sphere.ncasset",
+        "materials": [
+          {
+            "material_index": 0,
+            "roughness": 0.2,
+            "reflectance": 0.4,
+            "metal_mask": false
+          }
+        ]
+      },
+      "transform": {
+        "position": [ 160, 0, 0 ]
+      }
     },
     {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 60, 0, 0 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.1,
-          "reflectance": 0.4,
-          "metal_mask": false
-        }
-      ]
+      "model": {
+        "asset": "compiled/models/smooth_sphere.ncasset",
+        "materials": [
+          {
+            "material_index": 0,
+            "roughness": 0.3,
+            "reflectance": 0.4,
+            "metal_mask": false
+          }
+        ]
+      },
+      "transform": {
+        "position": [ 240, 0, 0 ]
+      }
     },
     {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 120, 0, 0 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.2,
-          "reflectance": 0.4,
-          "metal_mask": false
-        }
-      ]
+      "model": {
+        "asset": "compiled/models/smooth_sphere.ncasset",
+        "materials": [
+          {
+            "material_index": 0,
+            "roughness": 0.7,
+            "reflectance": 0.4,
+            "metal_mask": false
+          }
+        ]
+      },
+      "transform": {
+        "position": [ 320, 0, 0 ]
+      }
     },
     {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 180, 0, 0 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.3,
-          "reflectance": 0.4,
-          "metal_mask": false
-        }
-      ]
+      "model": {
+        "asset": "compiled/models/smooth_sphere.ncasset",
+        "materials": [
+          {
+            "material_index": 0,
+            "roughness": 0.9,
+            "reflectance": 0.4,
+            "metal_mask": false
+          }
+        ]
+      },
+      "transform": {
+        "position": [ 400, 0, 0 ]
+      }
     },
     {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 240, 0, 0 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.4,
-          "reflectance": 0.4,
-          "metal_mask": false
-        }
-      ]
+      "model": {
+        "asset": "compiled/models/smooth_sphere.ncasset",
+        "materials": [
+          {
+            "material_index": 0,
+            "roughness": 0.0,
+            "metal_mask": true
+          }
+        ]
+      },
+      "transform": {
+        "position": [ 80, -60, -60 ]
+      }
     },
     {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 300, 0, 0 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.5,
-          "reflectance": 0.4,
-          "metal_mask": false
-        }
-      ]
+      "model": {
+        "asset": "compiled/models/smooth_sphere.ncasset",
+        "materials": [
+          {
+            "material_index": 0,
+            "roughness": 0.2,
+            "metal_mask": true
+          }
+        ]
+      },
+      "transform": {
+        "position": [ 160, -60, -60 ]
+      }
     },
     {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 360, 0, 0 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.6,
-          "reflectance": 0.4,
-          "metal_mask": false
-        }
-      ]
+      "model": {
+        "asset": "compiled/models/smooth_sphere.ncasset",
+        "materials": [
+          {
+            "material_index": 0,
+            "roughness": 0.4,
+            "metal_mask": true
+          }
+        ]
+      },
+      "transform": {
+        "position": [ 240, -60, -60 ]
+      }
     },
     {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 420, 0, 0 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.7,
-          "reflectance": 0.4,
-          "metal_mask": false
-        }
-      ]
+      "model": {
+        "asset": "compiled/models/smooth_sphere.ncasset",
+        "materials": [
+          {
+            "material_index": 0,
+            "roughness": 0.6,
+            "metal_mask": true
+          }
+        ]
+      },
+      "transform": {
+        "position": [ 320, -60, -60 ]
+      }
     },
     {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 480, 0, 0 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.8,
-          "reflectance": 0.4,
-          "metal_mask": false
-        }
-      ]
-    },
-    {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 540, 0, 0 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.9,
-          "reflectance": 0.4,
-          "metal_mask": false
-        }
-      ]
-    },
-    {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 600, 0, 0 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 1,
-          "reflectance": 0.4,
-          "metal_mask": false
-        }
-      ]
-    },
-    {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 0, -60, -60 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.0,
-          "reflectance": 0.0,
-          "metal_mask": true
-        }
-      ]
-    },
-    {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 60, -60, -60 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.1,
-          "reflectance": 0.0,
-          "metal_mask": true
-        }
-      ]
-    },
-    {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 120, -60, -60 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.2,
-          "reflectance": 0.0,
-          "metal_mask": true
-        }
-      ]
-    },
-    {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 180, -60, -60 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.3,
-          "reflectance": 0.0,
-          "metal_mask": true
-        }
-      ]
-    },
-    {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 240, -60, -60 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.4,
-          "reflectance": 0.0,
-          "metal_mask": true
-        }
-      ]
-    },
-    {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 300, -60, -60 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.5,
-          "reflectance": 0.0,
-          "metal_mask": true
-        }
-      ]
-    },
-    {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 360, -60, -60 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.6,
-          "reflectance": 0.0,
-          "metal_mask": true
-        }
-      ]
-    },
-    {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 420, -60, -60 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.7,
-          "reflectance": 0.0,
-          "metal_mask": true
-        }
-      ]
-    },
-    {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 480, -60, -60 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.8,
-          "reflectance": 0.0,
-          "metal_mask": true
-        }
-      ]
-    },
-    {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 540, -60, -60 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 0.9,
-          "reflectance": 0.0,
-          "metal_mask": true
-        }
-      ]
-    },
-    {
-      "asset": "compiled/models/smooth_sphere.ncasset",
-      "position": [ 600, -60, -60 ],
-      "eulerAngles": [ 0, 0, 0 ],
-      "materialData": [
-        {
-          "materialIndex": 0,
-          "roughness": 1.0,
-          "reflectance": 0.0,
-          "metal_mask": true
-        }
-      ]
+      "model": {
+        "asset": "compiled/models/smooth_sphere.ncasset",
+        "materials": [
+          {
+            "material_index": 0,
+            "roughness": 0.8,
+            "metal_mask": true
+          }
+        ]
+      },
+      "transform": {
+        "position": [ 400, -60, -60 ]
+      }
     }
   ]
 }

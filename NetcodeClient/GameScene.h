@@ -111,12 +111,13 @@ public:
 
 	GameObject * Clone(GameObject * src);
 
+	GameObject * FindByName(const std::string & name);
+
 	void UpdatePerFrameCb() {
 		Transform * transform = GetCamera()->GetComponent<Transform>();
 		Camera * camComponent = GetCamera()->GetComponent<Camera>();
-
+		
 		const Netcode::Vector3 eyePos = transform->worldPosition;
-
 		const Netcode::Matrix view = Netcode::LookToMatrix(eyePos, camComponent->ahead, camComponent->up);
 		const Netcode::Matrix proj = Netcode::PerspectiveFovMatrix(camComponent->fov, camComponent->aspect, camComponent->nearPlane, camComponent->farPlane);
 
