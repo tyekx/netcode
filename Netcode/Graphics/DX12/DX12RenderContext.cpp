@@ -32,7 +32,7 @@ namespace Netcode::Graphics::DX12 {
 		barriers.push_back(barrier);
 	}
 
-	void BaseRenderContext::ResourceBarrier(Ref<GpuResource> handle, ResourceState before, ResourceState after)
+	void BaseRenderContext::ResourceBarrier(Ref<GpuResource> handle, ResourceStates before, ResourceStates after)
 	{
 		ID3D12Resource * res = std::dynamic_pointer_cast<DX12::Resource>(handle)->resource.Get();
 

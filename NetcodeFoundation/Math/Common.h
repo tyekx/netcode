@@ -1,15 +1,9 @@
 #pragma once
 
+#include "../Macros.h"
 #include <DirectXMath.h>
 #include <cstdint>
 #include "NonZero.hpp"
-
-#define DEFAULT_NOEXCEPT_ALL6(type) type() noexcept = default; \
-~type() noexcept = default; \
-type(const type & rhs) noexcept = default; \
-type(type &&) noexcept = default; \
-type & operator=(const type & rhs) noexcept = default; \
-type & operator=(type && rhs) noexcept = default
 
 #if !defined(XM_CALLCONV)
 #define NC_MATH_CALLCONV __stdcall

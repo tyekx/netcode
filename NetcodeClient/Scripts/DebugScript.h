@@ -33,7 +33,7 @@ public:
 	}
 
 	virtual void BeginPlay(GameObject * owner) override {
-		token = Netcode::Input::OnKeyPressed->Subscribe([this](Netcode::Key key, Netcode::KeyModifier modifiers) -> void {
+		token = Netcode::Input::OnKeyPressed->Subscribe([this](Netcode::Key key, Netcode::KeyModifiers modifiers) -> void {
 			int32_t idx = static_cast<int32_t>(key.GetCode()) - static_cast<int32_t>(Netcode::KeyCode::_0);
 			if(idx >= 0 && idx < 4) {
 				curr = refs[idx];
@@ -43,9 +43,9 @@ public:
 			if(curr != nullptr) {
 				float scale = 1.0f;
 
-				if(Netcode::KeyModifierContains(modifiers, Netcode::KeyModifier::CTRL)) {
+				if(modifiers.IsSet(Netcode::KeyModifier::CTRL)) {
 					scale *= 10.0f;
-				} else if(Netcode::KeyModifierContains(modifiers, Netcode::KeyModifier::ALT)) {
+				} else if(modifiers.IsSet(Netcode::KeyModifier::ALT)) {
 					scale /= 10.0f;
 				}
 

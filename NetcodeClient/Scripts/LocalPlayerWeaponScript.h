@@ -6,13 +6,26 @@
 class LocalPlayerWeaponScript : public ScriptBase {
 	Transform * transform;
 	Netcode::MovementController * movementController;
-	float rot;
-	//Netcode::Float3 target;
+	float t;
+	Netcode::Float3 target;
+
+	static Netcode::Vector3 GetDirectionalMovement() {
+		float dx = Netcode::Input::GetAxis(AxisEnum::HORIZONTAL);
+		float dz = Netcode::Input::GetAxis(AxisEnum::VERTICAL);
+
+		Netcode::Vector3 dxdzVec = Netcode::Float3{ dx, 0.0f, dz };
+
+		if(dxdzVec.AllZero()) {
+			return dxdzVec;
+		}
+
+		return dxdzVec.Normalize();
+	}
 public:
 	LocalPlayerWeaponScript(Transform * tr, Netcode::MovementController * ctrl) {
 		transform = tr;
 		movementController = ctrl;
-		rot = 0.0f;
+		t = 0.0f;
 	}
 	
 	virtual void BeginPlay(GameObject * gameObject) override {
@@ -21,21 +34,19 @@ public:
 
 	virtual void Update(float dt) override {
 
-		//const Netcode::Vector3 mask = Netcode::Float3{ 0.0f, 0.1f, 0.5f };
 		float scale = 0.33f;
-		float timescale = 1.5f;
 		Netcode::Vector3 mask = Netcode::Float3{ 0.0f, 1.0f, 0.2f };
+		if(movementController->IsIdle()) {
+			t += 1.5f * dt;
+		} else {
+			mask = GetDirectionalMovement() + Netcode::Float3{ 0.0f, 0.2f, 0.0f };
+			scale = 1.0f;
+			t += 10.0f * dt;
+		}
+
 		const Netcode::Vector3 unitZ = Netcode::Float3::UnitZ;
 
-		if(movementController->IsMovingForward()) {
-			mask = Netcode::Float3{ 0.0f, 0.2f, 1.0f };
-			timescale = 10.0f;
-			scale = 0.5f;
-		}
-		
-		rot += timescale * dt;
-
-		Netcode::Quaternion q{ rot, 0.0f, 0.0f };
+		const Netcode::Quaternion q{ t, 0.0f, 0.0f };
 		transform->position = unitZ.Rotate(q) * (mask * scale);
 	}
 };

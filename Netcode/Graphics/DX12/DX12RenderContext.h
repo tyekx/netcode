@@ -26,7 +26,7 @@ namespace Netcode::Graphics::DX12 {
 		virtual ~BaseRenderContext() = default;
 
 		virtual void UnorderedAccessBarrier(Ref<GpuResource> handle) override;
-		virtual void ResourceBarrier(Ref<GpuResource> handle, ResourceState before, ResourceState after) override;
+		virtual void ResourceBarrier(Ref<GpuResource> handle, ResourceStates before, ResourceStates after) override;
 
 		virtual void FlushResourceBarriers() override;
 	};

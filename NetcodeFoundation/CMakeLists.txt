@@ -21,6 +21,8 @@ PUBLIC
 	"Math.h"
 	"Memory.h"
 	"Json.h"
+	"Macros.h"
+	"Enum.hpp"
 	
 PRIVATE
 	

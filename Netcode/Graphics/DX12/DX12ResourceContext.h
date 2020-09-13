@@ -40,43 +40,43 @@ namespace Netcode::Graphics::DX12 {
 		virtual Ref<GpuResource> CreateResource(const ResourceDesc & resource) override;
 
 		virtual Ref<GpuResource> CreateReadbackBuffer(size_t size, ResourceType type, ResourceFlags flags) override;
-		virtual Ref<GpuResource> CreateTypedBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags) override;
-		virtual Ref<GpuResource> CreateStructuredBuffer(size_t size, uint32_t stride, ResourceType type, ResourceState initState, ResourceFlags flags) override;
+		virtual Ref<GpuResource> CreateTypedBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceStates initState, ResourceFlags flags) override;
+		virtual Ref<GpuResource> CreateStructuredBuffer(size_t size, uint32_t stride, ResourceType type, ResourceStates initState, ResourceFlags flags) override;
 
 		virtual Ref<GpuResource> CreateTexture2D(const Image * images) override;
 		virtual Ref<GpuResource> CreateTexture2D(const Image * images, ResourceType resourceType) override;
 		virtual Ref<GpuResource> CreateTexture2D(const Image * images, uint32_t mipLevels) override;
 		virtual Ref<GpuResource> CreateTexture2D(const Image * images, uint32_t mipLevels, ResourceType resourceType) override;
-		virtual Ref<GpuResource> CreateTexture2D(uint32_t width, uint32_t height, uint16_t mipLevels, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) override;
-		virtual Ref<GpuResource> CreateTextureCube(uint32_t width, uint32_t height, uint16_t mipLevels, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) override;
+		virtual Ref<GpuResource> CreateTexture2D(uint32_t width, uint32_t height, uint16_t mipLevels, DXGI_FORMAT format, ResourceType resourceType, ResourceStates initialState, ResourceFlags flags) override;
+		virtual Ref<GpuResource> CreateTextureCube(uint32_t width, uint32_t height, uint16_t mipLevels, DXGI_FORMAT format, ResourceType resourceType, ResourceStates initialState, ResourceFlags flags) override;
 
 		virtual Ref<Netcode::ResourceViews> CreateShaderResourceViews(uint32_t numDescriptors) override;
 		virtual Ref<Netcode::ResourceViews> CreateRenderTargetViews(uint32_t numDescriptors) override;
 		virtual Ref<Netcode::ResourceViews> CreateDepthStencilView() override;
 
-		virtual Ref<GpuResource> CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, const DirectX::XMFLOAT4 & clearColor) override;
-		virtual Ref<GpuResource> CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState) override;
+		virtual Ref<GpuResource> CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceStates initState, const DirectX::XMFLOAT4 & clearColor) override;
+		virtual Ref<GpuResource> CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceStates initState) override;
 		virtual Ref<GpuResource> CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, const DirectX::XMFLOAT4 & clearColor) override;
 		virtual Ref<GpuResource> CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType) override;
-		virtual Ref<GpuResource> CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, const DirectX::XMFLOAT4 & clearColor) override;
-		virtual Ref<GpuResource> CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState) override;
+		virtual Ref<GpuResource> CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, ResourceStates initState, const DirectX::XMFLOAT4 & clearColor) override;
+		virtual Ref<GpuResource> CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, ResourceStates initState) override;
 		virtual Ref<GpuResource> CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, const DirectX::XMFLOAT4 & clearColor) override;
 		virtual Ref<GpuResource> CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType) override;
 
-		virtual Ref<GpuResource> CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, float clearDepth, uint8_t clearStencil) override;
-		virtual Ref<GpuResource> CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState) override;
+		virtual Ref<GpuResource> CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceStates initState, float clearDepth, uint8_t clearStencil) override;
+		virtual Ref<GpuResource> CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceStates initState) override;
 		virtual Ref<GpuResource> CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, float clearDepth, uint8_t clearStencil) override;
 		virtual Ref<GpuResource> CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType) override;
-		virtual Ref<GpuResource> CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, float clearDepth, uint8_t clearStencil) override;
-		virtual Ref<GpuResource> CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState) override;
+		virtual Ref<GpuResource> CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, ResourceStates initState, float clearDepth, uint8_t clearStencil) override;
+		virtual Ref<GpuResource> CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, ResourceStates initState) override;
 		virtual Ref<GpuResource> CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, float clearDepth, uint8_t clearStencil) override;
 		virtual Ref<GpuResource> CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType) override;
 
-		virtual Ref<GpuResource> CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState) override;
-		virtual Ref<GpuResource> CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState, ResourceFlags flags) override;
+		virtual Ref<GpuResource> CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceStates initState) override;
+		virtual Ref<GpuResource> CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceStates initState, ResourceFlags flags) override;
 
-		virtual Ref<GpuResource> CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState) override;
-		virtual Ref<GpuResource> CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags) override;
+		virtual Ref<GpuResource> CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceStates initState) override;
+		virtual Ref<GpuResource> CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceStates initState, ResourceFlags flags) override;
 
 		virtual Ref<GpuResource> CreateConstantBuffer(size_t size) override;
 

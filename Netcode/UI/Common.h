@@ -75,10 +75,10 @@ namespace Netcode::UI {
 	class MouseEventArgs : public EventArgs {
 		Netcode::Int2 position;
 		Netcode::Key key;
-		Netcode::KeyModifier modifier;
+		Netcode::KeyModifiers modifier;
 
 	public:
-		MouseEventArgs(const Netcode::Int2 & pos, Netcode::Key key, Netcode::KeyModifier modifier) : EventArgs{}, position{ pos }, key{ key }, modifier{ modifier } {
+		MouseEventArgs(const Netcode::Int2 & pos, Netcode::Key key, Netcode::KeyModifiers modifier) : EventArgs{}, position{ pos }, key{ key }, modifier{ modifier } {
 
 		}
 
@@ -86,7 +86,7 @@ namespace Netcode::UI {
 			return key;
 		}
 
-		Netcode::KeyModifier Modifier() const {
+		Netcode::KeyModifiers Modifier() const {
 			return modifier;
 		}
 
@@ -98,7 +98,7 @@ namespace Netcode::UI {
 	class DragEventArgs : public MouseEventArgs {
 		Netcode::Int2 deltaPosition;
 	public:
-		DragEventArgs(const Netcode::Int2 & pos, Netcode::Key key, Netcode::KeyModifier modifier, const Netcode::Int2 & deltaPos) :
+		DragEventArgs(const Netcode::Int2 & pos, Netcode::Key key, Netcode::KeyModifiers modifier, const Netcode::Int2 & deltaPos) :
 			MouseEventArgs{ pos, key, modifier }, deltaPosition{ deltaPos } {
 
 		}
@@ -111,7 +111,7 @@ namespace Netcode::UI {
 	class ScrollEventArgs : public MouseEventArgs {
 		int32_t scrollVector;
 	public:
-		ScrollEventArgs(const Netcode::Int2 & pos, Netcode::Key key, Netcode::KeyModifier modifier, int32_t scrollVector) : MouseEventArgs{ pos, key, modifier }, scrollVector{ scrollVector } {
+		ScrollEventArgs(const Netcode::Int2 & pos, Netcode::Key key, Netcode::KeyModifiers modifier, int32_t scrollVector) : MouseEventArgs{ pos, key, modifier }, scrollVector{ scrollVector } {
 
 		}
 
@@ -122,13 +122,13 @@ namespace Netcode::UI {
 
 	class KeyEventArgs : public EventArgs {
 		Netcode::Key key;
-		Netcode::KeyModifier modifier;
+		Netcode::KeyModifiers modifier;
 	public:
-		KeyEventArgs(Netcode::Key key, Netcode::KeyModifier modifier) : EventArgs{ }, key{ key }, modifier{ modifier } {
+		KeyEventArgs(Netcode::Key key, Netcode::KeyModifiers modifier) : EventArgs{ }, key{ key }, modifier{ modifier } {
 
 		}
 
-		Netcode::KeyModifier Modifier() const {
+		Netcode::KeyModifiers Modifier() const {
 			return modifier;
 		}
 

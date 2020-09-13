@@ -325,7 +325,7 @@ namespace Netcode::UI {
 		}
 	}
 
-	void TextBox::HandleDefaultKeyStrokes(Key key, KeyModifier modifier)
+	void TextBox::HandleDefaultKeyStrokes(Key key, KeyModifiers modifier)
 	{
 		if(key.GetCode() == KeyCode::BACKSPACE) {
 			if(selectionOffset != 0) {
@@ -340,12 +340,12 @@ namespace Netcode::UI {
 			}
 		}
 
-		if(key.GetCode() == KeyCode::A && KeyModifierContains(modifier, KeyModifier::CTRL)) {
+		if(key.GetCode() == KeyCode::A && modifier.IsSet(KeyModifier::CTRL)) {
 			caretPosition = 0;
 			selectionOffset = static_cast<int32_t>(text.size());
 		}
 
-		if(KeyModifierContains(modifier, KeyModifier::SHIFT)) {
+		if(modifier.IsSet(KeyModifier::SHIFT)) {
 			if(key.GetCode() == KeyCode::LEFT) {
 				if((caretPosition + (selectionOffset - 1)) >= 0) {
 					selectionOffset -= 1;

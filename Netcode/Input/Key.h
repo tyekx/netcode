@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+#include <NetcodeFoundation/Enum.hpp>
 
 namespace Netcode {
 
@@ -12,6 +12,9 @@ namespace Netcode {
 		SHIFT_ALT = (SHIFT | ALT)
 	};
 
+	using KeyModifiers = Enum<KeyModifier>;
+	NETCODE_ENUM_CLASS_OPERATORS(KeyModifier)
+	
 	/*
 	LSB   = "Is active?"
 	LSB+1 = "Is edge?"
@@ -28,6 +31,9 @@ namespace Netcode {
 		TOGGLED = 8,
 		UNDEFINED = 0xFFFFFFFF
 	};
+	
+	using KeyStates = Enum<KeyState>;
+	NETCODE_ENUM_CLASS_OPERATORS(KeyState)
 
 	enum class KeyCode : uint32_t {
 		UNDEFINED = 0x00,
@@ -145,91 +151,90 @@ namespace Netcode {
 		ALT_RIGHT = 0xA5
 	};
 
-	KeyModifier operator&(KeyModifier lhs, KeyModifier rhs);
-	KeyModifier operator|(KeyModifier lhs, KeyModifier rhs);
-	bool KeyModifierContains(KeyModifier lhs, KeyModifier rhs);
-
-	KeyState operator&(KeyState lhs, KeyState rhs);
-	KeyState operator|(KeyState lhs, KeyState rhs);
-	bool KeyStateContains(KeyState lhs, KeyState rhs);
-
 	class Key {
 		KeyCode code;
-		KeyState state;
+		KeyStates state;
 	public:
-		Key() : code{ KeyCode::UNDEFINED }, state{ KeyState::UNDEFINED } { }
-		Key(KeyCode code, KeyState state) : code{ code }, state{ state } { }
-		Key(KeyCode code) : code{ code }, state{ KeyState::UNDEFINED } { }
+		constexpr Key() : code{ KeyCode::UNDEFINED }, state{ KeyState::UNDEFINED } { }
+		constexpr Key(KeyCode code) : code{ code }, state{ KeyState::UNDEFINED } { }
+		constexpr Key(KeyCode code, KeyStates state) : code{ code }, state{ state } { }
 
-		inline KeyCode GetCode() const {
+		[[nodiscard]]
+		constexpr KeyCode GetCode() const {
 			return code;
 		}
 
-		/**
-		* KeyState can be any combination of the given states. Use a specific
-		* query function instead.
-		*/
-		inline KeyState GetState() const {
+		[[nodiscard]]
+		constexpr const KeyStates & GetState() const noexcept {
 			return state;
 		}
 
-		inline void MergeStates(KeyState orState) {
-			state = state | orState;
+		[[nodiscard]]
+		KeyStates & GetState() noexcept {
+			return state;
 		}
 
-		inline void RemoveStates(KeyState negAndState) {
-			state = state & static_cast<KeyState>((~static_cast<uint32_t>(negAndState)));
-		}
-
-		inline void SetState(KeyState newState) {
+		constexpr void SetState(const KeyStates & newState) noexcept {
 			state = newState;
 		}
 
-		bool IsMouse() const {
+		[[nodiscard]]
+		constexpr bool IsMouse() const noexcept {
 			return code == KeyCode::MOUSE_LEFT || code == KeyCode::MOUSE_RIGHT || code == KeyCode::MOUSE_MIDDLE || code == KeyCode::MOUSE4 || code == KeyCode::MOUSE5;
 		}
 
-		bool IsKeyboard() const {
+		[[nodiscard]]
+		constexpr bool IsKeyboard() const noexcept {
 			return code != KeyCode::UNDEFINED && !IsMouse();
 		}
 
-		bool IsPressed() const {
-			return KeyStateContains(GetState(), KeyState::PRESSED);
+		[[nodiscard]]
+		constexpr bool IsPressed() const noexcept {
+			return state.IsSet(KeyState::PRESSED);
 		}
 
-		bool IsReleased() const {
+		[[nodiscard]]
+		constexpr bool IsReleased() const noexcept {
 			return !IsPressed();
 		}
 
-		bool IsToggled() const {
-			return KeyStateContains(GetState(), KeyState::TOGGLED);
+		[[nodiscard]]
+		constexpr bool IsToggled() const noexcept {
+			return state.IsSet(KeyState::TOGGLED);
 		}
 
-		bool IsPulse() const {
-			return KeyStateContains(GetState(), KeyState::PULSE);
+		[[nodiscard]]
+		constexpr bool IsPulse() const noexcept {
+			return state.IsSet(KeyState::PULSE);
 		}
 
-		bool IsEdge() const {
-			return KeyStateContains(GetState(), KeyState::EDGE);
+		[[nodiscard]]
+		constexpr bool IsEdge() const noexcept {
+			return state.IsSet(KeyState::EDGE);
 		}
 
-		bool IsActive() const {
+		[[nodiscard]]
+		constexpr bool IsActive() const noexcept {
 			return IsPressed() || IsPulse() || IsToggled();
 		}
 
-		bool IsInactive() const {
+		[[nodiscard]]
+		constexpr bool IsInactive() const noexcept {
 			return !IsActive();
 		}
 
-		bool IsRising() const {
+		[[nodiscard]]
+		constexpr bool IsRising() const noexcept {
 			return IsPressed() && IsEdge();
 		}
 
-		bool IsFalling() const {
+		[[nodiscard]]
+		constexpr bool IsFalling() const noexcept {
 			return IsReleased() && IsEdge();
 		}
 
-		bool operator==(KeyCode keyCode) const {
+		[[nodiscard]]
+		constexpr bool operator==(KeyCode keyCode) const noexcept {
 			return code == keyCode;
 		}
 	};

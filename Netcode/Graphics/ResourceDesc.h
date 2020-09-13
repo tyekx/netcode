@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Netcode/HandleDecl.h>
+#include "ResourceEnums.h"
 
 namespace Netcode::Graphics {
 
@@ -25,7 +26,7 @@ namespace Netcode::Graphics {
 		uint16_t depth;
 		ResourceType type;
 		ResourceFlags flags;
-		ResourceState state;
+		ResourceStates state;
 		ResourceDimension dimension;
 		DXGI_FORMAT format;
 		ClearValue clearValue;

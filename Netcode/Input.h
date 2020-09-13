@@ -5,6 +5,8 @@
 
 #include "HandleDecl.h"
 
+#include "Input/Key.h"
+
 namespace Netcode {
 
 	template<typename StdAlloc, typename ... T>
@@ -31,37 +33,37 @@ namespace Netcode {
 		/**
 		* Raw input, every key, every mouse button, every state
 		*/
-		static EventType<Key, KeyModifier> * OnInput;
+		static EventType<Key, KeyModifiers> * OnInput;
 
 		/**
 		* Raw mouse input, every mouse key, every state
 		*/
-		static EventType<Key, KeyModifier> * OnMouseInput;
+		static EventType<Key, KeyModifiers> * OnMouseInput;
 
 		/**
 		* Rising edges for mouse keys
 		*/
-		static EventType<Key, KeyModifier> * OnMouseKeyPressed;
+		static EventType<Key, KeyModifiers> * OnMouseKeyPressed;
 
 		/**
 		* Falling edges for mouse keys
 		*/
-		static EventType<Key, KeyModifier> * OnMouseKeyReleased;
+		static EventType<Key, KeyModifiers> * OnMouseKeyReleased;
 
 		/**
 		* Raw keyboard input, every keyboard key, every state
 		*/
-		static EventType<Key, KeyModifier> * OnKeyInput;
+		static EventType<Key, KeyModifiers> * OnKeyInput;
 
 		/**
 		* Rising edges or pulses for keyboard keys
 		*/
-		static EventType<Key, KeyModifier> * OnKeyPressed;
+		static EventType<Key, KeyModifiers> * OnKeyPressed;
 
 		/**
 		* Falling edges for keyboard keys
 		*/
-		static EventType<Key, KeyModifier> * OnKeyReleased;
+		static EventType<Key, KeyModifiers> * OnKeyReleased;
 
 		/**
 		* Mouse wheel scroll event
@@ -69,13 +71,13 @@ namespace Netcode {
 		* x > 0: scroll up
 		* x < 0: scroll down
 		*/
-		static EventType<int, KeyModifier> * OnScroll;
+		static EventType<int, KeyModifiers> * OnScroll;
 
 		/**
 		* Mouse move event
 		* Int2: mouse delta
 		*/
-		static EventType<Int2, KeyModifier> * OnMouseMove;
+		static EventType<Int2, KeyModifiers> * OnMouseMove;
 
 		static EventType<wchar_t> * OnCharInput;
 

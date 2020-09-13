@@ -119,7 +119,6 @@ namespace Netcode {
 	class FrameGraphBuilder;
 	class Fence;
 
-	enum class KeyModifier : uint32_t;
 	enum class KeyState : uint32_t;
 	enum class KeyCode : uint32_t;
 	class Key;
@@ -130,7 +129,9 @@ namespace Netcode::Network {
 
 	class Cookie;
 	class Response;
-	class GameSession;
+	class SessionBase;
+	class ClientSessionBase;
+	class ServerSessionBase;
 
 }
 

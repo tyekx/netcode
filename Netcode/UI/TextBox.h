@@ -41,7 +41,7 @@ namespace Netcode::UI {
 
         void AppendChar(wchar_t c);
 
-        void HandleDefaultKeyStrokes(Key key, KeyModifier modifier);
+        void HandleDefaultKeyStrokes(Key key, KeyModifiers modifier);
 
         virtual void Update(float dt) override;
 

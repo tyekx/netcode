@@ -216,7 +216,7 @@ namespace Netcode::UI {
 		lastMousePosition = Netcode::Input::GetMousePosition();
 
 		if(clickToken == 0) {
-			clickToken = Netcode::Input::OnMouseInput->Subscribe([this](Key key, KeyModifier modifier) -> void {
+			clickToken = Netcode::Input::OnMouseInput->Subscribe([this](Key key, KeyModifiers modifier) -> void {
 
 				Ref<Control> control = raycastedControl.lock();
 
@@ -257,7 +257,7 @@ namespace Netcode::UI {
 		}
 
 		if(moveToken == 0) {
-			moveToken = Netcode::Input::OnMouseMove->Subscribe([this](Int2 delta, KeyModifier modifier) -> void {
+			moveToken = Netcode::Input::OnMouseMove->Subscribe([this](Int2 delta, KeyModifiers modifier) -> void {
 				const Int2 mousePosition = Netcode::Input::GetMousePosition();
 
 
@@ -291,7 +291,7 @@ namespace Netcode::UI {
 		}
 
 		if(scrollToken == 0) {
-			scrollToken = Netcode::Input::OnScroll->Subscribe([this](int scrollVector, KeyModifier modifier) -> void {
+			scrollToken = Netcode::Input::OnScroll->Subscribe([this](int scrollVector, KeyModifiers modifier) -> void {
 				Ref<Control> ctrl = raycastedControl.lock();
 
 				if(ctrl != nullptr) {
@@ -306,7 +306,7 @@ namespace Netcode::UI {
 		}
 
 		if(keyPressedToken == 0) {
-			keyPressedToken = Netcode::Input::OnKeyPressed->Subscribe([this](Key key, KeyModifier modifier) -> void {
+			keyPressedToken = Netcode::Input::OnKeyPressed->Subscribe([this](Key key, KeyModifiers modifier) -> void {
 				if(!Netcode::Utility::IsWeakRefEmpty(focusedInput)) {
 					Ref<Input> input = focusedInput.lock();
 

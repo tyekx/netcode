@@ -5,6 +5,8 @@
 
 #include <Netcode/HandleDecl.h>
 
+#include "ResourceEnums.h"
+
 namespace Netcode {
 	class RenderPass;
 	class FrameGraph;
@@ -36,10 +38,10 @@ namespace Netcode::Graphics {
 
 		virtual Ref<GpuResource> CreateResource(const ResourceDesc & resource) = 0;
 		virtual Ref<GpuResource> CreateReadbackBuffer(size_t size, ResourceType type, ResourceFlags flags) = 0;
-		virtual Ref<GpuResource> CreateTypedBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
-		virtual Ref<GpuResource> CreateStructuredBuffer(size_t size, uint32_t stride, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
-		virtual Ref<GpuResource> CreateTexture2D(uint32_t width, uint32_t height, uint16_t mipLevels, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) = 0;
-		virtual Ref<GpuResource> CreateTextureCube(uint32_t width, uint32_t height, uint16_t mipLevels, DXGI_FORMAT format, ResourceType resourceType, ResourceState initialState, ResourceFlags flags) = 0;
+		virtual Ref<GpuResource> CreateTypedBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceStates initState, ResourceFlags flags) = 0;
+		virtual Ref<GpuResource> CreateStructuredBuffer(size_t size, uint32_t stride, ResourceType type, ResourceStates initState, ResourceFlags flags) = 0;
+		virtual Ref<GpuResource> CreateTexture2D(uint32_t width, uint32_t height, uint16_t mipLevels, DXGI_FORMAT format, ResourceType resourceType, ResourceStates initialState, ResourceFlags flags) = 0;
+		virtual Ref<GpuResource> CreateTextureCube(uint32_t width, uint32_t height, uint16_t mipLevels, DXGI_FORMAT format, ResourceType resourceType, ResourceStates initialState, ResourceFlags flags) = 0;
 
 		virtual Ref<GpuResource> CreateTexture2D(const Image * images) = 0;
 		virtual Ref<GpuResource> CreateTexture2D(const Image * images, ResourceType resourceType) = 0;
@@ -56,31 +58,31 @@ namespace Netcode::Graphics {
 		/*
 		Creates a Texture2D render target, every version invokes the one with the most arguments. Any argument not specified will fall back to its default:
 		- width, height: backbuffer width, height
-		- ResourceState: ResourceState::RENDER_TARGET
+		- ResourceStates: ResourceStates::RENDER_TARGET
 		- clearColor: (0,0,0,0)
 		*/
-		virtual Ref<GpuResource> CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, const DirectX::XMFLOAT4 & clearColor) = 0;
-		virtual Ref<GpuResource> CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState) = 0;
+		virtual Ref<GpuResource> CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceStates initState, const DirectX::XMFLOAT4 & clearColor) = 0;
+		virtual Ref<GpuResource> CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceStates initState) = 0;
 		virtual Ref<GpuResource> CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, const DirectX::XMFLOAT4 & clearColor) = 0;
 		virtual Ref<GpuResource> CreateRenderTarget(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType) = 0;
-		virtual Ref<GpuResource> CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, const DirectX::XMFLOAT4 & clearColor) = 0;
-		virtual Ref<GpuResource> CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState) = 0;
+		virtual Ref<GpuResource> CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, ResourceStates initState, const DirectX::XMFLOAT4 & clearColor) = 0;
+		virtual Ref<GpuResource> CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, ResourceStates initState) = 0;
 		virtual Ref<GpuResource> CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType, const DirectX::XMFLOAT4 & clearColor) = 0;
 		virtual Ref<GpuResource> CreateRenderTarget(DXGI_FORMAT format, ResourceType resourceType) = 0;
 
 		/*
 		Creates a Texture2D Depth stencil, every version invokes the one the most arguments. Any argument not specified will fall back to its default:
 		- width, height: backbuffer width, height
-		- ResourceState: ResourceState::DEPTH_WRITE
+		- ResourceStates: ResourceStates::DEPTH_WRITE
 		- clearDepth: 1.0f
 		- clearStencil: 0
 		*/
-		virtual Ref<GpuResource> CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, float clearDepth, uint8_t clearStencil) = 0;
-		virtual Ref<GpuResource> CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceState initState) = 0;
+		virtual Ref<GpuResource> CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceStates initState, float clearDepth, uint8_t clearStencil) = 0;
+		virtual Ref<GpuResource> CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, ResourceStates initState) = 0;
 		virtual Ref<GpuResource> CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType, float clearDepth, uint8_t clearStencil) = 0;
 		virtual Ref<GpuResource> CreateDepthStencil(uint32_t width, uint32_t height, DXGI_FORMAT format, ResourceType resourceType) = 0;
-		virtual Ref<GpuResource> CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState, float clearDepth, uint8_t clearStencil) = 0;
-		virtual Ref<GpuResource> CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, ResourceState initState) = 0;
+		virtual Ref<GpuResource> CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, ResourceStates initState, float clearDepth, uint8_t clearStencil) = 0;
+		virtual Ref<GpuResource> CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, ResourceStates initState) = 0;
 		virtual Ref<GpuResource> CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType, float clearDepth, uint8_t clearStencil) = 0;
 		virtual Ref<GpuResource> CreateDepthStencil(DXGI_FORMAT format, ResourceType resourceType) = 0;
 
@@ -92,11 +94,11 @@ namespace Netcode::Graphics {
 		virtual void Readback(Ref<GpuResource> readbackResource, void * dstData, size_t dstDataSizeInBytes) = 0;
 		virtual void Readback(Ref<GpuResource> readbackResource, void * dstData, size_t dstDataSizeInBytes, size_t srcOffsetInBytes) = 0;
 
-		virtual Ref<GpuResource> CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState) = 0;
-		virtual Ref<GpuResource> CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
+		virtual Ref<GpuResource> CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceStates initState) = 0;
+		virtual Ref<GpuResource> CreateVertexBuffer(size_t size, unsigned int stride, ResourceType type, ResourceStates initState, ResourceFlags flags) = 0;
 
-		virtual Ref<GpuResource> CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState) = 0;
-		virtual Ref<GpuResource> CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceState initState, ResourceFlags flags) = 0;
+		virtual Ref<GpuResource> CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceStates initState) = 0;
+		virtual Ref<GpuResource> CreateIndexBuffer(size_t size, DXGI_FORMAT format, ResourceType type, ResourceStates initState, ResourceFlags flags) = 0;
 	};
 
 
@@ -168,7 +170,7 @@ namespace Netcode::Graphics {
 		virtual void CopyBufferRegion(Ref<GpuResource> dstResource, size_t dstOffset, Ref<GpuResource> srcResource, size_t srcOffset, size_t sizeInBytes) = 0;
 
 		virtual void UnorderedAccessBarrier(Ref<GpuResource> handle) = 0;
-		virtual void ResourceBarrier(Ref<GpuResource> handle, ResourceState before, ResourceState after) = 0;
+		virtual void ResourceBarrier(Ref<GpuResource> handle, ResourceStates before, ResourceStates after) = 0;
 
 		virtual void FlushResourceBarriers() = 0;
 		virtual void BeginPass() = 0;

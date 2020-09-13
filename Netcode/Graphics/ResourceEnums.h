@@ -2,6 +2,7 @@
 
 #include <NetcodeFoundation/Formats.h>
 #include <cstdint>
+#include <NetcodeFoundation/Enum.hpp>
 
 namespace Netcode::Graphics {
 
@@ -32,7 +33,9 @@ namespace Netcode::Graphics {
 		PREDICATION = 0x200
 	};
 
-	ResourceState operator|(ResourceState lhs, ResourceState rhs);
+	using ResourceStates = Enum<ResourceState>;
+	NETCODE_ENUM_CLASS_OPERATORS(ResourceState)
+	
 
 	enum class ResourceType : unsigned {
 		TRANSIENT_DEFAULT,

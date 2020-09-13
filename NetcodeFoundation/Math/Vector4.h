@@ -11,7 +11,7 @@ namespace Netcode {
 	public:
 		DirectX::XMVECTOR v;
 
-		DEFAULT_NOEXCEPT_ALL6(Vector4);
+		NETCODE_CONSTRUCTORS_ALL(Vector4);
 
 		explicit Vector4(float xyzw) : v{ DirectX::XMVectorReplicate(xyzw) } { }
 

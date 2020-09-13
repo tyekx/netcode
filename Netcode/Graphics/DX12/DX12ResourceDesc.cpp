@@ -15,8 +15,8 @@ namespace Netcode::Graphics::DX12 {
 		return static_cast<D3D12_RESOURCE_DIMENSION>(d);
 	}
 
-	D3D12_RESOURCE_STATES GetNativeState(ResourceState s) {
-		return static_cast<D3D12_RESOURCE_STATES>(s);
+	D3D12_RESOURCE_STATES GetNativeState(ResourceStates s) {
+		return static_cast<D3D12_RESOURCE_STATES>(static_cast<ResourceState>(s));
 	}
 
 	D3D12_HEAP_TYPE GetNativeHeapType(ResourceType r) {

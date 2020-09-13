@@ -169,16 +169,16 @@ namespace Netcode {
 		Ref<AxisMapBase> axisMap;
 
 	public:
-		EventType<Key, KeyModifier> OnInput;
-		EventType<Key, KeyModifier> OnMouseInput;
-		EventType<Key, KeyModifier> OnMouseKeyPressed;
-		EventType<Key, KeyModifier> OnMouseKeyReleased;
-		EventType<Key, KeyModifier> OnKeyInput;
-		EventType<Key, KeyModifier> OnKeyPressed;
-		EventType<Key, KeyModifier> OnKeyReleased;
+		EventType<Key, KeyModifiers> OnInput;
+		EventType<Key, KeyModifiers> OnMouseInput;
+		EventType<Key, KeyModifiers> OnMouseKeyPressed;
+		EventType<Key, KeyModifiers> OnMouseKeyReleased;
+		EventType<Key, KeyModifiers> OnKeyInput;
+		EventType<Key, KeyModifiers> OnKeyPressed;
+		EventType<Key, KeyModifiers> OnKeyReleased;
 
-		EventType<int, KeyModifier> OnScroll;
-		EventType<Int2, KeyModifier> OnMouseMove;
+		EventType<int, KeyModifiers> OnScroll;
+		EventType<Int2, KeyModifiers> OnMouseMove;
 		EventType<wchar_t> OnCharInput;
 
 	private:
@@ -208,7 +208,7 @@ namespace Netcode {
 
 		Int2 mouseDelta;
 		Int2 mouseWindowPosition;
-		KeyModifier modifiers;
+		KeyModifiers modifiers;
 		KeyStorage keys;
 
 		uint8_t inputBuffer[2048];
@@ -256,26 +256,26 @@ namespace Netcode {
 
 
 					if(isKeyDown) {
-						keys[keyCode].MergeStates(KeyState::PRESSED);
+						keys[keyCode].GetState().Set(KeyState::PRESSED);
 					} else {
-						keys[keyCode].RemoveStates(KeyState::PRESSED);
+						keys[keyCode].GetState().Unset(KeyState::PRESSED);
 					}
 
 					if(IsModifier(keyCode)) {
 						KeyModifier modifier = MapKeyModifier(keyCode);
 
 						if(isKeyDown) {
-							modifiers = modifiers | modifier;
+							modifiers.Set(modifier);
 						} else {
-							modifiers = modifiers & static_cast<KeyModifier>(~static_cast<uint32_t>(modifier));
+							modifiers.Unset(modifier);
 						}
 					}
 
 					if(IsToggledType(keyCode)) {
 						if(isKeyToggled) {
-							keys[keyCode].MergeStates(KeyState::TOGGLED);
+							keys[keyCode].GetState().Set(KeyState::TOGGLED);
 						} else {
-							keys[keyCode].RemoveStates(KeyState::TOGGLED);
+							keys[keyCode].GetState().Unset(KeyState::TOGGLED);
 						}
 					}
 				}
@@ -284,14 +284,12 @@ namespace Netcode {
 			UpdateModifiers();
 		}
 
-		static KeyState ApplyModifierLogic(Key leftModifier, Key rightModifier) {
-			KeyState leftState = leftModifier.GetState();
-			KeyState rightState = rightModifier.GetState();
+		static KeyStates ApplyModifierLogic(Key leftModifier, Key rightModifier) {
+			KeyStates leftState = leftModifier.GetState();
+			KeyStates rightState = rightModifier.GetState();
 
-			UndefinedBehaviourAssertion(!KeyStateContains(leftState, KeyState::PULSE) &&
-										!KeyStateContains(leftState, KeyState::TOGGLED) &&
-										!KeyStateContains(rightState, KeyState::PULSE) &&
-										!KeyStateContains(rightState, KeyState::TOGGLED));
+			UndefinedBehaviourAssertion(!leftState.IsAnySet(KeyState::PULSE | KeyState::TOGGLED) &&
+										!rightState.IsAnySet(KeyState::PULSE | KeyState::TOGGLED));
 
 			return leftState | rightState;
 		}
@@ -312,18 +310,18 @@ namespace Netcode {
 
 			keys[KeyCode::SHIFT].SetState(ApplyModifierLogic(leftShift, rightShift));
 
-			KeyModifier sum = KeyModifier::NONE;
+			KeyModifiers sum = KeyModifier::NONE;
 
 			if(keys[KeyCode::ALT].IsPressed()) {
-				sum = sum | KeyModifier::ALT;
+				sum |= KeyModifier::ALT;
 			}
 
 			if(keys[KeyCode::CONTROL].IsPressed()) {
-				sum = sum | KeyModifier::CTRL;
+				sum |= KeyModifier::CTRL;
 			}
 
 			if(keys[KeyCode::SHIFT].IsPressed()) {
-				sum = sum | KeyModifier::SHIFT;
+				sum |= KeyModifier::SHIFT;
 			}
 
 			modifiers = sum;
@@ -367,6 +365,7 @@ namespace Netcode {
 			KeyCode keyCode = keyEvent.GetCode();
 			Key propagatedKeyEvent{ keyEvent.GetCode(), KeyState::UNDEFINED };
 			Key currentState = keys[keyCode];
+			KeyStates mutableState = currentState.GetState();
 
 			/**
 			* 1.) Pulse state does not get saved, its only for propagation
@@ -374,23 +373,23 @@ namespace Netcode {
 			*/
 
 			if(currentState.IsReleased() && keyEvent.IsPressed()) {
-				keys[keyCode].MergeStates(KeyState::RISING_EDGE);
-
+				mutableState.Set(KeyState::RISING_EDGE);
+				
 				if(IsToggledType(keyEvent.GetCode())) {
 					if(currentState.IsToggled()) {
-						keys[keyCode].RemoveStates(KeyState::TOGGLED);
+						mutableState.Unset(KeyState::TOGGLED);
 					} else {
-						keys[keyCode].MergeStates(KeyState::TOGGLED);
+						mutableState.Set(KeyState::TOGGLED);
 					}
 				}
 
-				propagatedKeyEvent.SetState(keys[keyCode].GetState());
+				propagatedKeyEvent.SetState(mutableState);
 			}
 
 			if(currentState.IsPressed() && keyEvent.IsReleased()) {
-				keys[keyCode].RemoveStates(KeyState::PRESSED);
-				keys[keyCode].MergeStates(KeyState::EDGE);
-				propagatedKeyEvent.SetState(keys[keyCode].GetState());
+				mutableState.Unset(KeyState::PRESSED);
+				mutableState.Set(KeyState::EDGE);
+				propagatedKeyEvent.SetState(mutableState);
 			}
 
 			if(keyEvent.IsPressed() && currentState.IsPressed()) {
@@ -416,7 +415,7 @@ namespace Netcode {
 
 		void CompleteFrame() {
 			for(uint32_t i = 0; i < ARRAYSIZE(iterableKeyCodes); ++i) {
-				keys[iterableKeyCodes[i]].RemoveStates(KeyState::EDGE);
+				keys[iterableKeyCodes[i]].GetState().Unset(KeyState::EDGE);
 			}
 
 			mouseDelta = Int2::Zero;
@@ -528,15 +527,15 @@ namespace Netcode {
 
 	std::unique_ptr<Input::detail> Input::instance{ nullptr };
 
-	Input::EventType<Key, KeyModifier> * Input::OnInput{ nullptr };
-	Input::EventType<Key, KeyModifier> * Input::OnMouseInput{ nullptr };
-	Input::EventType<Key, KeyModifier> * Input::OnMouseKeyPressed{ nullptr };
-	Input::EventType<Key, KeyModifier> * Input::OnMouseKeyReleased{ nullptr };
-	Input::EventType<Key, KeyModifier> * Input::OnKeyInput{ nullptr };
-	Input::EventType<Key, KeyModifier> * Input::OnKeyPressed{ nullptr };
-	Input::EventType<Key, KeyModifier> * Input::OnKeyReleased{ nullptr };
-	Input::EventType<int, KeyModifier> * Input::OnScroll{ nullptr };
-	Input::EventType<Int2, KeyModifier> * Input::OnMouseMove{ nullptr };
+	Input::EventType<Key, KeyModifiers> * Input::OnInput{ nullptr };
+	Input::EventType<Key, KeyModifiers> * Input::OnMouseInput{ nullptr };
+	Input::EventType<Key, KeyModifiers> * Input::OnMouseKeyPressed{ nullptr };
+	Input::EventType<Key, KeyModifiers> * Input::OnMouseKeyReleased{ nullptr };
+	Input::EventType<Key, KeyModifiers> * Input::OnKeyInput{ nullptr };
+	Input::EventType<Key, KeyModifiers> * Input::OnKeyPressed{ nullptr };
+	Input::EventType<Key, KeyModifiers> * Input::OnKeyReleased{ nullptr };
+	Input::EventType<int, KeyModifiers> * Input::OnScroll{ nullptr };
+	Input::EventType<Int2, KeyModifiers> * Input::OnMouseMove{ nullptr };
 	Input::EventType<wchar_t> * Input::OnCharInput{ nullptr };
 
 	bool Input::InputIsCapital() {
@@ -633,37 +632,6 @@ namespace Netcode {
 
 	Int2 Input::GetMousePosition() {
 		return instance->GetMousePosition();
-	}
-
-	KeyModifier operator&(KeyModifier lhs, KeyModifier rhs)
-	{
-		return static_cast<KeyModifier>(static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs));
-	}
-
-	KeyModifier operator|(KeyModifier lhs, KeyModifier rhs)
-	{
-		return static_cast<KeyModifier>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
-	}
-
-	bool KeyModifierContains(KeyModifier lhs, KeyModifier rhs)
-	{
-		// if rhs is 0, then this call always returns true, which can cause issues
-		UndefinedBehaviourAssertion(static_cast<uint32_t>(rhs) != 0);
-		return (lhs & rhs) == rhs;
-	}
-
-	KeyState operator&(KeyState lhs, KeyState rhs) {
-		return static_cast<KeyState>(static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs));
-	}
-
-	KeyState operator|(KeyState lhs, KeyState rhs) {
-		return static_cast<KeyState>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
-	}
-
-	bool KeyStateContains(KeyState lhs, KeyState rhs) {
-		// if rhs is 0, then this call always returns true, which can cause issues
-		UndefinedBehaviourAssertion(static_cast<uint32_t>(rhs) != 0);
-		return (lhs & rhs) == rhs;
 	}
 
 }
