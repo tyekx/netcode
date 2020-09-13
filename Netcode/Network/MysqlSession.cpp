@@ -1,7 +1,7 @@
 #include "MysqlSession.h"
 #include <Netcode/Config.h>
 #include <Netcode/Logger.h>
-
+#include <Netcode/Utility.h>
 #include <mysqlx/xdevapi.h>
 
 
@@ -18,7 +18,7 @@ namespace Netcode::Network {
 		std::unique_ptr<mysqlx::SqlStatement> closeRemainingGameSessions;
 		std::mutex mutex;
 
-		ErrorCode QueryUserByHash(const std::string & hash, UserRow & output) {
+		ErrorCode QueryUserByHash(const std::string & hash, PlayerDbDataRow & output) {
 			std::scoped_lock<std::mutex> lock{ mutex };
 			try {
 				queryUserByHash->bind(hash);
@@ -30,13 +30,12 @@ namespace Netcode::Network {
 
 				mysqlx::Row row = results.fetchOne();
 
-				UserRow userRow;
-				userRow.userId = (int)row.get(0);
-				userRow.name = (std::string)row.get(1);
-				userRow.isBanned = (bool)row.get(2);
-				userRow.hash = (std::string)row.get(3);
+				int userId = (int)row.get(0);
+				std::string name = (std::string)row.get(1);
+				bool isBanned = (bool)row.get(2);
+				std::string hash = (std::string)row.get(3);
 
-				output = std::move(userRow);
+				output = std::tie(userId, name, hash, isBanned);
 			} catch(mysqlx::Error & error) {
 				Log::Error("[MySQL] QueryUserByHash exception: {0}", error.what());
 				return Errc::make_error_code(Errc::host_unreachable);
@@ -145,7 +144,7 @@ namespace Netcode::Network {
 					mysqlx::SessionOption::USER, Config::Get<std::wstring>(L"network.database.username:string"),
 					mysqlx::SessionOption::PWD, Config::Get<std::wstring>(L"network.database.password:string"),
 					mysqlx::SessionOption::HOST, Config::Get<std::wstring>(L"network.database.hostname:string"),
-					mysqlx::SessionOption::PORT, Config::Get<std::wstring>(L"network.database.port:u16"),
+					mysqlx::SessionOption::PORT, Config::Get<uint16_t>(L"network.database.port:u16"),
 					mysqlx::SessionOption::DB, Config::Get<std::wstring>(L"network.database.schema:string"),
 					mysqlx::SessionOption::CONNECT_TIMEOUT, std::chrono::seconds(Config::Get<uint32_t>(L"network.database.timeout:u32"))
 				);
@@ -204,7 +203,7 @@ namespace Netcode::Network {
 		impl.reset();
 	}
 
-	ErrorCode MysqlSession::QueryUserByHash(const std::string& hash, UserRow& output)
+	ErrorCode MysqlSession::QueryUserByHash(const std::string& hash, PlayerDbDataRow & output)
 	{
 		return impl->QueryUserByHash(hash, output);
 	}

@@ -124,7 +124,7 @@ void GameApp::CreateAxisMapping() {
 
 	Netcode::Input::SetAxisMap(std::move(axisMap));
 
-	Netcode::Input::OnKeyPressed->Subscribe([this](Netcode::Key key, Netcode::KeyModifier modifiers) -> void {
+	Netcode::Input::OnKeyPressed->Subscribe([this](Netcode::Key key, Netcode::KeyModifiers modifiers) -> void {
 		if(modifiers == Netcode::KeyModifier::NONE) {
 			if(key == Netcode::KeyCode::F5) {
 				ReloadMap();

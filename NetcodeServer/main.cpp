@@ -4,8 +4,11 @@
 #include <Netcode/IO/Path.h>
 #include <Netcode/IO/File.h>
 #include <Netcode/IO/Json.h>
+#include <Netcode/System/SystemClock.h>
 
 int main(int argc, char * argv[]) {
+	Netcode::SystemClock::Tick();
+	
 	Log::Setup(true);
 	MainConfig mainConfig;
 	po::options_description rootDesc("General Options");
@@ -31,8 +34,8 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 
-	rapidjson::Document doc;
-	Netcode::IO::ParseJson(doc, configFile.GetFullPath());
+	Netcode::JsonDocument doc;
+	Netcode::IO::ParseJsonFromFile(doc, configFile.GetFullPath());
 	Netcode::Config::LoadJson(doc);
 	
 	Netcode::Module::DefaultModuleFactory dmf;

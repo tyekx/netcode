@@ -7,23 +7,17 @@
 
 namespace Netcode::Network {
 
-	class ClientSession : public GameSession {
+	class ClientSession : public ClientSessionBase {
 		boost::asio::io_context & ioContext;
 		MessageQueue<UdpPacket> queue;
-		MessageQueue<Netcode::Protocol::Message> gameQueue;
-		MessageQueue<Netcode::Protocol::Message> controlQueue;
-		PacketStorage storage;
-		ControlPacketStorage controlStorage;
+		MessageQueue<Netcode::Protocol::ServerUpdate> gameQueue;
+		Ref<PacketStorage> storage;
 		boost::asio::deadline_timer timer;
 		boost::asio::deadline_timer protocolTimer;
 		udp_resolver_t resolver;
 		Ref<UdpStream> stream;
-		udp_endpoint_t controlEndpoint;
 		udp_endpoint_t updateEndpoint;
-		int32_t clientAck;
-		int32_t serverAck;
-		boost::system::error_code lastError;
-
+		
 		void SetError(const boost::system::error_code & ec);
 
 		void Tick();
@@ -32,30 +26,31 @@ namespace Netcode::Network {
 
 		void InitTimer();
 		void InitRead();
-		void OnRead(std::size_t transferredBytes, udp_endpoint_t endpoint, PacketStorage::StorageType buffer);
-		void OnMessageSent(const ErrorCode & ec, std::size_t size, PacketStorage::StorageType buffer);
-
-		Ref<ClientSession> GetStrongRef() {
-			return std::dynamic_pointer_cast<ClientSession>(shared_from_this());
-		}
+		void OnRead(size_t transferredBytes, udp_endpoint_t endpoint, Ref<uint8_t[]> buffer);
+		void OnMessageSent(const ErrorCode & ec, size_t size);
 
 	public:
 		ClientSession(boost::asio::io_context & ioc);
 		virtual ~ClientSession() = default;
-		void SendAck(int32_t ack);
 		virtual void Start() override;
+		
 		virtual void Stop() override {
 
 		}
-		virtual bool CheckVersion(const Netcode::Protocol::Version & version) override;
-		virtual bool IsRunning() const override;
-		virtual std::string GetLastError() const override;
-		virtual void Receive(std::vector<Protocol::Message> & control, std::vector<Protocol::Message> & game) override;
-		virtual void SendUpdate(const udp_endpoint_t & endpoint, Protocol::Message message) override;
-		virtual void SendUpdate(Protocol::Message message) override;
-		virtual void SendControlMessage(Netcode::Protocol::Message message, std::function<void(ErrorCode)> completionHandler) override;
 
-		virtual void SendAll() override;
+		virtual void SwapBuffers(std::vector<Protocol::ServerUpdate> & game) override {
+			
+		}
+		
+		virtual void Update(Protocol::ClientUpdate message) override;
+		
+		virtual void Connect(std::string address, uint16_t port, std::string hash) override {
+			
+		}
+		
+		virtual void Disconnect() override {
+			
+		}
 	};
 
 }

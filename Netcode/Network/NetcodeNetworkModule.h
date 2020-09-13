@@ -17,8 +17,8 @@ namespace Netcode::Module {
 		virtual void Start(AApp * app) override;
 		virtual void Shutdown() override;
 
-		virtual Ref<Network::GameSession> CreateServer() override;
-		virtual Ref<Network::GameSession> CreateClient() override;
+		virtual Ref<Network::ServerSessionBase> CreateServer() override;
+		virtual Ref<Network::ClientSessionBase> CreateClient() override;
 
 		virtual Network::Cookie GetCookie(const std::string & key) override;
 		virtual void SetCookie(const Network::Cookie & cookie) override;

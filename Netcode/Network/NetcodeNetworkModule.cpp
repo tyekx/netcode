@@ -19,13 +19,13 @@ namespace Netcode::Module {
 	void NetcodeNetworkModule::Shutdown() {
 	}
 
-	Ref<Network::GameSession> NetcodeNetworkModule::CreateServer()
+	Ref<Network::ServerSessionBase> NetcodeNetworkModule::CreateServer()
 	{
 		context.Start(Config::Get<uint32_t>(L"network.server.workerThreadCount:u32"));
 		return std::make_shared<Network::ServerSession>(context.GetImpl());
 	}
 
-	Ref<Network::GameSession> NetcodeNetworkModule::CreateClient()
+	Ref<Network::ClientSessionBase> NetcodeNetworkModule::CreateClient()
 	{
 		context.Start(Config::Get<uint32_t>(L"network.client.workerThreadCount:u32"));
 		return std::make_shared<Network::ClientSession>(context.GetImpl());

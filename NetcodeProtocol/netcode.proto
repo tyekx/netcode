@@ -1,23 +1,69 @@
 syntax = "proto3";
+option cc_enable_arenas = true;
 
 package Netcode.Protocol;
 
-import "client.proto";
-import "server.proto";
-import "control.proto";
+import "shared.proto";
 
-message Message {
-    int32 id = 1;
-    int32 subject = 2;
-    string address = 3;
-    int32 port = 4;
+enum RequestType {
+	CONNECT = 0;
+	DISCONNECT = 1;
+}
+
+message Request {
+    RequestType type = 1;
+    string hash = 2;
+}
+
+message ConnectResponseData {
+    int32 port = 1; 
+}
+
+message Response {
+    RequestType type = 1;
+    int32 error_code = 2;
     oneof Body {
-        Netcode.Protocol.Control.Message control = 5;
-        Netcode.Protocol.Client.Update client_update = 6;
-        Netcode.Protocol.Server.Update server_update = 7;
+        ConnectResponseData connect_data = 3;
     }
 }
 
+enum CommandType {
+    NO_OP = 0;
+	PLAYER_KICKED = 1;
+	PLAYER_BANNED = 2;
+	PLAYER_CONNECTED = 3;
+	PLAYER_DISCONNECTED = 4;
+	PLAYER_TIMEDOUT = 5;
+	SERVER_CLOSED = 6;
+}
+
+message ServerCommand {
+    CommandType type = 1;
+    int32 subject = 2;
+}
+
+message TimeSync {
+    fixed64 client_req_transmission = 1;
+    fixed64 server_req_reception = 2;
+    fixed64 server_resp_transmission = 3;
+    fixed64 client_resp_reception = 4;
+}
+
+message ServerUpdate {
+    int32 id = 1;
+    repeated ServerCommand commands = 2;
+    repeated Player players = 3;
+    repeated Text texts = 4;
+    TimeSync time_sync = 5;
+}
+
+message ClientUpdate {
+    int32 id = 1;
+    Player player_state = 2;
+    repeated Text texts = 3;
+    TimeSync time_sync = 4;
+}
+
 service ServerService {
-    rpc Connect(Netcode.Protocol.Control.Request) returns (Netcode.Protocol.Control.Response) {} 
+    rpc Connect(Netcode.Protocol.Request) returns (Netcode.Protocol.Response) {} 
 }

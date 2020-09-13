@@ -98,6 +98,8 @@ add_subdirectory(Graphics)
 add_subdirectory(Network)
 add_subdirectory(Window)
 add_subdirectory(IO)
+add_subdirectory(Sync)
+add_subdirectory(System)
 add_subdirectory(UI)
 add_subdirectory(URI)
 

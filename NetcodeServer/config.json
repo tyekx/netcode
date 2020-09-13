@@ -57,11 +57,11 @@
         "logLevel:u8": 1,
         "enabled:bool": true
       },
-      "tickIntervalMs:u32": 16,
+      "tickIntervalMs:u32": 500,
       "workerThreadCount:u32": 1,
       "hostname:string": "localhost",
-      "controlPort:u16": 0,
-      "gamePort:u16": 0,
+      "controlPort:u16": 8888,
+      "gamePort:u16": 8889,
       "localPort:u16": 8899
     },
     "database": {
@@ -73,7 +73,7 @@
       "password:string": "password",
       "hostname:string": "localhost",
       "schema:string": "netcode",
-      "port:u16": 3306,
+      "port:u16": 33060,
       "timeout:u32": 10
     },
     "server": {
@@ -83,7 +83,7 @@
       },
       "tickIntervalMs:u32": 500,
       "workerThreadCount:u32": 1,
-      "selfAddress:string": "0.0.0.0",
+      "selfAddress:string": "::1",
       "hostname:string": "localhost",
       "ownerId:i32": 1,
       "gracePeriodMs:u32": 10000,

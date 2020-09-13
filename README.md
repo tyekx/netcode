@@ -15,5 +15,6 @@ Used 3rd party libraries:
  - dropbox/json11 (1.0.0)
  - boostorg/boost (1.73.0)
  - protocolbuffers/protobuf (3.12.0)
+ - grpc/grpc (1.31.1)
  - assimp/assimp (5.0.1)
  - mysql/mysql-connector-cpp (8.0.20)

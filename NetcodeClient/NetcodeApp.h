@@ -43,7 +43,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	Netcode::Physics::PhysX * pxService;
 	GameScene * gameScene;
 	Ref<AnimationSet> ybotAnimationSet;
-	Ref<Netcode::Network::GameSession> gameSession;
+	Ref<Netcode::Network::ClientSessionBase> gameSession;
 	Netcode::URI::Model mapAsset;
 
 	float totalTime;

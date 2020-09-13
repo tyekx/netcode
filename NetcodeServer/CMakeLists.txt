@@ -38,7 +38,7 @@ PRIVATE
 	"ServerApp.cpp"
 	"ProgramOptions.cpp"
 	"ProgramOptions.h"
- "RpcService.h" "RpcService.cpp")
+ "RpcService.h" "RpcService.cpp" "RpcServer.h")
 
 target_include_directories(NetcodeServer PRIVATE
 	${PROJECT_SOURCE_DIR}

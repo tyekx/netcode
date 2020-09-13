@@ -2,16 +2,16 @@
 
 #include "NetworkCommon.h"
 #include "../Logger.h"
+#include "Macros.h"
 
 namespace Netcode::Network {
 
 
-	PacketStorage::StorageType PacketStorage::AllocateStorage() {
-		// make_shared<uint8_t[]> wouldnt work here, so make_unique it is
-		return Ref<uint8_t[]>(std::make_unique<uint8_t[]>(PACKET_STORAGE_SIZE));
+	std::unique_ptr<uint8_t[]> PacketStorage::AllocateStorage() {
+		return std::make_unique<uint8_t[]>(PACKET_STORAGE_SIZE);
 	}
 
-	PacketStorage::PacketStorage(uint32_t preallocatedBuffers) : availableBuffers{} {
+	PacketStorage::PacketStorage(uint32_t preallocatedBuffers) : srwLock{}, availableBuffers {} {
 		availableBuffers.reserve(preallocatedBuffers * 2);
 
 		for(uint32_t i = 0; i < preallocatedBuffers; ++i) {
@@ -20,23 +20,17 @@ namespace Netcode::Network {
 		}
 	}
 
-	void PacketStorage::ReturnBuffer(StorageType storage) {
-		availableBuffers.emplace_back(std::move(storage));
-	}
-
-	void PacketStorage::ReturnBuffer(std::vector<StorageType> buffers)
-	{
-		std::move(std::begin(buffers), std::end(buffers), std::back_inserter(availableBuffers));
-	}
-
-	PacketStorage::StorageType PacketStorage::GetBuffer() {
+	Ref<uint8_t[]> PacketStorage::GetBuffer() {
+		ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+		
 		if(availableBuffers.empty()) {
-			return AllocateStorage();
-		} else {
-			auto ptr = availableBuffers.back();
-			availableBuffers.pop_back();
-			return ptr;
+			std::unique_ptr<uint8_t[]> b = AllocateStorage();
+			return Ref<uint8_t[]>{ b.release(), GetDestructor() };
 		}
+		
+		auto ptr = std::move(availableBuffers.back());
+		availableBuffers.pop_back();
+		return Ref<uint8_t[]>{ ptr.release(), GetDestructor() };
 	}
 
 	NetworkContext::~NetworkContext() {
@@ -89,67 +83,52 @@ namespace Netcode::Network {
 		return ioc;
 	}
 
-	void ControlPacketStorage::CheckTimeouts(uint64_t durationMs) {
-		std::scoped_lock<std::recursive_mutex> lock{ mutex };
-		auto now = std::chrono::steady_clock::now();
+	ErrorCode Bind(const boost::asio::ip::address & selfAddr, udp_socket_t & udpSocket, uint32_t & port) {
+		uint32_t portHint = port;
+		port = std::numeric_limits<uint32_t>::max();
 
-		auto it = storage.begin();
+		if(portHint < 1024 || portHint > 49151) {
+			portHint = (49151 - 1024) / 2;
+		}
 
-		for(; it != storage.end();) {
-			// on an empty entry, we erase it
-			if(it->second.empty()) {
-				storage.erase(it);
-				it = storage.begin();
+		ErrorCode ec;
+		const uint32_t range = 49151 - 1024;
+		const int32_t start = static_cast<int32_t>(portHint);
+		int32_t sign = 1;
+
+		udp_endpoint_t endpoint{ selfAddr, 0 };
+
+		udpSocket.open(endpoint.protocol(), ec);
+
+		if(ec) {
+			return ec;
+		}
+
+		for(int32_t i = 0; i < range; ++i, sign = -sign) {
+			uint32_t portToTest = static_cast<uint32_t>(start + sign * i / 2);
+
+			if(portToTest < 1024 || portToTest > 49151) {
 				continue;
 			}
-			 
-			Item & item = it->second.front();
-			auto timestamp = item.first_sent_at;
 
+			endpoint.port(portToTest);
 
-			if(timestamp.time_since_epoch() == std::chrono::steady_clock::duration::zero()) {
-				// was not sent yet
-				++it;
+			udpSocket.bind(endpoint, ec);
+
+			if(ec == boost::asio::error::bad_descriptor) { // expected error
 				continue;
 			}
 
-			if(std::chrono::duration_cast<std::chrono::milliseconds>(now - timestamp).count() > durationMs) {
-				item.completionHandler(boost::asio::error::make_error_code(boost::asio::error::timed_out));
-				Log::Info("[Network] Control packet timed out, no ACK was received");
-				it->second.pop_front();
+			if(ec) { // unexpected error 
+				return ec;
 			}
 
-			++it;
-		}
-	}
+			port = portToTest;
 
-	ErrorCode ControlPacketStorage::Acknowledge(const udp_endpoint_t & source, int32_t ackId) {
-		std::scoped_lock<std::recursive_mutex> lock{ mutex };
-		auto it = storage.find(source);
-
-		if(it == storage.end() || it->second.empty()) {
-			return boost::asio::error::make_error_code(boost::asio::error::not_found);
+			return Errc::make_error_code(Errc::success);
 		}
 
-		Item & item = it->second.front();
-
-		// acking a packet that was not sent yet is an error
-		if(item.packetId < ackId) {
-			return Errc::make_error_code(Errc::protocol_error);
-		}
-
-		if(item.packetId == ackId) {
-			item.completionHandler(Errc::make_error_code(Errc::success));
-			it->second.pop_front();
-			Log::Debug("[Network] ACK OK: {0}", ackId);
-		} // else: possibly resent ACK that got reordered
-
-		return Errc::make_error_code(Errc::success);
+		return ec;
 	}
 
-	void ControlPacketStorage::Push(int32_t id, UdpPacket packet, std::function<void(ErrorCode)> completionHandler) {
-		std::scoped_lock<std::recursive_mutex> lock{ mutex };
-
-		storage[packet.endpoint].emplace_back(id, std::move(packet), std::move(completionHandler));
-	}
 }

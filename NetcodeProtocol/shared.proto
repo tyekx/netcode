@@ -1,9 +1,10 @@
 syntax = "proto3";
+option cc_enable_arenas = true;
 
 package Netcode.Protocol;
 
 enum PlayerState {
-    ACTIVE = 0;
+    ALIVE = 0;
     DEAD = 1;
     OBSERVER = 2;
 }
@@ -16,6 +17,11 @@ enum TextCategory {
     SCORE_FEED = 4;
     SERVER = 5;
     CONSOLE = 6;
+}
+
+message Text {
+	Netcode.Protocol.TextCategory category = 1;
+	string content = 2;
 }
 
 message Float3 {
@@ -38,29 +44,25 @@ message Version {
 }
 
 message Shot {
-    int32 creator = 1;
-    int32 target = 2;
-    float damage = 3;
-    Netcode.Protocol.Float3 start_position = 4;
-    Netcode.Protocol.Float4 ray = 5;
-    Netcode.Protocol.Float3 surface_normal = 6;
+    fixed64 timestamp = 1;
+    Netcode.Protocol.Float3 start_position = 2;
+    Netcode.Protocol.Float4 ray = 3;
 }
 
-message User {
-    int32 id = 1;
+message PlayerDetails {
+    string name = 1;
     int32 kills = 2;
     int32 deaths = 3;
-    float respawning_in = 4;
-    Netcode.Protocol.Float3 position = 5;
-    Netcode.Protocol.Float3 velocity = 6;
-    Netcode.Protocol.Float4 rotation = 7;
-    Netcode.Protocol.PlayerState state = 8;
-    string name = 9;
-    float health = 10;
+    int32 rtt = 4;
 }
 
-message Text {
-    Netcode.Protocol.TextCategory category = 1;
-    repeated int32 addressed = 2 [packed = true];
-    string content = 3;
+message Player {
+    int32 id = 1;
+    Netcode.Protocol.PlayerState state = 2;
+    float health = 3;
+    Netcode.Protocol.Float3 position = 4;
+    Netcode.Protocol.Float3 look_at = 5;
+    PlayerDetails details = 6;
+    repeated Shot shots = 7;
+    bytes replication_data = 8;
 }

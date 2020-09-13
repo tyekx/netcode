@@ -1,28 +1,36 @@
 #pragma once 
 
 #include <NetcodeProtocol/netcode.pb.h>
+#include <NetcodeFoundation/Macros.h>
 
 #include "NetworkCommon.h"
 
 namespace Netcode::Network {
 
-	class GameSession : public std::enable_shared_from_this<GameSession> {
+	class SessionBase : public std::enable_shared_from_this<SessionBase> {
 	public:
-		virtual ~GameSession() = default;
-
-		virtual bool CheckVersion(const Netcode::Protocol::Version & version) = 0;
+		virtual NETCODE_CONSTRUCTORS_NO_COPY(SessionBase);
+		
 		virtual void Start() = 0;
 		virtual void Stop() = 0;
-		virtual void SendAll() = 0;
-		virtual void Receive(std::vector<Protocol::Message> & control, std::vector<Protocol::Message> & game) = 0;
-		virtual void SendUpdate(const udp_endpoint_t & endpoint, Protocol::Message message) = 0;
-		virtual void SendUpdate(Protocol::Message message) = 0;
-		virtual void SendControlMessage(Netcode::Protocol::Message message, std::function<void(ErrorCode)> completionHandler) = 0;
-		virtual bool IsRunning() const = 0;
-		virtual std::string GetLastError() const = 0;
-		
 	};
 
-	using GameSessionRef = Ref<GameSession>;
+	class ClientSessionBase : public SessionBase {
+	public:
+		virtual NETCODE_CONSTRUCTORS_NO_COPY(ClientSessionBase);
+
+		virtual void SwapBuffers(std::vector<Protocol::ServerUpdate> & game) = 0;
+		virtual void Update(Protocol::ClientUpdate message) = 0;
+		virtual void Connect(std::string address, uint16_t port, std::string hash) = 0;
+		virtual void Disconnect() = 0;
+	};
+	
+	class ServerSessionBase : public SessionBase {
+	public:
+		virtual NETCODE_CONSTRUCTORS_NO_COPY(ServerSessionBase);
+
+		virtual void SwapBuffers(std::vector<Protocol::ClientUpdate> & game) = 0;
+		virtual void Update(int32_t subjectId, Protocol::ServerUpdate serverUpdate) = 0;
+	};
 
 }

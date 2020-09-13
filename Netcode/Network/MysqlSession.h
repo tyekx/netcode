@@ -24,7 +24,7 @@ namespace Netcode::Network {
 		MysqlSession();
 		~MysqlSession();
 
-		ErrorCode QueryUserByHash(const std::string & hash, UserRow & output);
+		ErrorCode QueryUserByHash(const std::string & hash, PlayerDbDataRow & output);
 
 		ErrorCode CloseServer();
 

@@ -192,8 +192,8 @@ namespace Netcode::Module {
 		virtual std::future<Network::Response> QueryServers() = 0;
 		virtual std::future<Network::Response> Status() = 0;
 
-		virtual Ref<Network::GameSession> CreateServer() = 0;
-		virtual Ref<Network::GameSession> CreateClient() = 0;
+		virtual Ref<Network::ServerSessionBase> CreateServer() = 0;
+		virtual Ref<Network::ClientSessionBase> CreateClient() = 0;
 	};
 
 	class IModuleFactory {

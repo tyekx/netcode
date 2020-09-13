@@ -9,6 +9,12 @@
 #include <future>
 #include <boost/bind.hpp>
 #include <boost/asio/ip/udp.hpp>
+#include <boost/asio/ip/tcp.hpp>
+
+#include <Netcode/Sync/SlimReadWriteLock.h>
+#include <Netcode/Sync/LockGuards.hpp>
+
+#include <Netcode/System/SystemClock.h>
 
 namespace Netcode::Network {
 
@@ -17,8 +23,10 @@ namespace Netcode::Network {
 	using udp_endpoint_t = boost::asio::ip::udp::endpoint;
 	namespace Errc = boost::system::errc;
 	using ErrorCode = boost::system::error_code;
-
+	
 	constexpr static uint32_t PACKET_STORAGE_SIZE = 65536;
+
+	ErrorCode Bind(const boost::asio::ip::address & selfAddr, udp_socket_t & udpSocket, uint32_t & port);
 
 	class UdpStream : public std::enable_shared_from_this<UdpStream> {
 	protected:
@@ -56,24 +64,79 @@ namespace Netcode::Network {
 		boost::asio::io_context & GetImpl();
 	};
 
-	struct UdpPacket {
+	template<typename ProtocolType>
+	class BasicPacket final {
+	public:
+		using EndpointType = typename ProtocolType::endpoint;
+
+	private:
+		EndpointType endpoint;
 		Ref<uint8_t[]> data;
-		boost::asio::ip::udp::endpoint endpoint;
-		boost::asio::mutable_buffer mBuffer;
+		size_t dataSize;
+		Timestamp timestamp;
+	public:
+		BasicPacket(Ref<uint8_t[]> data, size_t size, EndpointType ep) : endpoint{ std::move(ep) }, data{ std::move(data) }, dataSize{ size }, timestamp{} { }
+		BasicPacket(BasicPacket<ProtocolType> &&) noexcept = default;
+		BasicPacket & operator=(BasicPacket<ProtocolType> &&) noexcept = default;
+		BasicPacket(const BasicPacket<ProtocolType> &) = delete;
+		BasicPacket & operator=(const BasicPacket<ProtocolType> &) = delete;
 
-		UdpPacket() = default;
+		[[nodiscard]]
+		Ref<uint8_t[]> GetData() const {
+			return data;
+		}
+		
+		[[nodiscard]]
+		uint8_t* GetDataPointer() const {
+			return data.get();
+		}
 
-		UdpPacket(Ref<uint8_t[]> storage) : data{ std::move(storage) }, endpoint{}, mBuffer{ boost::asio::buffer(data.get(), PACKET_STORAGE_SIZE) } { }
+		[[nodiscard]]
+		size_t GetDataSize() const {
+			return dataSize;
+		}
+
+		void SetTimestamp(const Timestamp & ts) {
+			timestamp = ts;
+		}
+
+		[[nodiscard]]
+		Timestamp GetTimestamp() const {
+			return timestamp;
+		}
+		
+		void SetDataSize(size_t s) {
+			dataSize = s;
+		}
+
+		[[nodiscard]]
+		boost::asio::mutable_buffer GetMutableBuffer() const {
+			return boost::asio::mutable_buffer{ GetDataPointer(), GetDataSize() };
+		}
+
+		[[nodiscard]]
+		boost::asio::const_buffer GetConstBuffer() const {
+			return boost::asio::const_buffer{ GetDataPointer(), GetDataSize() };
+		}
+
+		[[nodiscard]]
+		EndpointType GetEndpoint() const {
+			return endpoint;
+		}
 	};
+
+	using TcpPacket = BasicPacket<boost::asio::ip::tcp>;
+	using UdpPacket = BasicPacket<boost::asio::ip::udp>;
+
 
 	template<typename T>
 	class MessageQueue {
 		std::vector<T> recv;
 		std::vector<T> send;
-		std::mutex mutex;
+		SlimReadWriteLock srwLock;
 	public:
 		void GetOutgoingPackets(std::vector<T> & swapInto) {
-			std::scoped_lock<std::mutex> lock{ mutex };
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
 
 			swapInto.reserve(swapInto.size() + send.size());
 
@@ -82,7 +145,7 @@ namespace Netcode::Network {
 		}
 
 		void GetIncomingPackets(std::vector<T> & swapInto) {
-			std::scoped_lock<std::mutex> lock{ mutex };
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
 
 			swapInto.reserve(swapInto.size() + recv.size());
 			
@@ -91,95 +154,44 @@ namespace Netcode::Network {
 		}
 
 		void Send(T packet) {
-			std::scoped_lock<std::mutex> lock{ mutex };
-			send.push_back(packet);
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+			send.emplace_back(std::move(packet));
 		}
 
 		void Received(T packet) {
-			std::scoped_lock<std::mutex> lock{ mutex };
-
-			recv.push_back(packet);
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+			recv.emplace_back(std::move(packet));
 		}
 	};
 
-	class PacketStorage {
+	class PacketStorage : public std::enable_shared_from_this<PacketStorage> {
 	public:
-		using StorageType = Ref<uint8_t[]>;
 	private:
-		std::vector<StorageType> availableBuffers;
+		SlimReadWriteLock srwLock;
+		std::vector<std::unique_ptr<uint8_t[]>> availableBuffers;
 
-		StorageType AllocateStorage();
+		std::unique_ptr<uint8_t[]> AllocateStorage();
+
+		auto GetDestructor() {
+			return [this, lifetime = shared_from_this()](uint8_t * bufferPointer) -> void {
+				ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+				std::unique_ptr<uint8_t[]> obj{ bufferPointer };
+				
+				if(availableBuffers.size() < 32) {
+					availableBuffers.emplace_back(std::move(obj));
+				}
+			};
+		}
+		
 	public:
 
 		PacketStorage(uint32_t preallocatedBuffers = 32);
 
-		void ReturnBuffer(StorageType storage);
-
-		void ReturnBuffer(std::vector<StorageType> buffers);
-
-		StorageType GetBuffer();
+		Ref<uint8_t[]> GetBuffer();
 	};
 
-	class ControlPacketStorage {
-		struct Item {
-			std::chrono::steady_clock::time_point first_sent_at;
-			std::chrono::steady_clock::time_point last_sent_at;
-			int32_t packetId;
-			UdpPacket packet;
-			std::function<void(ErrorCode)> completionHandler;
-
-			Item(int32_t pid, UdpPacket pck, std::function<void(ErrorCode)> completionHandler) :
-				first_sent_at{}, last_sent_at{}, packetId{ pid }, packet{ std::move(pck) }, completionHandler{ std::move(completionHandler) } { }
-		};
-
-		std::map<udp_endpoint_t, std::list<Item>> storage;
-		std::recursive_mutex mutex;
-	public:
-		void CheckTimeouts(uint64_t durationMs);
-		/*
-		An expired item is an item that was not sent before, or its resend-timeout is expired,
-		assumes that the call of this function means a send operation thus renewing its timestamps
-		*/
-		template<typename Func>
-		void ForeachExpired(Func func, uint64_t resendTimeoutMs) {
-			auto now = std::chrono::steady_clock::now();
-			for(auto & i : storage) {
-				if(i.second.empty()) {
-					continue;
-				}
-
-				Item & item = i.second.front();
-
-				auto timestamp = item.first_sent_at;
-
-				if(timestamp.time_since_epoch() == std::chrono::steady_clock::duration::zero()) {
-					// ok
-					func(item.packet);
-					item.first_sent_at = now;
-					item.last_sent_at = now;
-					continue;
-				}
-
-				timestamp = item.last_sent_at;
-
-				if(std::chrono::duration_cast<std::chrono::milliseconds>(now - timestamp).count() > resendTimeoutMs) {
-					func(item.packet);
-					item.last_sent_at = now;
-				}
-			}
-		}
-
-		ErrorCode Acknowledge(const udp_endpoint_t & source, int32_t ackId);
-
-		void Push(int32_t id, UdpPacket packet, std::function<void(ErrorCode)> completionHandler);
-	};
-
-	struct UserRow {
-		int userId;
-		std::string name;
-		std::string hash;
-		bool isBanned;
-	};
+	// id, name, hash, is_banned
+	using PlayerDbDataRow = std::tuple<int, std::string, std::string, bool>;
 
 }
 
