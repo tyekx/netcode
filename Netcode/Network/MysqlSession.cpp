@@ -50,12 +50,10 @@ namespace Netcode::Network {
 			}
 
 			try {
-				time_t currentTime = time(NULL);
-
-				modifyServer->bind(2, currentTime, serverId);
+				modifyServer->bind(2, serverId);
 				mysqlx::SqlResult result = modifyServer->execute();
 
-				closeRemainingGameSessions->bind(currentTime, serverId);
+				closeRemainingGameSessions->bind(serverId);
 				mysqlx::SqlResult closeResult = closeRemainingGameSessions->execute();
 
 				if(result.getAffectedItemsCount() != 1) {
@@ -75,8 +73,8 @@ namespace Netcode::Network {
 			}
 
 			try {
-				// (user_id, game_server_id, joined_at)
-				insertGameSession->bind(playerId, serverId, time(NULL));
+				// (user_id, game_server_id)
+				insertGameSession->bind(playerId, serverId);
 				mysqlx::SqlResult result = insertGameSession->execute();
 
 				if(result.getAffectedItemsCount() != 1) {
@@ -94,8 +92,7 @@ namespace Netcode::Network {
 			}
 
 			try {
-				// UPDATE game_sessions SET left_at = ? WHERE user_id = ? and left_at IS NULL and game_server_id = ?
-				modifyGameSession->bind(time(NULL), playerId, serverId);
+				modifyGameSession->bind(playerId, serverId);
 				mysqlx::SqlResult result = modifyGameSession->execute();
 
 				if(result.getAffectedItemsCount() != 1) {
@@ -113,7 +110,7 @@ namespace Netcode::Network {
 			std::scoped_lock<std::mutex> lock{ mutex };
 
 			try {
-				// (owner_id, max_players, interval, status, server_ip, control_port, game_port, created_at, major, minor, build)
+				// (owner_id, max_players, interval, status, server_ip, control_port, game_port, major, minor, build)
 				insertServer->bind(ownerId,
 					playerSlots,
 					tickIntervalMs,
@@ -121,7 +118,6 @@ namespace Netcode::Network {
 					serverIp,
 					controlPort,
 					gamePort,
-					time(NULL),
 					0, 0, 0);
 				mysqlx::SqlResult res = insertServer->execute();
 
@@ -153,29 +149,26 @@ namespace Netcode::Network {
 
 				insertServer = std::make_unique<mysqlx::SqlStatement>(
 					session->sql("INSERT INTO game_servers (`owner_id`, `max_players`, `interval`, `status`, `server_ip`, `control_port`, `game_port`, `created_at`, `version_major`, `version_minor`, `version_build`) "
-						"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"));
+						"VALUES (?, ?, ?, ?, ?, ?, ?, NOW(6), ?, ?, ?)"));
 
 				modifyServer = std::make_unique<mysqlx::SqlStatement>(
-					session->sql("UPDATE `game_servers` SET `status` = ?, `closed_at` = ? WHERE `id` = ? LIMIT 1"));
+					session->sql("UPDATE `game_servers` SET `status` = ?, `closed_at` = NOW(6) WHERE `id` = ? LIMIT 1"));
 
 				insertGameSession = std::make_unique<mysqlx::SqlStatement>(
 					session->sql("INSERT INTO `game_sessions` (`user_id`, `game_server_id`, `joined_at`) "
-						"VALUES (?, ?, ?)"));
+						"VALUES (?, ?, NOW(6))"));
 
 				modifyGameSession = std::make_unique<mysqlx::SqlStatement>(
-					session->sql("UPDATE `game_sessions` SET `left_at` = ? WHERE `user_id` = ? AND `left_at` IS NULL AND `game_server_id` = ?"));
+					session->sql("UPDATE `game_sessions` SET `left_at` = NOW(6) WHERE `user_id` = ? AND `left_at` = 0 AND `game_server_id` = ?"));
 
 				queryUserByHash = std::make_unique<mysqlx::SqlStatement>(
-					session->sql("SELECT `users`.`id`, `users`.`name`, `users`.`is_banned`, `sessions`.`hash`, "
-						"IF(`game_sessions`.`user_id` IS NULL OR `game_sessions`.`left_at` IS NOT NULL, 1, 0) AS allowed_to_join "
+					session->sql("SELECT `users`.`id`, `users`.`name`, `users`.`is_banned`, `sessions`.`hash` "
 						"FROM `users` "
 						"INNER JOIN `sessions` ON `sessions`.`user_id` = `users`.`id` "
-						"LEFT JOIN `game_sessions` ON `game_sessions`.`user_id` = `users`.`id` "
-						"WHERE `sessions`.`hash` = ?"
-						"GROUP BY allowed_to_join"));
+						"WHERE `sessions`.`hash` = ? AND `sessions`.`expires_at` > NOW(6)"));
 
 				closeRemainingGameSessions = std::make_unique<mysqlx::SqlStatement>(
-					session->sql("UPDATE `game_sessions` SET `game_sessions`.`left_at` = ? WHERE `game_sessions`.`left_at` IS NULL AND `game_sessions`.`game_server_id` = ?"));
+					session->sql("UPDATE `game_sessions` SET `game_sessions`.`left_at` = NOW(6) WHERE `game_sessions`.`left_at` = 0 AND `game_sessions`.`game_server_id` = ?"));
 
 			} catch(mysqlx::Error & error) {
 				Log::Error("[MySQL] exception: {0}", error.what());

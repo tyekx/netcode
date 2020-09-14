@@ -11,8 +11,6 @@ require_once 'Session.php';
 require_once 'User.php';
 require_once 'ServerInstances.php';
 
-const COOKIE_DURATION = 604800;
-
 $db = new \Medoo\Medoo([
     'database_type' => 'mysql',
     'database_name' => 'netcode',
@@ -25,12 +23,11 @@ $db = new \Medoo\Medoo([
 function AuthenticateUser($db) {
     if(Cookie::Has('netcode-auth')) {
         $token = Cookie::Get('netcode-auth');
-        $ctime = time();
 
         $r = $db->select("users",
             ["[><]sessions" => ["id" => "user_id"]],
             ["users.id(uid)", "users.name", "users.is_banned", "sessions.id(sid)"],
-            ["sessions.hash" => $token, "expires_at[>]" => $ctime]
+            ["sessions.hash" => $token, "expires_at[>]" => \Medoo\Medoo::Raw("NOW(6)")]
         );
 
         if(count($r) != 1) {
@@ -38,9 +35,7 @@ function AuthenticateUser($db) {
             return null;
         }
 
-        $updatedTime = $ctime + COOKIE_DURATION;
-
-        $db->update("sessions", ["sessions.expires_at" => $updatedTime], ["sessions.id" => $r[0]['sid']]);
+        $db->update("sessions", ["sessions.expires_at" => \Medoo\Medoo::raw("DATE_ADD(NOW(6), INTERVAL 14 DAY)")], ["sessions.id" => $r[0]['sid']]);
 
         return new User($r[0]['name'], $r[0]['uid'], $r[0]['is_banned']);
     }
@@ -185,20 +180,20 @@ Route::Post('/api/login', function() use ($db, $user) {
     if(count($user) == 1) {
         $token = null;
 
-        $existingSession = $db->select("sessions", ["id", "hash"], ["user_id" => $id, "expires_at[>]" => time()]);
+        $existingSession = $db->select("sessions", ["id", "hash"], ["user_id" => $id, "expires_at[>]" => \Medoo\Medoo::raw("NOW(6)")]);
 
         if(count($existingSession) >= 1) {
             $token = $existingSession[0]["hash"];
             $sessionId = $existingSession[0]["id"];
 
-            $db->update("sessions", ["expires_at" => time() + COOKIE_DURATION], ["id" => $sessionId]);
+            $db->update("sessions", ["expires_at" => \Medoo\Medoo::raw("DATE_ADD(NOW(6), INTERVAL 14 DAY)")], ["id" => $sessionId]);
         } else {
             $token = Crypt::CreateRandomToken();
 
-            $db->insert("sessions", ["user_id" => $id, "hash" => $token, "expires_at" => time() + COOKIE_DURATION]);
+            $db->insert("sessions", ["user_id" => $id, "hash" => $token, "expires_at" => \Medoo\Medoo::raw("DATE_ADD(NOW(6), INTERVAL 14 DAY)")]);
         }
 
-        Cookie::Set('netcode-auth', $token, COOKIE_DURATION);
+        Cookie::Set('netcode-auth', $token, 1209600);
 
         Response::JSON(["id" => $id, "name" => $username, "is_banned" => $isBanned]);
     } else {

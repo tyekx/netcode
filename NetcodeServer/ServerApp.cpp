@@ -31,7 +31,7 @@ void ServerApp::Setup(Netcode::Module::IModuleFactory * factory) {
 		grpc::ClientContext ctx;
 		Netcode::Protocol::Request req;
 
-		ctx.AddMetadata("x-netcode-auth", "f5e9cd4c2a36fc5844c4513dce9eb1e1b68a4e4e815eca92297af389ff5cd8fd");
+		ctx.AddMetadata("x-netcode-auth", "de14a05b71fc3910cc34998f358d9ce1d7012e8919093f8817f7cf63507748b8");
 		req.set_type(Netcode::Protocol::RequestType::CONNECT);
 		Netcode::Protocol::Response resp;
 		grpc::Status st = stub->Connect(&ctx, req, &resp);
