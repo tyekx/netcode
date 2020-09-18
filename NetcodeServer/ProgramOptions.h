@@ -1,7 +1,4 @@
-#include <boost/program_options.hpp>
-
-
-namespace po = boost::program_options;
+#include <string>
 
 struct MainConfig {
 	std::wstring shaderRoot;
@@ -9,4 +6,4 @@ struct MainConfig {
 	std::wstring configFile;
 };
 
-void InitProgramOptions(po::options_description & root, MainConfig & cfg);
+void InitProgramOptions(int argc, char* argv[], MainConfig & config);

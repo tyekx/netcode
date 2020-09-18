@@ -1,5 +1,7 @@
 #include "SystemClock.h"
 
+#include <thread>
+
 namespace Netcode {
 
 	Duration SystemClock::theta;
@@ -46,6 +48,21 @@ namespace Netcode {
 
 	uint64_t ConvertTimestampToUInt64(const Timestamp & timestamp) {
 		return timestamp.time_since_epoch().count();
+	}
+
+	/*
+	* precise sleep function that is partially a busy loop
+	*/
+	void SleepFor(const Duration & duration) {
+		const Timestamp t = SystemClock::LocalNow();
+		Duration tmp = std::chrono::seconds(0);
+		while(tmp < duration) {
+			if((duration - tmp) > std::chrono::milliseconds(16)) {
+				// this will just sleep for 15~ ms
+				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			}
+			tmp = SystemClock::LocalNow() - t;
+		}
 	}
 
 }

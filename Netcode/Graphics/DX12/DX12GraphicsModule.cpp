@@ -27,6 +27,7 @@
 
 #include <Netcode/Config.h>
 #include <Netcode/Utility.h>
+#include <sstream>
 
 namespace Netcode::Graphics::DX12 {
 

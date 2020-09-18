@@ -6,33 +6,6 @@
 
 namespace Netcode::Network {
 
-
-	std::unique_ptr<uint8_t[]> PacketStorage::AllocateStorage() {
-		return std::make_unique<uint8_t[]>(PACKET_STORAGE_SIZE);
-	}
-
-	PacketStorage::PacketStorage(uint32_t preallocatedBuffers) : srwLock{}, availableBuffers {} {
-		availableBuffers.reserve(preallocatedBuffers * 2);
-
-		for(uint32_t i = 0; i < preallocatedBuffers; ++i) {
-			auto ptr = AllocateStorage();
-			availableBuffers.emplace_back(std::move(ptr));
-		}
-	}
-
-	Ref<uint8_t[]> PacketStorage::GetBuffer() {
-		ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-		
-		if(availableBuffers.empty()) {
-			std::unique_ptr<uint8_t[]> b = AllocateStorage();
-			return Ref<uint8_t[]>{ b.release(), GetDestructor() };
-		}
-		
-		auto ptr = std::move(availableBuffers.back());
-		availableBuffers.pop_back();
-		return Ref<uint8_t[]>{ ptr.release(), GetDestructor() };
-	}
-
 	NetworkContext::~NetworkContext() {
 		Stop();
 	}
@@ -83,7 +56,7 @@ namespace Netcode::Network {
 		return ioc;
 	}
 
-	ErrorCode Bind(const boost::asio::ip::address & selfAddr, udp_socket_t & udpSocket, uint32_t & port) {
+	ErrorCode Bind(const boost::asio::ip::address & selfAddr, UdpSocket & udpSocket, uint32_t & port) {
 		uint32_t portHint = port;
 		port = std::numeric_limits<uint32_t>::max();
 
@@ -96,7 +69,7 @@ namespace Netcode::Network {
 		const int32_t start = static_cast<int32_t>(portHint);
 		int32_t sign = 1;
 
-		udp_endpoint_t endpoint{ selfAddr, 0 };
+		UdpEndpoint endpoint{ selfAddr, 0 };
 
 		udpSocket.open(endpoint.protocol(), ec);
 

@@ -7,6 +7,7 @@ PUBLIC
 	"NetcodeNetworkModule.h"
 	"NetworkCommon.h"
 	"Cookie.h"
+	"Connection.h"
 	"HttpSession.h"
 	"ServerSession.h"
 	"MysqlSession.h"

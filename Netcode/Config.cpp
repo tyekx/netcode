@@ -2,10 +2,14 @@
 #include <NetcodeFoundation/Formats.h>
 #include <NetcodeFoundation/Exceptions.h>
 #include "MathExt.h"
+#include <boost/property_tree/ptree.hpp>
 
 namespace Netcode {
 
-	Ptree Config::storage{};
+	// std::any wouldnt compile with clang
+	using Ptree = boost::property_tree::basic_ptree<std::wstring, Property>;
+	
+	static Ptree storage{};
 
 	void Config::LoadReflectedValue(const std::wstring & path, std::wstring_view valueType, const JsonValue & value)
 	{
@@ -89,6 +93,18 @@ if(valueType == strRep) { \
 		storage.clear();
 
 		LoadMembersRecursive(L"", document);
+	}
+
+	Property & Config::GetProperty(const std::wstring & key) {
+		return storage.get_child(key).data();
+	}
+
+	const Property & Config::GetConstProperty(const std::wstring & key) {
+		return storage.get_child(key).data();
+	}
+
+	void Config::SetProperty(const std::wstring & key, Property prop) {
+		storage.add(key, std::move(prop));
 	}
 
 }

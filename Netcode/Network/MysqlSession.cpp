@@ -16,6 +16,7 @@ namespace Netcode::Network {
 		std::unique_ptr<mysqlx::SqlStatement> insertGameSession;
 		std::unique_ptr<mysqlx::SqlStatement> modifyGameSession;
 		std::unique_ptr<mysqlx::SqlStatement> closeRemainingGameSessions;
+		std::unique_ptr<mysqlx::SqlStatement> debugCleanup;
 		std::mutex mutex;
 
 		ErrorCode QueryUserByHash(const std::string & hash, PlayerDbDataRow & output) {
@@ -126,6 +127,11 @@ namespace Netcode::Network {
 				}
 
 				serverId = res.getAutoIncrementValue();
+
+#if defined(NETCODE_DEBUG)
+				debugCleanup->execute();
+#endif
+				
 			} catch(mysqlx::Error & error) {
 				Log::Error("[MySQL] RegisterServer exception: {0}", error.what());
 				return Errc::make_error_code(Errc::invalid_argument);
@@ -169,6 +175,11 @@ namespace Netcode::Network {
 
 				closeRemainingGameSessions = std::make_unique<mysqlx::SqlStatement>(
 					session->sql("UPDATE `game_sessions` SET `game_sessions`.`left_at` = NOW(6) WHERE `game_sessions`.`left_at` = 0 AND `game_sessions`.`game_server_id` = ?"));
+
+#if defined (NETCODE_DEBUG)
+				debugCleanup = std::make_unique<mysqlx::SqlStatement>(
+					session->sql("UPDATE `game_sessions` SET `game_sessions`.`left_at` = NOW(6) WHERE `game_sessions`.`left_at` = 0"));
+#endif
 
 			} catch(mysqlx::Error & error) {
 				Log::Error("[MySQL] exception: {0}", error.what());

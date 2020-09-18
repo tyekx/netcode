@@ -16,12 +16,11 @@ namespace Netcode::Network {
 		ioContext{ ioc },
 		timer{ ioc },
 		gameQueue{},
-		gameStream{},
-		storage{ std::make_shared<PacketStorage>() },
+		storage{ std::make_shared<PacketStorage<UdpPacket>>() },
 		db{},
 		dbContext{}{
 
-		udp_socket_t gameSocket{ ioc };
+		UdpSocket gameSocket{ ioc };
 
 		uint32_t gamePort = Config::Get<uint16_t>(L"network.server.gamePort:u16");
 
@@ -39,118 +38,159 @@ namespace Netcode::Network {
 			return;
 		}
 
-		gameStream = std::make_shared<UdpStream>(std::move(gameSocket));
-
 		ec = ConnectToMysql();
 
 		RETURN_ON_ERROR(ec, "[Network] [Server] Failed to connect to MySQL: {0}");
 
 		Config::Set<uint16_t>(L"network.server.gamePort:u16", static_cast<uint16_t>(gamePort));
+
+		connection = std::make_shared<Connection>();
+		connection->packetSequenceId = 1;
+		connection->authorizedAt = SystemClock::LocalNow();
+		connection->state = ConnectionState::ESTABLISHED;
+		connection->liveEndpoint = UdpEndpoint{ addr, static_cast<uint16_t>(gamePort) };
+		connection->socket = std::make_unique<UdpSocket>(std::move(gameSocket));
 	}
 
 	void ServerSession::Start() {
 		GameSocketReadInit();
 
-		Log::Info("[Network] [Server] Started on ports {0}", Config::Get<uint16_t>(L"network.server.gamePort:u16"));
+		Log::Info("[Network] [Server] Started on port: {0}", Config::Get<uint16_t>(L"network.server.gamePort:u16"));
 	}
 
 	void ServerSession::Stop()
 	{
 		dbContext.Stop();
 	}
+	
+	Ref<Connection> ServerSession::MakeEmptyConnection() {
+		return std::make_shared<Connection>();
+	}
+	
 	void ServerSession::Update(int32_t subjectId, Protocol::ServerUpdate serverUpdate) {
 		if(serverUpdate.has_time_sync()) {
 			serverUpdate.mutable_time_sync()->set_server_resp_transmission(ConvertTimestampToUInt64(SystemClock::LocalNow()));
 		}
 
-		udp_endpoint_t tmpEndpoint{ boost::asio::ip::address::from_string("::1"), 8899 };
+		Ref<Connection> conn = connectionStorage.GetConnectionById(subjectId);
 
-		auto buffer = storage->GetBuffer();
+		if(conn->liveEndpoint.address().is_unspecified()) {
+			Log::Debug("[Net] [Server] update failed because address is unspecified");
+			return;
+		}
 
-		if(!serverUpdate.SerializeToArray(buffer.get(), PACKET_STORAGE_SIZE)) {
+		serverUpdate.set_id(conn->packetSequenceId++);
+		
+		auto packet = storage->GetBuffer();
+
+		if(!serverUpdate.SerializeToArray(packet->GetData(), PACKET_STORAGE_SIZE)) {
 			Log::Error("[Net] [Server] Failed to serialize server update");
 		}
+
+		packet->SetDataSize(serverUpdate.ByteSizeLong());
+		packet->SetEndpoint(conn->liveEndpoint);
 		
-		gameStream->AsyncWrite(boost::asio::const_buffer{ buffer.get(), serverUpdate.ByteSizeLong() }, tmpEndpoint, 
-			[buffer, lifetime = shared_from_this()](const ErrorCode & ec, size_t sz) -> void {
+		connection->socket->async_send_to(packet->GetConstBuffer(), packet->GetEndpoint(), 
+			[lifetime = shared_from_this(), packet](const ErrorCode & ec, size_t size) ->void {
 			if(ec) {
 				Log::Error("[Net] [Server] failed to send message to client: {0}", ec.message());
 			} else {
-				Log::Info("[Net] [Server] sent {0} bytes", sz);
+				//Log::Debug("[---] WRITE {0}: BYTES {1} PORT {2}", static_cast<void *>(packet.get()), static_cast<uint64_t>(size), static_cast<uint64_t>(packet->GetEndpoint().port()));
 			}
 		});
-	}
-	/*
-	void ServerSession::Receive(std::vector<Protocol::Message> & game)
-	{
-		std::vector<UdpPacket> gameSockPackets;
-		gameQueue.GetIncomingPackets(gameSockPackets);
 		
-		ParseGameMessages(game, std::move(gameSockPackets));
 	}
-
-	void ServerSession::SendAll() {
-		std::vector<UdpPacket> controlPackets;
-		std::vector<UdpPacket> gamePackets;
-		gameQueue.GetOutgoingPackets(gamePackets);
-
-		for(UdpPacket & p : gamePackets) {
-			gameStream->AsyncWrite(p.GetConstBuffer(), p.GetEndpoint(),
-				[pThis = shared_from_this(), pData = p.GetData(), this](const ErrorCode & ec, size_t size) -> void {
-				OnMessageSent(ec, size);
-			});
-		}
-	}
-
-	void ServerSession::SendUpdate(Protocol::Message message) {
-		Log::Warn("[Network] [Server] operation is not supported");
-	}
-
-	void ServerSession::SendUpdate(const udp_endpoint_t & endpoint, Protocol::Message message) {
-		if(!message.has_server_update()) {
-			Log::Warn("[Network] [Server] Can only send server updates on the game socket");
-			return;
-		}
-
-		UdpPacket packet{ storage->GetBuffer(), PACKET_STORAGE_SIZE, endpoint };
-
-		if(!message.SerializeToArray(packet.GetDataPointer(), packet.GetDataSize())) {
-			Log::Error("[Network] [Server] Failed to serialize game message");
-			return;
-		}
-
-		packet.SetDataSize(message.ByteSizeLong());
-
-		gameQueue.Send(std::move(packet));
-	}*/
 
 	void ServerSession::GameSocketReadInit()
 	{
-		auto buffer = storage->GetBuffer();
+		auto packet = storage->GetBuffer();
+		packet->SetDataSize(PACKET_STORAGE_SIZE);
 
-		gameStream->AsyncRead(boost::asio::buffer(buffer.get(), PACKET_STORAGE_SIZE),
-			[this, buffer, lifetime = shared_from_this()](const ErrorCode & ec, size_t size, udp_endpoint_t sender) -> void {
-
+		connection->socket->async_receive_from(packet->GetMutableBuffer(), packet->GetEndpoint(), [lifetime = shared_from_this(), this, packet](const ErrorCode & ec, size_t size) -> void {
 			RETURN_AND_LOG_IF_ABORTED(ec, "[Net] [Server] [Game] Read operation aborted");
 
 			if(ec) {
 				Log::Error("[Net] [Server] [Game] Failed to read: {0}", ec.message());
-			} else if(sender.address().is_unspecified()) {
+			} else if(packet->GetEndpoint().address().is_unspecified()) {
 				Log::Warn("[Net] [Server] [Game] Rejected packet because the source address is unspecified");
 			} else {
-				Log::Info("[Net] [Server] Read {0} byte(s)", size);
-				UdpPacket packet{ std::move(buffer), size, sender };
-				packet.SetTimestamp(SystemClock::LocalNow());
-				OnGameRead(std::move(packet));
+				///Log::Debug("[---] READ {0}: BYTES {1} PORT {2}", static_cast<void *>(packet.get()), static_cast<uint64_t>(size), static_cast<uint64_t>(packet->GetEndpoint().port()));
+
+				packet->SetTimestamp(SystemClock::LocalNow());
+				packet->SetDataSize(size);
+				OnGameRead(packet);
 				GameSocketReadInit();
-				return;
 			}
 		});
 	}
 
-	void ServerSession::OnGameRead(UdpPacket packet) {
-		// could parse now, async, multithreaded context
-		gameQueue.Received(std::move(packet));
+	void ServerSession::OnGameRead(Ref<UdpPacket> packet) {
+		Protocol::ClientUpdate message;
+
+		if(!message.ParseFromArray(packet->GetData(), packet->GetDataSize())) {
+			Log::Info("[Network] [Server] Failed to parse raw data from game socket, {0} byte(s)", packet->GetDataSize());
+			return;
+		}
+
+		if(message.has_time_sync()) {
+			message.mutable_time_sync()->set_server_req_reception(ConvertTimestampToUInt64(packet->GetTimestamp()));
+		}
+		
+		Ref<Connection> conn = connectionStorage.GetConnectionByEndpoint(packet->GetEndpoint());
+
+		// if connection was not found by endpoint ...
+		if(conn == nullptr) {
+
+			// ... then we require a nonce ...
+			if(!message.nonce().empty()) {
+				conn = connectionStorage.GetConnectionByNonce(message.nonce());
+
+				// ... if we found a connection by nonce ...
+				if(conn != nullptr) {
+
+					// ... then we make sure we have the state required to be here ...
+					if(conn->state == ConnectionState::CONNECTING ||
+					   conn->state == ConnectionState::ESTABLISHED) {
+
+						// ... if the state is acceptable, we check if its the first time this client is handled ...
+						if(conn->liveEndpoint.address().is_unspecified()) {
+							// ... if so, then we proceed it to clock sync ...
+							conn->liveEndpoint = packet->GetEndpoint();
+							conn->state = ConnectionState::SYNCHRONIZING;
+							Log::Debug("[Net] [Server] Player first time here, synchronizing clocks");
+						}
+
+						// ... if its not the first time, than our clocks should be still adequate
+						if(conn->liveEndpoint != packet->GetEndpoint()) {
+							Log::Debug("[Net] [Server] Network change detected");
+							conn->liveEndpoint = packet->GetEndpoint();
+						}
+					}
+				} else {
+					// we have a bad nonce here value here
+					Log::Debug("[Net] [Server] Nonce value was specified but was not found");
+					return;
+				}
+			} else {
+
+				Log::Debug("[Net] [Server] player was not found by active connection, nor supplied a nonce");
+				return; // ... if nonce was not supplied, then we drop the packet
+			}
+		} else {
+			if(conn->state == ConnectionState::SYNCHRONIZING) {
+				if(!message.has_time_sync()) {
+					Log::Debug("[Net] [Server] Client should be synchronizing but did not sent a time sync package");
+				}
+			}
+		}
+
+		if(conn->peerPacketSequenceId < message.id()) {
+			conn->peerPacketSequenceId = message.id();
+			gameQueue.Received(std::move(message));
+		} else {
+			Log::Debug("[Net] [Server] Dropping player packet because it is older or duplicated");
+		}
+		
 	}
 
 	void ServerSession::OnMessageSent(const ErrorCode & ec, std::size_t size)
@@ -161,37 +201,6 @@ namespace Netcode::Network {
 			Log::Error("[Network] [Server] Failed to send message: {0}", ec.message());
 		} else {
 			Log::Debug("[Network] [Server] Successfully sent {0} byte(s)", size);
-		}
-	}
-
-	void ServerSession::ParseGameMessages(std::vector<Protocol::ClientUpdate> & outVec, std::vector<UdpPacket> packets)
-	{
-		if(packets.empty()) {
-			return;
-		}
-
-		for(UdpPacket & p : packets) {
-			Protocol::ClientUpdate message;
-
-			if(!message.ParseFromArray(p.GetDataPointer(), p.GetDataSize())) {
-				Log::Info("[Network] [Server] Failed to parse raw data from game socket, {0} byte(s)", p.GetDataSize());
-				continue;
-			}
-
-			//if(!message.has_player_state()) {
-				//	Log::Info("[Network] [Server] Dropping packet because it is missing player state");
-				//	continue;
-				//}
-
-			if(message.has_time_sync()) {
-				auto *timeSync = message.mutable_time_sync();
-				timeSync->set_server_req_reception(ConvertTimestampToUInt64(p.GetTimestamp()));
-			}
-			
-			// @TODO: save id and endpoint
-			//int32_t id = message.player_state().id();
-
-			outVec.emplace_back(std::move(message));
 		}
 	}
 
@@ -213,10 +222,13 @@ namespace Netcode::Network {
 		Log::Info("Connected to MySQL db");
 
 
-		//Config::Get<uint16_t>(L"network.server.controlPort:u16");
-		//Config::Get<uint16_t>(L"network.server.gamePort:u16");
-		// @TODO: register server
+		ec = db.RegisterServer(1, 8, 500, "::1", 50051, 8888);
 
+		if(ec) {
+			Log::Error("[Net] [Server] failed to register server");
+			return ec;
+		}
+		
 		dbContext.Start(1);
 		
 		return Errc::make_error_code(Errc::success);

@@ -11,17 +11,8 @@ int main(int argc, char * argv[]) {
 	
 	Log::Setup(true);
 	MainConfig mainConfig;
-	po::options_description rootDesc("General Options");
 	
-	InitProgramOptions(rootDesc, mainConfig);
-
-	po::variables_map vm;
-	try {
-		po::store(po::parse_command_line(argc, argv, rootDesc), vm);
-	} catch(po::error& err) {
-		Log::Error("Failed to parse configuration: {0}", err.what());
-	}
-	po::notify(vm);
+	InitProgramOptions(argc, argv, mainConfig);
 
 	Netcode::IO::Path::SetWorkingDirectiory(Netcode::IO::Path::CurrentWorkingDirectory());
 	Netcode::IO::Path::SetShaderRoot(mainConfig.shaderRoot);

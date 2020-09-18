@@ -34,9 +34,8 @@ public:
 			if(cu.has_time_sync()) {
 				resp.set_allocated_time_sync(cu.release_time_sync());
 			}
-			serverSession->Update(0, std::move(resp));
+			serverSession->Update(1, std::move(resp));
 		}
-
 		
 		gameMessages.clear();
 	}

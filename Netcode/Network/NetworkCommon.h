@@ -7,7 +7,6 @@
 #include <map>
 #include <thread>
 #include <future>
-#include <boost/bind.hpp>
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
@@ -18,20 +17,19 @@
 
 namespace Netcode::Network {
 
-	using udp_socket_t = boost::asio::ip::udp::socket;
-	using udp_resolver_t = boost::asio::ip::udp::resolver;
-	using udp_endpoint_t = boost::asio::ip::udp::endpoint;
+	using UdpSocket = boost::asio::ip::udp::socket;
+	using UdpResolver = boost::asio::ip::udp::resolver;
+	using UdpEndpoint = boost::asio::ip::udp::endpoint;
 	namespace Errc = boost::system::errc;
 	using ErrorCode = boost::system::error_code;
 	
 	constexpr static uint32_t PACKET_STORAGE_SIZE = 65536;
 
-	ErrorCode Bind(const boost::asio::ip::address & selfAddr, udp_socket_t & udpSocket, uint32_t & port);
-
+	ErrorCode Bind(const boost::asio::ip::address & selfAddr, UdpSocket & udpSocket, uint32_t & port);
+	/*
 	class UdpStream : public std::enable_shared_from_this<UdpStream> {
-	protected:
-		udp_socket_t socket;
 	public:
+		udp_socket_t socket;
 		udp_endpoint_t _interalReceivedFrom;
 		UdpStream(udp_socket_t socket) : socket{ std::move(socket) }, _interalReceivedFrom{} { }
 
@@ -48,7 +46,7 @@ namespace Netcode::Network {
 				handler(ec, size);
 			});
 		}
-	};
+	};*/
 
 	class NetworkContext {
 		boost::asio::io_context ioc;
@@ -71,24 +69,20 @@ namespace Netcode::Network {
 
 	private:
 		EndpointType endpoint;
-		Ref<uint8_t[]> data;
 		size_t dataSize;
 		Timestamp timestamp;
+		uint8_t data[PACKET_STORAGE_SIZE];
 	public:
-		BasicPacket(Ref<uint8_t[]> data, size_t size, EndpointType ep) : endpoint{ std::move(ep) }, data{ std::move(data) }, dataSize{ size }, timestamp{} { }
+		BasicPacket() : endpoint{}, dataSize{ PACKET_STORAGE_SIZE }, timestamp{} { }
+		BasicPacket(size_t size, EndpointType ep) : endpoint{ std::move(ep) },  dataSize{ size }, timestamp{} { }
 		BasicPacket(BasicPacket<ProtocolType> &&) noexcept = default;
 		BasicPacket & operator=(BasicPacket<ProtocolType> &&) noexcept = default;
 		BasicPacket(const BasicPacket<ProtocolType> &) = delete;
 		BasicPacket & operator=(const BasicPacket<ProtocolType> &) = delete;
 
 		[[nodiscard]]
-		Ref<uint8_t[]> GetData() const {
+		uint8_t* GetData() {
 			return data;
-		}
-		
-		[[nodiscard]]
-		uint8_t* GetDataPointer() const {
-			return data.get();
 		}
 
 		[[nodiscard]]
@@ -110,17 +104,26 @@ namespace Netcode::Network {
 		}
 
 		[[nodiscard]]
-		boost::asio::mutable_buffer GetMutableBuffer() const {
-			return boost::asio::mutable_buffer{ GetDataPointer(), GetDataSize() };
+		boost::asio::mutable_buffer GetMutableBuffer() {
+			return boost::asio::mutable_buffer{ static_cast<void*>(data), GetDataSize() };
 		}
 
 		[[nodiscard]]
 		boost::asio::const_buffer GetConstBuffer() const {
-			return boost::asio::const_buffer{ GetDataPointer(), GetDataSize() };
+			return boost::asio::const_buffer{ static_cast<const void *>(data), GetDataSize() };
+		}
+
+		void SetEndpoint(const EndpointType& ep) {
+			endpoint = ep;
+		}
+		
+		[[nodiscard]]
+		const EndpointType & GetEndpoint() const {
+			return endpoint;
 		}
 
 		[[nodiscard]]
-		EndpointType GetEndpoint() const {
+		EndpointType & GetEndpoint() {
 			return endpoint;
 		}
 	};
@@ -164,18 +167,17 @@ namespace Netcode::Network {
 		}
 	};
 
-	class PacketStorage : public std::enable_shared_from_this<PacketStorage> {
-	public:
-	private:
+	template<typename T>
+	class PacketStorage : public std::enable_shared_from_this<PacketStorage<T>> {
+		using Base = std::enable_shared_from_this<PacketStorage<T>>;
+		
 		SlimReadWriteLock srwLock;
-		std::vector<std::unique_ptr<uint8_t[]>> availableBuffers;
-
-		std::unique_ptr<uint8_t[]> AllocateStorage();
+		std::vector<std::unique_ptr<T>> availableBuffers;
 
 		auto GetDestructor() {
-			return [this, lifetime = shared_from_this()](uint8_t * bufferPointer) -> void {
+			return [lifetime = Base::shared_from_this(), this](T * bufferPointer) -> void {
 				ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-				std::unique_ptr<uint8_t[]> obj{ bufferPointer };
+				std::unique_ptr<T> obj{ bufferPointer };
 				
 				if(availableBuffers.size() < 32) {
 					availableBuffers.emplace_back(std::move(obj));
@@ -185,9 +187,27 @@ namespace Netcode::Network {
 		
 	public:
 
-		PacketStorage(uint32_t preallocatedBuffers = 32);
+		PacketStorage(uint32_t preallocatedBuffers = 32) : srwLock{}, availableBuffers{} {
+			availableBuffers.reserve(preallocatedBuffers * 2);
 
-		Ref<uint8_t[]> GetBuffer();
+			for(uint32_t i = 0; i < preallocatedBuffers; ++i) {
+				auto ptr = std::make_unique<T>();
+				availableBuffers.emplace_back(std::move(ptr));
+			}
+		}
+
+		Ref<T> GetBuffer() {
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+
+			if(availableBuffers.empty()) {
+				std::unique_ptr<T> b = std::make_unique<T>();
+				return Ref<T>{ b.release(), GetDestructor() };
+			}
+
+			auto ptr = std::move(availableBuffers.back());
+			availableBuffers.pop_back();
+			return Ref<T>{ ptr.release(), GetDestructor() };
+		}
 	};
 
 	// id, name, hash, is_banned

@@ -3,6 +3,7 @@
 #include <NetcodeProtocol/netcode.pb.h>
 #include <NetcodeFoundation/Macros.h>
 
+#include "Connection.h"
 #include "NetworkCommon.h"
 
 namespace Netcode::Network {
@@ -21,7 +22,7 @@ namespace Netcode::Network {
 
 		virtual void SwapBuffers(std::vector<Protocol::ServerUpdate> & game) = 0;
 		virtual void Update(Protocol::ClientUpdate message) = 0;
-		virtual void Connect(std::string address, uint16_t port, std::string hash) = 0;
+		virtual Ref<Connection> Connect(std::string address, uint16_t port, std::string nonce) = 0;
 		virtual void Disconnect() = 0;
 	};
 	
@@ -31,6 +32,12 @@ namespace Netcode::Network {
 
 		virtual void SwapBuffers(std::vector<Protocol::ClientUpdate> & game) = 0;
 		virtual void Update(int32_t subjectId, Protocol::ServerUpdate serverUpdate) = 0;
+		virtual Ref<Connection> GetConnectionById(int32_t userId) = 0;
+		virtual Ref<Connection> GetConnectionByNonce(const std::string & nonce) = 0;
+		virtual Ref<Connection> MakeEmptyConnection() = 0;
+		virtual void ActivateConnection(Ref<Connection> activeConnection) = 0;
+		virtual void RemoveConnection(Ref<Connection> connection) = 0;
+		virtual uint16_t GetPort() const = 0;
 	};
 
 }

@@ -60,7 +60,9 @@ namespace Log {
 	template void Debug<std::string>(const char * message, const std::string & value);
 	template void Debug<int32_t>(const char * message, const int32_t & value);
 	template void Debug<int32_t, int32_t>(const char * message, const int32_t & value, const int32_t & value2);
+	template void Debug<int64_t, int64_t>(const char * message, const int64_t & value, const int64_t & value2);
 	template void Debug<uint64_t>(const char * message, const uint64_t & value);
+	template void Debug<double, double>(const char * message, const double & value, const double & value2);
 	template void Debug<float, float>(const char * message, const float & value, const float & value2);
 	template void Debug<float, float, float>(const char * message, const float & value, const float & value2, const float & value3);
 	template void Debug<float, float, float, float>(const char * message, const float & value, const float & value2, const float & value3, const float & value4);

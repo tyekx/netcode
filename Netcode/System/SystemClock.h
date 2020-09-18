@@ -1,14 +1,8 @@
 #pragma once
 
-#include <chrono>
-
+#include "TimeTypes.h"
 
 namespace Netcode {
-
-	using ClockType = std::chrono::high_resolution_clock;
-	using Timestamp = ClockType::time_point;
-	using Duration = Timestamp::duration;
-
 
 	Timestamp ConvertUInt64ToTimestamp(uint64_t v);
 	uint64_t ConvertTimestampToUInt64(const Timestamp & timestamp);
@@ -40,6 +34,25 @@ namespace Netcode {
 		[[nodiscard]]
 		static double GetTotalTimeInSeconds();
 	};
+
+	/*
+	 * precise sleep function which is a busy wait for the last < 16ms of the wait time
+	 */
+	void SleepFor(const Duration & duration);
+
+
+	/*
+	 * wait for time to pass while doing something on the side
+	 */
+	template<typename T>
+	void BusyWait(const Duration & duration, T callable) {
+		const Timestamp t = SystemClock::LocalNow();
+		Duration tmp = std::chrono::seconds(0);
+		while(tmp < duration) {
+			callable();
+			tmp = SystemClock::LocalNow() - t;
+		}
+	}
 	
 }
 
