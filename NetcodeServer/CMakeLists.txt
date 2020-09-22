@@ -5,7 +5,6 @@ netcode_add_executable(NetcodeServer "")
 find_package(json11 CONFIG REQUIRED)
 find_package(protobuf CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS date_time program_options system)
-find_package(gRPC CONFIG REQUIRED)
 
 find_path(PHYSX_INCLUDE_DIR physx/PxScene.h)
 find_path(DIRECTXTEX_INCLUDE_DIR DirectXTex.h)
@@ -54,12 +53,6 @@ target_link_directories(NetcodeServer
 PRIVATE
 	${MYSQLCONN_LIB}
 )
-
-# Note: 7 target(s) were omitted.
-# target_link_libraries(main PRIVATE gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts)
-
-# find_package(modules CONFIG REQUIRED)
-# target_link_libraries(main PRIVATE c-ares::cares)
 	
 target_link_libraries(NetcodeServer
 PRIVATE
@@ -69,7 +62,6 @@ PRIVATE
 	Boost::date_time
 	Boost::system
 	Boost::program_options
-	gRPC::grpc++
 	${JSON11_LIBRARY}
 	${DIRECTXTEX_LIBRARY}
 	${PHYSX_LIBRARIES}
