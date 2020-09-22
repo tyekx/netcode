@@ -47,3 +47,10 @@ type & operator=(const type &) = delete
 type(type &&) noexcept = delete; \
 type & operator=(type &&) noexcept = delete
 #endif
+
+
+#if !defined(NETCODE_CONSTRUCTORS_DEFAULT_MOVE)
+#define NETCODE_CONSTRUCTORS_DEFAULT_MOVE(type) \
+type(type &&) noexcept = default; \
+type & operator=(type &&) noexcept = default
+#endif

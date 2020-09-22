@@ -2,10 +2,12 @@ cmake_minimum_required(VERSION 3.8)
 
 target_sources(Netcode
 PUBLIC
-	SystemClock.h
-	TimeTypes.h
-	FpsCounter.h
+	"SystemClock.h"
+	"TimeTypes.h"
+	"FpsCounter.h"
+	"System.h"
 PRIVATE
-	SystemClock.cpp
-	FpsCounter.cpp
+	"SystemClock.cpp"
+	"FpsCounter.cpp"
+	"System.cpp"
 )

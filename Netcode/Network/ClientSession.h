@@ -5,6 +5,8 @@
 #include "NetworkCommon.h"
 #include <boost/asio.hpp>
 
+#include "NetcodeProtocol/header.pb.h"
+
 namespace Netcode::Network {
 
 	class NtpClockFilter {
@@ -105,47 +107,72 @@ namespace Netcode::Network {
 
 	class ClientSession : public ClientSessionBase {
 		boost::asio::io_context & ioContext;
-		Ref<PacketStorage<UdpPacket>> packetStorage;
-		MessageQueue<Protocol::ServerUpdate> gameQueue;
-		boost::asio::deadline_timer timer;
 		UdpResolver resolver;
-		Ref<Connection> connection;
+		Ref<NetcodeService> service;
+		Ref<ConnectionBase> connection;
 		NtpClockFilter clockFilter;
 		std::string queryValueAddress;
 		std::string queryValuePort;
-		
-		void SetError(const boost::system::error_code & ec);
-
-		void Tick();
-
-		void OnTimerExpired(const boost::system::error_code & ec);
-
-		void InitTimeSyncStep();
-		
-		void InitTimer();
-		void InitRead();
-		void OnRead(Ref<UdpPacket> packet);
-		void OnMessageSent(const ErrorCode & ec, size_t size);
 
 	public:
-		ClientSession(boost::asio::io_context & ioc);
+		ClientSession(boost::asio::io_context & ioc) : ioContext{ ioc }, resolver{ ioc } {
+			
+		}
+
+		void OnAddrResolved(const UdpResolver::results_type & results) {
+			UdpSocket sock{ ioContext };
+
+			UdpEndpoint remoteEndpoint = *(results.begin());
+
+			ErrorCode ec;
+			sock.open(remoteEndpoint.protocol(), ec);
+
+			if(ec) {
+				Log::Error("Failed to open port");
+				return;
+			}
+			
+			sock.connect(remoteEndpoint, ec);
+
+			if(ec) {
+				Log::Error("Failed to 'connect'");
+				return;
+			}
+			
+			Ref<NetcodeUdpSocket> udpSock = std::make_shared<NetcodeUdpSocket>(ioContext, std::move(sock));
+
+			service = std::make_shared<NetcodeService>(std::move(udpSock));
+			service->Host();
+
+			Log::Debug("Service created");
+
+			Sleep(100);
+
+			Protocol::Header h;
+			h.set_sequence(1);
+			h.set_type(Protocol::MessageType::CONNECT_PUNCHTHROUGH);
+			
+			service->Send(std::move(h), remoteEndpoint);
+		}
+		
 		virtual ~ClientSession() = default;
-		virtual void Start() override;
+		
+		virtual void Start() override {
+			queryValueAddress = "::1";
+			queryValuePort = "8889";
+
+			resolver.async_resolve(queryValueAddress, queryValuePort, boost::asio::ip::resolver_base::address_configured,
+				[this](const ErrorCode& ec, UdpResolver::results_type results) -> void {
+					if(ec) {
+						Log::Error("Address resolution failed");
+					} else {
+						OnAddrResolved(std::move(results));
+					}
+				});
+		}
 		
 		virtual void Stop() override {
 
-		}
-
-		virtual void SwapBuffers(std::vector<Protocol::ServerUpdate> & game) override {
-			
-		}
-		
-		virtual void Update(Protocol::ClientUpdate message) override;
-		
-		virtual Ref<Connection> Connect(std::string address, uint16_t port, std::string nonce) override;
-		
-		virtual void Disconnect() override {
-			
 		}
 	};
 

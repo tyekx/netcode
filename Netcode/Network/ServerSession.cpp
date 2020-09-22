@@ -10,16 +10,9 @@
 
 namespace Netcode::Network {
 
-	
-
 	ServerSession::ServerSession(boost::asio::io_context & ioc) :
-		ioContext{ ioc },
-		timer{ ioc },
-		gameQueue{},
-		storage{ std::make_shared<PacketStorage<UdpPacket>>() },
-		db{},
-		dbContext{}{
-
+		ioContext{ ioc } {
+		/*
 		UdpSocket gameSocket{ ioc };
 
 		uint32_t gamePort = Config::Get<uint16_t>(L"network.server.gamePort:u16");
@@ -49,29 +42,44 @@ namespace Netcode::Network {
 		connection->authorizedAt = SystemClock::LocalNow();
 		connection->state = ConnectionState::ESTABLISHED;
 		connection->liveEndpoint = UdpEndpoint{ addr, static_cast<uint16_t>(gamePort) };
-		connection->socket = std::make_unique<UdpSocket>(std::move(gameSocket));
+		connection->socket = std::make_unique<UdpSocket>(std::move(gameSocket));*/
 	}
 
 	void ServerSession::Start() {
-		GameSocketReadInit();
+		UdpSocket gameSocket{ ioContext };
+
+		uint32_t gamePort = Config::Get<uint16_t>(L"network.server.gamePort:u16");
+
+		std::string selfAddr = Utility::ToNarrowString(Config::Get<std::wstring>(L"network.server.selfAddress:string"));
+
+		ErrorCode ec;
+		boost::asio::ip::address addr = boost::asio::ip::address::from_string(selfAddr, ec);
+
+		RETURN_ON_ERROR(ec, "[Network] [Server] invalid configuration value: {0}");
+
+		ec = Bind(addr, gameSocket, gamePort);
+
+		if(gamePort > std::numeric_limits<uint16_t>::max()) {
+			Log::Error("[Network] [Server] Failed to bind game port socket");
+			return;
+		}
+		
+		Config::Set<uint16_t>(L"network.server.gamePort:u16", static_cast<uint16_t>(gamePort));
 
 		Log::Info("[Network] [Server] Started on port: {0}", Config::Get<uint16_t>(L"network.server.gamePort:u16"));
+
+		Ref<NetcodeUdpSocket> udpSock = std::make_shared<NetcodeUdpSocket>(ioContext, std::move(gameSocket));
+
+		service = std::make_shared<NetcodeService>(std::move(udpSock));
+		service->Host();
 	}
 
 	void ServerSession::Stop()
 	{
-		dbContext.Stop();
+		
 	}
 	
-	Ref<Connection> ServerSession::MakeEmptyConnection() {
-		return std::make_shared<Connection>();
-	}
-	
-	void ServerSession::Update(int32_t subjectId, Protocol::ServerUpdate serverUpdate) {
-		if(serverUpdate.has_time_sync()) {
-			serverUpdate.mutable_time_sync()->set_server_resp_transmission(ConvertTimestampToUInt64(SystemClock::LocalNow()));
-		}
-
+	/*void ServerSession::Update(int32_t subjectId, Protocol::ServerUpdate serverUpdate) {
 		Ref<Connection> conn = connectionStorage.GetConnectionById(subjectId);
 
 		if(conn->liveEndpoint.address().is_unspecified()) {
@@ -105,25 +113,8 @@ namespace Netcode::Network {
 	{
 		auto packet = storage->GetBuffer();
 		packet->SetDataSize(PACKET_STORAGE_SIZE);
-
-		connection->socket->async_receive_from(packet->GetMutableBuffer(), packet->GetEndpoint(), [lifetime = shared_from_this(), this, packet](const ErrorCode & ec, size_t size) -> void {
-			RETURN_AND_LOG_IF_ABORTED(ec, "[Net] [Server] [Game] Read operation aborted");
-
-			if(ec) {
-				Log::Error("[Net] [Server] [Game] Failed to read: {0}", ec.message());
-			} else if(packet->GetEndpoint().address().is_unspecified()) {
-				Log::Warn("[Net] [Server] [Game] Rejected packet because the source address is unspecified");
-			} else {
-				///Log::Debug("[---] READ {0}: BYTES {1} PORT {2}", static_cast<void *>(packet.get()), static_cast<uint64_t>(size), static_cast<uint64_t>(packet->GetEndpoint().port()));
-
-				packet->SetTimestamp(SystemClock::LocalNow());
-				packet->SetDataSize(size);
-				OnGameRead(packet);
-				GameSocketReadInit();
-			}
-		});
 	}
-
+	
 	void ServerSession::OnGameRead(Ref<UdpPacket> packet) {
 		Protocol::ClientUpdate message;
 
@@ -131,11 +122,6 @@ namespace Netcode::Network {
 			Log::Info("[Network] [Server] Failed to parse raw data from game socket, {0} byte(s)", packet->GetDataSize());
 			return;
 		}
-
-		if(message.has_time_sync()) {
-			message.mutable_time_sync()->set_server_req_reception(ConvertTimestampToUInt64(packet->GetTimestamp()));
-		}
-		
 		Ref<Connection> conn = connectionStorage.GetConnectionByEndpoint(packet->GetEndpoint());
 
 		// if connection was not found by endpoint ...
@@ -178,9 +164,7 @@ namespace Netcode::Network {
 			}
 		} else {
 			if(conn->state == ConnectionState::SYNCHRONIZING) {
-				if(!message.has_time_sync()) {
-					Log::Debug("[Net] [Server] Client should be synchronizing but did not sent a time sync package");
-				}
+
 			}
 		}
 
@@ -203,7 +187,7 @@ namespace Netcode::Network {
 			Log::Debug("[Network] [Server] Successfully sent {0} byte(s)", size);
 		}
 	}
-
+	
 	ServerSession::~ServerSession() {
 		ErrorCode ec = db.CloseServer();
 
@@ -211,7 +195,7 @@ namespace Netcode::Network {
 
 		Log::Info("[Network] [Server] Closed gracefully");
 	}
-
+	
 	ErrorCode ServerSession::ConnectToMysql() {
 		ErrorCode ec = db.Connect();
 
@@ -232,6 +216,6 @@ namespace Netcode::Network {
 		dbContext.Start(1);
 		
 		return Errc::make_error_code(Errc::success);
-	}
+	}*/
 
 }

@@ -26,27 +26,6 @@ namespace Netcode::Network {
 	constexpr static uint32_t PACKET_STORAGE_SIZE = 65536;
 
 	ErrorCode Bind(const boost::asio::ip::address & selfAddr, UdpSocket & udpSocket, uint32_t & port);
-	/*
-	class UdpStream : public std::enable_shared_from_this<UdpStream> {
-	public:
-		udp_socket_t socket;
-		udp_endpoint_t _interalReceivedFrom;
-		UdpStream(udp_socket_t socket) : socket{ std::move(socket) }, _interalReceivedFrom{} { }
-
-		template<typename CompletionHandler>
-		void AsyncRead(boost::asio::mutable_buffer buffer, CompletionHandler handler) {
-			socket.async_receive_from(buffer, _interalReceivedFrom, [pThis = shared_from_this(), handler](ErrorCode ec, size_t size) -> void{
-				handler(ec, size, pThis->_interalReceivedFrom);
-			});
-		}
-
-		template<typename CompletionHandler>
-		void AsyncWrite(boost::asio::const_buffer buffer, udp_endpoint_t endpoint, CompletionHandler handler) {
-			socket.async_send_to(buffer, endpoint, [pThis = shared_from_this(), handler](ErrorCode ec, size_t size) -> void {
-				handler(ec, size);
-			});
-		}
-	};*/
 
 	class NetworkContext {
 		boost::asio::io_context ioc;
@@ -62,7 +41,7 @@ namespace Netcode::Network {
 		boost::asio::io_context & GetImpl();
 	};
 
-	template<typename ProtocolType>
+	template<typename ProtocolType, uint32_t NumBytes>
 	class BasicPacket final {
 	public:
 		using EndpointType = typename ProtocolType::endpoint;
@@ -71,17 +50,24 @@ namespace Netcode::Network {
 		EndpointType endpoint;
 		size_t dataSize;
 		Timestamp timestamp;
-		uint8_t data[PACKET_STORAGE_SIZE];
+		uint8_t data[NumBytes];
 	public:
-		BasicPacket() : endpoint{}, dataSize{ PACKET_STORAGE_SIZE }, timestamp{} { }
+		constexpr static uint32_t MAX_DATA_SIZE = NumBytes;
+		
+		BasicPacket() : endpoint{}, dataSize{ NumBytes }, timestamp{} { }
 		BasicPacket(size_t size, EndpointType ep) : endpoint{ std::move(ep) },  dataSize{ size }, timestamp{} { }
-		BasicPacket(BasicPacket<ProtocolType> &&) noexcept = default;
-		BasicPacket & operator=(BasicPacket<ProtocolType> &&) noexcept = default;
-		BasicPacket(const BasicPacket<ProtocolType> &) = delete;
-		BasicPacket & operator=(const BasicPacket<ProtocolType> &) = delete;
+		BasicPacket(BasicPacket<ProtocolType, NumBytes> &&) noexcept = default;
+		BasicPacket & operator=(BasicPacket<ProtocolType, NumBytes> &&) noexcept = default;
+		BasicPacket(const BasicPacket<ProtocolType, NumBytes> &) = delete;
+		BasicPacket & operator=(const BasicPacket<ProtocolType, NumBytes> &) = delete;
 
 		[[nodiscard]]
 		uint8_t* GetData() {
+			return data;
+		}
+		
+		[[nodiscard]]
+		const uint8_t * GetData() const {
 			return data;
 		}
 
@@ -128,8 +114,7 @@ namespace Netcode::Network {
 		}
 	};
 
-	using TcpPacket = BasicPacket<boost::asio::ip::tcp>;
-	using UdpPacket = BasicPacket<boost::asio::ip::udp>;
+	using UdpPacket = BasicPacket<boost::asio::ip::udp, 1536>;
 
 
 	template<typename T>
@@ -167,12 +152,14 @@ namespace Netcode::Network {
 		}
 	};
 
-	template<typename T>
-	class PacketStorage : public std::enable_shared_from_this<PacketStorage<T>> {
-		using Base = std::enable_shared_from_this<PacketStorage<T>>;
+	template<typename T, typename ... StorageStateTypes>
+	class PacketStorage : public std::enable_shared_from_this<PacketStorage<T, StorageStateTypes...>> {
+		using Base = std::enable_shared_from_this<PacketStorage<T, StorageStateTypes...>>;
+		using StateContainer = std::tuple<StorageStateTypes...>;
 		
 		SlimReadWriteLock srwLock;
 		std::vector<std::unique_ptr<T>> availableBuffers;
+		StateContainer storageState;
 
 		auto GetDestructor() {
 			return [lifetime = Base::shared_from_this(), this](T * bufferPointer) -> void {
@@ -184,14 +171,20 @@ namespace Netcode::Network {
 				}
 			};
 		}
+
+		std::unique_ptr<T> Make() {
+			return std::apply([](auto && ... args) -> std::unique_ptr<T> {
+				return std::make_unique<T>(std::forward<decltype(args)>(args)...);
+			}, storageState);
+		}
 		
 	public:
 
-		PacketStorage(uint32_t preallocatedBuffers = 32) : srwLock{}, availableBuffers{} {
+		PacketStorage(uint32_t preallocatedBuffers, StorageStateTypes && ... args) : srwLock{}, availableBuffers{}, storageState{ std::forward_as_tuple(args...) }{
 			availableBuffers.reserve(preallocatedBuffers * 2);
 
 			for(uint32_t i = 0; i < preallocatedBuffers; ++i) {
-				auto ptr = std::make_unique<T>();
+				auto ptr = Make();
 				availableBuffers.emplace_back(std::move(ptr));
 			}
 		}
@@ -200,7 +193,7 @@ namespace Netcode::Network {
 			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
 
 			if(availableBuffers.empty()) {
-				std::unique_ptr<T> b = std::make_unique<T>();
+				std::unique_ptr<T> b = Make();
 				return Ref<T>{ b.release(), GetDestructor() };
 			}
 

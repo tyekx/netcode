@@ -96,11 +96,19 @@ if(valueType == strRep) { \
 	}
 
 	Property & Config::GetProperty(const std::wstring & key) {
-		return storage.get_child(key).data();
+		try {
+			return storage.get_child(key).data();
+		} catch(boost::property_tree::ptree_error & err) {
+			throw OutOfRangeException{ "Config property was not found" };
+		}
 	}
 
 	const Property & Config::GetConstProperty(const std::wstring & key) {
-		return storage.get_child(key).data();
+		try {
+			return storage.get_child(key).data();
+		} catch(boost::property_tree::ptree_error& err) {
+			throw OutOfRangeException{ "Config property was not found" };
+		}
 	}
 
 	void Config::SetProperty(const std::wstring & key, Property prop) {

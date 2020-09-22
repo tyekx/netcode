@@ -9,7 +9,7 @@ PUBLIC
 	protobuf::libprotobuf
 )
 
-set(PROTO_SRC shared.proto netcode.proto)
+set(PROTO_SRC shared.proto netcode.proto header.proto)
 
 netcode_compile_proto(GENERATED_HEADERS GENERATED_SOURCE "${PROTO_SRC}")
 

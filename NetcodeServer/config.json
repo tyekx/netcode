@@ -48,6 +48,8 @@
     }
   },
   "network": {
+    "fakeLagAvg:u32": 50,
+    "fakeLagSigma:u32": 2,
     "web": {
       "hostname:string": "http://netcode.webs",
       "port:u16": 80

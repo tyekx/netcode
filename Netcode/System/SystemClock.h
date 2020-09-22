@@ -34,25 +34,6 @@ namespace Netcode {
 		[[nodiscard]]
 		static double GetTotalTimeInSeconds();
 	};
-
-	/*
-	 * precise sleep function which is a busy wait for the last < 16ms of the wait time
-	 */
-	void SleepFor(const Duration & duration);
-
-
-	/*
-	 * wait for time to pass while doing something on the side
-	 */
-	template<typename T>
-	void BusyWait(const Duration & duration, T callable) {
-		const Timestamp t = SystemClock::LocalNow();
-		Duration tmp = std::chrono::seconds(0);
-		while(tmp < duration) {
-			callable();
-			tmp = SystemClock::LocalNow() - t;
-		}
-	}
 	
 }
 

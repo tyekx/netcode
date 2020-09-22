@@ -1,0 +1,75 @@
+syntax = "proto3";
+option cc_enable_arenas = true;
+
+package Netcode.Protocol;
+
+enum MessageType {
+	ACKNOWLEDGE = 0;
+	CONNECT_PUNCHTHROUGH = 0x11;
+	CONNECT_REQUEST = 0x13;
+	CONNECT_RESPONSE = 0x15;
+	DISCONNECT = 0x21;
+	DISCONNECT_NOTIFY = 0x29;
+	HEARTBEAT = 0x30;
+	PMTU_DISCOVERY = 0x41;
+	NAT_DISCOVERY_REQUEST = 0x51;
+	NAT_DISCOVERY_RESPONSE = 0x53;
+	REGISTER_HOST = 0x61;
+	CLOCK_SYNC_REQUEST = 0x70;
+	CLOCK_SYNC_RESPONSE = 0x72;
+	GAME = 0x80;
+}
+
+enum NatType {
+	ONE_TO_ONE = 0;
+	PORT_RESTRICTED = 1;
+	ADDRESS_RESTRICTED = 2;
+	SYMMETRIC = 3;
+}
+
+enum ConnectType {
+	DIRECT = 0;
+	DEFERRED = 1;
+}
+
+message TimeSync {
+	fixed64 client_req_transmission = 1;
+	fixed64 server_req_reception = 2;
+	fixed64 server_resp_transmission = 3;
+	fixed64 client_resp_reception = 4;
+}
+
+message Endpoint {
+	int32 port = 1;
+	oneof Address {
+		fixed32 v4 = 2;
+		bytes v6 = 3;
+	}
+}
+
+message ConnectRequest {
+	ConnectType type = 1;
+	Endpoint private_endpoint = 2;
+	string query = 3;
+}
+
+message ConnectResponse {
+	ConnectType type = 1;
+	int32 error_code = 2;
+	string nonce = 3;
+	Endpoint public_endpoint = 4;
+	Endpoint private_endpoint = 5;
+}
+
+message Header {
+	MessageType type = 1;
+	fixed32 sequence = 2;
+
+	oneof HeaderContent {
+		NatType nat_type = 3;
+		TimeSync time_sync = 4;
+		ConnectRequest connect_request = 5;
+		ConnectResponse connect_response = 6;
+		fixed32 mtu_probe_value = 7;
+	}
+}

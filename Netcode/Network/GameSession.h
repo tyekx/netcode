@@ -20,24 +20,12 @@ namespace Netcode::Network {
 	public:
 		virtual NETCODE_CONSTRUCTORS_NO_COPY(ClientSessionBase);
 
-		virtual void SwapBuffers(std::vector<Protocol::ServerUpdate> & game) = 0;
-		virtual void Update(Protocol::ClientUpdate message) = 0;
-		virtual Ref<Connection> Connect(std::string address, uint16_t port, std::string nonce) = 0;
-		virtual void Disconnect() = 0;
 	};
 	
 	class ServerSessionBase : public SessionBase {
 	public:
 		virtual NETCODE_CONSTRUCTORS_NO_COPY(ServerSessionBase);
 
-		virtual void SwapBuffers(std::vector<Protocol::ClientUpdate> & game) = 0;
-		virtual void Update(int32_t subjectId, Protocol::ServerUpdate serverUpdate) = 0;
-		virtual Ref<Connection> GetConnectionById(int32_t userId) = 0;
-		virtual Ref<Connection> GetConnectionByNonce(const std::string & nonce) = 0;
-		virtual Ref<Connection> MakeEmptyConnection() = 0;
-		virtual void ActivateConnection(Ref<Connection> activeConnection) = 0;
-		virtual void RemoveConnection(Ref<Connection> connection) = 0;
-		virtual uint16_t GetPort() const = 0;
 	};
 
 }

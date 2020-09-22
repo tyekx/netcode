@@ -5,28 +5,6 @@ package Netcode.Protocol;
 
 import "shared.proto";
 
-enum RequestType {
-	CONNECT = 0;
-	DISCONNECT = 1;
-}
-
-message Request {
-    RequestType type = 1;
-    string hash = 2;
-}
-
-message ConnectResponseData {
-    int32 port = 1; 
-}
-
-message Response {
-    RequestType type = 1;
-    int32 error_code = 2;
-    oneof Body {
-        ConnectResponseData connect_data = 3;
-    }
-}
-
 enum CommandType {
     NO_OP = 0;
 	PLAYER_KICKED = 1;
@@ -42,28 +20,23 @@ message ServerCommand {
     int32 subject = 2;
 }
 
-message TimeSync {
-    fixed64 client_req_transmission = 1;
-    fixed64 server_req_reception = 2;
-    fixed64 server_resp_transmission = 3;
-    fixed64 client_resp_reception = 4;
-}
-
 message ServerUpdate {
     int32 id = 1;
     repeated ServerCommand commands = 2;
     repeated Player players = 3;
     repeated Text texts = 4;
-    TimeSync time_sync = 5;
 }
 
 message ClientUpdate {
     int32 id = 1;
-    Player player_state = 2;
-    repeated Text texts = 3;
-    TimeSync time_sync = 4;
+    string nonce = 2;
+    Player player_state = 3;
+    repeated Text texts = 4;
 }
 
-service ServerService {
-    rpc Connect(Netcode.Protocol.Request) returns (Netcode.Protocol.Response) {} 
+message Update {
+    oneof Content {
+        ServerUpdate server_update = 1;
+        ClientUpdate client_update = 2;
+    }
 }

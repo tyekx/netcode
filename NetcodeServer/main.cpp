@@ -7,6 +7,7 @@
 #include <Netcode/System/SystemClock.h>
 
 int main(int argc, char * argv[]) {
+	Netcode::Initialize();
 	Netcode::SystemClock::Tick();
 	
 	Log::Setup(true);

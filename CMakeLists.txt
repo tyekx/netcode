@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.8)
 project("Netcode" VERSION 0.0.1 HOMEPAGE_URL "https://netcode-game.eu" LANGUAGES CXX)
 
 enable_testing()
+enable_language(CXX)
 
 # target_sources now uses proper relative paths
 set(CMAKE_POLICY_DEFAULT_CMP0076 NEW)
@@ -80,10 +81,6 @@ if(NOT PROTOC)
 	message(FATAL_ERROR "Protobuf compiler was not found")
 endif()
 
-if(NOT GRPC_CPP_PLUGIN)
-	message(FATAL_ERROR "gRPC plugin was not found")
-endif()
-
 function(netcode_compile_proto var_generated_headers var_generated_source source_path_list)
 	set(generated_header_files "")
 	set(generated_source_files "")
@@ -95,13 +92,12 @@ function(netcode_compile_proto var_generated_headers var_generated_source source
 		
 		set(cpp_file ${source_filename}.pb.cc)
 		set(h_file ${source_filename}.pb.h)
-		set(grpc_cpp_file ${source_filename}.grpc.pb.cc)
-		set(grpc_h_file ${source_filename}.grpc.pb.h)
 		
-		list(APPEND generated_header_files ${h_file} ${grpc_h_file})
-		list(APPEND generated_source_files ${cpp_file} ${grpc_cpp_file})
+		file(TOUCH ${CMAKE_CURRENT_SOURCE_DIR}/${cpp_file} ${CMAKE_CURRENT_SOURCE_DIR}/${h_file})
+
+		list(APPEND generated_header_files ${h_file})
+		list(APPEND generated_source_files ${cpp_file})
 		list(APPEND abs_path_generated_files ${CMAKE_CURRENT_SOURCE_DIR}/${cpp_file} ${CMAKE_CURRENT_SOURCE_DIR}/${h_file})
-		list(APPEND abs_path_grpc_generated_files ${CMAKE_CURRENT_SOURCE_DIR}/${grpc_cpp_file} ${CMAKE_CURRENT_SOURCE_DIR}/${grpc_h_file})
 		list(APPEND abs_path_proto_files ${CMAKE_CURRENT_SOURCE_DIR}/${proto_file})
 	endforeach(proto_file)
 	add_custom_command(OUTPUT ${abs_path_generated_files} 
@@ -111,15 +107,6 @@ function(netcode_compile_proto var_generated_headers var_generated_source source
 		DEPENDS ${abs_path_proto_files}
 	)
 
-	add_custom_command(OUTPUT ${abs_path_grpc_generated_files} 
-		COMMENT "Generating protobuf files..."
-		COMMAND ${PROTOC} --proto_path=${CMAKE_CURRENT_SOURCE_DIR} --grpc_out=${CMAKE_CURRENT_SOURCE_DIR} --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN} ${abs_path_proto_files}
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		DEPENDS ${abs_path_proto_files}
-		USES_TERMINAL
-	)
-
-	# 
 	set(${var_generated_headers} ${generated_header_files} PARENT_SCOPE)
 	set(${var_generated_source} ${generated_source_files} PARENT_SCOPE)
 endfunction()
