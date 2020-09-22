@@ -344,8 +344,8 @@ namespace Netcode::Network {
 			}
 
 		public:
-			ReliableUdpHandle(boost::asio::io_context & ioc, ResendContext resendCtx, uint32_t sequenceId, const UdpEndpoint & dstEndpoint) :
-				TransmissionHandleBase{ sequenceId, dstEndpoint }, resendTimer{ ioc }, resendCtx{ std::move(resendCtx) }, lastResentAt{} {
+			ReliableUdpHandle(boost::asio::executor exec, ResendContext resendCtx, uint32_t sequenceId, const UdpEndpoint & dstEndpoint) :
+				TransmissionHandleBase{ sequenceId, dstEndpoint }, resendTimer{ exec }, resendCtx{ std::move(resendCtx) }, lastResentAt{} {
 
 			}
 
@@ -539,50 +539,266 @@ namespace Netcode::Network {
 			return true;
 		}
 	};
-	
-	class NetcodeUdpSocket {
-		UdpSocket socket;
-		mutable SlimReadWriteLock srwLock;
-		boost::asio::io_context & ioContext;
 
-#if defined(NETCODE_DEBUG)
+
+	template<typename SockType, typename SockReaderWriter>
+	class BasicSocket : public SockReaderWriter {
+	protected:
+		SockType socket;
+	public:
+		using SocketType = SockType;
+
+		BasicSocket(SocketType s) : SockReaderWriter{ s }, socket { std::move(s) } {}
+		
+		SockType & GetSocket() {
+			return socket;
+		}
+
+		template<typename ... ARGS>
+		void Send(ARGS && ... args) {
+			SockReaderWriter::Write(socket, std::forward<ARGS>(args)...);
+		}
+		
+		template<typename ... ARGS>
+		void Receive(ARGS && ... args) {
+			SockReaderWriter::Read(socket, std::forward<ARGS>(args)...);
+		}
+	};
+
+	template<typename SockType>
+	class AsioSocketReadWriter {
+	public:
+		AsioSocketReadWriter(const SockType&) { }
+		
+		template<typename MutableBufferSequence, typename Endpoint, typename Handler>
+		static void Read(SockType& socket, const MutableBufferSequence& buffers, Endpoint& remoteEndpoint, Handler&& handler) {
+			socket.async_receive_from(buffers, remoteEndpoint, std::forward<Handler>(handler));
+		}
+		
+		template<typename MutableBufferSequence, typename Handler>
+		static void Read(SockType& socket, const MutableBufferSequence& buffers, Handler&& handler) {
+			socket.async_receive(buffers, std::forward<Handler>(handler));
+		}
+
+		template<typename ConstBufferSequence, typename Handler>
+		static void Write(SockType& socket, const ConstBufferSequence& buffers, Handler&& handler) {
+			socket.async_send(buffers, handler);
+		}
+		
+		template<typename ConstBufferSequence, typename Endpoint, typename Handler>
+		static void Write(SockType & socket, const ConstBufferSequence & buffers, const Endpoint& remoteEndpoint, Handler && handler) {
+			socket.async_send(buffers, remoteEndpoint, handler);
+		}
+	};
+
+	template<typename SockType>
+	class SharedAsioSocketReadWriter {
+		SlimReadWriteLock srwLock;
+	public:
+		SharedAsioSocketReadWriter(const SockType &) { }
+
+		NETCODE_CONSTRUCTORS_DELETE_MOVE(SharedAsioSocketReadWriter);
+		NETCODE_CONSTRUCTORS_DELETE_COPY(SharedAsioSocketReadWriter);
+		
+		template<typename MutableBufferSequence, typename Endpoint, typename Handler>
+		void Read(SockType & socket, const MutableBufferSequence & buffers, Endpoint & remoteEndpoint, Handler && handler) {
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+			socket.async_receive_from(buffers, remoteEndpoint, std::forward<Handler>(handler));
+		}
+
+		template<typename MutableBufferSequence, typename Handler>
+		void Read(SockType & socket, const MutableBufferSequence & buffers, Handler && handler) {
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+			socket.async_receive(buffers, std::forward<Handler>(handler));
+		}
+
+		template<typename ConstBufferSequence, typename Handler>
+		void Write(SockType & socket, const ConstBufferSequence & buffers, Handler && handler) {
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+			socket.async_send(buffers, handler);
+		}
+
+		template<typename ConstBufferSequence, typename Endpoint, typename Handler>
+		void Write(SockType & socket, const ConstBufferSequence & buffers, const Endpoint & remoteEndpoint, Handler && handler) {
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+			socket.async_send(buffers, remoteEndpoint, handler);
+		}
+	};
+	
+	template<typename SockType>
+	class DebugSharedAsioSocketReadWriter {
+		SlimReadWriteLock srwLock;
+		boost::asio::executor executor;
 		Ref<ManagedPool<WaitableTimer>> fakeLagTimers;
 		Duration fakeLagAvgDuration;
 		std::default_random_engine randomEngine;
 		std::normal_distribution<double> fakeLagDistribution;
 
 		Duration SampleFakeLag() {
-			double d = fakeLagDistribution(randomEngine);
+			if(fakeLagAvgDuration > Duration{}) {
+				double d = fakeLagDistribution(randomEngine);
 
-			return std::chrono::duration_cast<Duration>(std::chrono::duration<double, std::milli>(d));
+				return std::chrono::duration_cast<Duration>(std::chrono::duration<double, std::milli>(d));
+			}
+			return Duration{};
 		}
-#endif
-		
 	public:
-		NetcodeUdpSocket(boost::asio::io_context & ioc, UdpSocket sock) : socket{ std::move(sock) }, srwLock{}, ioContext{ ioc } {
-#if defined(NETCODE_DEBUG)
-			fakeLagTimers = std::make_shared<ManagedPool<WaitableTimer>>();
+		DebugSharedAsioSocketReadWriter(SockType & sock) : srwLock{}, executor{ sock.get_executor() },
+			fakeLagTimers{ std::make_shared<ManagedPool<WaitableTimer>>() }, fakeLagAvgDuration{}, randomEngine{},
+			fakeLagDistribution{} {
+
 			uint32_t fakeLagAvgDur = 0;
 			uint32_t fakeLagSigma = 0;
 			try {
 				fakeLagAvgDur = Config::Get<uint32_t>(L"network.fakeLagAvg:u32");
 				fakeLagSigma = Config::Get<uint32_t>(L"network.fakeLagSigma:u32");
-			} catch(OutOfRangeException & e) {}
+			} catch(OutOfRangeException & e) { }
 
 			fakeLagAvgDuration = std::chrono::duration<uint64_t, std::milli>(fakeLagAvgDur);
 
 			double sigma = std::max(static_cast<double>(fakeLagSigma), 0.001);
-			
+
 			fakeLagDistribution = std::normal_distribution<double>(static_cast<double>(fakeLagAvgDur), sigma);
-#endif
 		}
 
-		boost::asio::io_context & GetIOContext() {
-			return ioContext;
+		NETCODE_CONSTRUCTORS_DELETE_MOVE(DebugSharedAsioSocketReadWriter);
+		NETCODE_CONSTRUCTORS_DELETE_COPY(DebugSharedAsioSocketReadWriter);
+		
+		template<typename MutableBufferSequence, typename Endpoint, typename Handler>
+		void Read(SockType & socket, const MutableBufferSequence & buffers, Endpoint & remoteEndpoint, Handler && handler) {
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+
+			/*
+			 * Its enough to have the send delay in a symmetrical manner,
+			 * shows up better in wireshark aswell
+			 */
+			socket.async_receive_from(buffers, remoteEndpoint, std::forward<Handler>(handler));
 		}
 
-		NETCODE_CONSTRUCTORS_DELETE_MOVE(NetcodeUdpSocket);
-		NETCODE_CONSTRUCTORS_DELETE_COPY(NetcodeUdpSocket);
+		template<typename MutableBufferSequence, typename Handler>
+		void Read(SockType & socket, const MutableBufferSequence & buffers, Handler && handler) {
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+
+			/*
+			 * Its enough to have the send delay in a symmetrical manner,
+			 * shows up better in wireshark aswell
+			 */
+			socket.async_receive(buffers, std::forward<Handler>(handler));
+		}
+
+		template<typename ConstBufferSequence, typename Handler>
+		void Write(SockType & socket, const ConstBufferSequence & buffers, Handler && handler) {
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+			auto fakeLagTimer = fakeLagTimers->Get(executor);
+			fakeLagTimer->expires_from_now(SampleFakeLag());
+			fakeLagTimer->async_wait([this, &socket, buffers, l = std::move(fakeLagTimer), h = std::move(handler)]
+			(const ErrorCode & ec) mutable -> void {
+				ScopedExclusiveLock<SlimReadWriteLock> callbackScopedLock{ srwLock };
+				socket.async_send(buffers, std::move(h));
+			});
+		}
+
+		template<typename ConstBufferSequence, typename Endpoint, typename Handler>
+		void Write(SockType & socket, const ConstBufferSequence & buffers, const Endpoint & remoteEndpoint, Handler && handler) {
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+			auto fakeLagTimer = fakeLagTimers->Get(executor);
+			fakeLagTimer->expires_from_now(SampleFakeLag());
+			fakeLagTimer->async_wait([this, &socket, buffers, &remoteEndpoint, l = std::move(fakeLagTimer), h = std::move(handler)]
+			(const ErrorCode & ec) mutable -> void {
+				ScopedExclusiveLock<SlimReadWriteLock> callbackScopedLock{ srwLock };
+				socket.async_send_to(buffers, remoteEndpoint, std::move(h));
+			});
+		}
+	};
+
+	template<typename SockType>
+	using BasicAsioSocket = BasicSocket<SockType, AsioSocketReadWriter<SockType>>;
+	
+	template<typename SockType>
+	using BasicSharedAsioSocket = BasicSocket<SockType, SharedAsioSocketReadWriter<SockType>>;
+
+	using SharedUdpSocket = BasicSharedAsioSocket<boost::asio::ip::udp::socket>;
+
+	/*
+	 * able to send and receive specialized handles
+	 */
+	template<typename NetcodeSocketTypeConcept = SharedUdpSocket>
+	class BasicNetcodeProtocolSocket {
+		NetcodeSocketTypeConcept socket;
+	public:
+		using SocketType = typename NetcodeSocketTypeConcept::SocketType;
+
+		SocketType & GetSocket() {
+			return socket.GetSocket();
+		}
+
+		BasicNetcodeProtocolSocket(SocketType sock) : socket{ std::move(sock) } {
+			
+		}
+
+		void Send(Ref<Detail::RawUdpHandle> handle) {
+			auto constBuffer = handle->GetContent()->GetConstBuffer();
+
+			socket.Send(constBuffer, handle->GetDestEndpoint(),
+				[handle](const ErrorCode & ec, size_t sz) -> void {
+				handle->Sent(ec, sz);
+			});
+		}
+
+		void Send(Ref<Detail::ReliableUdpHandle> handle) {
+			const Detail::ResendContext * resendCtx = handle->GetResendContext();
+
+			WaitableTimer & timer = handle->GetTimer();
+			timer.expires_from_now(resendCtx->resendInterval);
+			timer.async_wait([this, handle](const ErrorCode & errorCode) mutable -> void {
+				if(errorCode) {
+					return;
+				}
+			
+				if(!handle->IsComplete()) { // if the handle still yields no result
+					uint32_t numAttempts = handle->GetAttemptCount();
+
+					if(numAttempts < 10) {
+						Send(std::move(handle)); // restart everything
+					} else {
+						handle->SetCompletion(TransmissionResult::TIMEOUT);
+					}
+				}
+			});
+
+			socket.Send(resendCtx->constBuffer, handle->GetDestEndpoint(),
+				[handle](const ErrorCode & ec, size_t sz) -> void {
+				handle->AttemptedSend(ec, sz);
+			});
+		}
+
+		void Send(Ref<Detail::FragmentedUdpHandle> handle) {
+			for(uint32_t i = 0; i < handle->numFragments; i++) {
+				auto fragCtx = std::move(handle->fragments[i]);
+
+				socket.Send(fragCtx->constBuffers, handle->GetDestEndpoint(),
+					[lifetime = std::move(fragCtx), handle](const ErrorCode & ec, size_t sz)-> void {
+					handle->FragmentSent(ec, sz);
+				});
+			}
+		}
+
+		/*
+		 * Callback is void(const ErrorCode&, Ref<UdpPacket>)
+		 */
+		template<typename Callback>
+		void Receive(Ref<UdpPacket> packet, Callback&& c) {
+			socket.Receive(packet->GetMutableBuffer(), packet->GetEndpoint(),
+				[packet, callback = std::move(c)](const ErrorCode& ec, size_t sz) mutable -> void {
+				packet->SetTimestamp(SystemClock::LocalNow());
+				packet->SetDataSize(sz);
+				callback(ec, std::move(packet));
+			});
+		}
+	};
+
+	/*
+	 * 
 
 		MtuValue GetLinkLocalMtu() {
 			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
@@ -600,139 +816,7 @@ namespace Netcode::Network {
 
 			throw UndefinedBehaviourException{ "Failed to query link local MTU" };
 		}
-
-		void Send(Ref<Detail::RawUdpHandle> handle) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-
-			const UdpPacket * p = handle->GetContent();
-
-#if defined(NETCODE_DEBUG)
-			if(fakeLagAvgDuration > Duration{}) {
-				auto fakeLagTimer = fakeLagTimers->Get(ioContext);
-
-				fakeLagTimer->expires_from_now(SampleFakeLag());
-				fakeLagTimer->async_wait([handle, p, this, lifetime = std::move(fakeLagTimer)](const ErrorCode & ec) -> void {
-					socket.async_send_to(boost::asio::const_buffer{ p->GetData(), p->GetDataSize() },
-						handle->GetDestEndpoint(), [handle](const ErrorCode & ec, size_t sz) -> void {
-						handle->Sent(ec, sz);
-					});
-				});
-			} else
-#endif
-			{
-				socket.async_send_to(boost::asio::const_buffer{ p->GetData(), p->GetDataSize() },
-					handle->GetDestEndpoint(), [handle](const ErrorCode & ec, size_t sz) -> void {
-					handle->Sent(ec, sz);
-				});
-			}
-		}
-
-		void Send(Ref<Detail::ReliableUdpHandle> handle) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-
-			const Detail::ResendContext * resendCtx = handle->GetResendContext();
-			
-			WaitableTimer & timer = handle->GetTimer();
-			timer.expires_from_now(resendCtx->resendInterval);
-
-
-			// [ expiry ]
-			timer.async_wait([this, handle](const ErrorCode & errorCode) -> void {
-				if(!errorCode) { // if the timer is not cancelled
-					if(!handle->IsComplete()) { // if the handle still yields no result
-						uint32_t numAttempts = handle->GetAttemptCount();
-
-						if(numAttempts < 10) {
-							Send(std::move(handle)); // restart everything
-						} else {
-							handle->SetCompletion(TransmissionResult::TIMEOUT);
-						}
-					}
-				}
-			});
-
-#if defined(NETCODE_DEBUG)
-			if(fakeLagAvgDuration > Duration{}) {
-				auto fakeLagTimer = fakeLagTimers->Get(ioContext);
-
-				fakeLagTimer->expires_from_now(SampleFakeLag());
-				fakeLagTimer->async_wait([handle, resendCtx, this, lifetime = std::move(fakeLagTimer)](const ErrorCode & ec) -> void {
-					socket.async_send_to(resendCtx->constBuffer, handle->GetDestEndpoint(), [handle](const ErrorCode & ec, size_t sz) -> void {
-						Log::Debug("Sent: {0}", static_cast<int>(sz));
-						handle->AttemptedSend(ec, sz);
-					});
-				});
-			} else
-#endif
-			{
-				socket.async_send_to(resendCtx->constBuffer, handle->GetDestEndpoint(), [handle](const ErrorCode & ec, size_t sz) -> void {
-					Log::Debug("Sent: {0}", static_cast<int>(sz));
-					handle->AttemptedSend(ec, sz);
-				});
-			}
-		}
-
-		void Send(Ref<Detail::FragmentedUdpHandle> handle) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-
-#if defined(NETCODE_DEBUG)
-			if(fakeLagAvgDuration > Duration{}) {
-				auto fakeLagTimer = fakeLagTimers->Get(ioContext);
-
-				fakeLagTimer->expires_from_now(SampleFakeLag());
-
-				for(uint32_t i = 0; i < handle->numFragments; i++) {
-					auto fragCtx = std::move(handle->fragments[i]);
-					fakeLagTimer->async_wait([handle, this, fctx{ std::move(fragCtx) }](const ErrorCode & ec) mutable -> void {
-						socket.async_send_to(fctx->constBuffers, handle->GetDestEndpoint(),
-							[handle, f{ std::move(fctx) }](const ErrorCode & ec, size_t sz) -> void {
-							handle->FragmentSent(ec, sz);
-						});
-					});
-				}
-			} else
-#endif
-			{
-				for(uint32_t i = 0; i < handle->numFragments; i++) {
-					auto fragCtx = std::move(handle->fragments[i]);
-
-					socket.async_send_to(fragCtx->constBuffers, handle->GetDestEndpoint(),
-						[f = std::move(fragCtx), handle](const ErrorCode & ec, size_t sz) -> void {
-						handle->FragmentSent(ec, sz);
-					});
-				}
-			}
-		}
-
-		/*
-		 * Callback takes an ErrorCode and a Ref<UdpPacket>
-		 */
-		template<typename Callback>
-		void Receive(Ref<UdpPacket> pkt, Callback&& c) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-
-#if defined(NETCODE_DEBUG)
-			if(fakeLagAvgDuration > Duration{}) {
-				socket.async_receive_from(pkt->GetMutableBuffer(), pkt->GetEndpoint(), [this, pkt, cc = std::move(c)](const ErrorCode & ec, size_t sz) -> void {
-					auto fakeLagTimer = fakeLagTimers->Get(ioContext);
-					fakeLagTimer->expires_from_now(SampleFakeLag());
-					fakeLagTimer->async_wait([pkt, callback = std::move(cc), errorCode = ec, sz, lifetime = std::move(fakeLagTimer)](const ErrorCode & timerEc) -> void {
-						pkt->SetDataSize(sz);
-						pkt->SetTimestamp(SystemClock::LocalNow());
-						callback(errorCode, std::move(pkt));
-					});
-				});
-			} else 
-#endif
-			{
-				socket.async_receive_from(pkt->GetMutableBuffer(), pkt->GetEndpoint(), [pkt, callback = std::move(c)](const ErrorCode & ec, size_t sz) -> void {
-					pkt->SetDataSize(sz);
-					pkt->SetTimestamp(SystemClock::LocalNow());
-					callback(ec, std::move(pkt));
-				});
-			}
-		}
-	};
+	 */
 
 	class ConnectionBase : public std::enable_shared_from_this<ConnectionBase> {
 	public:
@@ -762,7 +846,17 @@ namespace Netcode::Network {
 	};
 
 	class NetcodeService {
-		Ref<NetcodeUdpSocket> udpSocket;
+
+		
+#if defined(NETCODE_DEBUG)
+		// basic socket with a debug readerwriter that enables fakelag
+		using NetcodeSocketType = BasicNetcodeProtocolSocket<
+			BasicSocket<boost::asio::ip::udp::socket, DebugSharedAsioSocketReadWriter<boost::asio::ip::udp::socket>>
+		>;
+#else
+		using NetcodeSocketType = BasicNetcodeProtocolSocket<SharedUdpSocket>;
+#endif
+		NetcodeSocketType udpSocket;
 
 		Ref<PacketStorage<UdpPacket>> packetStorage;
 		// messages that need to be handled further up
@@ -781,8 +875,8 @@ namespace Netcode::Network {
 		uint32_t mtu;
 
 	public:
-		NetcodeService(Ref<NetcodeUdpSocket> sock) :
-			udpSocket{ std::move(sock) },
+		NetcodeService(NetcodeSocketType::SocketType underlyingSocket) :
+			udpSocket{ std::move(underlyingSocket) },
 			packetStorage{ std::make_shared<PacketStorage<UdpPacket>>(32) },
 			controlMsgQueue{},
 			gameMsgQueue{},
@@ -941,10 +1035,11 @@ namespace Netcode::Network {
 		}
 
 		void InitReceive() {
-			udpSocket->Receive(packetStorage->GetBuffer(), [this](const ErrorCode & ec, Ref<UdpPacket> udpPacket) -> void {
+			udpSocket.Receive(packetStorage->GetBuffer(), [this](const ErrorCode & ec, Ref<UdpPacket> udpPacket) -> void {
 				if(ec) {
 					Log::Debug("Err: {0}", ec.message());
 				} else {
+					Log::Debug("Received: {0}", static_cast<int32_t>(udpPacket->GetDataSize()));
 					udpPacket->SetTimestamp(SystemClock::LocalNow());
 					InitReceive();
 					OnPacketReceivedAsync(std::move(udpPacket));
@@ -981,16 +1076,16 @@ namespace Netcode::Network {
 				constexpr Duration DEBUG_RESEND_INTERVAL = std::chrono::milliseconds(500);
 				Detail::ResendContext resendContext{ std::move(headerContent), totalHeaderSize, DEBUG_RESEND_INTERVAL };
 
-				auto handle = std::make_shared<Detail::ReliableUdpHandle>(udpSocket->GetIOContext(), std::move(resendContext), headerOnlyMessage.sequence(), dstEndpoint);
+				auto handle = std::make_shared<Detail::ReliableUdpHandle>(udpSocket.GetSocket().get_executor(), std::move(resendContext), headerOnlyMessage.sequence(), dstEndpoint);
 
 				reliableUdpIndices.Insert(handle);
-				udpSocket->Send(handle);
+				udpSocket.Send(handle);
 
 				return handle;
 			} else {
 				auto rawHandle = std::make_shared<Detail::RawUdpHandle>(std::move(headerContent), headerOnlyMessage.sequence(), dstEndpoint);
 
-				udpSocket->Send(rawHandle);
+				udpSocket.Send(rawHandle);
 
 				return rawHandle;
 			}
@@ -1056,7 +1151,7 @@ namespace Netcode::Network {
 				headerOffset += totalHeaderSize;
 			}
 
-			udpSocket->Send(handle);
+			udpSocket.Send(handle);
 
 			return handle;
 		}

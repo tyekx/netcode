@@ -1,6 +1,6 @@
 #pragma once 
 
-#include "../ModulesConfig.h"
+#include <Netcode/ModulesConfig.h>
 #include "GameSession.h"
 #include "NetworkCommon.h"
 #include <boost/asio.hpp>
@@ -138,10 +138,8 @@ namespace Netcode::Network {
 				Log::Error("Failed to 'connect'");
 				return;
 			}
-			
-			Ref<NetcodeUdpSocket> udpSock = std::make_shared<NetcodeUdpSocket>(ioContext, std::move(sock));
 
-			service = std::make_shared<NetcodeService>(std::move(udpSock));
+			service = std::make_shared<NetcodeService>(std::move(sock));
 			service->Host();
 
 			Log::Debug("Service created");

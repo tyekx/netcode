@@ -9,7 +9,6 @@
 namespace Netcode::Network {
 
 	struct PmtuDiscovery {
-		Ref<NetcodeUdpSocket> udpSocket;
 		Ref<TransmissionHandleBase> activeHandle;
 		uint16_t lastMtuAttempt;
 
@@ -44,7 +43,7 @@ namespace Netcode::Network {
 		}
 		
 	public:
-		PmtuDiscovery(Ref<NetcodeUdpSocket> sock) : udpSocket{ std::move(sock) }, activeHandle{}, lastMtuAttempt{ 1500 } {
+		PmtuDiscovery() : activeHandle{}, lastMtuAttempt{ 1500 } {
 			//stream->GetSocket()...
 			lastMtuAttempt = 1500;
 			InitDiscovery(lastMtuAttempt);

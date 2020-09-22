@@ -68,9 +68,7 @@ namespace Netcode::Network {
 
 		Log::Info("[Network] [Server] Started on port: {0}", Config::Get<uint16_t>(L"network.server.gamePort:u16"));
 
-		Ref<NetcodeUdpSocket> udpSock = std::make_shared<NetcodeUdpSocket>(ioContext, std::move(gameSocket));
-
-		service = std::make_shared<NetcodeService>(std::move(udpSock));
+		service = std::make_shared<NetcodeService>(std::move(gameSocket));
 		service->Host();
 	}
 
