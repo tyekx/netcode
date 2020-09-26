@@ -14,7 +14,8 @@ enum MessageType {
 	PMTU_DISCOVERY = 0x41;
 	NAT_DISCOVERY_REQUEST = 0x51;
 	NAT_DISCOVERY_RESPONSE = 0x53;
-	REGISTER_HOST = 0x61;
+	REG_HOST_REQUEST = 0x61;
+	REG_HOST_RESPONSE = 0x63;
 	CLOCK_SYNC_REQUEST = 0x70;
 	CLOCK_SYNC_RESPONSE = 0x72;
 	GAME = 0x80;
@@ -41,16 +42,14 @@ message TimeSync {
 
 message Endpoint {
 	int32 port = 1;
-	oneof Address {
-		fixed32 v4 = 2;
-		bytes v6 = 3;
-	}
+	string addr = 2;
 }
 
 message ConnectRequest {
 	ConnectType type = 1;
 	Endpoint private_endpoint = 2;
-	string query = 3;
+	Endpoint public_endpoint = 3;
+	string query = 4;
 }
 
 message ConnectResponse {

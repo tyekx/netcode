@@ -6,7 +6,6 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <future>
 
 #include "ModulesConfig.h"
 #include <Netcode/Graphics/GraphicsContexts.h>

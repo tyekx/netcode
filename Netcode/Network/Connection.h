@@ -3,23 +3,34 @@
 #include "NetworkCommon.h"
 #include <Netcode/System/SystemClock.h>
 #include <NetcodeProtocol/header.pb.h>
+#include <NetcodeProtocol/netcode.pb.h>
 #include <NetcodeFoundation/Exceptions.h>
 #include <Netcode/Utility.h>
 #include <Netcode/Sync/SlimReadWriteLock.h>
 #include <Netcode/Config.h>
 #include <random>
+#include <Netcode/Sync/Task.hpp>
+#include "NetcodeFoundation/Enum.hpp"
 
 namespace Netcode::Network {
 
 	enum class ConnectionState : uint32_t {
-		INACTIVE,
-		TIMEOUT,
-		CONNECTING,
-		SYNCHRONIZING,
-		ESTABLISHED
+		INACTIVE = 0,
+		DISCONNECTED = 1,
+		REJECTED = 403,
+		TIMEOUT = 404,
+		INTERNAL_ERROR = 500,
+		
+		RESOLVING = 0x4000,
+		CONNECTING = 0x8000,
+		AUTHENTICATING = 0x8001,
+		SYNCHRONIZING = 0x8002,
+		ESTABLISHED = 0x10000
 	};
+
+	NETCODE_ENUM_CLASS_OPERATORS(ConnectionState)
 	
-	using StreamPacket = BasicPacket<boost::asio::ip::udp, 65536>;
+	using GamePacket = BasicPacket<boost::asio::ip::udp, 65536>;
 	using WaitableTimer = boost::asio::basic_waitable_timer<Netcode::ClockType>;
 
 
@@ -120,69 +131,6 @@ namespace Netcode::Network {
 		}
 	};
 
-	template<typename T>
-	class IndexTable {
-		SlimReadWriteLock srwLock;
-		std::vector<T> storage;
-
-	public:
-		IndexTable() : srwLock{}, storage{} {
-			storage.reserve(32);
-		}
-
-		void Insert(T value) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-			storage.emplace_back(std::move(value));
-		}
-
-		template<typename Query>
-		T Find(Query && q) {
-			ScopedSharedLock<SlimReadWriteLock> scopedLock{ srwLock };
-
-			auto it = std::find_if(std::begin(storage), std::end(storage), q);
-
-			if(it != std::end(storage)) {
-				return *it;
-			}
-
-			return T{};
-		}
-
-		/*
-		 * Query takes a const T& returns bool
-		 */
-		template<typename Query>
-		T Erase(Query && q) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-			auto it = std::find_if(std::begin(storage), std::end(storage), q);
-
-			if(it != std::end(storage)) {
-				std::swap(*it, storage.back());
-				T tmp = std::move(storage.back());
-				storage.pop_back();
-				return tmp;
-			}
-
-			return T{};
-		}
-
-		template<typename Query>
-		size_t EraseAll(Query && q) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-
-			auto it = std::remove_if(std::begin(storage), std::end(storage), q);
-
-			if(it != std::end(storage)) {
-				size_t c = std::end(storage) - it;
-				storage.erase(it, std::end(storage));
-				return c;
-			}
-
-			return 0;
-		}
-
-	};
-
 	struct MtuValue {
 		constexpr static uint32_t MSB = (0x80000000);
 		constexpr static uint32_t UDP_HEADER_SIZE = 8;
@@ -215,254 +163,13 @@ namespace Netcode::Network {
 	};
 
 
-	enum class TransmissionResult : uint32_t {
+	enum class TransmissionState : uint32_t {
 		UNKNOWN,
 		TIMEOUT,
 		ERROR_WHILE_SENDING,
+		CANCELLED,
 		SUCCESS
 	};
-
-	struct MessageTransmissionResult {
-		TransmissionResult result;
-		uint32_t sequenceId;
-		uint32_t attempts;
-		uint32_t fragments;
-		uint32_t totalSentBytes;
-		Timestamp transmissionStartedAt;
-		Timestamp acknowledgeReceivedAt;
-		ErrorCode errorIfAny;
-
-		MessageTransmissionResult() : result{ TransmissionResult::UNKNOWN },
-			sequenceId{},
-			attempts{},
-			fragments{},
-			totalSentBytes{},
-			transmissionStartedAt{},
-			acknowledgeReceivedAt{},
-			errorIfAny{} {}
-	};
-
-
-	class TransmissionHandleBase {
-	protected:
-		mutable SlimReadWriteLock srwLock;
-		MessageTransmissionResult results;
-		UdpEndpoint destEndpoint;
-	public:
-		TransmissionHandleBase(uint32_t sequenceId, const UdpEndpoint & dstEndpoint) : srwLock{}, results{}, destEndpoint{ dstEndpoint } {
-			results.sequenceId = sequenceId;
-		}
-
-		bool IsComplete() const {
-			return results.result != TransmissionResult::UNKNOWN;
-		}
-
-		[[nodiscard]]
-		const UdpEndpoint & GetDestEndpoint() const {
-			return destEndpoint;
-		}
-
-		/*
-		 * Invoking this function while IsComplete() is false, is a racecondition
-		 */
-		[[nodiscard]]
-		const MessageTransmissionResult & GetResult() const {
-			return results;
-		}
-	};
-
-	namespace Detail {
-
-		struct ResendContext {
-			Ref<UdpPacket> headerContent;
-			Duration resendInterval;
-			boost::asio::const_buffer constBuffer;
-
-			ResendContext(Ref<UdpPacket> packet, uint32_t hdrSize, const Duration& resendInterval) :
-				headerContent{ std::move(packet) }, resendInterval{ resendInterval }, constBuffer{ headerContent->GetData(), hdrSize } { }
-		};
-
-		struct FragmentationToken {};
-
-		struct FragmentationContext {
-			Ref<UdpPacket> headerContent;
-			Ref<StreamPacket> messageContent;
-			Ref<FragmentationToken> token;
-			std::array<boost::asio::const_buffer, 2> constBuffers;
-
-			uint32_t GetHeaderSize() const {
-				return static_cast<uint32_t>(constBuffers[0].size());
-			}
-
-			uint32_t GetDataSize() const {
-				return static_cast<uint32_t>(constBuffers[1].size());
-			}
-
-			FragmentationContext(Ref<UdpPacket> hdrContent, uint32_t hdrOffset, uint32_t hdrSize,
-				Ref<StreamPacket> msgContent, uint32_t msgOffset, uint32_t msgSize,
-				Ref<FragmentationToken> fragToken) :
-				headerContent{ std::move(hdrContent) },
-				messageContent{ std::move(msgContent) },
-				token{ std::move(fragToken) },
-				constBuffers{
-					boost::asio::const_buffer{ headerContent->GetData() + hdrOffset, hdrSize },
-					boost::asio::const_buffer{ messageContent->GetData() + msgOffset, msgSize }
-			} { }
-		};
-
-		class RawUdpHandle : public TransmissionHandleBase {
-			Ref<UdpPacket> headerContent;
-
-		public:
-			RawUdpHandle(Ref<UdpPacket> pkt, uint32_t seq, const UdpEndpoint & ep) :
-				TransmissionHandleBase(seq, ep), headerContent{ std::move(pkt) } {}
-
-			const UdpPacket * GetContent() const {
-				return headerContent.get();
-			}
-
-			void Sent(const ErrorCode & ec, size_t size) {
-				ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-
-				if(ec) {
-					results.result = TransmissionResult::ERROR_WHILE_SENDING;
-					results.errorIfAny = ec;
-				} else {
-					results.result = TransmissionResult::SUCCESS;
-					results.totalSentBytes = size;
-				}
-			}
-		};
-
-		class ReliableUdpHandle : public TransmissionHandleBase {
-			WaitableTimer resendTimer;
-			ResendContext resendCtx;
-			Timestamp lastResentAt;
-
-			void SetCompletionUnsafe(TransmissionResult result) {
-				results.result = result;
-			}
-
-		public:
-			ReliableUdpHandle(boost::asio::executor exec, ResendContext resendCtx, uint32_t sequenceId, const UdpEndpoint & dstEndpoint) :
-				TransmissionHandleBase{ sequenceId, dstEndpoint }, resendTimer{ exec }, resendCtx{ std::move(resendCtx) }, lastResentAt{} {
-
-			}
-
-			// no lock needed because of the use-case
-			WaitableTimer & GetTimer() {
-				return resendTimer;
-			}
-
-			const ResendContext * GetResendContext() const {
-				return &resendCtx;
-			}
-
-			void AttemptedSend(const ErrorCode & ec, size_t numBytes) {
-				ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-
-				// if a thread marked it completed, we ignore this attempt
-				if(IsComplete()) {
-					return;
-				}
-
-				results.attempts += 1;
-				results.totalSentBytes += numBytes;
-				if(ec) {
-					results.errorIfAny = ec;
-					results.acknowledgeReceivedAt = Timestamp{};
-					results.result = TransmissionResult::ERROR_WHILE_SENDING;
-				}
-			}
-
-			void SetCompletion(TransmissionResult result) {
-				ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-
-				resendTimer.cancel();
-
-				if(IsComplete()) {
-					return;
-				}
-
-				SetCompletionUnsafe(result);
-			}
-
-			uint32_t GetAttemptCount() const {
-				return results.attempts;
-			}
-
-			uint32_t GetSequenceId() const {
-				return results.sequenceId;
-			}
-		};
-
-		class FragmentedUdpHandle : public TransmissionHandleBase {
-			Weak<FragmentationToken> associatedToken;
-
-			void SetCompletionUnsafe(TransmissionResult result) {
-				results.result = result;
-			}
-		public:
-			using FragCtxHandle = ManagedPool<FragmentationContext>::ObjectType;
-
-			std::array<FragCtxHandle, 16> fragments;
-			uint32_t numFragments;
-
-			using TransmissionHandleBase::TransmissionHandleBase;
-
-			void SetCompletionWithError(const ErrorCode & ec) {
-				ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-
-				if(IsComplete()) {
-					return;
-				}
-
-				results.errorIfAny = ec;
-				SetCompletionUnsafe(TransmissionResult::ERROR_WHILE_SENDING);
-			}
-
-			void SetCompletion(TransmissionResult tr) {
-				ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-
-				if(IsComplete()) {
-					return;
-				}
-
-				SetCompletionUnsafe(tr);
-			}
-
-			Ref<FragmentationToken> GetToken() {
-				if(!Utility::IsWeakRefEmpty(associatedToken)) {
-					return associatedToken.lock();
-				}
-
-				return Ref<FragmentationToken>{
-					new FragmentationToken{},
-						[this](FragmentationToken * p) -> void {
-						if(!IsComplete()) {
-							SetCompletionUnsafe(TransmissionResult::SUCCESS);
-						}
-					}
-				};
-			}
-
-			void FragmentSent(const ErrorCode & ec, size_t size) {
-				ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-
-				if(IsComplete()) {
-					return;
-				}
-
-				results.fragments += 1;
-				results.totalSentBytes += size;
-				if(ec) {
-					results.errorIfAny = ec;
-					SetCompletionUnsafe(TransmissionResult::ERROR_WHILE_SENDING);
-				}
-			}
-		};
-
-	}
 
 	class DefragmentationContext {
 
@@ -503,7 +210,7 @@ namespace Netcode::Network {
 			return numFragments == numReceivedFragments;
 		}
 
-		bool DefragmentInto(StreamPacket * dstPacket) {
+		bool DefragmentInto(GamePacket * dstPacket) {
 			if(dstPacket == nullptr) {
 				return false;
 			}
@@ -540,7 +247,6 @@ namespace Netcode::Network {
 		}
 	};
 
-
 	template<typename SockType, typename SockReaderWriter>
 	class BasicSocket : public SockReaderWriter {
 	protected:
@@ -550,18 +256,22 @@ namespace Netcode::Network {
 
 		BasicSocket(SocketType s) : SockReaderWriter{ s }, socket { std::move(s) } {}
 		
+		const SockType & GetSocket() const {
+			return socket;
+		}
+
 		SockType & GetSocket() {
 			return socket;
 		}
 
 		template<typename ... ARGS>
-		void Send(ARGS && ... args) {
-			SockReaderWriter::Write(socket, std::forward<ARGS>(args)...);
+		auto Send(ARGS && ... args) {
+			return SockReaderWriter::Write(socket, std::forward<ARGS>(args)...);
 		}
 		
 		template<typename ... ARGS>
-		void Receive(ARGS && ... args) {
-			SockReaderWriter::Read(socket, std::forward<ARGS>(args)...);
+		auto Receive(ARGS && ... args) {
+			return SockReaderWriter::Read(socket, std::forward<ARGS>(args)...);
 		}
 	};
 
@@ -588,6 +298,50 @@ namespace Netcode::Network {
 		template<typename ConstBufferSequence, typename Endpoint, typename Handler>
 		static void Write(SockType & socket, const ConstBufferSequence & buffers, const Endpoint& remoteEndpoint, Handler && handler) {
 			socket.async_send(buffers, remoteEndpoint, handler);
+		}
+	};
+
+	template<typename SockType>
+	class SyncAsioSocketHandler {
+	public:
+		SyncAsioSocketHandler(const SockType &) { }
+
+		template<typename MutableBufferSequence, typename Endpoint>
+		static size_t Read(SockType & socket, const MutableBufferSequence & buffers, Endpoint & remoteEndpoint, ErrorCode & ec) {
+			return socket.receive_from(buffers, remoteEndpoint, 0, ec);
+		}
+
+		template<typename ConstBufferSequence, typename Endpoint>
+		static size_t Write(SockType & socket, const ConstBufferSequence & buffers, const Endpoint & remoteEndpoint, ErrorCode  &ec) {
+			return socket.send_to(buffers, remoteEndpoint, 0, ec);
+		}
+		
+		template<typename MutableBufferSequence, typename Endpoint, typename Handler>
+		static void Read(SockType & socket, const MutableBufferSequence & buffers, Endpoint & remoteEndpoint, Handler && handler) {
+			ErrorCode ec;
+			size_t s = socket.receive_from(buffers, remoteEndpoint, 0, ec);
+			handler(ec, s);
+		}
+
+		template<typename MutableBufferSequence, typename Handler>
+		static void Read(SockType & socket, const MutableBufferSequence & buffers, Handler && handler) {
+			ErrorCode ec;
+			size_t s = socket.receive(buffers, 0, ec);
+			handler(ec, s);
+		}
+
+		template<typename ConstBufferSequence, typename Handler>
+		static void Write(SockType & socket, const ConstBufferSequence & buffers, Handler && handler) {
+			ErrorCode ec;
+			size_t s = socket.send(buffers, 0, ec);
+			handler(ec, s);
+		}
+
+		template<typename ConstBufferSequence, typename Endpoint, typename Handler>
+		static void Write(SockType & socket, const ConstBufferSequence & buffers, const Endpoint & remoteEndpoint, Handler && handler) {
+			ErrorCode ec;
+			size_t s = socket.send_to(buffers, remoteEndpoint, 0, ec);
+			handler(ec, s);
 		}
 	};
 
@@ -719,83 +473,6 @@ namespace Netcode::Network {
 
 	using SharedUdpSocket = BasicSharedAsioSocket<boost::asio::ip::udp::socket>;
 
-	/*
-	 * able to send and receive specialized handles
-	 */
-	template<typename NetcodeSocketTypeConcept = SharedUdpSocket>
-	class BasicNetcodeProtocolSocket {
-		NetcodeSocketTypeConcept socket;
-	public:
-		using SocketType = typename NetcodeSocketTypeConcept::SocketType;
-
-		SocketType & GetSocket() {
-			return socket.GetSocket();
-		}
-
-		BasicNetcodeProtocolSocket(SocketType sock) : socket{ std::move(sock) } {
-			
-		}
-
-		void Send(Ref<Detail::RawUdpHandle> handle) {
-			auto constBuffer = handle->GetContent()->GetConstBuffer();
-
-			socket.Send(constBuffer, handle->GetDestEndpoint(),
-				[handle](const ErrorCode & ec, size_t sz) -> void {
-				handle->Sent(ec, sz);
-			});
-		}
-
-		void Send(Ref<Detail::ReliableUdpHandle> handle) {
-			const Detail::ResendContext * resendCtx = handle->GetResendContext();
-
-			WaitableTimer & timer = handle->GetTimer();
-			timer.expires_from_now(resendCtx->resendInterval);
-			timer.async_wait([this, handle](const ErrorCode & errorCode) mutable -> void {
-				if(errorCode) {
-					return;
-				}
-			
-				if(!handle->IsComplete()) { // if the handle still yields no result
-					uint32_t numAttempts = handle->GetAttemptCount();
-
-					if(numAttempts < 10) {
-						Send(std::move(handle)); // restart everything
-					} else {
-						handle->SetCompletion(TransmissionResult::TIMEOUT);
-					}
-				}
-			});
-
-			socket.Send(resendCtx->constBuffer, handle->GetDestEndpoint(),
-				[handle](const ErrorCode & ec, size_t sz) -> void {
-				handle->AttemptedSend(ec, sz);
-			});
-		}
-
-		void Send(Ref<Detail::FragmentedUdpHandle> handle) {
-			for(uint32_t i = 0; i < handle->numFragments; i++) {
-				auto fragCtx = std::move(handle->fragments[i]);
-
-				socket.Send(fragCtx->constBuffers, handle->GetDestEndpoint(),
-					[lifetime = std::move(fragCtx), handle](const ErrorCode & ec, size_t sz)-> void {
-					handle->FragmentSent(ec, sz);
-				});
-			}
-		}
-
-		/*
-		 * Callback is void(const ErrorCode&, Ref<UdpPacket>)
-		 */
-		template<typename Callback>
-		void Receive(Ref<UdpPacket> packet, Callback&& c) {
-			socket.Receive(packet->GetMutableBuffer(), packet->GetEndpoint(),
-				[packet, callback = std::move(c)](const ErrorCode& ec, size_t sz) mutable -> void {
-				packet->SetTimestamp(SystemClock::LocalNow());
-				packet->SetDataSize(sz);
-				callback(ec, std::move(packet));
-			});
-		}
-	};
 
 	/*
 	 * 
@@ -823,8 +500,6 @@ namespace Netcode::Network {
 		MessageQueue<Protocol::Header> sharedControlQueue;
 		// shared between service and consumer
 		MessageQueue<Protocol::Update> sharedQueue;
-		// index table for the service
-		IndexTable<Ref<DefragmentationContext>> defragIndices;
 		// must be kept unchanged for a connection
 		UdpEndpoint endpoint;
 		// handled by the service
@@ -832,235 +507,507 @@ namespace Netcode::Network {
 		// handled by the service
 		uint32_t remoteSequence;
 		// state of the connection, handled by the consumer
-		ConnectionState state;
+		Enum<ConnectionState> state;
 	};
 
 	class Request {
+	public:
 		UdpEndpoint sourceEndpoint;
 		Protocol::Header header;
 
-	public:
 		NETCODE_CONSTRUCTORS_NO_COPY(Request);
 
 		Request(const UdpEndpoint & ep, Protocol::Header h) : sourceEndpoint{ ep }, header{ std::move(h) } { }
 	};
 
-	class NetcodeService {
+	struct ResendArgs {
+		Duration resendInterval;
+		uint32_t maxAttempts;
 
+		constexpr ResendArgs() : resendInterval{}, maxAttempts{} {}
+
+		constexpr ResendArgs(uint32_t resendIntervalMs, uint32_t maxAttempts) :
+			resendInterval{ std::chrono::milliseconds(resendIntervalMs) }, maxAttempts{ maxAttempts } { }
+	};
+
+
+	class ProtocolConfig {
+		constexpr uint32_t GetIndexOf(Protocol::MessageType messageType) {
+			switch(messageType) {
+				default: return 0;
+				case Protocol::MessageType::HEARTBEAT: return 1;
+				case Protocol::MessageType::NAT_DISCOVERY_RESPONSE: return 2;
+				case Protocol::MessageType::NAT_DISCOVERY_REQUEST: return 3;
+				case Protocol::MessageType::CONNECT_PUNCHTHROUGH: return 4;
+				case Protocol::MessageType::CONNECT_REQUEST: return 5;
+				case Protocol::MessageType::CONNECT_RESPONSE: return 6;
+				case Protocol::MessageType::PMTU_DISCOVERY: return 7;
+				case Protocol::MessageType::DISCONNECT: return 8;
+				case Protocol::MessageType::DISCONNECT_NOTIFY: return 9;
+				case Protocol::MessageType::REG_HOST_REQUEST: return 10;
+				case Protocol::MessageType::REG_HOST_RESPONSE: return 11;
+			}
+		}
+
+		inline static ResendArgs args[] = {
+			ResendArgs{ 0, 0 },
+			ResendArgs{ 60000, 5 },
+			ResendArgs{ 500, 5 },
+			ResendArgs{ 500, 5 },
+			ResendArgs{ 1000, 10 },
+			ResendArgs{ 1000, 5 },
+			ResendArgs{ 1000, 5 },
+			ResendArgs{ 500, 3 },
+			ResendArgs{ 1000, 5 },
+			ResendArgs{ 1000, 5 },
+			ResendArgs{ 500, 5 },
+			ResendArgs{ 500, 5 },
+		};
+	public:
+
+		ResendArgs GetArgsFor(Protocol::MessageType messageType) {
+			return args[GetIndexOf(messageType)];
+		}
+	};
+
+	struct SocketOperationResult {
+		size_t numBytes;
+		ErrorCode errorCode;
+	};
+	
+	struct TrResult {
+		TransmissionState state; // write once
+		uint32_t sequence; // const
+		uint32_t fragments; // const
+		uint32_t attempts; // resend only
+		uint32_t sentBytes; // resend only
+		uint32_t dataSize; // const
+		ErrorCode errorIfAny; // resend only
+
+		TrResult() : state{ TransmissionState::UNKNOWN }, sequence{ 0 }, fragments{ 0 }, attempts{ 0 }, sentBytes{ 0 }, dataSize{ 0 }, errorIfAny{} { }
+	};
+
+	struct UdpAck {
+		uint32_t sequence;
+		UdpEndpoint endpoint;
+	};
+
+	struct HandleBase {
+		concurrency::task_completion_event<TrResult> completionEvent;
+		TrResult result;
+		HandleBase() : completionEvent{} { }
+	};
+	
+	struct RawUdpHandle : public HandleBase {
+		Ref<UdpPacket> data;
+	};
+
+	struct ReliableUdpHandle : public HandleBase {
+		uint32_t sequence;
+		ResendArgs resendArgs;
+		Ref<UdpPacket> data;
+	};
+
+	struct FragmentationContext {
+		Ref<UdpPacket> headerContent;
+		Ref<GamePacket> gameContent;
+		std::array<boost::asio::const_buffer, 2> constBuffers;
+
+		uint32_t GetHeaderSize() const {
+			return static_cast<uint32_t>(constBuffers[0].size());
+		}
+
+		uint32_t GetDataSize() const {
+			return static_cast<uint32_t>(constBuffers[1].size());
+		}
+
+		FragmentationContext(Ref<UdpPacket> hdrContent, uint32_t hdrOffset, uint32_t hdrSize,
+			Ref<GamePacket> msgContent, uint32_t msgOffset, uint32_t msgSize) :
+			headerContent{ std::move(hdrContent) },
+			gameContent{ std::move(msgContent) },
+			constBuffers{
+				boost::asio::const_buffer{ headerContent->GetData() + hdrOffset, hdrSize },
+				boost::asio::const_buffer{ gameContent->GetData() + msgOffset, msgSize }
+		} { }
+	};
+
+	struct FragmentedUdpHandle : public HandleBase {
+		using FragCtxHandle = ManagedPool<FragmentationContext>::ObjectType;
+
+		std::array<FragCtxHandle, 16> fragments;
+		uint32_t numFragments;
+
+		FragmentedUdpHandle() : HandleBase{}, fragments {}, numFragments{} { }
+	};
+
+	struct SocketWriteHandle {
+		concurrency::task_completion_event<SocketOperationResult> completionEvent;
+		std::array<boost::asio::const_buffer, 2> buffers;
+		UdpEndpoint endpoint;
+	};
+
+	class WorkToken {
+		int32_t done;
+
+	public:
+		WorkToken() : done{ 0 } { }
 		
-#if defined(NETCODE_DEBUG)
-		// basic socket with a debug readerwriter that enables fakelag
-		using NetcodeSocketType = BasicNetcodeProtocolSocket<
-			BasicSocket<boost::asio::ip::udp::socket, DebugSharedAsioSocketReadWriter<boost::asio::ip::udp::socket>>
-		>;
-#else
-		using NetcodeSocketType = BasicNetcodeProtocolSocket<SharedUdpSocket>;
-#endif
-		NetcodeSocketType udpSocket;
+		void SetDone() {
+			done = 1;
+		}
 
-		Ref<PacketStorage<UdpPacket>> packetStorage;
-		// messages that need to be handled further up
-		MessageQueue<Request> controlMsgQueue;
-		// messages that are successfully assembled game messages
-		MessageQueue<Protocol::Update> gameMsgQueue;
-		// global ACK table
-		IndexTable<Ref<Detail::ReliableUdpHandle>> reliableUdpIndices;
+		bool IsDone() const {
+			return done != 0;
+		}
+	};
 
-		IndexTable<Ref<ConnectionBase>> connections;
+	class AgentBase : public concurrency::agent {
+		Ptr<WorkToken> token;
+		
+		virtual void run() override {
+			while(!token->IsDone()) {
+				RunImpl();
+			}
+		}
+	protected:
+		virtual void RunImpl() = 0;
 
-		Ref<ManagedPool<Detail::FragmentationContext>> fragContextPool;
+	public:
+		AgentBase(Ptr<WorkToken> wt) : concurrency::agent{}, token{ wt } {}
+	};
 
-		Ref<PacketStorage<StreamPacket>> messageBufferStorage;
+	template<typename SockType>
+	class UdpSocketWriterAgent : public AgentBase {
+		concurrency::ISource<SocketWriteHandle> & source;
+		Ptr<SockType> socket;
+	public:
 
+		UdpSocketWriterAgent(concurrency::ISource<SocketWriteHandle> & source, Ptr<SockType> sock, Ptr<WorkToken> wt) :
+			AgentBase{ wt }, source{ source }, socket{ sock } {
+			
+		}
+
+		virtual void RunImpl() override {
+			SocketOperationResult sor;
+			auto input = concurrency::receive(source);
+			sor.numBytes = socket->Send(input.buffers, input.endpoint, sor.errorCode);
+			input.completionEvent.set(std::move(sor));
+		}
+	};
+
+	struct AckHandle {
+		concurrency::task_completion_event<uint32_t> completionEvent;
+		UdpEndpoint endpoint;
+		uint32_t sequence;
+
+		AckHandle() = default;
+		AckHandle(concurrency::task_completion_event<uint32_t> evt, const UdpEndpoint& ep, uint32_t seq) :
+			completionEvent{ std::move(evt) }, endpoint{ ep }, sequence{ seq } { }
+	};
+	
+	class UdpAckAgent : public AgentBase {
+	private:
+		Concurrency::ISource<AckHandle> & sideSource;
+		Concurrency::ISource<UdpAck> & mainSource;
+	public:
+
+		UdpAckAgent(Concurrency::ISource<AckHandle> & sideSource, Concurrency::ISource<UdpAck> & mainSource, Ptr<WorkToken> token) :
+			AgentBase{ token }, sideSource{ sideSource }, mainSource{ mainSource }  {
+			
+		}
+		
+	protected:
+		virtual void RunImpl() override {
+			UdpAck udpAck = concurrency::receive(mainSource);
+
+			AckHandle handle;
+
+			if(concurrency::try_receive(sideSource, handle, [&udpAck](const AckHandle & h) -> bool {
+				return h.endpoint == udpAck.endpoint && h.sequence == udpAck.sequence;
+			})) {
+				bool b = handle.completionEvent.set(0);
+				Log::Debug("Tried receive success, setting result: {0}", static_cast<int>(b));
+			}
+		}
+	};
+	
+	class ReliableUdpAgent : public AgentBase {
+	private:
+		concurrency::ISource<ReliableUdpHandle> & source;
+		concurrency::ITarget<SocketWriteHandle> & sockWriteTarget;
+		concurrency::ITarget<AckHandle> & waitingForAckTarget;
+		concurrency::ITarget<UdpAck> & fakeAckTarget;
+		
+	public:
+
+		explicit ReliableUdpAgent(	concurrency::ISource<ReliableUdpHandle> & src,
+									concurrency::ITarget<SocketWriteHandle> & swt,
+									concurrency::ITarget<AckHandle> & wfat,
+									concurrency::ITarget<UdpAck> & fat,
+									Ptr<WorkToken> token) :
+			AgentBase{ token }, source{ src }, sockWriteTarget{ swt }, waitingForAckTarget{ wfat }, fakeAckTarget{ fat } {
+
+		}
+	protected:
+
+		void SendToSocket(concurrency::task_completion_event<uint32_t> evt, ReliableUdpHandle handle, uint32_t currentAttempt) {
+			SocketWriteHandle swh;
+			swh.endpoint = handle.data->GetEndpoint();
+			swh.buffers[0] = handle.data->GetConstBuffer();
+			concurrency::send(sockWriteTarget, swh);
+			concurrency::create_task(swh.completionEvent).then([evt, currentAttempt, mainEvent = handle.completionEvent](SocketOperationResult sor) -> void {
+				if(sor.errorCode) {
+					TrResult tr;
+					tr.state = TransmissionState::ERROR_WHILE_SENDING;
+					tr.errorIfAny = sor.errorCode;
+					tr.sentBytes = sor.numBytes;
+					mainEvent.set(tr);
+					evt.set(currentAttempt);
+				}
+			});
+		}
+
+		void SendToAck(concurrency::task_completion_event<uint32_t> evt, ReliableUdpHandle handle) {
+			AckHandle a{ std::move(evt), handle.data->GetEndpoint(), handle.sequence };
+			concurrency::send(waitingForAckTarget, a);
+		}
+		
+		virtual void RunImpl() override {
+			ReliableUdpHandle handle = concurrency::receive(source);
+
+			int64_t ms = std::chrono::duration_cast<std::chrono::milliseconds>(handle.resendArgs.resendInterval).count();
+			uint32_t maxAttempts = handle.resendArgs.maxAttempts;
+
+			concurrency::task_completion_event<uint32_t> tce;
+
+			auto callback = MakeSharedConcurrent<concurrency::call<ReliableUdpHandle>>([this, i = 1u, maxAttempts, tce](ReliableUdpHandle msg) mutable -> void {
+				uint32_t currentAttempts = i;
+
+				if(++i >= maxAttempts) {
+					tce.set(currentAttempts); // ready for cleanup
+				} else {
+					SendToSocket(tce, msg, i);
+				}
+			});
+
+			SendToAck(tce, handle);
+			SendToSocket(tce, handle, 1);
+
+			auto timer = MakeSharedConcurrent<concurrency::timer<ReliableUdpHandle>>(static_cast<uint32_t>(ms), handle, callback.get(), true);
+
+			timer->start();
+
+			concurrency::create_task(tce).then([this, callback, timer, handle](uint32_t result) -> void {
+				timer->unlink_target(callback.get());
+				timer->stop();
+
+				Log::Debug("Timer stopping");
+				
+				TrResult tr;
+				if(result == 0) {
+					tr.state = TransmissionState::SUCCESS;
+					Log::Debug("Set state to success");
+				} else {
+					tr.state = TransmissionState::TIMEOUT;
+					Log::Debug("Set state to timeout");
+					tr.attempts = result;
+					UdpAck fakeAck;
+					fakeAck.endpoint = handle.data->GetEndpoint();
+					fakeAck.sequence = handle.sequence;
+					concurrency::send(fakeAckTarget, fakeAck);
+				}
+				
+				handle.completionEvent.set(tr);
+			});
+		}
+	};
+
+	struct GameMessageHandle : public HandleBase {
+		uint32_t sequence;
+		Ref<GamePacket> gamePacket; // serialized game data
+		Ref<UdpPacket> headerPacket; // empty header buffer
+	};
+	
+	class UdpFragmenterAgent : public AgentBase {
+	private:
+		concurrency::ISource<GameMessageHandle> & source;
+		concurrency::ITarget<SocketWriteHandle> & sockWriteTarget;
 		uint32_t mtu;
 
 	public:
-		NetcodeService(NetcodeSocketType::SocketType underlyingSocket) :
-			udpSocket{ std::move(underlyingSocket) },
-			packetStorage{ std::make_shared<PacketStorage<UdpPacket>>(32) },
-			controlMsgQueue{},
-			gameMsgQueue{},
-			reliableUdpIndices{},
-			connections{},
-			fragContextPool{ std::make_shared<ManagedPool<Detail::FragmentationContext>>() },
-			messageBufferStorage{ std::make_shared<PacketStorage<StreamPacket>>(8) },
-			mtu{ 1280 } {
+		UdpFragmenterAgent(concurrency::ISource<GameMessageHandle> & source, concurrency::ITarget<SocketWriteHandle> & sockWt, Ptr<WorkToken> token) : AgentBase{ token },
+			source{ source }, sockWriteTarget{ sockWt }, mtu{ 1280 } {
 
 		}
 
-		struct MessageProcData {
-			uint32_t headerSize;
-			FragmentData fragData;
-			Protocol::Header header;
-			UdpEndpoint sourceEndpoint;
-			Ref<UdpPacket> pkt;
-		};
-
-		void HandleRequest(MessageProcData & msg) {
-			Request r{ msg.sourceEndpoint, std::move(msg.header) };
-			controlMsgQueue.Received(std::move(r));
+		void SetMtu(uint32_t maxTrUnit) {
+			mtu = maxTrUnit;
 		}
+		
+	protected:
+		virtual void RunImpl() override {
+			GameMessageHandle gmh = concurrency::receive(source);
 
-		void HandleClockSyncRequest(const MessageProcData & msg) {
-			if(!msg.header.has_time_sync()) {
-				return;
+			Protocol::Header protoHeader;
+			protoHeader.set_sequence(gmh.sequence);
+			protoHeader.set_type(Protocol::MessageType::GAME);
+
+			const uint32_t serializedHeaderSize = protoHeader.ByteSizeLong();
+			const uint32_t totalHeaderSize = serializedHeaderSize + 2 * sizeof(google::protobuf::uint32);
+			const uint32_t totalDataSizeInBytes = static_cast<uint32_t>(gmh.gamePacket->GetDataSize());
+			const uint32_t localMtu = mtu;
+			const uint32_t maxPayloadSize = localMtu - totalHeaderSize;
+
+			if(localMtu < totalHeaderSize) {
+				throw UndefinedBehaviourException{ "MTU too small" };
+			}
+			
+			const uint32_t numFragments = totalDataSizeInBytes / maxPayloadSize + (std::min(totalDataSizeInBytes % maxPayloadSize, 1u));
+
+			if(numFragments > std::numeric_limits<uint8_t>::max()) {
+				throw UndefinedBehaviourException{ "Too many fragments" };
 			}
 
-			Protocol::Header header;
-			header.set_sequence(msg.header.sequence());
-			header.set_type(Protocol::MessageType::CLOCK_SYNC_RESPONSE);
-			auto * timeSync = header.mutable_time_sync();
-			timeSync->set_client_req_transmission(msg.header.time_sync().client_req_transmission());
-			timeSync->set_server_req_reception(ConvertTimestampToUInt64(msg.pkt->GetTimestamp()));
-			timeSync->set_server_resp_transmission(ConvertTimestampToUInt64(SystemClock::LocalNow()));
+			std::vector<concurrency::task<SocketOperationResult>> tasks;
+			tasks.reserve(numFragments);
 
-			Send(std::move(header), msg.sourceEndpoint);
-		}
+			uint32_t remDataSize = totalDataSizeInBytes;
+			uint32_t dataOffset = 0;
+			uint32_t headerOffset = 0;
 
-		void HandleAckMessage(const MessageProcData & msg) {
-			UdpEndpoint sourceEndpoint = msg.sourceEndpoint;
-			uint32_t sourceSequence = msg.header.sequence();
-			Ref<Detail::ReliableUdpHandle> udpHandle = reliableUdpIndices.Erase([&sourceEndpoint, sourceSequence](const Ref<Detail::ReliableUdpHandle> & r) -> bool {
-				return r->GetDestEndpoint() == sourceEndpoint && r->GetSequenceId() == sourceSequence;
-			});
+			google::protobuf::io::ArrayOutputStream outStream{ gmh.headerPacket->GetData(), static_cast<int32_t>(gmh.headerPacket->GetDataSize()) };
+			google::protobuf::io::CodedOutputStream codedOutStream{ &outStream };
+			
+			for(uint32_t i = 0; i < numFragments; i++) {
+				FragmentData fd;
+				fd.sizeInBytes = std::min(remDataSize, localMtu);
+				fd.fragmentIndex = static_cast<uint8_t>(i);
+				fd.fragmentCount = static_cast<uint8_t>(numFragments);
 
-			if(udpHandle != nullptr) {
-				udpHandle->SetCompletion(TransmissionResult::SUCCESS);
-			}
-		}
+				codedOutStream.WriteLittleEndian32(serializedHeaderSize);
+				protoHeader.SerializeToCodedStream(&codedOutStream);
+				codedOutStream.WriteLittleEndian32(fd.Pack());
+				
+				SocketWriteHandle swh;
+				swh.buffers[0] = boost::asio::const_buffer{ gmh.headerPacket->GetData() + headerOffset, totalHeaderSize };
+				swh.buffers[1] = boost::asio::const_buffer{ gmh.gamePacket->GetData() + dataOffset, fd.sizeInBytes };
+				swh.endpoint = gmh.gamePacket->GetEndpoint();
+				tasks.emplace_back(swh.completionEvent);
+				concurrency::send(sockWriteTarget, std::move(swh));
 
-		void HandleGameMessage(const MessageProcData & msg) {
-			uint32_t sourceSequence = msg.header.sequence();
-
-			// for a game message more validation is in order
-			if(msg.fragData.sizeInBytes > UdpPacket::MAX_DATA_SIZE) {
-				return;
-			}
-
-			if(msg.fragData.fragmentCount > 16) {
-				return;
+				remDataSize -= fd.sizeInBytes;
+				dataOffset += fd.sizeInBytes;
+				headerOffset += totalDataSizeInBytes;
 			}
 
-			if(msg.fragData.fragmentIndex >= msg.fragData.fragmentCount) {
-				return;
-			}
-
-			Ref<ConnectionBase> conn = connections.Find([&msg](const Ref<ConnectionBase> & c) -> bool {
-				return c->endpoint == msg.sourceEndpoint;
-			});
-
-			if(conn != nullptr) {
-				if(conn->remoteSequence < (sourceSequence + 2)) {
-					conn->remoteSequence = std::max(conn->remoteSequence, sourceSequence);
-					auto defragCtx = conn->defragIndices.Find([sourceSequence](const Ref<DefragmentationContext> & d) -> bool {
-						return d->GetSequence() == sourceSequence;
-					});
-
-					if(defragCtx != nullptr) {
-						defragCtx->FragmentReceived(msg.headerSize, msg.fragData, std::move(msg.pkt));
+			concurrency::when_all(std::begin(tasks), std::end(tasks)).then([token = gmh.completionEvent](std::vector<SocketOperationResult> results) -> void {
+				TrResult finalResult;
+				finalResult.state = TransmissionState::SUCCESS;
+				for(const SocketOperationResult & t : results) {
+					finalResult.sentBytes += t.numBytes;
+					
+					if(t.errorCode) {
+						if(!finalResult.errorIfAny) {
+							finalResult.errorIfAny = t.errorCode;
+							finalResult.state = TransmissionState::ERROR_WHILE_SENDING;
+						}
 					}
 				}
-			}
-		}
-
-		void OnPacketReceivedAsync(Ref<UdpPacket> pkt) {
-			google::protobuf::io::ArrayInputStream arrayInputStream{ pkt->GetData(), static_cast<int32_t>(pkt->GetDataSize()) };
-			google::protobuf::io::CodedInputStream inputStream{ &arrayInputStream };
-
-			uint32_t headerSize;
-			if(!inputStream.ReadLittleEndian32(&headerSize)) {
-				Log::Debug("bad headerSize");
-				return;
-			}
-
-			Protocol::Header header;
-			if(!header.ParseFromCodedStream(&inputStream)) {
-				Log::Debug("bad header");
-				return;
-			}
-
-			uint32_t packedFragmentData;
-			if(!inputStream.ReadLittleEndian32(&packedFragmentData)) {
-				packedFragmentData = 0;
-			}
-
-			Protocol::MessageType  msgType = header.type();
-
-			// check if we need to send an ack
-			if((static_cast<uint32_t>(msgType) & 0x1) == 0x1) {
-				Protocol::Header h;
-				h.set_type(Protocol::MessageType::ACKNOWLEDGE);
-				h.set_sequence(header.sequence());
-				Send(std::move(h), pkt->GetEndpoint());
-			}
-
-			MessageProcData procData;
-			procData.sourceEndpoint = pkt->GetEndpoint();
-			procData.headerSize = headerSize;
-			procData.fragData.Unpack(packedFragmentData);
-			procData.header = std::move(header);
-
-			switch(msgType) {
-				case Protocol::MessageType::ACKNOWLEDGE:
-					HandleAckMessage(procData);
-					break;
-
-				case Protocol::MessageType::GAME:
-					HandleGameMessage(procData);
-					break;
-
-				// ACK was enough for these
-				case Protocol::MessageType::CONNECT_PUNCHTHROUGH:
-				case Protocol::MessageType::PMTU_DISCOVERY:
-				case Protocol::MessageType::HEARTBEAT: break;
-
-				case Protocol::MessageType::CLOCK_SYNC_REQUEST:
-					HandleClockSyncRequest(procData);
-					break;
-
-				// these must be added to a queue for further processing
-				case Protocol::MessageType::CLOCK_SYNC_RESPONSE:
-				case Protocol::MessageType::NAT_DISCOVERY_REQUEST:
-				case Protocol::MessageType::NAT_DISCOVERY_RESPONSE:
-				case Protocol::MessageType::CONNECT_REQUEST:
-				case Protocol::MessageType::CONNECT_RESPONSE:
-				case Protocol::MessageType::DISCONNECT:
-				case Protocol::MessageType::DISCONNECT_NOTIFY:
-				case Protocol::MessageType::REGISTER_HOST:
-					HandleRequest(procData);
-					break;
-
-				default: break;
-			}
-		}
-
-		void InitReceive() {
-			udpSocket.Receive(packetStorage->GetBuffer(), [this](const ErrorCode & ec, Ref<UdpPacket> udpPacket) -> void {
-				if(ec) {
-					Log::Debug("Err: {0}", ec.message());
-				} else {
-					Log::Debug("Received: {0}", static_cast<int32_t>(udpPacket->GetDataSize()));
-					udpPacket->SetTimestamp(SystemClock::LocalNow());
-					InitReceive();
-					OnPacketReceivedAsync(std::move(udpPacket));
-				}
+				token.set(finalResult);
 			});
 		}
+	};
 
-
+	class UdpReceiverAgent : public concurrency::agent {
 	public:
-		// sending header only messages either RAW or Reliable UDP
-		Ref<TransmissionHandleBase> Send(Protocol::Header headerOnlyMessage, const UdpEndpoint & dstEndpoint) {
+	};
+	
+	class FragmentedUdpReceiverAgent : public concurrency::agent {
+
+	};
+	
+	class NetcodeService {
+	public:
+#if defined(NETCODE_DEBUG)
+		// basic socket with a debug readerwriter that enables fakelag
+		using NetcodeSocketType = BasicSocket<boost::asio::ip::udp::socket, SyncAsioSocketHandler<boost::asio::ip::udp::socket>>;
+#else
+		using NetcodeSocketType = SharedUdpSocket;
+#endif
+		
+	private:
+		NetcodeSocketType socket;
+		
+		Ref<PacketStorage<UdpPacket>> packetStorage;
+		
+		Ref<PacketStorage<GamePacket>> gamePacketStorage;
+
+		Ref<ManagedPool<FragmentationContext>> fragContextPool;
+
+		concurrency::unbounded_buffer<UdpAck> receivedAckBuffer;
+
+		concurrency::unbounded_buffer<AckHandle> waitingForAckBuffer;
+
+		concurrency::unbounded_buffer<SocketWriteHandle> writeRequests;
+
+		concurrency::unbounded_buffer<ReliableUdpHandle> reliableHandles;
+
+		concurrency::unbounded_buffer<GameMessageHandle> gameMessageHandles;
+
+		WorkToken workToken;
+
+		ProtocolConfig protocolConfig;
+
+		uint32_t mtu;
+
+		UdpAckAgent ackAgent;
+
+		ReliableUdpAgent reliableUdpAgent;
+
+		UdpFragmenterAgent fragmenterAgent;
+
+		UdpSocketWriterAgent<NetcodeSocketType> writerAgent;
+		
+	public:
+		NetcodeService(NetcodeSocketType::SocketType sock) : socket { std::move(sock) },
+			packetStorage { std::make_shared<PacketStorage<UdpPacket>>(16) },
+			gamePacketStorage{ std::make_shared<PacketStorage<GamePacket>>(4) },
+			fragContextPool{ std::make_shared<ManagedPool<FragmentationContext>>() },
+			receivedAckBuffer{},
+			waitingForAckBuffer{},
+			writeRequests{},
+			reliableHandles{},
+			gameMessageHandles{},
+			workToken{},
+			protocolConfig{},
+			mtu{ 1280 },
+			ackAgent{ waitingForAckBuffer, receivedAckBuffer, &workToken },
+			reliableUdpAgent{ reliableHandles, writeRequests, waitingForAckBuffer, receivedAckBuffer, &workToken },
+			fragmenterAgent{ gameMessageHandles, writeRequests, &workToken },
+			writerAgent{ writeRequests, &socket, &workToken } {
+
+			ackAgent.start();
+			reliableUdpAgent.start();
+			fragmenterAgent.start();
+			writerAgent.start();
+			
+		}
+		
+		concurrency::task<TrResult> Send(Protocol::Header headerOnlyMessage, const UdpEndpoint & endpoint, ResendArgs args) {
 			if(headerOnlyMessage.type() == Protocol::MessageType::GAME) {
-				return nullptr;
+				throw UndefinedBehaviourException{ "bad API call" };
 			}
 
-			Ref<UdpPacket> headerContent = packetStorage->GetBuffer();
+			uint32_t seq = headerOnlyMessage.sequence();
+			
+			Ref<UdpPacket> pkt = packetStorage->GetBuffer();
+			pkt->SetDataSize(UdpPacket::MAX_DATA_SIZE);
+			pkt->SetEndpoint(endpoint);
 
 			const uint32_t serializedHeaderSize = static_cast<uint32_t>(headerOnlyMessage.ByteSizeLong());
 			const uint32_t totalHeaderSize = serializedHeaderSize + 8;
 
-			google::protobuf::io::ArrayOutputStream outStream{ headerContent->GetData(), static_cast<int32_t>(headerContent->GetDataSize()) };
+			google::protobuf::io::ArrayOutputStream outStream{ pkt->GetData(), static_cast<int32_t>(pkt->GetDataSize()) };
 			google::protobuf::io::CodedOutputStream codedOutStream{ &outStream };
 
 			codedOutStream.WriteLittleEndian32(static_cast<uint32_t>(serializedHeaderSize));
@@ -1068,98 +1015,69 @@ namespace Netcode::Network {
 				Log::Warn("Failed to serialize header");
 			}
 			codedOutStream.WriteLittleEndian32(FragmentData{}.Pack());
+			pkt->SetDataSize(totalHeaderSize);
 
-			headerContent->SetDataSize(totalHeaderSize);
-			headerContent->SetEndpoint(dstEndpoint);
-			
-			if((static_cast<uint32_t>(headerOnlyMessage.type()) & 0x1) == 0x1) {
-				constexpr Duration DEBUG_RESEND_INTERVAL = std::chrono::milliseconds(500);
-				Detail::ResendContext resendContext{ std::move(headerContent), totalHeaderSize, DEBUG_RESEND_INTERVAL };
+			if((headerOnlyMessage.type() & 0x1) == 0x1) {
+				ReliableUdpHandle handle;
+				handle.data = std::move(pkt);
+				handle.sequence = seq;
+				handle.resendArgs = args;
 
-				auto handle = std::make_shared<Detail::ReliableUdpHandle>(udpSocket.GetSocket().get_executor(), std::move(resendContext), headerOnlyMessage.sequence(), dstEndpoint);
+				concurrency::send(reliableHandles, handle);
 
-				reliableUdpIndices.Insert(handle);
-				udpSocket.Send(handle);
-
-				return handle;
+				return concurrency::task<TrResult>{ handle.completionEvent };
 			} else {
-				auto rawHandle = std::make_shared<Detail::RawUdpHandle>(std::move(headerContent), headerOnlyMessage.sequence(), dstEndpoint);
+				SocketWriteHandle swh;
+				swh.endpoint = endpoint;
+				swh.buffers[0] = pkt->GetConstBuffer();
 
-				udpSocket.Send(rawHandle);
+				concurrency::send(writeRequests, swh);
 
-				return rawHandle;
+				return concurrency::create_task(swh.completionEvent).then([pkt, seq](SocketOperationResult sor) -> TrResult {
+					TrResult tr;
+					tr.dataSize = pkt->GetDataSize();
+					tr.attempts = 1;
+					tr.fragments = 1;
+					tr.sequence = seq;
+					tr.sentBytes = sor.numBytes;
+					tr.errorIfAny = sor.errorCode;
+					tr.state = (sor.errorCode) ? TransmissionState::ERROR_WHILE_SENDING : TransmissionState::SUCCESS;
+					return tr;
+				});
 			}
 		}
-
-		Ref<TransmissionHandleBase> Send(uint32_t seq, Protocol::Update update, const UdpEndpoint & dstEndpoint) {
-			Protocol::Header header;
-			header.set_type(Protocol::MessageType::GAME);
-			header.set_sequence(seq);
-
-			uint32_t totalDataSizeInBytes = update.ByteSizeLong();
-
-			const uint32_t serializedHeaderSize = static_cast<uint32_t>(header.ByteSizeLong());
-			const uint32_t totalHeaderSize = serializedHeaderSize + 8;
-			// assert MTU > totalHeaderSize
-			const uint32_t fragmentedDataSize = mtu - totalHeaderSize;
-			const uint32_t numFragments = totalDataSizeInBytes / fragmentedDataSize +
-				(std::min(totalDataSizeInBytes % fragmentedDataSize, 1u)); // always need the ceil, except if its an exact fit
-
-			Ref<StreamPacket> messageContent = messageBufferStorage->GetBuffer();
-
-			Ref<Detail::FragmentedUdpHandle> handle = std::make_shared<Detail::FragmentedUdpHandle>(header.sequence(), dstEndpoint);
-			handle->numFragments = 0;
-
-			if(!update.SerializeToArray(messageContent->GetData(), messageContent->GetDataSize())) {
-				handle->SetCompletionWithError(Errc::make_error_code(Errc::bad_message));
-				return handle;
-			}
-
-			Ref<Detail::FragmentationToken> fragToken = handle->GetToken();
-
-			Ref<UdpPacket> headerContent = packetStorage->GetBuffer();
-
-			google::protobuf::io::ArrayOutputStream outStream{ headerContent->GetData(), static_cast<int32_t>(headerContent->GetDataSize()) };
-			google::protobuf::io::CodedOutputStream codedOutStream{ &outStream };
-
-			uint32_t remainingSize = totalDataSizeInBytes;
-			uint32_t dataOffset = 0;
-			uint32_t headerOffset = 0;
-			for(uint32_t i = 0; i < numFragments; i++) {
-				uint32_t currentFragmentSize = std::min(remainingSize, fragmentedDataSize);
-
-				FragmentData fragData;
-				fragData.sizeInBytes = static_cast<uint16_t>(currentFragmentSize);
-				fragData.fragmentCount = static_cast<uint8_t>(numFragments);
-				fragData.fragmentIndex = static_cast<uint8_t>(i);
-
-				codedOutStream.WriteLittleEndian32(serializedHeaderSize);
-				if(!header.SerializeToCodedStream(&codedOutStream)) {
-					return nullptr;
-				}
-				codedOutStream.WriteLittleEndian32(fragData.Pack());
-
-				auto fragCtx = fragContextPool->Get(headerContent, headerOffset, totalHeaderSize,
-					messageContent, dataOffset, currentFragmentSize,
-					fragToken);
-
-				handle->numFragments += 1;
-				handle->fragments[i] = std::move(fragCtx);
-
-				remainingSize -= currentFragmentSize;
-				dataOffset += currentFragmentSize;
-				headerOffset += totalHeaderSize;
-			}
-
-			udpSocket.Send(handle);
-
-			return handle;
+		
+		concurrency::task<TrResult> Send(Protocol::Header headerOnlyMessage, const UdpEndpoint& endpoint) {
+			const auto args = protocolConfig.GetArgsFor(headerOnlyMessage.type());
+			return Send(std::move(headerOnlyMessage), endpoint, args);
 		}
 
-		void Host(/* args */) {
-			InitReceive();
-		}
+		concurrency::task<TrResult> Send(uint32_t seq, Protocol::Update update, const UdpEndpoint& endpoint) {
+			auto gm = gamePacketStorage->GetBuffer();
+			gm->SetDataSize(GamePacket::MAX_DATA_SIZE);
+			auto h = packetStorage->GetBuffer();
+			h->SetDataSize(UdpPacket::MAX_DATA_SIZE);
 
+			if(!update.SerializeToArray(gm->GetData(), static_cast<int>(gm->GetDataSize()))) {
+				Log::Error("Failed to serialize game message");
+				return concurrency::create_task([]() -> TrResult {
+					TrResult tr;
+					tr.state = TransmissionState::CANCELLED;
+					tr.attempts = 0;
+					tr.errorIfAny = Errc::make_error_code(Errc::result_out_of_range);
+					return tr;
+				});
+			}
+
+			GameMessageHandle msg;
+			msg.gamePacket = std::move(gm);
+			msg.headerPacket = std::move(h);
+			msg.sequence = seq;
+			concurrency::send(gameMessageHandles, msg);
+
+			return concurrency::create_task(msg.completionEvent);
+		}
 	};
+	
 
 }

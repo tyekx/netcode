@@ -50,8 +50,28 @@ namespace Netcode {
 			return static_cast<T>(static_cast<UnderlyingType>(value) | static_cast<UnderlyingType>(rhs.value));
 		}
 
+		constexpr bool operator>(Enum<T> rhs) const noexcept {
+			return static_cast<UnderlyingType>(value) > static_cast<UnderlyingType>(rhs.value);
+		}
+		
+		constexpr bool operator<(Enum<T> rhs) const noexcept {
+			return static_cast<UnderlyingType>(value) < static_cast<UnderlyingType>(rhs.value);
+		}
+
+		constexpr bool operator>(UnderlyingType rhs) const noexcept {
+			return static_cast<UnderlyingType>(value) > rhs;
+		}
+
+		constexpr bool operator<(UnderlyingType rhs) const noexcept {
+			return static_cast<UnderlyingType>(value) < rhs;
+		}
+		
 		constexpr bool operator==(const Enum<T> & rhs) const noexcept {
 			return value == rhs.value;
+		}
+
+		constexpr bool operator!=(const Enum<T> & rhs) const noexcept {
+			return value != rhs.value;
 		}
 
 		constexpr Enum<T> operator~() const noexcept {

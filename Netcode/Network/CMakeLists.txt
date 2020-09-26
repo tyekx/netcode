@@ -20,9 +20,15 @@ PRIVATE
 	"ClientSession.cpp"
 	"NetcodeNetworkModule.cpp"
 	"NetworkCommon.cpp"
+	"Connection.cpp"
 	"Cookie.cpp"
 	"HttpSession.cpp"
 	"ServerSession.cpp"
 	"MysqlSession.cpp"
 	"ReplicationContext.cpp"
+)
+
+target_link_libraries(Netcode
+PRIVATE
+	iphlpapi.lib
 )

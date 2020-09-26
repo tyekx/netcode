@@ -1,7 +1,7 @@
 #include "Modules.h"
 #include <thread>
 #include <atomic>
-
+#include <mutex>
 namespace Netcode::Module {
 
 	class ConsoleModule : public IWindowModule {

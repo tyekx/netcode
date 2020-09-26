@@ -6,7 +6,6 @@
 #include <vector>
 #include <map>
 #include <thread>
-#include <future>
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
@@ -17,6 +16,7 @@
 
 namespace Netcode::Network {
 
+	using IpAddress = boost::asio::ip::address;
 	using UdpSocket = boost::asio::ip::udp::socket;
 	using UdpResolver = boost::asio::ip::udp::resolver;
 	using UdpEndpoint = boost::asio::ip::udp::endpoint;
@@ -26,6 +26,23 @@ namespace Netcode::Network {
 	constexpr static uint32_t PACKET_STORAGE_SIZE = 65536;
 
 	ErrorCode Bind(const boost::asio::ip::address & selfAddr, UdpSocket & udpSocket, uint32_t & port);
+
+	/*
+	 * Represents a basic Network interface
+	 */
+	struct Interface {
+		boost::asio::ip::address address;
+		uint64_t uplinkSpeedBps;
+		uint64_t downlinkSpeedBps;
+		uint32_t mtu;
+		uint32_t netcodeRank; // how likely it is that we want to choose this interface
+		std::wstring friendlyName;
+		std::wstring description;
+	};
+
+	bool SetDontFragmentBit(UdpSocket & socket);
+	
+	std::vector<Interface> GetCompatibleInterfaces(const IpAddress & forThisAddress);
 
 	class NetworkContext {
 		boost::asio::io_context ioc;

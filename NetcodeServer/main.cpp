@@ -21,6 +21,7 @@ int main(int argc, char * argv[]) {
 
 	Netcode::IO::File configFile{ mainConfig.configFile };
 
+
 	if(!Netcode::IO::File::Exists(configFile.GetFullPath())) {
 		Log::Error("Config file does not exist");
 		return 1;
