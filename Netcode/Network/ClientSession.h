@@ -152,6 +152,20 @@ namespace Netcode::Network {
 			});
 		}*/
 		
+		void DoStuff() {
+			static uint32_t v = 0;
+
+			Protocol::Update upd;
+			Protocol::ClientUpdate * cu = upd.mutable_client_update();
+			Protocol::Player * ps = cu->mutable_player_state();
+			std::string testString;
+			testString.resize(8192, 'A');
+			ps->set_replication_data(std::move(testString));
+
+			service->Send(v++, std::move(upd), connection->endpoint).then([this](TrResult tr) -> void {
+				DoStuff();
+			});
+		}
 		
 		void StartConnection() {
 			if(connection == nullptr) {
@@ -160,19 +174,8 @@ namespace Netcode::Network {
 			}
 
 			connection->state = ConnectionState::CONNECTING;
-			
-			Protocol::Header h;
-			h.set_sequence(1);
-			h.set_type(Protocol::MessageType::CONNECT_PUNCHTHROUGH);
 
-			auto task = service->Send(std::move(h), connection->endpoint);
-			task.then([](TrResult tr) -> void {
-				if(tr.state == TransmissionState::SUCCESS) {
-					Log::Debug("Success");
-				} else {
-					Log::Debug("Timeout?");
-				}
-			});
+			DoStuff();
 		}
 	public:
 		ClientSession(boost::asio::io_context & ioc) : ioContext{ ioc }, resolver{ ioc } {

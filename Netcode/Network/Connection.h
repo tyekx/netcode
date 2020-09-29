@@ -11,6 +11,7 @@
 #include <random>
 #include <Netcode/Sync/Task.hpp>
 #include "NetcodeFoundation/Enum.hpp"
+#include <Netcode/System/FpsCounter.h>
 
 namespace Netcode::Network {
 
@@ -171,81 +172,6 @@ namespace Netcode::Network {
 		SUCCESS
 	};
 
-	class DefragmentationContext {
-
-		struct Fragment {
-			uint32_t headerSize;
-			FragmentData fragData;
-			Ref<UdpPacket> packetIncludingHeader;
-		};
-
-		uint32_t sequence;
-		uint16_t numFragments;
-		uint16_t numReceivedFragments;
-		std::array<Fragment, 16> fragments;
-
-	public:
-		DefragmentationContext(uint32_t seq, uint16_t numFragments) : sequence{ seq }, numFragments{ numFragments }, numReceivedFragments{ 0 }, fragments{} { }
-
-		uint32_t GetSequence() const {
-			return sequence;
-		}
-
-		void FragmentReceived(uint32_t headerSize, FragmentData fragData, Ref<UdpPacket> pkt) {
-			if(fragData.fragmentIndex >= 16) {
-				return;
-			}
-
-			Fragment & f = fragments[fragData.fragmentIndex];
-
-			if(f.packetIncludingHeader == nullptr) {
-				f.headerSize = headerSize;
-				f.fragData = fragData;
-				f.packetIncludingHeader = std::move(pkt);
-				numReceivedFragments++;
-			}
-		}
-
-		bool IsDefragmentable() const {
-			return numFragments == numReceivedFragments;
-		}
-
-		bool DefragmentInto(GamePacket * dstPacket) {
-			if(dstPacket == nullptr) {
-				return false;
-			}
-
-			if(!IsDefragmentable()) {
-				return false;
-			}
-
-			uint8_t * const dstDataStartPtr = dstPacket->GetData();
-			const uint32_t dstDataMaxBytes = dstPacket->GetDataSize();
-			uint32_t dstDataOffset = 0;
-			for(uint16_t i = 0; i < numFragments; i++) {
-				const Fragment & f = fragments[i];
-				const uint8_t * srcData = f.packetIncludingHeader->GetData();
-				uint16_t sz = static_cast<uint16_t>(f.packetIncludingHeader->GetDataSize());
-
-				if(sz < (f.fragData.sizeInBytes + f.headerSize)) {
-					return false;
-				}
-
-				if(srcData == nullptr) {
-					return false;
-				}
-
-				if((dstDataOffset + sz) > dstDataMaxBytes) {
-					return false;
-				}
-
-				memcpy(dstDataStartPtr + dstDataOffset, srcData + f.headerSize, f.fragData.sizeInBytes);
-				dstDataOffset += f.fragData.sizeInBytes;
-			}
-
-			return true;
-		}
-	};
 
 	template<typename SockType, typename SockReaderWriter>
 	class BasicSocket : public SockReaderWriter {
@@ -473,28 +399,6 @@ namespace Netcode::Network {
 
 	using SharedUdpSocket = BasicSharedAsioSocket<boost::asio::ip::udp::socket>;
 
-
-	/*
-	 * 
-
-		MtuValue GetLinkLocalMtu() {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-			SOCKET nativeSocket = socket.native_handle();
-
-			if(nativeSocket != (INVALID_SOCKET)) {
-				uint32_t value = 0;
-				int len = sizeof(uint32_t);
-				int rv = getsockopt(nativeSocket, IPPROTO_IP, IP_MTU, reinterpret_cast<char *>(&value), &len);
-
-				if(rv != -1) {
-					return MtuValue{ value, socket.local_endpoint().address().is_v4() };
-				}
-			}
-
-			throw UndefinedBehaviourException{ "Failed to query link local MTU" };
-		}
-	 */
-
 	class ConnectionBase : public std::enable_shared_from_this<ConnectionBase> {
 	public:
 		MessageQueue<Protocol::Header> sharedControlQueue;
@@ -508,6 +412,45 @@ namespace Netcode::Network {
 		uint32_t remoteSequence;
 		// state of the connection, handled by the consumer
 		Enum<ConnectionState> state;
+	};
+
+	class ConnectionStorage {
+		SlimReadWriteLock srwLock;
+		std::vector<Ref<ConnectionBase>> connections;
+	public:
+		void RemoveConnection(Ref<ConnectionBase> conn) {
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+
+			auto it = std::remove(std::begin(connections), std::end(connections), conn);
+
+			connections.erase(it, std::end(connections));
+		}
+		
+		void AddConnection(Ref<ConnectionBase> conn) {
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+
+			auto it = std::find_if(std::begin(connections), std::end(connections), [&conn](const Ref<ConnectionBase> & c) -> bool {
+				return c == conn;
+			});
+
+			if(it == std::end(connections)) {
+				connections.emplace_back(std::move(conn));
+			}
+		}
+		
+		Ref<ConnectionBase> GetConnectionByEndpoint(const UdpEndpoint& ep) {
+			ScopedSharedLock<SlimReadWriteLock> scopedLock{ srwLock };
+
+			auto it = std::find_if(std::begin(connections), std::end(connections), [&ep](const Ref<ConnectionBase> & c)-> bool {
+				return c->endpoint == ep;
+			});
+
+			if(it != std::end(connections)) {
+				return *it;
+			}
+
+			return nullptr;
+		}
 	};
 
 	class Request {
@@ -644,6 +587,8 @@ namespace Netcode::Network {
 		concurrency::task_completion_event<SocketOperationResult> completionEvent;
 		std::array<boost::asio::const_buffer, 2> buffers;
 		UdpEndpoint endpoint;
+		Ref<UdpPacket> lifetime;
+		Ref<GamePacket> lifetime2;
 	};
 
 	class WorkToken {
@@ -662,6 +607,7 @@ namespace Netcode::Network {
 	};
 
 	class AgentBase : public concurrency::agent {
+	protected:
 		Ptr<WorkToken> token;
 		
 		virtual void run() override {
@@ -679,6 +625,7 @@ namespace Netcode::Network {
 	template<typename SockType>
 	class UdpSocketWriterAgent : public AgentBase {
 		concurrency::ISource<SocketWriteHandle> & source;
+		
 		Ptr<SockType> socket;
 	public:
 
@@ -690,7 +637,18 @@ namespace Netcode::Network {
 		virtual void RunImpl() override {
 			SocketOperationResult sor;
 			auto input = concurrency::receive(source);
+
+			/*std::ostringstream oss;
+			oss << input.buffers[0].data() << ":" << input.buffers[0].size() << " sending to: " << input.endpoint.address().to_string() << ":" << std::to_string(input.endpoint.port());
+			
+			Log::Debug("{0}", oss.str());*/
+			
 			sor.numBytes = socket->Send(input.buffers, input.endpoint, sor.errorCode);
+
+			if(sor.errorCode) {
+				Log::Debug("Err while writing: {0}", sor.errorCode.message());
+			}
+			
 			input.completionEvent.set(std::move(sor));
 		}
 	};
@@ -721,6 +679,8 @@ namespace Netcode::Network {
 			UdpAck udpAck = concurrency::receive(mainSource);
 
 			AckHandle handle;
+
+			Log::Debug("ACK received");
 
 			if(concurrency::try_receive(sideSource, handle, [&udpAck](const AckHandle & h) -> bool {
 				return h.endpoint == udpAck.endpoint && h.sequence == udpAck.sequence;
@@ -779,7 +739,7 @@ namespace Netcode::Network {
 			uint32_t maxAttempts = handle.resendArgs.maxAttempts;
 
 			concurrency::task_completion_event<uint32_t> tce;
-
+			
 			auto callback = MakeSharedConcurrent<concurrency::call<ReliableUdpHandle>>([this, i = 1u, maxAttempts, tce](ReliableUdpHandle msg) mutable -> void {
 				uint32_t currentAttempts = i;
 
@@ -880,27 +840,31 @@ namespace Netcode::Network {
 			
 			for(uint32_t i = 0; i < numFragments; i++) {
 				FragmentData fd;
-				fd.sizeInBytes = std::min(remDataSize, localMtu);
+				fd.sizeInBytes = std::min(remDataSize, maxPayloadSize);
 				fd.fragmentIndex = static_cast<uint8_t>(i);
 				fd.fragmentCount = static_cast<uint8_t>(numFragments);
 
 				codedOutStream.WriteLittleEndian32(serializedHeaderSize);
-				protoHeader.SerializeToCodedStream(&codedOutStream);
+				if(!protoHeader.SerializeToCodedStream(&codedOutStream)) {
+					Log::Debug("Failed to serialize header");
+				}
 				codedOutStream.WriteLittleEndian32(fd.Pack());
 				
 				SocketWriteHandle swh;
 				swh.buffers[0] = boost::asio::const_buffer{ gmh.headerPacket->GetData() + headerOffset, totalHeaderSize };
 				swh.buffers[1] = boost::asio::const_buffer{ gmh.gamePacket->GetData() + dataOffset, fd.sizeInBytes };
 				swh.endpoint = gmh.gamePacket->GetEndpoint();
+				swh.lifetime = gmh.headerPacket;
+				swh.lifetime2 = gmh.gamePacket;
 				tasks.emplace_back(swh.completionEvent);
 				concurrency::send(sockWriteTarget, std::move(swh));
 
 				remDataSize -= fd.sizeInBytes;
 				dataOffset += fd.sizeInBytes;
-				headerOffset += totalDataSizeInBytes;
+				headerOffset += totalHeaderSize;
 			}
 
-			concurrency::when_all(std::begin(tasks), std::end(tasks)).then([token = gmh.completionEvent](std::vector<SocketOperationResult> results) -> void {
+			concurrency::when_all(std::begin(tasks), std::end(tasks)).then([gmh](std::vector<SocketOperationResult> results) -> void {
 				TrResult finalResult;
 				finalResult.state = TransmissionState::SUCCESS;
 				for(const SocketOperationResult & t : results) {
@@ -913,17 +877,403 @@ namespace Netcode::Network {
 						}
 					}
 				}
-				token.set(finalResult);
+				gmh.completionEvent.set(finalResult);
 			});
 		}
 	};
 
-	class UdpReceiverAgent : public concurrency::agent {
+	template<typename SockType>
+	class UdpSocketReaderAgent : public AgentBase {
 	public:
+		Ptr<SockType> socket;
+		Ref<PacketStorage<UdpPacket>> packetStorage;
+		concurrency::ITarget<Ref<UdpPacket>> & readTarget;
+		uint32_t consecutiveErrorCount;
+
+		UdpSocketReaderAgent(Ptr<SockType> socket, Ref<PacketStorage<UdpPacket>> packetStorage, concurrency::ITarget<Ref<UdpPacket>> & readTarget, Ptr<WorkToken> wt) :
+			AgentBase{ wt }, socket { socket }, packetStorage{ std::move(packetStorage) }, readTarget{ readTarget }, consecutiveErrorCount{ 0 } { }
+		
+	protected:
+		virtual void RunImpl() override {
+			Ref<UdpPacket> udpPacket = packetStorage->GetBuffer();
+			udpPacket->SetDataSize(UdpPacket::MAX_DATA_SIZE);
+			SocketOperationResult sor;
+			sor.numBytes = socket->Receive(udpPacket->GetMutableBuffer(), udpPacket->GetEndpoint(), sor.errorCode);
+			udpPacket->SetDataSize(sor.numBytes);
+
+			if(sor.errorCode) {
+				Log::Debug("Error while reading: {0}", sor.errorCode.message());
+				consecutiveErrorCount++;
+
+				if(consecutiveErrorCount > 5) {
+					Log::Error("5 consequtive read errors occured, stopping");
+					token->SetDone();
+				}
+			} else {
+				consecutiveErrorCount = 0;
+				auto ep = udpPacket->GetEndpoint();
+				std::string addrPort = ep.address().to_string() + ":" + std::to_string(ep.port());
+
+				//Log::Debug("Raw read: {0}", addrPort);
+				
+				concurrency::send(readTarget, std::move(udpPacket));
+			}
+		}
+	};
+
+	struct UdpFragment {
+		uint32_t sequence;
+		FragmentData fragmentData;
+		uint32_t dataOffset;
+		Ref<UdpPacket> data;
 	};
 	
-	class FragmentedUdpReceiverAgent : public concurrency::agent {
+	class ParserAgent : public AgentBase {
+	public:
+		Ref<PacketStorage<UdpPacket>> packetStorage;
+		concurrency::ISource<Ref<UdpPacket>> & source;
+		concurrency::ITarget<UdpAck> & ackTarget;
+		concurrency::ITarget<SocketWriteHandle> & ackWriteTarget;
+		concurrency::ITarget<UdpFragment> & fragWriteTarget;
 
+		ParserAgent(Ref<PacketStorage<UdpPacket>> pktStorage,
+			concurrency::ISource<Ref<UdpPacket>> & source,
+			concurrency::ITarget<UdpAck> & ackTarget,
+			concurrency::ITarget<SocketWriteHandle> & ackWriteTarget,
+			concurrency::ITarget<UdpFragment> & fragWriteTarget,
+			Ptr<WorkToken> wt) :
+			AgentBase{ wt }, packetStorage{ std::move(pktStorage) }, source{ source }, ackTarget{ ackTarget }, ackWriteTarget{ ackWriteTarget }, fragWriteTarget{ fragWriteTarget } { }
+		
+	protected:
+		void SendAck(uint32_t seq, const UdpEndpoint & ep) {
+			Ref<UdpPacket> pkt = packetStorage->GetBuffer();
+			pkt->SetDataSize(UdpPacket::MAX_DATA_SIZE);
+			pkt->SetEndpoint(ep);
+			Protocol::Header h;
+			h.set_sequence(seq);
+			h.set_type(Protocol::MessageType::ACKNOWLEDGE);
+
+			google::protobuf::io::ArrayOutputStream aos{ pkt->GetData(), static_cast<int32_t>(pkt->GetDataSize()) };
+			google::protobuf::io::CodedOutputStream codedOutStream{ &aos };
+
+			uint32_t serializedHeaderSize = static_cast<uint32_t>(h.ByteSizeLong());
+			
+			codedOutStream.WriteLittleEndian32(serializedHeaderSize);
+			if(!h.SerializeToCodedStream(&codedOutStream)) {
+				Log::Debug("Failed to serialize ACK message");
+				return;
+			}
+			pkt->SetDataSize(serializedHeaderSize + sizeof(google::protobuf::uint32));
+
+			SocketWriteHandle swh;
+			swh.endpoint = pkt->GetEndpoint();
+			swh.buffers[0] = pkt->GetConstBuffer();
+			swh.lifetime = pkt;
+
+			concurrency::send(ackWriteTarget, std::move(swh));
+		}
+		
+		bool ParseNetcodeHeader(google::protobuf::io::CodedInputStream * codedStream, uint32_t & headerSize, Protocol::Header& header, FragmentData & fd) {
+
+			uint32_t serializedHeaderSize = std::numeric_limits<uint32_t>::max();
+			if(!codedStream->ReadLittleEndian32(&serializedHeaderSize)) {
+				Log::Debug("Failed to read serialized header size");
+				return false;
+			}
+
+			auto limit = codedStream->PushLimit(static_cast<int32_t>(serializedHeaderSize));
+
+			Protocol::Header h;
+			if(!h.ParseFromCodedStream(codedStream)) {
+				Log::Debug("Failed to parse header");
+				return false;
+			} else {
+				if(h.ByteSizeLong() != serializedHeaderSize) {
+					Log::Debug("Protocol misuse");
+					return false;
+				}
+			}
+
+			codedStream->PopLimit(limit);
+
+			uint32_t fragData = 0;
+			FragmentData tmpFd;
+
+			if(h.type() == Protocol::MessageType::GAME) {
+				if(!codedStream->ReadLittleEndian32(&fragData)) {
+					Log::Debug("Failed to read fragmentation data");
+					return false;
+				}
+				
+				if(fragData == 0) {
+					Log::Debug("Fragment data expected to be non-zero");
+					return false;
+				}
+				
+				tmpFd.Unpack(fragData);
+				
+				if(tmpFd.fragmentIndex >= tmpFd.fragmentCount) {
+					Log::Debug("Invalid fragment index");
+					return false;
+				}
+			}
+
+			headerSize = serializedHeaderSize;
+			header = std::move(h);
+			fd = tmpFd;
+			return true;
+		}
+		
+		virtual void RunImpl() override {
+			Ref<UdpPacket> handle = concurrency::receive(source);
+
+			if(handle == nullptr) {
+				return;
+			}
+			
+			google::protobuf::io::ArrayInputStream ais{ handle->GetData(), static_cast<int32_t>(handle->GetDataSize()) };
+			google::protobuf::io::CodedInputStream cis{ &ais };
+
+			uint32_t headerSize;
+			Protocol::Header header;
+			FragmentData fragData;
+			if(!ParseNetcodeHeader(&cis, headerSize, header, fragData)) {
+				return;
+			}
+			
+			if(header.type() == Protocol::MessageType::ACKNOWLEDGE) {
+
+				UdpAck ack;
+				ack.endpoint = handle->GetEndpoint();
+				ack.sequence = header.sequence();
+				concurrency::send(ackTarget, ack);
+				return;
+				
+			}
+
+			if(header.type() == Protocol::MessageType::GAME) {
+				
+				UdpFragment udpFrag;
+				udpFrag.data = std::move(handle);
+				udpFrag.fragmentData = fragData;
+				udpFrag.sequence = header.sequence();
+				udpFrag.dataOffset = static_cast<uint32_t>(cis.CurrentPosition());
+				concurrency::send(fragWriteTarget, udpFrag);
+				return;
+				
+			}
+
+			if((header.type() & 0x1) == 0x1) {
+
+				Log::Debug("Responsing with an ACK");
+				SendAck(header.sequence(), handle->GetEndpoint());
+				
+			}
+
+			// ---
+		}
+	};
+	
+	class DefragmenterAgent : public AgentBase {
+		ConnectionStorage * connStorage;
+		concurrency::ISource<UdpFragment> & fragmentSource;
+		
+		class DefragCtx {
+			uint32_t sequence;
+			UdpEndpoint endpoint;
+			Timestamp createdAt;
+			ConcurrentPtr<UdpFragment> fragments;
+			uint32_t receivedFragments;
+			uint32_t numFragments;
+			ConcurrentPtr<GamePacket> defragTarget;
+
+		public:
+
+			const Timestamp& GetTimestamp() const {
+				return createdAt;
+			}
+			
+			bool TryDefragment(Protocol::Update& update) {
+				if(!IsComplete()) {
+					return false;
+				}
+
+				uint8_t * const dstBase = defragTarget->GetData();
+				const uint32_t dstSize = defragTarget->GetDataSize();
+				uint32_t dstOffset = 0;
+				for(uint32_t i = 0; i < numFragments; i++) {
+					const UdpFragment * f = fragments.get() + i;
+					const uint32_t numBytes = f->fragmentData.sizeInBytes;
+
+					if((dstOffset + numBytes) > dstSize || numBytes == 0) {
+						Log::Debug("Error while defragmenting");
+						return false;
+					}
+					
+					memcpy(dstBase + dstOffset, f->data->GetData() + f->dataOffset, numBytes);
+					dstOffset += numBytes;
+				}
+
+				defragTarget->SetDataSize(dstOffset);
+
+				if(!update.ParseFromArray(defragTarget->GetData(), static_cast<int32_t>(defragTarget->GetDataSize()))) {
+					Log::Debug("Failed to parse defragmented game message");
+					return false;
+				}
+
+				return true;
+			}
+
+			uint32_t GetSequence() const {
+				return sequence;
+			}
+
+			bool IsComplete() const {
+				return receivedFragments == numFragments;
+			}
+
+			const UdpEndpoint & GetEndpoint() const {
+				return endpoint;
+			}
+
+			NETCODE_CONSTRUCTORS_DEFAULT_MOVE(DefragCtx);
+
+			void AddFragment(UdpFragment frag) {
+				if(static_cast<uint32_t>(frag.fragmentData.fragmentIndex) >= numFragments) {
+					return;
+				}
+
+				++receivedFragments;
+
+				UdpFragment * f = fragments.get() + frag.fragmentData.fragmentIndex;
+
+				if(f->data == nullptr) {
+					*f = std::move(frag);
+				}
+			}
+			
+			DefragCtx(uint32_t sequence, const UdpEndpoint & ep, uint32_t nf) :
+				sequence{ sequence }, endpoint{ ep }, createdAt{ SystemClock::LocalNow() }, fragments{ nullptr }, receivedFragments{ 0 }, numFragments{ nf } {
+				defragTarget = MakeConcurrent<GamePacket>();
+				defragTarget->SetDataSize(GamePacket::MAX_DATA_SIZE);
+				fragments = ConcurrentPtr<UdpFragment>{ static_cast<UdpFragment *>(concurrency::Alloc(numFragments * sizeof(UdpFragment))) };
+
+				for(uint32_t i = 0; i < numFragments; i++) {
+					UdpFragment * f = new (fragments.get() + i) UdpFragment{};
+					f->sequence = 0;
+					f->dataOffset = 0;
+					f->data = nullptr;
+				}
+
+				createdAt = SystemClock::LocalNow();
+			}
+
+			~DefragCtx() noexcept {
+				if(fragments != nullptr) {
+					for(uint32_t i = 0; i < numFragments; i++) {
+						fragments.get()[i].~UdpFragment();
+					}
+				}
+			}
+		};
+
+		std::vector<DefragCtx> pendingFragments;
+		concurrency::call<int> timerCallback;
+		concurrency::timer<int> timeoutTimer;
+		concurrency::critical_section lock;
+		FrameCounter fpsCounter;
+		int fi;
+
+		void TimerTick() {
+			if(pendingFragments.empty()) {
+				return;
+			}
+			
+			concurrency::critical_section::scoped_lock scopedLock{ lock };
+
+			Timestamp current = SystemClock::LocalNow();
+
+			auto it = std::remove_if(std::begin(pendingFragments), std::end(pendingFragments), [&current](const DefragCtx & dc)->bool {
+				return (dc.GetTimestamp() - current) > std::chrono::seconds(1);
+			});
+
+			if(it != std::end(pendingFragments)) {
+				pendingFragments.erase(it, std::end(pendingFragments));
+			}
+		}
+		
+	public:
+		DefragmenterAgent(ConnectionStorage * storage, concurrency::ISource<UdpFragment> & fragSource, Ptr<WorkToken> wt) :
+			AgentBase{ wt }, connStorage{ storage }, fragmentSource{ fragSource }, pendingFragments{},
+			timerCallback{ [this](int) -> void { TimerTick(); } }, timeoutTimer{ 1000, 0, &timerCallback, false }, lock{} {
+			fi = 0;
+		}
+
+	protected:
+		virtual void RunImpl() override {
+			UdpFragment frag = concurrency::receive(fragmentSource);
+			
+			Ref<ConnectionBase> conn = connStorage->GetConnectionByEndpoint(frag.data->GetEndpoint());
+
+			if(conn == nullptr) {
+				//Log::Debug("Connection was not found for the fragment, dropping packet");
+				//return;
+				conn = std::make_shared<ConnectionBase>();
+				conn->state = ConnectionState::ESTABLISHED;
+				conn->remoteSequence = frag.sequence;
+			}
+
+			if(conn->state != ConnectionState::ESTABLISHED) {
+				Log::Debug("Connection is not established yet");
+				return;
+			}
+
+			if(conn->remoteSequence > (frag.sequence + 5)) {
+				Log::Debug("Received an old fragment, dropping packet");
+				return;
+			}
+
+			conn->remoteSequence = std::max(conn->remoteSequence, frag.sequence);
+
+			concurrency::critical_section::scoped_lock scopedLock{ lock };
+
+			auto it = std::find_if(std::begin(pendingFragments), std::end(pendingFragments), [&frag](const DefragCtx & dc) -> bool {
+				return frag.sequence == dc.GetSequence() && frag.data->GetEndpoint() == dc.GetEndpoint();
+			});
+
+			if(it == std::end(pendingFragments)) {
+				DefragCtx dc{ frag.sequence, frag.data->GetEndpoint(), frag.fragmentData.fragmentCount };
+				dc.AddFragment(std::move(frag));
+
+				if(dc.IsComplete()) {
+					Protocol::Update u;
+					if(dc.TryDefragment(u)) {
+						fpsCounter.Update(it->GetTimestamp() - SystemClock::LocalNow());
+						fi++;
+						//conn->sharedQueue.Received(std::move(u));
+					}
+				} else {
+					pendingFragments.emplace_back(std::move(dc));
+				}
+			} else {
+				it->AddFragment(std::move(frag));
+
+				if(it->IsComplete()) {
+					Protocol::Update u;
+					if(it->TryDefragment(u)) {
+						fpsCounter.Update(it->GetTimestamp() - SystemClock::LocalNow());
+						fi++;
+						//conn->sharedQueue.Received(std::move(u));
+					}
+					pendingFragments.erase(it);
+				}
+			}
+
+			if(fi % 128 == 0) {
+				//Log::Debug("Perf: {0}", fpsCounter.GetAvgFramesPerSecond(), 0.0);
+				//std::cout << "Perf: " << fpsCounter.GetAvgFramesPerSecond() << std::endl;
+			}
+		}
 	};
 	
 	class NetcodeService {
@@ -944,6 +1294,8 @@ namespace Netcode::Network {
 
 		Ref<ManagedPool<FragmentationContext>> fragContextPool;
 
+		ConnectionStorage connectionStorage;
+
 		concurrency::unbounded_buffer<UdpAck> receivedAckBuffer;
 
 		concurrency::unbounded_buffer<AckHandle> waitingForAckBuffer;
@@ -953,6 +1305,10 @@ namespace Netcode::Network {
 		concurrency::unbounded_buffer<ReliableUdpHandle> reliableHandles;
 
 		concurrency::unbounded_buffer<GameMessageHandle> gameMessageHandles;
+
+		concurrency::unbounded_buffer<UdpFragment> fragmentBuffer;
+
+		concurrency::unbounded_buffer<Ref<UdpPacket>> receivedPackets;
 
 		WorkToken workToken;
 
@@ -967,8 +1323,18 @@ namespace Netcode::Network {
 		UdpFragmenterAgent fragmenterAgent;
 
 		UdpSocketWriterAgent<NetcodeSocketType> writerAgent;
+
+		UdpSocketReaderAgent<NetcodeSocketType> readerAgent;
+
+		ParserAgent parserAgent;
+
+		DefragmenterAgent defragAgent;
 		
 	public:
+		ConnectionStorage* GetConnections() {
+			return &connectionStorage;
+		}
+		
 		NetcodeService(NetcodeSocketType::SocketType sock) : socket { std::move(sock) },
 			packetStorage { std::make_shared<PacketStorage<UdpPacket>>(16) },
 			gamePacketStorage{ std::make_shared<PacketStorage<GamePacket>>(4) },
@@ -984,12 +1350,18 @@ namespace Netcode::Network {
 			ackAgent{ waitingForAckBuffer, receivedAckBuffer, &workToken },
 			reliableUdpAgent{ reliableHandles, writeRequests, waitingForAckBuffer, receivedAckBuffer, &workToken },
 			fragmenterAgent{ gameMessageHandles, writeRequests, &workToken },
-			writerAgent{ writeRequests, &socket, &workToken } {
+			writerAgent{ writeRequests, &socket, &workToken },
+			readerAgent{ &socket, packetStorage, receivedPackets, &workToken },
+			parserAgent{ packetStorage, receivedPackets, receivedAckBuffer, writeRequests, fragmentBuffer, &workToken },
+			defragAgent{ &connectionStorage, fragmentBuffer, &workToken } {
 
 			ackAgent.start();
 			reliableUdpAgent.start();
 			fragmenterAgent.start();
 			writerAgent.start();
+			readerAgent.start();
+			parserAgent.start();
+			defragAgent.start();
 			
 		}
 		
@@ -1068,6 +1440,10 @@ namespace Netcode::Network {
 					return tr;
 				});
 			}
+
+			gm->SetDataSize(static_cast<uint32_t>(update.ByteSizeLong()));
+			gm->SetEndpoint(endpoint);
+			h->SetEndpoint(endpoint);
 
 			GameMessageHandle msg;
 			msg.gamePacket = std::move(gm);

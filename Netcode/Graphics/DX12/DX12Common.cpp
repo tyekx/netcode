@@ -43,7 +43,7 @@ namespace Netcode::Graphics::DX12 {
 		woss << prefix << L'(' << idx << L')';
 		return woss.str();
 	}
-
+	
 	void DebugDestruction(IUnknown * pUnknown)
 	{
 		ID3DDestructionNotifier * notifier = nullptr;
