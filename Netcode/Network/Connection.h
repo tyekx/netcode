@@ -9,9 +9,12 @@
 #include <Netcode/Sync/SlimReadWriteLock.h>
 #include <Netcode/Config.h>
 #include <random>
-#include <Netcode/Sync/Task.hpp>
 #include "NetcodeFoundation/Enum.hpp"
 #include <Netcode/System/FpsCounter.h>
+
+#include <ppltasks.h>
+#include <agents.h>
+#include <ppl.h>
 
 namespace Netcode::Network {
 
@@ -665,11 +668,11 @@ namespace Netcode::Network {
 	
 	class UdpAckAgent : public AgentBase {
 	private:
-		Concurrency::ISource<AckHandle> & sideSource;
-		Concurrency::ISource<UdpAck> & mainSource;
+		concurrency::ISource<AckHandle> & sideSource;
+		concurrency::ISource<UdpAck> & mainSource;
 	public:
 
-		UdpAckAgent(Concurrency::ISource<AckHandle> & sideSource, Concurrency::ISource<UdpAck> & mainSource, Ptr<WorkToken> token) :
+		UdpAckAgent(concurrency::ISource<AckHandle> & sideSource, concurrency::ISource<UdpAck> & mainSource, Ptr<WorkToken> token) :
 			AgentBase{ token }, sideSource{ sideSource }, mainSource{ mainSource }  {
 			
 		}
@@ -740,7 +743,7 @@ namespace Netcode::Network {
 
 			concurrency::task_completion_event<uint32_t> tce;
 			
-			auto callback = MakeSharedConcurrent<concurrency::call<ReliableUdpHandle>>([this, i = 1u, maxAttempts, tce](ReliableUdpHandle msg) mutable -> void {
+			auto callback = std::make_shared<concurrency::call<ReliableUdpHandle>>([this, i = 1u, maxAttempts, tce](ReliableUdpHandle msg) mutable -> void {
 				uint32_t currentAttempts = i;
 
 				if(++i >= maxAttempts) {
@@ -753,7 +756,7 @@ namespace Netcode::Network {
 			SendToAck(tce, handle);
 			SendToSocket(tce, handle, 1);
 
-			auto timer = MakeSharedConcurrent<concurrency::timer<ReliableUdpHandle>>(static_cast<uint32_t>(ms), handle, callback.get(), true);
+			auto timer = std::make_shared<concurrency::timer<ReliableUdpHandle>>(static_cast<uint32_t>(ms), handle, callback.get(), true);
 
 			timer->start();
 
@@ -911,9 +914,8 @@ namespace Netcode::Network {
 				}
 			} else {
 				consecutiveErrorCount = 0;
-				auto ep = udpPacket->GetEndpoint();
-				std::string addrPort = ep.address().to_string() + ":" + std::to_string(ep.port());
-
+				//auto ep = udpPacket->GetEndpoint();
+				//std::string addrPort = ep.address().to_string() + ":" + std::to_string(ep.port());
 				//Log::Debug("Raw read: {0}", addrPort);
 				
 				concurrency::send(readTarget, std::move(udpPacket));
@@ -1082,10 +1084,10 @@ namespace Netcode::Network {
 			uint32_t sequence;
 			UdpEndpoint endpoint;
 			Timestamp createdAt;
-			ConcurrentPtr<UdpFragment> fragments;
+			std::unique_ptr<UdpFragment[]> fragments;
 			uint32_t receivedFragments;
 			uint32_t numFragments;
-			ConcurrentPtr<GamePacket> defragTarget;
+			Ref<GamePacket> defragTarget;
 
 		public:
 
@@ -1154,12 +1156,12 @@ namespace Netcode::Network {
 			
 			DefragCtx(uint32_t sequence, const UdpEndpoint & ep, uint32_t nf) :
 				sequence{ sequence }, endpoint{ ep }, createdAt{ SystemClock::LocalNow() }, fragments{ nullptr }, receivedFragments{ 0 }, numFragments{ nf } {
-				defragTarget = MakeConcurrent<GamePacket>();
+				defragTarget = std::make_shared<GamePacket>();
 				defragTarget->SetDataSize(GamePacket::MAX_DATA_SIZE);
-				fragments = ConcurrentPtr<UdpFragment>{ static_cast<UdpFragment *>(concurrency::Alloc(numFragments * sizeof(UdpFragment))) };
+				fragments = std::make_unique<UdpFragment[]>(numFragments);
 
 				for(uint32_t i = 0; i < numFragments; i++) {
-					UdpFragment * f = new (fragments.get() + i) UdpFragment{};
+					UdpFragment * f = fragments.get() + i;
 					f->sequence = 0;
 					f->dataOffset = 0;
 					f->data = nullptr;
@@ -1167,22 +1169,12 @@ namespace Netcode::Network {
 
 				createdAt = SystemClock::LocalNow();
 			}
-
-			~DefragCtx() noexcept {
-				if(fragments != nullptr) {
-					for(uint32_t i = 0; i < numFragments; i++) {
-						fragments.get()[i].~UdpFragment();
-					}
-				}
-			}
 		};
 
 		std::vector<DefragCtx> pendingFragments;
 		concurrency::call<int> timerCallback;
 		concurrency::timer<int> timeoutTimer;
 		concurrency::critical_section lock;
-		FrameCounter fpsCounter;
-		int fi;
 
 		void TimerTick() {
 			if(pendingFragments.empty()) {
@@ -1205,9 +1197,7 @@ namespace Netcode::Network {
 	public:
 		DefragmenterAgent(ConnectionStorage * storage, concurrency::ISource<UdpFragment> & fragSource, Ptr<WorkToken> wt) :
 			AgentBase{ wt }, connStorage{ storage }, fragmentSource{ fragSource }, pendingFragments{},
-			timerCallback{ [this](int) -> void { TimerTick(); } }, timeoutTimer{ 1000, 0, &timerCallback, false }, lock{} {
-			fi = 0;
-		}
+			timerCallback{ [this](int) -> void { TimerTick(); } }, timeoutTimer{ 1000, 0, &timerCallback, false }, lock{} { }
 
 	protected:
 		virtual void RunImpl() override {
@@ -1216,11 +1206,13 @@ namespace Netcode::Network {
 			Ref<ConnectionBase> conn = connStorage->GetConnectionByEndpoint(frag.data->GetEndpoint());
 
 			if(conn == nullptr) {
-				//Log::Debug("Connection was not found for the fragment, dropping packet");
-				//return;
-				conn = std::make_shared<ConnectionBase>();
+				Log::Debug("Connection was not found for the fragment, dropping packet");
+				return;
+				/*conn = std::make_shared<ConnectionBase>();
 				conn->state = ConnectionState::ESTABLISHED;
 				conn->remoteSequence = frag.sequence;
+				conn->endpoint = frag.data->GetEndpoint();
+				connStorage->AddConnection(conn);*/
 			}
 
 			if(conn->state != ConnectionState::ESTABLISHED) {
@@ -1248,9 +1240,7 @@ namespace Netcode::Network {
 				if(dc.IsComplete()) {
 					Protocol::Update u;
 					if(dc.TryDefragment(u)) {
-						fpsCounter.Update(it->GetTimestamp() - SystemClock::LocalNow());
-						fi++;
-						//conn->sharedQueue.Received(std::move(u));
+						conn->sharedQueue.Received(std::move(u));
 					}
 				} else {
 					pendingFragments.emplace_back(std::move(dc));
@@ -1261,17 +1251,10 @@ namespace Netcode::Network {
 				if(it->IsComplete()) {
 					Protocol::Update u;
 					if(it->TryDefragment(u)) {
-						fpsCounter.Update(it->GetTimestamp() - SystemClock::LocalNow());
-						fi++;
-						//conn->sharedQueue.Received(std::move(u));
+						conn->sharedQueue.Received(std::move(u));
 					}
 					pendingFragments.erase(it);
 				}
-			}
-
-			if(fi % 128 == 0) {
-				//Log::Debug("Perf: {0}", fpsCounter.GetAvgFramesPerSecond(), 0.0);
-				//std::cout << "Perf: " << fpsCounter.GetAvgFramesPerSecond() << std::endl;
 			}
 		}
 	};
