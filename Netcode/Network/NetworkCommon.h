@@ -15,6 +15,57 @@
 #include <Netcode/System/SystemClock.h>
 
 namespace Netcode::Network {
+	enum class Error : unsigned {
+		SUCCESS,
+		ALREADY_RUNNING,
+		CONNECTION_ALREADY_EXISTS,
+		ADDRESS_RESOLUTION_FAILED,
+		SOCK_ERR,
+		BAD_API_CALL,
+		NO_INTERFACE,
+		BAD_REQUEST,
+		TIMEDOUT,
+		SERVER_IS_FULL
+	};
+
+	class ErrorCategory : public boost::system::error_category {
+	public:
+		const char * name() const noexcept
+		{
+			return "Netcode::Network";
+		}
+
+		std::string message(int v) const
+		{
+			Error value = static_cast<Error>(v);
+			if(value == Error::SUCCESS)
+				return "Operation completed successfully";
+			if(value == Error::ADDRESS_RESOLUTION_FAILED)
+				return "Address resolution failed";
+			if(value == Error::NO_INTERFACE)
+				return "No network interface";
+			if(value == Error::BAD_REQUEST)
+				return "Bad request";
+			if(value == Error::TIMEDOUT)
+				return "Message ACK window timed out";
+			return "Netcode::Network error";
+		}
+	};
+
+	inline boost::system::error_code make_error_code(Error e) {
+		static ErrorCategory cat;
+		return boost::system::error_code{ static_cast<int>(e), cat };
+	}
+}
+
+namespace boost::system {
+	template<>
+	struct is_error_code_enum<Netcode::Network::Error> {
+		static const bool value = true;
+	};
+}
+
+namespace Netcode::Network {
 
 	using IpAddress = boost::asio::ip::address;
 	using UdpSocket = boost::asio::ip::udp::socket;

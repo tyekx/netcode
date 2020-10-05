@@ -38,6 +38,8 @@ namespace Netcode::Network {
 
 		Tuple buffer[8];
 		Timestamp lastValidPacket;
+		double offsetApprox;
+		double delayApprox;
 		
 		void ClockFilter() {
 			static Tuple* tmpBuffer[8] = {
@@ -59,6 +61,9 @@ namespace Netcode::Network {
 			double jitter = 0.0;
 			
 			const Tuple* f0 = tmpBuffer[0];
+
+			delayApprox = f0->delay;
+			offsetApprox = f0->offset;
 			
 			for(int i = 0; i < 8;i++) {
 				jitter += (tmpBuffer[i]->offset - f0->offset) * (tmpBuffer[i]->offset - f0->offset);
@@ -94,7 +99,14 @@ namespace Netcode::Network {
 			}
 		}
 		
-
+		double GetDelay() const {
+			return delayApprox;
+		}
+		
+		double GetOffset() const {
+			return offsetApprox;
+		}
+		
 		void Update(const Protocol::TimeSync & timeSync) {
 			const Timestamp t0{ ConvertUInt64ToTimestamp(timeSync.client_req_transmission()) };
 			const Timestamp t1{ ConvertUInt64ToTimestamp(timeSync.server_req_reception()) };
@@ -106,8 +118,6 @@ namespace Netcode::Network {
 
 			double offset = DurationToDouble(theta);
 			double delay = std::max(DurationToDouble(delta), PRECISION);
-
-			//Log::Debug("Delay: {0} Offset: {1}", delay, offset);
 			
 			// shift 1 out regardless of what happens next
 			std::rotate(std::rbegin(buffer), std::rbegin(buffer) + 1, std::rend(buffer));
@@ -125,53 +135,73 @@ namespace Netcode::Network {
 	class ClientSession : public ClientSessionBase {
 		boost::asio::io_context & ioContext;
 		UdpResolver resolver;
+		WaitableTimer tickTimer;
 		Ref<NetcodeService> service;
 		Ref<ConnectionBase> connection;
 		NtpClockFilter clockFilter;
 		Enum<NatType> natType;
 		std::string queryValueAddress;
 		std::string queryValuePort;
-		/*
-		void SendLoginRequest() {
-			Protocol::Header h;
-			h.set_sequence(2);
-			h.set_type(Protocol::MessageType::CONNECT_REQUEST);
-			Protocol::ConnectRequest * connReq = h.mutable_connect_request();
-			connReq->set_type(Protocol::ConnectType::DIRECT);
-			Protocol::Endpoint * privateEndpoint = connReq->mutable_private_endpoint();
-			auto ep = service->GetPrivateEndpoint();
-			privateEndpoint->set_addr(ep.address().to_string());
-			privateEndpoint->set_port(ep.port());
 
-			connection->state = ConnectionState::AUTHENTICATING;
-			Ref<TransmissionHandleBase> handle = service->Send(std::move(h), connection->endpoint);
-			handle->ContinueWith([this](const MessageTransmissionResult & tr, const UdpEndpoint & ep) -> void {
-				if(tr.result != TransmissionResult::SUCCESS) {
-					Log::Error("LoginRequest: {0}", tr.errorIfAny.message());
-				}
-			});
-		}*/
+		void SendConnectRequest(concurrency::task_completion_event<ErrorCode> tce);
+
+		void Tick();
 		
-		void StartConnection() {
+		void InitTick() {
+			tickTimer.expires_from_now(std::chrono::milliseconds(500));
+			tickTimer.async_wait([this](const ErrorCode & ec) -> void {
+				if(ec) {
+					Log::Error("Tick: {0}", ec.message());
+					return;
+				}
+
+				Tick();
+				
+				InitTick();
+			});
+		}
+		
+		void StartConnection(concurrency::task_completion_event<ErrorCode> tce) {
 			if(connection == nullptr) {
 				Log::Error("No connection was set");
+				tce.set(make_error_code(Error::BAD_API_CALL));
 				return;
 			}
 
 			connection->state = ConnectionState::CONNECTING;
 
-			// start connection
-		}
-	public:
-		ClientSession(boost::asio::io_context & ioc) : ioContext{ ioc }, resolver{ ioc } {
-			
+			Protocol::Header h;
+			h.set_type(Protocol::CONNECT_PUNCHTHROUGH);
+			h.set_sequence(connection->localSequence++);
+
+			concurrency::task<TrResult> handle = service->Send(std::move(h), connection->endpoint);
+			handle.then([this, tce](TrResult r) mutable -> void {
+				if(r.state == TransmissionState::SUCCESS) {
+					Log::Debug("Punchthrough success");
+					SendConnectRequest(std::move(tce));
+				} else if(r.state == TransmissionState::TIMEOUT) {
+					Log::Debug("Punchthrough TIMEOUT");
+					tce.set(make_error_code(Error::TIMEDOUT));
+				} else if(r.state == TransmissionState::ERROR_WHILE_SENDING) {
+					Log::Debug("Punchthrough ERROR: {0}", r.errorIfAny.message());
+					tce.set(r.errorIfAny);
+				} else {
+					tce.set(make_error_code(Error::BAD_API_CALL));
+				}
+			});
 		}
 
-		void OnHostnameResolved(const UdpResolver::results_type & results) {
+		void OnHostnameResolved(concurrency::task_completion_event<ErrorCode> tce, const UdpResolver::results_type & results) {
+			if(results.empty()) {
+				tce.set(make_error_code(Error::ADDRESS_RESOLUTION_FAILED));
+				return;
+			}
+			
 			UdpSocket sock{ ioContext };
 
 			connection->state = ConnectionState::CONNECTING;
 			connection->endpoint = *(results.begin());
+			connection->localSequence = 1;
 
 			ErrorCode ec;
 			sock.open(connection->endpoint.protocol(), ec);
@@ -191,6 +221,7 @@ namespace Netcode::Network {
 				if(ec) {
 					Log::Error("Failed to bind port");
 					connection->state = ConnectionState::INTERNAL_ERROR;
+					tce.set(ec);
 					return;
 				}
 			}
@@ -198,17 +229,21 @@ namespace Netcode::Network {
 			if(ec) {
 				Log::Error("Failed to open port");
 				connection->state = ConnectionState::INTERNAL_ERROR;
+				tce.set(ec);
 				return;
 			}
 
 			if(ec) {
 				Log::Error("Failed to 'connect': {0}", ec.message());
 				connection->state = ConnectionState::INTERNAL_ERROR;
+				tce.set(ec);
 				return;
 			}
 			
 			if(!SetDontFragmentBit(sock)) {
-				Log::Warn("Failed to set dont fragment bit");
+				Log::Error("Failed to set dont fragment bit");
+				tce.set(make_error_code(Error::SOCK_ERR));
+				return;
 			}
 
 
@@ -218,19 +253,33 @@ namespace Netcode::Network {
 
 			Sleep(100);
 
-			StartConnection();
+			StartConnection(tce);
+
+			InitTick();
 		}
 
-		void StartHostnameResolution() {
+		void StartHostnameResolution(concurrency::task_completion_event<ErrorCode> connTce) {
 			connection->state = ConnectionState::RESOLVING;
 			resolver.async_resolve(queryValueAddress, queryValuePort, boost::asio::ip::resolver_base::address_configured,
-				[this](const ErrorCode & ec, UdpResolver::results_type results) -> void {
+				[this, ct = std::move(connTce)](const ErrorCode & ec, UdpResolver::results_type results) mutable -> void {
 				if(ec) {
 					Log::Error("Address resolution failed");
+					ct.set(make_error_code(Error::ADDRESS_RESOLUTION_FAILED));
 				} else {
-					OnHostnameResolved(std::move(results));
+					OnHostnameResolved(std::move(ct), std::move(results));
 				}
 			});
+		}
+
+		void SynchronizeToServerClock(concurrency::task_completion_event<ErrorCode> connTce);
+		
+	public:
+		ClientSession(boost::asio::io_context & ioc) : ioContext{ ioc }, resolver{ ioc }, tickTimer{ ioc } {
+
+		}
+
+		Ref<NetcodeService> GetService() const {
+			return service;
 		}
 		
 		virtual ~ClientSession() = default;
@@ -239,32 +288,41 @@ namespace Netcode::Network {
 			Ref<ConnectionBase> c = std::make_shared<ConnectionBase>();
 			c->state = ConnectionState::INACTIVE;
 
-			Connect(std::move(c), "localhost", 8889);
+			auto t = Connect(std::move(c), "localhost", 8889);
+			t.then([](ErrorCode ec) -> void {
+				if(ec) {
+					Log::Debug("Error---");
+				}
+				Log::Debug("So far: {0}", ec.message());
+			});
 		}
 
 		virtual void Stop() override {
 
 		}
-
 		
-		virtual void Connect(Ref<ConnectionBase> connectionHandle, std::string hostname, uint32_t port) {
+		virtual concurrency::task<ErrorCode> Connect(Ref<ConnectionBase> connectionHandle, std::string hostname, uint32_t port) {
 			if(connectionHandle->state != ConnectionState::INACTIVE) {
 				Log::Error("State must be inactive to start a new connection");
-				return;
+				return concurrency::create_task([]()-> ErrorCode { return make_error_code(Error::ALREADY_RUNNING); });
 			}
 
 			if(connection != nullptr) {
 				if(connection->state > 0x1000u) {
 					Log::Error("Current connection seems to be active or pending");
-					return;
+					return concurrency::create_task([]()-> ErrorCode { return make_error_code(Error::ALREADY_RUNNING); });
 				}
 			}
 
 			std::swap(connectionHandle, connection);
 
+			concurrency::task_completion_event<ErrorCode> tce;
+			
 			queryValueAddress = std::move(hostname);
 			queryValuePort = std::to_string(port);
-			StartHostnameResolution();
+			StartHostnameResolution(tce);
+
+			return concurrency::create_task(tce);
 		}
 	};
 

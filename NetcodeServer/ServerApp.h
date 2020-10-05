@@ -10,6 +10,7 @@ class ServerApp : public Netcode::Module::AApp {
 	Ref<Netcode::Network::ServerSession> serverSession;
 	std::vector<Netcode::Protocol::ClientUpdate> gameMessages;
 	Ref<Netcode::Network::ClientSessionBase> clientSession;
+	Ref<Netcode::Network::NetcodeService> service;
 public:
 	/*
 	Initialize modules

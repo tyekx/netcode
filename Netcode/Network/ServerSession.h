@@ -22,6 +22,10 @@ namespace Netcode::Network {
 		virtual void Start() override;
 
 		virtual void Stop() override;
+
+		Ref<NetcodeService> GetService() const {
+			return service;
+		}
 	};
 
 }

@@ -3,6 +3,7 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/msvc_sink.h>
+#include <boost/asio/ip/udp.hpp>
 
 namespace Log {
 
@@ -55,6 +56,13 @@ namespace Log {
 	template<typename ... T>
 	void Critical(const char * message, const T & ... values) {
 		spdlog::critical(message, values...);
+	}
+
+	template<>
+	void Debug<boost::asio::ip::udp::endpoint>(const char * message, const boost::asio::ip::udp::endpoint & value) {
+		std::ostringstream oss;
+		oss << value.address().to_string() << ":" << std::to_string(value.port());
+		spdlog::debug(message, oss.str());
 	}
 	
 	template void Debug<std::string>(const char * message, const std::string & value);

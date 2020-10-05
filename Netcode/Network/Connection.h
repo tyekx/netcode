@@ -11,6 +11,7 @@
 #include <random>
 #include "NetcodeFoundation/Enum.hpp"
 #include <Netcode/System/FpsCounter.h>
+#include <Netcode/System/System.h>
 
 #include <ppltasks.h>
 #include <agents.h>
@@ -307,6 +308,53 @@ namespace Netcode::Network {
 			socket.async_send(buffers, remoteEndpoint, handler);
 		}
 	};
+
+	template<typename SockType>
+	class DebugSyncAsioSocketHandler {
+	public:
+		DebugSyncAsioSocketHandler(const SockType &) { }
+
+		template<typename MutableBufferSequence, typename Endpoint>
+		static size_t Read(SockType & socket, const MutableBufferSequence & buffers, Endpoint & remoteEndpoint, ErrorCode & ec) {
+			return socket.receive_from(buffers, remoteEndpoint, 0, ec);
+		}
+
+		template<typename ConstBufferSequence, typename Endpoint>
+		static size_t Write(SockType & socket, const ConstBufferSequence & buffers, const Endpoint & remoteEndpoint, ErrorCode & ec) {
+			SleepFor(std::chrono::milliseconds(50));
+			return socket.send_to(buffers, remoteEndpoint, 0, ec);
+		}
+
+		template<typename MutableBufferSequence, typename Endpoint, typename Handler>
+		static void Read(SockType & socket, const MutableBufferSequence & buffers, Endpoint & remoteEndpoint, Handler && handler) {
+			ErrorCode ec;
+			size_t s = socket.receive_from(buffers, remoteEndpoint, 0, ec);
+			handler(ec, s);
+		}
+
+		template<typename MutableBufferSequence, typename Handler>
+		static void Read(SockType & socket, const MutableBufferSequence & buffers, Handler && handler) {
+			ErrorCode ec;
+			size_t s = socket.receive(buffers, 0, ec);
+			handler(ec, s);
+		}
+
+		template<typename ConstBufferSequence, typename Handler>
+		static void Write(SockType & socket, const ConstBufferSequence & buffers, Handler && handler) {
+			ErrorCode ec;
+			SleepFor(std::chrono::milliseconds(50));
+			size_t s = socket.send(buffers, 0, ec);
+			handler(ec, s);
+		}
+
+		template<typename ConstBufferSequence, typename Endpoint, typename Handler>
+		static void Write(SockType & socket, const ConstBufferSequence & buffers, const Endpoint & remoteEndpoint, Handler && handler) {
+			ErrorCode ec;
+			SleepFor(std::chrono::milliseconds(50));
+			size_t s = socket.send_to(buffers, remoteEndpoint, 0, ec);
+			handler(ec, s);
+		}
+	};
 	
 	template<typename SockType>
 	class DebugSharedAsioSocketReadWriter {
@@ -418,7 +466,7 @@ namespace Netcode::Network {
 	};
 
 	class ConnectionStorage {
-		SlimReadWriteLock srwLock;
+		mutable SlimReadWriteLock srwLock;
 		std::vector<Ref<ConnectionBase>> connections;
 	public:
 		void RemoveConnection(Ref<ConnectionBase> conn) {
@@ -439,6 +487,11 @@ namespace Netcode::Network {
 			if(it == std::end(connections)) {
 				connections.emplace_back(std::move(conn));
 			}
+		}
+
+		uint32_t GetConnectionCount() const {
+			ScopedSharedLock<SlimReadWriteLock> scopedLock{ srwLock };
+			return static_cast<uint32_t>(connections.size());
 		}
 		
 		Ref<ConnectionBase> GetConnectionByEndpoint(const UdpEndpoint& ep) {
@@ -680,10 +733,7 @@ namespace Netcode::Network {
 	protected:
 		virtual void RunImpl() override {
 			UdpAck udpAck = concurrency::receive(mainSource);
-
 			AckHandle handle;
-
-			Log::Debug("ACK received");
 
 			if(concurrency::try_receive(sideSource, handle, [&udpAck](const AckHandle & h) -> bool {
 				return h.endpoint == udpAck.endpoint && h.sequence == udpAck.sequence;
@@ -763,16 +813,12 @@ namespace Netcode::Network {
 			concurrency::create_task(tce).then([this, callback, timer, handle](uint32_t result) -> void {
 				timer->unlink_target(callback.get());
 				timer->stop();
-
-				Log::Debug("Timer stopping");
 				
 				TrResult tr;
 				if(result == 0) {
 					tr.state = TransmissionState::SUCCESS;
-					Log::Debug("Set state to success");
 				} else {
 					tr.state = TransmissionState::TIMEOUT;
-					Log::Debug("Set state to timeout");
 					tr.attempts = result;
 					UdpAck fakeAck;
 					fakeAck.endpoint = handle.data->GetEndpoint();
@@ -903,6 +949,7 @@ namespace Netcode::Network {
 			SocketOperationResult sor;
 			sor.numBytes = socket->Receive(udpPacket->GetMutableBuffer(), udpPacket->GetEndpoint(), sor.errorCode);
 			udpPacket->SetDataSize(sor.numBytes);
+			udpPacket->SetTimestamp(SystemClock::LocalNow());
 
 			if(sor.errorCode) {
 				Log::Debug("Error while reading: {0}", sor.errorCode.message());
@@ -929,6 +976,12 @@ namespace Netcode::Network {
 		uint32_t dataOffset;
 		Ref<UdpPacket> data;
 	};
+
+	struct ControlMessage {
+		Timestamp receivedAt;
+		UdpEndpoint source;
+		Protocol::Header content;
+	};
 	
 	class ParserAgent : public AgentBase {
 	public:
@@ -937,14 +990,22 @@ namespace Netcode::Network {
 		concurrency::ITarget<UdpAck> & ackTarget;
 		concurrency::ITarget<SocketWriteHandle> & ackWriteTarget;
 		concurrency::ITarget<UdpFragment> & fragWriteTarget;
+		concurrency::ITarget<ControlMessage> & controlTarget;
 
 		ParserAgent(Ref<PacketStorage<UdpPacket>> pktStorage,
 			concurrency::ISource<Ref<UdpPacket>> & source,
 			concurrency::ITarget<UdpAck> & ackTarget,
 			concurrency::ITarget<SocketWriteHandle> & ackWriteTarget,
 			concurrency::ITarget<UdpFragment> & fragWriteTarget,
+			concurrency::ITarget<ControlMessage> & controlTarget,
 			Ptr<WorkToken> wt) :
-			AgentBase{ wt }, packetStorage{ std::move(pktStorage) }, source{ source }, ackTarget{ ackTarget }, ackWriteTarget{ ackWriteTarget }, fragWriteTarget{ fragWriteTarget } { }
+			AgentBase{ wt },
+			packetStorage{ std::move(pktStorage) },
+			source{ source },
+			ackTarget{ ackTarget },
+			ackWriteTarget{ ackWriteTarget },
+			fragWriteTarget{ fragWriteTarget },
+			controlTarget{ controlTarget } { }
 		
 	protected:
 		void SendAck(uint32_t seq, const UdpEndpoint & ep) {
@@ -1066,13 +1127,16 @@ namespace Netcode::Network {
 			}
 
 			if((header.type() & 0x1) == 0x1) {
-
-				Log::Debug("Responsing with an ACK");
+				
 				SendAck(header.sequence(), handle->GetEndpoint());
 				
 			}
 
-			// ---
+			ControlMessage cm;
+			cm.content = std::move(header);
+			cm.source = handle->GetEndpoint();
+			cm.receivedAt = handle->GetTimestamp();
+			concurrency::send(controlTarget, std::move(cm));
 		}
 	};
 	
@@ -1258,12 +1322,44 @@ namespace Netcode::Network {
 			}
 		}
 	};
+
+	enum class FilterResult {
+		IGNORED,
+		ONLY_READ,
+		CONSUMED
+	};
+
+	enum class FilterState {
+		IDLE,
+		RUNNING,
+		COMPLETED
+	};
+
+	class NetcodeService;
+	
+	class FilterBase {
+	protected:
+		FilterState state;
+	public:
+		virtual ~FilterBase() = default;
+		
+		virtual bool IsCompleted() const {
+			return state == FilterState::COMPLETED;
+		}
+
+		virtual bool CheckTimeout(Timestamp checkAt) {
+			return false;
+		}
+
+		virtual FilterResult Run(Ptr<NetcodeService> service, Timestamp timestamp, ControlMessage & cm) {
+			return FilterResult::IGNORED;
+		}
+	};
 	
 	class NetcodeService {
 	public:
 #if defined(NETCODE_DEBUG)
-		// basic socket with a debug readerwriter that enables fakelag
-		using NetcodeSocketType = BasicSocket<boost::asio::ip::udp::socket, SyncAsioSocketHandler<boost::asio::ip::udp::socket>>;
+		using NetcodeSocketType = BasicSocket<boost::asio::ip::udp::socket, DebugSyncAsioSocketHandler<boost::asio::ip::udp::socket>>;
 #else
 		using NetcodeSocketType = SharedUdpSocket;
 #endif
@@ -1291,6 +1387,8 @@ namespace Netcode::Network {
 
 		concurrency::unbounded_buffer<UdpFragment> fragmentBuffer;
 
+		concurrency::unbounded_buffer<ControlMessage> controlMessages;
+
 		concurrency::unbounded_buffer<Ref<UdpPacket>> receivedPackets;
 
 		WorkToken workToken;
@@ -1312,10 +1410,42 @@ namespace Netcode::Network {
 		ParserAgent parserAgent;
 
 		DefragmenterAgent defragAgent;
+
+		std::vector<std::unique_ptr<FilterBase>> filters;
 		
 	public:
 		ConnectionStorage* GetConnections() {
 			return &connectionStorage;
+		}
+
+		UdpEndpoint GetLocalEndpoint() const {
+			return socket.GetSocket().local_endpoint();
+		}
+
+		void AddFilter(std::unique_ptr<FilterBase> filter) {
+			filters.emplace_back(std::move(filter));
+		}
+
+		void RunFilters() {
+			ControlMessage cm;
+			Timestamp ts = SystemClock::LocalNow();
+			while(concurrency::try_receive(controlMessages, cm)) {
+				for(auto it = std::begin(filters); it != std::end(filters); it++) {
+					if(!(*it)->IsCompleted()) {
+						FilterResult r = (*it)->Run(this, ts, cm);
+
+						if(r == FilterResult::CONSUMED) {
+							break;
+						}
+					}
+				}
+			}
+
+			auto it = std::remove_if(std::begin(filters), std::end(filters), [ts](const std::unique_ptr<FilterBase> & f) -> bool {
+				return f->IsCompleted() || f->CheckTimeout(ts);
+			});
+
+			filters.erase(it, std::end(filters));
 		}
 		
 		NetcodeService(NetcodeSocketType::SocketType sock) : socket { std::move(sock) },
@@ -1327,6 +1457,9 @@ namespace Netcode::Network {
 			writeRequests{},
 			reliableHandles{},
 			gameMessageHandles{},
+			fragmentBuffer{},
+			controlMessages{},
+			receivedPackets{},
 			workToken{},
 			protocolConfig{},
 			mtu{ 1280 },
@@ -1335,7 +1468,7 @@ namespace Netcode::Network {
 			fragmenterAgent{ gameMessageHandles, writeRequests, &workToken },
 			writerAgent{ writeRequests, &socket, &workToken },
 			readerAgent{ &socket, packetStorage, receivedPackets, &workToken },
-			parserAgent{ packetStorage, receivedPackets, receivedAckBuffer, writeRequests, fragmentBuffer, &workToken },
+			parserAgent{ packetStorage, receivedPackets, receivedAckBuffer, writeRequests, fragmentBuffer, controlMessages, &workToken },
 			defragAgent{ &connectionStorage, fragmentBuffer, &workToken } {
 
 			ackAgent.start();
