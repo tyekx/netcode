@@ -76,6 +76,7 @@ namespace Log {
 	template void Debug<float, float, float, float>(const char * message, const float & value, const float & value2, const float & value3, const float & value4);
 	template void Debug<>(const char * message);
 	template void Debug<void *, uint64_t, uint64_t>(const char * message, void * const & value, const uint64_t & value2, const uint64_t & value3);
+	template void Debug<void *>(const char * message, void * const & value);
 
 	template void Info<>(const char * message);
 	template void Info<std::string>(const char * message, const std::string & value);

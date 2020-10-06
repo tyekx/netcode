@@ -12,10 +12,8 @@
 #include "NetcodeFoundation/Enum.hpp"
 #include <Netcode/System/FpsCounter.h>
 #include <Netcode/System/System.h>
-
-#include <ppltasks.h>
-#include <agents.h>
-#include <ppl.h>
+#include <Netcode/PlacedFunction.hpp>
+#include <boost/lockfree/queue.hpp>
 
 namespace Netcode::Network {
 
@@ -57,6 +55,277 @@ namespace Netcode::Network {
 			return (static_cast<uint32_t>(fragmentIndex) << 24) |
 				(static_cast<uint32_t>(fragmentCount) << 16) |
 				static_cast<uint32_t>(sizeInBytes);
+		}
+	};
+
+
+	/*
+	 * LockFree completion token
+	 * can facilitate a single callback function and a single result
+	 * internals does not allocate
+	 */
+	template<typename T>
+	class CompletionTokenType : public std::enable_shared_from_this<CompletionTokenType<T>> {
+		std::aligned_storage_t<sizeof(T)> storage;
+		PlacedFunction<56, void(const T &)> callback;
+		boost::asio::io_context * ioc;
+		/*
+		 *  - state only increases with CAS operations
+		 *  - 1: callback write started flag
+		 *  - 2: result write started flag
+		 *  - 4: callback saved
+		 *  - 8: result saved
+		 *  - 15: every neccessary flag set, ready to invoke
+		 *  - 31: all done
+		 */
+		std::atomic_uint32_t state;
+
+		using Base = std::enable_shared_from_this<CompletionTokenType<T>>;
+
+		void InvokeCallbackUnsafe() {
+			callback(*reinterpret_cast<const T *>(std::addressof(storage)));
+		}
+
+		void TryInvoke() {
+			uint32_t expectedValue = 0xF;
+			if(state.compare_exchange_strong(expectedValue, 0x1F, std::memory_order_release)) {
+				boost::asio::post(*ioc, [this, lifetime = Base::shared_from_this()]() -> void {
+					InvokeCallbackUnsafe();
+				});
+			}
+		}
+
+		bool TrySetFlag(uint32_t flag) {
+			for(;;) {
+				uint32_t currentState = state.load(std::memory_order_acquire);
+
+				if((currentState & flag) == flag) {
+					return false;
+				}
+
+				const uint32_t desiredState = state | flag;
+
+				if(state.compare_exchange_strong(currentState, desiredState, std::memory_order_release)) {
+					return true;
+				}
+			}
+		}
+
+	public:
+		CompletionTokenType(boost::asio::io_context * ioc = nullptr) : storage{}, callback{}, ioc{ ioc }, state{ 0 } {
+
+		}
+
+		~CompletionTokenType() {
+			if((state & 0xA) == 0xA) {
+				reinterpret_cast<T *>(std::addressof(storage))->~T();
+			}
+		}
+
+		template<typename Functor>
+		CompletionTokenType(boost::asio::io_context * ioc, Functor&& f) :
+			storage{},
+			callback{ std::forward<Functor>(f) },
+			ioc{ ioc },
+			state{ 0x5 } {
+
+		}
+
+		CompletionTokenType(const CompletionTokenType &) = delete;
+		CompletionTokenType(CompletionTokenType &&) noexcept = delete;
+		CompletionTokenType & operator=(const CompletionTokenType &) = delete;
+		CompletionTokenType & operator=(CompletionTokenType &&) noexcept = delete;
+
+		[[nodiscard]]
+		bool IsCompleted() const {
+			return (state.load(std::memory_order_acquire) & 0xA) == 0xA;
+		}
+
+		[[nodiscard]]
+		bool HasCallback() const {
+			return (state.load(std::memory_order_acquire) & 0x5) == 0x5;
+		}
+
+		template<typename Functor>
+		bool Then(Functor f) {
+			if(TrySetFlag(0x1)) {
+				callback = std::move(f);
+				if(TrySetFlag(0x4)) {
+					TryInvoke();
+				}
+				return true;
+			}
+			return false;
+		}
+
+		bool Set(T obj) {
+			if(TrySetFlag(0x2)) {
+				new (std::addressof(storage)) T{ std::move(obj) };
+				if(TrySetFlag(0x8)) {
+					TryInvoke();
+				}
+				return true;
+			}
+			return false;
+		}
+	};
+
+	template<typename T>
+	using CompletionToken = Ref<CompletionTokenType<T>>;
+
+
+	template<typename T>
+	class ArenaAllocatorAdapter {
+		google::protobuf::Arena * a;
+	public:
+
+		using value_type = T;
+		using size_type = std::size_t;
+		using difference_type = std::ptrdiff_t;
+
+		google::protobuf::Arena * GetArena() const {
+			return a;
+		}
+
+		~ArenaAllocatorAdapter() = default;
+		ArenaAllocatorAdapter() : a{ nullptr } { }
+		ArenaAllocatorAdapter(google::protobuf::Arena * a) : a{ a } {}
+		ArenaAllocatorAdapter(const ArenaAllocatorAdapter &) = default;
+		ArenaAllocatorAdapter(ArenaAllocatorAdapter &&) noexcept = default;
+		ArenaAllocatorAdapter & operator=(const ArenaAllocatorAdapter &) = default;
+		ArenaAllocatorAdapter & operator=(ArenaAllocatorAdapter &&) noexcept = default;
+
+		template<typename U>
+		bool operator==(const ArenaAllocatorAdapter<U> & rhs) const {
+			return GetArena() == rhs.GetArena();
+		}
+
+		template<typename U>
+		ArenaAllocatorAdapter(const ArenaAllocatorAdapter<U> & rhs) : a{ rhs.GetArena() } { }
+
+		template< typename U > struct rebind {
+			using other = ArenaAllocatorAdapter<U>;
+		};
+
+		T * allocate(std::size_t n) {
+			return reinterpret_cast<T *>(google::protobuf::Arena::CreateArray<uint8_t>(a, sizeof(T) * n));
+		}
+
+		static void deallocate(T * ptr, std::size_t n) { }
+	};
+
+	template<typename T>
+	using NetVector = std::vector<T, ArenaAllocatorAdapter<T>>;
+
+	class NetAllocator : public std::enable_shared_from_this<NetAllocator> {
+
+		// to avoid the pointer storage, and constructor requirement in uniq ptr
+		struct RawPtrDeleter {
+			void operator()(void * ptr) {
+				std::free(ptr);
+			}
+		};
+
+		// allows the user to retain this block even if a the arena is Reset.
+		std::unique_ptr<void, RawPtrDeleter> firstBlock;
+		size_t blockSize;
+		boost::asio::io_context * ioc;
+		google::protobuf::Arena arena;
+
+		static google::protobuf::ArenaOptions GetOptions(void * firstBlock, size_t blockSize) {
+			google::protobuf::ArenaOptions ao;
+			ao.initial_block = reinterpret_cast<char *>(firstBlock);
+			ao.initial_block_size = blockSize;
+			ao.max_block_size = blockSize;
+			ao.start_block_size = blockSize;
+			return ao;
+		}
+
+		template<typename T>
+		class ArenaOwnerAdapter {
+			std::shared_ptr<NetAllocator> alloc;
+
+		public:
+			using value_type = T;
+			using size_type = std::size_t;
+			using difference_type = std::ptrdiff_t;
+
+
+			[[nodiscard]]
+			std::shared_ptr<NetAllocator> GetAllocator() const {
+				return alloc;
+			}
+
+			T * allocate(size_type n) {
+				return alloc->GetAdapter<T>().allocate(n);
+			}
+
+			static void deallocate(T * ptr, size_type n) {
+
+			}
+
+			ArenaOwnerAdapter() : alloc{ nullptr } { }
+
+			ArenaOwnerAdapter(std::shared_ptr<NetAllocator> alloc) : alloc{ std::move(alloc) } { }
+
+			template<typename U>
+			ArenaOwnerAdapter(const ArenaOwnerAdapter<U> & rhs) : alloc{ rhs.GetAllocator() } {
+
+			}
+
+			template<typename U>
+			struct rebind {
+				using other = ArenaOwnerAdapter<U>;
+			};
+		};
+
+	public:
+		NetAllocator(boost::asio::io_context * ioc, size_t blockSize) :
+			firstBlock{ std::malloc(blockSize) }, blockSize{ blockSize }, ioc{ ioc }, arena{ GetOptions(firstBlock.get(), blockSize) } {
+		}
+
+		/*
+		* Clears the arena and reinitializes it without reallocating the first block.
+		* Dangerous method as it'll ignore every live Ref<T>.
+		* Main use-case is to reuse allocations when an error happens.
+		*/
+		void Clear() {
+			arena.Reset();
+			arena.Init(GetOptions(firstBlock.get(), blockSize));
+		}
+
+		google::protobuf::Arena * GetArena() {
+			return &arena;
+		}
+
+		template<typename T>
+		ArenaAllocatorAdapter<T> GetAdapter() {
+			return ArenaAllocatorAdapter<T>{ &arena };
+		}
+
+		template<typename T>
+		T * MakeArray(size_t n) {
+			return google::protobuf::Arena::CreateArray<T>(&arena, n);
+		}
+
+		template<typename T>
+		T * MakeProto() {
+			return google::protobuf::Arena::CreateMessage<T>(&arena);
+		}
+
+		template<typename T, typename ... U>
+		T * Make(U && ... args) {
+			return google::protobuf::Arena::Create<T>(&arena, std::forward<U>(args)...);
+		}
+
+		template<typename T, typename ... U>
+		std::shared_ptr<T> MakeShared(U&& ... args) {
+			return std::allocate_shared<T>(ArenaOwnerAdapter<void>{ shared_from_this() }, std::forward<U>(args)...);
+		}
+
+		template<typename T, typename ... U>
+		CompletionToken<T> MakeCompletionToken(U && ... args) {
+			return std::allocate_shared<CompletionTokenType<T>>(ArenaOwnerAdapter<void>{ shared_from_this() }, ioc, std::forward<U>(args)...);
 		}
 	};
 
@@ -178,7 +447,7 @@ namespace Netcode::Network {
 
 
 	template<typename SockType, typename SockReaderWriter>
-	class BasicSocket : public SockReaderWriter {
+	class BasicSocket : private SockReaderWriter {
 	protected:
 		SockType socket;
 	public:
@@ -227,51 +496,7 @@ namespace Netcode::Network {
 		
 		template<typename ConstBufferSequence, typename Endpoint, typename Handler>
 		static void Write(SockType & socket, const ConstBufferSequence & buffers, const Endpoint& remoteEndpoint, Handler && handler) {
-			socket.async_send(buffers, remoteEndpoint, handler);
-		}
-	};
-
-	template<typename SockType>
-	class SyncAsioSocketHandler {
-	public:
-		SyncAsioSocketHandler(const SockType &) { }
-
-		template<typename MutableBufferSequence, typename Endpoint>
-		static size_t Read(SockType & socket, const MutableBufferSequence & buffers, Endpoint & remoteEndpoint, ErrorCode & ec) {
-			return socket.receive_from(buffers, remoteEndpoint, 0, ec);
-		}
-
-		template<typename ConstBufferSequence, typename Endpoint>
-		static size_t Write(SockType & socket, const ConstBufferSequence & buffers, const Endpoint & remoteEndpoint, ErrorCode  &ec) {
-			return socket.send_to(buffers, remoteEndpoint, 0, ec);
-		}
-		
-		template<typename MutableBufferSequence, typename Endpoint, typename Handler>
-		static void Read(SockType & socket, const MutableBufferSequence & buffers, Endpoint & remoteEndpoint, Handler && handler) {
-			ErrorCode ec;
-			size_t s = socket.receive_from(buffers, remoteEndpoint, 0, ec);
-			handler(ec, s);
-		}
-
-		template<typename MutableBufferSequence, typename Handler>
-		static void Read(SockType & socket, const MutableBufferSequence & buffers, Handler && handler) {
-			ErrorCode ec;
-			size_t s = socket.receive(buffers, 0, ec);
-			handler(ec, s);
-		}
-
-		template<typename ConstBufferSequence, typename Handler>
-		static void Write(SockType & socket, const ConstBufferSequence & buffers, Handler && handler) {
-			ErrorCode ec;
-			size_t s = socket.send(buffers, 0, ec);
-			handler(ec, s);
-		}
-
-		template<typename ConstBufferSequence, typename Endpoint, typename Handler>
-		static void Write(SockType & socket, const ConstBufferSequence & buffers, const Endpoint & remoteEndpoint, Handler && handler) {
-			ErrorCode ec;
-			size_t s = socket.send_to(buffers, remoteEndpoint, 0, ec);
-			handler(ec, s);
+			socket.async_send_to(buffers, remoteEndpoint, handler);
 		}
 	};
 
@@ -309,53 +534,6 @@ namespace Netcode::Network {
 		}
 	};
 
-	template<typename SockType>
-	class DebugSyncAsioSocketHandler {
-	public:
-		DebugSyncAsioSocketHandler(const SockType &) { }
-
-		template<typename MutableBufferSequence, typename Endpoint>
-		static size_t Read(SockType & socket, const MutableBufferSequence & buffers, Endpoint & remoteEndpoint, ErrorCode & ec) {
-			return socket.receive_from(buffers, remoteEndpoint, 0, ec);
-		}
-
-		template<typename ConstBufferSequence, typename Endpoint>
-		static size_t Write(SockType & socket, const ConstBufferSequence & buffers, const Endpoint & remoteEndpoint, ErrorCode & ec) {
-			SleepFor(std::chrono::milliseconds(50));
-			return socket.send_to(buffers, remoteEndpoint, 0, ec);
-		}
-
-		template<typename MutableBufferSequence, typename Endpoint, typename Handler>
-		static void Read(SockType & socket, const MutableBufferSequence & buffers, Endpoint & remoteEndpoint, Handler && handler) {
-			ErrorCode ec;
-			size_t s = socket.receive_from(buffers, remoteEndpoint, 0, ec);
-			handler(ec, s);
-		}
-
-		template<typename MutableBufferSequence, typename Handler>
-		static void Read(SockType & socket, const MutableBufferSequence & buffers, Handler && handler) {
-			ErrorCode ec;
-			size_t s = socket.receive(buffers, 0, ec);
-			handler(ec, s);
-		}
-
-		template<typename ConstBufferSequence, typename Handler>
-		static void Write(SockType & socket, const ConstBufferSequence & buffers, Handler && handler) {
-			ErrorCode ec;
-			SleepFor(std::chrono::milliseconds(50));
-			size_t s = socket.send(buffers, 0, ec);
-			handler(ec, s);
-		}
-
-		template<typename ConstBufferSequence, typename Endpoint, typename Handler>
-		static void Write(SockType & socket, const ConstBufferSequence & buffers, const Endpoint & remoteEndpoint, Handler && handler) {
-			ErrorCode ec;
-			SleepFor(std::chrono::milliseconds(50));
-			size_t s = socket.send_to(buffers, remoteEndpoint, 0, ec);
-			handler(ec, s);
-		}
-	};
-	
 	template<typename SockType>
 	class DebugSharedAsioSocketReadWriter {
 		SlimReadWriteLock srwLock;
@@ -450,11 +628,22 @@ namespace Netcode::Network {
 
 	using SharedUdpSocket = BasicSharedAsioSocket<boost::asio::ip::udp::socket>;
 
+	struct ControlMessage {
+		Ref<NetAllocator> allocator;
+		UdpPacket * packet;
+		Protocol::Header * header;
+	};
+
+	struct GameMessage {
+		Ref<NetAllocator> allocator;
+		Protocol::Update * update;
+	};
+
 	class ConnectionBase : public std::enable_shared_from_this<ConnectionBase> {
 	public:
-		MessageQueue<Protocol::Header> sharedControlQueue;
+		MessageQueue<ControlMessage> sharedControlQueue;
 		// shared between service and consumer
-		MessageQueue<Protocol::Update> sharedQueue;
+		MessageQueue<GameMessage> sharedQueue;
 		// must be kept unchanged for a connection
 		UdpEndpoint endpoint;
 		// handled by the service
@@ -507,16 +696,6 @@ namespace Netcode::Network {
 
 			return nullptr;
 		}
-	};
-
-	class Request {
-	public:
-		UdpEndpoint sourceEndpoint;
-		Protocol::Header header;
-
-		NETCODE_CONSTRUCTORS_NO_COPY(Request);
-
-		Request(const UdpEndpoint & ep, Protocol::Header h) : sourceEndpoint{ ep }, header{ std::move(h) } { }
 	};
 
 	struct ResendArgs {
@@ -591,738 +770,6 @@ namespace Netcode::Network {
 		UdpEndpoint endpoint;
 	};
 
-	struct HandleBase {
-		concurrency::task_completion_event<TrResult> completionEvent;
-		TrResult result;
-		HandleBase() : completionEvent{} { }
-	};
-	
-	struct RawUdpHandle : public HandleBase {
-		Ref<UdpPacket> data;
-	};
-
-	struct ReliableUdpHandle : public HandleBase {
-		uint32_t sequence;
-		ResendArgs resendArgs;
-		Ref<UdpPacket> data;
-	};
-
-	struct FragmentationContext {
-		Ref<UdpPacket> headerContent;
-		Ref<GamePacket> gameContent;
-		std::array<boost::asio::const_buffer, 2> constBuffers;
-
-		uint32_t GetHeaderSize() const {
-			return static_cast<uint32_t>(constBuffers[0].size());
-		}
-
-		uint32_t GetDataSize() const {
-			return static_cast<uint32_t>(constBuffers[1].size());
-		}
-
-		FragmentationContext(Ref<UdpPacket> hdrContent, uint32_t hdrOffset, uint32_t hdrSize,
-			Ref<GamePacket> msgContent, uint32_t msgOffset, uint32_t msgSize) :
-			headerContent{ std::move(hdrContent) },
-			gameContent{ std::move(msgContent) },
-			constBuffers{
-				boost::asio::const_buffer{ headerContent->GetData() + hdrOffset, hdrSize },
-				boost::asio::const_buffer{ gameContent->GetData() + msgOffset, msgSize }
-		} { }
-	};
-
-	struct FragmentedUdpHandle : public HandleBase {
-		using FragCtxHandle = ManagedPool<FragmentationContext>::ObjectType;
-
-		std::array<FragCtxHandle, 16> fragments;
-		uint32_t numFragments;
-
-		FragmentedUdpHandle() : HandleBase{}, fragments {}, numFragments{} { }
-	};
-
-	struct SocketWriteHandle {
-		concurrency::task_completion_event<SocketOperationResult> completionEvent;
-		std::array<boost::asio::const_buffer, 2> buffers;
-		UdpEndpoint endpoint;
-		Ref<UdpPacket> lifetime;
-		Ref<GamePacket> lifetime2;
-	};
-
-	class WorkToken {
-		int32_t done;
-
-	public:
-		WorkToken() : done{ 0 } { }
-		
-		void SetDone() {
-			done = 1;
-		}
-
-		bool IsDone() const {
-			return done != 0;
-		}
-	};
-
-	class AgentBase : public concurrency::agent {
-	protected:
-		Ptr<WorkToken> token;
-		
-		virtual void run() override {
-			while(!token->IsDone()) {
-				RunImpl();
-			}
-		}
-	protected:
-		virtual void RunImpl() = 0;
-
-	public:
-		AgentBase(Ptr<WorkToken> wt) : concurrency::agent{}, token{ wt } {}
-	};
-
-	template<typename SockType>
-	class UdpSocketWriterAgent : public AgentBase {
-		concurrency::ISource<SocketWriteHandle> & source;
-		
-		Ptr<SockType> socket;
-	public:
-
-		UdpSocketWriterAgent(concurrency::ISource<SocketWriteHandle> & source, Ptr<SockType> sock, Ptr<WorkToken> wt) :
-			AgentBase{ wt }, source{ source }, socket{ sock } {
-			
-		}
-
-		virtual void RunImpl() override {
-			SocketOperationResult sor;
-			auto input = concurrency::receive(source);
-
-			/*std::ostringstream oss;
-			oss << input.buffers[0].data() << ":" << input.buffers[0].size() << " sending to: " << input.endpoint.address().to_string() << ":" << std::to_string(input.endpoint.port());
-			
-			Log::Debug("{0}", oss.str());*/
-			
-			sor.numBytes = socket->Send(input.buffers, input.endpoint, sor.errorCode);
-
-			if(sor.errorCode) {
-				Log::Debug("Err while writing: {0}", sor.errorCode.message());
-			}
-			
-			input.completionEvent.set(std::move(sor));
-		}
-	};
-
-	struct AckHandle {
-		concurrency::task_completion_event<uint32_t> completionEvent;
-		UdpEndpoint endpoint;
-		uint32_t sequence;
-
-		AckHandle() = default;
-		AckHandle(concurrency::task_completion_event<uint32_t> evt, const UdpEndpoint& ep, uint32_t seq) :
-			completionEvent{ std::move(evt) }, endpoint{ ep }, sequence{ seq } { }
-	};
-	
-	class UdpAckAgent : public AgentBase {
-	private:
-		concurrency::ISource<AckHandle> & sideSource;
-		concurrency::ISource<UdpAck> & mainSource;
-	public:
-
-		UdpAckAgent(concurrency::ISource<AckHandle> & sideSource, concurrency::ISource<UdpAck> & mainSource, Ptr<WorkToken> token) :
-			AgentBase{ token }, sideSource{ sideSource }, mainSource{ mainSource }  {
-			
-		}
-		
-	protected:
-		virtual void RunImpl() override {
-			UdpAck udpAck = concurrency::receive(mainSource);
-			AckHandle handle;
-
-			if(concurrency::try_receive(sideSource, handle, [&udpAck](const AckHandle & h) -> bool {
-				return h.endpoint == udpAck.endpoint && h.sequence == udpAck.sequence;
-			})) {
-				bool b = handle.completionEvent.set(0);
-				Log::Debug("Tried receive success, setting result: {0}", static_cast<int>(b));
-			}
-		}
-	};
-	
-	class ReliableUdpAgent : public AgentBase {
-	private:
-		concurrency::ISource<ReliableUdpHandle> & source;
-		concurrency::ITarget<SocketWriteHandle> & sockWriteTarget;
-		concurrency::ITarget<AckHandle> & waitingForAckTarget;
-		concurrency::ITarget<UdpAck> & fakeAckTarget;
-		
-	public:
-
-		explicit ReliableUdpAgent(	concurrency::ISource<ReliableUdpHandle> & src,
-									concurrency::ITarget<SocketWriteHandle> & swt,
-									concurrency::ITarget<AckHandle> & wfat,
-									concurrency::ITarget<UdpAck> & fat,
-									Ptr<WorkToken> token) :
-			AgentBase{ token }, source{ src }, sockWriteTarget{ swt }, waitingForAckTarget{ wfat }, fakeAckTarget{ fat } {
-
-		}
-	protected:
-
-		void SendToSocket(concurrency::task_completion_event<uint32_t> evt, ReliableUdpHandle handle, uint32_t currentAttempt) {
-			SocketWriteHandle swh;
-			swh.endpoint = handle.data->GetEndpoint();
-			swh.buffers[0] = handle.data->GetConstBuffer();
-			concurrency::send(sockWriteTarget, swh);
-			concurrency::create_task(swh.completionEvent).then([evt, currentAttempt, mainEvent = handle.completionEvent](SocketOperationResult sor) -> void {
-				if(sor.errorCode) {
-					TrResult tr;
-					tr.state = TransmissionState::ERROR_WHILE_SENDING;
-					tr.errorIfAny = sor.errorCode;
-					tr.sentBytes = sor.numBytes;
-					mainEvent.set(tr);
-					evt.set(currentAttempt);
-				}
-			});
-		}
-
-		void SendToAck(concurrency::task_completion_event<uint32_t> evt, ReliableUdpHandle handle) {
-			AckHandle a{ std::move(evt), handle.data->GetEndpoint(), handle.sequence };
-			concurrency::send(waitingForAckTarget, a);
-		}
-		
-		virtual void RunImpl() override {
-			ReliableUdpHandle handle = concurrency::receive(source);
-
-			int64_t ms = std::chrono::duration_cast<std::chrono::milliseconds>(handle.resendArgs.resendInterval).count();
-			uint32_t maxAttempts = handle.resendArgs.maxAttempts;
-
-			concurrency::task_completion_event<uint32_t> tce;
-			
-			auto callback = std::make_shared<concurrency::call<ReliableUdpHandle>>([this, i = 1u, maxAttempts, tce](ReliableUdpHandle msg) mutable -> void {
-				uint32_t currentAttempts = i;
-
-				if(++i >= maxAttempts) {
-					tce.set(currentAttempts); // ready for cleanup
-				} else {
-					SendToSocket(tce, msg, i);
-				}
-			});
-
-			SendToAck(tce, handle);
-			SendToSocket(tce, handle, 1);
-
-			auto timer = std::make_shared<concurrency::timer<ReliableUdpHandle>>(static_cast<uint32_t>(ms), handle, callback.get(), true);
-
-			timer->start();
-
-			concurrency::create_task(tce).then([this, callback, timer, handle](uint32_t result) -> void {
-				timer->unlink_target(callback.get());
-				timer->stop();
-				
-				TrResult tr;
-				if(result == 0) {
-					tr.state = TransmissionState::SUCCESS;
-				} else {
-					tr.state = TransmissionState::TIMEOUT;
-					tr.attempts = result;
-					UdpAck fakeAck;
-					fakeAck.endpoint = handle.data->GetEndpoint();
-					fakeAck.sequence = handle.sequence;
-					concurrency::send(fakeAckTarget, fakeAck);
-				}
-				
-				handle.completionEvent.set(tr);
-			});
-		}
-	};
-
-	struct GameMessageHandle : public HandleBase {
-		uint32_t sequence;
-		Ref<GamePacket> gamePacket; // serialized game data
-		Ref<UdpPacket> headerPacket; // empty header buffer
-	};
-	
-	class UdpFragmenterAgent : public AgentBase {
-	private:
-		concurrency::ISource<GameMessageHandle> & source;
-		concurrency::ITarget<SocketWriteHandle> & sockWriteTarget;
-		uint32_t mtu;
-
-	public:
-		UdpFragmenterAgent(concurrency::ISource<GameMessageHandle> & source, concurrency::ITarget<SocketWriteHandle> & sockWt, Ptr<WorkToken> token) : AgentBase{ token },
-			source{ source }, sockWriteTarget{ sockWt }, mtu{ 1280 } {
-
-		}
-
-		void SetMtu(uint32_t maxTrUnit) {
-			mtu = maxTrUnit;
-		}
-		
-	protected:
-		virtual void RunImpl() override {
-			GameMessageHandle gmh = concurrency::receive(source);
-
-			Protocol::Header protoHeader;
-			protoHeader.set_sequence(gmh.sequence);
-			protoHeader.set_type(Protocol::MessageType::GAME);
-
-			const uint32_t serializedHeaderSize = protoHeader.ByteSizeLong();
-			const uint32_t totalHeaderSize = serializedHeaderSize + 2 * sizeof(google::protobuf::uint32);
-			const uint32_t totalDataSizeInBytes = static_cast<uint32_t>(gmh.gamePacket->GetDataSize());
-			const uint32_t localMtu = mtu;
-			const uint32_t maxPayloadSize = localMtu - totalHeaderSize;
-
-			if(localMtu < totalHeaderSize) {
-				throw UndefinedBehaviourException{ "MTU too small" };
-			}
-			
-			const uint32_t numFragments = totalDataSizeInBytes / maxPayloadSize + (std::min(totalDataSizeInBytes % maxPayloadSize, 1u));
-
-			if(numFragments > std::numeric_limits<uint8_t>::max()) {
-				throw UndefinedBehaviourException{ "Too many fragments" };
-			}
-
-			std::vector<concurrency::task<SocketOperationResult>> tasks;
-			tasks.reserve(numFragments);
-
-			uint32_t remDataSize = totalDataSizeInBytes;
-			uint32_t dataOffset = 0;
-			uint32_t headerOffset = 0;
-
-			google::protobuf::io::ArrayOutputStream outStream{ gmh.headerPacket->GetData(), static_cast<int32_t>(gmh.headerPacket->GetDataSize()) };
-			google::protobuf::io::CodedOutputStream codedOutStream{ &outStream };
-			
-			for(uint32_t i = 0; i < numFragments; i++) {
-				FragmentData fd;
-				fd.sizeInBytes = std::min(remDataSize, maxPayloadSize);
-				fd.fragmentIndex = static_cast<uint8_t>(i);
-				fd.fragmentCount = static_cast<uint8_t>(numFragments);
-
-				codedOutStream.WriteLittleEndian32(serializedHeaderSize);
-				if(!protoHeader.SerializeToCodedStream(&codedOutStream)) {
-					Log::Debug("Failed to serialize header");
-				}
-				codedOutStream.WriteLittleEndian32(fd.Pack());
-				
-				SocketWriteHandle swh;
-				swh.buffers[0] = boost::asio::const_buffer{ gmh.headerPacket->GetData() + headerOffset, totalHeaderSize };
-				swh.buffers[1] = boost::asio::const_buffer{ gmh.gamePacket->GetData() + dataOffset, fd.sizeInBytes };
-				swh.endpoint = gmh.gamePacket->GetEndpoint();
-				swh.lifetime = gmh.headerPacket;
-				swh.lifetime2 = gmh.gamePacket;
-				tasks.emplace_back(swh.completionEvent);
-				concurrency::send(sockWriteTarget, std::move(swh));
-
-				remDataSize -= fd.sizeInBytes;
-				dataOffset += fd.sizeInBytes;
-				headerOffset += totalHeaderSize;
-			}
-
-			concurrency::when_all(std::begin(tasks), std::end(tasks)).then([gmh](std::vector<SocketOperationResult> results) -> void {
-				TrResult finalResult;
-				finalResult.state = TransmissionState::SUCCESS;
-				for(const SocketOperationResult & t : results) {
-					finalResult.sentBytes += t.numBytes;
-					
-					if(t.errorCode) {
-						if(!finalResult.errorIfAny) {
-							finalResult.errorIfAny = t.errorCode;
-							finalResult.state = TransmissionState::ERROR_WHILE_SENDING;
-						}
-					}
-				}
-				gmh.completionEvent.set(finalResult);
-			});
-		}
-	};
-
-	template<typename SockType>
-	class UdpSocketReaderAgent : public AgentBase {
-	public:
-		Ptr<SockType> socket;
-		Ref<PacketStorage<UdpPacket>> packetStorage;
-		concurrency::ITarget<Ref<UdpPacket>> & readTarget;
-		uint32_t consecutiveErrorCount;
-
-		UdpSocketReaderAgent(Ptr<SockType> socket, Ref<PacketStorage<UdpPacket>> packetStorage, concurrency::ITarget<Ref<UdpPacket>> & readTarget, Ptr<WorkToken> wt) :
-			AgentBase{ wt }, socket { socket }, packetStorage{ std::move(packetStorage) }, readTarget{ readTarget }, consecutiveErrorCount{ 0 } { }
-		
-	protected:
-		virtual void RunImpl() override {
-			Ref<UdpPacket> udpPacket = packetStorage->GetBuffer();
-			udpPacket->SetDataSize(UdpPacket::MAX_DATA_SIZE);
-			SocketOperationResult sor;
-			sor.numBytes = socket->Receive(udpPacket->GetMutableBuffer(), udpPacket->GetEndpoint(), sor.errorCode);
-			udpPacket->SetDataSize(sor.numBytes);
-			udpPacket->SetTimestamp(SystemClock::LocalNow());
-
-			if(sor.errorCode) {
-				Log::Debug("Error while reading: {0}", sor.errorCode.message());
-				consecutiveErrorCount++;
-
-				if(consecutiveErrorCount > 5) {
-					Log::Error("5 consequtive read errors occured, stopping");
-					token->SetDone();
-				}
-			} else {
-				consecutiveErrorCount = 0;
-				//auto ep = udpPacket->GetEndpoint();
-				//std::string addrPort = ep.address().to_string() + ":" + std::to_string(ep.port());
-				//Log::Debug("Raw read: {0}", addrPort);
-				
-				concurrency::send(readTarget, std::move(udpPacket));
-			}
-		}
-	};
-
-	struct UdpFragment {
-		uint32_t sequence;
-		FragmentData fragmentData;
-		uint32_t dataOffset;
-		Ref<UdpPacket> data;
-	};
-
-	struct ControlMessage {
-		Timestamp receivedAt;
-		UdpEndpoint source;
-		Protocol::Header content;
-	};
-	
-	class ParserAgent : public AgentBase {
-	public:
-		Ref<PacketStorage<UdpPacket>> packetStorage;
-		concurrency::ISource<Ref<UdpPacket>> & source;
-		concurrency::ITarget<UdpAck> & ackTarget;
-		concurrency::ITarget<SocketWriteHandle> & ackWriteTarget;
-		concurrency::ITarget<UdpFragment> & fragWriteTarget;
-		concurrency::ITarget<ControlMessage> & controlTarget;
-
-		ParserAgent(Ref<PacketStorage<UdpPacket>> pktStorage,
-			concurrency::ISource<Ref<UdpPacket>> & source,
-			concurrency::ITarget<UdpAck> & ackTarget,
-			concurrency::ITarget<SocketWriteHandle> & ackWriteTarget,
-			concurrency::ITarget<UdpFragment> & fragWriteTarget,
-			concurrency::ITarget<ControlMessage> & controlTarget,
-			Ptr<WorkToken> wt) :
-			AgentBase{ wt },
-			packetStorage{ std::move(pktStorage) },
-			source{ source },
-			ackTarget{ ackTarget },
-			ackWriteTarget{ ackWriteTarget },
-			fragWriteTarget{ fragWriteTarget },
-			controlTarget{ controlTarget } { }
-		
-	protected:
-		void SendAck(uint32_t seq, const UdpEndpoint & ep) {
-			Ref<UdpPacket> pkt = packetStorage->GetBuffer();
-			pkt->SetDataSize(UdpPacket::MAX_DATA_SIZE);
-			pkt->SetEndpoint(ep);
-			Protocol::Header h;
-			h.set_sequence(seq);
-			h.set_type(Protocol::MessageType::ACKNOWLEDGE);
-
-			google::protobuf::io::ArrayOutputStream aos{ pkt->GetData(), static_cast<int32_t>(pkt->GetDataSize()) };
-			google::protobuf::io::CodedOutputStream codedOutStream{ &aos };
-
-			uint32_t serializedHeaderSize = static_cast<uint32_t>(h.ByteSizeLong());
-			
-			codedOutStream.WriteLittleEndian32(serializedHeaderSize);
-			if(!h.SerializeToCodedStream(&codedOutStream)) {
-				Log::Debug("Failed to serialize ACK message");
-				return;
-			}
-			pkt->SetDataSize(serializedHeaderSize + sizeof(google::protobuf::uint32));
-
-			SocketWriteHandle swh;
-			swh.endpoint = pkt->GetEndpoint();
-			swh.buffers[0] = pkt->GetConstBuffer();
-			swh.lifetime = pkt;
-
-			concurrency::send(ackWriteTarget, std::move(swh));
-		}
-		
-		bool ParseNetcodeHeader(google::protobuf::io::CodedInputStream * codedStream, uint32_t & headerSize, Protocol::Header& header, FragmentData & fd) {
-
-			uint32_t serializedHeaderSize = std::numeric_limits<uint32_t>::max();
-			if(!codedStream->ReadLittleEndian32(&serializedHeaderSize)) {
-				Log::Debug("Failed to read serialized header size");
-				return false;
-			}
-
-			auto limit = codedStream->PushLimit(static_cast<int32_t>(serializedHeaderSize));
-
-			Protocol::Header h;
-			if(!h.ParseFromCodedStream(codedStream)) {
-				Log::Debug("Failed to parse header");
-				return false;
-			} else {
-				if(h.ByteSizeLong() != serializedHeaderSize) {
-					Log::Debug("Protocol misuse");
-					return false;
-				}
-			}
-
-			codedStream->PopLimit(limit);
-
-			uint32_t fragData = 0;
-			FragmentData tmpFd;
-
-			if(h.type() == Protocol::MessageType::GAME) {
-				if(!codedStream->ReadLittleEndian32(&fragData)) {
-					Log::Debug("Failed to read fragmentation data");
-					return false;
-				}
-				
-				if(fragData == 0) {
-					Log::Debug("Fragment data expected to be non-zero");
-					return false;
-				}
-				
-				tmpFd.Unpack(fragData);
-				
-				if(tmpFd.fragmentIndex >= tmpFd.fragmentCount) {
-					Log::Debug("Invalid fragment index");
-					return false;
-				}
-			}
-
-			headerSize = serializedHeaderSize;
-			header = std::move(h);
-			fd = tmpFd;
-			return true;
-		}
-		
-		virtual void RunImpl() override {
-			Ref<UdpPacket> handle = concurrency::receive(source);
-
-			if(handle == nullptr) {
-				return;
-			}
-			
-			google::protobuf::io::ArrayInputStream ais{ handle->GetData(), static_cast<int32_t>(handle->GetDataSize()) };
-			google::protobuf::io::CodedInputStream cis{ &ais };
-
-			uint32_t headerSize;
-			Protocol::Header header;
-			FragmentData fragData;
-			if(!ParseNetcodeHeader(&cis, headerSize, header, fragData)) {
-				return;
-			}
-			
-			if(header.type() == Protocol::MessageType::ACKNOWLEDGE) {
-
-				UdpAck ack;
-				ack.endpoint = handle->GetEndpoint();
-				ack.sequence = header.sequence();
-				concurrency::send(ackTarget, ack);
-				return;
-				
-			}
-
-			if(header.type() == Protocol::MessageType::GAME) {
-				
-				UdpFragment udpFrag;
-				udpFrag.data = std::move(handle);
-				udpFrag.fragmentData = fragData;
-				udpFrag.sequence = header.sequence();
-				udpFrag.dataOffset = static_cast<uint32_t>(cis.CurrentPosition());
-				concurrency::send(fragWriteTarget, udpFrag);
-				return;
-				
-			}
-
-			if((header.type() & 0x1) == 0x1) {
-				
-				SendAck(header.sequence(), handle->GetEndpoint());
-				
-			}
-
-			ControlMessage cm;
-			cm.content = std::move(header);
-			cm.source = handle->GetEndpoint();
-			cm.receivedAt = handle->GetTimestamp();
-			concurrency::send(controlTarget, std::move(cm));
-		}
-	};
-	
-	class DefragmenterAgent : public AgentBase {
-		ConnectionStorage * connStorage;
-		concurrency::ISource<UdpFragment> & fragmentSource;
-		
-		class DefragCtx {
-			uint32_t sequence;
-			UdpEndpoint endpoint;
-			Timestamp createdAt;
-			std::unique_ptr<UdpFragment[]> fragments;
-			uint32_t receivedFragments;
-			uint32_t numFragments;
-			Ref<GamePacket> defragTarget;
-
-		public:
-
-			const Timestamp& GetTimestamp() const {
-				return createdAt;
-			}
-			
-			bool TryDefragment(Protocol::Update& update) {
-				if(!IsComplete()) {
-					return false;
-				}
-
-				uint8_t * const dstBase = defragTarget->GetData();
-				const uint32_t dstSize = defragTarget->GetDataSize();
-				uint32_t dstOffset = 0;
-				for(uint32_t i = 0; i < numFragments; i++) {
-					const UdpFragment * f = fragments.get() + i;
-					const uint32_t numBytes = f->fragmentData.sizeInBytes;
-
-					if((dstOffset + numBytes) > dstSize || numBytes == 0) {
-						Log::Debug("Error while defragmenting");
-						return false;
-					}
-					
-					memcpy(dstBase + dstOffset, f->data->GetData() + f->dataOffset, numBytes);
-					dstOffset += numBytes;
-				}
-
-				defragTarget->SetDataSize(dstOffset);
-
-				if(!update.ParseFromArray(defragTarget->GetData(), static_cast<int32_t>(defragTarget->GetDataSize()))) {
-					Log::Debug("Failed to parse defragmented game message");
-					return false;
-				}
-
-				return true;
-			}
-
-			uint32_t GetSequence() const {
-				return sequence;
-			}
-
-			bool IsComplete() const {
-				return receivedFragments == numFragments;
-			}
-
-			const UdpEndpoint & GetEndpoint() const {
-				return endpoint;
-			}
-
-			NETCODE_CONSTRUCTORS_DEFAULT_MOVE(DefragCtx);
-
-			void AddFragment(UdpFragment frag) {
-				if(static_cast<uint32_t>(frag.fragmentData.fragmentIndex) >= numFragments) {
-					return;
-				}
-
-				++receivedFragments;
-
-				UdpFragment * f = fragments.get() + frag.fragmentData.fragmentIndex;
-
-				if(f->data == nullptr) {
-					*f = std::move(frag);
-				}
-			}
-			
-			DefragCtx(uint32_t sequence, const UdpEndpoint & ep, uint32_t nf) :
-				sequence{ sequence }, endpoint{ ep }, createdAt{ SystemClock::LocalNow() }, fragments{ nullptr }, receivedFragments{ 0 }, numFragments{ nf } {
-				defragTarget = std::make_shared<GamePacket>();
-				defragTarget->SetDataSize(GamePacket::MAX_DATA_SIZE);
-				fragments = std::make_unique<UdpFragment[]>(numFragments);
-
-				for(uint32_t i = 0; i < numFragments; i++) {
-					UdpFragment * f = fragments.get() + i;
-					f->sequence = 0;
-					f->dataOffset = 0;
-					f->data = nullptr;
-				}
-
-				createdAt = SystemClock::LocalNow();
-			}
-		};
-
-		std::vector<DefragCtx> pendingFragments;
-		concurrency::call<int> timerCallback;
-		concurrency::timer<int> timeoutTimer;
-		concurrency::critical_section lock;
-
-		void TimerTick() {
-			if(pendingFragments.empty()) {
-				return;
-			}
-			
-			concurrency::critical_section::scoped_lock scopedLock{ lock };
-
-			Timestamp current = SystemClock::LocalNow();
-
-			auto it = std::remove_if(std::begin(pendingFragments), std::end(pendingFragments), [&current](const DefragCtx & dc)->bool {
-				return (dc.GetTimestamp() - current) > std::chrono::seconds(1);
-			});
-
-			if(it != std::end(pendingFragments)) {
-				pendingFragments.erase(it, std::end(pendingFragments));
-			}
-		}
-		
-	public:
-		DefragmenterAgent(ConnectionStorage * storage, concurrency::ISource<UdpFragment> & fragSource, Ptr<WorkToken> wt) :
-			AgentBase{ wt }, connStorage{ storage }, fragmentSource{ fragSource }, pendingFragments{},
-			timerCallback{ [this](int) -> void { TimerTick(); } }, timeoutTimer{ 1000, 0, &timerCallback, false }, lock{} { }
-
-	protected:
-		virtual void RunImpl() override {
-			UdpFragment frag = concurrency::receive(fragmentSource);
-			
-			Ref<ConnectionBase> conn = connStorage->GetConnectionByEndpoint(frag.data->GetEndpoint());
-
-			if(conn == nullptr) {
-				Log::Debug("Connection was not found for the fragment, dropping packet");
-				return;
-				/*conn = std::make_shared<ConnectionBase>();
-				conn->state = ConnectionState::ESTABLISHED;
-				conn->remoteSequence = frag.sequence;
-				conn->endpoint = frag.data->GetEndpoint();
-				connStorage->AddConnection(conn);*/
-			}
-
-			if(conn->state != ConnectionState::ESTABLISHED) {
-				Log::Debug("Connection is not established yet");
-				return;
-			}
-
-			if(conn->remoteSequence > (frag.sequence + 5)) {
-				Log::Debug("Received an old fragment, dropping packet");
-				return;
-			}
-
-			conn->remoteSequence = std::max(conn->remoteSequence, frag.sequence);
-
-			concurrency::critical_section::scoped_lock scopedLock{ lock };
-
-			auto it = std::find_if(std::begin(pendingFragments), std::end(pendingFragments), [&frag](const DefragCtx & dc) -> bool {
-				return frag.sequence == dc.GetSequence() && frag.data->GetEndpoint() == dc.GetEndpoint();
-			});
-
-			if(it == std::end(pendingFragments)) {
-				DefragCtx dc{ frag.sequence, frag.data->GetEndpoint(), frag.fragmentData.fragmentCount };
-				dc.AddFragment(std::move(frag));
-
-				if(dc.IsComplete()) {
-					Protocol::Update u;
-					if(dc.TryDefragment(u)) {
-						conn->sharedQueue.Received(std::move(u));
-					}
-				} else {
-					pendingFragments.emplace_back(std::move(dc));
-				}
-			} else {
-				it->AddFragment(std::move(frag));
-
-				if(it->IsComplete()) {
-					Protocol::Update u;
-					if(it->TryDefragment(u)) {
-						conn->sharedQueue.Received(std::move(u));
-					}
-					pendingFragments.erase(it);
-				}
-			}
-		}
-	};
-
 	enum class FilterResult {
 		IGNORED,
 		ONLY_READ,
@@ -1356,60 +803,528 @@ namespace Netcode::Network {
 		}
 	};
 	
+	struct AckContext {
+		CompletionToken<TrResult> completionToken;
+		UdpPacket * sentPacket;
+		WaitableTimer * timer;
+		uint32_t sequence;
+
+		bool IsAckable(uint32_t seq, const UdpEndpoint & sourceEndpoint) const {
+			return sequence == seq && sourceEndpoint == sentPacket->GetEndpoint();
+		}
+
+		void Ack() {
+			if(completionToken->IsCompleted()) {
+				return;
+			}
+
+			TrResult tr;
+			tr.errorIfAny = make_error_code(Error::SUCCESS);
+			completionToken->Set(std::move(tr));
+			timer->cancel();
+		}
+	};
+
+	struct PendingTokenNode {
+		CompletionToken<TrResult> token;
+		WaitableTimer * timer;
+		UdpPacket * packet;
+		uint32_t sequence;
+		PendingTokenNode * next;
+
+		PendingTokenNode(CompletionToken<TrResult> token, WaitableTimer * timer, UdpPacket * packet, uint32_t sequence) :
+			token{ std::move(token) }, timer{ timer }, packet{ packet }, sequence{ sequence }, next{ nullptr } { }
+	};
+
+	class PendingTokenStorage {
+		SlimReadWriteLock srwLock;
+		PendingTokenNode * head;
+
+	public:
+		PendingTokenStorage() : srwLock{}, head{ nullptr }{}
+
+		void Ack(UdpAck ack) {
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+
+			PendingTokenNode * prev = nullptr;
+
+			for(PendingTokenNode * iter = head; iter != nullptr; iter = iter->next) {
+				if(iter->packet->GetEndpoint() == ack.endpoint && iter->sequence == ack.sequence) {
+					if(prev == nullptr) {
+						head = iter->next;
+					} else {
+						prev = iter->next;
+					}
+
+					TrResult tr;
+					tr.errorIfAny = make_error_code(Errc::success);
+					iter->token->Set(std::move(tr));
+					iter->timer->cancel();
+					CompletionToken<TrResult> tmpToken = std::move(iter->token);
+				}
+
+				prev = iter;
+			}
+		}
+
+		void AddNode(PendingTokenNode * node) {
+			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+
+			node->next = head;
+			head = node;
+		}
+	};
+
+	template<typename SockType>
+	struct ResendContext : public std::enable_shared_from_this<ResendContext<SockType>> {
+		CompletionToken<TrResult> completionToken;
+		UdpPacket * packet;
+		WaitableTimer * timer;
+		SockType * socket;
+		Duration resendInterval;
+		uint32_t attemptIndex;
+		uint32_t attemptCount;
+		uint32_t sequence;
+		PendingTokenStorage * pendingTokenStorage;
+
+		using Base = std::enable_shared_from_this<ResendContext<SockType>>;
+
+		void Attempt() {
+			if(completionToken->IsCompleted()) {
+				return;
+			}
+
+			attemptIndex++;
+
+			if(attemptIndex == attemptCount) {
+				TrResult tr;
+				tr.attempts = attemptIndex;
+				tr.errorIfAny = make_error_code(Error::TIMEDOUT);
+				completionToken->Set(std::move(tr));
+				return;
+			}
+
+			socket->Send(packet->GetConstBuffer(), packet->GetEndpoint(), [pThis = Base::shared_from_this()](const ErrorCode & ec, size_t s) -> void {
+				if(ec) {
+					TrResult tr;
+					tr.attempts = pThis->attemptIndex;
+					tr.sentBytes += s;
+					tr.errorIfAny = ec;
+					tr.fragments = 1;
+					tr.sequence = 0;
+					pThis->completionToken->Set(std::move(tr));
+				} else {
+					pThis->InitTimer();
+				}
+			});
+		}
+
+		void InitTimer() {
+			timer->expires_after(resendInterval);
+			timer->async_wait([pThis = Base::shared_from_this()](const ErrorCode & ec) -> void {
+				if(!ec) {
+					pThis->Attempt();
+				}
+
+				/*
+				 * ec is presumably a cancellation error, but check if the operation is completed,
+				 * otherwise a memoryleak could arise.
+				 * Concurrency here does not matter, 2 ACK on the same packet will be silently ignored
+				 */
+				if(!pThis->completionToken->IsCompleted()) {
+					UdpAck ack;
+					ack.endpoint = pThis->packet->GetEndpoint();
+					ack.sequence = pThis->sequence;
+					pThis->pendingTokenStorage->Ack(std::move(ack));
+				}
+			});
+		}
+	};
+
+	template<typename SockType>
+	struct FragmentationContext : public std::enable_shared_from_this<FragmentationContext<SockType>> {
+		CompletionToken<TrResult> completionToken;
+		SockType * socket;
+		GamePacket * packet;
+		std::array<boost::asio::const_buffer, 2> currentFragment;
+		uint32_t maxDataSize;
+		uint32_t dataStart;
+		uint32_t headerStart;
+		uint32_t dataOffset;
+		uint32_t headerOffset;
+		uint32_t dataSize;
+		uint32_t headerSize;
+
+		using Base = std::enable_shared_from_this<FragmentationContext<SockType>>;
+
+		void SendFragment() {
+			const uint32_t cDataSize = std::min(maxDataSize, dataSize - dataOffset);
+			const uint32_t cDataOffset = dataStart + dataOffset;
+			const uint32_t cHeaderSize = headerSize;
+			const uint32_t cHeaderOffset = headerStart + headerOffset;
+
+			if(cDataSize == 0) {
+				TrResult tr;
+				tr.errorIfAny = make_error_code(Errc::success);
+				completionToken->Set(std::move(tr));
+				return;
+			}
+
+			dataOffset += cDataSize;
+			headerOffset += cHeaderSize;
+
+			currentFragment[0] = boost::asio::const_buffer{ packet->GetData() + cHeaderOffset, cHeaderSize };
+			currentFragment[1] = boost::asio::const_buffer{ packet->GetData() + cDataOffset, cDataSize };
+
+			socket->Send(currentFragment, packet->GetEndpoint(), [this, lt = Base::shared_from_this()](const ErrorCode & ec, size_t s) -> void {
+				if(ec) {
+					TrResult tr;
+					tr.errorIfAny = make_error_code(Error::SOCK_ERR);
+					completionToken->Set(std::move(tr));
+				} else {
+					SendFragment();
+				}
+			});
+		}
+	};
+
+
+	class FragmentStorage {
+
+		struct FSItem {
+			Ref<NetAllocator> allocator;
+			Protocol::Header * header;
+			UdpPacket * packet;
+			FragmentData fragmentData;
+			uint16_t linkCount;
+			uint16_t dataOffset;
+			Timestamp receivedAt;
+			FSItem * orderedNext;
+			FSItem * next;
+			FSItem * prev;
+
+			FSItem(Ref<NetAllocator> alloc, Protocol::Header* header, UdpPacket *packet, FragmentData fragData, uint16_t dataOffset) :
+				allocator{ std::move(alloc) }, header{ header }, packet{ packet },
+				fragmentData{ fragData }, linkCount{ 1 }, dataOffset{ dataOffset }, receivedAt{ SystemClock::LocalNow() },
+				orderedNext{ nullptr }, next{ nullptr }, prev{ nullptr } {}
+
+			bool IsMatching(const FSItem & rhs) const {
+				return	header->sequence() == rhs.header->sequence() &&
+						packet->GetEndpoint() == rhs.packet->GetEndpoint() &&
+						fragmentData.fragmentCount == rhs.fragmentData.fragmentCount;
+			}
+
+			bool operator==(const FSItem & rhs) const noexcept {
+				return fragmentData.fragmentIndex == rhs.fragmentData.fragmentIndex;
+			}
+
+			bool operator<(const FSItem & rhs) const noexcept {
+				return fragmentData.fragmentIndex < rhs.fragmentData.fragmentIndex;
+			}
+		};
+
+		boost::asio::io_context * ioc;
+		ConnectionStorage * connectionStorage;
+		boost::lockfree::queue<FSItem *> inQueue;
+		FSItem * orderedHead;
+		FSItem * orderedTail;
+		FSItem * deletableHead;
+		std::atomic_uint32_t generation;
+
+		void MarkDeletable(FSItem * node) {
+			node->next = deletableHead;
+			node->prev = nullptr;
+			deletableHead = node;
+		}
+
+		void Erase(FSItem ** currentHead, FSItem ** currentTail, FSItem * node) {
+			if(*currentHead == node) {
+				*currentHead = node->next;
+			}
+
+			if(*currentTail == node) {
+				*currentTail = node->prev;
+			}
+
+			FSItem * l = node->prev;
+			FSItem * r = node->next;
+
+			if(r != nullptr) {
+				r->prev = l;
+			}
+
+			if(l != nullptr) {
+				l->next = r;
+			}
+		}
+
+		FSItem * DReplace(FSItem ** currentHead, FSItem ** currentTail, FSItem * currentItem, FSItem * newNode) {
+			newNode->next = nullptr;
+			newNode->prev = nullptr;
+
+			if(*currentHead == currentItem) {
+				newNode->next = currentItem->next;
+				*currentHead = newNode;
+			}
+
+			if(*currentTail == currentItem) {
+				newNode->prev = currentItem->prev;
+				*currentTail = newNode;
+			}
+
+			if(currentItem->next != nullptr) {
+				currentItem->next->prev = newNode;
+			}
+
+			if(currentItem->prev != nullptr) {
+				currentItem->prev->next = newNode;
+			}
+
+			currentItem->next = nullptr;
+			currentItem->prev = nullptr;
+
+			return newNode;
+		}
+
+		void PushFront(FSItem ** currentHead, FSItem ** currentTail, FSItem * node) {
+			if(*currentHead == nullptr) {
+				*currentHead = node;
+				*currentTail = node;
+				return;
+			}
+
+			node->prev = nullptr;
+			node->next = (*currentHead);
+			(*currentHead)->prev = node;
+			*currentHead = node;
+		}
+
+		void OrderedInsert(FSItem * item) {
+			for(FSItem * iter = orderedHead; iter != nullptr; iter = iter->next) {
+				if(iter->IsMatching(*item)) {
+					if(*iter == *item) {
+						return MarkDeletable(item);
+					}
+
+					if(*item < *iter) {
+						DReplace(&orderedHead, &orderedTail, iter, item);
+						// keep the old timestamp for the new head
+						item->receivedAt = iter->receivedAt;
+						item->orderedNext = iter;
+						item->linkCount += iter->linkCount;
+					} else {
+						FSItem * p = iter;
+
+						for(FSItem * i2 = iter->orderedNext; i2 != nullptr; i2 = i2->orderedNext) {
+							if(*i2 == *item) {
+								return MarkDeletable(item);
+							}
+
+							if(*p < *item && *item < *i2) {
+								item->orderedNext = i2;
+								break;
+							}
+							p = i2;
+						}
+
+						iter->linkCount += 1;
+						p->orderedNext = item;
+					}
+					return;
+				}
+			}
+
+			PushFront(&orderedHead, &orderedTail, item);
+		}
+
+		bool FragmentsAreConsistent(FSItem * ptr, uint32_t * dataSize) {
+			int32_t prevIndex = -1;
+			uint32_t expectedSize = ptr->fragmentData.sizeInBytes;
+			*dataSize = 0;
+
+			for(FSItem * it = ptr; it != nullptr; it = it->orderedNext) {
+				int32_t currentIndex = it->fragmentData.fragmentIndex;
+
+				if((currentIndex - prevIndex) != 1) {
+					return false;
+				}
+
+				// size should never increase
+				if(expectedSize < it->fragmentData.sizeInBytes) {
+					return false;
+				}
+
+				// MTU should be constant for a message
+				if(expectedSize != it->fragmentData.sizeInBytes) {
+					// we allow the last one to fail this check, otherwise we delete
+					if(it->orderedNext != nullptr) {
+						return false;
+					}
+				}
+
+
+				const size_t sourceSize = it->packet->GetDataSize();
+				const size_t sourceOffset = it->dataOffset;
+				const size_t sourceFragSize = it->fragmentData.sizeInBytes;
+
+				if(sourceFragSize != (sourceSize - sourceOffset)) {
+					return false;
+				}
+
+				*dataSize += it->fragmentData.sizeInBytes;
+
+				prevIndex = currentIndex;
+			}
+
+			return true;
+		}
+
+		void TryReassemble(FSItem * p) {
+			uint32_t dataSize = 0;
+			if(FragmentsAreConsistent(p, &dataSize)) {
+				uint32_t requiredSpace = Utility::Align<uint32_t, 512u>(dataSize + 512u);
+				
+				Ref<NetAllocator> dstAllocator = std::make_shared<NetAllocator>(ioc, requiredSpace);
+
+				MutableArrayView<uint8_t> reassembledBinary{ dstAllocator->MakeArray<uint8_t>(dataSize), dataSize };
+
+				uint32_t dstOffset = 0;
+
+				for(FSItem * iter = p; iter != nullptr; iter = iter->orderedNext) {
+					const uint8_t * sourceData = iter->packet->GetData();
+					const uint32_t sourceOffset = iter->dataOffset;
+					const uint32_t sourceFragSize = iter->fragmentData.sizeInBytes;
+
+					memcpy(reassembledBinary.Data() + dstOffset, sourceData + sourceOffset, sourceFragSize);
+
+					dstOffset += sourceFragSize;
+				}
+
+				Protocol::Update * update = dstAllocator->MakeProto<Protocol::Update>();
+				google::protobuf::io::ArrayInputStream ais{ reassembledBinary.Data(), static_cast<int32_t>(reassembledBinary.Size()) };
+
+				if(update->ParseFromZeroCopyStream(&ais)) {
+					Ref<ConnectionBase> conn = connectionStorage->GetConnectionByEndpoint(p->packet->GetEndpoint());
+
+					if(conn != nullptr) {
+						GameMessage msg;
+						msg.allocator = std::move(dstAllocator);
+						msg.update = update;
+						conn->sharedQueue.Received(std::move(msg));
+					}
+				}
+			}
+
+			FSItem * it = p;
+			while(it != nullptr) {
+				FSItem * tmp = it->orderedNext;
+				MarkDeletable(it);
+				it = tmp;
+			}
+		}
+
+		void DeleteFragments() {
+			FSItem * it = deletableHead;
+			while(it != nullptr) {
+				FSItem * tmp = it->next;
+				Ref<NetAllocator> alloc = std::move(it->allocator);
+				alloc.reset();
+				it = tmp;
+			}
+			deletableHead = nullptr;
+		}
+
+		void CheckFragments() {
+			Timestamp tNow = SystemClock::LocalNow();
+			for(FSItem * it = orderedHead; it != nullptr; it = it->next) {
+				// 1 second old fragments are way too old
+				if((tNow - it->receivedAt) > std::chrono::seconds(1)) {
+					Erase(&orderedHead, &orderedTail, it);
+					MarkDeletable(it);
+				} else {
+					if(it->linkCount == static_cast<uint32_t>(it->fragmentData.fragmentCount)) {
+						Erase(&orderedHead, &orderedTail, it);
+						TryReassemble(it);
+					}
+				}
+			}
+		}
+
+		void RunDefragmentation() {
+			do {
+				uint32_t cg = generation.load(std::memory_order_acquire);
+
+				FSItem * it = nullptr;
+				while(inQueue.pop(it)) {
+					OrderedInsert(it);
+				}
+				
+				// traverses the ordered list for possible reorders
+				CheckFragments();
+
+				// deallocates finalized fragments
+				DeleteFragments();
+
+				// if we caught up, we reset
+				if(generation.compare_exchange_strong(cg, 0, std::memory_order_release)) {
+					return;
+				}
+			} while(true);
+		}
+	public:
+		FragmentStorage(boost::asio::io_context * ioc, ConnectionStorage * connStorage) : ioc{ ioc }, connectionStorage{ connStorage },
+			inQueue{1024}, orderedHead{ nullptr }, orderedTail{ nullptr }, deletableHead{ nullptr }, generation{ 0 } {
+
+		}
+
+		void AddFragment(Ref<NetAllocator> alloc, UdpPacket * pkt, Protocol::Header * header, FragmentData fd, uint16_t dataOffset) {
+			Ref<ConnectionBase> conn = connectionStorage->GetConnectionByEndpoint(pkt->GetEndpoint());
+
+			if(conn == nullptr) {
+				return;
+			}
+
+			FSItem * node = alloc->Make<FSItem>(std::move(alloc), header, pkt, fd, dataOffset);
+
+			if(!inQueue.push(node)) {
+				node->allocator.reset();
+				Log::Error("Queue is full");
+				return;
+			}
+
+			if(generation.fetch_add(1) == 1) {
+				boost::asio::post(*ioc, [this]() -> void {
+					RunDefragmentation();
+				});
+			}
+		}
+
+	};
+
 	class NetcodeService {
 	public:
 #if defined(NETCODE_DEBUG)
-		using NetcodeSocketType = BasicSocket<boost::asio::ip::udp::socket, DebugSyncAsioSocketHandler<boost::asio::ip::udp::socket>>;
+		using NetcodeSocketType = BasicSocket<boost::asio::ip::udp::socket, AsioSocketReadWriter<boost::asio::ip::udp::socket>>;
 #else
 		using NetcodeSocketType = SharedUdpSocket;
 #endif
 		
 	private:
-		NetcodeSocketType socket;
-		
-		Ref<PacketStorage<UdpPacket>> packetStorage;
-		
-		Ref<PacketStorage<GamePacket>> gamePacketStorage;
+		boost::asio::io_context & ioContext;
 
-		Ref<ManagedPool<FragmentationContext>> fragContextPool;
+		NetcodeSocketType socket;
 
 		ConnectionStorage connectionStorage;
 
-		concurrency::unbounded_buffer<UdpAck> receivedAckBuffer;
+		FragmentStorage fragmentStorage;
+		
+		PendingTokenStorage pendingTokenStorage;
 
-		concurrency::unbounded_buffer<AckHandle> waitingForAckBuffer;
-
-		concurrency::unbounded_buffer<SocketWriteHandle> writeRequests;
-
-		concurrency::unbounded_buffer<ReliableUdpHandle> reliableHandles;
-
-		concurrency::unbounded_buffer<GameMessageHandle> gameMessageHandles;
-
-		concurrency::unbounded_buffer<UdpFragment> fragmentBuffer;
-
-		concurrency::unbounded_buffer<ControlMessage> controlMessages;
-
-		concurrency::unbounded_buffer<Ref<UdpPacket>> receivedPackets;
-
-		WorkToken workToken;
+		MessageQueue<ControlMessage> controlQueue;
 
 		ProtocolConfig protocolConfig;
 
 		uint32_t mtu;
-
-		UdpAckAgent ackAgent;
-
-		ReliableUdpAgent reliableUdpAgent;
-
-		UdpFragmenterAgent fragmenterAgent;
-
-		UdpSocketWriterAgent<NetcodeSocketType> writerAgent;
-
-		UdpSocketReaderAgent<NetcodeSocketType> readerAgent;
-
-		ParserAgent parserAgent;
-
-		DefragmenterAgent defragAgent;
 
 		std::vector<std::unique_ptr<FilterBase>> filters;
 		
@@ -1427,12 +1342,16 @@ namespace Netcode::Network {
 		}
 
 		void RunFilters() {
-			ControlMessage cm;
+			std::vector<ControlMessage> controlMessages;
+
+			controlQueue.GetIncomingPackets(controlMessages);
+
 			Timestamp ts = SystemClock::LocalNow();
-			while(concurrency::try_receive(controlMessages, cm)) {
-				for(auto it = std::begin(filters); it != std::end(filters); it++) {
-					if(!(*it)->IsCompleted()) {
-						FilterResult r = (*it)->Run(this, ts, cm);
+
+			for(ControlMessage & cm : controlMessages) {
+				for(std::unique_ptr<FilterBase> & f : filters) {
+					if(!f->IsCompleted()) {
+						FilterResult r = f->Run(this, ts, cm);
 
 						if(r == FilterResult::CONSUMED) {
 							break;
@@ -1448,128 +1367,264 @@ namespace Netcode::Network {
 			filters.erase(it, std::end(filters));
 		}
 		
-		NetcodeService(NetcodeSocketType::SocketType sock) : socket { std::move(sock) },
-			packetStorage { std::make_shared<PacketStorage<UdpPacket>>(16) },
-			gamePacketStorage{ std::make_shared<PacketStorage<GamePacket>>(4) },
-			fragContextPool{ std::make_shared<ManagedPool<FragmentationContext>>() },
-			receivedAckBuffer{},
-			waitingForAckBuffer{},
-			writeRequests{},
-			reliableHandles{},
-			gameMessageHandles{},
-			fragmentBuffer{},
-			controlMessages{},
-			receivedPackets{},
-			workToken{},
+		NetcodeService(boost::asio::io_context & ioContext, NetcodeSocketType::SocketType sock) :
+			ioContext{ ioContext },
+			socket { std::move(sock) },
+			connectionStorage{},
+			fragmentStorage{ &ioContext, &connectionStorage },
 			protocolConfig{},
-			mtu{ 1280 },
-			ackAgent{ waitingForAckBuffer, receivedAckBuffer, &workToken },
-			reliableUdpAgent{ reliableHandles, writeRequests, waitingForAckBuffer, receivedAckBuffer, &workToken },
-			fragmenterAgent{ gameMessageHandles, writeRequests, &workToken },
-			writerAgent{ writeRequests, &socket, &workToken },
-			readerAgent{ &socket, packetStorage, receivedPackets, &workToken },
-			parserAgent{ packetStorage, receivedPackets, receivedAckBuffer, writeRequests, fragmentBuffer, controlMessages, &workToken },
-			defragAgent{ &connectionStorage, fragmentBuffer, &workToken } {
-
-			ackAgent.start();
-			reliableUdpAgent.start();
-			fragmenterAgent.start();
-			writerAgent.start();
-			readerAgent.start();
-			parserAgent.start();
-			defragAgent.start();
+			mtu{ 1280 } {
 			
 		}
-		
-		concurrency::task<TrResult> Send(Protocol::Header headerOnlyMessage, const UdpEndpoint & endpoint, ResendArgs args) {
-			if(headerOnlyMessage.type() == Protocol::MessageType::GAME) {
-				throw UndefinedBehaviourException{ "bad API call" };
+
+		void SendAck(NetAllocator * alloc, uint32_t seq, const UdpEndpoint & ep) {
+
+			Protocol::Header* h = alloc->MakeProto<Protocol::Header>();
+			h->set_sequence(seq);
+			h->set_type(Protocol::MessageType::ACKNOWLEDGE);
+
+			const uint32_t serializedHeaderSize = static_cast<uint32_t>(h->ByteSizeLong());
+			const uint32_t binarySize = serializedHeaderSize + 2 * sizeof(google::protobuf::uint32);
+			uint8_t * buffer = google::protobuf::Arena::CreateArray<uint8_t>(alloc->GetArena(), binarySize);
+
+			google::protobuf::io::ArrayOutputStream outStream{ buffer, static_cast<int32_t>(binarySize) };
+			google::protobuf::io::CodedOutputStream codedOutStream{ &outStream };
+
+			codedOutStream.WriteLittleEndian32(static_cast<uint32_t>(serializedHeaderSize));
+			if(!h->SerializeToCodedStream(&codedOutStream)) {
+				Log::Error("Failed to serialize ACK header");
+				return;
+			}
+			codedOutStream.WriteLittleEndian32(FragmentData{}.Pack());
+
+			socket.Send(boost::asio::mutable_buffer{ buffer, binarySize }, ep, [al = alloc->shared_from_this()](const ErrorCode & ec, size_t s) -> void {
+				if(ec) {
+					Log::Error("Failed to send ack: {0}", ec.message());
+				}
+			});
+		}
+
+		bool TryParseMessage(NetAllocator* alloc, UdpPacket * pkt) {
+			Protocol::Header* header = alloc->MakeProto<Protocol::Header>();
+			
+			google::protobuf::io::ArrayInputStream ais{ pkt->GetData(), static_cast<int32_t>(pkt->GetDataSize()) };
+			google::protobuf::io::CodedInputStream cis{ &ais };
+
+			uint32_t serializedHeaderSize = 0;
+			if(!cis.ReadLittleEndian32(&serializedHeaderSize)) {
+				return false;
 			}
 
-			uint32_t seq = headerOnlyMessage.sequence();
+			auto limit = cis.PushLimit(static_cast<int32_t>(serializedHeaderSize));
+			if(!header->ParseFromCodedStream(&cis)) {
+				return false;
+			}
+			cis.PopLimit(limit);
+
+			uint32_t packedFragData = 0;
+			if(!cis.ReadLittleEndian32(&packedFragData)) {
+				return false;
+			}
+
+			FragmentData fd;
+			fd.Unpack(packedFragData);
+
+			if(header->type() == Protocol::MessageType::ACKNOWLEDGE) {
+
+				UdpAck ack;
+				ack.endpoint = pkt->GetEndpoint();
+				ack.sequence = header->sequence();
+				pendingTokenStorage.Ack(std::move(ack));
+				return false; // signal false error, we dont need the memory anymore
+
+			}
+
+			if(header->type() == Protocol::MessageType::GAME) {
+				fragmentStorage.AddFragment(alloc->shared_from_this(), pkt, header, fd, static_cast<uint16_t>(cis.CurrentPosition()));
+				return true;
+
+			}
+
+			if((header->type() & 0x1) == 0x1) {
+
+				SendAck(alloc, header->sequence(), pkt->GetEndpoint());
+
+			}
+
+			ControlMessage cm;
+			cm.allocator = alloc->shared_from_this();
+			cm.header = header;
+			cm.packet = pkt;
+			controlQueue.Received(std::move(cm));
+
+			return true;
+		}
+
+		void StartReceive(Ref<NetAllocator> alloc) {
+			UdpPacket * p = alloc->Make<UdpPacket>();
+
+			socket.Receive(p->GetMutableBuffer(), p->GetEndpoint(), [this, p, al = std::move(alloc)](const ErrorCode & ec, size_t s) mutable -> void {
+				if(ec) {
+					al->Clear();
+					StartReceive(std::move(al));
+					return;
+				}
+
+				p->SetDataSize(s);
+				p->SetTimestamp(SystemClock::LocalNow());
+				if(!TryParseMessage(al.get(), p)) {
+					al->Clear();
+					StartReceive(std::move(al));
+					return;
+				}
+
+				Host();
+			});
+		}
+
+		void Host() {
+			Ref<NetAllocator> alloc = MakeSmallAllocator();
+
+			StartReceive(std::move(alloc));
+		}
+
+		// optimal for receiving messages or sending small messages
+		Ref<NetAllocator> MakeSmallAllocator() {
+			// a full packet + 512 bytes for management
+			constexpr uint32_t blockSize = UdpPacket::MAX_DATA_SIZE + 512;
+			return std::make_shared<NetAllocator>(&ioContext, blockSize);
+		}
+
+		// optimal for sending game updates
+		Ref<NetAllocator> MakeLargeAllocator() {
+			constexpr uint32_t blockSize = 0x28000;
+			return std::make_shared<NetAllocator>(&ioContext, blockSize);
+		}
+
+		CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, Protocol::Header * header, const UdpEndpoint & endpoint) {
+			const auto args = protocolConfig.GetArgsFor(header->type());
+			return Send(std::move(allocator), header, endpoint, args);
+		}
+
+		CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, Protocol::Header * header, const UdpEndpoint & endpoint, ResendArgs args) {
+			if(header->type() == Protocol::MessageType::GAME) {
+				throw UndefinedBehaviourException{ "bad API call" };
+			}
 			
-			Ref<UdpPacket> pkt = packetStorage->GetBuffer();
-			pkt->SetDataSize(UdpPacket::MAX_DATA_SIZE);
+			UdpPacket* pkt = allocator->Make<UdpPacket>();
 			pkt->SetEndpoint(endpoint);
+			
+			uint32_t seq = header->sequence();
 
-			const uint32_t serializedHeaderSize = static_cast<uint32_t>(headerOnlyMessage.ByteSizeLong());
+			const uint32_t serializedHeaderSize = static_cast<uint32_t>(header->ByteSizeLong());
 			const uint32_t totalHeaderSize = serializedHeaderSize + 8;
-
 			google::protobuf::io::ArrayOutputStream outStream{ pkt->GetData(), static_cast<int32_t>(pkt->GetDataSize()) };
 			google::protobuf::io::CodedOutputStream codedOutStream{ &outStream };
 
 			codedOutStream.WriteLittleEndian32(static_cast<uint32_t>(serializedHeaderSize));
-			if(!headerOnlyMessage.SerializeToCodedStream(&codedOutStream)) {
+			if(!header->SerializeToCodedStream(&codedOutStream)) {
 				Log::Warn("Failed to serialize header");
 			}
 			codedOutStream.WriteLittleEndian32(FragmentData{}.Pack());
 			pkt->SetDataSize(totalHeaderSize);
 
-			if((headerOnlyMessage.type() & 0x1) == 0x1) {
-				ReliableUdpHandle handle;
-				handle.data = std::move(pkt);
-				handle.sequence = seq;
-				handle.resendArgs = args;
+			CompletionToken<TrResult> ct = allocator->MakeCompletionToken<TrResult>();
 
-				concurrency::send(reliableHandles, handle);
+			if((header->type() & 0x1) == 0x1) { 
+				Ref<ResendContext<NetcodeSocketType>> rc = allocator->MakeShared<ResendContext<NetcodeSocketType>>();
+				WaitableTimer * timer = allocator->Make<WaitableTimer>(ioContext);
+				PendingTokenNode * node = allocator->Make<PendingTokenNode>(ct, timer, pkt, seq);
 
-				return concurrency::task<TrResult>{ handle.completionEvent };
+				pendingTokenStorage.AddNode(node);
+
+				rc->attemptCount = args.maxAttempts;
+				rc->attemptIndex = 1;
+				rc->socket = &socket;
+				rc->timer = timer;
+				rc->packet = pkt;
+				rc->completionToken = ct;
+				rc->resendInterval = args.resendInterval;
+				rc->pendingTokenStorage = &pendingTokenStorage;
+				rc->sequence = seq;
+
+				rc->Attempt();
 			} else {
-				SocketWriteHandle swh;
-				swh.endpoint = endpoint;
-				swh.buffers[0] = pkt->GetConstBuffer();
-
-				concurrency::send(writeRequests, swh);
-
-				return concurrency::create_task(swh.completionEvent).then([pkt, seq](SocketOperationResult sor) -> TrResult {
+				socket.Send(pkt->GetConstBuffer(), pkt->GetEndpoint(), [ct](const ErrorCode& ec, size_t s) -> void {
 					TrResult tr;
-					tr.dataSize = pkt->GetDataSize();
-					tr.attempts = 1;
-					tr.fragments = 1;
-					tr.sequence = seq;
-					tr.sentBytes = sor.numBytes;
-					tr.errorIfAny = sor.errorCode;
-					tr.state = (sor.errorCode) ? TransmissionState::ERROR_WHILE_SENDING : TransmissionState::SUCCESS;
-					return tr;
-				});
-			}
-		}
-		
-		concurrency::task<TrResult> Send(Protocol::Header headerOnlyMessage, const UdpEndpoint& endpoint) {
-			const auto args = protocolConfig.GetArgsFor(headerOnlyMessage.type());
-			return Send(std::move(headerOnlyMessage), endpoint, args);
-		}
-
-		concurrency::task<TrResult> Send(uint32_t seq, Protocol::Update update, const UdpEndpoint& endpoint) {
-			auto gm = gamePacketStorage->GetBuffer();
-			gm->SetDataSize(GamePacket::MAX_DATA_SIZE);
-			auto h = packetStorage->GetBuffer();
-			h->SetDataSize(UdpPacket::MAX_DATA_SIZE);
-
-			if(!update.SerializeToArray(gm->GetData(), static_cast<int>(gm->GetDataSize()))) {
-				Log::Error("Failed to serialize game message");
-				return concurrency::create_task([]() -> TrResult {
-					TrResult tr;
-					tr.state = TransmissionState::CANCELLED;
-					tr.attempts = 0;
-					tr.errorIfAny = Errc::make_error_code(Errc::result_out_of_range);
-					return tr;
+					tr.sentBytes = s;
+					tr.errorIfAny = ec;
+					ct->Set(std::move(tr));
 				});
 			}
 
-			gm->SetDataSize(static_cast<uint32_t>(update.ByteSizeLong()));
-			gm->SetEndpoint(endpoint);
-			h->SetEndpoint(endpoint);
-
-			GameMessageHandle msg;
-			msg.gamePacket = std::move(gm);
-			msg.headerPacket = std::move(h);
-			msg.sequence = seq;
-			concurrency::send(gameMessageHandles, msg);
-
-			return concurrency::create_task(msg.completionEvent);
+			return ct;
 		}
+
+		CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, uint32_t seq, Protocol::Update * update, const UdpEndpoint & endpoint) {
+			CompletionToken<TrResult> ct = allocator->MakeCompletionToken<TrResult>();
+			GamePacket * pkt = allocator->Make<GamePacket>();
+			Protocol::Header * header = allocator->MakeProto<Protocol::Header>();
+			pkt->SetEndpoint(endpoint);
+
+			header->set_sequence(seq);
+			header->set_type(Protocol::MessageType::GAME);
+
+			const uint32_t serializedDataSize = static_cast<uint32_t>(update->ByteSizeLong());
+			const uint32_t serializedHeaderSize = static_cast<uint32_t>(header->ByteSizeLong());
+			const uint32_t totalHeaderSize = serializedHeaderSize + 2 * sizeof(google::protobuf::uint32);
+			const uint32_t localMtu = mtu;
+			const uint32_t maxPayloadSize = localMtu - totalHeaderSize;
+			const uint32_t numFragments = serializedDataSize / maxPayloadSize + (std::min(serializedDataSize % maxPayloadSize, 1u));
+
+			const uint32_t binaryDataSize = numFragments * (localMtu);
+
+			if(binaryDataSize > GamePacket::MAX_DATA_SIZE) {
+				throw OutOfRangeException{ "Network packet too big" };
+			}
+
+			google::protobuf::io::ArrayOutputStream outStream{ pkt->GetData(), static_cast<int32_t>(pkt->GetDataSize()) };
+			google::protobuf::io::CodedOutputStream codedOutStream{ &outStream };
+
+			uint32_t remainingSize = serializedDataSize;
+			const uint32_t headerStart = 0;
+			const uint32_t dataStart = numFragments * totalHeaderSize;
+
+			for(uint32_t i = 0; i < numFragments; i++) {
+				codedOutStream.WriteLittleEndian32(serializedHeaderSize);
+				if(!header->SerializeToCodedStream(&codedOutStream)) {
+					throw UndefinedBehaviourException{ "Failed to serialize header while fragmenting" };
+				}
+
+				FragmentData fd;
+				fd.fragmentCount = static_cast<uint8_t>(numFragments);
+				fd.fragmentIndex = static_cast<uint8_t>(i);
+				fd.sizeInBytes = static_cast<uint16_t>(std::min(remainingSize, maxPayloadSize));
+
+				codedOutStream.WriteLittleEndian32(fd.Pack());
+
+				remainingSize -= fd.sizeInBytes;
+			}
+
+			if(!update->SerializePartialToCodedStream(&codedOutStream)) {
+				throw UndefinedBehaviourException{ "Failed to serialize update while fragmenting" };
+			}
+
+			Ref<FragmentationContext<NetcodeSocketType>> fragCtx = allocator->MakeShared<FragmentationContext<NetcodeSocketType>>();
+			fragCtx->completionToken = ct;
+			fragCtx->socket = &socket;
+			fragCtx->packet = pkt;
+			fragCtx->maxDataSize = maxPayloadSize;
+			fragCtx->headerStart = headerStart;
+			fragCtx->dataStart = dataStart;
+			fragCtx->headerSize = totalHeaderSize;
+			fragCtx->dataSize = serializedDataSize;
+			fragCtx->dataOffset = 0;
+			fragCtx->headerOffset = 0;
+			fragCtx->SendFragment();
+
+			return ct;
+		}
+
 	};
-	
 
 }

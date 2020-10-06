@@ -1,11 +1,12 @@
 #include "ServerApp.h"
 
 namespace nn = Netcode::Network;
+namespace np = Netcode::Protocol;
 
 class ServerClockSyncRequestFilter : public nn::FilterBase {
 public:
 	nn::FilterResult Run(Ptr<nn::NetcodeService> service, Netcode::Timestamp timestamp, nn::ControlMessage& cm) override {
-		Netcode::Protocol::Header & header = cm.content;
+		/*Netcode::Protocol::Header & header = cm.content;
 
 		if(header.type() == Netcode::Protocol::MessageType::CLOCK_SYNC_REQUEST) {
 			Netcode::Protocol::Header h;
@@ -15,9 +16,9 @@ public:
  			Netcode::Protocol::TimeSync* ts = h.mutable_time_sync();
 			ts->set_server_req_reception(Netcode::ConvertTimestampToUInt64(cm.receivedAt));
 			ts->set_server_resp_transmission(Netcode::ConvertTimestampToUInt64(Netcode::SystemClock::LocalNow()));
-			service->Send(std::move(h), cm.source);
+			//service->Send(std::move(h), cm.source);
 			return nn::FilterResult::CONSUMED;
-		}
+		}*/
 
 		return nn::FilterResult::IGNORED;
 	}
@@ -27,13 +28,16 @@ class ServerConnectRequestFilter : public nn::FilterBase {
 	uint32_t maxConnections;
 	
 	void SendConnectResponse(Ptr<nn::NetcodeService> service, uint32_t seq, const nn::UdpEndpoint& target, int errorCode) {
-		Netcode::Protocol::Header h;
-		h.set_sequence(seq);
-		h.set_type(Netcode::Protocol::MessageType::CONNECT_RESPONSE);
-		Netcode::Protocol::ConnectResponse * cr = h.mutable_connect_response();
+		Ref<nn::NetAllocator> alloc = service->MakeSmallAllocator();
+		np::Header * header = alloc->MakeProto<np::Header>();
+
+		header->set_sequence(seq);
+		header->set_type(Netcode::Protocol::MessageType::CONNECT_RESPONSE);
+		Netcode::Protocol::ConnectResponse * cr = header->mutable_connect_response();
 		cr->set_type(Netcode::Protocol::DIRECT);
 		cr->set_error_code(errorCode);
-		service->Send(std::move(h), target);
+
+		service->Send(std::move(alloc), header, target);
 	}
 	
 public:
@@ -42,31 +46,32 @@ public:
 	}
 	
 	virtual nn::FilterResult Run(Ptr<nn::NetcodeService> service, Netcode::Timestamp timestamp, nn::ControlMessage& cm) override {
-		const Netcode::Protocol::Header & header = cm.content;
+		const Netcode::Protocol::Header * header = cm.header;
+		nn::UdpEndpoint source = cm.packet->GetEndpoint();
 		nn::ConnectionStorage * cs = service->GetConnections();
 		
-		if(header.type() == Netcode::Protocol::MessageType::CONNECT_REQUEST) {
-			if(cs->GetConnectionByEndpoint(cm.source) != nullptr) {
-				SendConnectResponse(service, header.sequence(), cm.source, static_cast<int>(nn::Error::CONNECTION_ALREADY_EXISTS));
+		if(header->type() == Netcode::Protocol::MessageType::CONNECT_REQUEST) {
+			if(cs->GetConnectionByEndpoint(cm.packet->GetEndpoint()) != nullptr) {
+				SendConnectResponse(service, header->sequence(), source, static_cast<int>(nn::Error::CONNECTION_ALREADY_EXISTS));
 				return Netcode::Network::FilterResult::CONSUMED;
 			}
 
 			if(cs->GetConnectionCount() >= maxConnections) {
-				SendConnectResponse(service, header.sequence(), cm.source, static_cast<int>(nn::Error::SERVER_IS_FULL));
+				SendConnectResponse(service, header->sequence(), source, static_cast<int>(nn::Error::SERVER_IS_FULL));
 			} else {
 				Ref<nn::ConnectionBase> conn = std::make_shared<Netcode::Network::ConnectionBase>();
 				conn->state = Netcode::Network::ConnectionState::SYNCHRONIZING;
-				conn->remoteSequence = header.sequence();
+				conn->remoteSequence = header->sequence();
 				conn->localSequence = 1;
-				conn->endpoint = cm.source;
+				conn->endpoint = source;
 				cs->AddConnection(std::move(conn));
 				Log::Debug("Connection added");
-				SendConnectResponse(service, header.sequence(), cm.source, static_cast<int>(nn::Error::SUCCESS));
+				SendConnectResponse(service, header->sequence(), source, static_cast<int>(nn::Error::SUCCESS));
 			}
 			
 			return nn::FilterResult::CONSUMED;
 		}
-		
+
 		return nn::FilterResult::IGNORED;
 	}
 };
@@ -110,14 +115,8 @@ void ServerApp::Run() {
 		const Netcode::Duration sim = frameFinishedAt - frameStartedAt;
 		frameStartedAt = frameFinishedAt;
 
-		
-		
 		if(sim < frameDuration) {
 			Netcode::SleepFor(frameDuration - sim);
-			/*
-			Netcode::BusyWait(frameDuration - sim, [this]() -> void {
-				window->ProcessMessages();
-			});*/
 		}
 	}
 }

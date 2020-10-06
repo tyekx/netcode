@@ -60,7 +60,7 @@
         "enabled:bool": true
       },
       "tickIntervalMs:u32": 500,
-      "workerThreadCount:u32": 1,
+      "workerThreadCount:u32": 2,
       "hostname:string": "localhost",
       "controlPort:u16": 8888,
       "gamePort:u16": 8889,
@@ -84,7 +84,7 @@
         "enabled:bool": true
       },
       "tickIntervalMs:u32": 500,
-      "workerThreadCount:u32": 1,
+      "workerThreadCount:u32": 2,
       "selfAddress:string": "::1",
       "hostname:string": "localhost",
       "ownerId:i32": 1,

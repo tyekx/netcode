@@ -143,7 +143,7 @@ namespace Netcode::Network {
 		std::string queryValueAddress;
 		std::string queryValuePort;
 
-		void SendConnectRequest(concurrency::task_completion_event<ErrorCode> tce);
+		void SendConnectRequest(CompletionToken<ErrorCode> mainToken);
 
 		void Tick();
 		
@@ -161,39 +161,34 @@ namespace Netcode::Network {
 			});
 		}
 		
-		void StartConnection(concurrency::task_completion_event<ErrorCode> tce) {
+		void StartConnection(CompletionToken<ErrorCode> mainToken) {
 			if(connection == nullptr) {
 				Log::Error("No connection was set");
-				tce.set(make_error_code(Error::BAD_API_CALL));
+				mainToken->Set(make_error_code(Error::BAD_API_CALL));
 				return;
 			}
 
 			connection->state = ConnectionState::CONNECTING;
 
-			Protocol::Header h;
-			h.set_type(Protocol::CONNECT_PUNCHTHROUGH);
-			h.set_sequence(connection->localSequence++);
+			Ref<NetAllocator> alloc = service->MakeSmallAllocator();
+			Protocol::Header* header = alloc->MakeProto<Protocol::Header>();
+			header->set_sequence(connection->localSequence++);
+			header->set_type(Protocol::MessageType::CONNECT_PUNCHTHROUGH);
 
-			concurrency::task<TrResult> handle = service->Send(std::move(h), connection->endpoint);
-			handle.then([this, tce](TrResult r) mutable -> void {
-				if(r.state == TransmissionState::SUCCESS) {
-					Log::Debug("Punchthrough success");
-					SendConnectRequest(std::move(tce));
-				} else if(r.state == TransmissionState::TIMEOUT) {
-					Log::Debug("Punchthrough TIMEOUT");
-					tce.set(make_error_code(Error::TIMEDOUT));
-				} else if(r.state == TransmissionState::ERROR_WHILE_SENDING) {
-					Log::Debug("Punchthrough ERROR: {0}", r.errorIfAny.message());
-					tce.set(r.errorIfAny);
+			service->Send(std::move(alloc), header, connection->endpoint)
+				   ->Then([this, mainToken](TrResult tr) mutable -> void {
+				if(tr.errorIfAny) {
+					Log::Error("Failed to connect...");
+					mainToken->Set(tr.errorIfAny);
 				} else {
-					tce.set(make_error_code(Error::BAD_API_CALL));
+					SendConnectRequest(std::move(mainToken));
 				}
 			});
 		}
 
-		void OnHostnameResolved(concurrency::task_completion_event<ErrorCode> tce, const UdpResolver::results_type & results) {
+		void OnHostnameResolved(const UdpResolver::results_type & results, CompletionToken<ErrorCode> mainToken) {
 			if(results.empty()) {
-				tce.set(make_error_code(Error::ADDRESS_RESOLUTION_FAILED));
+				mainToken->Set(make_error_code(Error::ADDRESS_RESOLUTION_FAILED));
 				return;
 			}
 			
@@ -220,58 +215,61 @@ namespace Netcode::Network {
 
 				if(ec) {
 					Log::Error("Failed to bind port");
+					mainToken->Set(make_error_code(Error::SOCK_ERR));
 					connection->state = ConnectionState::INTERNAL_ERROR;
-					tce.set(ec);
 					return;
 				}
 			}
 
 			if(ec) {
 				Log::Error("Failed to open port");
+				mainToken->Set(make_error_code(Error::SOCK_ERR));
 				connection->state = ConnectionState::INTERNAL_ERROR;
-				tce.set(ec);
 				return;
 			}
 
 			if(ec) {
 				Log::Error("Failed to 'connect': {0}", ec.message());
+				mainToken->Set(make_error_code(Error::SOCK_ERR));
 				connection->state = ConnectionState::INTERNAL_ERROR;
-				tce.set(ec);
 				return;
 			}
 			
 			if(!SetDontFragmentBit(sock)) {
 				Log::Error("Failed to set dont fragment bit");
-				tce.set(make_error_code(Error::SOCK_ERR));
+				mainToken->Set(make_error_code(Error::SOCK_ERR));
+				connection->state = ConnectionState::INTERNAL_ERROR;
 				return;
 			}
 
 
-			service = std::make_shared<NetcodeService>(std::move(sock));
+			service = std::make_shared<NetcodeService>(ioContext, std::move(sock));
+			service->Host();
 
 			Log::Debug("Service created");
 
 			Sleep(100);
 
-			StartConnection(tce);
+			StartConnection(std::move(mainToken));
 
 			InitTick();
 		}
 
-		void StartHostnameResolution(concurrency::task_completion_event<ErrorCode> connTce) {
+		CompletionToken<ErrorCode> StartHostnameResolution() {
+			CompletionToken<ErrorCode> ct = std::make_shared<CompletionTokenType<ErrorCode>>(&ioContext);
 			connection->state = ConnectionState::RESOLVING;
 			resolver.async_resolve(queryValueAddress, queryValuePort, boost::asio::ip::resolver_base::address_configured,
-				[this, ct = std::move(connTce)](const ErrorCode & ec, UdpResolver::results_type results) mutable -> void {
+				[this, ct](const ErrorCode & ec, UdpResolver::results_type results) mutable -> void {
 				if(ec) {
 					Log::Error("Address resolution failed");
-					ct.set(make_error_code(Error::ADDRESS_RESOLUTION_FAILED));
 				} else {
-					OnHostnameResolved(std::move(ct), std::move(results));
+					OnHostnameResolved(std::move(results), std::move(ct));
 				}
 			});
+			return ct;
 		}
 
-		void SynchronizeToServerClock(concurrency::task_completion_event<ErrorCode> connTce);
+		void SynchronizeToServerClock();
 		
 	public:
 		ClientSession(boost::asio::io_context & ioc) : ioContext{ ioc }, resolver{ ioc }, tickTimer{ ioc } {
@@ -284,16 +282,32 @@ namespace Netcode::Network {
 		
 		virtual ~ClientSession() = default;
 		
+		void SendDebugFragmentedMessage() {
+			Ref<NetAllocator> alloc = service->MakeLargeAllocator();
+			Protocol::Update * update = alloc->MakeProto<Protocol::Update>();
+			
+			uint32_t seq = connection->localSequence++;
+
+			Protocol::ClientUpdate * cu = update->mutable_client_update();
+			Protocol::Player * ps = cu->mutable_player_state();
+
+			char * data = alloc->MakeArray<char>(8000);
+			memset(data, 'A', 8000);
+
+			ps->set_replication_data(data, 8000);
+
+			service->Send(std::move(alloc), seq, update, connection->endpoint)->Then([this](const TrResult & tr) -> void {
+				SendDebugFragmentedMessage();
+			});
+		}
+
 		virtual void Start() override {
 			Ref<ConnectionBase> c = std::make_shared<ConnectionBase>();
 			c->state = ConnectionState::INACTIVE;
 
-			auto t = Connect(std::move(c), "localhost", 8889);
-			t.then([](ErrorCode ec) -> void {
-				if(ec) {
-					Log::Debug("Error---");
-				}
-				Log::Debug("So far: {0}", ec.message());
+			Connect(std::move(c), "localhost", 8889)->Then([this](const ErrorCode & ec) -> void {
+				Log::Debug("Connect: {0}", ec.message());
+				SendDebugFragmentedMessage();
 			});
 		}
 
@@ -301,28 +315,22 @@ namespace Netcode::Network {
 
 		}
 		
-		virtual concurrency::task<ErrorCode> Connect(Ref<ConnectionBase> connectionHandle, std::string hostname, uint32_t port) {
+		virtual CompletionToken<ErrorCode> Connect(Ref<ConnectionBase> connectionHandle, std::string hostname, uint32_t port) {
 			if(connectionHandle->state != ConnectionState::INACTIVE) {
-				Log::Error("State must be inactive to start a new connection");
-				return concurrency::create_task([]()-> ErrorCode { return make_error_code(Error::ALREADY_RUNNING); });
+				throw UndefinedBehaviourException{ "connectionHandle must be INACTIVE" };
 			}
 
 			if(connection != nullptr) {
 				if(connection->state > 0x1000u) {
-					Log::Error("Current connection seems to be active or pending");
-					return concurrency::create_task([]()-> ErrorCode { return make_error_code(Error::ALREADY_RUNNING); });
+					throw UndefinedBehaviourException{ "Current connection seems to be active or pending" };
 				}
 			}
 
 			std::swap(connectionHandle, connection);
-
-			concurrency::task_completion_event<ErrorCode> tce;
 			
 			queryValueAddress = std::move(hostname);
 			queryValuePort = std::to_string(port);
-			StartHostnameResolution(tce);
-
-			return concurrency::create_task(tce);
+			return StartHostnameResolution();
 		}
 	};
 

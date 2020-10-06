@@ -122,7 +122,7 @@ namespace Netcode::Network {
 	public:
 		constexpr static uint32_t MAX_DATA_SIZE = NumBytes;
 		
-		BasicPacket() : endpoint{}, dataSize{ NumBytes }, timestamp{} { }
+		BasicPacket() : endpoint{}, dataSize{ MAX_DATA_SIZE }, timestamp{} { }
 		BasicPacket(size_t size, EndpointType ep) : endpoint{ std::move(ep) },  dataSize{ size }, timestamp{} { }
 		BasicPacket(BasicPacket<ProtocolType, NumBytes> &&) noexcept = default;
 		BasicPacket & operator=(BasicPacket<ProtocolType, NumBytes> &&) noexcept = default;
@@ -217,57 +217,6 @@ namespace Netcode::Network {
 		void Received(T packet) {
 			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
 			recv.emplace_back(std::move(packet));
-		}
-	};
-
-	template<typename T, typename ... StorageStateTypes>
-	class PacketStorage : public std::enable_shared_from_this<PacketStorage<T, StorageStateTypes...>> {
-		using Base = std::enable_shared_from_this<PacketStorage<T, StorageStateTypes...>>;
-		using StateContainer = std::tuple<StorageStateTypes...>;
-		
-		SlimReadWriteLock srwLock;
-		std::vector<std::unique_ptr<T>> availableBuffers;
-		StateContainer storageState;
-
-		auto GetDestructor() {
-			return [lifetime = Base::shared_from_this(), this](T * bufferPointer) -> void {
-				ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-				std::unique_ptr<T> obj{ bufferPointer };
-				
-				if(availableBuffers.size() < 32) {
-					availableBuffers.emplace_back(std::move(obj));
-				}
-			};
-		}
-
-		std::unique_ptr<T> Make() {
-			return std::apply([](auto && ... args) -> std::unique_ptr<T> {
-				return std::make_unique<T>(std::forward<decltype(args)>(args)...);
-			}, storageState);
-		}
-		
-	public:
-
-		PacketStorage(uint32_t preallocatedBuffers, StorageStateTypes && ... args) : srwLock{}, availableBuffers{}, storageState{ std::forward_as_tuple(args...) }{
-			availableBuffers.reserve(preallocatedBuffers * 2);
-
-			for(uint32_t i = 0; i < preallocatedBuffers; ++i) {
-				auto ptr = Make();
-				availableBuffers.emplace_back(std::move(ptr));
-			}
-		}
-
-		Ref<T> GetBuffer() {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-
-			if(availableBuffers.empty()) {
-				std::unique_ptr<T> b = Make();
-				return Ref<T>{ b.release(), GetDestructor() };
-			}
-
-			auto ptr = std::move(availableBuffers.back());
-			availableBuffers.pop_back();
-			return Ref<T>{ ptr.release(), GetDestructor() };
 		}
 	};
 

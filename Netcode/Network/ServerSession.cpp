@@ -68,9 +68,8 @@ namespace Netcode::Network {
 
 		Log::Info("[Network] [Server] Started on port: {0}", Config::Get<uint16_t>(L"network.server.gamePort:u16"));
 
-		service = std::make_shared<NetcodeService>(std::move(gameSocket));
-		
-		//service->Host();
+		service = std::make_shared<NetcodeService>(ioContext, std::move(gameSocket));
+		service->Host();
 	}
 
 	void ServerSession::Stop()
