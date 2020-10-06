@@ -202,6 +202,8 @@ namespace Netcode::Network {
 
 			auto netInterfaces = GetCompatibleInterfaces(connection->endpoint.address());
 
+			uint32_t linkLocalMtu = 1280;
+
 			if(netInterfaces.empty()) {
 				Log::Warn("No defaultable network interface found");
 			} else {
@@ -218,6 +220,8 @@ namespace Netcode::Network {
 					connection->state = ConnectionState::INACTIVE;
 					return;
 				}
+
+				linkLocalMtu = std::min(bestCandidate.mtu, UdpPacket::MAX_DATA_SIZE);
 			}
 
 			if(ec) {
@@ -240,9 +244,8 @@ namespace Netcode::Network {
 				connection->state = ConnectionState::INACTIVE;
 				return;
 			}
-
-
-			service = std::make_shared<NetcodeService>(ioContext, std::move(sock));
+			
+			service = std::make_shared<NetcodeService>(ioContext, std::move(sock), linkLocalMtu);
 			service->Host();
 
 			Log::Debug("Service created");
@@ -267,9 +270,9 @@ namespace Netcode::Network {
 			});
 			return ct;
 		}
-
-		void SynchronizeToServerClock();
 		
+		CompletionToken<ErrorCode> DiscoverPathMtu();
+
 	public:
 		ClientSession(boost::asio::io_context & ioc) : ioContext{ ioc }, resolver{ ioc }, tickTimer{ ioc } {
 
@@ -323,6 +326,10 @@ namespace Netcode::Network {
 					}
 
 					connection->state = ConnectionState::ESTABLISHED;
+
+					DiscoverPathMtu()->Then([this](const ErrorCode & ec)-> void {
+						Log::Debug("Pmtu discovery: {0}", ec.message());
+					});
 				});
 			});
 		}

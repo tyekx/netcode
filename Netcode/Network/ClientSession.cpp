@@ -150,9 +150,62 @@ namespace Netcode::Network {
 			return FilterResult::CONSUMED;
 		}
 	};
-	
-	void ClientSession::SynchronizeToServerClock() {
 
+	class PmtuDiscovery {
+		constexpr static uint16_t COMMON_MTUS[] = {
+			576,
+			1006,
+			1280,
+			1472,
+			1500,
+			4352,
+			8166,
+			17914
+		};
+	public:
+		static void Start(Ptr<NetcodeService> service, CompletionToken<ErrorCode> ct, Ref<ConnectionBase> conn, uint32_t linkLocalMtu) {
+			constexpr uint32_t ipv6_header = 48;
+			/*
+			* lets assume that we already established some communication with the host,
+			* try sending the highest and work backwards
+			*/
+			Ref<NetAllocator> alloc = service->MakeSmallAllocator();
+			Protocol::Header * h = alloc->MakeProto<Protocol::Header>();
+			h->set_sequence(conn->localSequence++);
+			h->set_type(Protocol::MessageType::PMTU_DISCOVERY);
+			h->set_mtu_probe_value(linkLocalMtu - ipv6_header);
+
+			service->Send(std::move(alloc), h, conn->endpoint, ResendArgs{ 200, 3 })->Then([service, ct, conn, linkLocalMtu](const TrResult & tr) -> void { 
+				if(tr.errorCode) {
+					uint32_t nextAttempt = 0;
+					for(uint16_t i : COMMON_MTUS) {
+						if(i >= linkLocalMtu) {
+							break;
+						}
+						nextAttempt = i;
+					}
+
+					if(nextAttempt == 0) {
+						ct->Set(make_error_code(Error::TIMEDOUT));
+						return;
+					}
+
+					PmtuDiscovery::Start(service, ct, conn, nextAttempt);
+				} else {
+					Log::Debug("PMTU ok: {0}", static_cast<int32_t>(linkLocalMtu));
+					service->UpdateMtu(linkLocalMtu);
+					ct->Set(make_error_code(Errc::success));
+				}
+			});
+		}
+	};
+
+	CompletionToken<ErrorCode> ClientSession::DiscoverPathMtu() {
+		CompletionToken<ErrorCode> ct = std::make_shared<CompletionTokenType<ErrorCode>>(&ioContext);
+
+		PmtuDiscovery::Start(service.get(), ct, connection, service->GetLinkLocalMtu());
+
+		return ct;
 	}
 
 	CompletionToken<ErrorCode> ClientSession::Synchronize() {

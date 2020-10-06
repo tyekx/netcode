@@ -1168,6 +1168,8 @@ namespace Netcode::Network {
 
 		ProtocolConfig protocolConfig;
 
+		uint32_t linkLocalMtu;
+
 		uint32_t mtu;
 
 		std::vector<std::unique_ptr<FilterBase>> filters;
@@ -1211,14 +1213,23 @@ namespace Netcode::Network {
 			filters.erase(it, std::end(filters));
 		}
 		
-		NetcodeService(boost::asio::io_context & ioContext, NetcodeSocketType::SocketType sock) :
+		NetcodeService(boost::asio::io_context & ioContext, NetcodeSocketType::SocketType sock, uint32_t linkLocalMtu) :
 			ioContext{ ioContext },
 			socket { std::move(sock) },
 			connectionStorage{},
 			fragmentStorage{ &ioContext, &connectionStorage },
 			protocolConfig{},
-			mtu{ 1280 } {
-			
+			linkLocalMtu{ linkLocalMtu },
+			mtu{ linkLocalMtu } {
+
+		}
+
+		uint32_t GetLinkLocalMtu() const {
+			return linkLocalMtu;
+		}
+
+		void UpdateMtu(uint32_t value) {
+			mtu = value;
 		}
 
 		void SendAck(NetAllocator * alloc, uint32_t seq, const UdpEndpoint & ep) {
@@ -1284,6 +1295,7 @@ namespace Netcode::Network {
 			}
 
 			if(header->type() == Protocol::MessageType::GAME) {
+
 				fragmentStorage.AddFragment(alloc->shared_from_this(), pkt, header, fd, static_cast<uint16_t>(cis.CurrentPosition()));
 				return true;
 
@@ -1369,8 +1381,38 @@ namespace Netcode::Network {
 			if(!header->SerializeToCodedStream(&codedOutStream)) {
 				Log::Warn("Failed to serialize header");
 			}
-			codedOutStream.WriteLittleEndian32(FragmentData{}.Pack());
-			pkt->SetDataSize(totalHeaderSize);
+
+			if(header->type() == Protocol::MessageType::PMTU_DISCOVERY) {
+				uint32_t mtuProbeValue = header->mtu_probe_value();
+
+				if(mtuProbeValue < totalHeaderSize) {
+					throw UndefinedBehaviourException{ "MTU probe value too small" };
+				}
+
+				const uint32_t fakeAllocatedSize = mtuProbeValue - totalHeaderSize;
+
+				if(UdpPacket::MAX_DATA_SIZE < mtuProbeValue) {
+					throw OutOfRangeException{ "MTU probe size is too big" };
+				}
+
+				FragmentData fd;
+				fd.fragmentCount = 1;
+				fd.fragmentIndex = 0;
+				fd.sizeInBytes = static_cast<uint16_t>(fakeAllocatedSize);
+				codedOutStream.WriteLittleEndian32(fd.Pack());
+
+				uint8_t * rawBuffer = codedOutStream.GetDirectBufferForNBytesAndAdvance(fakeAllocatedSize);
+				
+				if(rawBuffer == nullptr) {
+					throw OutOfRangeException{ "MTU probe size is too big" };
+				}
+				// 60 is palindrom in binary
+				memset(rawBuffer, 60, fakeAllocatedSize);
+				pkt->SetDataSize(mtuProbeValue);
+			} else {
+				codedOutStream.WriteLittleEndian32(FragmentData{}.Pack());
+				pkt->SetDataSize(totalHeaderSize);
+			}
 
 			CompletionToken<TrResult> ct = allocator->MakeCompletionToken<TrResult>();
 
