@@ -177,9 +177,8 @@ namespace Netcode::Network {
 
 			service->Send(std::move(alloc), header, connection->endpoint)
 				   ->Then([this, mainToken](TrResult tr) mutable -> void {
-				if(tr.errorIfAny) {
-					Log::Error("Failed to connect...");
-					mainToken->Set(tr.errorIfAny);
+				if(tr.errorCode) {
+					mainToken->Set(tr.errorCode);
 				} else {
 					SendConnectRequest(std::move(mainToken));
 				}
@@ -216,7 +215,7 @@ namespace Netcode::Network {
 				if(ec) {
 					Log::Error("Failed to bind port");
 					mainToken->Set(make_error_code(Error::SOCK_ERR));
-					connection->state = ConnectionState::INTERNAL_ERROR;
+					connection->state = ConnectionState::INACTIVE;
 					return;
 				}
 			}
@@ -224,21 +223,21 @@ namespace Netcode::Network {
 			if(ec) {
 				Log::Error("Failed to open port");
 				mainToken->Set(make_error_code(Error::SOCK_ERR));
-				connection->state = ConnectionState::INTERNAL_ERROR;
+				connection->state = ConnectionState::INACTIVE;
 				return;
 			}
 
 			if(ec) {
 				Log::Error("Failed to 'connect': {0}", ec.message());
 				mainToken->Set(make_error_code(Error::SOCK_ERR));
-				connection->state = ConnectionState::INTERNAL_ERROR;
+				connection->state = ConnectionState::INACTIVE;
 				return;
 			}
 			
 			if(!SetDontFragmentBit(sock)) {
 				Log::Error("Failed to set dont fragment bit");
 				mainToken->Set(make_error_code(Error::SOCK_ERR));
-				connection->state = ConnectionState::INTERNAL_ERROR;
+				connection->state = ConnectionState::INACTIVE;
 				return;
 			}
 
@@ -297,7 +296,7 @@ namespace Netcode::Network {
 			ps->set_replication_data(data, 8000);
 
 			service->Send(std::move(alloc), seq, update, connection->endpoint)->Then([this](const TrResult & tr) -> void {
-				SendDebugFragmentedMessage();
+				//SendDebugFragmentedMessage();
 			});
 		}
 
@@ -307,13 +306,32 @@ namespace Netcode::Network {
 
 			Connect(std::move(c), "localhost", 8889)->Then([this](const ErrorCode & ec) -> void {
 				Log::Debug("Connect: {0}", ec.message());
-				SendDebugFragmentedMessage();
+
+				if(ec) {
+					Log::Error("Failed to connect: {0}", ec.message());
+					connection->state = ConnectionState::INACTIVE;
+					return;
+				}
+
+				connection->state = ConnectionState::SYNCHRONIZING;
+
+				Synchronize()->Then([this](const ErrorCode & ec) -> void {
+					if(ec) {
+						Log::Error("Failed to synchronize: {0}", ec.message());
+						connection->state = ConnectionState::INACTIVE;
+						return;
+					}
+
+					connection->state = ConnectionState::ESTABLISHED;
+				});
 			});
 		}
 
 		virtual void Stop() override {
 
 		}
+
+		virtual CompletionToken<ErrorCode> Synchronize();
 		
 		virtual CompletionToken<ErrorCode> Connect(Ref<ConnectionBase> connectionHandle, std::string hostname, uint32_t port) {
 			if(connectionHandle->state != ConnectionState::INACTIVE) {

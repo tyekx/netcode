@@ -6,19 +6,20 @@ namespace np = Netcode::Protocol;
 class ServerClockSyncRequestFilter : public nn::FilterBase {
 public:
 	nn::FilterResult Run(Ptr<nn::NetcodeService> service, Netcode::Timestamp timestamp, nn::ControlMessage& cm) override {
-		/*Netcode::Protocol::Header & header = cm.content;
+		np::Header * header = cm.header;
+		Ref<nn::NetAllocator> alloc = cm.allocator;
 
-		if(header.type() == Netcode::Protocol::MessageType::CLOCK_SYNC_REQUEST) {
-			Netcode::Protocol::Header h;
-			h.set_sequence(header.sequence());
-			h.set_allocated_time_sync(header.release_time_sync());
-			h.set_type(Netcode::Protocol::CLOCK_SYNC_RESPONSE);
- 			Netcode::Protocol::TimeSync* ts = h.mutable_time_sync();
-			ts->set_server_req_reception(Netcode::ConvertTimestampToUInt64(cm.receivedAt));
+		if(header->type() == np::MessageType::CLOCK_SYNC_REQUEST) {
+			np::Header * h = alloc->MakeProto<np::Header>();
+			h->set_sequence(header->sequence());
+			h->unsafe_arena_set_allocated_time_sync(header->unsafe_arena_release_time_sync());
+			h->set_type(np::CLOCK_SYNC_RESPONSE);
+			np::TimeSync* ts = h->mutable_time_sync();
+			ts->set_server_req_reception(Netcode::ConvertTimestampToUInt64(cm.packet->GetTimestamp()));
 			ts->set_server_resp_transmission(Netcode::ConvertTimestampToUInt64(Netcode::SystemClock::LocalNow()));
-			//service->Send(std::move(h), cm.source);
+			service->Send(std::move(alloc), h, cm.packet->GetEndpoint());
 			return nn::FilterResult::CONSUMED;
-		}*/
+		}
 
 		return nn::FilterResult::IGNORED;
 	}

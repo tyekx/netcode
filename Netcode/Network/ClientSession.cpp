@@ -75,15 +75,14 @@ namespace Netcode::Network {
 		connection->state = ConnectionState::AUTHENTICATING;
 		CompletionToken<TrResult> transmissionToken = service->Send(std::move(alloc), header, connection->endpoint);
 		service->AddFilter(std::make_unique<ClientConnectResponseFilter>(seq, connection->endpoint, transmissionToken, filterCompletionToken));
-		transmissionToken->Then([this, mainToken](const TrResult & tr) -> void {
-			if(tr.errorIfAny) {
-				Log::Error("Failed to send connection request");
-				mainToken->Set(tr.errorIfAny);
-			} else {
-				Log::Debug("Connect request was ACK-ed");
+
+		transmissionToken->Then([mainToken](const TrResult & tr) -> void {
+			if(tr.errorCode) {
+				mainToken->Set(tr.errorCode);
 			}
 		});
-		filterCompletionToken->Then([this, mainToken](const ErrorCode & ec) -> void {
+
+		filterCompletionToken->Then([mainToken](const ErrorCode & ec) -> void {
 			mainToken->Set(ec);
 		});
 	}
@@ -95,14 +94,14 @@ namespace Netcode::Network {
 	};
 
 	class ClockSyncResponseFilter : public FilterBase {
+		CompletionToken<ClockSyncResult> completionToken;
 		Timestamp createdAt;
-		concurrency::task_completion_event<ClockSyncResult> tce;
 		Ref<ConnectionBase> serverConnection;
 		NtpClockFilter clockFilter;
 		uint32_t numUpdates;
 	public:
-		ClockSyncResponseFilter(Ref<ConnectionBase> serverConnection, concurrency::task_completion_event<ClockSyncResult> tce) :
-			createdAt{ SystemClock::LocalNow() }, tce{ std::move(tce) }, serverConnection{ std::move(serverConnection) }, clockFilter{} {
+		ClockSyncResponseFilter(Ref<ConnectionBase> serverConnection, CompletionToken<ClockSyncResult> tce) :
+			completionToken{ std::move(tce) }, createdAt{ SystemClock::LocalNow() },  serverConnection{ std::move(serverConnection) }, clockFilter{} {
 			state = FilterState::RUNNING;
 			numUpdates = 0;
 		}
@@ -114,28 +113,28 @@ namespace Netcode::Network {
 				csr.errorCode = make_error_code(Error::TIMEDOUT);
 				csr.delay = 0.0;
 				csr.offset = 0.0;
-				tce.set(std::move(csr));
+				completionToken->Set(csr);
 				return true;
 			}
 			return false;
 		}
 		
 		FilterResult Run(Ptr<NetcodeService> service, Timestamp timestamp, ControlMessage& cm) override {
-			/*
-			Protocol::Header & header = cm.content;
+			UdpEndpoint source = cm.packet->GetEndpoint();
+			Protocol::Header * header = cm.header;
 			
-			if(header.type() == Protocol::MessageType::CLOCK_SYNC_RESPONSE) {
-				if(cm.source != serverConnection->endpoint) {
+			if(header->type() == Protocol::MessageType::CLOCK_SYNC_RESPONSE) {
+				if(source != serverConnection->endpoint) {
 					return FilterResult::IGNORED;
 				}
 
-				if(!header.has_time_sync()) {
+				if(!header->has_time_sync()) {
 					return FilterResult::IGNORED;
 				}
 			}
-			header.mutable_time_sync()->set_client_resp_reception(ConvertTimestampToUInt64(cm.receivedAt));
+			header->mutable_time_sync()->set_client_resp_reception(ConvertTimestampToUInt64(cm.packet->GetTimestamp()));
 			
-			clockFilter.Update(header.time_sync());
+			clockFilter.Update(header->time_sync());
 
 			numUpdates++;
 
@@ -144,11 +143,10 @@ namespace Netcode::Network {
 				csr.errorCode = make_error_code(Error::SUCCESS);
 				csr.delay = clockFilter.GetDelay();
 				csr.offset = clockFilter.GetOffset();
-				tce.set(std::move(csr));
+				completionToken->Set(csr);
 				state = FilterState::COMPLETED;
 			}
-
-			*/
+			
 			return FilterResult::CONSUMED;
 		}
 	};
@@ -157,17 +155,36 @@ namespace Netcode::Network {
 
 	}
 
+	CompletionToken<ErrorCode> ClientSession::Synchronize() {
+		CompletionToken<ErrorCode> ct = std::make_shared<CompletionTokenType<ErrorCode>>(&ioContext);
+		CompletionToken<ClockSyncResult> syncToken = std::make_shared<CompletionTokenType<ClockSyncResult>>(&ioContext);
+
+		service->AddFilter(std::make_unique<ClockSyncResponseFilter>(connection, syncToken));
+
+		syncToken->Then([this, ct](const ClockSyncResult & cr) -> void {
+			if(cr.errorCode) {
+				Log::Error("Failed to synchronize clock");
+			} else {
+				Log::Debug("Clock sync OK. Offset: {0} Delta: {1}", cr.offset, cr.delay);
+			}
+			ct->Set(cr.errorCode);
+		});
+
+		return ct;
+	}
+
 	void ClientSession::Tick() {
 		service->RunFilters();
 
 		if(connection != nullptr) {
 			if(connection->state == ConnectionState::SYNCHRONIZING) {
-				Protocol::Header h;
-				h.set_sequence(connection->localSequence++);
-				h.set_type(Protocol::MessageType::CLOCK_SYNC_REQUEST);
-				Protocol::TimeSync * ts = h.mutable_time_sync();
+				Ref<NetAllocator> alloc = service->MakeSmallAllocator();
+				Protocol::Header * h = alloc->MakeProto<Protocol::Header>();
+				h->set_sequence(connection->localSequence++);
+				h->set_type(Protocol::MessageType::CLOCK_SYNC_REQUEST);
+				Protocol::TimeSync * ts = h->mutable_time_sync();
 				ts->set_client_req_transmission(ConvertTimestampToUInt64(SystemClock::LocalNow()));
-				//service->Send(std::move(h), connection->endpoint);
+				service->Send(std::move(alloc), h, connection->endpoint);
 			}
 		}
 	}

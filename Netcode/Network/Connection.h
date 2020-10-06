@@ -19,11 +19,6 @@ namespace Netcode::Network {
 
 	enum class ConnectionState : uint32_t {
 		INACTIVE = 0,
-		DISCONNECTED = 1,
-		REJECTED = 403,
-		TIMEOUT = 404,
-		INTERNAL_ERROR = 500,
-		
 		RESOLVING = 0x4000,
 		CONNECTING = 0x8000,
 		AUTHENTICATING = 0x8001,
@@ -34,9 +29,7 @@ namespace Netcode::Network {
 	NETCODE_ENUM_CLASS_OPERATORS(ConnectionState)
 	
 	using GamePacket = BasicPacket<boost::asio::ip::udp, 65536>;
-	using WaitableTimer = boost::asio::basic_waitable_timer<Netcode::ClockType>;
-
-
+	using WaitableTimer = boost::asio::basic_waitable_timer<ClockType>;
 
 	struct FragmentData {
 		uint8_t fragmentIndex;
@@ -329,82 +322,6 @@ namespace Netcode::Network {
 		}
 	};
 
-	template<typename T, unsigned PAGE_SIZE = 32>
-	class ManagedPool : public std::enable_shared_from_this<ManagedPool<T, PAGE_SIZE>> {
-
-		struct Page {
-			uint8_t data[PAGE_SIZE * sizeof(T)];
-			uint32_t idx;
-
-			Page() : idx{ 0 } {}
-		};
-
-		struct FreeListItem {
-			FreeListItem * next;
-		};
-
-		FreeListItem * head;
-		std::list< Page > pages;
-		SlimReadWriteLock srwLock;
-
-		using Base = std::enable_shared_from_this<ManagedPool<T, PAGE_SIZE>>;
-
-	public:
-
-		ManagedPool() : head{ nullptr }, pages{}, srwLock{} {
-			pages.emplace_back();
-		}
-
-		NETCODE_CONSTRUCTORS_DELETE_COPY(ManagedPool);
-		NETCODE_CONSTRUCTORS_DELETE_MOVE(ManagedPool);
-
-		void FreeItem(T * ptr) {
-			ptr->~T(); // this could actually take a while
-
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-
-			auto * p = reinterpret_cast<FreeListItem *>(ptr);
-			p->next = head;
-			head = p;
-		}
-
-		struct ManagedPoolDeleter {
-			Ref<ManagedPool> self;
-
-			void operator()(T * freedPtr) {
-				self->FreeItem(freedPtr);
-			}
-		};
-
-		using ObjectType = std::unique_ptr<T, ManagedPoolDeleter>;
-
-		template<typename ... U>
-		ObjectType Get(U && ... args) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-			void * dst;
-
-			if(head != nullptr) {
-				dst = head;
-				head = head->next;
-			} else {
-				auto & page = pages.back();
-
-				if(page.idx == PAGE_SIZE) {
-					pages.emplace_back();
-					page = pages.back();
-				}
-
-				dst = page.data + sizeof(T) * page.idx;
-				page.idx += 1;
-			}
-
-			return std::unique_ptr<T, ManagedPoolDeleter>{
-				new (dst) T{ std::forward<U>(args)... },
-					ManagedPoolDeleter{ Base::shared_from_this() }
-			};
-		}
-	};
-
 	struct MtuValue {
 		constexpr static uint32_t MSB = (0x80000000);
 		constexpr static uint32_t UDP_HEADER_SIZE = 8;
@@ -535,92 +452,6 @@ namespace Netcode::Network {
 	};
 
 	template<typename SockType>
-	class DebugSharedAsioSocketReadWriter {
-		SlimReadWriteLock srwLock;
-		boost::asio::executor executor;
-		Ref<ManagedPool<WaitableTimer>> fakeLagTimers;
-		Duration fakeLagAvgDuration;
-		std::default_random_engine randomEngine;
-		std::normal_distribution<double> fakeLagDistribution;
-
-		Duration SampleFakeLag() {
-			if(fakeLagAvgDuration > Duration{}) {
-				double d = fakeLagDistribution(randomEngine);
-
-				return std::chrono::duration_cast<Duration>(std::chrono::duration<double, std::milli>(d));
-			}
-			return Duration{};
-		}
-	public:
-		DebugSharedAsioSocketReadWriter(SockType & sock) : srwLock{}, executor{ sock.get_executor() },
-			fakeLagTimers{ std::make_shared<ManagedPool<WaitableTimer>>() }, fakeLagAvgDuration{}, randomEngine{},
-			fakeLagDistribution{} {
-
-			uint32_t fakeLagAvgDur = 0;
-			uint32_t fakeLagSigma = 0;
-			try {
-				fakeLagAvgDur = Config::Get<uint32_t>(L"network.fakeLagAvg:u32");
-				fakeLagSigma = Config::Get<uint32_t>(L"network.fakeLagSigma:u32");
-			} catch(OutOfRangeException & e) { }
-
-			fakeLagAvgDuration = std::chrono::duration<uint64_t, std::milli>(fakeLagAvgDur);
-
-			double sigma = std::max(static_cast<double>(fakeLagSigma), 0.001);
-
-			fakeLagDistribution = std::normal_distribution<double>(static_cast<double>(fakeLagAvgDur), sigma);
-		}
-
-		NETCODE_CONSTRUCTORS_DELETE_MOVE(DebugSharedAsioSocketReadWriter);
-		NETCODE_CONSTRUCTORS_DELETE_COPY(DebugSharedAsioSocketReadWriter);
-		
-		template<typename MutableBufferSequence, typename Endpoint, typename Handler>
-		void Read(SockType & socket, const MutableBufferSequence & buffers, Endpoint & remoteEndpoint, Handler && handler) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-
-			/*
-			 * Its enough to have the send delay in a symmetrical manner,
-			 * shows up better in wireshark aswell
-			 */
-			socket.async_receive_from(buffers, remoteEndpoint, std::forward<Handler>(handler));
-		}
-
-		template<typename MutableBufferSequence, typename Handler>
-		void Read(SockType & socket, const MutableBufferSequence & buffers, Handler && handler) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-
-			/*
-			 * Its enough to have the send delay in a symmetrical manner,
-			 * shows up better in wireshark aswell
-			 */
-			socket.async_receive(buffers, std::forward<Handler>(handler));
-		}
-
-		template<typename ConstBufferSequence, typename Handler>
-		void Write(SockType & socket, const ConstBufferSequence & buffers, Handler && handler) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-			auto fakeLagTimer = fakeLagTimers->Get(executor);
-			fakeLagTimer->expires_from_now(SampleFakeLag());
-			fakeLagTimer->async_wait([this, &socket, buffers, l = std::move(fakeLagTimer), h = std::move(handler)]
-			(const ErrorCode & ec) mutable -> void {
-				ScopedExclusiveLock<SlimReadWriteLock> callbackScopedLock{ srwLock };
-				socket.async_send(buffers, std::move(h));
-			});
-		}
-
-		template<typename ConstBufferSequence, typename Endpoint, typename Handler>
-		void Write(SockType & socket, const ConstBufferSequence & buffers, const Endpoint & remoteEndpoint, Handler && handler) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-			auto fakeLagTimer = fakeLagTimers->Get(executor);
-			fakeLagTimer->expires_from_now(SampleFakeLag());
-			fakeLagTimer->async_wait([this, &socket, buffers, &remoteEndpoint, l = std::move(fakeLagTimer), h = std::move(handler)]
-			(const ErrorCode & ec) mutable -> void {
-				ScopedExclusiveLock<SlimReadWriteLock> callbackScopedLock{ srwLock };
-				socket.async_send_to(buffers, remoteEndpoint, std::move(h));
-			});
-		}
-	};
-
-	template<typename SockType>
 	using BasicAsioSocket = BasicSocket<SockType, AsioSocketReadWriter<SockType>>;
 	
 	template<typename SockType>
@@ -637,6 +468,11 @@ namespace Netcode::Network {
 	struct GameMessage {
 		Ref<NetAllocator> allocator;
 		Protocol::Update * update;
+	};
+
+	struct AckMessage {
+		uint32_t sequence;
+		UdpEndpoint endpoint;
 	};
 
 	class ConnectionBase : public std::enable_shared_from_this<ConnectionBase> {
@@ -708,7 +544,6 @@ namespace Netcode::Network {
 			resendInterval{ std::chrono::milliseconds(resendIntervalMs) }, maxAttempts{ maxAttempts } { }
 	};
 
-
 	class ProtocolConfig {
 		constexpr uint32_t GetIndexOf(Protocol::MessageType messageType) {
 			switch(messageType) {
@@ -754,20 +589,18 @@ namespace Netcode::Network {
 	};
 	
 	struct TrResult {
-		TransmissionState state; // write once
-		uint32_t sequence; // const
-		uint32_t fragments; // const
-		uint32_t attempts; // resend only
-		uint32_t sentBytes; // resend only
-		uint32_t dataSize; // const
-		ErrorCode errorIfAny; // resend only
+		size_t numBytes;
+		ErrorCode errorCode;
 
-		TrResult() : state{ TransmissionState::UNKNOWN }, sequence{ 0 }, fragments{ 0 }, attempts{ 0 }, sentBytes{ 0 }, dataSize{ 0 }, errorIfAny{} { }
-	};
+		TrResult() : numBytes{ 0 }, errorCode{ } { }
 
-	struct UdpAck {
-		uint32_t sequence;
-		UdpEndpoint endpoint;
+		explicit TrResult(const ErrorCode & ec) : numBytes{ 0 }, errorCode{ ec } {
+
+		}
+
+		TrResult(const ErrorCode & ec, size_t s) : numBytes{ s }, errorCode{ ec } {
+
+		}
 	};
 
 	enum class FilterResult {
@@ -802,28 +635,6 @@ namespace Netcode::Network {
 			return FilterResult::IGNORED;
 		}
 	};
-	
-	struct AckContext {
-		CompletionToken<TrResult> completionToken;
-		UdpPacket * sentPacket;
-		WaitableTimer * timer;
-		uint32_t sequence;
-
-		bool IsAckable(uint32_t seq, const UdpEndpoint & sourceEndpoint) const {
-			return sequence == seq && sourceEndpoint == sentPacket->GetEndpoint();
-		}
-
-		void Ack() {
-			if(completionToken->IsCompleted()) {
-				return;
-			}
-
-			TrResult tr;
-			tr.errorIfAny = make_error_code(Error::SUCCESS);
-			completionToken->Set(std::move(tr));
-			timer->cancel();
-		}
-	};
 
 	struct PendingTokenNode {
 		CompletionToken<TrResult> token;
@@ -843,7 +654,7 @@ namespace Netcode::Network {
 	public:
 		PendingTokenStorage() : srwLock{}, head{ nullptr }{}
 
-		void Ack(UdpAck ack) {
+		void Ack(AckMessage ack) {
 			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
 
 			PendingTokenNode * prev = nullptr;
@@ -857,8 +668,7 @@ namespace Netcode::Network {
 					}
 
 					TrResult tr;
-					tr.errorIfAny = make_error_code(Errc::success);
-					iter->token->Set(std::move(tr));
+					iter->token->Set(TrResult{ make_error_code(Errc::success), iter->packet->GetDataSize() });
 					iter->timer->cancel();
 					CompletionToken<TrResult> tmpToken = std::move(iter->token);
 				}
@@ -876,18 +686,38 @@ namespace Netcode::Network {
 	};
 
 	template<typename SockType>
-	struct ResendContext : public std::enable_shared_from_this<ResendContext<SockType>> {
+	class ResendContext : public std::enable_shared_from_this<ResendContext<SockType>> {
+		PendingTokenStorage * pendingTokenStorage;
+		SockType * socket;
 		CompletionToken<TrResult> completionToken;
 		UdpPacket * packet;
 		WaitableTimer * timer;
-		SockType * socket;
 		Duration resendInterval;
-		uint32_t attemptIndex;
-		uint32_t attemptCount;
 		uint32_t sequence;
-		PendingTokenStorage * pendingTokenStorage;
+		uint32_t attemptCount;
+		uint32_t attemptIndex;
 
 		using Base = std::enable_shared_from_this<ResendContext<SockType>>;
+
+	public:
+		ResendContext(PendingTokenStorage * pendingTokenStorage, 
+			SockType * socket,
+			CompletionToken<TrResult> token,
+			UdpPacket * packet,
+			WaitableTimer * timer,
+			Duration resendInterval,
+			uint32_t numAttempts,
+			uint32_t sequence) : pendingTokenStorage{ pendingTokenStorage },
+			socket{ socket },
+			completionToken{ std::move(token) },
+			packet{ packet },
+			timer{ timer },
+			resendInterval{ resendInterval },
+			sequence{ sequence },
+			attemptCount{ numAttempts },
+			attemptIndex{ 0 } {
+
+		}
 
 		void Attempt() {
 			if(completionToken->IsCompleted()) {
@@ -897,33 +727,25 @@ namespace Netcode::Network {
 			attemptIndex++;
 
 			if(attemptIndex == attemptCount) {
-				TrResult tr;
-				tr.attempts = attemptIndex;
-				tr.errorIfAny = make_error_code(Error::TIMEDOUT);
-				completionToken->Set(std::move(tr));
+				completionToken->Set(TrResult{ make_error_code(Error::TIMEDOUT), attemptCount * packet->GetDataSize() });
 				return;
 			}
 
-			socket->Send(packet->GetConstBuffer(), packet->GetEndpoint(), [pThis = Base::shared_from_this()](const ErrorCode & ec, size_t s) -> void {
+			socket->Send(packet->GetConstBuffer(), packet->GetEndpoint(),
+				[this, lt = Base::shared_from_this()](const ErrorCode & ec, size_t s) -> void {
 				if(ec) {
-					TrResult tr;
-					tr.attempts = pThis->attemptIndex;
-					tr.sentBytes += s;
-					tr.errorIfAny = ec;
-					tr.fragments = 1;
-					tr.sequence = 0;
-					pThis->completionToken->Set(std::move(tr));
+					completionToken->Set(TrResult{ make_error_code(Error::SOCK_ERR), (attemptIndex - 1) * packet->GetDataSize() });
 				} else {
-					pThis->InitTimer();
+					InitTimer();
 				}
 			});
 		}
 
 		void InitTimer() {
 			timer->expires_after(resendInterval);
-			timer->async_wait([pThis = Base::shared_from_this()](const ErrorCode & ec) -> void {
+			timer->async_wait([this, lt = Base::shared_from_this()](const ErrorCode & ec) -> void {
 				if(!ec) {
-					pThis->Attempt();
+					Attempt();
 				}
 
 				/*
@@ -931,31 +753,56 @@ namespace Netcode::Network {
 				 * otherwise a memoryleak could arise.
 				 * Concurrency here does not matter, 2 ACK on the same packet will be silently ignored
 				 */
-				if(!pThis->completionToken->IsCompleted()) {
-					UdpAck ack;
-					ack.endpoint = pThis->packet->GetEndpoint();
-					ack.sequence = pThis->sequence;
-					pThis->pendingTokenStorage->Ack(std::move(ack));
+				if(!completionToken->IsCompleted()) {
+					AckMessage ack;
+					ack.endpoint = packet->GetEndpoint();
+					ack.sequence = sequence;
+					pendingTokenStorage->Ack(std::move(ack));
 				}
 			});
 		}
 	};
 
 	template<typename SockType>
-	struct FragmentationContext : public std::enable_shared_from_this<FragmentationContext<SockType>> {
+	class FragmentationContext : public std::enable_shared_from_this<FragmentationContext<SockType>> {
 		CompletionToken<TrResult> completionToken;
 		SockType * socket;
 		GamePacket * packet;
-		std::array<boost::asio::const_buffer, 2> currentFragment;
 		uint32_t maxDataSize;
 		uint32_t dataStart;
 		uint32_t headerStart;
-		uint32_t dataOffset;
-		uint32_t headerOffset;
 		uint32_t dataSize;
 		uint32_t headerSize;
+		uint32_t dataOffset;
+		uint32_t headerOffset;
+		uint32_t sentDataSize;
+		std::array<boost::asio::const_buffer, 2> currentFragment;
 
 		using Base = std::enable_shared_from_this<FragmentationContext<SockType>>;
+
+	public:
+		FragmentationContext(CompletionToken<TrResult> token,
+			SockType * socket,
+			GamePacket * pkt,
+			uint32_t maxDataSizePerFragment,
+			uint32_t dataStart,
+			uint32_t headerStart,
+			uint32_t dataSize,
+			uint32_t headerSize) :
+			completionToken{ std::move(token) },
+			socket{ socket },
+			packet{ pkt },
+			maxDataSize{ maxDataSizePerFragment },
+			dataStart{ dataStart },
+			headerStart{ headerStart },
+			dataSize{ dataSize },
+			headerSize{ headerSize },
+			dataOffset{ 0 },
+			headerOffset{ 0 },
+			sentDataSize{ 0 },
+			currentFragment{} {
+
+		}
 
 		void SendFragment() {
 			const uint32_t cDataSize = std::min(maxDataSize, dataSize - dataOffset);
@@ -964,9 +811,7 @@ namespace Netcode::Network {
 			const uint32_t cHeaderOffset = headerStart + headerOffset;
 
 			if(cDataSize == 0) {
-				TrResult tr;
-				tr.errorIfAny = make_error_code(Errc::success);
-				completionToken->Set(std::move(tr));
+				completionToken->Set(TrResult{ make_error_code(Errc::success), sentDataSize });
 				return;
 			}
 
@@ -978,10 +823,9 @@ namespace Netcode::Network {
 
 			socket->Send(currentFragment, packet->GetEndpoint(), [this, lt = Base::shared_from_this()](const ErrorCode & ec, size_t s) -> void {
 				if(ec) {
-					TrResult tr;
-					tr.errorIfAny = make_error_code(Error::SOCK_ERR);
-					completionToken->Set(std::move(tr));
+					completionToken->Set(TrResult{ make_error_code(Error::SOCK_ERR), sentDataSize });
 				} else {
+					sentDataSize += static_cast<uint32_t>(s);
 					SendFragment();
 				}
 			});
@@ -1431,7 +1275,7 @@ namespace Netcode::Network {
 
 			if(header->type() == Protocol::MessageType::ACKNOWLEDGE) {
 
-				UdpAck ack;
+				AckMessage ack;
 				ack.endpoint = pkt->GetEndpoint();
 				ack.sequence = header->sequence();
 				pendingTokenStorage.Ack(std::move(ack));
@@ -1530,30 +1374,19 @@ namespace Netcode::Network {
 
 			CompletionToken<TrResult> ct = allocator->MakeCompletionToken<TrResult>();
 
-			if((header->type() & 0x1) == 0x1) { 
-				Ref<ResendContext<NetcodeSocketType>> rc = allocator->MakeShared<ResendContext<NetcodeSocketType>>();
+			if((header->type() & 0x1) == 0x1) {
 				WaitableTimer * timer = allocator->Make<WaitableTimer>(ioContext);
 				PendingTokenNode * node = allocator->Make<PendingTokenNode>(ct, timer, pkt, seq);
 
-				pendingTokenStorage.AddNode(node);
+				Ref<ResendContext<NetcodeSocketType>> rc = allocator->MakeShared<ResendContext<NetcodeSocketType>>(
+					&pendingTokenStorage, &socket, ct, pkt, timer, args.resendInterval, args.maxAttempts, seq);
 
-				rc->attemptCount = args.maxAttempts;
-				rc->attemptIndex = 1;
-				rc->socket = &socket;
-				rc->timer = timer;
-				rc->packet = pkt;
-				rc->completionToken = ct;
-				rc->resendInterval = args.resendInterval;
-				rc->pendingTokenStorage = &pendingTokenStorage;
-				rc->sequence = seq;
+				pendingTokenStorage.AddNode(node);
 
 				rc->Attempt();
 			} else {
 				socket.Send(pkt->GetConstBuffer(), pkt->GetEndpoint(), [ct](const ErrorCode& ec, size_t s) -> void {
-					TrResult tr;
-					tr.sentBytes = s;
-					tr.errorIfAny = ec;
-					ct->Set(std::move(tr));
+					ct->Set(TrResult{ ec, s });
 				});
 			}
 
@@ -1609,17 +1442,10 @@ namespace Netcode::Network {
 				throw UndefinedBehaviourException{ "Failed to serialize update while fragmenting" };
 			}
 
-			Ref<FragmentationContext<NetcodeSocketType>> fragCtx = allocator->MakeShared<FragmentationContext<NetcodeSocketType>>();
-			fragCtx->completionToken = ct;
-			fragCtx->socket = &socket;
-			fragCtx->packet = pkt;
-			fragCtx->maxDataSize = maxPayloadSize;
-			fragCtx->headerStart = headerStart;
-			fragCtx->dataStart = dataStart;
-			fragCtx->headerSize = totalHeaderSize;
-			fragCtx->dataSize = serializedDataSize;
-			fragCtx->dataOffset = 0;
-			fragCtx->headerOffset = 0;
+			Ref<FragmentationContext<NetcodeSocketType>> fragCtx =
+				allocator->MakeShared<FragmentationContext<NetcodeSocketType>>(
+					ct, &socket, pkt, maxPayloadSize, dataStart, headerStart, serializedDataSize, totalHeaderSize);
+
 			fragCtx->SendFragment();
 
 			return ct;
