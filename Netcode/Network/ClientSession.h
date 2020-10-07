@@ -172,10 +172,9 @@ namespace Netcode::Network {
 
 			Ref<NetAllocator> alloc = service->MakeSmallAllocator();
 			Protocol::Header* header = alloc->MakeProto<Protocol::Header>();
-			header->set_sequence(connection->localSequence++);
 			header->set_type(Protocol::MessageType::CONNECT_PUNCHTHROUGH);
 
-			service->Send(std::move(alloc), header, connection->endpoint)
+			service->Send(std::move(alloc), connection.get(), header)
 				   ->Then([this, mainToken](TrResult tr) mutable -> void {
 				if(tr.errorCode) {
 					mainToken->Set(tr.errorCode);
@@ -221,7 +220,16 @@ namespace Netcode::Network {
 					return;
 				}
 
-				linkLocalMtu = std::min(bestCandidate.mtu, UdpPacket::MAX_DATA_SIZE);
+				linkLocalMtu = bestCandidate.mtu;
+
+#if defined(NETCODE_DEBUG)
+				try {
+					uint32_t fakeMtu = Config::Get<uint32_t>(L"network.fakeMtu:u32");
+					if(fakeMtu > 0) {
+						linkLocalMtu = std::min(linkLocalMtu, fakeMtu);
+					}
+				} catch(OutOfRangeException & e) { }
+#endif
 			}
 
 			if(ec) {
@@ -245,7 +253,7 @@ namespace Netcode::Network {
 				return;
 			}
 			
-			service = std::make_shared<NetcodeService>(ioContext, std::move(sock), linkLocalMtu);
+			service = std::make_shared<NetcodeService>(ioContext, std::move(sock), static_cast<uint16_t>(linkLocalMtu));
 			service->Host();
 
 			Log::Debug("Service created");
@@ -287,8 +295,6 @@ namespace Netcode::Network {
 		void SendDebugFragmentedMessage() {
 			Ref<NetAllocator> alloc = service->MakeLargeAllocator();
 			Protocol::Update * update = alloc->MakeProto<Protocol::Update>();
-			
-			uint32_t seq = connection->localSequence++;
 
 			Protocol::ClientUpdate * cu = update->mutable_client_update();
 			Protocol::Player * ps = cu->mutable_player_state();
@@ -298,7 +304,8 @@ namespace Netcode::Network {
 
 			ps->set_replication_data(data, 8000);
 
-			service->Send(std::move(alloc), seq, update, connection->endpoint)->Then([this](const TrResult & tr) -> void {
+			service->Send(std::move(alloc), connection.get(), update)->Then([this](const TrResult & tr) -> void {
+				Log::Debug("Send: {0}", tr.errorCode.message());
 				//SendDebugFragmentedMessage();
 			});
 		}

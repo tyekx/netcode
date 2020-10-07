@@ -13,6 +13,7 @@
 #include <Netcode/Sync/LockGuards.hpp>
 
 #include <Netcode/System/SystemClock.h>
+#include "BasicPacket.hpp"
 
 namespace Netcode::Network {
 	enum class Error : unsigned {
@@ -73,8 +74,6 @@ namespace Netcode::Network {
 	using UdpEndpoint = boost::asio::ip::udp::endpoint;
 	namespace Errc = boost::system::errc;
 	using ErrorCode = boost::system::error_code;
-	
-	constexpr static uint32_t PACKET_STORAGE_SIZE = 65536;
 
 	ErrorCode Bind(const boost::asio::ip::address & selfAddr, UdpSocket & udpSocket, uint32_t & port);
 
@@ -108,82 +107,6 @@ namespace Netcode::Network {
 
 		boost::asio::io_context & GetImpl();
 	};
-
-	template<typename ProtocolType, uint32_t NumBytes>
-	class BasicPacket final {
-	public:
-		using EndpointType = typename ProtocolType::endpoint;
-
-	private:
-		EndpointType endpoint;
-		size_t dataSize;
-		Timestamp timestamp;
-		uint8_t data[NumBytes];
-	public:
-		constexpr static uint32_t MAX_DATA_SIZE = NumBytes;
-		
-		BasicPacket() : endpoint{}, dataSize{ MAX_DATA_SIZE }, timestamp{} { }
-		BasicPacket(size_t size, EndpointType ep) : endpoint{ std::move(ep) },  dataSize{ size }, timestamp{} { }
-		BasicPacket(BasicPacket<ProtocolType, NumBytes> &&) noexcept = default;
-		BasicPacket & operator=(BasicPacket<ProtocolType, NumBytes> &&) noexcept = default;
-		BasicPacket(const BasicPacket<ProtocolType, NumBytes> &) = delete;
-		BasicPacket & operator=(const BasicPacket<ProtocolType, NumBytes> &) = delete;
-
-		[[nodiscard]]
-		uint8_t* GetData() {
-			return data;
-		}
-		
-		[[nodiscard]]
-		const uint8_t * GetData() const {
-			return data;
-		}
-
-		[[nodiscard]]
-		size_t GetDataSize() const {
-			return dataSize;
-		}
-
-		void SetTimestamp(const Timestamp & ts) {
-			timestamp = ts;
-		}
-
-		[[nodiscard]]
-		Timestamp GetTimestamp() const {
-			return timestamp;
-		}
-		
-		void SetDataSize(size_t s) {
-			dataSize = s;
-		}
-
-		[[nodiscard]]
-		boost::asio::mutable_buffer GetMutableBuffer() {
-			return boost::asio::mutable_buffer{ static_cast<void*>(data), GetDataSize() };
-		}
-
-		[[nodiscard]]
-		boost::asio::const_buffer GetConstBuffer() const {
-			return boost::asio::const_buffer{ static_cast<const void *>(data), GetDataSize() };
-		}
-
-		void SetEndpoint(const EndpointType& ep) {
-			endpoint = ep;
-		}
-		
-		[[nodiscard]]
-		const EndpointType & GetEndpoint() const {
-			return endpoint;
-		}
-
-		[[nodiscard]]
-		EndpointType & GetEndpoint() {
-			return endpoint;
-		}
-	};
-
-	using UdpPacket = BasicPacket<boost::asio::ip::udp, 1536>;
-
 
 	template<typename T>
 	class MessageQueue {

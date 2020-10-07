@@ -38,7 +38,7 @@ class ServerConnectRequestFilter : public nn::FilterBase {
 		cr->set_type(Netcode::Protocol::DIRECT);
 		cr->set_error_code(errorCode);
 
-		service->Send(std::move(alloc), header, target);
+		service->Send(alloc, header, target);
 	}
 	
 public:
@@ -65,6 +65,7 @@ public:
 				conn->remoteSequence = header->sequence();
 				conn->localSequence = 1;
 				conn->endpoint = source;
+				conn->pmtu = service->GetLinkLocalMtu();
 				cs->AddConnection(std::move(conn));
 				Log::Debug("Connection added");
 				SendConnectResponse(service, header->sequence(), source, static_cast<int>(nn::Error::SUCCESS));

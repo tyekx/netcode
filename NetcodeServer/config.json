@@ -50,6 +50,7 @@
   "network": {
     "fakeLagAvg:u32": 50,
     "fakeLagSigma:u32": 2,
+    "fakeMtu:u32": 0,
     "web": {
       "hostname:string": "http://netcode.webs",
       "port:u16": 80

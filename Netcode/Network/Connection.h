@@ -8,12 +8,12 @@
 #include <Netcode/Utility.h>
 #include <Netcode/Sync/SlimReadWriteLock.h>
 #include <Netcode/Config.h>
-#include <random>
 #include "NetcodeFoundation/Enum.hpp"
-#include <Netcode/System/FpsCounter.h>
 #include <Netcode/System/System.h>
-#include <Netcode/PlacedFunction.hpp>
 #include <boost/lockfree/queue.hpp>
+#include "Socket.hpp"
+#include "NetAllocator.h"
+#include "BasicPacket.hpp"
 
 namespace Netcode::Network {
 
@@ -28,436 +28,40 @@ namespace Netcode::Network {
 
 	NETCODE_ENUM_CLASS_OPERATORS(ConnectionState)
 	
-	using GamePacket = BasicPacket<boost::asio::ip::udp, 65536>;
 	using WaitableTimer = boost::asio::basic_waitable_timer<ClockType>;
 
-	struct FragmentData {
-		uint8_t fragmentIndex;
-		uint8_t fragmentCount;
-		uint16_t sizeInBytes;
-
-		FragmentData() : fragmentIndex{ 0 }, fragmentCount{ 0 }, sizeInBytes{ 0 } { }
-
-		void Unpack(uint32_t value) {
-			fragmentIndex = static_cast<uint8_t>((value >> 24) & 0xFF);
-			fragmentCount = static_cast<uint8_t>((value >> 16) & 0xFF);
-			sizeInBytes = static_cast<uint16_t>(value & 0xFFFF);
-		}
-
-		uint32_t Pack() const {
-			return (static_cast<uint32_t>(fragmentIndex) << 24) |
-				(static_cast<uint32_t>(fragmentCount) << 16) |
-				static_cast<uint32_t>(sizeInBytes);
-		}
-	};
-
-
-	/*
-	 * LockFree completion token
-	 * can facilitate a single callback function and a single result
-	 * internals does not allocate
-	 */
-	template<typename T>
-	class CompletionTokenType : public std::enable_shared_from_this<CompletionTokenType<T>> {
-		std::aligned_storage_t<sizeof(T)> storage;
-		PlacedFunction<56, void(const T &)> callback;
-		boost::asio::io_context * ioc;
-		/*
-		 *  - state only increases with CAS operations
-		 *  - 1: callback write started flag
-		 *  - 2: result write started flag
-		 *  - 4: callback saved
-		 *  - 8: result saved
-		 *  - 15: every neccessary flag set, ready to invoke
-		 *  - 31: all done
-		 */
-		std::atomic_uint32_t state;
-
-		using Base = std::enable_shared_from_this<CompletionTokenType<T>>;
-
-		void InvokeCallbackUnsafe() {
-			callback(*reinterpret_cast<const T *>(std::addressof(storage)));
-		}
-
-		void TryInvoke() {
-			uint32_t expectedValue = 0xF;
-			if(state.compare_exchange_strong(expectedValue, 0x1F, std::memory_order_release)) {
-				boost::asio::post(*ioc, [this, lifetime = Base::shared_from_this()]() -> void {
-					InvokeCallbackUnsafe();
-				});
-			}
-		}
-
-		bool TrySetFlag(uint32_t flag) {
-			for(;;) {
-				uint32_t currentState = state.load(std::memory_order_acquire);
-
-				if((currentState & flag) == flag) {
-					return false;
-				}
-
-				const uint32_t desiredState = state | flag;
-
-				if(state.compare_exchange_strong(currentState, desiredState, std::memory_order_release)) {
-					return true;
-				}
-			}
-		}
-
-	public:
-		CompletionTokenType(boost::asio::io_context * ioc = nullptr) : storage{}, callback{}, ioc{ ioc }, state{ 0 } {
-
-		}
-
-		~CompletionTokenType() {
-			if((state & 0xA) == 0xA) {
-				reinterpret_cast<T *>(std::addressof(storage))->~T();
-			}
-		}
-
-		template<typename Functor>
-		CompletionTokenType(boost::asio::io_context * ioc, Functor&& f) :
-			storage{},
-			callback{ std::forward<Functor>(f) },
-			ioc{ ioc },
-			state{ 0x5 } {
-
-		}
-
-		CompletionTokenType(const CompletionTokenType &) = delete;
-		CompletionTokenType(CompletionTokenType &&) noexcept = delete;
-		CompletionTokenType & operator=(const CompletionTokenType &) = delete;
-		CompletionTokenType & operator=(CompletionTokenType &&) noexcept = delete;
-
-		[[nodiscard]]
-		bool IsCompleted() const {
-			return (state.load(std::memory_order_acquire) & 0xA) == 0xA;
-		}
-
-		[[nodiscard]]
-		bool HasCallback() const {
-			return (state.load(std::memory_order_acquire) & 0x5) == 0x5;
-		}
-
-		template<typename Functor>
-		bool Then(Functor f) {
-			if(TrySetFlag(0x1)) {
-				callback = std::move(f);
-				if(TrySetFlag(0x4)) {
-					TryInvoke();
-				}
-				return true;
-			}
-			return false;
-		}
-
-		bool Set(T obj) {
-			if(TrySetFlag(0x2)) {
-				new (std::addressof(storage)) T{ std::move(obj) };
-				if(TrySetFlag(0x8)) {
-					TryInvoke();
-				}
-				return true;
-			}
-			return false;
-		}
-	};
-
-	template<typename T>
-	using CompletionToken = Ref<CompletionTokenType<T>>;
-
-
-	template<typename T>
-	class ArenaAllocatorAdapter {
-		google::protobuf::Arena * a;
-	public:
-
-		using value_type = T;
-		using size_type = std::size_t;
-		using difference_type = std::ptrdiff_t;
-
-		google::protobuf::Arena * GetArena() const {
-			return a;
-		}
-
-		~ArenaAllocatorAdapter() = default;
-		ArenaAllocatorAdapter() : a{ nullptr } { }
-		ArenaAllocatorAdapter(google::protobuf::Arena * a) : a{ a } {}
-		ArenaAllocatorAdapter(const ArenaAllocatorAdapter &) = default;
-		ArenaAllocatorAdapter(ArenaAllocatorAdapter &&) noexcept = default;
-		ArenaAllocatorAdapter & operator=(const ArenaAllocatorAdapter &) = default;
-		ArenaAllocatorAdapter & operator=(ArenaAllocatorAdapter &&) noexcept = default;
-
-		template<typename U>
-		bool operator==(const ArenaAllocatorAdapter<U> & rhs) const {
-			return GetArena() == rhs.GetArena();
-		}
-
-		template<typename U>
-		ArenaAllocatorAdapter(const ArenaAllocatorAdapter<U> & rhs) : a{ rhs.GetArena() } { }
-
-		template< typename U > struct rebind {
-			using other = ArenaAllocatorAdapter<U>;
-		};
-
-		T * allocate(std::size_t n) {
-			return reinterpret_cast<T *>(google::protobuf::Arena::CreateArray<uint8_t>(a, sizeof(T) * n));
-		}
-
-		static void deallocate(T * ptr, std::size_t n) { }
-	};
-
-	template<typename T>
-	using NetVector = std::vector<T, ArenaAllocatorAdapter<T>>;
-
-	class NetAllocator : public std::enable_shared_from_this<NetAllocator> {
-
-		// to avoid the pointer storage, and constructor requirement in uniq ptr
-		struct RawPtrDeleter {
-			void operator()(void * ptr) {
-				std::free(ptr);
-			}
-		};
-
-		// allows the user to retain this block even if a the arena is Reset.
-		std::unique_ptr<void, RawPtrDeleter> firstBlock;
-		size_t blockSize;
-		boost::asio::io_context * ioc;
-		google::protobuf::Arena arena;
-
-		static google::protobuf::ArenaOptions GetOptions(void * firstBlock, size_t blockSize) {
-			google::protobuf::ArenaOptions ao;
-			ao.initial_block = reinterpret_cast<char *>(firstBlock);
-			ao.initial_block_size = blockSize;
-			ao.max_block_size = blockSize;
-			ao.start_block_size = blockSize;
-			return ao;
-		}
-
-		template<typename T>
-		class ArenaOwnerAdapter {
-			std::shared_ptr<NetAllocator> alloc;
-
-		public:
-			using value_type = T;
-			using size_type = std::size_t;
-			using difference_type = std::ptrdiff_t;
-
-
-			[[nodiscard]]
-			std::shared_ptr<NetAllocator> GetAllocator() const {
-				return alloc;
-			}
-
-			T * allocate(size_type n) {
-				return alloc->GetAdapter<T>().allocate(n);
-			}
-
-			static void deallocate(T * ptr, size_type n) {
-
-			}
-
-			ArenaOwnerAdapter() : alloc{ nullptr } { }
-
-			ArenaOwnerAdapter(std::shared_ptr<NetAllocator> alloc) : alloc{ std::move(alloc) } { }
-
-			template<typename U>
-			ArenaOwnerAdapter(const ArenaOwnerAdapter<U> & rhs) : alloc{ rhs.GetAllocator() } {
-
-			}
-
-			template<typename U>
-			struct rebind {
-				using other = ArenaOwnerAdapter<U>;
-			};
-		};
-
-	public:
-		NetAllocator(boost::asio::io_context * ioc, size_t blockSize) :
-			firstBlock{ std::malloc(blockSize) }, blockSize{ blockSize }, ioc{ ioc }, arena{ GetOptions(firstBlock.get(), blockSize) } {
-		}
-
-		/*
-		* Clears the arena and reinitializes it without reallocating the first block.
-		* Dangerous method as it'll ignore every live Ref<T>.
-		* Main use-case is to reuse allocations when an error happens.
-		*/
-		void Clear() {
-			arena.Reset();
-			arena.Init(GetOptions(firstBlock.get(), blockSize));
-		}
-
-		google::protobuf::Arena * GetArena() {
-			return &arena;
-		}
-
-		template<typename T>
-		ArenaAllocatorAdapter<T> GetAdapter() {
-			return ArenaAllocatorAdapter<T>{ &arena };
-		}
-
-		template<typename T>
-		T * MakeArray(size_t n) {
-			return google::protobuf::Arena::CreateArray<T>(&arena, n);
-		}
-
-		template<typename T>
-		T * MakeProto() {
-			return google::protobuf::Arena::CreateMessage<T>(&arena);
-		}
-
-		template<typename T, typename ... U>
-		T * Make(U && ... args) {
-			return google::protobuf::Arena::Create<T>(&arena, std::forward<U>(args)...);
-		}
-
-		template<typename T, typename ... U>
-		std::shared_ptr<T> MakeShared(U&& ... args) {
-			return std::allocate_shared<T>(ArenaOwnerAdapter<void>{ shared_from_this() }, std::forward<U>(args)...);
-		}
-
-		template<typename T, typename ... U>
-		CompletionToken<T> MakeCompletionToken(U && ... args) {
-			return std::allocate_shared<CompletionTokenType<T>>(ArenaOwnerAdapter<void>{ shared_from_this() }, ioc, std::forward<U>(args)...);
-		}
-	};
-
 	struct MtuValue {
-		constexpr static uint32_t MSB = (0x80000000);
 		constexpr static uint32_t UDP_HEADER_SIZE = 8;
 		constexpr static uint32_t IPV4_HEADER_SIZE = 20;
 		constexpr static uint32_t IPV6_HEADER_SIZE = 40;
+		constexpr static uint32_t LOOPBACK_HEADER = 4;
 
 		uint32_t mtu;
-		uint32_t maxPayloadSize;
 	public:
 		MtuValue(const MtuValue & rhs) = default;
 		MtuValue & operator=(const MtuValue & rhs) = default;
 
-		MtuValue(uint32_t v, bool isIpv4) {
-			mtu = v;
+		MtuValue() : mtu{ 0 } { }
 
-			if((isIpv4 && v < 68) || (!isIpv4 && v < 576)) {
-				throw OutOfRangeException{ "given MTU size is below the RFC specified values" };
+		explicit MtuValue(uint32_t v) : mtu{ v } {
+
+		}
+
+		uint32_t GetMtu() const {
+			return mtu;
+		}
+		
+		// value will still include UDP header size.
+		uint32_t GetMaxPayloadSize(const IpAddress & peerOrHostAddr) const {
+			if(peerOrHostAddr.is_v4()) {
+				return mtu - IPV4_HEADER_SIZE;
 			}
 
-			if(isIpv4) {
-				maxPayloadSize = mtu - IPV4_HEADER_SIZE - UDP_HEADER_SIZE;
-			} else {
-				maxPayloadSize = mtu - IPV6_HEADER_SIZE - UDP_HEADER_SIZE;
+			if(peerOrHostAddr.is_v6()) {
+				return mtu - IPV6_HEADER_SIZE;
 			}
 		}
-
-		uint32_t GetMaxPayloadSizeForUdp() const {
-			return maxPayloadSize;
-		}
 	};
-
-
-	enum class TransmissionState : uint32_t {
-		UNKNOWN,
-		TIMEOUT,
-		ERROR_WHILE_SENDING,
-		CANCELLED,
-		SUCCESS
-	};
-
-
-	template<typename SockType, typename SockReaderWriter>
-	class BasicSocket : private SockReaderWriter {
-	protected:
-		SockType socket;
-	public:
-		using SocketType = SockType;
-
-		BasicSocket(SocketType s) : SockReaderWriter{ s }, socket { std::move(s) } {}
-		
-		const SockType & GetSocket() const {
-			return socket;
-		}
-
-		SockType & GetSocket() {
-			return socket;
-		}
-
-		template<typename ... ARGS>
-		auto Send(ARGS && ... args) {
-			return SockReaderWriter::Write(socket, std::forward<ARGS>(args)...);
-		}
-		
-		template<typename ... ARGS>
-		auto Receive(ARGS && ... args) {
-			return SockReaderWriter::Read(socket, std::forward<ARGS>(args)...);
-		}
-	};
-
-	template<typename SockType>
-	class AsioSocketReadWriter {
-	public:
-		AsioSocketReadWriter(const SockType&) { }
-		
-		template<typename MutableBufferSequence, typename Endpoint, typename Handler>
-		static void Read(SockType& socket, const MutableBufferSequence& buffers, Endpoint& remoteEndpoint, Handler&& handler) {
-			socket.async_receive_from(buffers, remoteEndpoint, std::forward<Handler>(handler));
-		}
-		
-		template<typename MutableBufferSequence, typename Handler>
-		static void Read(SockType& socket, const MutableBufferSequence& buffers, Handler&& handler) {
-			socket.async_receive(buffers, std::forward<Handler>(handler));
-		}
-
-		template<typename ConstBufferSequence, typename Handler>
-		static void Write(SockType& socket, const ConstBufferSequence& buffers, Handler&& handler) {
-			socket.async_send(buffers, handler);
-		}
-		
-		template<typename ConstBufferSequence, typename Endpoint, typename Handler>
-		static void Write(SockType & socket, const ConstBufferSequence & buffers, const Endpoint& remoteEndpoint, Handler && handler) {
-			socket.async_send_to(buffers, remoteEndpoint, handler);
-		}
-	};
-
-	template<typename SockType>
-	class SharedAsioSocketReadWriter {
-		SlimReadWriteLock srwLock;
-	public:
-		SharedAsioSocketReadWriter(const SockType &) { }
-
-		NETCODE_CONSTRUCTORS_DELETE_MOVE(SharedAsioSocketReadWriter);
-		NETCODE_CONSTRUCTORS_DELETE_COPY(SharedAsioSocketReadWriter);
-		
-		template<typename MutableBufferSequence, typename Endpoint, typename Handler>
-		void Read(SockType & socket, const MutableBufferSequence & buffers, Endpoint & remoteEndpoint, Handler && handler) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-			socket.async_receive_from(buffers, remoteEndpoint, std::forward<Handler>(handler));
-		}
-
-		template<typename MutableBufferSequence, typename Handler>
-		void Read(SockType & socket, const MutableBufferSequence & buffers, Handler && handler) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-			socket.async_receive(buffers, std::forward<Handler>(handler));
-		}
-
-		template<typename ConstBufferSequence, typename Handler>
-		void Write(SockType & socket, const ConstBufferSequence & buffers, Handler && handler) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-			socket.async_send(buffers, handler);
-		}
-
-		template<typename ConstBufferSequence, typename Endpoint, typename Handler>
-		void Write(SockType & socket, const ConstBufferSequence & buffers, const Endpoint & remoteEndpoint, Handler && handler) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-			socket.async_send(buffers, remoteEndpoint, handler);
-		}
-	};
-
-	template<typename SockType>
-	using BasicAsioSocket = BasicSocket<SockType, AsioSocketReadWriter<SockType>>;
-	
-	template<typename SockType>
-	using BasicSharedAsioSocket = BasicSocket<SockType, SharedAsioSocketReadWriter<SockType>>;
-
-	using SharedUdpSocket = BasicSharedAsioSocket<boost::asio::ip::udp::socket>;
 
 	struct ControlMessage {
 		Ref<NetAllocator> allocator;
@@ -488,6 +92,8 @@ namespace Netcode::Network {
 		uint32_t remoteSequence;
 		// state of the connection, handled by the consumer
 		Enum<ConnectionState> state;
+		// raw mtu value including ip and udp header sizes
+		MtuValue pmtu;
 	};
 
 	class ConnectionStorage {
@@ -562,7 +168,7 @@ namespace Netcode::Network {
 			}
 		}
 
-		inline static ResendArgs args[] = {
+		constexpr static ResendArgs args[] = {
 			ResendArgs{ 0, 0 },
 			ResendArgs{ 60000, 5 },
 			ResendArgs{ 500, 5 },
@@ -581,11 +187,6 @@ namespace Netcode::Network {
 		ResendArgs GetArgsFor(Protocol::MessageType messageType) {
 			return args[GetIndexOf(messageType)];
 		}
-	};
-
-	struct SocketOperationResult {
-		size_t numBytes;
-		ErrorCode errorCode;
 	};
 	
 	struct TrResult {
@@ -640,11 +241,10 @@ namespace Netcode::Network {
 		CompletionToken<TrResult> token;
 		WaitableTimer * timer;
 		UdpPacket * packet;
-		uint32_t sequence;
 		PendingTokenNode * next;
 
-		PendingTokenNode(CompletionToken<TrResult> token, WaitableTimer * timer, UdpPacket * packet, uint32_t sequence) :
-			token{ std::move(token) }, timer{ timer }, packet{ packet }, sequence{ sequence }, next{ nullptr } { }
+		PendingTokenNode(CompletionToken<TrResult> token, WaitableTimer * timer, UdpPacket * packet) :
+			token{ std::move(token) }, timer{ timer }, packet{ packet }, next{ nullptr } { }
 	};
 
 	class PendingTokenStorage {
@@ -660,7 +260,7 @@ namespace Netcode::Network {
 			PendingTokenNode * prev = nullptr;
 
 			for(PendingTokenNode * iter = head; iter != nullptr; iter = iter->next) {
-				if(iter->packet->GetEndpoint() == ack.endpoint && iter->sequence == ack.sequence) {
+				if(iter->packet->GetEndpoint() == ack.endpoint && iter->packet->GetSequence() == ack.sequence) {
 					if(prev == nullptr) {
 						head = iter->next;
 					} else {
@@ -668,7 +268,7 @@ namespace Netcode::Network {
 					}
 
 					TrResult tr;
-					iter->token->Set(TrResult{ make_error_code(Errc::success), iter->packet->GetDataSize() });
+					iter->token->Set(TrResult{ make_error_code(Errc::success), iter->packet->GetSize() });
 					iter->timer->cancel();
 					CompletionToken<TrResult> tmpToken = std::move(iter->token);
 				}
@@ -693,7 +293,6 @@ namespace Netcode::Network {
 		UdpPacket * packet;
 		WaitableTimer * timer;
 		Duration resendInterval;
-		uint32_t sequence;
 		uint32_t attemptCount;
 		uint32_t attemptIndex;
 
@@ -706,14 +305,12 @@ namespace Netcode::Network {
 			UdpPacket * packet,
 			WaitableTimer * timer,
 			Duration resendInterval,
-			uint32_t numAttempts,
-			uint32_t sequence) : pendingTokenStorage{ pendingTokenStorage },
+			uint32_t numAttempts) : pendingTokenStorage{ pendingTokenStorage },
 			socket{ socket },
 			completionToken{ std::move(token) },
 			packet{ packet },
 			timer{ timer },
 			resendInterval{ resendInterval },
-			sequence{ sequence },
 			attemptCount{ numAttempts },
 			attemptIndex{ 0 } {
 
@@ -727,14 +324,14 @@ namespace Netcode::Network {
 			attemptIndex++;
 
 			if(attemptIndex == attemptCount) {
-				completionToken->Set(TrResult{ make_error_code(Error::TIMEDOUT), attemptCount * packet->GetDataSize() });
+				completionToken->Set(TrResult{ make_error_code(Error::TIMEDOUT), attemptCount * packet->GetSize() });
 				return;
 			}
 
 			socket->Send(packet->GetConstBuffer(), packet->GetEndpoint(),
 				[this, lt = Base::shared_from_this()](const ErrorCode & ec, size_t s) -> void {
 				if(ec) {
-					completionToken->Set(TrResult{ make_error_code(Error::SOCK_ERR), (attemptIndex - 1) * packet->GetDataSize() });
+					completionToken->Set(TrResult{ make_error_code(Error::SOCK_ERR), (attemptIndex - 1) * packet->GetSize() });
 				} else {
 					InitTimer();
 				}
@@ -756,7 +353,7 @@ namespace Netcode::Network {
 				if(!completionToken->IsCompleted()) {
 					AckMessage ack;
 					ack.endpoint = packet->GetEndpoint();
-					ack.sequence = sequence;
+					ack.sequence = packet->GetSequence();
 					pendingTokenStorage->Ack(std::move(ack));
 				}
 			});
@@ -767,7 +364,7 @@ namespace Netcode::Network {
 	class FragmentationContext : public std::enable_shared_from_this<FragmentationContext<SockType>> {
 		CompletionToken<TrResult> completionToken;
 		SockType * socket;
-		GamePacket * packet;
+		UdpPacket * packet;
 		uint32_t maxDataSize;
 		uint32_t dataStart;
 		uint32_t headerStart;
@@ -783,7 +380,7 @@ namespace Netcode::Network {
 	public:
 		FragmentationContext(CompletionToken<TrResult> token,
 			SockType * socket,
-			GamePacket * pkt,
+			UdpPacket * pkt,
 			uint32_t maxDataSizePerFragment,
 			uint32_t dataStart,
 			uint32_t headerStart,
@@ -1007,7 +604,7 @@ namespace Netcode::Network {
 				}
 
 
-				const size_t sourceSize = it->packet->GetDataSize();
+				const size_t sourceSize = it->packet->GetSize();
 				const size_t sourceOffset = it->dataOffset;
 				const size_t sourceFragSize = it->fragmentData.sizeInBytes;
 
@@ -1028,7 +625,13 @@ namespace Netcode::Network {
 			if(FragmentsAreConsistent(p, &dataSize)) {
 				uint32_t requiredSpace = Utility::Align<uint32_t, 512u>(dataSize + 512u);
 				
-				Ref<NetAllocator> dstAllocator = std::make_shared<NetAllocator>(ioc, requiredSpace);
+				Ref<NetAllocator> dstAllocator;
+				
+				if(p->linkCount != 1) {
+					dstAllocator = std::make_shared<NetAllocator>(ioc, requiredSpace);
+				} else {
+					dstAllocator = p->allocator;
+				}
 
 				MutableArrayView<uint8_t> reassembledBinary{ dstAllocator->MakeArray<uint8_t>(dataSize), dataSize };
 
@@ -1136,7 +739,7 @@ namespace Netcode::Network {
 				return;
 			}
 
-			if(generation.fetch_add(1) == 1) {
+			if(generation.fetch_add(1) == 0) {
 				boost::asio::post(*ioc, [this]() -> void {
 					RunDefragmentation();
 				});
@@ -1168,9 +771,9 @@ namespace Netcode::Network {
 
 		ProtocolConfig protocolConfig;
 
-		uint32_t linkLocalMtu;
+		MtuValue linkLocalMtu;
 
-		uint32_t mtu;
+		MtuValue mtu;
 
 		std::vector<std::unique_ptr<FilterBase>> filters;
 		
@@ -1224,12 +827,8 @@ namespace Netcode::Network {
 
 		}
 
-		uint32_t GetLinkLocalMtu() const {
+		MtuValue GetLinkLocalMtu() const {
 			return linkLocalMtu;
-		}
-
-		void UpdateMtu(uint32_t value) {
-			mtu = value;
 		}
 
 		void SendAck(NetAllocator * alloc, uint32_t seq, const UdpEndpoint & ep) {
@@ -1262,7 +861,7 @@ namespace Netcode::Network {
 		bool TryParseMessage(NetAllocator* alloc, UdpPacket * pkt) {
 			Protocol::Header* header = alloc->MakeProto<Protocol::Header>();
 			
-			google::protobuf::io::ArrayInputStream ais{ pkt->GetData(), static_cast<int32_t>(pkt->GetDataSize()) };
+			google::protobuf::io::ArrayInputStream ais{ pkt->GetData(), static_cast<int32_t>(pkt->GetSize()) };
 			google::protobuf::io::CodedInputStream cis{ &ais };
 
 			uint32_t serializedHeaderSize = 0;
@@ -1317,18 +916,18 @@ namespace Netcode::Network {
 		}
 
 		void StartReceive(Ref<NetAllocator> alloc) {
-			UdpPacket * p = alloc->Make<UdpPacket>();
+			UdpPacket * pkt = alloc->MakeUdpPacket(Utility::Align<uint32_t, 512u>(linkLocalMtu.GetMtu() + 512u));
 
-			socket.Receive(p->GetMutableBuffer(), p->GetEndpoint(), [this, p, al = std::move(alloc)](const ErrorCode & ec, size_t s) mutable -> void {
+			socket.Receive(pkt->GetMutableBuffer(), pkt->GetEndpoint(), [this, pkt, al = std::move(alloc)](const ErrorCode & ec, size_t s) mutable -> void {
 				if(ec) {
 					al->Clear();
 					StartReceive(std::move(al));
 					return;
 				}
 
-				p->SetDataSize(s);
-				p->SetTimestamp(SystemClock::LocalNow());
-				if(!TryParseMessage(al.get(), p)) {
+				pkt->SetSize(s);
+				pkt->SetTimestamp(SystemClock::LocalNow());
+				if(!TryParseMessage(al.get(), pkt)) {
 					al->Clear();
 					StartReceive(std::move(al));
 					return;
@@ -1346,153 +945,54 @@ namespace Netcode::Network {
 
 		// optimal for receiving messages or sending small messages
 		Ref<NetAllocator> MakeSmallAllocator() {
-			// a full packet + 512 bytes for management
-			constexpr uint32_t blockSize = UdpPacket::MAX_DATA_SIZE + 512;
+			// the largest possible packet + 512 bytes for management
+			uint32_t blockSize = Utility::Align<uint32_t, 512u>(linkLocalMtu.GetMtu() + 512u);
 			return std::make_shared<NetAllocator>(&ioContext, blockSize);
 		}
 
 		// optimal for sending game updates
 		Ref<NetAllocator> MakeLargeAllocator() {
-			constexpr uint32_t blockSize = 0x28000;
+			constexpr uint32_t blockSize = 0x21000;
 			return std::make_shared<NetAllocator>(&ioContext, blockSize);
 		}
 
+
+		// main interface for sending control messages
+		CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, CompletionToken<TrResult> ct, Protocol::Header * header, const UdpEndpoint & endpoint, MtuValue pmtu, ResendArgs args);
+
+		// main interface for sending updates
+		CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, CompletionToken<TrResult> ct, Protocol::Update * update, const UdpEndpoint & endpoint, MtuValue pmtu, uint32_t seq);
+
 		CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, Protocol::Header * header, const UdpEndpoint & endpoint) {
-			const auto args = protocolConfig.GetArgsFor(header->type());
-			return Send(std::move(allocator), header, endpoint, args);
+			return Send(allocator, allocator->MakeCompletionToken<TrResult>(), header, endpoint, mtu, protocolConfig.GetArgsFor(header->type()));
 		}
 
-		CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, Protocol::Header * header, const UdpEndpoint & endpoint, ResendArgs args) {
-			if(header->type() == Protocol::MessageType::GAME) {
-				throw UndefinedBehaviourException{ "bad API call" };
-			}
-			
-			UdpPacket* pkt = allocator->Make<UdpPacket>();
-			pkt->SetEndpoint(endpoint);
-			
-			uint32_t seq = header->sequence();
-
-			const uint32_t serializedHeaderSize = static_cast<uint32_t>(header->ByteSizeLong());
-			const uint32_t totalHeaderSize = serializedHeaderSize + 8;
-			google::protobuf::io::ArrayOutputStream outStream{ pkt->GetData(), static_cast<int32_t>(pkt->GetDataSize()) };
-			google::protobuf::io::CodedOutputStream codedOutStream{ &outStream };
-
-			codedOutStream.WriteLittleEndian32(static_cast<uint32_t>(serializedHeaderSize));
-			if(!header->SerializeToCodedStream(&codedOutStream)) {
-				Log::Warn("Failed to serialize header");
-			}
-
-			if(header->type() == Protocol::MessageType::PMTU_DISCOVERY) {
-				uint32_t mtuProbeValue = header->mtu_probe_value();
-
-				if(mtuProbeValue < totalHeaderSize) {
-					throw UndefinedBehaviourException{ "MTU probe value too small" };
-				}
-
-				const uint32_t fakeAllocatedSize = mtuProbeValue - totalHeaderSize;
-
-				if(UdpPacket::MAX_DATA_SIZE < mtuProbeValue) {
-					throw OutOfRangeException{ "MTU probe size is too big" };
-				}
-
-				FragmentData fd;
-				fd.fragmentCount = 1;
-				fd.fragmentIndex = 0;
-				fd.sizeInBytes = static_cast<uint16_t>(fakeAllocatedSize);
-				codedOutStream.WriteLittleEndian32(fd.Pack());
-
-				uint8_t * rawBuffer = codedOutStream.GetDirectBufferForNBytesAndAdvance(fakeAllocatedSize);
-				
-				if(rawBuffer == nullptr) {
-					throw OutOfRangeException{ "MTU probe size is too big" };
-				}
-				// 60 is palindrom in binary
-				memset(rawBuffer, 60, fakeAllocatedSize);
-				pkt->SetDataSize(mtuProbeValue);
-			} else {
-				codedOutStream.WriteLittleEndian32(FragmentData{}.Pack());
-				pkt->SetDataSize(totalHeaderSize);
-			}
-
-			CompletionToken<TrResult> ct = allocator->MakeCompletionToken<TrResult>();
-
-			if((header->type() & 0x1) == 0x1) {
-				WaitableTimer * timer = allocator->Make<WaitableTimer>(ioContext);
-				PendingTokenNode * node = allocator->Make<PendingTokenNode>(ct, timer, pkt, seq);
-
-				Ref<ResendContext<NetcodeSocketType>> rc = allocator->MakeShared<ResendContext<NetcodeSocketType>>(
-					&pendingTokenStorage, &socket, ct, pkt, timer, args.resendInterval, args.maxAttempts, seq);
-
-				pendingTokenStorage.AddNode(node);
-
-				rc->Attempt();
-			} else {
-				socket.Send(pkt->GetConstBuffer(), pkt->GetEndpoint(), [ct](const ErrorCode& ec, size_t s) -> void {
-					ct->Set(TrResult{ ec, s });
-				});
-			}
-
-			return ct;
+		CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, ConnectionBase * connectionBase, Protocol::Header * header) {
+			return Send(allocator, allocator->MakeCompletionToken<TrResult>(), connectionBase, header);
 		}
 
-		CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, uint32_t seq, Protocol::Update * update, const UdpEndpoint & endpoint) {
-			CompletionToken<TrResult> ct = allocator->MakeCompletionToken<TrResult>();
-			GamePacket * pkt = allocator->Make<GamePacket>();
-			Protocol::Header * header = allocator->MakeProto<Protocol::Header>();
-			pkt->SetEndpoint(endpoint);
-
-			header->set_sequence(seq);
-			header->set_type(Protocol::MessageType::GAME);
-
-			const uint32_t serializedDataSize = static_cast<uint32_t>(update->ByteSizeLong());
-			const uint32_t serializedHeaderSize = static_cast<uint32_t>(header->ByteSizeLong());
-			const uint32_t totalHeaderSize = serializedHeaderSize + 2 * sizeof(google::protobuf::uint32);
-			const uint32_t localMtu = mtu;
-			const uint32_t maxPayloadSize = localMtu - totalHeaderSize;
-			const uint32_t numFragments = serializedDataSize / maxPayloadSize + (std::min(serializedDataSize % maxPayloadSize, 1u));
-
-			const uint32_t binaryDataSize = numFragments * (localMtu);
-
-			if(binaryDataSize > GamePacket::MAX_DATA_SIZE) {
-				throw OutOfRangeException{ "Network packet too big" };
-			}
-
-			google::protobuf::io::ArrayOutputStream outStream{ pkt->GetData(), static_cast<int32_t>(pkt->GetDataSize()) };
-			google::protobuf::io::CodedOutputStream codedOutStream{ &outStream };
-
-			uint32_t remainingSize = serializedDataSize;
-			const uint32_t headerStart = 0;
-			const uint32_t dataStart = numFragments * totalHeaderSize;
-
-			for(uint32_t i = 0; i < numFragments; i++) {
-				codedOutStream.WriteLittleEndian32(serializedHeaderSize);
-				if(!header->SerializeToCodedStream(&codedOutStream)) {
-					throw UndefinedBehaviourException{ "Failed to serialize header while fragmenting" };
-				}
-
-				FragmentData fd;
-				fd.fragmentCount = static_cast<uint8_t>(numFragments);
-				fd.fragmentIndex = static_cast<uint8_t>(i);
-				fd.sizeInBytes = static_cast<uint16_t>(std::min(remainingSize, maxPayloadSize));
-
-				codedOutStream.WriteLittleEndian32(fd.Pack());
-
-				remainingSize -= fd.sizeInBytes;
-			}
-
-			if(!update->SerializePartialToCodedStream(&codedOutStream)) {
-				throw UndefinedBehaviourException{ "Failed to serialize update while fragmenting" };
-			}
-
-			Ref<FragmentationContext<NetcodeSocketType>> fragCtx =
-				allocator->MakeShared<FragmentationContext<NetcodeSocketType>>(
-					ct, &socket, pkt, maxPayloadSize, dataStart, headerStart, serializedDataSize, totalHeaderSize);
-
-			fragCtx->SendFragment();
-
-			return ct;
+		CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, ConnectionBase * connectionBase, Protocol::Update * update) {
+			return Send(allocator, allocator->MakeCompletionToken<TrResult>(), connectionBase, update);
 		}
 
+		CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, ConnectionBase * connectionBase, Protocol::Header * header, ResendArgs args) {
+			header->set_sequence(connectionBase->localSequence++);
+			return Send(allocator, allocator->MakeCompletionToken<TrResult>(), header, connectionBase->endpoint, connectionBase->pmtu, args);
+		}
+
+		CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, CompletionToken<TrResult> premadeToken, ConnectionBase * connectionBase, Protocol::Header * header) {
+			header->set_sequence(connectionBase->localSequence++);
+			return Send(std::move(allocator), std::move(premadeToken), header, connectionBase->endpoint, connectionBase->pmtu, protocolConfig.GetArgsFor(header->type()));
+		}
+
+		CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, CompletionToken<TrResult> premadeToken, ConnectionBase * connectionBase, Protocol::Header * header, ResendArgs args) {
+			header->set_sequence(connectionBase->localSequence++);
+			return Send(std::move(allocator), std::move(premadeToken), header, connectionBase->endpoint, connectionBase->pmtu, args);
+		}
+
+		CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, CompletionToken<TrResult> premadeToken, ConnectionBase * connectionBase, Protocol::Update * update) {
+			return Send(std::move(allocator), std::move(premadeToken), update, connectionBase->endpoint, connectionBase->pmtu, connectionBase->localSequence++);
+		}
 	};
 
 }

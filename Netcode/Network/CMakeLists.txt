@@ -14,6 +14,10 @@ PUBLIC
 	"NetworkDecl.h"
 	"Response.hpp"
 	"ReplicationContext.h"
+	"NetAllocator.h"
+	"Socket.hpp"
+	"CompletionToken.h"
+	"BasicPacket.hpp"
 	
 PRIVATE
 	"GameSession.cpp"

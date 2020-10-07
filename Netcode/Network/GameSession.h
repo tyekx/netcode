@@ -6,6 +6,7 @@
 #include "Connection.h"
 #include "NetworkCommon.h"
 
+
 namespace Netcode::Network {
 
 	class SessionBase : public std::enable_shared_from_this<SessionBase> {

@@ -160,11 +160,11 @@ namespace Netcode::Network {
 			1500,
 			4352,
 			8166,
-			17914
+			17914,
+			65535
 		};
 	public:
-		static void Start(Ptr<NetcodeService> service, CompletionToken<ErrorCode> ct, Ref<ConnectionBase> conn, uint32_t linkLocalMtu) {
-			constexpr uint32_t ipv6_header = 48;
+		static void Start(Ptr<NetcodeService> service, CompletionToken<ErrorCode> ct, Ref<ConnectionBase> conn, MtuValue linkLocalMtu) {
 			/*
 			* lets assume that we already established some communication with the host,
 			* try sending the highest and work backwards
@@ -173,13 +173,14 @@ namespace Netcode::Network {
 			Protocol::Header * h = alloc->MakeProto<Protocol::Header>();
 			h->set_sequence(conn->localSequence++);
 			h->set_type(Protocol::MessageType::PMTU_DISCOVERY);
-			h->set_mtu_probe_value(linkLocalMtu - ipv6_header);
+			h->set_mtu_probe_value(linkLocalMtu.GetMtu());
+			conn->pmtu = linkLocalMtu;
 
-			service->Send(std::move(alloc), h, conn->endpoint, ResendArgs{ 200, 3 })->Then([service, ct, conn, linkLocalMtu](const TrResult & tr) -> void { 
+			service->Send(std::move(alloc), conn.get(), h, ResendArgs{ 200, 3 })->Then([service, ct, conn, linkLocalMtu](const TrResult & tr) -> void { 
 				if(tr.errorCode) {
 					uint32_t nextAttempt = 0;
 					for(uint16_t i : COMMON_MTUS) {
-						if(i >= linkLocalMtu) {
+						if(i >= linkLocalMtu.GetMtu()) {
 							break;
 						}
 						nextAttempt = i;
@@ -190,10 +191,9 @@ namespace Netcode::Network {
 						return;
 					}
 
-					PmtuDiscovery::Start(service, ct, conn, nextAttempt);
+					PmtuDiscovery::Start(service, ct, conn, MtuValue{ nextAttempt });
 				} else {
-					Log::Debug("PMTU ok: {0}", static_cast<int32_t>(linkLocalMtu));
-					service->UpdateMtu(linkLocalMtu);
+					Log::Debug("PMTU ok: {0}", static_cast<int32_t>(linkLocalMtu.GetMtu()));
 					ct->Set(make_error_code(Errc::success));
 				}
 			});

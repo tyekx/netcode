@@ -223,7 +223,7 @@ namespace Netcode::Network {
 		auto addr = endpoint.address();
 		
 		if(addr.is_v4()) {
-			status = setsockopt(s, IPPROTO_IPV4, IP_DONTFRAGMENT, reinterpret_cast<char *>(&value), sizeof(value));
+			status = setsockopt(s, IPPROTO_IP, IP_DONTFRAGMENT, reinterpret_cast<char *>(&value), sizeof(value));
 		}
 
 		if(addr.is_v6()) {

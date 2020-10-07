@@ -10,39 +10,7 @@
 
 namespace Netcode::Network {
 
-	ServerSession::ServerSession(boost::asio::io_context & ioc) :
-		ioContext{ ioc } {
-		/*
-		UdpSocket gameSocket{ ioc };
-
-		uint32_t gamePort = Config::Get<uint16_t>(L"network.server.gamePort:u16");
-
-		std::string selfAddr = Utility::ToNarrowString(Config::Get<std::wstring>(L"network.server.selfAddress:string"));
-
-		ErrorCode ec;
-		boost::asio::ip::address addr = boost::asio::ip::address::from_string(selfAddr, ec);
-
-		RETURN_ON_ERROR(ec, "[Network] [Server] invalid configuration value: {0}");
-		
-		ec = Bind(addr, gameSocket, gamePort);
-
-		if(gamePort > std::numeric_limits<uint16_t>::max()) {
-			Log::Error("[Network] [Server] Failed to bind game port socket");
-			return;
-		}
-
-		ec = ConnectToMysql();
-
-		RETURN_ON_ERROR(ec, "[Network] [Server] Failed to connect to MySQL: {0}");
-
-		Config::Set<uint16_t>(L"network.server.gamePort:u16", static_cast<uint16_t>(gamePort));
-
-		connection = std::make_shared<Connection>();
-		connection->packetSequenceId = 1;
-		connection->authorizedAt = SystemClock::LocalNow();
-		connection->state = ConnectionState::ESTABLISHED;
-		connection->liveEndpoint = UdpEndpoint{ addr, static_cast<uint16_t>(gamePort) };
-		connection->socket = std::make_unique<UdpSocket>(std::move(gameSocket));*/
+	ServerSession::ServerSession(boost::asio::io_context & ioc) : ioContext{ ioc } {
 	}
 
 	void ServerSession::Start() {
@@ -55,9 +23,18 @@ namespace Netcode::Network {
 		ErrorCode ec;
 		boost::asio::ip::address addr = boost::asio::ip::address::from_string(selfAddr, ec);
 
+		std::vector<Interface> ifaces = GetCompatibleInterfaces(addr);
+
+		if(ifaces.empty()) {
+			Log::Error("[Network] [Server] No interface");
+			return;
+		}
+
+		Interface iface = ifaces.front();
+
 		RETURN_ON_ERROR(ec, "[Network] [Server] invalid configuration value: {0}");
 
-		ec = Bind(addr, gameSocket, gamePort);
+		ec = Bind(iface.address, gameSocket, gamePort);
 
 		if(gamePort > std::numeric_limits<uint16_t>::max()) {
 			Log::Error("[Network] [Server] Failed to bind game port socket");
@@ -68,7 +45,7 @@ namespace Netcode::Network {
 
 		Log::Info("[Network] [Server] Started on port: {0}", Config::Get<uint16_t>(L"network.server.gamePort:u16"));
 
-		service = std::make_shared<NetcodeService>(ioContext, std::move(gameSocket), 1280);
+		service = std::make_shared<NetcodeService>(ioContext, std::move(gameSocket), static_cast<uint16_t>(iface.mtu));
 		service->Host();
 	}
 
