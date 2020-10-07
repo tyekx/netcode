@@ -20,9 +20,24 @@ namespace boost::asio {
 
 }
 
+namespace std {
+
+	template<typename T>
+	class shared_ptr;
+
+}
+
 namespace Netcode::Network {
 
 	class Timer;
 	using ErrorCode = boost::system::error_code;
+
+	template<typename T>
+	class CompletionTokenType;
+
+	class Response;
+
+	template<typename T>
+	using CompletionToken = std::shared_ptr<CompletionTokenType<T>>;
 
 }

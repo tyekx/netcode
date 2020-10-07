@@ -7,6 +7,8 @@
 #include <map>
 #include <vector>
 
+#include "Network/NetworkDecl.h"
+
 #include "ModulesConfig.h"
 #include <Netcode/Graphics/GraphicsContexts.h>
 
@@ -187,9 +189,9 @@ namespace Netcode::Module {
 		virtual Network::Cookie GetCookie(const std::string & key) = 0;
 		virtual void SetCookie(const Network::Cookie & cookie) = 0;
 
-		virtual std::future<Network::Response> Login(const std::wstring & username, const std::wstring & password) = 0;
-		virtual std::future<Network::Response> QueryServers() = 0;
-		virtual std::future<Network::Response> Status() = 0;
+		virtual Network::CompletionToken<Network::Response> Login(const std::wstring & username, const std::wstring & password) = 0;
+		virtual Network::CompletionToken<Network::Response> QueryServers() = 0;
+		virtual Network::CompletionToken<Network::Response> Status() = 0;
 
 		virtual Ref<Network::ServerSessionBase> CreateServer() = 0;
 		virtual Ref<Network::ClientSessionBase> CreateClient() = 0;

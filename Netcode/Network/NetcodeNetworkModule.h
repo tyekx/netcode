@@ -1,5 +1,6 @@
 #pragma once 
 
+#include "NetworkDecl.h"
 #include <Netcode/Modules.h>
 #include "NetworkCommon.h"
 #include "HttpSession.h"
@@ -23,9 +24,9 @@ namespace Netcode::Module {
 		virtual Network::Cookie GetCookie(const std::string & key) override;
 		virtual void SetCookie(const Network::Cookie & cookie) override;
 
-		virtual std::future<Network::Response> Login(const std::wstring & username, const std::wstring & password) override;
-		virtual std::future<Network::Response> QueryServers() override;
-		virtual std::future<Network::Response> Status() override;
+		virtual Network::CompletionToken<Network::Response> Login(const std::wstring & username, const std::wstring & password) override;
+		virtual Network::CompletionToken<Network::Response> QueryServers() override;
+		virtual Network::CompletionToken<Network::Response> Status() override;
 	};
 
 }

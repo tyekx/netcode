@@ -57,7 +57,7 @@ namespace Netcode::Module {
 		}
 	}
 
-	std::future<Network::Response> NetcodeNetworkModule::Login(const std::wstring & username, const std::wstring & password)
+	Network::CompletionToken<Network::Response> NetcodeNetworkModule::Login(const std::wstring & username, const std::wstring & password)
 	{
 		if(httpSession == nullptr) {
 			httpSession = std::make_shared<Network::HttpSession>(context.GetImpl());
@@ -70,25 +70,28 @@ namespace Netcode::Module {
 
 		std::string body = json.dump();
 
-		return httpSession->MakeRequest(Config::Get<std::string>(L"network.web.hostname:string"), std::to_string(Config::Get<uint16_t>(L"network.web.port:u16")), "/api/login", Network::http::verb::post, cookiesCache, std::move(body));
+		return httpSession->MakeRequest(Utility::ToNarrowString(Config::Get<std::wstring>(L"network.web.hostname:string")),
+			std::to_string(Config::Get<uint16_t>(L"network.web.port:u16")), "/api/login", Network::http::verb::post, cookiesCache, std::move(body));
 	}
 
-	std::future<Network::Response> NetcodeNetworkModule::QueryServers()
+	Network::CompletionToken<Network::Response> NetcodeNetworkModule::QueryServers()
 	{
 		if(httpSession == nullptr) {
 			httpSession = std::make_shared<Network::HttpSession>(context.GetImpl());
 		}
 
-		return httpSession->MakeRequest(Config::Get<std::string>(L"network.web.hostname:string"), std::to_string(Config::Get<uint16_t>(L"network.web.port:u16")), "/api/list-sessions", Network::http::verb::post, cookiesCache, "");
+		return httpSession->MakeRequest(Utility::ToNarrowString(Config::Get<std::wstring>(L"network.web.hostname:string")),
+			std::to_string(Config::Get<uint16_t>(L"network.web.port:u16")), "/api/list-sessions", Network::http::verb::get, cookiesCache, "");
 	}
 
-	std::future<Network::Response> NetcodeNetworkModule::Status()
+	Network::CompletionToken<Network::Response> NetcodeNetworkModule::Status()
 	{
 		if(httpSession == nullptr) {
 			httpSession = std::make_shared<Network::HttpSession>(context.GetImpl());
 		}
 
-		return httpSession->MakeRequest(Config::Get<std::string>(L"network.web.hostname:string"), std::to_string(Config::Get<uint16_t>(L"network.web.port:u16")), "/api/status", Network::http::verb::post, cookiesCache, "");
+		return httpSession->MakeRequest(Utility::ToNarrowString(Config::Get<std::wstring>(L"network.web.hostname:string")),
+			std::to_string(Config::Get<uint16_t>(L"network.web.port:u16")), "/api/status", Network::http::verb::get, cookiesCache, "");
 	}
 
 }

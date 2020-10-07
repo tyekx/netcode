@@ -1,5 +1,6 @@
 #pragma once
 
+#include "NetworkDecl.h"
 #include <Netcode/HandleDecl.h>
 #include <Netcode/PlacedFunction.hpp>
 #include <atomic>
@@ -117,8 +118,5 @@ namespace Netcode::Network {
 			return false;
 		}
 	};
-
-	template<typename T>
-	using CompletionToken = Ref<CompletionTokenType<T>>;
 
 }

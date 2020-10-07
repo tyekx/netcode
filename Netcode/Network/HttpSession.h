@@ -1,41 +1,43 @@
 #pragma once
 
-#include <Netcode/HandleDecl.h>
 #include "NetworkDecl.h"
+#include <Netcode/HandleDecl.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
-#include "../DestructiveCopyConstructible.hpp"
 
 namespace Netcode::Network {
 
 	namespace http = boost::beast::http;
 
-	class HttpSession : public std::enable_shared_from_this<HttpSession> {
-		using dcc_promise = dcc_t<std::promise<Network::Response>>;
+	using TcpResolver = boost::asio::ip::tcp::resolver;
+	using TcpEndpoint = boost::asio::ip::tcp::endpoint;
 
+	class HttpSession : public std::enable_shared_from_this<HttpSession> {
+
+		boost::asio::io_context & ioc;
 		boost::asio::strand<boost::asio::io_context::executor_type> strand;
-		boost::asio::ip::tcp::resolver resolver;
+		TcpResolver resolver;
 		boost::beast::tcp_stream stream;
 		boost::beast::flat_buffer readBuffer;
 		http::response<http::string_body> response;
 		http::request<http::string_body> request;
 		bool isConnected;
 
-		void OnReceive(ErrorCode ec, std::size_t transferredBytes, dcc_promise promise);
+		void OnReceive(ErrorCode ec, size_t transferredBytes, CompletionToken<Response> token);
 
-		void OnSent(ErrorCode ec, std::size_t transferredBytes, dcc_promise promise);
+		void OnSent(ErrorCode ec, size_t transferredBytes, CompletionToken<Response> token);
 
-		void OnConnected(ErrorCode ec, boost::asio::ip::tcp::endpoint endpoint, dcc_promise promise);
+		void OnConnected(ErrorCode ec, TcpEndpoint endpoint, CompletionToken<Response> token);
 
-		void OnResolved(ErrorCode ec, boost::asio::ip::tcp::resolver::results_type results, dcc_promise promise);
+		void OnResolved(ErrorCode ec, TcpResolver::results_type results, CompletionToken<Response> token);
 
-		void OnSentFirstTry(ErrorCode ec, std::size_t transferredBytes, std::string host, std::string port, dcc_promise promise);
+		void OnSentFirstTry(ErrorCode ec, size_t transferredBytes, std::string host, std::string port, CompletionToken<Response> token);
 
 	public:
 		HttpSession(boost::asio::io_context & ioc);
 
-		std::future<Network::Response> MakeRequest(std::string host, std::string port, std::string path, http::verb method,  std::string cookies, std::string body);
+		CompletionToken<Response> MakeRequest(std::string host, std::string port, std::string path, http::verb method,  std::string cookies, std::string body);
 	};
 
 }

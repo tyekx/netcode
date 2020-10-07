@@ -1,47 +1,46 @@
 #include "HttpSession.h"
 #include <Netcode/Logger.h>
-#include <boost/bind.hpp>
 #include "Response.hpp"
+#include "CompletionToken.h"
 
 
 namespace Netcode::Network {
 
-	void HttpSession::OnReceive(ErrorCode ec, std::size_t transferredBytes, dcc_promise promise) {
+	void HttpSession::OnReceive(ErrorCode ec, size_t transferredBytes, CompletionToken<Response> token) {
 		if(ec) {
 			Log::Error("[Network][Http] Failed to read from stream: {0}", ec.message());
 
 			response.result(http::status::client_closed_request);
-			promise.value.set_value(std::move(response));
+
+			token->Set(std::move(response));
 		} else {
 			Log::Debug("[Network][Http] Successfully read {0} bytes", static_cast<int32_t>(transferredBytes));
-			promise.value.set_value(std::move(response));
+
+			token->Set(std::move(response));
 		}
 	}
 
-	void HttpSession::OnSent(ErrorCode ec, std::size_t transferredBytes, dcc_promise promise) {
+	void HttpSession::OnSent(ErrorCode ec, size_t transferredBytes, CompletionToken<Response> token) {
 		if(ec) {
 			Log::Error("[Network][Http] Failed to write to stream: {0}", ec.message());
 
 			response.result(http::status::client_closed_request);
-			promise.value.set_value(std::move(response));
+			token->Set(std::move(response));
 		} else {
 			Log::Debug("[Network][Http] Successfully wrote {0} bytes", static_cast<int32_t>(transferredBytes));
 
-			http::async_read(stream, readBuffer, response,
-				boost::bind(&HttpSession::OnReceive,
-					shared_from_this(),
-					boost::asio::placeholders::error,
-					boost::asio::placeholders::bytes_transferred,
-					promise));
+			http::async_read(stream, readBuffer, response, [this, ct = std::move(token), lt = shared_from_this()](ErrorCode ec, size_t numBytes) mutable -> void {
+				OnReceive(ec, numBytes, std::move(ct));
+			});
 		}
 	}
 
-	void HttpSession::OnConnected(ErrorCode ec, boost::asio::ip::tcp::endpoint endpoint, dcc_promise promise) {
+	void HttpSession::OnConnected(ErrorCode ec, TcpEndpoint endpoint, CompletionToken<Response> token) {
 		if(ec) {
 			Log::Error("[Network][Http] Failed to connect to host: {0}", ec.message());
 
 			response.result(http::status::client_closed_request);
-			promise.value.set_value(std::move(response));
+			token->Set(std::move(response));
 		} else {
 			isConnected = true;
 
@@ -52,66 +51,59 @@ namespace Netcode::Network {
 			}
 
 			Log::Debug("[Network][Http] Successfully connected to host");
-			http::async_write(stream, request, boost::bind(&HttpSession::OnSent, shared_from_this(),
-				boost::asio::placeholders::error,
-				boost::asio::placeholders::bytes_transferred,
-				promise));
+			http::async_write(stream, request, [this, ct = std::move(token), lt = shared_from_this()](ErrorCode ec, size_t numBytes) mutable -> void {
+				OnSent(ec, numBytes, std::move(ct));
+			});
 		}
 	}
 
-	void HttpSession::OnResolved(ErrorCode ec, boost::asio::ip::tcp::resolver::results_type results, dcc_promise promise) {
+	void HttpSession::OnResolved(ErrorCode ec, boost::asio::ip::tcp::resolver::results_type results, CompletionToken<Response> token) {
 		if(ec) {
 			Log::Error("[Network][Http] Failed to resolve hostname: {0}", ec.message());
-
+			response.result(http::status::client_closed_request);
+			token->Set(std::move(response));
 		} else {
 			Log::Debug("[Network][Http] Successfully resolved hostname");
 			stream.expires_after(std::chrono::seconds(30));
 
-			stream.async_connect(results,
-				boost::bind(&HttpSession::OnConnected, shared_from_this(),
-					boost::asio::placeholders::error,
-					boost::asio::placeholders::endpoint,
-					promise));
+			stream.async_connect(results, [this, ct = std::move(token), lt = shared_from_this()](ErrorCode ec, TcpEndpoint endpoint) mutable -> void{
+				OnConnected(ec, endpoint, std::move(ct));
+			});
 		}
 	}
 
-	void HttpSession::OnSentFirstTry(ErrorCode ec, std::size_t transferredBytes, std::string host, std::string port, dcc_promise promise) {
+	void HttpSession::OnSentFirstTry(ErrorCode ec, size_t transferredBytes, std::string host, std::string port, CompletionToken<Response> token) {
 		// if the stream "is just timed out", then try reconnecting first
 		if(ec == boost::beast::error::timeout) {
 			Log::Debug("[Network][Http] Stream timed out, trying to reconnect");
 			stream.close();
 			isConnected = false;
-			resolver.async_resolve(host, port, boost::bind(&HttpSession::OnResolved, shared_from_this(),
-				boost::asio::placeholders::error,
-				boost::asio::placeholders::results,
-				promise));
+			resolver.async_resolve(host, port, [this, ct = std::move(token), lt = shared_from_this()](ErrorCode ec, TcpResolver::results_type results) mutable -> void {
+				OnResolved(ec, std::move(results), std::move(ct));
+			});
 			return;
 		}
 
 		// on other errors, log for now
 		if(ec) {
 			Log::Error("[Network][Http] Failed to send HTTP request: {0}", ec.message());
-
 			response.result(http::status::client_closed_request);
-			promise.value.set_value(std::move(response));
+			token->Set(std::move(response));
 			return;
 		}
 
-		http::async_read(stream, readBuffer, response,
-			boost::bind(&HttpSession::OnReceive,
-				shared_from_this(),
-				boost::asio::placeholders::error,
-				boost::asio::placeholders::bytes_transferred,
-				promise));
+		http::async_read(stream, readBuffer, response, [this, ct = std::move(token), lt = shared_from_this()](ErrorCode ec, size_t numBytes) mutable -> void{
+			OnReceive(ec, numBytes, std::move(ct));
+		});
 	}
 
-	HttpSession::HttpSession(boost::asio::io_context & ioc) : strand{ boost::asio::make_strand(ioc) }, resolver{ strand }, stream{ strand }, readBuffer{}, response{}, isConnected{ false } {
+	HttpSession::HttpSession(boost::asio::io_context & ioc) : ioc{ ioc }, strand { boost::asio::make_strand(ioc) }, resolver{ strand }, stream{ strand }, readBuffer{}, response{}, isConnected{ false } {
 
 	}
 
-	std::future<Response> HttpSession::MakeRequest(std::string host, std::string port, std::string path, http::verb method, std::string cookies, std::string body) {
-		std::promise<Response> promise;
-		auto future = promise.get_future();
+	CompletionToken<Response> HttpSession::MakeRequest(std::string host, std::string port, std::string path, http::verb method, std::string cookies, std::string body) {
+		CompletionToken<Response> token = std::make_shared<CompletionTokenType<Response>>(&ioc);
+		
 
 		request.clear();
 		request.method(method);
@@ -132,19 +124,16 @@ namespace Netcode::Network {
 		}
 
 		if(!isConnected) {
-			resolver.async_resolve(host, port, boost::bind(&HttpSession::OnResolved, shared_from_this(),
-				boost::asio::placeholders::error,
-				boost::asio::placeholders::results,
-				move_to_dcc(promise)));
+			resolver.async_resolve(host, port, [this, ct = token, lt = shared_from_this()](ErrorCode ec, TcpResolver::results_type results) mutable -> void {
+				OnResolved(ec, std::move(results), std::move(ct));
+			});
 		} else {
-			http::async_write(stream, request, boost::bind(&HttpSession::OnSentFirstTry, shared_from_this(),
-				boost::asio::placeholders::error,
-				boost::asio::placeholders::bytes_transferred,
-				host,
-				port,
-				move_to_dcc(promise)));
+			http::async_write(stream, request, [this, ct = token, h = std::move(host), p = std::move(port), lt = shared_from_this()]
+				(ErrorCode ec, size_t numBytes) mutable -> void {
+				OnSentFirstTry(ec, numBytes, std::move(h), std::move(p), std::move(ct));
+			});
 		}
 
-		return future;
+		return token;
 	}
 }

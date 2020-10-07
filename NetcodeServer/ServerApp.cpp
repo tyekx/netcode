@@ -1,4 +1,5 @@
 #include "ServerApp.h"
+#include <Netcode/Network/Response.hpp>
 
 namespace nn = Netcode::Network;
 namespace np = Netcode::Protocol;
@@ -94,6 +95,10 @@ void ServerApp::Setup(Netcode::Module::IModuleFactory * factory) {
 
 	clientSession = network->CreateClient();
 	clientSession->Start();
+
+	network->Status()->Then([](const nn::Response & resp) -> void {
+		Log::Debug("http status: {0}", static_cast<int32_t>(resp.result_int()));
+	});
 	//clientSession->Connect("::1", 9999, "");
 }
 
