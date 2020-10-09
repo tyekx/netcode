@@ -5,6 +5,7 @@
 #include <Netcode/Modules.h>
 #include <Netcode/BasicGeometry.h>
 #include <Netcode/Graphics/ResourceEnums.h>
+#include "DX12GraphicsModule.h"
 
 namespace Netcode::Graphics::DX12 {
 
@@ -35,7 +36,61 @@ namespace Netcode::Graphics::DX12 {
 		return tmp;
 	}
 
+	void DebugContext::CreateD2DContext(Module::IGraphicsModule * graphics)
+	{
+		DX12GraphicsModule * dx12Module = dynamic_cast<DX12GraphicsModule *>(graphics);
+
+		com_ptr<ID3D11Device> tmpDev;
+		
+		DX_API("Failed to create D11Device")
+			D3D11On12CreateDevice(dx12Module->device.Get(),
+				D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+				nullptr,
+				0,
+				reinterpret_cast<IUnknown **>(dx12Module->commandQueue.GetAddressOf()),
+				1, 0, tmpDev.GetAddressOf(), d11Context.GetAddressOf(), nullptr);
+
+		DX_API("Failed to cast to D3D11on12Device")
+			tmpDev.As(&d11Device);
+		
+		D2D1_FACTORY_OPTIONS factoryOptions;
+		factoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
+		D2D1_DEVICE_CONTEXT_OPTIONS deviceOptions = D2D1_DEVICE_CONTEXT_OPTIONS_NONE;
+
+		DX_API("Failed to create D2DFactory")
+			D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory3), &factoryOptions, reinterpret_cast<void **>(d2dFactory.GetAddressOf()));
+
+		DX_API("Failed to cast D3D11 device to DXGI device")
+			d11Device.As(&dxgiDevice);
+
+		DX_API("Failed to create D2DDevice")
+			d2dFactory->CreateDevice(dxgiDevice.Get(), d2dDevice.GetAddressOf());
+
+		DX_API("Failed to create D2DDeviceContext")
+			d2dDevice->CreateDeviceContext(deviceOptions, d2dDeviceContext.GetAddressOf());
+
+		DX_API("Failed to create DWriteFactory")
+			DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown **>(dwriteFactory.GetAddressOf()));
+
+		d2dDeviceContext->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &textBrush);
+		dwriteFactory->CreateTextFormat(
+			L"Verdana",
+			NULL,
+			DWRITE_FONT_WEIGHT_NORMAL,
+			DWRITE_FONT_STYLE_NORMAL,
+			DWRITE_FONT_STRETCH_NORMAL,
+			16,
+			L"en-us",
+			textFormat.GetAddressOf()
+		);
+		textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+		textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+	}
+
 	void DebugContext::CreateResources(Module::IGraphicsModule * graphics) {
+		graphicsModule = graphics;
+		CreateD2DContext(graphics);
+		
 		Ref<Netcode::InputLayoutBuilder> ilBuilder = graphics->CreateInputLayoutBuilder();
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("COLOR", DXGI_FORMAT_R32G32B32_FLOAT);
@@ -98,6 +153,58 @@ namespace Netcode::Graphics::DX12 {
 			context->CopyConstants(uploadBuffer, vertices.data() + numDepthVertices, numNoDepthVertices * sizeof(PC_Vertex), numDepthVertices * sizeof(PC_Vertex));
 		}
 	}
+	
+	void DebugContext::InternalSwapChainResourcesChanged(Module::IGraphicsModule * graphics) {
+		if(graphics == nullptr) {
+			d2dRenderTargets[0].Reset();
+			d2dRenderTargets[1].Reset();
+			d2dRenderTargets[2].Reset();
+			wrappedResources[0].Reset();
+			wrappedResources[1].Reset();
+			wrappedResources[2].Reset();
+
+			d2dDeviceContext->SetTarget(nullptr);
+			d11Context->Flush();
+			return;
+		}
+		
+		DX12GraphicsModule * g = dynamic_cast<DX12GraphicsModule *>(graphics);
+		graphicsModule = graphics;
+		
+		const float dpi = static_cast<float>(g->windowDpi);
+		
+		D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1(
+			D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+			D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED),
+			dpi,
+			dpi
+		);
+		
+		for(UINT i = 0; i < g->backbufferDepth; i++) {
+			com_ptr<ID3D12Resource> resource;
+			
+			g->swapChain->GetBuffer(i, IID_PPV_ARGS(resource.GetAddressOf()));
+
+			D3D11_RESOURCE_FLAGS d3d11Flags = { D3D11_BIND_RENDER_TARGET };
+
+			DX_API("Failed to create wrapped resource")
+			d11Device->CreateWrappedResource(resource.Get(),
+				&d3d11Flags,
+				D3D12_RESOURCE_STATE_RENDER_TARGET,
+				D3D12_RESOURCE_STATE_RENDER_TARGET,
+				IID_PPV_ARGS(wrappedResources[i].ReleaseAndGetAddressOf())
+			);
+
+			com_ptr<IDXGISurface> dxgiSurface;
+			
+			DX_API("Failed to cast to DXGI surface")
+				wrappedResources[i].As(&dxgiSurface);
+
+			DX_API("Failed to create bitmap from dxgi surface")
+				d2dDeviceContext->CreateBitmapFromDxgiSurface(dxgiSurface.Get(), &bitmapProperties, d2dRenderTargets[i].ReleaseAndGetAddressOf());
+		}
+	}
+	
 	void DebugContext::Draw(IRenderContext * context, const Netcode::Float4x4 & viewProjMatrix) {
 		if(numDepthVertices == 0 && numNoDepthVertices == 0) {
 			return;
@@ -124,6 +231,51 @@ namespace Netcode::Graphics::DX12 {
 
 		numDepthVertices = 0;
 		numNoDepthVertices = 0;
+	}
+
+	void DebugContext::DrawDebugText(std::wstring text, const Float2 & topLeftPosInWindowCoords)
+	{
+		DebugText dt;
+		dt.content = std::move(text);
+		dt.pos = topLeftPosInWindowCoords;
+		debugTextBatch.emplace_back(std::move(dt));
+	}
+
+	void DebugContext::InternalPostRender()
+	{
+		if(debugTextBatch.empty()) {
+			return;
+		}
+		
+		UINT frameIndex = dynamic_cast<DX12GraphicsModule *>(graphicsModule)->backbufferIndex;
+
+		D2D1_SIZE_F rtSize = d2dRenderTargets[frameIndex]->GetSize();
+
+		d11Device->AcquireWrappedResources(wrappedResources[frameIndex].GetAddressOf(), 1);
+		
+		d2dDeviceContext->SetTarget(d2dRenderTargets[frameIndex].Get());
+		d2dDeviceContext->BeginDraw();
+		d2dDeviceContext->SetTransform(D2D1::Matrix3x2F::Identity());
+
+		for(const DebugText & dt: debugTextBatch) {
+			D2D1_RECT_F textRect = D2D1::RectF(dt.pos.x, dt.pos.y, rtSize.width - dt.pos.x, rtSize.height - dt.pos.y);
+			d2dDeviceContext->DrawTextA(
+				dt.content.c_str(),
+				dt.content.size(),
+				textFormat.Get(),
+				&textRect,
+				textBrush.Get()
+			);
+		}
+
+		debugTextBatch.clear();
+
+		DX_API("Failed to end draw")
+			d2dDeviceContext->EndDraw();
+
+		d11Device->ReleaseWrappedResources(wrappedResources[frameIndex].GetAddressOf(), 1);
+
+		d11Context->Flush();
 	}
 
 	void DebugContext::DrawPoint(const Float3 & point, float extent) {

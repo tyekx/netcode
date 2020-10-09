@@ -58,6 +58,10 @@ namespace Netcode {
 		}
 
 		void Invoke(T ... args) {
+			if(handlers.empty()) {
+				return;
+			}
+			
 			for(typename ContainerType::iterator it = handlers.begin(); it != handlers.end(); ++it) {
 				(it->second)(std::forward<T>(args)...);
 			}

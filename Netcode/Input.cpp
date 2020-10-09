@@ -3,6 +3,7 @@
 #include "Event.hpp"
 #include "Input/Key.h"
 #include "Input/AxisMapBase.h"
+#include <Netcode/Logger.h>
 
 #if defined(NETCODE_OS_WINDOWS)
 #include <Windows.h>
@@ -364,13 +365,8 @@ namespace Netcode {
 		void ProcessKeyEvent(Key keyEvent) {
 			KeyCode keyCode = keyEvent.GetCode();
 			Key propagatedKeyEvent{ keyEvent.GetCode(), KeyState::UNDEFINED };
-			Key currentState = keys[keyCode];
-			KeyStates mutableState = currentState.GetState();
-
-			/**
-			* 1.) Pulse state does not get saved, its only for propagation
-			* 2.) Toggled bit is handled separately for ToggledTypes.
-			*/
+			Key & currentState = keys[keyCode];
+			KeyStates & mutableState = currentState.GetState();
 
 			if(currentState.IsReleased() && keyEvent.IsPressed()) {
 				mutableState.Set(KeyState::RISING_EDGE);
@@ -391,13 +387,13 @@ namespace Netcode {
 				mutableState.Set(KeyState::EDGE);
 				propagatedKeyEvent.SetState(mutableState);
 			}
-
+			
 			if(keyEvent.IsPressed() && currentState.IsPressed()) {
 				propagatedKeyEvent.SetState(currentState.GetState() | KeyState::PULSE);
 			}
 
 			UpdateModifiers();
-
+			
 			InputEvent(propagatedKeyEvent);
 		}
 
@@ -470,6 +466,10 @@ namespace Netcode {
 			UndefinedBehaviourAssertion(static_cast<uint32_t>(code) < 256);
 
 			return keys[code];
+		}
+
+		void SetInitialMousePosition(const Int2 & i2) {
+			mouseWindowPosition = i2;
 		}
 
 		void ReadWinApiMouse(uintptr_t wParam, intptr_t lParam) {
@@ -632,6 +632,11 @@ namespace Netcode {
 
 	Int2 Input::GetMousePosition() {
 		return instance->GetMousePosition();
+	}
+
+	void Input::SetInitialMousePosition(const Int2 & i2)
+	{
+		instance->SetInitialMousePosition(i2);
 	}
 
 }

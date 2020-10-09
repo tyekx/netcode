@@ -23,11 +23,13 @@ PUBLIC
 	"Json.h"
 	"Macros.h"
 	"Enum.hpp"
+	"ErrorCode.h"
 	
 PRIVATE
 	
 	"Math.cpp"
 	"Exceptions.cpp"
+	"ErrorCode.cpp"
 	"UriBase.cpp"
 	"Json.cpp"
 )

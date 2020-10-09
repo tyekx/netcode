@@ -75,7 +75,7 @@ namespace Netcode {
 		}
 
 		constexpr Enum<T> operator~() const noexcept {
-			return ~value;
+			return static_cast<T>(~static_cast<UnderlyingType>(value));
 		}
 
 		constexpr explicit operator T() const noexcept {

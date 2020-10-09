@@ -164,7 +164,7 @@ namespace Netcode::Network {
 		void StartConnection(CompletionToken<ErrorCode> mainToken) {
 			if(connection == nullptr) {
 				Log::Error("No connection was set");
-				mainToken->Set(make_error_code(Error::BAD_API_CALL));
+				mainToken->Set(make_error_code(NetworkErrc::ALREADY_CONNECTED));
 				return;
 			}
 
@@ -186,7 +186,7 @@ namespace Netcode::Network {
 
 		void OnHostnameResolved(const UdpResolver::results_type & results, CompletionToken<ErrorCode> mainToken) {
 			if(results.empty()) {
-				mainToken->Set(make_error_code(Error::ADDRESS_RESOLUTION_FAILED));
+				mainToken->Set(make_error_code(NetworkErrc::HOSTNAME_NOT_FOUND));
 				return;
 			}
 			
@@ -196,8 +196,15 @@ namespace Netcode::Network {
 			connection->endpoint = *(results.begin());
 			connection->localSequence = 1;
 
-			ErrorCode ec;
+			boost::system::error_code ec;
 			sock.open(connection->endpoint.protocol(), ec);
+
+			if(ec) {
+				Log::Error("Failed to open port");
+				mainToken->Set(make_error_code(NetworkErrc::SOCK_ERROR));
+				connection->state = ConnectionState::INACTIVE;
+				return;
+			}
 
 			auto netInterfaces = GetCompatibleInterfaces(connection->endpoint.address());
 
@@ -215,7 +222,7 @@ namespace Netcode::Network {
 
 				if(ec) {
 					Log::Error("Failed to bind port");
-					mainToken->Set(make_error_code(Error::SOCK_ERR));
+					mainToken->Set(make_error_code(NetworkErrc::SOCK_ERROR));
 					connection->state = ConnectionState::INACTIVE;
 					return;
 				}
@@ -233,30 +240,21 @@ namespace Netcode::Network {
 			}
 
 			if(ec) {
-				Log::Error("Failed to open port");
-				mainToken->Set(make_error_code(Error::SOCK_ERR));
-				connection->state = ConnectionState::INACTIVE;
-				return;
-			}
-
-			if(ec) {
 				Log::Error("Failed to 'connect': {0}", ec.message());
-				mainToken->Set(make_error_code(Error::SOCK_ERR));
+				mainToken->Set(make_error_code(NetworkErrc::SOCK_ERROR));
 				connection->state = ConnectionState::INACTIVE;
 				return;
 			}
 			
 			if(!SetDontFragmentBit(sock)) {
 				Log::Error("Failed to set dont fragment bit");
-				mainToken->Set(make_error_code(Error::SOCK_ERR));
+				mainToken->Set(make_error_code(NetworkErrc::SOCK_ERROR));
 				connection->state = ConnectionState::INACTIVE;
 				return;
 			}
 			
 			service = std::make_shared<NetcodeService>(ioContext, std::move(sock), static_cast<uint16_t>(linkLocalMtu));
 			service->Host();
-
-			Log::Debug("Service created");
 
 			Sleep(100);
 
@@ -271,7 +269,7 @@ namespace Netcode::Network {
 			resolver.async_resolve(queryValueAddress, queryValuePort, boost::asio::ip::resolver_base::address_configured,
 				[this, ct](const ErrorCode & ec, UdpResolver::results_type results) mutable -> void {
 				if(ec) {
-					Log::Error("Address resolution failed");
+					ct->Set(make_error_code(NetworkErrc::HOSTNAME_NOT_FOUND));
 				} else {
 					OnHostnameResolved(std::move(results), std::move(ct));
 				}

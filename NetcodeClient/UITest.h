@@ -3,6 +3,7 @@
 #include <Netcode/UI/Page.h>
 
 #include "Services.h"
+#include "Asset.h"
 
 enum PagesEnum {
 	LOGIN_PAGE,
@@ -14,16 +15,19 @@ enum PagesEnum {
 namespace Netcode::UI {
 	class Button;
 	class TextBox;
+	class Panel;
+	class Label;
 };
 
 class PageBase : public Netcode::UI::Page {
 protected:
 	constexpr static Netcode::Float4 COLOR_ACCENT{ 1.0f, 0.4f, 0.533333f, 1.0f };
-	constexpr static Netcode::Float4 COLOR_SECONDARY{ 0.043137f, 0.164705f, 0.247058f, 0.8f };
+	constexpr static Netcode::Float4 COLOR_SECONDARY{ 0.043137f, 0.164705f, 0.247058f, 0.95f };
+	constexpr static Netcode::Float4 COLOR_TERTIARY{ 0.0746f, 0.2706f, 0.4314f, 0.90f };
 	constexpr static Netcode::Float4 COLOR_BORDER{ 0.02745f, 0.141176f, 0.211764f, 1.0f };
 	constexpr static Netcode::Float4 COLOR_HOVER{ 0.458823f, 0.235294f, 0.282353f, 1.0f };
 	constexpr static Netcode::Float4 COLOR_TEXT{ 0.8f, 0.8f, 0.8f, 1.0f };
-
+	
 	constexpr static float BORDER_RADIUS = 4.0f;
 	constexpr static float BORDER_WIDTH = 2.0f;
 
@@ -45,37 +49,99 @@ class LoginPage : public PageBase {
 public:
 	using PageBase::PageBase;
 
+	std::function<void()> onLoginClick;
+	std::function<void()> onExitClick;
+
+	Ref<Netcode::UI::TextBox> usernameTextBox;
+	Ref<Netcode::UI::TextBox> passwordTextBox;
+	Ref<Netcode::UI::Button> loginButton;
+	Ref<Netcode::UI::Button> exitButton;
+
+	virtual void InitializeComponents() override;
+};
+
+class MainMenuPage : public PageBase {
+public:
+	using PageBase::PageBase;
+
+	Ref<Netcode::UI::Button> joinGameBtn;
+	Ref<Netcode::UI::Button> createGameBtn;
+	Ref<Netcode::UI::Button> optionsBtn;
+	Ref<Netcode::UI::Button> logoutBtn;
+	Ref<Netcode::UI::Button> exitBtn;
+
+	std::function<void()> onJoinGameClick;
+	std::function<void()> onCreateGameClick;
+	std::function<void()> onOptionsClick;
+	std::function<void()> onLogoutClick;
+	std::function<void()> onExitClick;
+
 	virtual void InitializeComponents() override;
 };
 
 class ServerBrowserPage : public PageBase {
 
-	Ref<Netcode::UI::Control> CreateServerRow(std::wstring serverIp);
+	Ref<Control> CreateServerRow(const GameServerData & srvData, int32_t index);
 
+	Ref<Control> listControl;
+	std::vector<GameServerData> serverData;
+	int32_t selectionIndex;
+
+	
 public:
+	std::function<void()> onCancel;
+	std::function<void()> onRefresh;
+	std::function<void(const GameServerData *)> onJoinCallback;
+	
 	using PageBase::PageBase;
 
 	virtual void InitializeComponents() override;
+
+	void SetList(std::vector<GameServerData> srvData);
 };
 
 class LoadingPage : public PageBase {
 	Ref<Netcode::GpuResource> loadingIcon;
 	Ref<Netcode::GpuResource> warningIcon;
 
-	Ref<Netcode::UI::Control> rootPanel;
+	enum class DialogState {
+		CLOSED, LOADER, ERROR_MSG, DIALOG
+	};
 
-	Ref<Netcode::UI::Control> errorContent;
-	Ref<Netcode::UI::Control> dialogContent;
-	Ref<Netcode::UI::Control> loaderContent;
+	Ref<Control> content;
+	Ref<Control> loaderRoot;
+	Ref<Netcode::UI::Panel> loaderIconPanel;
+	Ref<Netcode::UI::Label> loaderLabel;
 
-	void CloseDialog();
+	Ref<Control> errorRoot;
+	Ref<Netcode::UI::Panel> errorIconPanel;
+	Ref<Netcode::UI::Label> errorLabel;
+	Ref<Netcode::UI::Button> errorButton;
+	
+	DialogState state;
+
+	void StartShowLoaderAnims(float delay);
+	void StartHideLoaderAnims(float delay);
+
+	void StartShowErrorAnims(float delay);
+	void StartHideErrorAnims(float delay);
+	
 
 public:
+
+	Ref<Netcode::UI::Control> rootPanel;
+	
 	using PageBase::PageBase;
+
+	void Destruct() override;
+	
+	void CloseDialog();
 
 	virtual void InitializeComponents() override;
 
 	virtual void Activate() override;
+
+	virtual void Deactivate() override;
 
 	void SetError(const std::wstring & msg);
 
@@ -83,9 +149,7 @@ public:
 
 	}
 
-	void SetLoader(const std::wstring & msg) {
-
-	}
+	void SetLoader(const std::wstring & msg);
 };
 
 

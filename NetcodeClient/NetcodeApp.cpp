@@ -7,8 +7,13 @@
 #include "Scripts/GunScript.h"
 #include "Snippets.h"
 #include <NetcodeAssetLib/JsonUtility.h>
+#include <Netcode/UI/Button.h>
+#include <Netcode/UI/TextBox.h>
+#include <Netcode/Network/CompletionToken.h>
+#include <Netcode/Network/Response.hpp>
 
 #include "Scripts/LocalPlayerWeaponScript.h"
+#include <iomanip>
 
 
 void GameApp::ReloadMap() {
@@ -48,6 +53,16 @@ void GameApp::Render() {
 		}
 	});
 
+	static int i = 0;
+
+	if(i++ > 0 && i % 16 == 0) {
+		std::wostringstream woss;
+		woss << "FPS: " << std::setw(7) << std::fixed << std::setprecision(2) << fpsCounter.GetAvgFramesPerSecond();
+		fpsValue = woss.str();
+	}
+
+	graphics->debug->DrawDebugText(fpsValue, Netcode::Float2::Zero);
+	
 	gameScene->UpdatePerFrameCb();
 
 	auto builder = graphics->CreateFrameGraphBuilder();
@@ -88,24 +103,267 @@ void GameApp::LoadServices() {
 
 	Service::Init<GameSceneManager>();
 
-
 	gameScene = Service::Get<GameSceneManager>()->GetScene();
 
 	gameScene->Setup();
 }
 
+static Netcode::ErrorCode ConvertServerData(const rapidjson::Value& v, GameServerData & outData) {
+	if(!v.IsObject()) {
+		return make_error_code(Netcode::JsonErrc::INVALID_VALUE);
+	}
+
+	GameServerData gsd;
+
+	if(const auto it = v.FindMember("hostname"); it != v.MemberEnd() && (it->value.IsString() || it->value.IsNull())) {
+		if(it->value.IsString()) {
+			gsd.hostname = it->value.GetString();
+		}
+	} else return make_error_code(Netcode::JsonErrc::INVALID_VALUE);
+
+	if(const auto it = v.FindMember("owner"); it != v.MemberEnd() && it->value.IsString()) {
+		gsd.host = it->value.GetString();
+	} else return make_error_code(Netcode::JsonErrc::INVALID_VALUE);
+
+	if(const auto it = v.FindMember("server_ip"); it != v.MemberEnd() && it->value.IsString()) {
+		gsd.address = it->value.GetString();
+	} else return make_error_code(Netcode::JsonErrc::INVALID_VALUE);
+
+	if(const auto it = v.FindMember("control_port"); it != v.MemberEnd() && it->value.IsInt()) {
+		gsd.port = it->value.GetInt();
+	} else return make_error_code(Netcode::JsonErrc::INVALID_VALUE);
+
+	if(const auto it = v.FindMember("max_players"); it != v.MemberEnd() && it->value.IsInt()) {
+		gsd.availableSlots = it->value.GetInt();
+	} else return make_error_code(Netcode::JsonErrc::INVALID_VALUE);
+
+	if(const auto it = v.FindMember("active_players"); it != v.MemberEnd() && it->value.IsInt()) {
+		gsd.activePlayers = it->value.GetInt();
+	} else return make_error_code(Netcode::JsonErrc::INVALID_VALUE);
+
+	gsd.rtt = -1;
+	std::swap(gsd, outData);
+	
+	return Netcode::ErrorCode{};
+}
+
+static Netcode::ErrorCode ConvertServerData(const std::string & inputString, std::vector<GameServerData> & outData) {
+	rapidjson::Document doc;
+	doc.SetObject();
+	doc.Parse(inputString);
+
+	if(doc.HasParseError()) {
+		return make_error_code(static_cast<Netcode::JsonErrc>(doc.GetParseError()));
+	}
+
+	if(!doc.IsArray()) {
+		return make_error_code(Netcode::JsonErrc::INVALID_VALUE);
+	}
+	
+	std::vector<GameServerData> vec;
+	vec.reserve(doc.GetArray().Size());
+	
+	for(const auto & v : doc.GetArray()) {
+		GameServerData gsd;
+
+		Netcode::ErrorCode ec = ConvertServerData(v, gsd);
+
+		if(ec) {
+			return ec;
+		}
+
+		vec.emplace_back(std::move(gsd));
+	}
+
+	std::swap(outData, vec);
+
+	return Netcode::ErrorCode{};
+}
+
 void GameApp::CreateUI() {
 	Ref<LoginPage> loginPage = pageManager.CreatePage<LoginPage>(*pxService->physics);
+	Ref<MainMenuPage> mmPage = pageManager.CreatePage<MainMenuPage>(*pxService->physics);
 	Ref<ServerBrowserPage> serverBrowserPage = pageManager.CreatePage<ServerBrowserPage>(*pxService->physics);
 	Ref<LoadingPage> loadingPage = pageManager.CreatePage<LoadingPage>(*pxService->physics);
 
 	loginPage->InitializeComponents();
+	mmPage->InitializeComponents();
 	serverBrowserPage->InitializeComponents();
 	loadingPage->InitializeComponents();
 
 	pageManager.AddPage(loginPage);
+	pageManager.AddPage(mmPage);
 	pageManager.AddPage(serverBrowserPage);
 	pageManager.AddPage(loadingPage);
+
+	loginPage->onExitClick = [this]() -> void {
+		mainThreadDispatcher.Post([this]() -> void {
+			window->Shutdown();
+		});
+	};
+
+	mmPage->onExitClick = loginPage->onExitClick;
+
+	mmPage->onLogoutClick = [this]() -> void {
+		mainThreadDispatcher.Post([this]() -> void {
+			pageManager.ReturnToLastPage();
+		});
+	};
+
+	mmPage->onJoinGameClick = [this, loadp = loadingPage.get(), sbp = serverBrowserPage.get()]() -> void {
+		mainThreadDispatcher.Post([this, loadp, sbp]() -> void {
+			pageManager.NavigateTo(2);
+			pageManager.NavigateTo(3);
+			loadp->SetLoader(L"Fetching data...");
+
+			network->QueryServers()->Then([this, loadp, sbp](const Netcode::Network::Response& resp) -> void {
+				Netcode::SleepFor(std::chrono::milliseconds(750));
+				
+				Netcode::ErrorCode ec = resp.GetErrorCode();
+				if(ec) {
+					mainThreadDispatcher.Post([loadp, ec]() -> void {
+						loadp->SetError(Netcode::Utility::ToWideString(Netcode::ErrorCodeToString(ec)));
+					});
+				}
+
+				std::vector<GameServerData> serverData;
+				
+				ec = ConvertServerData(resp.body(), serverData);
+
+				if(ec) {
+					mainThreadDispatcher.Post([loadp, ec]() -> void {
+						loadp->SetError(Netcode::Utility::ToWideString(Netcode::ErrorCodeToString(ec)));
+					});
+				} else {
+					mainThreadDispatcher.Post([d = std::move(serverData), loadp, sbp]() mutable -> void {
+						loadp->CloseDialog();
+						sbp->SetList(std::move(d));
+					});
+				}
+			});
+		});
+	};
+
+	loginPage->onLoginClick = [this, lp = loginPage.get(), loadp = loadingPage.get()]() -> void {
+		mainThreadDispatcher.Post([this, lp, loadp]() -> void {
+			pageManager.NavigateTo(3);
+			
+			if(lp->usernameTextBox->Text().empty() || lp->passwordTextBox->Text().empty()) {
+				loadp->SetError(L"Both fields are required");
+				return;
+			}
+			
+			loadp->SetLoader(L"Please wait...");
+			
+			network->Login(lp->usernameTextBox->Text(), lp->passwordTextBox->Text())->Then([this, loadp](const Netcode::Network::Response & httpResp) -> void {
+				Netcode::SleepFor(std::chrono::milliseconds(750));
+				
+				if(httpResp.result() != boost::beast::http::status::ok) {
+					std::wostringstream woss;
+					woss << L"Error(Netcode.Http#" << httpResp.result_int() << L"): ";
+
+					if(httpResp.result() == boost::beast::http::status::client_closed_request) {
+						if(httpResp.GetErrorCode()) {
+							woss << Netcode::Utility::ToWideString(httpResp.GetErrorCode().message());
+						} else {
+							woss << L"Hostname resolution failed";
+						}
+					} else {
+						woss << Netcode::Utility::ToWideString(std::string{ httpResp.reason() });
+						woss << L", Authentication failed";
+					}
+					std::wstring err = woss.str();
+
+					mainThreadDispatcher.Post([this, e = std::move(err), loadp]()->void {
+						loadp->SetError(e);
+					});
+
+					return;
+				}
+
+				mainThreadDispatcher.Post([this, loadp]() -> void {
+					loadp->CloseDialog();
+					loadp->rootPanel->OnAnimationsFinished.Subscribe([this](Netcode::UI::Control *)->void {
+						pageManager.NavigateTo(1);
+					});
+				});
+				
+			});
+
+		});
+	};
+
+	serverBrowserPage->onRefresh = [this, loadp = loadingPage.get(), sbp = serverBrowserPage.get()]() -> void {
+		mainThreadDispatcher.Post([this, loadp, sbp]() -> void {
+			pageManager.NavigateTo(2);
+			pageManager.NavigateTo(3);
+			loadp->SetLoader(L"Fetching data...");
+
+			network->QueryServers()->Then([this, loadp, sbp](const Netcode::Network::Response & resp) -> void {
+				Netcode::SleepFor(std::chrono::milliseconds(750));
+
+				Netcode::ErrorCode ec = resp.GetErrorCode();
+				if(ec) {
+					mainThreadDispatcher.Post([loadp, ec]() -> void {
+						loadp->SetError(Netcode::Utility::ToWideString(Netcode::ErrorCodeToString(ec)));
+					});
+				}
+
+				std::vector<GameServerData> serverData;
+
+				ec = ConvertServerData(resp.body(), serverData);
+
+				if(ec) {
+					mainThreadDispatcher.Post([loadp, ec]() -> void {
+						loadp->SetError(Netcode::Utility::ToWideString(Netcode::ErrorCodeToString(ec)));
+					});
+				} else {
+					mainThreadDispatcher.Post([d = std::move(serverData), loadp, sbp]() mutable -> void {
+						loadp->CloseDialog();
+						sbp->SetList(std::move(d));
+					});
+				}
+			});
+		});
+	};
+
+	serverBrowserPage->onJoinCallback = [this, loadp = loadingPage](const GameServerData * gsd) -> void {
+		if(gsd == nullptr) {
+			return;
+		}
+
+		mainThreadDispatcher.Post([this, gsd, loadp]() -> void {
+
+			if(clientSession == nullptr) {
+				clientSession = std::dynamic_pointer_cast<nn::ClientSession>(network->CreateClient());
+				connectionBase = std::make_shared<Netcode::Network::ConnectionBase>();
+
+				std::string h = (!gsd->hostname.empty()) ? gsd->hostname : gsd->address;
+				std::wostringstream woss;
+				woss << "Connecting to " << Netcode::Utility::ToWideString(h) << L"...";
+
+				pageManager.NavigateTo(3);
+				loadp->SetLoader(woss.str());
+
+				clientSession->Connect(connectionBase, std::move(h), gsd->port)->Then([loadp](const Netcode::ErrorCode & ec) -> void {
+					if(ec) {
+						loadp->SetError(Netcode::Utility::ToWideString(Netcode::ErrorCodeToString(ec)));
+					} else {
+						loadp->CloseDialog();
+					}
+				});
+			}
+			
+		});
+	};
+	
+	serverBrowserPage->onCancel = [this]() -> void {
+		mainThreadDispatcher.Post([this]() -> void {
+			pageManager.ReturnToLastPage();
+		});
+	};
+
+	pageManager.NavigateTo(0);
 
 	renderer.ui_Input = &pageManager;
 }
@@ -148,6 +406,7 @@ void GameApp::CreateAxisMapping() {
 
 
 void GameApp::LoadSystems() {
+	Netcode::Initialize();
 	renderer.CreatePermanentResources(graphics.get());
 	animSystem.SetMovementController(&movCtrl);
 	animSystem.renderer = &renderer;

@@ -10,14 +10,8 @@
 #include <Netcode/Config.h>
 #include "ProgramOptions.h"
 
-void ListConfigEntries(const std::wstring & prefix, const Netcode::Ptree & tree) {
-	for(const auto & i : tree) {
-		std::wstring s = (!prefix.empty() ? prefix + L"." : L"") + i.first;
-		OutputDebugStringW(s.c_str());
-		OutputDebugStringW(L"\n");
-		ListConfigEntries(s, i.second);
-	}
-}
+#include <dxgi1_3.h>
+#include <dxgidebug.h>
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR command, _In_ INT nShowCmd) {
 	std::vector<std::wstring> args = po::split_winmain(command);
@@ -54,8 +48,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	Netcode::IO::ParseJsonFromFile(doc, configFile.GetFullPath());
 	Netcode::Config::LoadJson(doc);
 
-	ListConfigEntries(L"", Netcode::Config::storage);
-
 	Netcode::Input::Initialize();
 
 	Netcode::Module::DefaultModuleFactory defModuleFactory;
@@ -66,8 +58,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	app->Run();
 	app->Exit();
+	app.reset();
 
 	Log::Info("Gracefully shutting down");
+
+	IDXGIDebug1 * dxgiDebug;
+	if(SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
+	{
+		dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_FLAGS(DXGI_DEBUG_RLO_SUMMARY | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
+	}
 
 	return 0;
 }

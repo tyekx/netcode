@@ -5,6 +5,12 @@
 #include <vector>
 #include <memory>
 
+#include "DX12Common.h"
+#include "DX12Includes.h"
+#include <d3d11on12.h>
+#include <d2d1_3.h>
+#include <dwrite.h>
+
 namespace Netcode::Module {
 
 	class IGraphicsModule;
@@ -14,6 +20,25 @@ namespace Netcode::Module {
 namespace Netcode::Graphics::DX12 {
 
 	class DebugContext : public IDebugContext {
+
+		struct DebugText {
+			std::wstring content;
+			Float2 pos;
+		};
+
+		Module::IGraphicsModule * graphicsModule;
+		com_ptr<ID3D11On12Device> d11Device;
+		com_ptr<ID3D11DeviceContext> d11Context;
+		com_ptr<ID2D1Factory3> d2dFactory;
+		com_ptr<IDXGIDevice> dxgiDevice;
+		com_ptr<ID2D1Device> d2dDevice;
+		com_ptr<ID2D1DeviceContext> d2dDeviceContext;
+		com_ptr<IDWriteFactory> dwriteFactory;
+		com_ptr<ID3D11Resource> wrappedResources[3];
+		com_ptr<ID2D1Bitmap1> d2dRenderTargets[3];
+		com_ptr<ID2D1SolidColorBrush> textBrush;
+		com_ptr<IDWriteTextFormat> textFormat;
+		
 		Float3 defaultColor;
 		Float4x4 viewProj;
 		size_t bufferSize;
@@ -26,16 +51,25 @@ namespace Netcode::Graphics::DX12 {
 		Ref<PipelineState> noDepthPso;
 		Ref<RootSignature> rootSignature;
 
+		std::vector<DebugText> debugTextBatch;
+
 		void PushVertex(const PC_Vertex & vertex, bool depthEnabled);
 
 		PC_Vertex * GetBufferForVertices(size_t numVertices, bool depthEnabled);
 
+		void CreateD2DContext(Module::IGraphicsModule * graphics);
+		
 	public:
 		void CreateResources(Module::IGraphicsModule * graphics);
+		
+		virtual void InternalSwapChainResourcesChanged(Module::IGraphicsModule * graphics) override;
+		virtual void InternalPostRender() override;
 
 		virtual void UploadResources(IResourceContext * context) override;
 
 		virtual void Draw(IRenderContext * context, const Float4x4 & viewProjMatrix) override;
+
+		virtual void DrawDebugText(std::wstring text, const Float2 & topLeftPosInWindowCoords) override;
 
 		virtual void DrawPoint(const Float3 & point, float extent) override;
 		virtual void DrawPoint(const Float3 & point, float extent, bool depthEnabled) override;

@@ -367,6 +367,10 @@ namespace Netcode::Graphics::DX12 {
 
 	void GraphicsContext::SetShaderResources(int slot, Ref<Netcode::ResourceViews> resourceView, int descriptorOffset)
 	{
+		if(resourceView == nullptr) {
+			return;
+		}
+		
 		Ref<DX12::ResourceViewsImpl> srv = std::dynamic_pointer_cast<DX12::ResourceViewsImpl>(resourceView);
 
 		commandList->SetGraphicsRootDescriptorTable(slot, srv->GetGpuHandle(descriptorOffset));

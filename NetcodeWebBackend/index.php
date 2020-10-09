@@ -47,41 +47,41 @@ $user = AuthenticateUser($db);
 
 Route::Get('/api/status', function() use ($user) {
     if($user == null) {
-        return Response::EmptyJSON();
+        return Response::EmptyJSON(200);
     }
-    return Response::JSON($user->ToArray());
+    return Response::JSON($user->ToArray(), 200);
 });
 
 Route::Get('/api/servers-status', function() use ($db, $user) {
     $json = ServerInstances::GetStatus();
 
     if($json === FALSE) {
-        return Response::JSON(["error" => "Could not reach netcode-shell"]);
+        return Response::JSON(["error" => "Could not reach netcode-shell"], 500);
     }
 
-    return Response::RawJSON($json);
+    return Response::RawJSON($json, 200);
 });
 
 Route::Post('/api/register', function() use ($db, $user) {
     if($user != null) {
-        Response::JSON(["error" => "You are already logged in"]);
+        Response::JSON(["error" => "You are already logged in"], 403);
         return;
     }
 
     JsonPost::Read();
     
     if(!JsonPost::Has('username')) {
-        Response::JSON(["error" => "Username was not specified"]);
+        Response::JSON(["error" => "Username was not specified"], 403);
         return;
     }
 
     if(!JsonPost::Has('password')) {
-        Response::JSON(["error" => "Password was not specified"]);
+        Response::JSON(["error" => "Password was not specified"], 403);
         return;
     }
 
     if(!JsonPost::Has('password_again')) {
-        Response::JSON(["error" => "Password was not specified"]);
+        Response::JSON(["error" => "Password was not specified"], 403);
         return;
     }
 
@@ -90,44 +90,44 @@ Route::Post('/api/register', function() use ($db, $user) {
     $passwordAgain = JsonPost::Get('password_again');
 
     if(strlen($username) > 16 || strlen($username) < 3) {
-        Response::JSON(["error" => "Username must be between 3-16 characters long"]);
+        Response::JSON(["error" => "Username must be between 3-16 characters long"], 403);
         return;
     }
 
     if(strlen($password) < 6) {
-        Response::JSON(["error" => "I mean, I know, just please do at least 6 characters :D"]);
+        Response::JSON(["error" => "I mean, I know, just please do at least 6 characters :D"], 403);
         return;
     }
 
     if(strlen($password) > 16) {
-        Response::JSON(["error" => "Ha! Testing me, I knew it. Do less than 16 characters :P"]);
+        Response::JSON(["error" => "Ha! Testing me, I knew it. Do less than 16 characters :P"], 403);
         return;
     }
 
     if($password != $passwordAgain) {
-        Response::JSON(["error" => "Passwords does not match"]);
+        Response::JSON(["error" => "Passwords does not match"], 403);
         return;
     }
 
     if(preg_match("/[a-zA-Z].*/", $username) == 0) {
-        Response::JSON(["error" => "YoUr NaMe ShOuLd StArT WiTh A ChArAcTeR, NoT wItH a NuMbEr"]);
+        Response::JSON(["error" => "YoUr NaMe ShOuLd StArT WiTh A ChArAcTeR, NoT wItH a NuMbEr"], 403);
         return;
     }
 
     if(preg_match("/[a-zA-Z][a-zA-Z0-9]+/", $username) == 0) {
-        Response::JSON(["error" => "Do not try to SQL inject me please, just go with a regular name with only english alphabet and numbers"]);
+        Response::JSON(["error" => "Do not try to SQL inject me please, just go with a regular name with only english alphabet and numbers"], 403);
         return;
     }
 
     if(preg_match("/[a-zA-Z0-9]+/", $password) == 0) {
-        Response::JSON(["error" => "Passwords should contain only characters from the english alphabet or numbers"]);
+        Response::JSON(["error" => "Passwords should contain only characters from the english alphabet or numbers"], 403);
         return;
     }
 
     $query = $db->select("users", ["id"], ["name" => $username]);
 
     if(count($query) != 0) {
-        Response::JSON(["error" => "Username is already taken, text us if you wanna claim yours"]);
+        Response::JSON(["error" => "Username is already taken, text us if you wanna claim yours"], 403);
         return;
     }
 
@@ -137,24 +137,24 @@ Route::Post('/api/register', function() use ($db, $user) {
 
     $db->insert("users", ["name" => $username, "password" => $saltedPw, "salt" => $salt]);
 
-    Response::EmptyJSON();
+    Response::EmptyJSON(200);
 });
 
 Route::Post('/api/login', function() use ($db, $user) {
     if($user != null) {
-        Response::JSON(["error" => "You are already logged in"]);
+        Response::JSON(["error" => "You are already logged in"], 403);
         return;
     }
 
     JsonPost::Read();
 
     if(!JsonPost::Has('username')) {
-        Response::JSON(["error" => "Username was not specified"]);
+        Response::JSON(["error" => "Username was not specified"], 403);
         return;
     }
 
     if(!JsonPost::Has('password')) {
-        Response::JSON(["error" => "Password was not specified"]);
+        Response::JSON(["error" => "Password was not specified"], 403);
         return;
     }
 
@@ -169,7 +169,7 @@ Route::Post('/api/login', function() use ($db, $user) {
         $salt = $result[0]['salt'];
         $isBanned = $result[0]['is_banned'];
     } else {
-        Response::JSON(["error" => "Invalid login details"]);
+        Response::JSON(["error" => "Invalid login details"], 403);
         return;
     }
 
@@ -195,15 +195,15 @@ Route::Post('/api/login', function() use ($db, $user) {
 
         Cookie::Set('netcode-auth', $token, 1209600);
 
-        Response::JSON(["id" => $id, "name" => $username, "is_banned" => $isBanned]);
+        Response::JSON(["id" => $id, "name" => $username, "is_banned" => $isBanned], 200);
     } else {
-        Response::JSON(["error" => "Invalid login details"]);
+        Response::JSON(["error" => "Invalid login details"], 403);
     }
 });
 
 Route::Get('/api/logout', function() use ($db, $user) {
     if($user == null) {
-        Response::JSON(["error" => "You are not logged in"]);
+        Response::JSON(["error" => "You are not logged in"], 401);
         return;
     }
     $db->update('users', ['session' => null, 'expires_at' => 0], ["id" => $user->id]);
@@ -212,14 +212,14 @@ Route::Get('/api/logout', function() use ($db, $user) {
 
 Route::Post('/api/create-session', function() use ($db, $user) {
     if($user == null) {
-        Response::JSON(["error" => "You are not logged in"]);
+        Response::JSON(["error" => "You are not logged in"], 401);
         return;
     }
 
     JsonPost::Read();
 
     if(!JsonPost::Has('max_players')) {
-        Response::JSON(["error" => "You must specify the maximum number of players"]);
+        Response::JSON(["error" => "You must specify the maximum number of players"], 403);
         return;
     }
 
@@ -228,45 +228,45 @@ Route::Post('/api/create-session', function() use ($db, $user) {
     $interval = intval(JsonPost::Get('interval'));
 
     if($maxPlayers < 2 || $maxPlayers > 16) {
-        Response::JSON(["error" => "Max players must be between 2-16"]);
+        Response::JSON(["error" => "Max players must be between 2-16"], 403);
         return;
     }
 
     if($interval < 1 || $interval > 1000) {
-        Response::JSON(["error" => "Interval must be between 1-1000"]);
+        Response::JSON(["error" => "Interval must be between 1-1000"], 403);
         return;
     }
 
     $json = ServerInstances::CreateServer($maxPlayers, $port, $user->id, $interval);
 
     if($json === FALSE) {
-        return Response::JSON(["error" => "Could not reach netcode-shell"]);
+        return Response::JSON(["error" => "Could not reach netcode-shell"], 500);
     }
 
     $arr = json_decode($json, true);
 
     if(!array_key_exists("Port", $arr)) {
-        return Response::JSON(["error" => "Unexpected error"]);
+        return Response::JSON(["error" => "Unexpected error"], 500);
     }
 
-    Response::RawJSON($json);
+    Response::RawJSON($json, 200);
 });
 
 Route::Get('/api/list-sessions', function() use ($db) {
    $r = $db->select("game_servers",
     [ "[>]game_sessions" => ["id" => "game_server_id"], "[><]users" => ["owner_id" => "id"]],
     [
-        "game_servers.hostname",
-        "game_servers.server_ip",
-        "game_servers.control_port",
-        "game_servers.game_port",
-        "game_servers.max_players",
-        "game_servers.id",
-        "game_servers.version_major",
-        "game_servers.version_minor",
-        "game_servers.version_build",
-        "users.name(owner)",
-        "active_players" => \Medoo\Medoo::raw('SUM(IF(<game_sessions.left_at> IS NULL AND <game_sessions.user_id> IS NOT NULL, 1, 0))')
+        "game_servers.hostname [String]",
+        "game_servers.server_ip [String]",
+        "game_servers.control_port [Int]",
+        "game_servers.game_port [Int]",
+        "game_servers.max_players [Int]",
+        "game_servers.id [Int]",
+        "game_servers.version_major [Int]",
+        "game_servers.version_minor [Int]",
+        "game_servers.version_build [Int]",
+        "users.name(owner) [String]",
+        "active_players [Int]" => \Medoo\Medoo::raw('SUM(IF(<game_sessions.left_at> IS NULL AND <game_sessions.user_id> IS NOT NULL, 1, 0))')
         /*
         sum those that are null because they have not left the server yet, and not because they got introduced by left join
         for future me: cant use where clause because it semantically creates an inner join instead
@@ -278,7 +278,7 @@ Route::Get('/api/list-sessions', function() use ($db) {
             "game_servers.id"
         ]
     ]);
-   Response::Json($r);
+   Response::Json($r, 200);
 });
 
 Route::Run();

@@ -5,6 +5,8 @@
 #include <spdlog/sinks/msvc_sink.h>
 #include <boost/asio/ip/udp.hpp>
 
+#include <NetcodeFoundation/ErrorCode.h>
+
 namespace Log {
 
 	
@@ -64,6 +66,16 @@ namespace Log {
 		oss << value.address().to_string() << ":" << std::to_string(value.port());
 		spdlog::debug(message, oss.str());
 	}
+
+	template<>
+	void Debug<boost::system::error_code>(const char * message, const boost::system::error_code & value) {
+		spdlog::debug(message, Netcode::ErrorCodeToString(Netcode::ErrorCode{ value }));
+	}
+
+	template<>
+	void Debug<Netcode::ErrorCode>(const char * message, const Netcode::ErrorCode & value) {
+		spdlog::debug(message, Netcode::ErrorCodeToString(value));
+	}
 	
 	template void Debug<std::string>(const char * message, const std::string & value);
 	template void Debug<int32_t>(const char * message, const int32_t & value);
@@ -77,6 +89,7 @@ namespace Log {
 	template void Debug<>(const char * message);
 	template void Debug<void *, uint64_t, uint64_t>(const char * message, void * const & value, const uint64_t & value2, const uint64_t & value3);
 	template void Debug<void *>(const char * message, void * const & value);
+	template void Debug<int, void *>(const char * message, const int & value, void * const & value2);
 
 	template void Info<>(const char * message);
 	template void Info<std::string>(const char * message, const std::string & value);

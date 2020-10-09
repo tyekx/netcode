@@ -45,8 +45,7 @@ class Route {
             }
         }
         
-        http_response_code(404);
-        Response::JSON(["error" => 404]);
+        Response::JSON(["error" => 404], 404);
     }
 
 }

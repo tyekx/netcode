@@ -26,10 +26,7 @@ namespace Netcode::UI {
 
     void Button::PropagateOnMouseKeyReleased(MouseEventArgs & args) {
         args.Handled(true);
-
-        /**
-        * For a generic button the click event should be on release instead
-        */
+    	
         if(args.Key().GetCode() == KeyCode::MOUSE_LEFT) {
             MouseEventArgs copyArgs{ args.Position(), args.Key(), args.Modifier() };
             copyArgs.Handled(true);

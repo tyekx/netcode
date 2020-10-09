@@ -10,3 +10,13 @@
 
 using Netcode::Graphics::ResourceType;
 using Netcode::Graphics::ResourceState;
+
+struct GameServerData {
+	int rtt;
+	int activePlayers;
+	int availableSlots;
+	int port;
+	std::string hostname;
+	std::string address;
+	std::string host;
+};

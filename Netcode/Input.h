@@ -121,6 +121,8 @@ namespace Netcode {
 
 		static Int2 GetMousePosition();
 
+		static void SetInitialMousePosition(const Int2 & i2);
+
 	};
 
 }

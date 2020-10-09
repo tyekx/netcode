@@ -6,6 +6,8 @@
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 
+#include "Response.hpp"
+
 namespace Netcode::Network {
 
 	namespace http = boost::beast::http;
@@ -20,19 +22,19 @@ namespace Netcode::Network {
 		TcpResolver resolver;
 		boost::beast::tcp_stream stream;
 		boost::beast::flat_buffer readBuffer;
-		http::response<http::string_body> response;
+		Response response;
 		http::request<http::string_body> request;
 		bool isConnected;
 
-		void OnReceive(ErrorCode ec, size_t transferredBytes, CompletionToken<Response> token);
+		void OnReceive(const boost::system::error_code & ec, size_t transferredBytes, CompletionToken<Response> token);
 
-		void OnSent(ErrorCode ec, size_t transferredBytes, CompletionToken<Response> token);
+		void OnSent(const boost::system::error_code & ec, size_t transferredBytes, CompletionToken<Response> token);
 
-		void OnConnected(ErrorCode ec, TcpEndpoint endpoint, CompletionToken<Response> token);
+		void OnConnected(boost::system::error_code ec, TcpEndpoint endpoint, CompletionToken<Response> token);
 
-		void OnResolved(ErrorCode ec, TcpResolver::results_type results, CompletionToken<Response> token);
+		void OnResolved(const boost::system::error_code & ec, TcpResolver::results_type results, CompletionToken<Response> token);
 
-		void OnSentFirstTry(ErrorCode ec, size_t transferredBytes, std::string host, std::string port, CompletionToken<Response> token);
+		void OnSentFirstTry(const boost::system::error_code & ec, size_t transferredBytes, std::string host, std::string port, CompletionToken<Response> token);
 
 	public:
 		HttpSession(boost::asio::io_context & ioc);

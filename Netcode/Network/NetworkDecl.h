@@ -30,7 +30,6 @@ namespace std {
 namespace Netcode::Network {
 
 	class Timer;
-	using ErrorCode = boost::system::error_code;
 
 	template<typename T>
 	class CompletionTokenType;

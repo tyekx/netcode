@@ -60,6 +60,7 @@ namespace Netcode::Module {
 	Network::CompletionToken<Network::Response> NetcodeNetworkModule::Login(const std::wstring & username, const std::wstring & password)
 	{
 		if(httpSession == nullptr) {
+			context.Start(Config::Get<uint32_t>(L"network.client.workerThreadCount:u32"));
 			httpSession = std::make_shared<Network::HttpSession>(context.GetImpl());
 		}
 
@@ -77,6 +78,7 @@ namespace Netcode::Module {
 	Network::CompletionToken<Network::Response> NetcodeNetworkModule::QueryServers()
 	{
 		if(httpSession == nullptr) {
+			context.Start(Config::Get<uint32_t>(L"network.client.workerThreadCount:u32"));
 			httpSession = std::make_shared<Network::HttpSession>(context.GetImpl());
 		}
 
@@ -87,6 +89,7 @@ namespace Netcode::Module {
 	Network::CompletionToken<Network::Response> NetcodeNetworkModule::Status()
 	{
 		if(httpSession == nullptr) {
+			context.Start(Config::Get<uint32_t>(L"network.client.workerThreadCount:u32"));
 			httpSession = std::make_shared<Network::HttpSession>(context.GetImpl());
 		}
 

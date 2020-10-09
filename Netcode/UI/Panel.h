@@ -67,6 +67,14 @@ namespace Netcode::UI {
 
         Float4 BorderColor() const;
 
+        void BorderOpacity(float v);
+
+        float BorderOpacity() const;
+
+        void BorderRGB(const Float3 & c);
+
+        Float3 BorderRGB() const;
+
         Float2 BackgroundSize() const;
 
         void BackgroundSize(const Float2 & bgSizeInPixels);

@@ -18,6 +18,7 @@ PUBLIC
 	"Socket.hpp"
 	"CompletionToken.h"
 	"BasicPacket.hpp"
+	"NetworkErrorCode.h"
 	
 PRIVATE
 	"GameSession.cpp"

@@ -114,6 +114,10 @@ public:
 	GameObject * FindByName(const std::string & name);
 
 	void UpdatePerFrameCb() {
+		if(GetCamera() == nullptr) {
+			return;
+		}
+		
 		Transform * transform = GetCamera()->GetComponent<Transform>();
 		Camera * camComponent = GetCamera()->GetComponent<Camera>();
 		

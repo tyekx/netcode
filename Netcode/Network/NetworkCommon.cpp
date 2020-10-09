@@ -19,6 +19,10 @@ namespace Netcode::Network {
 	
 	}
 
+	uint8_t NetworkContext::GetActiveThreadCount() const {
+		return static_cast<uint8_t>(workers.size());
+	}
+
 	void NetworkContext::Start(uint8_t numThreads) {
 		if(!workers.empty()) {
 			return;
@@ -69,7 +73,7 @@ namespace Netcode::Network {
 			portHint = (49151 - 1024) / 2;
 		}
 
-		ErrorCode ec;
+		boost::system::error_code ec;
 		const uint32_t range = 49151 - 1024;
 		const int32_t start = static_cast<int32_t>(portHint);
 		int32_t sign = 1;
@@ -213,7 +217,7 @@ namespace Netcode::Network {
 		int value = 1;
 		int status = -1;
 
-		ErrorCode ec;
+		boost::system::error_code ec;
 		auto endpoint = socket.local_endpoint(ec);
 
 		if(ec) {

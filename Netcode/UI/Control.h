@@ -293,6 +293,8 @@ namespace Netcode::UI {
 
         const std::vector<Ref<Control>> & Children() const;
 
+        void ClearChildren();
+
         void RotationZ(float rotZ);
 
         float RotationZ() const;
@@ -316,6 +318,8 @@ namespace Netcode::UI {
         virtual void Destruct();
 
         virtual void AddChild(Ref<Control> child);
+
+        virtual void RemoveChild(Ref<Control> child);
 
         virtual void Render(Ptr<SpriteBatch> batch);
 

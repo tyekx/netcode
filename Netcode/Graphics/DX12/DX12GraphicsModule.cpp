@@ -274,6 +274,9 @@ namespace Netcode::Graphics::DX12 {
 		if(app->window != nullptr) {
 			hwnd = reinterpret_cast<HWND>(app->window->GetUnderlyingPointer());
 		}
+		
+		windowDpi = GetDpiForWindow(hwnd);
+		
 		backbufferDepth = 2;
 		depthStencilFormat = Config::Get<DXGI_FORMAT>(L"graphics.depthStencil:Format");
 		Float4 cColor = Config::Get<Float4>(L"graphics.clearColor:Float4");
@@ -329,23 +332,23 @@ namespace Netcode::Graphics::DX12 {
 		DX_API("Failed to set maximum frame latency")
 			swapChain->SetMaximumFrameLatency(1);
 
-		swapChainWaitableObject = swapChain->GetFrameLatencyWaitableObject();
-
 		CreateSwapChainResources();
 
-		// wait for first swap chain
+		swapChainWaitableObject = swapChain->GetFrameLatencyWaitableObject();
 
+		// wait for first swap chain
 		DWORD waitResult = WaitForSingleObjectEx(swapChainWaitableObject, 1000, TRUE);
 
 		if(waitResult != WAIT_OBJECT_0) {
 			Log::Warn("First swap chain wait returned unexpected code");
 		}
-
+		
 #if defined(NETCODE_DEBUG)
 		if(debugEnabled) {
 			debugContext = objectAllocator.MakeShared<DebugContext>();
 			debugContext->CreateResources(this);
 			debug = debugContext.get();
+			debug->InternalSwapChainResourcesChanged(this);
 		}
 #endif
 	}
@@ -387,10 +390,22 @@ namespace Netcode::Graphics::DX12 {
 
 			ReleaseSwapChainResources();
 
+#if defined(NETCODE_DEBUG)
+			if(debug) {
+				debug->InternalSwapChainResourcesChanged(nullptr);
+			}
+#endif
+
 			DX_API("Failed to resize buffers")
 				swapChain->ResizeBuffers(backbufferDepth, width, height, DXGI_FORMAT_UNKNOWN, swapChainFlags);
 
 			CreateSwapChainResources();
+
+#if defined(NETCODE_DEBUG)
+			if(debug) {
+				debug->InternalSwapChainResourcesChanged(this);
+			}
+#endif
 		}
 	}
 
@@ -630,6 +645,7 @@ namespace Netcode::Graphics::DX12 {
 			resourcePool.get(),
 			dheaps.get(),
 			cbufferPool.get(),
+			debugContext.get(),
 			commandQueue.Get(),
 			computeCommandQueue.Get(),
 			frameResources[backbufferIndex].swapChainBuffer.Get(),

@@ -25,7 +25,7 @@ namespace Netcode::Network {
 
 		bool CheckTimeout(Timestamp checkAt) override {
 			if((checkAt - createdAt) > std::chrono::seconds(10)) {
-				filterToken->Set(make_error_code(Error::TIMEDOUT));
+				filterToken->Set(make_error_code(NetworkErrc::RESPONSE_TIMEOUT));
 				return true;
 			}
 			return false;
@@ -49,7 +49,7 @@ namespace Netcode::Network {
 				}
 			}
 
-			filterToken->Set(make_error_code(static_cast<Error>(header->connect_response().error_code())));
+			filterToken->Set(make_error_code(static_cast<NetworkErrc>(header->connect_response().error_code())));
 
 			state = FilterState::COMPLETED;
 			return FilterResult::CONSUMED;
@@ -110,7 +110,7 @@ namespace Netcode::Network {
 			if((checkAt - createdAt) > std::chrono::seconds(10)) {
 				state = FilterState::COMPLETED;
 				ClockSyncResult csr;
-				csr.errorCode = make_error_code(Error::TIMEDOUT);
+				csr.errorCode = make_error_code(NetworkErrc::RESPONSE_TIMEOUT);
 				csr.delay = 0.0;
 				csr.offset = 0.0;
 				completionToken->Set(csr);
@@ -140,7 +140,7 @@ namespace Netcode::Network {
 
 			if(numUpdates >= 8) {
 				ClockSyncResult csr;
-				csr.errorCode = make_error_code(Error::SUCCESS);
+				csr.errorCode = make_error_code(NetworkErrc::SUCCESS);
 				csr.delay = clockFilter.GetDelay();
 				csr.offset = clockFilter.GetOffset();
 				completionToken->Set(csr);
@@ -187,14 +187,13 @@ namespace Netcode::Network {
 					}
 
 					if(nextAttempt == 0) {
-						ct->Set(make_error_code(Error::TIMEDOUT));
+						ct->Set(make_error_code(NetworkErrc::RESPONSE_TIMEOUT));
 						return;
 					}
 
 					PmtuDiscovery::Start(service, ct, conn, MtuValue{ nextAttempt });
 				} else {
-					Log::Debug("PMTU ok: {0}", static_cast<int32_t>(linkLocalMtu.GetMtu()));
-					ct->Set(make_error_code(Errc::success));
+					ct->Set(make_error_code(NetworkErrc::SUCCESS));
 				}
 			});
 		}

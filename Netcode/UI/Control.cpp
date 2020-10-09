@@ -430,6 +430,10 @@ namespace Netcode::UI {
         return children;
     }
 
+    void Control::ClearChildren() {
+        children.clear();
+    }
+
     void Control::RotationZ(float rotZ) {
         rotationZ = rotZ;
     }
@@ -455,6 +459,15 @@ namespace Netcode::UI {
     void Control::AddChild(Ref<Control> child) {
         children.push_back(child);
         child->Parent(shared_from_this());
+    }
+
+    void Control::RemoveChild(Ref<Control> child)
+    {
+        auto it = std::remove(std::begin(children), std::end(children), child);
+        if(it != std::end(children)) {
+            children.erase(it, std::end(children));
+            child->Parent(nullptr);
+        }
     }
 
     void Control::Update(float dt)

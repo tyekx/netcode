@@ -905,7 +905,7 @@ void GraphicsEngine::CreateFrameGraph(Ptr<Netcode::FrameGraphBuilder> builder) {
 	//CreateSSAOBlurPass(builder);
 	//CreateLightingPass(builder);
 	CreateBackgroundPass(builder);
-	//CreateUIPass(builder);
+	CreateUIPass(builder);
 
 #if defined(NETCODE_DEBUG)
 	CreateDebugPrimPass(builder);

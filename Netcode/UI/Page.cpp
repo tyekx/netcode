@@ -336,7 +336,7 @@ namespace Netcode::UI {
 
 	void Page::Deactivate() {
 		if(clickToken != 0) {
-			Netcode::Input::OnKeyPressed->Erase(clickToken);
+			Netcode::Input::OnMouseInput->Erase(clickToken);
 			clickToken = 0;
 		}
 
@@ -354,11 +354,18 @@ namespace Netcode::UI {
 			Netcode::Input::OnKeyPressed->Erase(keyPressedToken);
 			keyPressedToken = 0;
 		}
+
+		if(charToken != 0) {
+			Netcode::Input::OnCharInput->Erase(charToken);
+			charToken = 0;
+		}
+
+		HandleRaycastChanges(Int2{ -50000, -50000 });
 	}
 
 	bool Page::IsActive() const
 	{
-		return clickToken != 0 || moveToken != 0 || scrollToken != 0 || keyPressedToken != 0;
+		return clickToken != 0 || moveToken != 0 || scrollToken != 0 || keyPressedToken != 0 || charToken != 0;
 	}
 
 }

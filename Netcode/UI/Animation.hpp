@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Netcode/HandleDecl.h>
 #include <NetcodeFoundation/Math.h>
 #include <vector>
 #include <memory>
@@ -33,6 +34,14 @@ namespace Netcode::UI {
 
         AnimationContainer() : animations{}, numAnimations{ 0 } { }
 
+        void Splice(uint32_t keepFirstN) {
+        	if(animations.size() <= keepFirstN) {
+                return;
+        	}
+            animations.erase(std::begin(animations) + keepFirstN, std::end(animations));
+            numAnimations = keepFirstN;
+        }
+    	
         void Update(float dt) {
             for(uint32_t i = 0; i < numAnimations;) {
                 Animation * anim = animations[i].get();
@@ -65,6 +74,10 @@ namespace Netcode::UI {
             }
         }
 
+    	uint32_t Count() const {
+            return numAnimations;
+        }
+    	
         void Clear() {
             numAnimations = 0;
             animations.clear();

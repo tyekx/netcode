@@ -20,6 +20,7 @@ namespace Netcode::Graphics::DX12 {
 		Ptr<ResourcePool> resourcePool;
 		Ptr<DynamicDescriptorHeap> dheaps;
 		Ptr<ConstantBufferPool> cbufferPool;
+		Ptr<IDebugContext> debugContext;
 		Ptr<ID3D12CommandQueue> directCommandQueue;
 		Ptr<ID3D12CommandQueue> computeCommandQueue;
 		Ptr<ID3D12Resource> backbufferResource;
@@ -69,6 +70,7 @@ namespace Netcode::Graphics::DX12 {
 			Ptr<ResourcePool> resourcePool,
 			Ptr<DynamicDescriptorHeap> dheaps,
 			Ptr<ConstantBufferPool> cbufferPool,
+			Ptr<IDebugContext> debugContext,
 			Ptr<ID3D12CommandQueue> directCommandQueue,
 			Ptr<ID3D12CommandQueue> computeCommandQueue,
 			Ptr<ID3D12Resource> backbufferResource,

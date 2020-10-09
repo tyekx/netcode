@@ -22,14 +22,21 @@
 #include "UITest.h"
 
 #include <Netcode/URI/Model.h>
-#include <Netcode/Graphics/Material.h>
-#include <json11.hpp>
+#include <Netcode/System/Dispatcher.hpp>
+#include <Netcode/System/FpsCounter.h>
+#include <Netcode/System/SystemClock.h>
+#include <Netcode/System/System.h>
+
+#include <Netcode/Network/ClientSession.h>
 
 using Netcode::Graphics::ResourceType;
 using Netcode::Graphics::ResourceState;
 using Netcode::Graphics::FrameGraphCullMode;
 
+namespace nn = Netcode::Network;
+
 class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler {
+	Netcode::Dispatcher mainThreadDispatcher;
 	GraphicsEngine renderer;
 	Netcode::Stopwatch stopwatch;
 	Netcode::MovementController movCtrl;
@@ -43,8 +50,11 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	Netcode::Physics::PhysX * pxService;
 	GameScene * gameScene;
 	Ref<AnimationSet> ybotAnimationSet;
-	Ref<Netcode::Network::ClientSessionBase> gameSession;
+	Ref<nn::ConnectionBase> connectionBase;
+	Ref<Netcode::Network::ClientSession> clientSession;
 	Netcode::URI::Model mapAsset;
+	Netcode::FrameCounter fpsCounter;
+	std::wstring fpsValue;
 
 	float totalTime;
 
@@ -59,10 +69,6 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	void Simulate(float dt);
 
 	void LoadServices();
-
-	void ConnectServer() {
-		gameSession = network->CreateClient();
-	}
 
 	void CreateUI();
 
@@ -122,16 +128,21 @@ public:
 		LoadSystems();
 		CreateAxisMapping();
 		CreateUI();
-		LoadMap(L"mat_test_map.json");
+		//LoadMap(L"mat_test_map.json");
 	}
 
 	/*
 	Advance simulation, update modules
 	*/
 	virtual void Run() override {
+		double targetFrametime = 1.0 / 144.0;
+
+		Netcode::Duration d = std::chrono::duration_cast<Netcode::Duration>(std::chrono::duration<double>(targetFrametime));
+		
 		while(window->KeepRunning()) {
-			window->ProcessMessages();
+			Netcode::Timestamp st = Netcode::SystemClock::LocalNow();
 			
+			window->ProcessMessages();
 			events->Dispatch();
 
 			float dt = stopwatch.Restart();
@@ -140,8 +151,19 @@ public:
 			Simulate(dt);
 
 			Render();
+			
+			mainThreadDispatcher.Run();
 
 			window->CompleteFrame();
+
+			Netcode::Duration frameTime = Netcode::SystemClock::LocalNow() - st;
+			Netcode::Duration sleepTime = d - frameTime;
+			
+			if(sleepTime > std::chrono::microseconds(500)) {
+				Netcode::SleepFor(sleepTime);
+			}
+
+			fpsCounter.Update(Netcode::SystemClock::LocalNow() - st);
 		}
 	}
 

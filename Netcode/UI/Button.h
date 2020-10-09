@@ -7,6 +7,10 @@ namespace Netcode::UI {
     class Button : public Input {
     protected:
     public:
+        virtual void PropagateOnClick(MouseEventArgs& args) override {
+            return;
+        }
+    	
         virtual void PropagateOnMouseEnter(MouseEventArgs & evtArgs) override;
 
         virtual void PropagateOnMouseLeave(MouseEventArgs & evtArgs) override;

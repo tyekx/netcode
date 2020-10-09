@@ -5,6 +5,7 @@
 #include "Math.h"
 #include "Exceptions.h"
 #include "ArrayView.hpp"
+#include "ErrorCode.h"
 
 namespace Netcode {
 
@@ -311,5 +312,41 @@ namespace Netcode {
 			value.w = jsonArray[3].GetUint();
 		}
 	};
+
+	enum class JsonErrc {
+		NONE = rapidjson::ParseErrorCode::kParseErrorNone,
+		EMPTY_DOCUMENT = rapidjson::ParseErrorCode::kParseErrorDocumentEmpty,
+		ROOT_NOT_SINGULAR = rapidjson::ParseErrorCode::kParseErrorDocumentRootNotSingular,
+
+		INVALID_VALUE = rapidjson::ParseErrorCode::kParseErrorValueInvalid,
+
+		MISSING_OBJECT_NAME = rapidjson::ParseErrorCode::kParseErrorObjectMissName,
+		MISSING_OBJECT_COLON = rapidjson::ParseErrorCode::kParseErrorObjectMissColon,
+		MISSING_COMMA_OR_CURLY = rapidjson::ParseErrorCode::kParseErrorObjectMissCommaOrCurlyBracket,
+
+		MISSING_COMMA_OR_SQUARE = rapidjson::ParseErrorCode::kParseErrorArrayMissCommaOrSquareBracket,
+
+		INVALID_UNICODE_HEX = rapidjson::ParseErrorCode::kParseErrorStringUnicodeEscapeInvalidHex,
+		INVALID_UNICODE_SURROGATE = rapidjson::ParseErrorCode::kParseErrorStringUnicodeSurrogateInvalid,
+		INVALID_ESCAPE = rapidjson::ParseErrorCode::kParseErrorStringEscapeInvalid,
+		MISSING_QUOTATION_MARK = rapidjson::ParseErrorCode::kParseErrorStringMissQuotationMark,
+		INVALID_ENCODING = rapidjson::ParseErrorCode::kParseErrorStringInvalidEncoding,
+
+		NUMBER_TOO_BIG = rapidjson::ParseErrorCode::kParseErrorNumberTooBig,
+		MISSING_FRACTION = rapidjson::ParseErrorCode::kParseErrorNumberMissFraction,
+		MISSING_EXPONENT = rapidjson::ParseErrorCode::kParseErrorNumberMissExponent,
+
+		TERMINATION = rapidjson::ParseErrorCode::kParseErrorTermination,
+		UNKNOWN_ERROR = rapidjson::ParseErrorCode::kParseErrorUnspecificSyntaxError
+	};
+
+	ErrorCode make_error_code(JsonErrc ec);
 	
+}
+
+namespace std {
+	template<>
+	struct is_error_code_enum<Netcode::JsonErrc> {
+		static const bool value = true;
+	};
 }

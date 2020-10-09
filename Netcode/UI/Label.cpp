@@ -39,7 +39,12 @@ namespace Netcode::UI {
         const Float2 textSize = font->MeasureString(text.c_str());
         const Vector2 textAnchorOffset = CalculateAnchorOffset(HorizontalContentAlignment(), VerticalContentAlignment(), Size());
         const Vector2 textAnchorDiff = CalculateAnchorOffset(HorizontalContentAlignment(), VerticalContentAlignment(), textSize);
-        TextPosition(textAnchorOffset - textAnchorDiff);
+
+    	// lazy padding
+        const Float4 pad = Padding();
+        const Vector2 topLeftPad{ Float2{  pad.x, pad.y } };
+    	
+        TextPosition(topLeftPad + textAnchorOffset - textAnchorDiff);
     }
 
     void Label::UpdateTextSize() {

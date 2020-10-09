@@ -2,18 +2,18 @@
 
 class Response {
 
-    public static function JSON($assoc) {
-        header("Content-Type: application/json");
+    public static function JSON($assoc, $code = 200) {
+        header("Content-Type: application/json", true, $code);
         echo json_encode($assoc);
     }
 
-    public static function EmptyJSON() {
-        header("Content-Type: application/json");
+    public static function EmptyJSON($code = 200) {
+        header("Content-Type: application/json", true, $code);
         echo "{}";
     }
 
-    public static function RawJSON($json) {
-        header("Content-Type: application/json");
+    public static function RawJSON($json, $code = 200) {
+        header("Content-Type: application/json", true, $code);
         echo $json;
     }
 

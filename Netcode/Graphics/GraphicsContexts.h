@@ -4,12 +4,17 @@
 #include <NetcodeFoundation/Math.h>
 
 #include <Netcode/HandleDecl.h>
+#include <string>
 
 #include "ResourceEnums.h"
 
 namespace Netcode {
 	class RenderPass;
 	class FrameGraph;
+}
+
+namespace Netcode::Module {
+	class IGraphicsModule;
 }
 
 namespace Netcode::Graphics {
@@ -226,8 +231,12 @@ namespace Netcode::Graphics {
 		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, const Float4x4 & transform) = 0;
 		virtual void DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, const Float4x4 & transform, bool depthEnabled) = 0;
 
+		virtual void DrawDebugText(std::wstring text, const Float2 & topLeftPosInWindowCoords) = 0;
+		
 		virtual void UploadResources(IResourceContext * context) = 0;
 		virtual void Draw(IRenderContext* context, const Float4x4 & viewProjMatrix) = 0;
+		virtual void InternalSwapChainResourcesChanged(Module::IGraphicsModule * graphics) = 0;
+		virtual void InternalPostRender() = 0;
 	};
 
 	class IFrameContext {

@@ -318,6 +318,13 @@ namespace Netcode::Module {
 
 		windowHandle = wnd;
 
+		POINT p;
+		if(GetCursorPos(&p)) {
+			if(ScreenToClient(wnd, &p)) {
+				Input::SetInitialMousePosition(Int2{ p.x, p.y });
+			}
+		}
+		
 		isRunning = true;
 	}
 

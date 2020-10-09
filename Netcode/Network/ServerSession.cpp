@@ -20,7 +20,7 @@ namespace Netcode::Network {
 
 		std::string selfAddr = Utility::ToNarrowString(Config::Get<std::wstring>(L"network.server.selfAddress:string"));
 
-		ErrorCode ec;
+		boost::system::error_code ec;
 		boost::asio::ip::address addr = boost::asio::ip::address::from_string(selfAddr, ec);
 
 		std::vector<Interface> ifaces = GetCompatibleInterfaces(addr);
@@ -34,7 +34,7 @@ namespace Netcode::Network {
 
 		RETURN_ON_ERROR(ec, "[Network] [Server] invalid configuration value: {0}");
 
-		ec = Bind(iface.address, gameSocket, gamePort);
+		Bind(iface.address, gameSocket, gamePort);
 
 		if(gamePort > std::numeric_limits<uint16_t>::max()) {
 			Log::Error("[Network] [Server] Failed to bind game port socket");

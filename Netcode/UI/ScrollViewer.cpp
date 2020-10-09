@@ -47,17 +47,23 @@ namespace Netcode::UI {
         Vector2 cSize = contentSize;
         Vector2 mSize = MaxSize();
 
-        size = mSize.Min(cSize);
+    	if(Sizing() == SizingType::DERIVED) {
+            size = mSize.Min(cSize);
 
-        if((contentSize.y - 0.5f) < maxSize.y) {
-            scrollButton->Enabled(false);
-        } else {
+            if((contentSize.y - 0.5f) < maxSize.y) {
+                scrollButton->Enabled(false);
+            } else {
+                scrollButton->Enabled(true);
+                const Float2 btnSize = (mSize / cSize) * mSize;
+                scrollButton->Size(Float2{ ScrollBarThickness(), btnSize.y });
+            }
+    	}
+
+    	if(Sizing() == SizingType::FIXED) {
             scrollButton->Enabled(true);
-
-            Float2 btnSize = (mSize / cSize) * mSize;
-
+            const Float2 btnSize = (mSize / mSize.Max(cSize)) * mSize;
             scrollButton->Size(Float2{ ScrollBarThickness(), btnSize.y });
-        }
+    	}
     }
 
     void ScrollViewer::ApplyScrollYDelta(float delta)
@@ -72,17 +78,24 @@ namespace Netcode::UI {
 
     void ScrollViewer::Render(Ptr<SpriteBatch> batch)
     {
+        Panel::Render(batch);
+    	
         if(children.empty()) {
             return;
         }
 
         Vector2 posV = ScreenPosition();
         Rect rect = GetContentRect();
-
+    	
         Vector2 yOffset = Float2{ 0.0f, scrollY };
         Vector2 cSize = contentSize;
         Vector2 mSize = MaxSize();
-        Vector2 scaledYOffset = yOffset * (mSize / cSize);
+        Vector2 scaledYOffset;
+        if(contentSize.x == 0.0f || contentSize.y == 0.0f) {
+            scaledYOffset = Float2::Zero;
+        } else {
+            scaledYOffset = yOffset * (mSize / cSize);
+        }
 
         batch->SetScissorRect(rect);
         children.front()->Render(batch);
@@ -100,6 +113,7 @@ namespace Netcode::UI {
             scrollButton->Position(alignment + scaledYOffset);
             scrollButton->Render(batch);
         }
+    	
         batch->SetScissorRect();
     }
 

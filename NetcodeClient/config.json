@@ -49,7 +49,7 @@
   },
   "network": {
     "web": {
-      "hostname:string": "http://netcode.webs",
+      "hostname:string": "netcode.webs",
       "port:u16": 80
     },
     "client": {

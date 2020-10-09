@@ -153,6 +153,24 @@ namespace Netcode::UI {
         return borderColor;
     }
 
+    void Panel::BorderOpacity(float v) {
+        borderColor.w = v;
+    }
+
+    float Panel::BorderOpacity() const {
+        return borderColor.w;
+    }
+
+    void Panel::BorderRGB(const Float3 & c) {
+        borderColor.x = c.x;
+        borderColor.y = c.y;
+        borderColor.z = c.z;
+    }
+
+    Float3 Panel::BorderRGB() const {
+        return Float3{ borderColor.x, borderColor.y, borderColor.z };
+    }
+
     Float2 Panel::BackgroundSize() const {
         return backgroundSize;
     }

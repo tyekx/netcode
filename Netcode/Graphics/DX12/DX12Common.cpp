@@ -115,7 +115,9 @@ namespace Netcode::Graphics::DX12 {
 
 	void DebugDestructionCallback(void * pData)
 	{
-		DebugBreak();
+		static int x = 0;
+
+		Log::Debug("Destruction#{0}: {1}", x++, pData);
 	}
 
 }

@@ -54,3 +54,9 @@ type & operator=(type &&) noexcept = delete
 type(type &&) noexcept = default; \
 type & operator=(type &&) noexcept = default
 #endif
+
+#if !defined(NETCODE_CONSTRUCTORS_DEFAULT_COPY)
+#define NETCODE_CONSTRUCTORS_DEFAULT_COPY(type) \
+type(const type &) = default; \
+type & operator=(const type &) = default
+#endif

@@ -4,12 +4,10 @@
 #include <Netcode/System/SystemClock.h>
 #include <NetcodeProtocol/header.pb.h>
 #include <NetcodeProtocol/netcode.pb.h>
-#include <NetcodeFoundation/Exceptions.h>
 #include <Netcode/Utility.h>
 #include <Netcode/Sync/SlimReadWriteLock.h>
 #include <Netcode/Config.h>
 #include "NetcodeFoundation/Enum.hpp"
-#include <Netcode/System/System.h>
 #include <boost/lockfree/queue.hpp>
 #include "Socket.hpp"
 #include "NetAllocator.h"
@@ -60,6 +58,8 @@ namespace Netcode::Network {
 			if(peerOrHostAddr.is_v6()) {
 				return mtu - IPV6_HEADER_SIZE;
 			}
+			
+			return mtu;
 		}
 	};
 
@@ -67,16 +67,34 @@ namespace Netcode::Network {
 		Ref<NetAllocator> allocator;
 		UdpPacket * packet;
 		Protocol::Header * header;
+		
+		ControlMessage() : allocator{}, packet{}, header{ } { }
+		~ControlMessage() noexcept = default;
+
+		NETCODE_CONSTRUCTORS_DEFAULT_MOVE(ControlMessage);
+		NETCODE_CONSTRUCTORS_DEFAULT_COPY(ControlMessage);
 	};
 
 	struct GameMessage {
 		Ref<NetAllocator> allocator;
 		Protocol::Update * update;
+
+		GameMessage() : allocator{}, update{} { }
+		~GameMessage() noexcept = default;
+
+		NETCODE_CONSTRUCTORS_DEFAULT_MOVE(GameMessage);
+		NETCODE_CONSTRUCTORS_DEFAULT_COPY(GameMessage);
 	};
 
 	struct AckMessage {
-		uint32_t sequence;
 		UdpEndpoint endpoint;
+		uint32_t sequence;
+
+		AckMessage() : endpoint{}, sequence{} { }
+		~AckMessage() noexcept = default;
+
+		NETCODE_CONSTRUCTORS_DEFAULT_MOVE(AckMessage);
+		NETCODE_CONSTRUCTORS_DEFAULT_COPY(AckMessage);
 	};
 
 	class ConnectionBase : public std::enable_shared_from_this<ConnectionBase> {
@@ -146,8 +164,8 @@ namespace Netcode::Network {
 
 		constexpr ResendArgs() : resendInterval{}, maxAttempts{} {}
 
-		constexpr ResendArgs(uint32_t resendIntervalMs, uint32_t maxAttempts) :
-			resendInterval{ std::chrono::milliseconds(resendIntervalMs) }, maxAttempts{ maxAttempts } { }
+		constexpr ResendArgs(uint32_t resendIntervalMs, uint32_t numAttempts) :
+			resendInterval{ std::chrono::milliseconds(resendIntervalMs) }, maxAttempts{ numAttempts } { }
 	};
 
 	class ProtocolConfig {
@@ -222,7 +240,11 @@ namespace Netcode::Network {
 	protected:
 		FilterState state;
 	public:
+		FilterBase() : state { FilterState::IDLE } { }
 		virtual ~FilterBase() = default;
+
+		NETCODE_CONSTRUCTORS_DEFAULT_MOVE(FilterBase);
+		NETCODE_CONSTRUCTORS_DELETE_COPY(FilterBase);
 		
 		virtual bool IsCompleted() const {
 			return state == FilterState::COMPLETED;
@@ -254,7 +276,7 @@ namespace Netcode::Network {
 	public:
 		PendingTokenStorage() : srwLock{}, head{ nullptr }{}
 
-		void Ack(AckMessage ack) {
+		void Ack(const AckMessage& ack) {
 			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
 
 			PendingTokenNode * prev = nullptr;
@@ -268,7 +290,7 @@ namespace Netcode::Network {
 					}
 
 					TrResult tr;
-					iter->token->Set(TrResult{ make_error_code(Errc::success), iter->packet->GetSize() });
+					iter->token->Set(TrResult{ make_error_code(NetworkErrc::SUCCESS), iter->packet->GetSize() });
 					iter->timer->cancel();
 					CompletionToken<TrResult> tmpToken = std::move(iter->token);
 				}
@@ -324,14 +346,14 @@ namespace Netcode::Network {
 			attemptIndex++;
 
 			if(attemptIndex == attemptCount) {
-				completionToken->Set(TrResult{ make_error_code(Error::TIMEDOUT), attemptCount * packet->GetSize() });
+				completionToken->Set(TrResult{ make_error_code(NetworkErrc::RESEND_TIMEOUT), attemptCount * packet->GetSize() });
 				return;
 			}
 
 			socket->Send(packet->GetConstBuffer(), packet->GetEndpoint(),
 				[this, lt = Base::shared_from_this()](const ErrorCode & ec, size_t s) -> void {
 				if(ec) {
-					completionToken->Set(TrResult{ make_error_code(Error::SOCK_ERR), (attemptIndex - 1) * packet->GetSize() });
+					completionToken->Set(TrResult{ make_error_code(NetworkErrc::SOCK_ERROR), (attemptIndex - 1) * packet->GetSize() });
 				} else {
 					InitTimer();
 				}
@@ -354,7 +376,7 @@ namespace Netcode::Network {
 					AckMessage ack;
 					ack.endpoint = packet->GetEndpoint();
 					ack.sequence = packet->GetSequence();
-					pendingTokenStorage->Ack(std::move(ack));
+					pendingTokenStorage->Ack(ack);
 				}
 			});
 		}
@@ -408,7 +430,7 @@ namespace Netcode::Network {
 			const uint32_t cHeaderOffset = headerStart + headerOffset;
 
 			if(cDataSize == 0) {
-				completionToken->Set(TrResult{ make_error_code(Errc::success), sentDataSize });
+				completionToken->Set(TrResult{ make_error_code(NetworkErrc::SUCCESS), sentDataSize });
 				return;
 			}
 
@@ -420,7 +442,7 @@ namespace Netcode::Network {
 
 			socket->Send(currentFragment, packet->GetEndpoint(), [this, lt = Base::shared_from_this()](const ErrorCode & ec, size_t s) -> void {
 				if(ec) {
-					completionToken->Set(TrResult{ make_error_code(Error::SOCK_ERR), sentDataSize });
+					completionToken->Set(TrResult{ make_error_code(NetworkErrc::SOCK_ERROR), sentDataSize });
 				} else {
 					sentDataSize += static_cast<uint32_t>(s);
 					SendFragment();
@@ -944,14 +966,14 @@ namespace Netcode::Network {
 		}
 
 		// optimal for receiving messages or sending small messages
-		Ref<NetAllocator> MakeSmallAllocator() {
+		Ref<NetAllocator> MakeSmallAllocator() const {
 			// the largest possible packet + 512 bytes for management
 			uint32_t blockSize = Utility::Align<uint32_t, 512u>(linkLocalMtu.GetMtu() + 512u);
 			return std::make_shared<NetAllocator>(&ioContext, blockSize);
 		}
 
 		// optimal for sending game updates
-		Ref<NetAllocator> MakeLargeAllocator() {
+		Ref<NetAllocator> MakeLargeAllocator() const {
 			constexpr uint32_t blockSize = 0x21000;
 			return std::make_shared<NetAllocator>(&ioContext, blockSize);
 		}
