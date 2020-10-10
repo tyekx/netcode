@@ -8,6 +8,8 @@
 #include <NetcodeFoundation/Enum.hpp>
 #include "NetcodeProtocol/header.pb.h"
 
+#include <Netcode/System/System.h>
+
 namespace Netcode::Network {
 
 	enum class NatType : unsigned {
@@ -156,8 +158,12 @@ namespace Netcode::Network {
 				}
 
 				Tick();
-				
-				InitTick();
+
+				if(connection != nullptr) {
+					if(connection->state != ConnectionState::INACTIVE) {
+						InitTick();
+					}
+				}
 			});
 		}
 		
@@ -177,6 +183,7 @@ namespace Netcode::Network {
 			service->Send(std::move(alloc), connection.get(), header)
 				   ->Then([this, mainToken](TrResult tr) mutable -> void {
 				if(tr.errorCode) {
+					connection->state = ConnectionState::INACTIVE;
 					mainToken->Set(tr.errorCode);
 				} else {
 					SendConnectRequest(std::move(mainToken));
@@ -185,6 +192,7 @@ namespace Netcode::Network {
 		}
 
 		void OnHostnameResolved(const UdpResolver::results_type & results, CompletionToken<ErrorCode> mainToken) {
+			
 			if(results.empty()) {
 				mainToken->Set(make_error_code(NetworkErrc::HOSTNAME_NOT_FOUND));
 				return;
@@ -255,8 +263,6 @@ namespace Netcode::Network {
 			
 			service = std::make_shared<NetcodeService>(ioContext, std::move(sock), static_cast<uint16_t>(linkLocalMtu));
 			service->Host();
-
-			Sleep(100);
 
 			StartConnection(std::move(mainToken));
 
@@ -344,6 +350,16 @@ namespace Netcode::Network {
 		}
 
 		virtual CompletionToken<ErrorCode> Synchronize();
+
+		virtual void CloseService() {
+			if(service != nullptr) {
+				boost::system::error_code ec;
+				tickTimer.cancel(ec);
+				service->Close();
+				Netcode::SleepFor(std::chrono::milliseconds(100));
+				service.reset();
+			}
+		}
 		
 		virtual CompletionToken<ErrorCode> Connect(Ref<ConnectionBase> connectionHandle, std::string hostname, uint32_t port) {
 			if(connectionHandle->state != ConnectionState::INACTIVE) {
@@ -355,6 +371,8 @@ namespace Netcode::Network {
 					throw UndefinedBehaviourException{ "Current connection seems to be active or pending" };
 				}
 			}
+
+			CloseService();
 
 			std::swap(connectionHandle, connection);
 			

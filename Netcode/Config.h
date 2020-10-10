@@ -2,8 +2,19 @@
 
 #include <string>
 #include <NetcodeFoundation/Json.h>
+#include <NetcodeFoundation/ErrorCode.h>
 
 namespace Netcode {
+
+	enum class ConfigErrc {
+		SUCCESS,
+		BAD_ARGUMENTS,
+		CONFIG_NOT_FOUND,
+		SHADER_ROOT_NOT_FOUND,
+		MEDIA_ROOT_NOT_FOUND,
+		INVALID_NETWORK_MODE,
+		APPDATA_INACCESSIBLE
+	};
 
     class Property {
     private:
@@ -99,4 +110,40 @@ namespace Netcode {
 		}
 	};
 
+
+    class ConfigErrorCategory : public std::error_category {
+    public:
+        [[nodiscard]]
+        const char * name() const noexcept override
+        {
+            return "Netcode.Config";
+        }
+
+        [[nodiscard]]
+        std::string message(int v) const override
+        {
+            switch(static_cast<ConfigErrc>(v)) {
+                case ConfigErrc::SUCCESS: return "Success";
+                case ConfigErrc::BAD_ARGUMENTS: return "Bad commandline arguments";
+                case ConfigErrc::CONFIG_NOT_FOUND: return "Config file not found";
+                case ConfigErrc::MEDIA_ROOT_NOT_FOUND: return "Media folder not found";
+                case ConfigErrc::SHADER_ROOT_NOT_FOUND: return "Shader folder not found";
+                case ConfigErrc::INVALID_NETWORK_MODE: return "Invalid network mode";
+                case ConfigErrc::APPDATA_INACCESSIBLE: return "AppData inaccessible";
+                default: return "Unknown configuration error";
+            }
+        }
+    };
+
+    inline ErrorCode make_error_code(ConfigErrc e) {
+        static ConfigErrorCategory cat;
+        return ErrorCode{ static_cast<int>(e), cat };
+    }
+}
+
+namespace std {
+    template<>
+    struct is_error_code_enum<Netcode::ConfigErrc> {
+        static const bool value = true;
+    };
 }

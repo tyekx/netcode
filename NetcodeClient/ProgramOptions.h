@@ -10,6 +10,8 @@ struct MainConfig {
 	std::wstring shaderRoot;
 	std::wstring mediaRoot;
 	std::wstring configFile;
+	std::wstring hostMode;
+	bool isPublic;
 };
 
 void InitProgramOptions(po::options_description & root, MainConfig & config);

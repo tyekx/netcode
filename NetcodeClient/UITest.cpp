@@ -307,7 +307,7 @@ void LoginPage::InitializeComponents() {
 	Netcode::UInt2 aenamiSize = Netcode::UInt2{ static_cast<uint32_t>(aenami->GetDesc().width), aenami->GetDesc().height };
 	*/
 	Ref<ui::Panel> rootPanel = controlAllocator.MakeShared<ui::Panel>(eventAllocator, CreatePhysxActor());
-	rootPanel->BackgroundColor(COLOR_TERTIARY);
+	rootPanel->BackgroundColor(Netcode::Float4::One);
 	rootPanel->Sizing(ui::SizingType::INHERITED);
 	rootPanel->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
 	rootPanel->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
@@ -600,7 +600,6 @@ Ref<ui::Control> ServerBrowserPage::CreateServerRow(const GameServerData & srvDa
 	panel->OnClick.Subscribe([this, index](Control * ctrl, ui::MouseEventArgs & evtArgs) -> void {
 		auto * c = dynamic_cast<ui::StackPanel *>(ctrl);
 		selectionIndex = index;
-		Log::Debug("ClicK: {0}", selectionIndex);
 		c->ClearAnimations();
 		c->AddAnimation(ui::MakeAnimation(
 			static_cast<ui::Panel *>(c),
@@ -806,6 +805,11 @@ void ServerBrowserPage::SetList(std::vector<GameServerData> srvData) {
 	serverData = std::move(srvData);
 	selectionIndex = -1;
 	int32_t v = 0;
+
+	for(auto & i : listControl->Children()) {
+		i->Destruct();
+	}
+	
 	listControl->ClearChildren();
 	for(const auto & i : serverData) {
 		listControl->AddChild(CreateServerRow(i, v++));

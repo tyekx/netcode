@@ -9,7 +9,7 @@ enable_language(CXX)
 set(CMAKE_POLICY_DEFAULT_CMP0076 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0079 NEW)
 
-set(DX12_LIBRARIES "dxgi.lib d3d12.lib d3dcompiler.lib dwrite.lib d2d1.lib d3d11.lib")
+set(DX12_LIBRARIES "dxgi.lib dxguid.lib d3d12.lib d3dcompiler.lib dwrite.lib d2d1.lib d3d11.lib")
 
 set(NETCODE_COMPILE_OPTIONS
 	"-Wno-microsoft-include"

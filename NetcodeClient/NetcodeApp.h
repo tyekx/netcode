@@ -128,7 +128,7 @@ public:
 		LoadSystems();
 		CreateAxisMapping();
 		CreateUI();
-		//LoadMap(L"mat_test_map.json");
+		LoadMap(L"mat_test_map.json");
 	}
 
 	/*

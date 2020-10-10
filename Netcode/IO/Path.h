@@ -25,6 +25,8 @@ namespace Netcode::IO {
 
 		static std::wstring_view MediaRoot();
 
+		static std::wstring_view AppData();
+
 		static wchar_t GetOppositeSlash(wchar_t slash);
 
 		static wchar_t GetOtherSlash();

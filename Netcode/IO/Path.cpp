@@ -8,6 +8,7 @@
 
 #if defined(NETCODE_OS_WINDOWS)
 #include <Windows.h>
+#include <ShlObj.h>
 #endif
 
 namespace Netcode::IO {
@@ -50,6 +51,19 @@ namespace Netcode::IO {
 
 	std::wstring_view Path::MediaRoot() {
 		return mediaRoot;
+	}
+
+	std::wstring_view Path::AppData()
+	{
+		static wchar_t AppDataPath[MAX_PATH] = {};
+		static size_t len = 0;
+
+		if(len == 0) {
+			SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, AppDataPath);
+			len = wcslen(AppDataPath);
+		}
+
+		return std::wstring_view{ AppDataPath, len };
 	}
 
 	wchar_t Path::GetOppositeSlash(wchar_t slash)

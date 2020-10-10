@@ -345,6 +345,8 @@ namespace Netcode::Network {
 
 			attemptIndex++;
 
+			Log::Debug("AttemptIndex:{0} AttemptCount: {1}", static_cast<int>(attemptIndex), static_cast<int>(attemptCount));
+			
 			if(attemptIndex == attemptCount) {
 				completionToken->Set(TrResult{ make_error_code(NetworkErrc::RESEND_TIMEOUT), attemptCount * packet->GetSize() });
 				return;
@@ -365,6 +367,7 @@ namespace Netcode::Network {
 			timer->async_wait([this, lt = Base::shared_from_this()](const ErrorCode & ec) -> void {
 				if(!ec) {
 					Attempt();
+					return;
 				}
 
 				/*
@@ -791,13 +794,15 @@ namespace Netcode::Network {
 
 		MessageQueue<ControlMessage> controlQueue;
 
-		ProtocolConfig protocolConfig;
+		std::vector<std::unique_ptr<FilterBase>> filters;
 
 		MtuValue linkLocalMtu;
 
 		MtuValue mtu;
 
-		std::vector<std::unique_ptr<FilterBase>> filters;
+		ProtocolConfig protocolConfig;
+
+		uint32_t receiveFailures;
 		
 	public:
 		ConnectionStorage* GetConnections() {
@@ -937,16 +942,24 @@ namespace Netcode::Network {
 			return true;
 		}
 
+		void Close() {
+			boost::system::error_code ec;
+			socket.GetSocket().close(ec);
+		}
+
 		void StartReceive(Ref<NetAllocator> alloc) {
 			UdpPacket * pkt = alloc->MakeUdpPacket(Utility::Align<uint32_t, 512u>(linkLocalMtu.GetMtu() + 512u));
 
 			socket.Receive(pkt->GetMutableBuffer(), pkt->GetEndpoint(), [this, pkt, al = std::move(alloc)](const ErrorCode & ec, size_t s) mutable -> void {
 				if(ec) {
 					al->Clear();
-					StartReceive(std::move(al));
+					if(receiveFailures++ < 5) {
+						StartReceive(std::move(al));
+					}
 					return;
 				}
 
+				receiveFailures = 0;
 				pkt->SetSize(s);
 				pkt->SetTimestamp(SystemClock::LocalNow());
 				if(!TryParseMessage(al.get(), pkt)) {

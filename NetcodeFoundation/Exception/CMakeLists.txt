@@ -8,6 +8,7 @@ PUBLIC
 	"NotSupportedException.h"
 	"OutOfRangeException.h"
 	"UndefinedBehaviourException.h"
+	"RuntimeException.h"
 
 PRIVATE
 	"Exception.cpp"	

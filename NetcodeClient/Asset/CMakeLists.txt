@@ -7,4 +7,6 @@ PRIVATE
 	ClientConverters.cpp
 	GameObjectCatalog.h
 	GameObjectCatalog.cpp
+	ServerConverters.h
+	ServerConverters.cpp
 )

@@ -337,22 +337,22 @@ void GameApp::CreateUI() {
 			if(clientSession == nullptr) {
 				clientSession = std::dynamic_pointer_cast<nn::ClientSession>(network->CreateClient());
 				connectionBase = std::make_shared<Netcode::Network::ConnectionBase>();
-
-				std::string h = (!gsd->hostname.empty()) ? gsd->hostname : gsd->address;
-				std::wostringstream woss;
-				woss << "Connecting to " << Netcode::Utility::ToWideString(h) << L"...";
-
-				pageManager.NavigateTo(3);
-				loadp->SetLoader(woss.str());
-
-				clientSession->Connect(connectionBase, std::move(h), gsd->port)->Then([loadp](const Netcode::ErrorCode & ec) -> void {
-					if(ec) {
-						loadp->SetError(Netcode::Utility::ToWideString(Netcode::ErrorCodeToString(ec)));
-					} else {
-						loadp->CloseDialog();
-					}
-				});
 			}
+
+			std::string h = (!gsd->hostname.empty()) ? gsd->hostname : gsd->address;
+			std::wostringstream woss;
+			woss << "Connecting to " << Netcode::Utility::ToWideString(h) << L"...";
+
+			pageManager.NavigateTo(3);
+			loadp->SetLoader(woss.str());
+
+			clientSession->Connect(connectionBase, std::move(h), gsd->port)->Then([loadp](const Netcode::ErrorCode & ec) -> void {
+				if(ec) {
+					loadp->SetError(Netcode::Utility::ToWideString(Netcode::ErrorCodeToString(ec)));
+				} else {
+					loadp->CloseDialog();
+				}
+			});
 			
 		});
 	};
@@ -363,7 +363,7 @@ void GameApp::CreateUI() {
 		});
 	};
 
-	pageManager.NavigateTo(0);
+	//pageManager.NavigateTo(0);
 
 	renderer.ui_Input = &pageManager;
 }

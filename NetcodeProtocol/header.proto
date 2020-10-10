@@ -56,8 +56,9 @@ message ConnectResponse {
 	ConnectType type = 1;
 	int32 error_code = 2;
 	string nonce = 3;
-	Endpoint public_endpoint = 4;
-	Endpoint private_endpoint = 5;
+	string current_map = 4;
+	Endpoint public_endpoint = 5;
+	Endpoint private_endpoint = 6;
 }
 
 message Header {

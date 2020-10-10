@@ -6,13 +6,13 @@ namespace Netcode {
 	
 	std::string ExceptionBase::ToString() const {
 		std::ostringstream oss;
-		oss << what_type() << ": " << message;
+		oss << what_type() << ": " << what();
 		return oss.str();
 	}
 
 	std::string IOException::ToString() const {
 		std::ostringstream oss;
-		oss << what_type() << ": " << message << ". Argument: '" << filePath << "'";
+		oss << what_type() << ": " << what() << ". Argument: '" << filePath << "'";
 		return oss.str();
 	}
 

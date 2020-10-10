@@ -5,6 +5,7 @@
 #include "../GameObject.h"
 #include "../Services.h"
 #include "../Scripts/DebugScript.h"
+#include "ComponentProxy.hpp"
 
 ClientAssetConverter::ClientAssetConverter(GameObjectCatalog * catalog, Netcode::JsonValue * json, GameScene * scene) : AssetConverterBase{ scene, json },
 	catalog{ catalog } {
@@ -157,20 +158,6 @@ GameObject * ClientAssetConverter::ConvertTransformComponent(GameObject * gameOb
 	
 	return gameObject;
 }
-
-template<typename T>
-class ComponentProxy {
-	GameObject * gameObj;
-public:
-	ComponentProxy(GameObject* obj) : gameObj{ obj } { }
-	
-	T * operator->() {
-		if(gameObj->HasComponent<T>()) {
-			return gameObj->GetComponent<T>();
-		}
-		return gameObj->AddComponent<T>();
-	}
-};
 
 void ClientAssetConverter::ConvertScriptComponent(GameObject* gameObject, const Netcode::JsonValue& values) {
 	ComponentProxy<Script> proxy { gameObject };

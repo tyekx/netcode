@@ -5,6 +5,7 @@
 #include <memory>
 #include <Netcode/IO/Json.h>
 #include "Asset/ClientConverters.h"
+#include "Asset/ServerConverters.h"
 
 GameScene::GameScene() : Scene<GameObject>{} {
 	auto * pxService = Service::Get<Netcode::Physics::PhysX>();
@@ -124,7 +125,7 @@ void GameSceneManager::LoadSceneDetail(const Netcode::URI::Model & uri) {
 		return;
 	}
 
-	ClientAssetConverter converter{ &catalog, &json, &activeScene };
+	ServerAssetConverter converter{ &catalog, &json, &activeScene };
 	converter.ConvertScene();
 	
 	catalog.Reset();
