@@ -6,8 +6,10 @@ PUBLIC
 	"TimeTypes.h"
 	"FpsCounter.h"
 	"System.h"
+	"SecureString.h"
 PRIVATE
 	"SystemClock.cpp"
 	"FpsCounter.cpp"
 	"System.cpp"
+	"SecureString.cpp"
 )

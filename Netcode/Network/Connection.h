@@ -848,9 +848,10 @@ namespace Netcode::Network {
 			socket { std::move(sock) },
 			connectionStorage{},
 			fragmentStorage{ &ioContext, &connectionStorage },
-			protocolConfig{},
 			linkLocalMtu{ linkLocalMtu },
-			mtu{ linkLocalMtu } {
+			mtu{ linkLocalMtu },
+			protocolConfig{},
+			receiveFailures{} {
 
 		}
 

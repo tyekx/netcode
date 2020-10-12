@@ -25,6 +25,17 @@ namespace Netcode::IO {
 		impl.reset();
 	}
 
+	bool Directory::Create(const std::wstring & path)
+	{
+#if defined(NETCODE_OS_WINDOWS)
+#if defined(NETCODE_EDITOR_VARIANT)
+		return CreateDirectoryFromAppW(path.c_str(), nullptr) != 0;
+#else
+		return CreateDirectoryW(path.c_str(), nullptr) != 0;
+#endif
+#endif
+	}
+
 	bool Directory::Exists(const std::wstring & path) {
 #if defined(NETCODE_OS_WINDOWS)
 #if defined(NETCODE_EDITOR_VARIANT)
@@ -36,8 +47,8 @@ namespace Netcode::IO {
 #else
 		DWORD attribs = GetFileAttributesW(path.data());
 
-		return (attribs != INVALID_FILE_ATTRIBUTES) &&
-			(attribs & FILE_ATTRIBUTE_DIRECTORY);
+		return	(attribs != INVALID_FILE_ATTRIBUTES) &&
+				(attribs & FILE_ATTRIBUTE_DIRECTORY);
 #endif
 #else
 

@@ -6,8 +6,11 @@
 #include <Netcode/UI/StackPanel.h>
 #include <Netcode/UI/InputGroup.h>
 #include <Netcode/UI/ScrollViewer.h>
+#include <Netcode/UI/Slider.h>
 
 #include <sstream>
+
+#include "NetcodeApp.h"
 
 namespace ui = Netcode::UI;
 
@@ -271,6 +274,27 @@ Ref<Netcode::UI::TextBox> PageBase::CreateTextBox() {
 	return textBox;
 }
 
+Ref<Netcode::UI::Slider> PageBase::CreateSliderWithTextBox()
+{
+	Ref<ui::Slider> slider = controlAllocator.MakeShared<ui::Slider>(controlAllocator, eventAllocator, CreatePhysxActor());
+	Ref<ui::TextBox> sliderValue = CreateTextBox();
+	sliderValue->Padding(Netcode::Float4{ 7.0f, 0.0f, 0.0f, 0.0f });
+	sliderValue->SizeX(120.0f);
+	Ref<ui::Panel> sliderBar = slider->SliderBar();
+	Ref<ui::Panel> sliderButton = slider->SliderButton();
+	sliderBar->BorderRadius(4.0f);
+	sliderBar->BackgroundColor(COLOR_SECONDARY);
+	sliderBar->BorderColor(COLOR_HOVER);
+	
+	sliderButton->BorderRadius(4.0f);
+	sliderButton->BorderWidth(2.0f);
+	sliderButton->BackgroundColor(COLOR_SECONDARY);
+	sliderButton->BorderColor(COLOR_HOVER);
+	
+	slider->BindTextBox(std::move(sliderValue));
+	return slider;
+}
+
 static void LogControls(int depth, const std::vector<Ref<ui::Control>> & children) {
 	std::string prefix(depth, '\t');
 
@@ -425,6 +449,29 @@ void LoginPage::InitializeComponents() {
 	});
 }
 
+void LoginPage::Activate() {
+	PageBase::Activate();
+
+	passwordTextBox->Text(L"");
+}
+
+void MainMenuPage::SetUsername(const std::string & username) {
+	if(currentlyDisplayedUsername == username) {
+		return;
+	}
+	
+	std::wstring ws = L"Welcome, " + Netcode::Utility::ToWideString(username);
+	loggedInLabel->Text(ws);
+	currentlyDisplayedUsername = username;
+}
+
+void MainMenuPage::Activate() {
+	PageBase::Activate();
+
+	GameApp* app = Service::Get<GameApp *>();
+	SetUsername(app->user.name);
+}
+
 void MainMenuPage::InitializeComponents()
 {
 	PageBase::InitializeComponents();
@@ -452,6 +499,14 @@ void MainMenuPage::InitializeComponents()
 	titleLabel->Text(L"Netcode");
 	titleLabel->Margin(Netcode::Float4{ 0.0f, 0.0f, 0.0f, 24.0f });
 
+	loggedInLabel = controlAllocator.MakeShared<ui::Label>(eventAllocator, CreatePhysxActor());
+	loggedInLabel->Sizing(ui::SizingType::FIXED);
+	loggedInLabel->Size(Netcode::Float2{ 400.0f, 48.0f });
+	loggedInLabel->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
+	loggedInLabel->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
+	loggedInLabel->TextColor(COLOR_ACCENT);
+	loggedInLabel->Font(textFont);
+
 	createGameBtn = CreateButton(L"Create game");
 	createGameBtn->Margin(Netcode::Float4{ 0.0f, 0.0f, 0.0f, 8.0f });
 	
@@ -467,6 +522,7 @@ void MainMenuPage::InitializeComponents()
 	exitBtn = CreateButton(L"Exit");
 
 	buttonField->AddChild(titleLabel);
+	buttonField->AddChild(loggedInLabel);
 	buttonField->AddChild(createGameBtn);
 	buttonField->AddChild(joinGameBtn);
 	buttonField->AddChild(optionsBtn);
@@ -1230,4 +1286,36 @@ void LoadingPage::SetLoader(const std::wstring & msg) {
 		& Netcode::Function::EaseOutQuad,
 		0.3f
 	));
+}
+
+void OptionsPage::InitializeComponents()
+{
+	PageBase::InitializeComponents();
+
+	VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
+	HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
+
+	Ref<ui::Slider> slider = CreateSliderWithTextBox();
+	
+	slider->OnValueChanged.Subscribe([](double v) -> void {
+		Log::Debug("Value: {0}", v, 0.0);
+	});
+
+	Ref<ui::ScrollViewer> sv = controlAllocator.MakeShared<ui::ScrollViewer>(controlAllocator, eventAllocator, CreatePhysxActor());
+	sv->ScrollBarColor(COLOR_HOVER);
+	sv->ScrollButtonColor(COLOR_ACCENT);
+	sv->BackgroundColor(COLOR_TERTIARY);
+
+	Ref<ui::Panel> testPanel = controlAllocator.MakeShared<ui::Panel>(eventAllocator, CreatePhysxActor());
+	testPanel->BackgroundColor(Netcode::Float4{ 0.7f, 0.0f, 0.0f, 1.0f });
+	testPanel->Sizing(ui::SizingType::FIXED);
+	testPanel->Size(Netcode::Float2{ 500.0f, 2000.0f });
+	testPanel->AddChild(slider);
+	
+	sv->AddChild(testPanel);
+	sv->Sizing(ui::SizingType::INHERITED);
+	
+	AddChild(sv);
+
+	UpdateLayout();
 }

@@ -11,6 +11,12 @@
 using Netcode::Graphics::ResourceType;
 using Netcode::Graphics::ResourceState;
 
+struct UserData {
+	int id;
+	std::string name;
+	bool isBanned;
+};
+
 struct GameServerData {
 	int rtt;
 	int activePlayers;

@@ -11,6 +11,8 @@
 #include <Netcode/UI/TextBox.h>
 #include <Netcode/Network/CompletionToken.h>
 #include <Netcode/Network/Response.hpp>
+#include <Netcode/Network/Cookie.h>
+#include <Netcode/System/SecureString.h>
 
 #include "Scripts/LocalPlayerWeaponScript.h"
 #include <iomanip>
@@ -97,6 +99,7 @@ void GameApp::LoadServices() {
 	Service::Init<AssetManager>(graphics.get());
 	Service::Init<Netcode::Physics::PhysX>();
 	Service::Init<Netcode::Module::IGraphicsModule *>(graphics.get());
+	Service::Init<GameApp *>(this);
 
 	pxService = Service::Get<Netcode::Physics::PhysX>();
 	pxService->CreateResources();
@@ -106,6 +109,41 @@ void GameApp::LoadServices() {
 	gameScene = Service::Get<GameSceneManager>()->GetScene();
 
 	gameScene->Setup();
+}
+
+static Netcode::ErrorCode ConvertUserData(const rapidjson::Value& v, UserData& outData) {
+	if(!v.IsObject()) {
+		return make_error_code(Netcode::JsonErrc::INVALID_VALUE);
+	}
+
+	UserData ud;
+	
+	if(const auto it = v.FindMember("id"); it != v.MemberEnd() && it->value.IsInt()) {
+		ud.id = it->value.GetInt();
+	} else return make_error_code(Netcode::JsonErrc::INVALID_VALUE);
+
+	if(const auto it = v.FindMember("name"); it != v.MemberEnd() && it->value.IsString()) {
+		ud.name = it->value.GetString();
+	} else return make_error_code(Netcode::JsonErrc::INVALID_VALUE);
+
+	if(const auto it = v.FindMember("is_banned"); it != v.MemberEnd() && it->value.IsBool()) {
+		ud.isBanned = it->value.GetBool();
+	} else return make_error_code(Netcode::JsonErrc::INVALID_VALUE);
+	
+	std::swap(ud, outData);
+
+	return Netcode::ErrorCode{};
+}
+
+static Netcode::ErrorCode ConvertUserData(const std::string & inputString, UserData& outData) {
+	rapidjson::Document doc;
+	doc.Parse(inputString);
+
+	if(doc.HasParseError()) {
+		return make_error_code(static_cast<Netcode::JsonErrc>(doc.GetParseError()));
+	}
+
+	return ConvertUserData(doc, outData);
 }
 
 static Netcode::ErrorCode ConvertServerData(const rapidjson::Value& v, GameServerData & outData) {
@@ -149,7 +187,6 @@ static Netcode::ErrorCode ConvertServerData(const rapidjson::Value& v, GameServe
 
 static Netcode::ErrorCode ConvertServerData(const std::string & inputString, std::vector<GameServerData> & outData) {
 	rapidjson::Document doc;
-	doc.SetObject();
 	doc.Parse(inputString);
 
 	if(doc.HasParseError()) {
@@ -181,6 +218,14 @@ static Netcode::ErrorCode ConvertServerData(const std::string & inputString, std
 }
 
 void GameApp::CreateUI() {
+	Ref<OptionsPage> optionsPage = pageManager.CreatePage<OptionsPage>(*pxService->physics);
+	optionsPage->InitializeComponents();
+	pageManager.AddPage(optionsPage);
+	pageManager.NavigateWithoutHistory(0);
+	renderer.ui_Input = &pageManager;
+
+	return;
+	
 	Ref<LoginPage> loginPage = pageManager.CreatePage<LoginPage>(*pxService->physics);
 	Ref<MainMenuPage> mmPage = pageManager.CreatePage<MainMenuPage>(*pxService->physics);
 	Ref<ServerBrowserPage> serverBrowserPage = pageManager.CreatePage<ServerBrowserPage>(*pxService->physics);
@@ -205,8 +250,11 @@ void GameApp::CreateUI() {
 	mmPage->onExitClick = loginPage->onExitClick;
 
 	mmPage->onLogoutClick = [this]() -> void {
+		Netcode::IO::File::Delete(Netcode::Config::Get<std::wstring>(L"user.sessionFile:string"));
+		network->EraseCookie("netcode-auth");
+		
 		mainThreadDispatcher.Post([this]() -> void {
-			pageManager.ReturnToLastPage();
+			pageManager.NavigateWithoutHistory(0);
 		});
 	};
 
@@ -257,7 +305,7 @@ void GameApp::CreateUI() {
 			
 			network->Login(lp->usernameTextBox->Text(), lp->passwordTextBox->Text())->Then([this, loadp](const Netcode::Network::Response & httpResp) -> void {
 				Netcode::SleepFor(std::chrono::milliseconds(750));
-				
+
 				if(httpResp.result() != boost::beast::http::status::ok) {
 					std::wostringstream woss;
 					woss << L"Error(Netcode.Http#" << httpResp.result_int() << L"): ";
@@ -274,11 +322,45 @@ void GameApp::CreateUI() {
 					}
 					std::wstring err = woss.str();
 
-					mainThreadDispatcher.Post([this, e = std::move(err), loadp]()->void {
+					mainThreadDispatcher.Post([e = std::move(err), loadp]()->void {
 						loadp->SetError(e);
 					});
 
 					return;
+				}
+
+				auto pair = httpResp.equal_range(boost::beast::http::field::set_cookie);
+
+				for(auto it = pair.first; it != pair.second; it++) {
+					nn::Cookie c;
+					boost::beast::string_view sv = it->value();
+					
+					if(nn::Cookie::Parse(std::string_view{ sv.data(), sv.size() }, c)) {
+						network->SetCookie(c);
+					}
+				}
+
+				nn::Cookie cookie = network->GetCookie("netcode-auth");
+
+				if(!cookie.IsValid()) {
+					std::wstring err = Netcode::Utility::ToWideString(Netcode::ErrorCodeToString(make_error_code(Netcode::NetworkErrc::BAD_COOKIE)));
+					mainThreadDispatcher.Post([e = std::move(err), loadp]() -> void {
+						loadp->SetError(e);
+					});
+					return;
+				}
+				Netcode::SecureString ss;
+				ss.Store(Netcode::Utility::ToWideString(cookie.GetValue()), L"netcode-session");
+				Netcode::Config::Set<Netcode::SecureString>(L"user.session", ss);
+
+				try {
+					Netcode::IO::File cookieFile{ Netcode::Config::Get<std::wstring>(L"user.sessionFile:string") };
+					Netcode::IO::FileWriter<Netcode::IO::File> writer{ cookieFile };
+					writer->Write(ss.GetView());
+					Log::Debug("Cookie was saved");
+				} catch(Netcode::ExceptionBase& e) {
+					// an error is fine here, will just prompt a new login at the next start
+					Log::Error("Exception while trying to save cookie: {0}", e.ToString());
 				}
 
 				mainThreadDispatcher.Post([this, loadp]() -> void {
@@ -287,7 +369,6 @@ void GameApp::CreateUI() {
 						pageManager.NavigateTo(1);
 					});
 				});
-				
 			});
 
 		});
@@ -327,13 +408,12 @@ void GameApp::CreateUI() {
 		});
 	};
 
-	serverBrowserPage->onJoinCallback = [this, loadp = loadingPage](const GameServerData * gsd) -> void {
+	serverBrowserPage->onJoinCallback = [this, loadp = loadingPage.get()](const GameServerData * gsd) -> void {
 		if(gsd == nullptr) {
 			return;
 		}
 
 		mainThreadDispatcher.Post([this, gsd, loadp]() -> void {
-
 			if(clientSession == nullptr) {
 				clientSession = std::dynamic_pointer_cast<nn::ClientSession>(network->CreateClient());
 				connectionBase = std::make_shared<Netcode::Network::ConnectionBase>();
@@ -363,9 +443,40 @@ void GameApp::CreateUI() {
 		});
 	};
 
-	//pageManager.NavigateTo(0);
-
+	pageManager.NavigateTo(0);
 	renderer.ui_Input = &pageManager;
+
+	auto session = Netcode::Config::Get<Netcode::SecureString>(L"user.session");
+	if(!session.Empty()) {
+		std::wstring sessionValue = session.Load();
+		if(!sessionValue.empty()) {
+			std::string cookieStr = "netcode-auth=" + Netcode::Utility::ToNarrowString(sessionValue);
+			Netcode::Network::Cookie c;
+
+			if(!Netcode::Network::Cookie::Parse(cookieStr, c)) {
+				Log::Error("Unexpected error while parsing cookie");
+			}
+			
+			if(Netcode::Network::Cookie::Parse(cookieStr, c)) {
+				pageManager.NavigateTo(3);
+				loadingPage->SetLoader(L"Authenticating...");
+				network->SetCookie(c);
+				network->Status()->Then([this](const Netcode::Network::Response & resp) -> void {
+					Netcode::SleepFor(std::chrono::milliseconds(750));
+					if(resp.GetErrorCode() || resp.result() != boost::beast::http::status::ok || ConvertUserData(resp.body(), user)) {
+						Log::Info("Failed to authenticate by session");
+						mainThreadDispatcher.Post([this]() -> void {
+							pageManager.NavigateWithoutHistory(0);
+						});
+					} else {
+						mainThreadDispatcher.Post([this]() -> void {
+							pageManager.NavigateWithoutHistory(1);
+						});
+					}
+				});
+			}
+		}
+	}
 }
 
 void GameApp::CreateAxisMapping() {

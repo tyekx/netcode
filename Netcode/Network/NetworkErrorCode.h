@@ -36,7 +36,10 @@ namespace Netcode {
 		CLIENT_BANNED,
 		CLIENT_TIMEOUT,
 		SERVER_TIMEOUT,
-		SERVER_CLOSED
+		SERVER_CLOSED,
+
+		// http
+		BAD_COOKIE
 		
 	};
 
@@ -75,6 +78,7 @@ namespace Netcode {
 				case NetworkErrc::CLIENT_TIMEOUT: return "Client timed out";
 				case NetworkErrc::SERVER_TIMEOUT: return "Server timed out";
 				case NetworkErrc::SERVER_CLOSED: return "Server closed";
+				case NetworkErrc::BAD_COOKIE: return "Cookie was not set";
 			}
 
 			return "Unknown network error";

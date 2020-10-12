@@ -111,6 +111,13 @@ public:
 	}
 };
 
+COMPONENT_ALIGN class Netw {
+	int32_t owner;
+
+	bool HasAuthority(int32_t id) const {
+		return owner == id;
+	}
+};
 
 COMPONENT_ALIGN class Camera {
 public:

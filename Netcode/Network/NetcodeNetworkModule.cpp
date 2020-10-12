@@ -31,11 +31,26 @@ namespace Netcode::Module {
 		return std::make_shared<Network::ClientSession>(context.GetImpl());
 	}
 
+	void NetcodeNetworkModule::EraseCookie(const std::string & key)
+	{
+		if(auto it = cookieStorage.find(key); it != cookieStorage.end()) {
+			cookieStorage.erase(it);
+		}
+
+		cookiesCache.clear();
+
+		for(const auto & i : cookieStorage) {
+			std::string s = i.second.GetCookieString();
+			if(!cookiesCache.empty()) {
+				cookiesCache += "; ";
+			}
+			cookiesCache += s;
+		}
+	}
+
 	Network::Cookie NetcodeNetworkModule::GetCookie(const std::string & key)
 	{
-		auto it = cookieStorage.find(key);
-
-		if(it != cookieStorage.end()) {
+		if(auto it = cookieStorage.find(key); it != cookieStorage.end()) {
 			return it->second;
 		}
 
@@ -95,6 +110,16 @@ namespace Netcode::Module {
 
 		return httpSession->MakeRequest(Utility::ToNarrowString(Config::Get<std::wstring>(L"network.web.hostname:string")),
 			std::to_string(Config::Get<uint16_t>(L"network.web.port:u16")), "/api/status", Network::http::verb::get, cookiesCache, "");
+	}
+
+	Network::CompletionToken<Network::Response> NetcodeNetworkModule::Logout() {
+		if(httpSession == nullptr) {
+			context.Start(Config::Get<uint32_t>(L"network.client.workerThreadCount:u32"));
+			httpSession = std::make_shared<Network::HttpSession>(context.GetImpl());
+		}
+
+		return httpSession->MakeRequest(Utility::ToNarrowString(Config::Get<std::wstring>(L"network.web.hostname:string")),
+			std::to_string(Config::Get<uint16_t>(L"network.web.port:u16")), "/api/logout", Network::http::verb::get, cookiesCache, "");
 	}
 
 }

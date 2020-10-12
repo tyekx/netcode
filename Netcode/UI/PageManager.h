@@ -42,6 +42,8 @@ namespace Netcode::UI {
 
 		void Hide(uint32_t idx);
 
+		void NavigateWithoutHistory(uint32_t idx);
+
 		/**
 		* Activates this page as the only page that receives input
 		* saves the currently opened pages in the history.

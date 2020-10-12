@@ -59,7 +59,7 @@ namespace Netcode::UI {
             }
     	}
 
-    	if(Sizing() == SizingType::FIXED) {
+    	if(Sizing() == SizingType::FIXED || Sizing() == SizingType::INHERITED) {
             scrollButton->Enabled(true);
             const Float2 btnSize = (mSize / mSize.Max(cSize)) * mSize;
             scrollButton->Size(Float2{ ScrollBarThickness(), btnSize.y });
@@ -159,7 +159,11 @@ namespace Netcode::UI {
 
     void ScrollViewer::UpdateLayout()
     {
-        UndefinedBehaviourAssertion(Sizing() != SizingType::INHERITED);
+        if(Sizing() == SizingType::INHERITED) {
+            const Float2 ps = parent->Size();
+            MaxSize(ps);
+            Size(ps);
+        }
 
         for(auto & child : children) {
             child->UpdateLayout();

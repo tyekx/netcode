@@ -90,8 +90,6 @@ if(valueType == strRep) { \
 
 	void Config::LoadJson(const JsonDocument & document)
 	{
-		storage.clear();
-
 		LoadMembersRecursive(L"", document);
 	}
 

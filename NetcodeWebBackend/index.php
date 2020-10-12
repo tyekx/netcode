@@ -24,20 +24,20 @@ function AuthenticateUser($db) {
     if(Cookie::Has('netcode-auth')) {
         $token = Cookie::Get('netcode-auth');
 
-        $r = $db->select("users",
+        $r = $db->get("users",
             ["[><]sessions" => ["id" => "user_id"]],
-            ["users.id(uid)", "users.name", "users.is_banned", "sessions.id(sid)"],
+            ["users.id(uid) [Int]", "users.name [String]", "users.is_banned [Bool]", "sessions.id(sid)"],
             ["sessions.hash" => $token, "expires_at[>]" => \Medoo\Medoo::Raw("NOW(6)")]
         );
 
-        if(count($r) != 1) {
+        if(empty($r)) {
             Cookie::Set('netcode-auth', '', -2000000);
             return null;
         }
 
-        $db->update("sessions", ["sessions.expires_at" => \Medoo\Medoo::raw("DATE_ADD(NOW(6), INTERVAL 14 DAY)")], ["sessions.id" => $r[0]['sid']]);
+        $db->update("sessions", ["sessions.expires_at" => \Medoo\Medoo::raw("DATE_ADD(NOW(6), INTERVAL 14 DAY)")], ["sessions.id" => $r['sid']]);
 
-        return new User($r[0]['name'], $r[0]['uid'], $r[0]['is_banned']);
+        return new User($r['name'], $r['uid'], $r['is_banned']);
     }
     return null;
 }

@@ -31,13 +31,18 @@ namespace Netcode::UI {
         virtual void PropagateOnMouseKeyPressed(MouseEventArgs & args) override;
         virtual void PropagateOnMouseKeyReleased(MouseEventArgs & args) override;
         virtual void PropagateOnDrag(DragEventArgs & args) override;
+        virtual void PropagateOnTextChanged() override;
 
         virtual void Render(Ptr<SpriteBatch> batch) override;
 
         void EraseSelection();
 
     public:
+        EventType<const std::wstring &> OnTextChanged;
+    	
         virtual ~TextBox() = default;
+
+        int32_t CaretPosition() const { return caretPosition; }
 
         void AppendChar(wchar_t c);
 

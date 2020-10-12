@@ -16,6 +16,7 @@ namespace Netcode::IO {
 	std::wstring Path::workingDirectory{};
 	std::wstring Path::shaderRoot{};
 	std::wstring Path::mediaRoot{};
+	std::wstring Path::appData{};
 
 	void Path::SetWorkingDirectiory(const std::wstring & pwd) {
 		UndefinedBehaviourAssertion(!pwd.empty());
@@ -55,15 +56,14 @@ namespace Netcode::IO {
 
 	std::wstring_view Path::AppData()
 	{
-		static wchar_t AppDataPath[MAX_PATH] = {};
-		static size_t len = 0;
-
-		if(len == 0) {
-			SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, AppDataPath);
-			len = wcslen(AppDataPath);
+		if(appData.empty()) {
+			wchar_t data[MAX_PATH];
+			SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, data);
+			appData = std::wstring_view{ data, wcslen(data) };
+			FixDirectoryPath(appData);
 		}
 
-		return std::wstring_view{ AppDataPath, len };
+		return appData;
 	}
 
 	wchar_t Path::GetOppositeSlash(wchar_t slash)

@@ -98,6 +98,19 @@ namespace Netcode::UI {
 		SortDrawBuffer();
 	}
 
+	void PageManager::NavigateWithoutHistory(uint32_t idx)
+	{
+		for(uint32_t i = 0; i < numDrawnPages; i++) {
+			drawBuffer[i]->Deactivate();
+		}
+		
+		numDrawnPages = 0;
+		historyDepth = 0;
+
+		Display(idx);
+		Activate(idx);
+	}
+
 	void PageManager::Deactivate(uint32_t value) {
 		pages[value]->Deactivate();
 	}

@@ -5,6 +5,8 @@
 #include "GameScene.h"
 #include <Netcode/PhysXWrapper.h>
 
-using ServicesTuple = std::tuple<AssetManager, GameSceneManager, Netcode::Physics::PhysX, Netcode::Module::IGraphicsModule*>;
+class GameApp;
+
+using ServicesTuple = std::tuple<AssetManager, GameSceneManager, Netcode::Physics::PhysX, Netcode::Module::IGraphicsModule*, GameApp*>;
 
 using Service = Netcode::Service<ServicesTuple>;

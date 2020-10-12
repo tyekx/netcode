@@ -169,6 +169,12 @@ namespace Netcode::UI {
 		Input::PropagateOnDrag(args);
 	}
 
+	void TextBox::PropagateOnTextChanged()
+	{
+		Input::PropagateOnTextChanged();
+		OnTextChanged.Invoke(Text());
+	}
+
 	void TextBox::Render(Ptr<SpriteBatch> batch) {
 		Panel::Render(batch);
 
@@ -260,7 +266,7 @@ namespace Netcode::UI {
 				Float2 selectedTextSize = font->MeasureString(selectedMiddle);
 				selectedTextSize.y = caretHeight;
 				Float2 selectionAnchorOffset = CalculateAnchorOffset(HorizontalContentAlignment(), VerticalAnchor::MIDDLE, selectedTextSize);
-				Float2 selectionRectPosition = basePosition + selectionAnchorOffset + unitX * offsetLeft + Float2{ 0.0f, -BorderWidth() };
+				Float2 selectionRectPosition = paddingLeftTop + basePosition + selectionAnchorOffset + unitX * offsetLeft + Float2{ 0.0f, -BorderWidth() };
 
 				offsetLeft += Float2{ leftCorrection, 0.0f };
 
@@ -305,6 +311,8 @@ namespace Netcode::UI {
 
 		caretPosition = std::min(cp, cpso);
 		selectionOffset = 0;
+
+		OnTextChanged.Invoke(Text());
 	}
 
 	void TextBox::AppendChar(wchar_t c)
@@ -315,6 +323,7 @@ namespace Netcode::UI {
 		text.insert(text.begin() + caretPosition, c);
 		UpdateTextPosition();
 		caretPosition += 1;
+		OnTextChanged.Invoke(Text());
 	}
 
 	void TextBox::Update(float dt) {
@@ -410,7 +419,7 @@ namespace Netcode::UI {
 		selectionTextColor{ Float4::One },
 		selectionBackgroundColor{ Float4::One },
 		caretColor{ Float4::UnitW },
-		xSlider{ 0.0f }, caretPosition{ 0 }, selectionOffset{ 0 }, isPassword{ false }, caretRef{} {
+		xSlider{ 0.0f }, caretPosition{ 0 }, selectionOffset{ 0 }, isPassword{ false }, caretRef{}, OnTextChanged{ allocator } {
 		if(Utility::IsWeakRefEmpty(globalCaret)) {
 			caretRef = CreateCaret(allocator);
 			globalCaret = caretRef;

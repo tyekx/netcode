@@ -11,6 +11,7 @@ namespace Netcode::IO {
 		static std::wstring workingDirectory;
 		static std::wstring shaderRoot;
 		static std::wstring mediaRoot;
+		static std::wstring appData;
 	public:
 
 		static void SetWorkingDirectiory(const std::wstring & pwd);

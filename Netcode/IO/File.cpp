@@ -295,4 +295,16 @@ namespace Netcode::IO {
 #endif
 	}
 
+	bool File::Delete(const std::wstring & path) noexcept
+	{
+#if defined(NETCODE_OS_WINDOWS)
+#if defined(NETCODE_EDITOR_VARIANT)
+		return DeleteFileFromAppW(path.c_str()) != 0;
+#else
+		return DeleteFileW(path.c_str()) != 0;
+#endif
+#endif
+		
+	}
+
 }

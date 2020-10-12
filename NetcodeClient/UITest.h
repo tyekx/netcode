@@ -17,6 +17,7 @@ namespace Netcode::UI {
 	class TextBox;
 	class Panel;
 	class Label;
+	class Slider;
 };
 
 class PageBase : public Netcode::UI::Page {
@@ -36,6 +37,8 @@ protected:
 	Ref<Netcode::UI::Button> CreateButton(const wchar_t * text);
 
 	Ref<Netcode::UI::TextBox> CreateTextBox();
+
+	Ref<Netcode::UI::Slider> CreateSliderWithTextBox();
 public:
 	using Netcode::UI::Page::Page;
 
@@ -58,12 +61,15 @@ public:
 	Ref<Netcode::UI::Button> exitButton;
 
 	virtual void InitializeComponents() override;
+
+	virtual void Activate() override;
 };
 
 class MainMenuPage : public PageBase {
 public:
 	using PageBase::PageBase;
 
+	Ref<Netcode::UI::Label> loggedInLabel;
 	Ref<Netcode::UI::Button> joinGameBtn;
 	Ref<Netcode::UI::Button> createGameBtn;
 	Ref<Netcode::UI::Button> optionsBtn;
@@ -76,6 +82,12 @@ public:
 	std::function<void()> onLogoutClick;
 	std::function<void()> onExitClick;
 
+	std::string currentlyDisplayedUsername;
+	
+	void SetUsername(const std::string & username);
+
+	virtual void Activate() override;
+	
 	virtual void InitializeComponents() override;
 };
 
@@ -152,4 +164,9 @@ public:
 	void SetLoader(const std::wstring & msg);
 };
 
-
+class OptionsPage : public PageBase {
+public:
+	using PageBase::PageBase;
+	
+	virtual void InitializeComponents() override;
+};

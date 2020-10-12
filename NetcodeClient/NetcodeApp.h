@@ -36,6 +36,7 @@ using Netcode::Graphics::FrameGraphCullMode;
 namespace nn = Netcode::Network;
 
 class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler {
+public:
 	Netcode::Dispatcher mainThreadDispatcher;
 	GraphicsEngine renderer;
 	Netcode::Stopwatch stopwatch;
@@ -55,6 +56,7 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	Netcode::URI::Model mapAsset;
 	Netcode::FrameCounter fpsCounter;
 	std::wstring fpsValue;
+	UserData user;
 
 	float totalTime;
 
@@ -79,8 +81,6 @@ class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler 
 	void CreateRemoteAvatar();
 
 	void CreateLocalAvatar();
-
-public:
 
 	virtual void OnResized(int w, int h) override {
 		float asp = graphics->GetAspectRatio();
@@ -128,7 +128,7 @@ public:
 		LoadSystems();
 		CreateAxisMapping();
 		CreateUI();
-		LoadMap(L"mat_test_map.json");
+		//LoadMap(L"mat_test_map.json");
 	}
 
 	/*

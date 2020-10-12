@@ -53,6 +53,8 @@ namespace Netcode::IO {
 		std::wstring_view GetParentDirectory() const noexcept;
 
 		static bool Exists(const std::wstring & path) noexcept;
+
+		static bool Delete(const std::wstring & path) noexcept;
 	};
 
 	template<typename T>

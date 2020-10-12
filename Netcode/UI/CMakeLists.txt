@@ -14,6 +14,7 @@ PUBLIC
 	"StackPanel.h"
 	"TextBox.h"
 	"Animation.hpp"
+	"Slider.h"
 	"Control.h"
 
 PRIVATE
@@ -28,5 +29,6 @@ PRIVATE
 	"StackPanel.cpp"
 	"TextBox.cpp"
 	"Animation.cpp"
+	"Slider.cpp"
 	"Control.cpp"
 )

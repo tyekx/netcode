@@ -2,6 +2,78 @@
 
 #include "../GameObject.h"
 #include <Netcode/MathExt.h>
+#include <Netcode/System/TimeTypes.h>
+
+enum class PredictionType {
+	MOVEMENT, FIRE
+};
+
+struct ClientPredictedFire {
+	Netcode::Float3 position;
+	Netcode::Float3 direction;
+};
+
+struct ClientPredictedMovement {
+	Netcode::Float3 startPosition;
+	Netcode::Float3 delta;
+};
+
+struct ClientPredictedAction {
+	uint32_t id;
+	PredictionType type;
+	Netcode::Timestamp predictionTime;
+
+	union {
+		ClientPredictedMovement movementActionData;
+		ClientPredictedFire fireActionData;
+	};
+};
+
+enum class ReconciliationType {
+	ACCEPTED, REJECTED
+};
+
+struct ServerReconciliation {
+	uint32_t id;
+	ReconciliationType type;
+	ClientPredictedMovement correctedPosition;
+};
+
+class ReconciliationBuffer {
+public:
+	std::vector<ClientPredictedAction> predications;
+
+	void Reconcile(std::vector<ServerReconciliation> reconciliationData) {
+		for(const ClientPredictedAction& pred : predications) {
+			for(const ServerReconciliation& sr : reconciliationData) {
+				if(pred.id == sr.id) {
+					if(sr.type == ReconciliationType::ACCEPTED) {
+						// done
+					}
+
+					if(sr.type == ReconciliationType::REJECTED) {
+						// move character back -> replay actions?
+					}
+				}
+			}
+		}
+	}
+};
+
+class InterpolationDelayBuffer {
+public:
+
+};
+
+class PlayerScript : public ScriptBase {
+protected:
+	std::string name;
+	int kills;
+	int deaths;
+	int rtt;
+	Netcode::Float3 position; // IND buffered
+	Netcode::Float3 lookAt;
+};
 
 class LocalPlayerScript : public ScriptBase {
 	Transform * transform;
@@ -11,10 +83,10 @@ class LocalPlayerScript : public ScriptBase {
 	Netcode::PxPtr<physx::PxController> controller;
 	float cameraPitch;
 	float cameraYaw;
-	float mouseSpeed;
-	float avatarSpeed;
 	Netcode::Float3 velocity;
+	float mouseSpeed;
 	Netcode::Float3 gravity;
+	float avatarSpeed;
 
 	void UpdateLookDirection(float dt) {
 		Netcode::Int2 mouseDelta = Netcode::Input::GetMouseDelta();
