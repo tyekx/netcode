@@ -136,9 +136,12 @@ if($compileAll -OR $Textures.IsPresent) {
     Compile-Texture-Copy "textures/ui/aenami_dreamer.jpg"
     Compile-Texture-Copy "textures/ui/loading_icon.png"
     Compile-Texture-Copy "textures/ui/warning_icon.png"
+    Compile-Texture-Copy "textures/ui/crosshair.png"
+    Compile-Texture-Copy "textures/ui/hitpip.png"
 }
 
 if($compileAll -OR $Fonts.IsPresent) {
+    Compile-SpriteFont "titillium14.spritefont" "Titillium Web" 14 "Regular"
     Compile-SpriteFont "titillium16.spritefont" "Titillium Web" 16 "Regular"
     Compile-SpriteFont "titillium18.spritefont" "Titillium Web" 18 "Regular"
     Compile-SpriteFont "titillium24.spritefont" "Titillium Web" 24 "Regular"

@@ -223,7 +223,7 @@ namespace Netcode::UI {
         void VerticalContentAlignment(VerticalAnchor verticalAnchor);
 
         void AddAnimation(std::unique_ptr<Animation> anim) {
-            anim->Run(0.0f);
+            anim->Run(this, 0.0f);
             animations.Add(std::move(anim));
         }
 

@@ -20,9 +20,9 @@ namespace Netcode::Graphics::DX12 {
 
 	}
 
-	void BaseRenderContext::UnorderedAccessBarrier(Ref<GpuResource> handle)
+	void BaseRenderContext::UnorderedAccessBarrier(Ptr<GpuResource> handle)
 	{
-		ID3D12Resource * res = std::dynamic_pointer_cast<DX12::Resource>(handle)->resource.Get();
+		ID3D12Resource * res = static_cast<DX12::Resource *>(handle)->resource.Get();
 
 		D3D12_RESOURCE_BARRIER barrier;
 		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
@@ -32,9 +32,9 @@ namespace Netcode::Graphics::DX12 {
 		barriers.push_back(barrier);
 	}
 
-	void BaseRenderContext::ResourceBarrier(Ref<GpuResource> handle, ResourceStates before, ResourceStates after)
+	void BaseRenderContext::ResourceBarrier(Ptr<GpuResource> handle, ResourceStates before, ResourceStates after)
 	{
-		ID3D12Resource * res = std::dynamic_pointer_cast<DX12::Resource>(handle)->resource.Get();
+		ID3D12Resource * res = static_cast<DX12::Resource *>(handle)->resource.Get();
 
 #if defined(NETCODE_DEBUG)
 		const auto it = std::find_if(std::begin(barriers), std::end(barriers), [res](const D3D12_RESOURCE_BARRIER & barrier) ->bool {
@@ -79,9 +79,9 @@ namespace Netcode::Graphics::DX12 {
 		commandList->OMSetStencilRef(stencilValue);
 	}
 
-	void GraphicsContext::SetVertexBuffer(Ref<GpuResource> handle)
+	void GraphicsContext::SetVertexBuffer(Ptr<GpuResource> handle)
 	{
-		Ref<DX12::Resource> rr = std::dynamic_pointer_cast<DX12::Resource>(handle);
+		DX12::Resource * rr = static_cast<DX12::Resource *>(handle);
 
 		D3D12_VERTEX_BUFFER_VIEW vbv;
 		vbv.BufferLocation = rr->resource->GetGPUVirtualAddress();
@@ -91,9 +91,9 @@ namespace Netcode::Graphics::DX12 {
 		commandList->IASetVertexBuffers(0, 1, &vbv);
 	}
 
-	void GraphicsContext::SetIndexBuffer(Ref<GpuResource> handle)
+	void GraphicsContext::SetIndexBuffer(Ptr<GpuResource> handle)
 	{
-		Ref<DX12::Resource> rr = std::dynamic_pointer_cast<DX12::Resource>(handle);
+		DX12::Resource * rr = static_cast<DX12::Resource *>(handle);
 		
 		D3D12_INDEX_BUFFER_VIEW ibv;
 		ibv.BufferLocation = rr->resource->GetGPUVirtualAddress();
@@ -128,11 +128,11 @@ namespace Netcode::Graphics::DX12 {
 		Netcode::NotImplementedAssertion("");
 	}
 
-	void GraphicsContext::SetRootSignature(Ref<Netcode::RootSignature> rs) {
+	void GraphicsContext::SetRootSignature(Ptr<Netcode::RootSignature> rs) {
 		commandList->SetGraphicsRootSignature(reinterpret_cast<ID3D12RootSignature *>(rs->GetImplDetail()));
 	}
 
-	void GraphicsContext::SetPipelineState(Ref<Netcode::PipelineState> pso)
+	void GraphicsContext::SetPipelineState(Ptr<Netcode::PipelineState> pso)
 	{
 		commandList->SetPipelineState(reinterpret_cast<ID3D12PipelineState*>(pso->GetImplDetail()));
 	}
@@ -142,9 +142,9 @@ namespace Netcode::Graphics::DX12 {
 		commandList->IASetPrimitiveTopology(GetNativePrimitiveTopology(topology));
 	}
 
-	void GraphicsContext::ClearUnorderedAccessViewUint(Ref<GpuResource> handle, const UInt4 & values)
+	void GraphicsContext::ClearUnorderedAccessViewUint(Ptr<GpuResource> handle, const UInt4 & values)
 	{
-		Ref<DX12::Resource> rr = std::dynamic_pointer_cast<DX12::Resource>(handle);
+		Ptr<DX12::Resource> rr = static_cast<DX12::Resource*>(handle);
 
 		const auto [cpuDesc, gpuDesc] = descHeaps->CreateBufferUAV(rr);
 
@@ -175,9 +175,9 @@ namespace Netcode::Graphics::DX12 {
 		commandList->ClearRenderTargetView(currentlyBoundRenderTargets[idx], clearColor, 0, nullptr);
 	}
 
-	void GraphicsContext::SetStreamOutput(Ref<GpuResource> handle)
+	void GraphicsContext::SetStreamOutput(Ptr<GpuResource> handle)
 	{
-		Ref<DX12::Resource> rr = std::dynamic_pointer_cast<DX12::Resource>(handle);
+		DX12::Resource * rr = static_cast<DX12::Resource *>(handle);
 
 		D3D12_STREAM_OUTPUT_BUFFER_VIEW sobv;
 		sobv.BufferLocation = rr->resource->GetGPUVirtualAddress();
@@ -186,9 +186,9 @@ namespace Netcode::Graphics::DX12 {
 		commandList->SOSetTargets(0, 1, &sobv);
 	}
 
-	void GraphicsContext::SetStreamOutputFilledSize(Ref<GpuResource> handle, uint64_t byteOffset)
+	void GraphicsContext::SetStreamOutputFilledSize(Ptr<GpuResource> handle, uint64_t byteOffset)
 	{
-		Ref<DX12::Resource> rr = std::dynamic_pointer_cast<DX12::Resource>(handle);
+		DX12::Resource * rr = static_cast<DX12::Resource *>(handle);
 
 		streamOutput_FilledSizeLocation = rr->resource->GetGPUVirtualAddress() + ((byteOffset + 3ull) & ~(3ull));
 	}
@@ -256,21 +256,21 @@ namespace Netcode::Graphics::DX12 {
 		commandList->RSSetScissorRects(1, &defaultScissorRect);
 	}
 
-	void GraphicsContext::SetRenderTargets(std::nullptr_t rt, Ref<Netcode::ResourceViews> ds)
+	void GraphicsContext::SetRenderTargets(std::nullptr_t rt, Ptr<Netcode::ResourceViews> ds)
 	{
-		SetRenderTargets(Ref<ResourceViews>{}, std::move(ds));
+		SetRenderTargets(Ptr<ResourceViews>{}, std::move(ds));
 	}
 
-	void GraphicsContext::SetRenderTargets(Ref<Netcode::ResourceViews> rt, std::nullptr_t ds)
+	void GraphicsContext::SetRenderTargets(Ptr<Netcode::ResourceViews> rt, std::nullptr_t ds)
 	{
-		SetRenderTargets(std::move(rt), Ref<ResourceViews>{});
+		SetRenderTargets(std::move(rt), Ptr<ResourceViews>{});
 	}
 
-	void GraphicsContext::SetRenderTargets(Ref<Netcode::ResourceViews> renderTargets, Ref<Netcode::ResourceViews> depthStencil)
+	void GraphicsContext::SetRenderTargets(Ptr<Netcode::ResourceViews> renderTargets, Ptr<Netcode::ResourceViews> depthStencil)
 	{
 		uint32_t numDescriptors;
 		if(renderTargets != nullptr) {
-			Ref<DX12::ResourceViewsImpl> rtvs = std::dynamic_pointer_cast<DX12::ResourceViewsImpl>(renderTargets);
+			DX12::ResourceViewsImpl* rtvs = static_cast<DX12::ResourceViewsImpl*>(renderTargets);
 			numDescriptors = rtvs->GetNumDescriptors();
 			for(uint32_t i = 0; i < numDescriptors; ++i) {
 				currentlyBoundRenderTargets[i] = rtvs->GetCpuVisibleCpuHandle(i);
@@ -281,7 +281,7 @@ namespace Netcode::Graphics::DX12 {
 		}
 
 		if(depthStencil != nullptr) {
-			Ref<DX12::ResourceViewsImpl> dsv = std::dynamic_pointer_cast<DX12::ResourceViewsImpl>(depthStencil);
+			DX12::ResourceViewsImpl* dsv = static_cast<DX12::ResourceViewsImpl*>(depthStencil);
 			currentlyBoundDepth = dsv->GetCpuVisibleCpuHandle(0);
 		} else {
 			currentlyBoundDepth = backbufferDepth;
@@ -290,12 +290,12 @@ namespace Netcode::Graphics::DX12 {
 		commandList->OMSetRenderTargets(numDescriptors, currentlyBoundRenderTargets, FALSE, &currentlyBoundDepth);
 	}
 
-	void GraphicsContext::SetRenderTargets(std::initializer_list<Ref<GpuResource>> handles, Ref<GpuResource> depthStencil)
+	void GraphicsContext::SetRenderTargets(std::initializer_list<Ptr<GpuResource>> handles, Ptr<GpuResource> depthStencil)
 	{
 		uint8_t k = 0;
-		for(const Ref<GpuResource> & rtHandle : handles) {
+		for(const Ptr<GpuResource> & rtHandle : handles) {
 			ASSERT(rtHandle != nullptr, "SetRenderTargets(...): handles array must not contain null handle");
-			Ref<DX12::Resource> rr = std::dynamic_pointer_cast<DX12::Resource>(rtHandle);
+			Ptr<DX12::Resource> rr = static_cast<DX12::Resource*>(rtHandle);
 
 			currentlyBoundRenderTargets[k++] = descHeaps->CreateRTV(rr);
 		}
@@ -303,7 +303,7 @@ namespace Netcode::Graphics::DX12 {
 		if(depthStencil == nullptr) {
 			currentlyBoundDepth = backbufferDepth;
 		} else {
-			Ref<DX12::Resource> rr = std::dynamic_pointer_cast<DX12::Resource>(depthStencil);
+			Ptr<DX12::Resource> rr = static_cast<DX12::Resource*>(depthStencil);
 			currentlyBoundDepth = descHeaps->CreateDSV(rr);
 		}
 
@@ -312,46 +312,46 @@ namespace Netcode::Graphics::DX12 {
 
 	void GraphicsContext::SetRenderTargets(std::nullptr_t rt, std::nullptr_t ds)
 	{
-		SetRenderTargets(Ref<GpuResource>{}, Ref<GpuResource>{});
+		SetRenderTargets(Ptr<GpuResource>{}, Ptr<GpuResource>{});
 	}
 
-	void GraphicsContext::SetRenderTargets(std::nullptr_t rt, Ref<GpuResource> ds)
+	void GraphicsContext::SetRenderTargets(std::nullptr_t rt, Ptr<GpuResource> ds)
 	{
-		SetRenderTargets(Ref<GpuResource>{}, std::move(ds));
+		SetRenderTargets(Ptr<GpuResource>{}, std::move(ds));
 	}
 
-	void GraphicsContext::SetRenderTargets(Ref<GpuResource> rt, std::nullptr_t ds)
+	void GraphicsContext::SetRenderTargets(Ptr<GpuResource> rt, std::nullptr_t ds)
 	{
-		SetRenderTargets(std::move(rt), Ref<GpuResource>{});
+		SetRenderTargets(std::move(rt), Ptr<GpuResource>{});
 	}
 
-	void GraphicsContext::SetRenderTargets(Ref<GpuResource> handle, Ref<GpuResource> depthStencil)
+	void GraphicsContext::SetRenderTargets(Ptr<GpuResource> handle, Ptr<GpuResource> depthStencil)
 	{
 		if(handle == nullptr) {
 			currentlyBoundRenderTargets[0] = backbuffer;
 		} else {
-			Ref<DX12::Resource> rr = std::dynamic_pointer_cast<DX12::Resource>(handle);
+			Ptr<DX12::Resource> rr = static_cast<DX12::Resource*>(handle);
 			currentlyBoundRenderTargets[0] = descHeaps->CreateRTV(rr);
 		}
 
 		if(depthStencil == nullptr) {
 			currentlyBoundDepth = backbufferDepth;
 		} else {
-			Ref<DX12::Resource> rr = std::dynamic_pointer_cast<DX12::Resource>(depthStencil);
+			Ptr<DX12::Resource> rr = static_cast<DX12::Resource*>(depthStencil);
 			currentlyBoundDepth = descHeaps->CreateDSV(rr);
 		}
 
 		commandList->OMSetRenderTargets(1, currentlyBoundRenderTargets, FALSE, &currentlyBoundDepth);
 	}
 
-	void GraphicsContext::SetShaderResources(int slot, std::initializer_list<Ref<GpuResource>> shaderResourceHandles) {
+	void GraphicsContext::SetShaderResources(int slot, std::initializer_list<Ptr<GpuResource>> shaderResourceHandles) {
 		
 
 		D3D12_GPU_DESCRIPTOR_HANDLE descriptor;
 		descriptor.ptr = 0;
 		
-		for(const Ref<GpuResource> & i : shaderResourceHandles) {
-			Ref<DX12::Resource> rr = std::dynamic_pointer_cast<DX12::Resource>(i);
+		for(const Ptr<GpuResource> & i : shaderResourceHandles) {
+			Ptr<DX12::Resource> rr = static_cast<DX12::Resource*>(i);
 			if(descriptor.ptr == 0) {
 				descriptor = descHeaps->CreateSRV(rr);
 			} else descHeaps->CreateSRV(rr);
@@ -360,24 +360,24 @@ namespace Netcode::Graphics::DX12 {
 		commandList->SetGraphicsRootDescriptorTable(slot, descriptor);
 	}
 
-	void GraphicsContext::SetShaderResources(int slot, Ref<Netcode::ResourceViews> resourceView)
+	void GraphicsContext::SetShaderResources(int slot, Ptr<Netcode::ResourceViews> resourceView)
 	{
-		SetShaderResources(slot, resourceView, 0);
+		SetShaderResources(slot, std::move(resourceView), 0);
 	}
 
-	void GraphicsContext::SetShaderResources(int slot, Ref<Netcode::ResourceViews> resourceView, int descriptorOffset)
+	void GraphicsContext::SetShaderResources(int slot, Ptr<Netcode::ResourceViews> resourceView, int descriptorOffset)
 	{
 		if(resourceView == nullptr) {
 			return;
 		}
 		
-		Ref<DX12::ResourceViewsImpl> srv = std::dynamic_pointer_cast<DX12::ResourceViewsImpl>(resourceView);
+		DX12::ResourceViewsImpl* srv = static_cast<DX12::ResourceViewsImpl*>(resourceView);
 
 		commandList->SetGraphicsRootDescriptorTable(slot, srv->GetGpuHandle(descriptorOffset));
 	}
 
-	void GraphicsContext::SetShaderResources(int slot, Ref<GpuResource> nonTextureResource) {
-		Ref<DX12::Resource> resource = std::dynamic_pointer_cast<DX12::Resource>(nonTextureResource);
+	void GraphicsContext::SetShaderResources(int slot, Ptr<GpuResource> nonTextureResource) {
+		DX12::Resource* resource = static_cast<DX12::Resource*>(nonTextureResource);
 
 		commandList->SetGraphicsRootShaderResourceView(slot, resource->resource->GetGPUVirtualAddress());
 	}
@@ -391,9 +391,9 @@ namespace Netcode::Graphics::DX12 {
 		commandList->SetGraphicsRoot32BitConstants(slot, num32bitConstants, srcData, offsetIn32BitConstants);
 	}
 
-	void GraphicsContext::SetConstantBuffer(int slot, Ref<GpuResource> cbufferHandle)
+	void GraphicsContext::SetConstantBuffer(int slot, Ptr<GpuResource> cbufferHandle)
 	{
-		Ref<DX12::Resource> rr = std::dynamic_pointer_cast<DX12::Resource>(cbufferHandle);
+		DX12::Resource * rr = static_cast<DX12::Resource *>(cbufferHandle);
 
 		commandList->SetGraphicsRootConstantBufferView(slot, rr->resource->GetGPUVirtualAddress());
 	}
@@ -413,15 +413,15 @@ namespace Netcode::Graphics::DX12 {
 		return handle;
 	}
 
-	void GraphicsContext::CopyBufferRegion(Ref<GpuResource> dstResource, Ref<GpuResource> srcResource, size_t sizeInBytes)
+	void GraphicsContext::CopyBufferRegion(Ptr<GpuResource> dstResource, Ptr<GpuResource> srcResource, size_t sizeInBytes)
 	{
-		CopyBufferRegion(dstResource, 0, srcResource, 0, sizeInBytes);
+		CopyBufferRegion(std::move(dstResource), 0, std::move(srcResource), 0, sizeInBytes);
 	}
 
-	void GraphicsContext::CopyBufferRegion(Ref<GpuResource> dstResource, size_t dstOffset, Ref<GpuResource> srcResource, size_t srcOffset, size_t sizeInBytes)
+	void GraphicsContext::CopyBufferRegion(Ptr<GpuResource> dstResource, size_t dstOffset, Ptr<GpuResource> srcResource, size_t srcOffset, size_t sizeInBytes)
 	{
-		Ref<DX12::Resource> rr0 = std::dynamic_pointer_cast<DX12::Resource>(dstResource);
-		Ref<DX12::Resource> rr1 = std::dynamic_pointer_cast<DX12::Resource>(srcResource);
+		DX12::Resource * rr0 = static_cast<DX12::Resource *>(dstResource);
+		DX12::Resource * rr1 = static_cast<DX12::Resource *>(srcResource);
 
 		commandList->CopyBufferRegion(rr0->resource.Get(), dstOffset, rr1->resource.Get(), srcOffset, sizeInBytes);
 	}
@@ -437,22 +437,22 @@ namespace Netcode::Graphics::DX12 {
 		ResetStreamOutput();
 	}
 
-	void ComputeContext::SetRootSignature(Ref<Netcode::RootSignature> rs)
+	void ComputeContext::SetRootSignature(Ptr<Netcode::RootSignature> rs)
 	{
 		commandList->SetComputeRootSignature(reinterpret_cast<ID3D12RootSignature *>(rs->GetImplDetail()));
 	}
 
-	void ComputeContext::SetPipelineState(Ref<Netcode::PipelineState> pso)
+	void ComputeContext::SetPipelineState(Ptr<Netcode::PipelineState> pso)
 	{
 		commandList->SetPipelineState(reinterpret_cast<ID3D12PipelineState *>(pso->GetImplDetail()));
 	}
 
-	void ComputeContext::SetVertexBuffer(Ref<GpuResource> handle)
+	void ComputeContext::SetVertexBuffer(Ptr<GpuResource> handle)
 	{
 		Netcode::NotImplementedAssertion("");
 	}
 
-	void ComputeContext::SetIndexBuffer(Ref<GpuResource> handle)
+	void ComputeContext::SetIndexBuffer(Ptr<GpuResource> handle)
 	{
 		Netcode::NotImplementedAssertion("");
 	}
@@ -487,7 +487,7 @@ namespace Netcode::Graphics::DX12 {
 		Netcode::NotImplementedAssertion("");
 	}
 
-	void ComputeContext::ClearUnorderedAccessViewUint(Ref<GpuResource> handle, const UInt4 & values)
+	void ComputeContext::ClearUnorderedAccessViewUint(Ptr<GpuResource> handle, const UInt4 & values)
 	{
 		Netcode::NotImplementedAssertion("");
 	}
@@ -517,12 +517,12 @@ namespace Netcode::Graphics::DX12 {
 		Netcode::NotImplementedAssertion("");
 	}
 
-	void ComputeContext::SetStreamOutput(Ref<GpuResource> handle)
+	void ComputeContext::SetStreamOutput(Ptr<GpuResource> handle)
 	{
 		Netcode::NotImplementedAssertion("");
 	}
 
-	void ComputeContext::SetStreamOutputFilledSize(Ref<GpuResource> handle, uint64_t byteOffset)
+	void ComputeContext::SetStreamOutputFilledSize(Ptr<GpuResource> handle, uint64_t byteOffset)
 	{
 		Netcode::NotImplementedAssertion("");
 	}
@@ -532,7 +532,7 @@ namespace Netcode::Graphics::DX12 {
 		Netcode::NotImplementedAssertion("");
 	}
 
-	void ComputeContext::SetRenderTargets(std::initializer_list<Ref<GpuResource>> handles, Ref<GpuResource> depthStencil)
+	void ComputeContext::SetRenderTargets(std::initializer_list<Ptr<GpuResource>> handles, Ptr<GpuResource> depthStencil)
 	{
 		Netcode::NotImplementedAssertion("");
 	}
@@ -578,7 +578,7 @@ namespace Netcode::Graphics::DX12 {
 		Netcode::NotImplementedAssertion("");
 	}
 
-	void ComputeContext::SetRenderTargets(Ref<GpuResource> renderTarget, Ref<GpuResource> depthStencil)
+	void ComputeContext::SetRenderTargets(Ptr<GpuResource> renderTarget, Ptr<GpuResource> depthStencil)
 	{
 		Netcode::NotImplementedAssertion("");
 	}
@@ -588,27 +588,27 @@ namespace Netcode::Graphics::DX12 {
 		Netcode::NotImplementedAssertion("");
 	}
 
-	void ComputeContext::SetRenderTargets(std::nullptr_t rt, Ref<Netcode::ResourceViews> ds)
+	void ComputeContext::SetRenderTargets(std::nullptr_t rt, Ptr<Netcode::ResourceViews> ds)
 	{
 		Netcode::NotImplementedAssertion("");
 	}
 
-	void ComputeContext::SetRenderTargets(Ref<Netcode::ResourceViews> rt, std::nullptr_t ds)
+	void ComputeContext::SetRenderTargets(Ptr<Netcode::ResourceViews> rt, std::nullptr_t ds)
 	{
 		Netcode::NotImplementedAssertion("");
 	}
 
-	void ComputeContext::SetRenderTargets(Ref<Netcode::ResourceViews> renderTargets, Ref<Netcode::ResourceViews> depthStencil)
+	void ComputeContext::SetRenderTargets(Ptr<Netcode::ResourceViews> renderTargets, Ptr<Netcode::ResourceViews> depthStencil)
 	{
 		Netcode::NotImplementedAssertion("");
 	}
 
-	void ComputeContext::SetRenderTargets(std::nullptr_t rt, Ref<GpuResource> ds)
+	void ComputeContext::SetRenderTargets(std::nullptr_t rt, Ptr<GpuResource> ds)
 	{
 		Netcode::NotImplementedAssertion("");
 	}
 
-	void ComputeContext::SetRenderTargets(Ref<GpuResource> rt, std::nullptr_t ds)
+	void ComputeContext::SetRenderTargets(Ptr<GpuResource> rt, std::nullptr_t ds)
 	{
 		Netcode::NotImplementedAssertion("");
 	}
@@ -623,12 +623,12 @@ namespace Netcode::Graphics::DX12 {
 		commandList->SetComputeRoot32BitConstants(slot, num32bitConstants, srcData, offsetIn32BitConstants);
 	}
 
-	void ComputeContext::SetShaderResources(int slot, std::initializer_list<Ref<GpuResource>> shaderResourceHandles) {
+	void ComputeContext::SetShaderResources(int slot, std::initializer_list<Ptr<GpuResource>> shaderResourceHandles) {
 		D3D12_GPU_DESCRIPTOR_HANDLE descriptor;
 		descriptor.ptr = 0;
 
-		for(const Ref<GpuResource> & i : shaderResourceHandles) {
-			Ref<DX12::Resource> rr = std::dynamic_pointer_cast<DX12::Resource>(i);
+		for(const Ptr<GpuResource> & i : shaderResourceHandles) {
+			Ptr<DX12::Resource> rr = static_cast<DX12::Resource*>(i);
 			if(descriptor.ptr == 0) {
 				descriptor = descHeaps->CreateSRV(rr);
 			} else descHeaps->CreateSRV(rr);
@@ -637,27 +637,27 @@ namespace Netcode::Graphics::DX12 {
 		commandList->SetComputeRootDescriptorTable(slot, descriptor);
 	}
 
-	void ComputeContext::SetShaderResources(int slot, Ref<Netcode::ResourceViews> resourceView)
+	void ComputeContext::SetShaderResources(int slot, Ptr<Netcode::ResourceViews> resourceView)
 	{
 		SetShaderResources(slot, resourceView, 0);
 	}
 
-	void ComputeContext::SetShaderResources(int slot, Ref<Netcode::ResourceViews> resourceView, int descriptorOffset)
+	void ComputeContext::SetShaderResources(int slot, Ptr<Netcode::ResourceViews> resourceView, int descriptorOffset)
 	{
-		Ref<DX12::ResourceViewsImpl> srv = std::dynamic_pointer_cast<DX12::ResourceViewsImpl>(resourceView);
+		DX12::ResourceViewsImpl* srv = static_cast<DX12::ResourceViewsImpl*>(resourceView);
 
 		commandList->SetComputeRootDescriptorTable(slot, srv->GetGpuHandle(descriptorOffset));
 	}
 
-	void ComputeContext::SetShaderResources(int slot, Ref<GpuResource> nonTextureResource) {
-		Ref<DX12::Resource> resource = std::dynamic_pointer_cast<DX12::Resource>(nonTextureResource);
+	void ComputeContext::SetShaderResources(int slot, Ptr<GpuResource> nonTextureResource) {
+		DX12::Resource* resource = static_cast<DX12::Resource*>(nonTextureResource);
 
 		commandList->SetComputeRootShaderResourceView(slot, resource->resource->GetGPUVirtualAddress());
 	}
 
-	void ComputeContext::SetConstantBuffer(int slot, Ref<GpuResource> cbufferHandle)
+	void ComputeContext::SetConstantBuffer(int slot, Ptr<GpuResource> cbufferHandle)
 	{
-		Ref<DX12::Resource> rr = std::dynamic_pointer_cast<DX12::Resource>(cbufferHandle);
+		DX12::Resource* rr = static_cast<DX12::Resource*>(cbufferHandle);
 
 		commandList->SetComputeRootConstantBufferView(slot, rr->resource->GetGPUVirtualAddress());
 	}
@@ -677,15 +677,15 @@ namespace Netcode::Graphics::DX12 {
 		return handle;
 	}
 
-	void ComputeContext::CopyBufferRegion(Ref<GpuResource> dstResource, Ref<GpuResource> srcResource, size_t sizeInBytes)
+	void ComputeContext::CopyBufferRegion(Ptr<GpuResource> dstResource, Ptr<GpuResource> srcResource, size_t sizeInBytes)
 	{
 		CopyBufferRegion(dstResource, 0, srcResource, 0, sizeInBytes);
 	}
 
-	void ComputeContext::CopyBufferRegion(Ref<GpuResource> dstResource, size_t dstOffset, Ref<GpuResource> srcResource, size_t srcOffset, size_t sizeInBytes)
+	void ComputeContext::CopyBufferRegion(Ptr<GpuResource> dstResource, size_t dstOffset, Ptr<GpuResource> srcResource, size_t srcOffset, size_t sizeInBytes)
 	{
-		Ref<DX12::Resource> rr0 = std::dynamic_pointer_cast<DX12::Resource>(dstResource);
-		Ref<DX12::Resource> rr1 = std::dynamic_pointer_cast<DX12::Resource>(srcResource);
+		DX12::Resource* rr0 = static_cast<DX12::Resource*>(dstResource);
+		DX12::Resource* rr1 = static_cast<DX12::Resource*>(srcResource);
 
 		commandList->CopyBufferRegion(rr0->resource.Get(), dstOffset, rr1->resource.Get(), srcOffset, sizeInBytes);
 	}

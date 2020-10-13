@@ -47,6 +47,10 @@ namespace Netcode::UI {
         Vector2 cSize = contentSize;
         Vector2 mSize = MaxSize();
 
+    	if(cSize.AllZero()) {
+            return;
+    	}
+
     	if(Sizing() == SizingType::DERIVED) {
             size = mSize.Min(cSize);
 

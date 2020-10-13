@@ -472,7 +472,7 @@ namespace Netcode::UI {
 
     void Control::Update(float dt)
     {
-        animations.Update(dt);
+        animations.Update(this, dt);
 
         if(animations.Empty() && !OnAnimationsFinished.Empty()) {
             OnAnimationsFinished.Invoke(this);
@@ -578,7 +578,9 @@ namespace Netcode::UI {
 
     void Control::Render(Ptr<SpriteBatch> batch) {
         for(auto & child : children) {
-            child->Render(batch);
+        	if(child->Enabled()) {
+                child->Render(batch);
+        	}
         }
     }
 

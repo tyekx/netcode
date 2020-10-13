@@ -135,9 +135,9 @@ public:
 	Advance simulation, update modules
 	*/
 	virtual void Run() override {
-		double targetFrametime = 1.0 / 144.0;
+		/*double targetFrametime = 1.0 / 144.0;
 
-		Netcode::Duration d = std::chrono::duration_cast<Netcode::Duration>(std::chrono::duration<double>(targetFrametime));
+		Netcode::Duration d = std::chrono::duration_cast<Netcode::Duration>(std::chrono::duration<double>(targetFrametime));*/
 		
 		while(window->KeepRunning()) {
 			Netcode::Timestamp st = Netcode::SystemClock::LocalNow();
@@ -155,13 +155,6 @@ public:
 			mainThreadDispatcher.Run();
 
 			window->CompleteFrame();
-
-			Netcode::Duration frameTime = Netcode::SystemClock::LocalNow() - st;
-			Netcode::Duration sleepTime = d - frameTime;
-			
-			if(sleepTime > std::chrono::microseconds(500)) {
-				Netcode::SleepFor(sleepTime);
-			}
 
 			fpsCounter.Update(Netcode::SystemClock::LocalNow() - st);
 		}

@@ -111,10 +111,10 @@ namespace Netcode::Graphics {
 	public:
 		virtual ~IRenderContext() = default;
 
-		virtual void SetRootSignature(Ref<RootSignature> rs) = 0;
-		virtual void SetPipelineState(Ref<PipelineState> pso) = 0;
-		virtual void SetVertexBuffer(Ref<GpuResource> handle) = 0;
-		virtual void SetIndexBuffer(Ref<GpuResource> handle) = 0;
+		virtual void SetRootSignature(Ptr<RootSignature> rs) = 0;
+		virtual void SetPipelineState(Ptr<PipelineState> pso) = 0;
+		virtual void SetVertexBuffer(Ptr<GpuResource> handle) = 0;
+		virtual void SetIndexBuffer(Ptr<GpuResource> handle) = 0;
 		virtual void DrawIndexed(uint32_t indexCount) = 0;
 		virtual void DrawIndexed(uint32_t indexCount, uint32_t vertexOffset) = 0;
 		virtual void Draw(uint32_t vertexCount) = 0;
@@ -123,19 +123,19 @@ namespace Netcode::Graphics {
 
 		virtual void SetPrimitiveTopology(PrimitiveTopology topology) = 0;
 
-		virtual void ClearUnorderedAccessViewUint(Ref<GpuResource> handle, const UInt4 & values) = 0;
+		virtual void ClearUnorderedAccessViewUint(Ptr<GpuResource> handle, const UInt4 & values) = 0;
 		virtual void ClearRenderTarget(uint8_t idx) = 0;
 		virtual void ClearRenderTarget(uint8_t idx, const float * clearColor) = 0;
 		virtual void ClearDepthOnly() = 0;
 		virtual void ClearStencilOnly() = 0;
 		virtual void ClearDepthStencil() = 0;
 
-		virtual void SetStreamOutput(Ref<GpuResource> handle) = 0;
+		virtual void SetStreamOutput(Ptr<GpuResource> handle) = 0;
 
-		virtual void SetStreamOutputFilledSize(Ref<GpuResource> handle, uint64_t byteOffset) = 0;
+		virtual void SetStreamOutputFilledSize(Ptr<GpuResource> handle, uint64_t byteOffset) = 0;
 		virtual void ResetStreamOutput() = 0;
 
-		virtual void SetRenderTargets(std::initializer_list<Ref<GpuResource>> handles, Ref<GpuResource> depthStencil) = 0;
+		virtual void SetRenderTargets(std::initializer_list<Ptr<GpuResource>> handles, Ptr<GpuResource> depthStencil) = 0;
 		
 		virtual void SetStencilReference(uint8_t stencilValue) = 0;
 		
@@ -154,28 +154,28 @@ namespace Netcode::Graphics {
 		// 0 means backbuffer RT/Depth
 		virtual void SetRenderTargets(std::nullptr_t rt, std::nullptr_t ds) = 0;
 
-		virtual void SetRenderTargets(std::nullptr_t rt, Ref<ResourceViews> ds) = 0;
-		virtual void SetRenderTargets(Ref<ResourceViews> rt, std::nullptr_t ds) = 0;
-		virtual void SetRenderTargets(Ref<ResourceViews> renderTargets, Ref<ResourceViews> depthStencil) = 0;
-		virtual void SetRenderTargets(std::nullptr_t rt, Ref<GpuResource> ds) = 0;
-		virtual void SetRenderTargets(Ref<GpuResource> rt, std::nullptr_t ds) = 0;
-		virtual void SetRenderTargets(Ref<GpuResource> renderTarget, Ref<GpuResource> depthStencil) = 0;
+		virtual void SetRenderTargets(std::nullptr_t rt, Ptr<ResourceViews> ds) = 0;
+		virtual void SetRenderTargets(Ptr<ResourceViews> rt, std::nullptr_t ds) = 0;
+		virtual void SetRenderTargets(Ptr<ResourceViews> renderTargets, Ptr<ResourceViews> depthStencil) = 0;
+		virtual void SetRenderTargets(std::nullptr_t rt, Ptr<GpuResource> ds) = 0;
+		virtual void SetRenderTargets(Ptr<GpuResource> rt, std::nullptr_t ds) = 0;
+		virtual void SetRenderTargets(Ptr<GpuResource> renderTarget, Ptr<GpuResource> depthStencil) = 0;
 
 		// for frame-constant constant buffers only that are allocated with CreateConstantBuffer
 		virtual void SetRootConstants(int slot, const void * srcData, uint32_t numConstants) = 0;
 		virtual void SetRootConstants(int slot, const void * srcData, uint32_t num32bitConstants, uint32_t offsetIn32BitConstants) = 0;
-		virtual void SetConstantBuffer(int slot, Ref<GpuResource> cbufferHandle) = 0;
+		virtual void SetConstantBuffer(int slot, Ptr<GpuResource> cbufferHandle) = 0;
 		virtual void SetConstants(int slot, uint64_t constantHandle) = 0;
 		virtual uint64_t SetConstants(int slot, const void * srcData, size_t srcDataSizeInBytes) = 0;
-		virtual void SetShaderResources(int slot, std::initializer_list<Ref<GpuResource>> shaderResourceHandles) = 0;
-		virtual void SetShaderResources(int slot, Ref<ResourceViews> resourceView) = 0;
-		virtual void SetShaderResources(int slot, Ref<ResourceViews> resourceView, int descriptorOffset) = 0;
-		virtual void SetShaderResources(int slot, Ref<GpuResource> nonTextureResource) = 0;
-		virtual void CopyBufferRegion(Ref<GpuResource> dstResource, Ref<GpuResource> srcResource, size_t sizeInBytes) = 0;
-		virtual void CopyBufferRegion(Ref<GpuResource> dstResource, size_t dstOffset, Ref<GpuResource> srcResource, size_t srcOffset, size_t sizeInBytes) = 0;
+		virtual void SetShaderResources(int slot, std::initializer_list<Ptr<GpuResource>> shaderResourceHandles) = 0;
+		virtual void SetShaderResources(int slot, Ptr<ResourceViews> resourceView) = 0;
+		virtual void SetShaderResources(int slot, Ptr<ResourceViews> resourceView, int descriptorOffset) = 0;
+		virtual void SetShaderResources(int slot, Ptr<GpuResource> nonTextureResource) = 0;
+		virtual void CopyBufferRegion(Ptr<GpuResource> dstResource, Ptr<GpuResource> srcResource, size_t sizeInBytes) = 0;
+		virtual void CopyBufferRegion(Ptr<GpuResource> dstResource, size_t dstOffset, Ptr<GpuResource> srcResource, size_t srcOffset, size_t sizeInBytes) = 0;
 
-		virtual void UnorderedAccessBarrier(Ref<GpuResource> handle) = 0;
-		virtual void ResourceBarrier(Ref<GpuResource> handle, ResourceStates before, ResourceStates after) = 0;
+		virtual void UnorderedAccessBarrier(Ptr<GpuResource> handle) = 0;
+		virtual void ResourceBarrier(Ptr<GpuResource> handle, ResourceStates before, ResourceStates after) = 0;
 
 		virtual void FlushResourceBarriers() = 0;
 		virtual void BeginPass() = 0;

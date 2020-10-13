@@ -19,7 +19,7 @@ namespace Netcode::UI {
 
 		panel->Size(Netcode::Float2{ 1.0f, 26.0f });
 		panel->BackgroundColor(Netcode::Float4::One);
-		panel->AddAnimation(MakeAnimation(panel.get(),
+		panel->AddAnimation(MakeAnimation(
 			&Panel::Opacity,
 			&Panel::Opacity,
 			Interpolator<float>{ 0.0f, 1.0f },

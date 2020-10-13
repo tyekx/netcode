@@ -14,7 +14,7 @@ namespace Netcode {
 
 	struct SpriteDesc {
 		BackgroundType type;
-		Ref<ResourceViews> texture;
+		Ptr<ResourceViews> texture;
 		UInt2 textureSize;
 		Float4 color;
 		Rect sourceRect;
@@ -25,10 +25,10 @@ namespace Netcode {
 
 		SpriteDesc();
 		SpriteDesc(const Float4 & color);
-		SpriteDesc(const Ref<ResourceViews> & texture, const UInt2 & textureSize);
-		SpriteDesc(const Ref<ResourceViews> & texture, const UInt2 & textureSize, const Float4 & albedoColor);
-		SpriteDesc(const Ref<ResourceViews> & texture, const UInt2 & textureSize, const Rect & sourceRect);
-		SpriteDesc(const Ref<ResourceViews> & texture, const UInt2 & textureSize, const Rect & sourceRect, const Float4 & albedoColor);
+		SpriteDesc(Ptr<ResourceViews> texture, const UInt2 & textureSize);
+		SpriteDesc(Ptr<ResourceViews> texture, const UInt2 & textureSize, const Float4 & albedoColor);
+		SpriteDesc(Ptr<ResourceViews> texture, const UInt2 & textureSize, const Rect & sourceRect);
+		SpriteDesc(Ptr<ResourceViews> texture, const UInt2 & textureSize, const Rect & sourceRect, const Float4 & albedoColor);
 	};
 
 }

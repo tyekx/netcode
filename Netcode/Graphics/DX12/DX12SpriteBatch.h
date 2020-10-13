@@ -82,10 +82,11 @@ namespace Netcode::Graphics::DX12
 
         uint32_t mSpriteQueueCount;
         uint32_t mSpriteQueueArraySize;
+    	// write only pointer
+        PCT_Vertex * dstVertexBuffer;
 
         std::vector<SpriteInfo const *> mSortedSprites;
 
-        SpriteSortMode mSortMode;
         Netcode::Matrix mTransformMatrix;
 
         D3D12_GPU_VIRTUAL_ADDRESS cbufferAddr;
@@ -94,6 +95,7 @@ namespace Netcode::Graphics::DX12
         uint32_t mVertexPageSize;
         uint32_t mSpriteCount;
 
+        SpriteSortMode mSortMode;
         bool mInBeginEndPair;
         bool firstDraw;
 
@@ -161,7 +163,7 @@ namespace Netcode::Graphics::DX12
         void SortSprites();
         void GrowSortedSprites();
 
-        void NC_MATH_CALLCONV RenderBatch(Ref<Netcode::ResourceViews> texture, Vector2 textureSize, const SpriteInfo * const * sprites, uint32_t count);
+        void NC_MATH_CALLCONV RenderBatch(Ptr<Netcode::ResourceViews> texture, Vector2 textureSize, const SpriteInfo * const * sprites, uint32_t count);
 
         static void NC_MATH_CALLCONV RenderSprite(const SpriteInfo * sprite, PCT_Vertex * vertices, Vector2 textureSize, Vector2 inverseTextureSize);
 

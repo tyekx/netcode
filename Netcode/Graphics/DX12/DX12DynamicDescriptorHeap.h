@@ -48,15 +48,15 @@ namespace Netcode::Graphics::DX12 {
 
 		DynamicDescriptorHeap(com_ptr<ID3D12Device> dev);
 
-		std::tuple<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> CreateBufferUAV(Ref<DX12::Resource> resource);
+		std::tuple<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> CreateBufferUAV(Ptr<DX12::Resource> resource);
 
-		D3D12_GPU_DESCRIPTOR_HANDLE CreateSRV(Ref<DX12::Resource> resource);
+		D3D12_GPU_DESCRIPTOR_HANDLE CreateSRV(Ptr<DX12::Resource> resource);
 
-		D3D12_GPU_DESCRIPTOR_HANDLE CreateCBV(Ref<DX12::Resource> resource);
+		D3D12_GPU_DESCRIPTOR_HANDLE CreateCBV(Ptr<DX12::Resource> resource);
 
-		D3D12_CPU_DESCRIPTOR_HANDLE CreateRTV(Ref<DX12::Resource> resource);
+		D3D12_CPU_DESCRIPTOR_HANDLE CreateRTV(Ptr<DX12::Resource> resource);
 
-		D3D12_CPU_DESCRIPTOR_HANDLE CreateDSV(Ref<DX12::Resource> resource);
+		D3D12_CPU_DESCRIPTOR_HANDLE CreateDSV(Ptr<DX12::Resource> resource);
 
 		Ref<DX12::ResourceViewsImpl> CreatePermanentSRV(uint32_t numDescriptors);
 

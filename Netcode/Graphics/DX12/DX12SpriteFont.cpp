@@ -288,7 +288,7 @@ namespace Netcode::Graphics::DX12 {
 				static_cast<float>(glyph->Subrect.bottom - glyph->Subrect.top)
 			};
 
-			spriteBatch->DrawSprite(SpriteDesc{ shaderResourceView, textureSize, glyph->Subrect, color }, 
+			spriteBatch->DrawSprite(SpriteDesc{ shaderResourceView.get(), textureSize, glyph->Subrect, color }, 
 				position, size, offsetValue, rotation, layerDepth);
 		});
 	}
@@ -326,20 +326,17 @@ namespace Netcode::Graphics::DX12 {
 
 	const Glyph * SpriteFontImpl::FindGlyph(wchar_t character) const
 	{
-		auto glyph = std::lower_bound(glyphs.begin(), glyphs.end(), character);
+		if(character < 32 || character > 127) {
+			if(defaultGlyph)
+			{
+				return defaultGlyph;
+			}
 
-		if(glyph != glyphs.end() && glyph->Character == character)
-		{
-			return &(*glyph);
+			ASSERT(false, "ERROR: SpriteFont encountered a character not in the font (%u, %C), and no default glyph was provided\n", character, character);
+			return nullptr;
+		} else {
+			return glyphs.data() + (character - 32);
 		}
-
-		if(defaultGlyph)
-		{
-			return defaultGlyph;
-		}
-
-		ASSERT(false, "ERROR: SpriteFont encountered a character not in the font (%u, %C), and no default glyph was provided\n", character, character);
-		return nullptr;
 	}
 
 	UInt2 SpriteFontImpl::GetSpriteSheetSize() const

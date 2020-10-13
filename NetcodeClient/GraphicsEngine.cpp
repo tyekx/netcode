@@ -533,18 +533,18 @@ void GraphicsEngine::CreateSkinningPass(Ptr<Netcode::FrameGraphBuilder> frameGra
 	},
 		[&](IRenderContext * context) -> void {
 
-		context->SetRootSignature(skinningPass_RootSignature);
+		context->SetRootSignature(skinningPass_RootSignature.get());
 
 		for(Ref<AnimationSet> & animSet : skinningPass_Input) {
 			animSet->BindResources(context);
 
-			context->SetPipelineState(skinningInterpolatePass_PipelineState);
+			context->SetPipelineState(skinningInterpolatePass_PipelineState.get());
 			context->Dispatch(8, animSet->GetNumInstances(), 1);
 
-			context->UnorderedAccessBarrier(animSet->GetIntermediateResource());
+			context->UnorderedAccessBarrier(animSet->GetIntermediateResource().get());
 			context->FlushResourceBarriers();
 
-			context->SetPipelineState(skinningBlendPass_PipelineState);
+			context->SetPipelineState(skinningBlendPass_PipelineState.get());
 			context->Dispatch(1, animSet->GetNumInstances(), 1);
 
 			animSet->CopyResults(context);
@@ -566,10 +566,10 @@ void GraphicsEngine::CreateSkinnedGbufferPass(Ptr<Netcode::FrameGraphBuilder> fr
 
 	},
 		[&](IRenderContext * context) -> void {
-		context->SetRootSignature(skinnedGbufferPass_RootSignature);
-		context->SetPipelineState(skinnedGbufferPass_PipelineState);
+		context->SetRootSignature(skinnedGbufferPass_RootSignature.get());
+		context->SetPipelineState(skinnedGbufferPass_PipelineState.get());
 
-		context->SetRenderTargets(nullptr, gbufferPass_DepthStencilView);
+		context->SetRenderTargets(nullptr, gbufferPass_DepthStencilView.get());
 		context->SetScissorRect();
 		context->SetViewport();
 		context->ClearRenderTarget(0);
@@ -585,8 +585,8 @@ void GraphicsEngine::CreateSkinnedGbufferPass(Ptr<Netcode::FrameGraphBuilder> fr
 				SetPerFrameCb(context, 2);
 				context->SetConstants(3, *item.debugBoneData);
 				//context->SetShaderResources(3, item.boneData, item.boneDataOffset);
-				context->SetVertexBuffer(item.gbuffer.vertexBuffer);
-				context->SetIndexBuffer(item.gbuffer.indexBuffer);
+				context->SetVertexBuffer(item.gbuffer.vertexBuffer.get());
+				context->SetIndexBuffer(item.gbuffer.indexBuffer.get());
 				context->DrawIndexed(item.gbuffer.indexCount);
 			}
 		}
@@ -606,20 +606,20 @@ void GraphicsEngine::CreateGbufferPass(Ptr<Netcode::FrameGraphBuilder> frameGrap
 		bool isBound = false;
 		void * objectData = nullptr;
 
-		context->ResourceBarrier(gbufferPass_DepthBuffer, ResourceState::PIXEL_SHADER_RESOURCE | ResourceState::DEPTH_READ, ResourceState::DEPTH_WRITE);
+		context->ResourceBarrier(gbufferPass_DepthBuffer.get(), ResourceState::PIXEL_SHADER_RESOURCE | ResourceState::DEPTH_READ, ResourceState::DEPTH_WRITE);
 		context->FlushResourceBarriers();
 
-		context->SetRootSignature(gbufferPass_RootSignature);
-		context->SetPipelineState(gbufferPass_PipelineState);
-		context->SetRenderTargets(nullptr, gbufferPass_DepthStencilView);
+		context->SetRootSignature(gbufferPass_RootSignature.get());
+		context->SetPipelineState(gbufferPass_PipelineState.get());
+		context->SetRenderTargets(nullptr, gbufferPass_DepthStencilView.get());
 		context->ClearRenderTarget(0);
 		context->ClearDepthStencil();
 		context->SetScissorRect();
 		context->SetViewport();
 		context->SetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
 		context->SetStencilReference(0xFF);
-		context->SetShaderResources(4, lightingData_StructuredBuffer);
-		context->SetShaderResources(5, prefilteredSplitSumViews);
+		context->SetShaderResources(4, lightingData_StructuredBuffer.get());
+		context->SetShaderResources(5, prefilteredSplitSumViews.get());
 
 		for(RenderItem & item : gbufferPass_Input) {
 			if(item.material->GetType() != Netcode::MaterialType::BRDF) {
@@ -643,15 +643,15 @@ void GraphicsEngine::CreateGbufferPass(Ptr<Netcode::FrameGraphBuilder> frameGrap
 			auto srv = item.material->GetResourceView(0);
 
 			if(srv != nullptr) {
-				context->SetShaderResources(3, srv);
+				context->SetShaderResources(3, srv.get());
 			}
 
-			context->SetVertexBuffer(item.gbuffer.vertexBuffer);
-			context->SetIndexBuffer(item.gbuffer.indexBuffer);
+			context->SetVertexBuffer(item.gbuffer.vertexBuffer.get());
+			context->SetIndexBuffer(item.gbuffer.indexBuffer.get());
 			context->DrawIndexed(item.gbuffer.indexCount);
 		}
 
-		context->ResourceBarrier(gbufferPass_DepthBuffer, ResourceState::DEPTH_WRITE, ResourceState::PIXEL_SHADER_RESOURCE | ResourceState::DEPTH_READ);
+		context->ResourceBarrier(gbufferPass_DepthBuffer.get(), ResourceState::DEPTH_WRITE, ResourceState::PIXEL_SHADER_RESOURCE | ResourceState::DEPTH_READ);
 		context->FlushResourceBarriers();
 	});
 }
@@ -824,19 +824,19 @@ void GraphicsEngine::CreateBackgroundPass(Ptr<Netcode::FrameGraphBuilder> builde
 	},
 		[this](IRenderContext * ctx) -> void {
 
-		ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencilView);
+		ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencilView.get());
 		ctx->SetScissorRect();
 		ctx->SetViewport();
 		ctx->SetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
 		ctx->SetStencilReference(0);
 
-		ctx->SetRootSignature(envmapPass_RootSignature);
-		ctx->SetPipelineState(envmapPass_PipelineState);
+		ctx->SetRootSignature(envmapPass_RootSignature.get());
+		ctx->SetPipelineState(envmapPass_PipelineState.get());
 
 		SetPerFrameCb(ctx, 0);
-		ctx->SetShaderResources(1, prefilteredSplitSumViews);
+		ctx->SetShaderResources(1, prefilteredSplitSumViews.get());
 
-		ctx->SetVertexBuffer(fsQuad.vertexBuffer);
+		ctx->SetVertexBuffer(fsQuad.vertexBuffer.get());
 		ctx->Draw(fsQuad.vertexCount);
 	});
 }
@@ -847,7 +847,7 @@ void GraphicsEngine::CreateDebugPrimPass(Ptr<Netcode::FrameGraphBuilder> builder
 		graphics->debug->UploadResources(ctx);
 	},
 		[this](IRenderContext * ctx) -> void {
-		ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencilView);
+		ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencilView.get());
 		graphics->debug->Draw(ctx, perFrameData->ViewProj);
 	});
 }
@@ -908,7 +908,9 @@ void GraphicsEngine::CreateFrameGraph(Ptr<Netcode::FrameGraphBuilder> builder) {
 	CreateUIPass(builder);
 
 #if defined(NETCODE_DEBUG)
-	CreateDebugPrimPass(builder);
+	if(graphics->debug != nullptr) {
+		CreateDebugPrimPass(builder);
+	}
 #endif
 }
 
@@ -946,9 +948,9 @@ Ref<GpuResource> GraphicsEngine::PreIntegrateBrdf(Ptr<Netcode::FrameGraphBuilder
 	},
 		[this, SIZE, tempViews, resource](IRenderContext * ctx) -> void {
 
-		ctx->SetPipelineState(IBLPreIntegratePass_PipelineState);
-		ctx->SetRootSignature(IBLPreIntegratePass_RootSignature);
-		ctx->SetShaderResources(0, tempViews);
+		ctx->SetPipelineState(IBLPreIntegratePass_PipelineState.get());
+		ctx->SetRootSignature(IBLPreIntegratePass_RootSignature.get());
+		ctx->SetShaderResources(0, tempViews.get());
 		ctx->Dispatch(SIZE / 8, SIZE / 8, 1);
 
 	});
@@ -958,7 +960,7 @@ Ref<GpuResource> GraphicsEngine::PreIntegrateBrdf(Ptr<Netcode::FrameGraphBuilder
 		ctx->Reads(resource.get());
 	},
 		[resource](IRenderContext * ctx) -> void {
-		ctx->ResourceBarrier(resource, ResourceState::UNORDERED_ACCESS, ResourceState::PIXEL_SHADER_RESOURCE);
+		ctx->ResourceBarrier(resource.get(), ResourceState::UNORDERED_ACCESS, ResourceState::PIXEL_SHADER_RESOURCE);
 		ctx->FlushResourceBarriers();
 	});
 
@@ -1012,15 +1014,15 @@ Ref<GpuResource> GraphicsEngine::PrefilterEnvMap(Ptr<Netcode::FrameGraphBuilder>
 		ctx->Writes(texResource.get());
 	},
 		[this, srv, minWidth, mipCount](IRenderContext * ctx) -> void {
-		ctx->SetPipelineState(IBLPreFilterPass_PipelineState);
-		ctx->SetRootSignature(IBLPreFilterPass_RootSignature);
+		ctx->SetPipelineState(IBLPreFilterPass_PipelineState.get());
+		ctx->SetRootSignature(IBLPreFilterPass_RootSignature.get());
 
 		uint32_t groupSize = minWidth / 8;
 		uint32_t numMipLevels = mipCount;
 		ctx->SetRootConstants(2, &numMipLevels, 1, 0);
 		for(uint32_t i = 0; i < mipCount; i++) {
-			ctx->SetShaderResources(0, srv, static_cast<int>(i));
-			ctx->SetShaderResources(1, srv, static_cast<int>(mipCount));
+			ctx->SetShaderResources(0, srv.get(), static_cast<int>(i));
+			ctx->SetShaderResources(1, srv.get(), static_cast<int>(mipCount));
 			ctx->SetRootConstants(2, &i, 1, 1);
 			ctx->Dispatch(groupSize, groupSize, 1);
 			groupSize >>= 1;
@@ -1033,7 +1035,7 @@ Ref<GpuResource> GraphicsEngine::PrefilterEnvMap(Ptr<Netcode::FrameGraphBuilder>
 		ctx->Reads(texResource.get());
 	},
 		[=](IRenderContext * ctx) -> void {
-		ctx->ResourceBarrier(texResource, ResourceState::UNORDERED_ACCESS, ResourceState::PIXEL_SHADER_RESOURCE);
+		ctx->ResourceBarrier(texResource.get(), ResourceState::UNORDERED_ACCESS, ResourceState::PIXEL_SHADER_RESOURCE);
 		ctx->FlushResourceBarriers();
 	});
 

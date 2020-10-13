@@ -7,6 +7,7 @@
 #include <Netcode/Utility.h>
 #include <algorithm>
 #include <NetcodeFoundation/Exceptions.h>
+#include "DX12Resource.h"
 
 
 namespace Netcode::Graphics::DX12 {
@@ -79,12 +80,13 @@ SpriteBatchImpl::SpriteBatchImpl(const Netcode::Module::IGraphicsModule * graphi
 			mSpriteQueue{ nullptr },
 			mSpriteQueueCount{ 0 },
 			mSpriteQueueArraySize{ 0 },
-			mSortMode{ SpriteSortMode::SpriteSortMode_Deferred },
+			dstVertexBuffer{ nullptr },
 			mTransformMatrix{ },
 			cbufferAddr{},
 			cbuffer{},
 			mVertexPageSize{ 6 * 4 * MaxBatchSize * VerticesPerSprite },
 			mSpriteCount{ 0 },
+			mSortMode{ SpriteSortMode::SpriteSortMode_Deferred },
 			mInBeginEndPair{ false },
 			firstDraw{ true }
 	{
@@ -110,6 +112,11 @@ SpriteBatchImpl::SpriteBatchImpl(const Netcode::Module::IGraphicsModule * graphi
 			PrepareForRendering();
 		}
 
+		if(dstVertexBuffer == nullptr) {
+			CD3DX12_RANGE nullRange{ 0,0 };
+			static_cast<DX12::Resource *>(vertexBuffer.get())->resource->Map(0, &nullRange, reinterpret_cast<void **>(&dstVertexBuffer));
+		}
+	
 		mInBeginEndPair = true;
 		firstDraw = true;
 		recordScissorRect = Rect{ 0,0,0,0 };
@@ -126,17 +133,23 @@ SpriteBatchImpl::SpriteBatchImpl(const Netcode::Module::IGraphicsModule * graphi
 			FlushBatch();
 		}
 
+		if(dstVertexBuffer != nullptr) {
+			CD3DX12_RANGE nullRange{ 0,0 };
+			static_cast<DX12::Resource *>(vertexBuffer.get())->resource->Unmap(0, &nullRange);
+			dstVertexBuffer = nullptr;
+		}
+
 		mInBeginEndPair = false;
 	}
 
 	void SpriteBatchImpl::PrepareForRendering()
 	{
-		renderContext->SetRootSignature(rootSignature);
-		renderContext->SetPipelineState(pipelineState);
+		renderContext->SetRootSignature(rootSignature.get());
+		renderContext->SetPipelineState(pipelineState.get());
 		renderContext->SetViewport();
 		renderContext->SetScissorRect();
 		renderContext->SetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
-		renderContext->SetIndexBuffer(indexBufferRef);
+		renderContext->SetIndexBuffer(indexBufferRef.get());
 	}
 
 	// Sorts the array of queued sprites.
@@ -156,7 +169,7 @@ SpriteBatchImpl::SpriteBatchImpl(const Netcode::Module::IGraphicsModule * graphi
 					  mSortedSprites.begin() + static_cast<int>(mSpriteQueueCount),
 					  [](SpriteInfo const * x, SpriteInfo const * y) -> bool
 			{
-				return x->spriteDesc.texture.get() < y->spriteDesc.texture.get();
+				return x->spriteDesc.texture < y->spriteDesc.texture;
 			});
 			break;
 
@@ -194,7 +207,7 @@ SpriteBatchImpl::SpriteBatchImpl(const Netcode::Module::IGraphicsModule * graphi
 		SortSprites();
 
 		// Walk through the sorted sprite list, looking for adjacent entries that share a texture.
-		Ref<Netcode::ResourceViews> batchTexture;
+		Ptr<Netcode::ResourceViews> batchTexture;
 		Vector2 batchTextureSize = {};
 		BorderDesc batchBorderDesc;
 		SpriteDesc batchSpriteDesc;
@@ -205,7 +218,7 @@ SpriteBatchImpl::SpriteBatchImpl(const Netcode::Module::IGraphicsModule * graphi
 		{
 			const SpriteInfo * sprite = mSortedSprites[pos];
 
-			Ref<Netcode::ResourceViews> texture = sprite->spriteDesc.texture;
+			Ptr<Netcode::ResourceViews> texture = sprite->spriteDesc.texture;
 			Rect spr = sprite->scissorRect;
 			BorderDesc borderDesc = sprite->borderDesc;
 			SpriteDesc spriteDesc = sprite->spriteDesc;
@@ -249,9 +262,6 @@ SpriteBatchImpl::SpriteBatchImpl(const Netcode::Module::IGraphicsModule * graphi
 		// Flush the final batch.
 		RenderBatch(batchTexture, batchTextureSize, &mSortedSprites[batchStart], mSpriteQueueCount - batchStart);
 
-		for(uint32_t i = 0; i < mSpriteQueueCount; ++i) {
-			mSpriteQueue[i].spriteDesc.texture.reset();
-		}
 		// Reset the queue.
 		mSpriteQueueCount = 0;
 
@@ -264,7 +274,7 @@ SpriteBatchImpl::SpriteBatchImpl(const Netcode::Module::IGraphicsModule * graphi
 		}
 	}
 
-	void NC_MATH_CALLCONV SpriteBatchImpl::RenderBatch(Ref<Netcode::ResourceViews> texture, Vector2 textureSize, const SpriteInfo * const * sprites, uint32_t count)
+	void NC_MATH_CALLCONV SpriteBatchImpl::RenderBatch(Ptr<Netcode::ResourceViews> texture, Vector2 textureSize, const SpriteInfo * const * sprites, uint32_t count)
 	{
 
 		Vector2 inverseTextureSize = textureSize.Reciprocal();
@@ -306,7 +316,7 @@ SpriteBatchImpl::SpriteBatchImpl(const Netcode::Module::IGraphicsModule * graphi
 			}
 
 			uint32_t spriteVertexTotalSize = sizeof(PCT_Vertex) * VerticesPerSprite;
-			resourceContext->CopyConstants(vertexBuffer, vertexData.get() + vertexOffset, batchSize * spriteVertexTotalSize, vertexOffset * sizeof(PCT_Vertex));
+			memcpy(dstVertexBuffer + vertexOffset, vertexData.get() + vertexOffset, batchSize * spriteVertexTotalSize);
 
 			uint32_t indexCount = static_cast<uint32_t>(batchSize * IndicesPerSprite);
 
@@ -345,7 +355,7 @@ SpriteBatchImpl::SpriteBatchImpl(const Netcode::Module::IGraphicsModule * graphi
 			}
 			renderContext->SetRootConstants(1, &controlDisplay, 14);
 			renderContext->SetRootConstants(2, &cbuffer.transform, 16);
-			renderContext->SetVertexBuffer(vertexBuffer);
+			renderContext->SetVertexBuffer(vertexBuffer.get());
 			renderContext->DrawIndexed(indexCount, vertexOffset);
 
 			// Advance the buffer position.
@@ -516,7 +526,6 @@ SpriteBatchImpl::SpriteBatchImpl(const Netcode::Module::IGraphicsModule * graphi
 		{
 			// If we are in immediate mode, draw this sprite straight away.
 			RenderBatch(sprite->spriteDesc.texture, sprite->textureSize, &sprite, 1);
-			sprite->spriteDesc.texture.reset();
 		} else {
 			// Queue this sprite for later sorting and batched rendering.
 			mSpriteQueueCount++;

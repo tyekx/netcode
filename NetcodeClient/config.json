@@ -29,7 +29,7 @@
       "enabled:bool": true
     },
     "debug": {
-      "enabled:bool": true,
+      "enabled:bool": false,
       "gpuBasedValidation:bool": false,
       "primitiveBufferDepth:u32": 65536,
       "capsuleSlices:u32": 12,

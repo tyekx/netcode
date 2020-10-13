@@ -27,8 +27,10 @@ namespace Netcode::UI {
 
         for(auto & child : children) {
             const Float2 bs = child->BoxSize();
+            const Float4 margin = child->Margin();
+            const Vector2 topLeftMargin{ Float2{ margin.x, margin.y } };
 
-            child->Position(invMask * anchorOffset + dirSum);
+            child->Position(invMask * anchorOffset + topLeftMargin + dirSum);
 
             dirSum += invMask * bs;
         }

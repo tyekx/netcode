@@ -11,14 +11,19 @@ require_once 'Session.php';
 require_once 'User.php';
 require_once 'ServerInstances.php';
 
-$db = new \Medoo\Medoo([
-    'database_type' => 'mysql',
-    'database_name' => 'netcode',
-    'server' => '127.0.0.1',
-    'username' => 'admin',
-    'password' => 'password',
-    'port' => 3306
-]);
+$db = null;
+try {
+    $db = new \Medoo\Medoo([
+        'database_type' => 'mysql',
+        'database_name' => 'netcode',
+        'server' => '127.0.0.1',
+        'username' => 'admin',
+        'password' => 'password',
+        'port' => 3306
+    ]);
+} catch(Exception $e) {
+    return Response::JSON(["error" => "Failed to connect to database"], 500);
+}
 
 function AuthenticateUser($db) {
     if(Cookie::Has('netcode-auth')) {

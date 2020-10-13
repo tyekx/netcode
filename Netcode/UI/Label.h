@@ -48,6 +48,8 @@ namespace Netcode::UI {
         void Text(const std::wstring & ws);
 
         virtual void Render(Ptr<SpriteBatch> batch) override;
+
+    	virtual void AddChild(Ref<Control> child) override { }
     };
 
 }

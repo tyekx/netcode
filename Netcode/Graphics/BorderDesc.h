@@ -10,10 +10,10 @@ namespace Netcode {
 	};
 	
 	struct BorderDesc {
+		Float4 color;
 		BorderType type;
 		float borderWidth;
 		float borderRadius;
-		Float4 color;
 
 		bool IsEmpty() const;
 

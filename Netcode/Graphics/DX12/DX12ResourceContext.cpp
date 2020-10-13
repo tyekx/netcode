@@ -320,7 +320,7 @@ namespace Netcode::Graphics::DX12 {
 	}
 
 	void ResourceContext::CopyConstants(Ref<GpuResource> uploadResource, const void * srcData, size_t srcDataSizeInBytes, size_t dstOffsetInBytes) {
-		ID3D12Resource * resource = std::dynamic_pointer_cast<DX12::Resource>(uploadResource)->resource.Get();
+		ID3D12Resource * resource = static_cast<DX12::Resource*>(uploadResource.get())->resource.Get();
 
 		uint8_t * mappedPtr;
 		const CD3DX12_RANGE readRange{ 0,0 };

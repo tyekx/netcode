@@ -33,7 +33,6 @@ Ref<ui::Button> PageBase::CreateButton(const wchar_t * text) {
 			auto * pThis = static_cast<ui::Input *>(ctrl);
 			pThis->ClearAnimations();
 			pThis->AddAnimation(ui::MakeAnimation(
-				static_cast<ui::Panel *>(pThis),
 				&ui::Panel::BackgroundColor,
 				&ui::Panel::BackgroundColor,
 				ui::Interpolator<Netcode::Vector4>{ pThis->BackgroundColor(), COLOR_ACCENT },
@@ -43,7 +42,6 @@ Ref<ui::Button> PageBase::CreateButton(const wchar_t * text) {
 			));
 
 			pThis->AddAnimation(ui::MakeAnimation(
-				static_cast<ui::Label *>(pThis),
 				&ui::Label::TextColor,
 				&ui::Label::TextColor,
 				ui::Interpolator<Netcode::Vector4>{ pThis->TextColor(), COLOR_SECONDARY },
@@ -59,7 +57,6 @@ Ref<ui::Button> PageBase::CreateButton(const wchar_t * text) {
 			auto * pThis = static_cast<ui::Input *>(ctrl);
 			pThis->ClearAnimations();
 			pThis->AddAnimation(ui::MakeAnimation(
-				static_cast<ui::Panel *>(pThis),
 				&ui::Panel::BackgroundColor,
 				&ui::Panel::BackgroundColor,
 				ui::Interpolator<Netcode::Vector4>{ pThis->BackgroundColor(), COLOR_HOVER },
@@ -69,7 +66,6 @@ Ref<ui::Button> PageBase::CreateButton(const wchar_t * text) {
 			));
 
 			pThis->AddAnimation(ui::MakeAnimation(
-				static_cast<ui::Label *>(pThis),
 				&ui::Label::TextColor,
 				&ui::Label::TextColor,
 				ui::Interpolator<Netcode::Vector4>{ pThis->TextColor(), COLOR_ACCENT },
@@ -85,7 +81,6 @@ Ref<ui::Button> PageBase::CreateButton(const wchar_t * text) {
 
 		ctrl->ClearAnimations();
 		ctrl->AddAnimation(ui::MakeAnimation(
-			static_cast<ui::Panel*>(ctrl),
 			&ui::Panel::BackgroundColor,
 			&ui::Panel::BackgroundColor,
 			ui::Interpolator<Netcode::Vector4>(pThis->BackgroundColor(), COLOR_HOVER),
@@ -95,7 +90,6 @@ Ref<ui::Button> PageBase::CreateButton(const wchar_t * text) {
 		));
 
 		ctrl->AddAnimation(ui::MakeAnimation(
-			pThis,
 			&ui::Label::TextColor,
 			&ui::Label::TextColor,
 			ui::Interpolator<Netcode::Vector4>{ pThis->TextColor(), COLOR_ACCENT },
@@ -110,7 +104,6 @@ Ref<ui::Button> PageBase::CreateButton(const wchar_t * text) {
 
 		ctrl->ClearAnimations();
 		ctrl->AddAnimation(ui::MakeAnimation(
-			static_cast<ui::Panel *>(ctrl),
 			&ui::Panel::BackgroundColor,
 			&ui::Panel::BackgroundColor,
 			ui::Interpolator<Netcode::Vector4>(pThis->BackgroundColor(), COLOR_SECONDARY),
@@ -120,7 +113,6 @@ Ref<ui::Button> PageBase::CreateButton(const wchar_t * text) {
 		));
 
 		ctrl->AddAnimation(ui::MakeAnimation(
-			pThis,
 			&ui::Label::TextColor,
 			&ui::Label::TextColor,
 			ui::Interpolator<Netcode::Vector4>{ pThis->TextColor(), COLOR_ACCENT },
@@ -173,7 +165,6 @@ Ref<Netcode::UI::TextBox> PageBase::CreateTextBox() {
 		Netcode::Float4 targetColor = (pThis->Hovered()) ? COLOR_HOVER : COLOR_SECONDARY;
 		pThis->ClearAnimations();
 		pThis->AddAnimation(ui::MakeAnimation(
-			static_cast<ui::Panel *>(pThis),
 			&ui::Panel::BackgroundColor,
 			&ui::Panel::BackgroundColor,
 			ui::Interpolator<Netcode::Vector4>{ pThis->BackgroundColor(), targetColor },
@@ -183,7 +174,6 @@ Ref<Netcode::UI::TextBox> PageBase::CreateTextBox() {
 		));
 
 		pThis->AddAnimation(ui::MakeAnimation(
-			static_cast<ui::Label *>(pThis),
 			&ui::Label::TextColor,
 			&ui::Label::TextColor,
 			ui::Interpolator<Netcode::Vector4>{ pThis->TextColor(), COLOR_ACCENT },
@@ -197,7 +187,6 @@ Ref<Netcode::UI::TextBox> PageBase::CreateTextBox() {
 		auto * pThis = static_cast<ui::Input *>(ctrl);
 		pThis->ClearAnimations();
 		pThis->AddAnimation(ui::MakeAnimation(
-			static_cast<ui::Panel *>(pThis),
 			&ui::Panel::BackgroundColor,
 			&ui::Panel::BackgroundColor,
 			ui::Interpolator<Netcode::Vector4>{ pThis->BackgroundColor(), COLOR_ACCENT },
@@ -207,7 +196,6 @@ Ref<Netcode::UI::TextBox> PageBase::CreateTextBox() {
 		));
 
 		pThis->AddAnimation(ui::MakeAnimation(
-			static_cast<ui::Label*>(pThis),
 			&ui::Label::TextColor,
 			&ui::Label::TextColor,
 			ui::Interpolator<Netcode::Vector4>{ pThis->TextColor(), COLOR_SECONDARY },
@@ -223,7 +211,6 @@ Ref<Netcode::UI::TextBox> PageBase::CreateTextBox() {
 		if(!pThis->Focused()) {
 			pThis->ClearAnimations();
 			pThis->AddAnimation(ui::MakeAnimation(
-				static_cast<ui::Panel *>(pThis),
 				&ui::Panel::BackgroundColor,
 				&ui::Panel::BackgroundColor,
 				ui::Interpolator<Netcode::Vector4>{ pThis->BackgroundColor(), COLOR_HOVER },
@@ -233,7 +220,6 @@ Ref<Netcode::UI::TextBox> PageBase::CreateTextBox() {
 			));
 
 			pThis->AddAnimation(ui::MakeAnimation(
-				static_cast<ui::Label *>(pThis),
 				&ui::Label::TextColor,
 				&ui::Label::TextColor,
 				ui::Interpolator<Netcode::Vector4>{ pThis->TextColor(), COLOR_ACCENT },
@@ -250,7 +236,6 @@ Ref<Netcode::UI::TextBox> PageBase::CreateTextBox() {
 		if(!pThis->Focused()) {
 			pThis->ClearAnimations();
 			pThis->AddAnimation(ui::MakeAnimation(
-				static_cast<ui::Panel *>(pThis),
 				&ui::Panel::BackgroundColor,
 				&ui::Panel::BackgroundColor,
 				ui::Interpolator<Netcode::Vector4>{ pThis->BackgroundColor(), COLOR_SECONDARY },
@@ -260,7 +245,6 @@ Ref<Netcode::UI::TextBox> PageBase::CreateTextBox() {
 			));
 
 			pThis->AddAnimation(ui::MakeAnimation(
-				static_cast<ui::Label *>(pThis),
 				&ui::Label::TextColor,
 				&ui::Label::TextColor,
 				ui::Interpolator<Netcode::Vector4>{ pThis->TextColor(), COLOR_ACCENT },
@@ -425,7 +409,6 @@ void LoginPage::InitializeComponents() {
 	this->AddChild(rootPanel);
 
 	std::unique_ptr<ui::Animation> positionAnim = ui::MakeAnimation(
-		static_cast<ui::Control *>(inputGroup.get()),
 		&ui::Control::Position,
 		&ui::Control::Position,
 		ui::Interpolator<Netcode::Vector2>{ Netcode::Float2{ -1000.0f, 0.0f }, Netcode::Float2{ 0.0f, 0.0f } },
@@ -658,7 +641,6 @@ Ref<ui::Control> ServerBrowserPage::CreateServerRow(const GameServerData & srvDa
 		selectionIndex = index;
 		c->ClearAnimations();
 		c->AddAnimation(ui::MakeAnimation(
-			static_cast<ui::Panel *>(c),
 			&ui::Panel::BackgroundColor,
 			&ui::Panel::BackgroundColor,
 			ui::Interpolator<Netcode::Vector4>(c->BackgroundColor(), COLOR_ACCENT),
@@ -672,7 +654,6 @@ Ref<ui::Control> ServerBrowserPage::CreateServerRow(const GameServerData & srvDa
 		auto * c = dynamic_cast<ui::StackPanel *>(ctrl);
 		c->ClearAnimations();
 		c->AddAnimation(ui::MakeAnimation(
-			static_cast<ui::Panel*>(c),
 			&ui::Panel::BackgroundColor,
 			&ui::Panel::BackgroundColor,
 			ui::Interpolator<Netcode::Vector4>(c->BackgroundColor(), COLOR_HOVER),
@@ -686,7 +667,6 @@ Ref<ui::Control> ServerBrowserPage::CreateServerRow(const GameServerData & srvDa
 		auto * c = dynamic_cast<ui::StackPanel *>(ctrl);
 		c->ClearAnimations();
 		c->AddAnimation(ui::MakeAnimation(
-			static_cast<ui::Panel *>(c),
 			&ui::Panel::BackgroundColor,
 			&ui::Panel::BackgroundColor,
 			ui::Interpolator<Netcode::Vector4>(c->BackgroundColor(), COLOR_SECONDARY),
@@ -878,7 +858,6 @@ void LoadingPage::CloseDialog()
 	rootPanel->ClearAnimations();
 	
 	rootPanel->AddAnimation(ui::MakeAnimation(
-		rootPanel.get(),
 		&ui::Control::SizeY,
 		&ui::Control::SizeY,
 		ui::Interpolator<float>{ rootPanel->SizeY(), 0.0f },
@@ -992,7 +971,6 @@ void LoadingPage::InitializeComponents() {
 	errorRoot->UpdateLayout();
 
 	std::unique_ptr<ui::Animation> loadingAnim = ui::MakeAnimation(
-		static_cast<ui::Control *>(loaderIconPanel.get()),
 		&ui::Control::RotationZ,
 		&ui::Control::RotationZ,
 		ui::Interpolator<float>{ 0.0f, Netcode::C_2PI },
@@ -1026,7 +1004,6 @@ void LoadingPage::Activate() {
 	rootPanel->Size(Netcode::Float2{ 0.0f, 20.0f });
 
 	rootPanel->AddAnimation(ui::MakeAnimation(
-		rootPanel.get(),
 		&ui::Control::SizeX,
 		&ui::Control::SizeX,
 		ui::Interpolator<float>{ 0.0f, 1920.0f },
@@ -1036,7 +1013,6 @@ void LoadingPage::Activate() {
 	));
 
 	rootPanel->AddAnimation(ui::MakeAnimation(
-		static_cast<ui::Panel*>(rootPanel.get()),
 		&ui::Panel::BackgroundColor,
 		&ui::Panel::BackgroundColor,
 		ui::Interpolator<Netcode::Vector4>{ COLOR_ACCENT, COLOR_TERTIARY },
@@ -1086,7 +1062,6 @@ void LoadingPage::SetError(const std::wstring & msg) {
 	StartShowErrorAnims(ySizeAnimationDelay);
 	
 	rootPanel->AddAnimation(ui::MakeAnimation(
-		rootPanel.get(),
 		&ui::Control::SizeY,
 		&ui::Control::SizeY,
 		ui::Interpolator<float>{ rootPanel->SizeY(), errorRoot->SizeY() + 80.0f },
@@ -1100,7 +1075,6 @@ void LoadingPage::StartShowErrorAnims(float delay)
 {
 	errorIconPanel->Opacity(0.0f);
 	errorIconPanel->AddAnimation(ui::MakeAnimation(
-		errorIconPanel.get(),
 		&ui::Panel::Opacity,
 		&ui::Panel::Opacity,
 		ui::Interpolator<float>{ errorIconPanel->Opacity(), 1.0f },
@@ -1111,7 +1085,6 @@ void LoadingPage::StartShowErrorAnims(float delay)
 
 	errorLabel->TextOpacity(0.0f);
 	errorLabel->AddAnimation(ui::MakeAnimation(
-		errorLabel.get(),
 		&ui::Label::TextOpacity,
 		&ui::Label::TextOpacity,
 		ui::Interpolator<float>{ errorLabel->TextOpacity(), 1.0f },
@@ -1126,7 +1099,6 @@ void LoadingPage::StartShowErrorAnims(float delay)
 	errorButton->BorderOpacity(0.0f);
 
 	errorButton->AddAnimation(ui::MakeAnimation(
-		static_cast<ui::Panel *>(errorButton.get()),
 		&ui::Panel::Opacity,
 		&ui::Panel::Opacity,
 		ui::Interpolator<float>{ errorButton->Opacity(), 1.0f },
@@ -1136,7 +1108,6 @@ void LoadingPage::StartShowErrorAnims(float delay)
 	));
 
 	errorButton->AddAnimation(ui::MakeAnimation(
-		static_cast<ui::Label *>(errorButton.get()),
 		&ui::Label::TextOpacity,
 		&ui::Label::TextOpacity,
 		ui::Interpolator<float>{ errorButton->TextOpacity(), 1.0f },
@@ -1146,7 +1117,6 @@ void LoadingPage::StartShowErrorAnims(float delay)
 	));
 
 	errorButton->AddAnimation(ui::MakeAnimation(
-		static_cast<ui::Panel *>(errorButton.get()),
 		&ui::Label::BorderOpacity,
 		&ui::Label::BorderOpacity,
 		ui::Interpolator<float>{ errorButton->BorderOpacity(), 1.0f },
@@ -1159,7 +1129,6 @@ void LoadingPage::StartShowErrorAnims(float delay)
 void LoadingPage::StartHideErrorAnims(float delay)
 {
 	errorIconPanel->AddAnimation(ui::MakeAnimation(
-		errorIconPanel.get(),
 		&ui::Panel::Opacity,
 		&ui::Panel::Opacity,
 		ui::Interpolator<float>{ errorIconPanel->Opacity(), 0.0f },
@@ -1169,7 +1138,6 @@ void LoadingPage::StartHideErrorAnims(float delay)
 	));
 
 	errorLabel->AddAnimation(ui::MakeAnimation(
-		errorLabel.get(),
 		&ui::Label::TextOpacity,
 		&ui::Label::TextOpacity,
 		ui::Interpolator<float>{ errorLabel->TextOpacity(), 0.0f },
@@ -1179,7 +1147,6 @@ void LoadingPage::StartHideErrorAnims(float delay)
 	));
 
 	errorButton->AddAnimation(ui::MakeAnimation(
-		static_cast<ui::Panel *>(errorButton.get()),
 		&ui::Panel::Opacity,
 		&ui::Panel::Opacity,
 		ui::Interpolator<float>{ errorButton->Opacity(), 0.0f },
@@ -1189,7 +1156,6 @@ void LoadingPage::StartHideErrorAnims(float delay)
 	));
 
 	errorButton->AddAnimation(ui::MakeAnimation(
-		static_cast<ui::Label *>(errorButton.get()),
 		&ui::Label::TextOpacity,
 		&ui::Label::TextOpacity,
 		ui::Interpolator<float>{ errorButton->TextOpacity(), 0.0f },
@@ -1199,7 +1165,6 @@ void LoadingPage::StartHideErrorAnims(float delay)
 	));
 
 	errorButton->AddAnimation(ui::MakeAnimation(
-		static_cast<ui::Panel *>(errorButton.get()),
 		&ui::Label::BorderOpacity,
 		&ui::Label::BorderOpacity,
 		ui::Interpolator<float>{ errorButton->BorderOpacity(), 0.0f },
@@ -1215,7 +1180,6 @@ void LoadingPage::StartShowLoaderAnims(float delay)
 	loaderLabel->ClearAnimations();
 	
 	loaderIconPanel->AddAnimation(ui::MakeAnimation(
-		loaderIconPanel.get(),
 		&ui::Panel::Opacity,
 		&ui::Panel::Opacity,
 		ui::Interpolator<float>{ loaderIconPanel->Opacity(), 1.0f },
@@ -1225,7 +1189,6 @@ void LoadingPage::StartShowLoaderAnims(float delay)
 	));
 
 	loaderLabel->AddAnimation(ui::MakeAnimation(
-		loaderLabel.get(),
 		&ui::Label::TextOpacity,
 		&ui::Label::TextOpacity,
 		ui::Interpolator<float>{ loaderLabel->TextOpacity(), 1.0f },
@@ -1241,7 +1204,6 @@ void LoadingPage::StartHideLoaderAnims(float delay)
 	loaderLabel->ClearAnimations();
 
 	loaderIconPanel->AddAnimation(ui::MakeAnimation(
-		loaderIconPanel.get(),
 		&ui::Panel::Opacity,
 		&ui::Panel::Opacity,
 		ui::Interpolator<float>{ loaderIconPanel->Opacity(), 0.0f },
@@ -1251,7 +1213,6 @@ void LoadingPage::StartHideLoaderAnims(float delay)
 	));
 
 	loaderLabel->AddAnimation(ui::MakeAnimation(
-		loaderLabel.get(),
 		&ui::Label::TextOpacity,
 		&ui::Label::TextOpacity,
 		ui::Interpolator<float>{ loaderLabel->TextOpacity(), 0.0f },
@@ -1278,7 +1239,6 @@ void LoadingPage::SetLoader(const std::wstring & msg) {
 	state = DialogState::LOADER;
 
 	rootPanel->AddAnimation(ui::MakeAnimation(
-		rootPanel.get(),
 		&ui::Control::SizeY,
 		&ui::Control::SizeY,
 		ui::Interpolator<float>{ rootPanel->SizeY(), loaderRoot->SizeY() + 60.0f },
@@ -1295,27 +1255,194 @@ void OptionsPage::InitializeComponents()
 	VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
 	HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
 
-	Ref<ui::Slider> slider = CreateSliderWithTextBox();
+	AssetManager * assets = Service::Get<AssetManager>();
 	
-	slider->OnValueChanged.Subscribe([](double v) -> void {
-		Log::Debug("Value: {0}", v, 0.0);
+	Ref<ui::Label> titleLabel = controlAllocator.MakeShared<ui::Label>(eventAllocator, CreatePhysxActor());
+	titleLabel->Sizing(ui::SizingType::FIXED);
+	titleLabel->Size(Netcode::Float2{ 280.0f, 100.0f });
+	titleLabel->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
+	titleLabel->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
+	titleLabel->TextColor(COLOR_ACCENT);
+	titleLabel->Font(assets->ImportFont(L"compiled/fonts/titillium48bold.spritefont"));
+	titleLabel->Text(L"Options");
+	titleLabel->Margin(Netcode::Float4{ 0.0f, 0.0f, 0.0f, 48.0f });
+
+	Ref<ui::StackPanel> sensitivityPanel = controlAllocator.MakeShared<ui::StackPanel>(eventAllocator, nullptr);
+	sensitivityPanel->Sizing(ui::SizingType::DERIVED);
+	sensitivityPanel->StackDirection(ui::Direction::HORIZONTAL);
+
+	Ref<ui::Label> sensitivityLabel = controlAllocator.MakeShared<ui::Label>(eventAllocator, nullptr);
+	sensitivityLabel->Sizing(ui::SizingType::FIXED);
+	sensitivityLabel->Size(Netcode::Float2{ 360.0f, 64.0f });
+	sensitivityLabel->Margin(Netcode::Float4{ 280.0f, 0.0f, 0.0f, 0.0f });
+	sensitivityLabel->Font(textFont);
+	sensitivityLabel->TextColor(COLOR_ACCENT);
+	sensitivityLabel->Text(L"Mouse sensitivity:");
+
+	Ref<ui::Slider> slider = CreateSliderWithTextBox();
+	slider->MinValue(0.1);
+	slider->MaxValue(100.0);
+	slider->Value(1.0);
+
+	sensitivityPanel->AddChild(sensitivityLabel);
+	sensitivityPanel->AddChild(slider);
+
+	Ref<ui::Label> notifLabel = controlAllocator.MakeShared<ui::Label>(eventAllocator, nullptr);
+	notifLabel->Sizing(ui::SizingType::FIXED);
+	notifLabel->Size(Netcode::Float2{ 480.0f, 64.0f });
+	notifLabel->Margin(Netcode::Float4{ 280.0f, 0.0f, 0.0f, 0.0f });
+	notifLabel->Font(textFont);
+	notifLabel->TextColor(COLOR_ACCENT);
+	notifLabel->Text(L"Axis remapping is not supported yet.");
+	
+	Ref<ui::Label> controlsLabel = controlAllocator.MakeShared<ui::Label>(eventAllocator, nullptr);
+	controlsLabel->Sizing(ui::SizingType::FIXED);
+	controlsLabel->Size(Netcode::Float2{ 480.0f, 240.0f });
+	controlsLabel->Margin(Netcode::Float4{ 280.0f, 0.0f, 0.0f, 0.0f});
+	controlsLabel->Font(textFont);
+	controlsLabel->TextColor(COLOR_ACCENT);
+	controlsLabel->Text(LR"([W]: move forward
+[S]: move backward
+[A]: move left
+[D]: move right
+[Space]: jump
+[LMB]: fire)");
+
+	Ref<ui::Button> backBtn = CreateButton(L"Back");
+	backBtn->ZIndex(64.0f);
+	backBtn->Position(Netcode::Float2{ -64.0f, -44.0f });
+	backBtn->OnClick.Subscribe([this](Control *, ui::MouseEventArgs &) -> void {
+		if(onBack) {
+			onBack();
+		}
 	});
+
+	Ref<ui::StackPanel> stackPanel = controlAllocator.MakeShared<ui::StackPanel>(eventAllocator, nullptr);
+	stackPanel->StackDirection(ui::Direction::VERTICAL);
+	stackPanel->Sizing(ui::SizingType::DERIVED);
+	stackPanel->AddChild(titleLabel);
+	stackPanel->AddChild(sensitivityPanel);
+	stackPanel->AddChild(notifLabel);
+	stackPanel->AddChild(controlsLabel);
 
 	Ref<ui::ScrollViewer> sv = controlAllocator.MakeShared<ui::ScrollViewer>(controlAllocator, eventAllocator, CreatePhysxActor());
 	sv->ScrollBarColor(COLOR_HOVER);
 	sv->ScrollButtonColor(COLOR_ACCENT);
-	sv->BackgroundColor(COLOR_TERTIARY);
-
-	Ref<ui::Panel> testPanel = controlAllocator.MakeShared<ui::Panel>(eventAllocator, CreatePhysxActor());
-	testPanel->BackgroundColor(Netcode::Float4{ 0.7f, 0.0f, 0.0f, 1.0f });
-	testPanel->Sizing(ui::SizingType::FIXED);
-	testPanel->Size(Netcode::Float2{ 500.0f, 2000.0f });
-	testPanel->AddChild(slider);
-	
-	sv->AddChild(testPanel);
+	sv->BackgroundColor(Netcode::Float4::One);
+	sv->AddChild(stackPanel);
 	sv->Sizing(ui::SizingType::INHERITED);
-	
-	AddChild(sv);
 
-	UpdateLayout();
+	Ref<ui::Panel> rootPanel = controlAllocator.MakeShared<ui::Panel>(eventAllocator, nullptr);
+	rootPanel->Sizing(ui::SizingType::INHERITED);
+	rootPanel->AddChild(sv);
+	rootPanel->AddChild(backBtn);
+	rootPanel->HorizontalContentAlignment(ui::HorizontalAnchor::RIGHT);
+	rootPanel->VerticalContentAlignment(ui::VerticalAnchor::BOTTOM);
+	
+	AddChild(rootPanel);
+}
+
+void HUD::Update(float dt) {
+	uint32_t v = 0;
+	for(uint32_t i = 0; i < numActiveLog; i++) {
+		logBuffer[i].displayedFor += dt;
+
+		if(logBuffer[i].displayedFor > 5.0f) {
+			ui::Label * label = logBuffer[i].label;
+			label->Enabled(false);
+			v++;
+		}
+	}
+
+	numActiveLog -= v;
+}
+
+void HUD::AddKillFeedItem(const std::wstring & text) {
+	uint32_t rotateSize = std::min(numActiveLog + 1, maxLogCount);
+	if(rotateSize > 1) {
+		std::rotate(std::begin(logBuffer), std::begin(logBuffer) + (rotateSize - 1), std::begin(logBuffer) + rotateSize);
+	}
+	numActiveLog = rotateSize;
+	
+	for(uint32_t i = 0; i < numActiveLog; i++) {
+		logBuffer[i].label->Position(Netcode::Float2{ 0.0f, static_cast<float>(i * 24) });
+	}
+	
+	ui::Label* label = logBuffer[0].label;
+	logBuffer[0].displayedFor = 0.0f;
+	label->Enabled(true);
+	label->Text(text);
+}
+
+void HUD::InitializeComponents()
+{
+	PageBase::InitializeComponents();
+
+	numActiveLog = 0;
+	maxLogCount = 4;
+	
+	AssetManager * assets = Service::Get<AssetManager>();
+	crosshairTexture = assets->ImportTexture2D(L"compiled/textures/ui/crosshair.png");
+	auto rv = assets->CreateTextureRV(crosshairTexture);
+	hitpipTexture = assets->ImportTexture2D(L"compiled/textures/ui/hitpip.png");
+	auto hitpipRV = assets->CreateTextureRV(hitpipTexture);
+	Netcode::UInt2 hitpipSize = Netcode::UInt2{ static_cast<uint32_t>(hitpipTexture->GetDesc().width), hitpipTexture->GetDesc().height };
+	Netcode::UInt2 rvSize = Netcode::UInt2{ static_cast<uint32_t>(crosshairTexture->GetDesc().width), crosshairTexture->GetDesc().height };
+	
+	Ref<ui::Panel> crosshair = controlAllocator.MakeShared<ui::Panel>(eventAllocator, nullptr);
+	crosshair->Sizing(ui::SizingType::FIXED);
+	crosshair->Size(Netcode::Float2{ 32.0f, 32.0f });
+	crosshair->BackgroundColor(Netcode::Float4::One);
+	crosshair->BackgroundImage(rv, rvSize);
+	
+	Ref<ui::Panel> hitpip = controlAllocator.MakeShared<ui::Panel>(eventAllocator, nullptr);
+	hitpip->Sizing(ui::SizingType::FIXED);
+	hitpip->Size(Netcode::Float2{ 28.0f, 28.0f });
+	hitpip->BackgroundColor(Netcode::Float4{ 0.8f, 0.8f, 0.8f, 1.0f });
+	hitpip->BackgroundImage(hitpipRV, hitpipSize);
+
+	Ref<ui::Label> elimLabel = controlAllocator.MakeShared<ui::Label>(eventAllocator, nullptr);
+	elimLabel->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
+	elimLabel->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
+	elimLabel->Sizing(ui::SizingType::FIXED);
+	elimLabel->Size(Netcode::Float2{ 640.0f, 48.0f });
+	elimLabel->Font(textFont);
+	elimLabel->TextColor(Netcode::Float4::One);
+	elimLabel->Text(L"You were eliminated by MrLongNamePotato");
+	elimLabel->Position(Netcode::Float2{ 0.0f, 64.0f });
+	
+	Ref<ui::Panel> rootPanel = controlAllocator.MakeShared<ui::Panel>(eventAllocator, nullptr);
+	rootPanel->Sizing(ui::SizingType::INHERITED);
+	rootPanel->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
+	rootPanel->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
+
+	killFeed = controlAllocator.MakeShared<ui::Panel>(eventAllocator, nullptr);
+	killFeed->Sizing(ui::SizingType::FIXED);
+	killFeed->Size(Netcode::Float2{ 480.0f, 160.0f });
+	killFeed->Position(Netcode::Float2{ 0.0f, -200.0f });
+	//killFeed->BackgroundColor(Netcode::Float4{ 0.0f, 0.0f, 0.5f, 1.0f });
+
+	auto font = assets->ImportFont(L"compiled/fonts/titillium14.spritefont");
+
+	for(int i = 0; i < 4; i++) {
+		Ref<ui::Label> elim1 = controlAllocator.MakeShared<ui::Label>(eventAllocator, nullptr);
+		elim1->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
+		elim1->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
+		elim1->Sizing(ui::SizingType::DERIVED);
+		elim1->Font(font);
+		elim1->TextColor(Netcode::Float4::One);
+		elim1->Text(L"MrLongNamePotato eliminated MrLongNamePotato");
+		elim1->Position(Netcode::Float2{ 0.0f, static_cast<float>(i * 24) });
+		elim1->Enabled(false);
+		logBuffer[i].label = elim1.get();
+		logBuffer[i].displayedFor = 0.0f;
+		killFeed->AddChild(elim1);
+	}
+	
+	rootPanel->AddChild(crosshair);
+	rootPanel->AddChild(killFeed);
+	rootPanel->AddChild(hitpip);
+	rootPanel->AddChild(elimLabel);
+
+	AddChild(rootPanel);
 }

@@ -9,6 +9,8 @@ namespace Netcode::UI {
 
     using AnimationTimeFunc = float(*)(float);
 
+    class Control;
+	
     class Animation {
     protected:
         AnimationTimeFunc timeFunc;
@@ -23,7 +25,7 @@ namespace Netcode::UI {
         }
 
         virtual ~Animation() = default;
-        virtual void Run(float dt) = 0;
+        virtual void Run(Control * ctrl, float dt) = 0;
         virtual bool IsDone() const = 0;
     };
 
@@ -42,11 +44,11 @@ namespace Netcode::UI {
             numAnimations = keepFirstN;
         }
     	
-        void Update(float dt) {
+        void Update(Control * ctrl, float dt) {
             for(uint32_t i = 0; i < numAnimations;) {
                 Animation * anim = animations[i].get();
 
-                anim->Run(dt);
+                anim->Run(ctrl, dt);
 
                 if(anim->IsDone()) {
                     for(uint32_t j = i; j < numAnimations - 1; ++j) {
@@ -170,20 +172,18 @@ namespace Netcode::UI {
 
     template<typename CtrlType, typename GetterFunc, typename SetterFunc, typename Animator, typename Behaviour>
     class PropertyAnimation : public Animation {
-        CtrlType * control;
         GetterFunc getter;
         SetterFunc setter;
         Animator animator;
         Behaviour behaviour;
     public:
 
-        PropertyAnimation(AnimationTimeFunc timeFunc, float duration, CtrlType * controlPointer, GetterFunc getter, SetterFunc setter, Animator animator, Behaviour behav) :
-            Animation{ timeFunc, duration },
-            control{ controlPointer }, getter{ getter }, setter{ setter }, animator{ animator }, behaviour{ behav } {
+        PropertyAnimation(AnimationTimeFunc timeFunc, float duration, GetterFunc getter, SetterFunc setter, Animator animator, Behaviour behav) :
+            Animation{ timeFunc, duration }, getter{ getter }, setter{ setter }, animator{ animator }, behaviour{ behav } {
 
         }
 
-        virtual void Run(float dt) override {
+        virtual void Run(Control * control, float dt) override {
             Animation::time = behaviour(Animation::time + dt, Animation::duration);
 
             float t = Animation::timeFunc(Animation::time / Animation::duration);
@@ -191,7 +191,7 @@ namespace Netcode::UI {
             auto currentValue = ((*static_cast<const CtrlType *>(control)).*getter)();
             auto updatedValue = animator(currentValue, t);
 
-            ((*control).*setter)(updatedValue);
+            ((*static_cast<CtrlType*>(control)).*setter)(updatedValue);
         }
 
         virtual bool IsDone() const override {
@@ -200,13 +200,13 @@ namespace Netcode::UI {
     };
 
     template<typename CtrlType, typename PropertyType, typename Animator, typename Behaviour>
-    std::unique_ptr<Animation> MakeAnimation(CtrlType * control, PropertyType(CtrlType:: * getter)() const, void (CtrlType:: * setter)(const PropertyType &), Animator animator, Behaviour behaviour, AnimationTimeFunc timeFunc, float duration) {
-        return std::make_unique<PropertyAnimation<CtrlType, PropertyType(CtrlType:: *)() const, void (CtrlType:: *)(const PropertyType &), Animator, Behaviour>>(timeFunc, duration, control, getter, setter, animator, behaviour);
+    std::unique_ptr<Animation> MakeAnimation(PropertyType(CtrlType:: * getter)() const, void (CtrlType:: * setter)(const PropertyType &), Animator animator, Behaviour behaviour, AnimationTimeFunc timeFunc, float duration) {
+        return std::make_unique<PropertyAnimation<CtrlType, PropertyType(CtrlType:: *)() const, void (CtrlType:: *)(const PropertyType &), Animator, Behaviour>>(timeFunc, duration, getter, setter, animator, behaviour);
     }
 
     template<typename CtrlType, typename PropertyType, typename Animator, typename Behaviour>
-    std::unique_ptr<Animation> MakeAnimation(CtrlType * control, PropertyType(CtrlType:: * getter)() const, void (CtrlType:: * setter)(PropertyType), Animator animator, Behaviour behaviour, AnimationTimeFunc timeFunc, float duration) {
-        return std::make_unique<PropertyAnimation<CtrlType, PropertyType(CtrlType:: *)() const, void (CtrlType:: *)(PropertyType), Animator, Behaviour>>(timeFunc, duration, control, getter, setter, animator, behaviour);
+    std::unique_ptr<Animation> MakeAnimation(PropertyType(CtrlType:: * getter)() const, void (CtrlType:: * setter)(PropertyType), Animator animator, Behaviour behaviour, AnimationTimeFunc timeFunc, float duration) {
+        return std::make_unique<PropertyAnimation<CtrlType, PropertyType(CtrlType:: *)() const, void (CtrlType:: *)(PropertyType), Animator, Behaviour>>(timeFunc, duration, getter, setter, animator, behaviour);
     }
 
 }

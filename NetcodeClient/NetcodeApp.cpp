@@ -57,13 +57,19 @@ void GameApp::Render() {
 
 	static int i = 0;
 
-	if(i++ > 0 && i % 16 == 0) {
-		std::wostringstream woss;
-		woss << "FPS: " << std::setw(7) << std::fixed << std::setprecision(2) << fpsCounter.GetAvgFramesPerSecond();
-		fpsValue = woss.str();
-	}
+	if(graphics->debug != nullptr) {
+		if(i++ > 0 && i % 16 == 0) {
+			std::wostringstream woss;
+			woss << "FPS: " << std::setw(7) << std::fixed << std::setprecision(2) << fpsCounter.GetAvgFramesPerSecond();
+			fpsValue = woss.str();
+		}
 
-	graphics->debug->DrawDebugText(fpsValue, Netcode::Float2::Zero);
+		graphics->debug->DrawDebugText(fpsValue, Netcode::Float2::Zero);
+	} else {
+		if(i++ > 0 && i % 1024 == 0) {
+			Log::Debug("FPS: {0}", fpsCounter.GetAvgFramesPerSecond(), 0.0);
+		}
+	}
 	
 	gameScene->UpdatePerFrameCb();
 
@@ -218,32 +224,42 @@ static Netcode::ErrorCode ConvertServerData(const std::string & inputString, std
 }
 
 void GameApp::CreateUI() {
-	Ref<OptionsPage> optionsPage = pageManager.CreatePage<OptionsPage>(*pxService->physics);
-	optionsPage->InitializeComponents();
-	pageManager.AddPage(optionsPage);
-	pageManager.NavigateWithoutHistory(0);
-	renderer.ui_Input = &pageManager;
+	enum PageEnum {
+		E_LOGIN, E_MAIN, E_OPTIONS, E_SERVER_BROWSER, E_LOADING
+	};
+	/*
+	optionsPage->OnClick.Subscribe([op = optionsPage.get()](Netcode::UI::Control*, Netcode::UI::MouseEventArgs&) -> void {
+		op->AddKillFeedItem(L"Hello eliminated World " + std::to_wstring(rand()));
+	});*/
 
-	return;
 	
 	Ref<LoginPage> loginPage = pageManager.CreatePage<LoginPage>(*pxService->physics);
 	Ref<MainMenuPage> mmPage = pageManager.CreatePage<MainMenuPage>(*pxService->physics);
+	Ref<OptionsPage> optionsPage = pageManager.CreatePage<OptionsPage>(*pxService->physics);
 	Ref<ServerBrowserPage> serverBrowserPage = pageManager.CreatePage<ServerBrowserPage>(*pxService->physics);
 	Ref<LoadingPage> loadingPage = pageManager.CreatePage<LoadingPage>(*pxService->physics);
 
 	loginPage->InitializeComponents();
 	mmPage->InitializeComponents();
+	optionsPage->InitializeComponents();
 	serverBrowserPage->InitializeComponents();
 	loadingPage->InitializeComponents();
 
 	pageManager.AddPage(loginPage);
 	pageManager.AddPage(mmPage);
+	pageManager.AddPage(optionsPage);
 	pageManager.AddPage(serverBrowserPage);
 	pageManager.AddPage(loadingPage);
 
 	loginPage->onExitClick = [this]() -> void {
 		mainThreadDispatcher.Post([this]() -> void {
 			window->Shutdown();
+		});
+	};
+	
+	optionsPage->onBack = [this]()->void {
+		mainThreadDispatcher.Post([this]() -> void {
+			pageManager.ReturnToLastPage();
 		});
 	};
 
@@ -254,14 +270,20 @@ void GameApp::CreateUI() {
 		network->EraseCookie("netcode-auth");
 		
 		mainThreadDispatcher.Post([this]() -> void {
-			pageManager.NavigateWithoutHistory(0);
+			pageManager.NavigateWithoutHistory(E_LOGIN);
+		});
+	};
+
+	mmPage->onOptionsClick = [this]() -> void {
+		mainThreadDispatcher.Post([this]() -> void {
+			pageManager.NavigateTo(E_OPTIONS);
 		});
 	};
 
 	mmPage->onJoinGameClick = [this, loadp = loadingPage.get(), sbp = serverBrowserPage.get()]() -> void {
 		mainThreadDispatcher.Post([this, loadp, sbp]() -> void {
-			pageManager.NavigateTo(2);
-			pageManager.NavigateTo(3);
+			pageManager.NavigateTo(E_SERVER_BROWSER);
+			pageManager.NavigateTo(E_LOADING);
 			loadp->SetLoader(L"Fetching data...");
 
 			network->QueryServers()->Then([this, loadp, sbp](const Netcode::Network::Response& resp) -> void {
@@ -272,6 +294,14 @@ void GameApp::CreateUI() {
 					mainThreadDispatcher.Post([loadp, ec]() -> void {
 						loadp->SetError(Netcode::Utility::ToWideString(Netcode::ErrorCodeToString(ec)));
 					});
+				}
+
+				if(resp.result() != boost::beast::http::status::ok) {
+					std::wstring err = L"Error(Netcode.Http#" + std::to_wstring(resp.result_int()) + L")";
+					mainThreadDispatcher.Post([loadp, e = std::move(err)]() -> void {
+						loadp->SetError(e);
+					});
+					return;
 				}
 
 				std::vector<GameServerData> serverData;
@@ -294,7 +324,7 @@ void GameApp::CreateUI() {
 
 	loginPage->onLoginClick = [this, lp = loginPage.get(), loadp = loadingPage.get()]() -> void {
 		mainThreadDispatcher.Post([this, lp, loadp]() -> void {
-			pageManager.NavigateTo(3);
+			pageManager.NavigateTo(E_LOADING);
 			
 			if(lp->usernameTextBox->Text().empty() || lp->passwordTextBox->Text().empty()) {
 				loadp->SetError(L"Both fields are required");
@@ -366,7 +396,7 @@ void GameApp::CreateUI() {
 				mainThreadDispatcher.Post([this, loadp]() -> void {
 					loadp->CloseDialog();
 					loadp->rootPanel->OnAnimationsFinished.Subscribe([this](Netcode::UI::Control *)->void {
-						pageManager.NavigateTo(1);
+						pageManager.NavigateTo(E_MAIN);
 					});
 				});
 			});
@@ -376,8 +406,8 @@ void GameApp::CreateUI() {
 
 	serverBrowserPage->onRefresh = [this, loadp = loadingPage.get(), sbp = serverBrowserPage.get()]() -> void {
 		mainThreadDispatcher.Post([this, loadp, sbp]() -> void {
-			pageManager.NavigateTo(2);
-			pageManager.NavigateTo(3);
+			pageManager.NavigateTo(E_SERVER_BROWSER);
+			pageManager.NavigateTo(E_LOADING);
 			loadp->SetLoader(L"Fetching data...");
 
 			network->QueryServers()->Then([this, loadp, sbp](const Netcode::Network::Response & resp) -> void {
@@ -388,6 +418,14 @@ void GameApp::CreateUI() {
 					mainThreadDispatcher.Post([loadp, ec]() -> void {
 						loadp->SetError(Netcode::Utility::ToWideString(Netcode::ErrorCodeToString(ec)));
 					});
+				}
+
+				if(resp.result() != boost::beast::http::status::ok) {
+					std::wstring err = L"Error(Netcode.Http#" + std::to_wstring(resp.result_int()) + L")";
+					mainThreadDispatcher.Post([loadp, e = std::move(err)]() -> void {
+						loadp->SetError(e);
+					});
+					return;
 				}
 
 				std::vector<GameServerData> serverData;
@@ -423,7 +461,7 @@ void GameApp::CreateUI() {
 			std::wostringstream woss;
 			woss << "Connecting to " << Netcode::Utility::ToWideString(h) << L"...";
 
-			pageManager.NavigateTo(3);
+			pageManager.NavigateTo(E_LOADING);
 			loadp->SetLoader(woss.str());
 
 			clientSession->Connect(connectionBase, std::move(h), gsd->port)->Then([loadp](const Netcode::ErrorCode & ec) -> void {
@@ -443,7 +481,7 @@ void GameApp::CreateUI() {
 		});
 	};
 
-	pageManager.NavigateTo(0);
+	pageManager.NavigateTo(E_LOGIN);
 	renderer.ui_Input = &pageManager;
 
 	auto session = Netcode::Config::Get<Netcode::SecureString>(L"user.session");
@@ -458,7 +496,7 @@ void GameApp::CreateUI() {
 			}
 			
 			if(Netcode::Network::Cookie::Parse(cookieStr, c)) {
-				pageManager.NavigateTo(3);
+				pageManager.NavigateTo(E_LOADING);
 				loadingPage->SetLoader(L"Authenticating...");
 				network->SetCookie(c);
 				network->Status()->Then([this](const Netcode::Network::Response & resp) -> void {
@@ -466,11 +504,11 @@ void GameApp::CreateUI() {
 					if(resp.GetErrorCode() || resp.result() != boost::beast::http::status::ok || ConvertUserData(resp.body(), user)) {
 						Log::Info("Failed to authenticate by session");
 						mainThreadDispatcher.Post([this]() -> void {
-							pageManager.NavigateWithoutHistory(0);
+							pageManager.NavigateWithoutHistory(E_LOGIN);
 						});
 					} else {
 						mainThreadDispatcher.Post([this]() -> void {
-							pageManager.NavigateWithoutHistory(1);
+							pageManager.NavigateWithoutHistory(E_MAIN);
 						});
 					}
 				});

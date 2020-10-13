@@ -30,7 +30,7 @@ namespace Netcode::UI {
             Float2 bgSize = BackgroundSize();
 
             if(bgSize.x == 0.0f || bgSize.y == 0.0f) {
-                return SpriteDesc{ BackgroundImage(), BackgroundImageSize(), BackgroundColor() };
+                return SpriteDesc{ backgroundImage.get(), BackgroundImageSize(), BackgroundColor() };
             } else {
                 HorizontalAnchor ha = BackgroundHorizontalAlignment();
                 VerticalAnchor va = BackgroundVerticalAlignment();
@@ -53,7 +53,7 @@ namespace Netcode::UI {
                     static_cast<int32_t>(br.y)
                 };
 
-                return SpriteDesc{ BackgroundImage(), BackgroundImageSize(), sourceRectangle, BackgroundColor() };
+                return SpriteDesc{ backgroundImage.get(), BackgroundImageSize(), sourceRectangle, BackgroundColor() };
             }
         }
 

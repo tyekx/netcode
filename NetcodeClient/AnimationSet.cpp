@@ -38,11 +38,11 @@ uint32_t AnimationSet::GetNumInstances() const {
 }
 
 void AnimationSet::CopyResults(Netcode::Graphics::IRenderContext * context) {
-	context->ResourceBarrier(resultBuffer, Netcode::Graphics::ResourceState::UNORDERED_ACCESS, Netcode::Graphics::ResourceState::NON_PIXEL_SHADER_RESOURCE | Netcode::Graphics::ResourceState::COPY_SOURCE);
+	context->ResourceBarrier(resultBuffer.get(), Netcode::Graphics::ResourceState::UNORDERED_ACCESS, Netcode::Graphics::ResourceState::NON_PIXEL_SHADER_RESOURCE | Netcode::Graphics::ResourceState::COPY_SOURCE);
 	context->FlushResourceBarriers();
 	size_t resultSize = BoneData::MAX_BONE_COUNT * numActiveControllers * 2 * sizeof(DirectX::XMFLOAT4X4);
 	if(resultSize > 0) {
-		context->CopyBufferRegion(resultReadbackBuffer, resultBuffer, resultSize);
+		context->CopyBufferRegion(resultReadbackBuffer.get(), resultBuffer.get(), resultSize);
 	}
 }
 
@@ -52,11 +52,11 @@ void AnimationSet::UploadConstants(Netcode::Graphics::IResourceContext * context
 }
 
 void AnimationSet::BindResources(Netcode::Graphics::IRenderContext * context) {
-	context->ResourceBarrier(resultBuffer, Netcode::Graphics::ResourceState::NON_PIXEL_SHADER_RESOURCE | Netcode::Graphics::ResourceState::COPY_SOURCE, Netcode::Graphics::ResourceState::UNORDERED_ACCESS);
+	context->ResourceBarrier(resultBuffer.get(), Netcode::Graphics::ResourceState::NON_PIXEL_SHADER_RESOURCE | Netcode::Graphics::ResourceState::COPY_SOURCE, Netcode::Graphics::ResourceState::UNORDERED_ACCESS);
 	context->FlushResourceBarriers();
-	context->SetConstantBuffer(0, instanceCbuffer);
-	context->SetConstantBuffer(1, animationStaticCbuffer);
-	context->SetShaderResources(2, animKeysView);
+	context->SetConstantBuffer(0, instanceCbuffer.get());
+	context->SetConstantBuffer(1, animationStaticCbuffer.get());
+	context->SetShaderResources(2, animKeysView.get());
 }
 
 int32_t AnimationSet::Activate(const std::vector<Netcode::Animation::BlendItem> & blendPlan) {

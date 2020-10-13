@@ -4,6 +4,7 @@
 
 #include "Services.h"
 #include "Asset.h"
+#include <array>
 
 enum PagesEnum {
 	LOGIN_PAGE,
@@ -164,9 +165,36 @@ public:
 	void SetLoader(const std::wstring & msg);
 };
 
+class HUD : public PageBase {
+	Ref<Netcode::GpuResource> crosshairTexture;
+	Ref<Netcode::GpuResource> hitpipTexture;
+
+	Ref<Netcode::UI::Panel> killFeed;
+	uint32_t numActiveLog;
+	uint32_t maxLogCount;
+
+	struct LogEntry {
+		Ptr<Netcode::UI::Label> label;
+		float displayedFor;
+	};
+	
+	std::array<LogEntry, 8> logBuffer;
+	
+public:
+	using PageBase::PageBase;
+
+	virtual void Update(float dt) override;
+
+	void AddKillFeedItem(const std::wstring & text);
+	
+	virtual void InitializeComponents() override;
+};
+
 class OptionsPage : public PageBase {
 public:
 	using PageBase::PageBase;
+
+	std::function<void()> onBack;
 	
 	virtual void InitializeComponents() override;
 };

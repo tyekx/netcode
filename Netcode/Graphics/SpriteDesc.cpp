@@ -32,20 +32,20 @@ namespace Netcode {
 
 	}
 
-	SpriteDesc::SpriteDesc(const Ref<ResourceViews> & texture, const UInt2 & textureSize) :
+	SpriteDesc::SpriteDesc(Ptr<ResourceViews> texture, const UInt2 & textureSize) :
 		SpriteDesc(texture, textureSize, Float4::One) { }
 
-	SpriteDesc::SpriteDesc(const Ref<ResourceViews> & texture, const UInt2 & textureSize, const Float4 & albedoColor) :
+	SpriteDesc::SpriteDesc(Ptr<ResourceViews> texture, const UInt2 & textureSize, const Float4 & albedoColor) :
 		SpriteDesc(texture, textureSize, Rect{ 0, 0, static_cast<int32_t>(textureSize.x), static_cast<int32_t>(textureSize.y) }, albedoColor) {
 
 	}
 
-	SpriteDesc::SpriteDesc(const Ref<ResourceViews> & texture, const UInt2 & textureSize, const Rect & sourceRect) :
+	SpriteDesc::SpriteDesc(Ptr<ResourceViews> texture, const UInt2 & textureSize, const Rect & sourceRect) :
 		SpriteDesc(texture, textureSize, sourceRect, Float4::One) {
 
 	}
 
-	SpriteDesc::SpriteDesc(const Ref<ResourceViews> & texture, const UInt2 & textureSize, const Rect & sourceRect, const Float4 & albedoColor) :
+	SpriteDesc::SpriteDesc(Ptr<ResourceViews> texture, const UInt2 & textureSize, const Rect & sourceRect, const Float4 & albedoColor) :
 		type{ BackgroundType::TEXTURE },
 		texture{ texture },
 		textureSize{ textureSize },

@@ -14,12 +14,12 @@ namespace Netcode {
 		return !operator==(rhs);
 	}
 
-	BorderDesc::BorderDesc() : type{ BorderType::NONE }, borderWidth{ 0.0f }, borderRadius{ 0.0f }, color{ Float4::Zero } { }
+	BorderDesc::BorderDesc() : color{ Float4::Zero } , type{ BorderType::NONE }, borderWidth{ 0.0f }, borderRadius{ 0.0f } { }
 
 	BorderDesc::BorderDesc(float width, float radius, const Float4 & color) :
+		color{ color },
 		type{ BorderType::SOLID },
 		borderWidth{ width },
-		borderRadius{ radius },
-		color{ color } { }
+		borderRadius{ radius } { }
 
 }

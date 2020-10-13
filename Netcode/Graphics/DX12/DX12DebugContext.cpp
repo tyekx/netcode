@@ -215,17 +215,17 @@ namespace Netcode::Graphics::DX12 {
 		context->SetPrimitiveTopology(PrimitiveTopology::LINELIST);
 		context->SetScissorRect();
 		context->SetViewport();
-		context->SetRootSignature(rootSignature);
+		context->SetRootSignature(rootSignature.get());
 		context->SetRootConstants(0, &viewProj, 16);
-		context->SetVertexBuffer(uploadBuffer);
+		context->SetVertexBuffer(uploadBuffer.get());
 
 		if(numDepthVertices > 0) {
-			context->SetPipelineState(depthPso);
+			context->SetPipelineState(depthPso.get());
 			context->Draw(numDepthVertices);
 		}
 
 		if(numNoDepthVertices > 0) {
-			context->SetPipelineState(noDepthPso);
+			context->SetPipelineState(noDepthPso.get());
 			context->Draw(numNoDepthVertices, numDepthVertices);
 		}
 

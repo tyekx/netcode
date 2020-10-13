@@ -10,7 +10,7 @@
 
 namespace Netcode::Graphics::DX12 {
 
-	std::tuple<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> DynamicDescriptorHeap::CreateBufferUAV(Ref<DX12::Resource> resource) {
+	std::tuple<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> DynamicDescriptorHeap::CreateBufferUAV(Ptr<DX12::Resource> resource) {
 		ASSERT(IsRendering, "Creating transient descriptor outside of rendering is invalid, create them after a Prepare() call");
 
 		const uint32_t srvId_cpuVisible = srvOffset_CpuVisible;
@@ -29,7 +29,7 @@ namespace Netcode::Graphics::DX12 {
 		return std::tie(srvCpuHandle_CpuVisible, srvGpuHandle_ShaderVisible);
 	}
 
-	D3D12_CPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateRTV(Ref<DX12::Resource> resource)
+	D3D12_CPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateRTV(Ptr<DX12::Resource> resource)
 	{
 		ASSERT(IsRendering, "Creating transient descriptor outside of rendering is invalid, create them after a Prepare() call");
 
@@ -44,7 +44,7 @@ namespace Netcode::Graphics::DX12 {
 		return dHandle;
 	}
 
-	D3D12_CPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateDSV(Ref<DX12::Resource> resource)
+	D3D12_CPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateDSV(Ptr<DX12::Resource> resource)
 	{
 		ASSERT(IsRendering, "Creating transient descriptor outside of rendering is invalid, create them after a Prepare() call");
 		const uint32_t dsvId_CpuVisible = dsvOffset_CpuVisible;
@@ -58,7 +58,7 @@ namespace Netcode::Graphics::DX12 {
 		return dHandle;
 	}
 
-	D3D12_GPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateSRV(Ref<DX12::Resource> resource)
+	D3D12_GPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateSRV(Ptr<DX12::Resource> resource)
 	{
 		ASSERT(IsRendering, "Creating transient descriptor outside of rendering is invalid, create them after a Prepare() call");
 
@@ -74,7 +74,7 @@ namespace Netcode::Graphics::DX12 {
 		return gpuHandle;
 	}
 
-	D3D12_GPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateCBV(Ref<DX12::Resource> resource)
+	D3D12_GPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::CreateCBV(Ptr<DX12::Resource> resource)
 	{
 		ASSERT(IsRendering, "Creating transient descriptor outside of rendering is invalid, create them after a Prepare() call");
 
