@@ -15,23 +15,51 @@ enum CommandType {
 	SERVER_CLOSED = 6;
 }
 
+enum ActionType {
+    MOVEMENT = 0;
+    SPAWN = 1;
+    JUMP = 2;
+    FIRE = 3;
+}
+
+enum ActionResultType {
+    ACCEPTED = 0;
+    REJECTED = 1;
+}
+
 message ServerCommand {
     CommandType type = 1;
     int32 subject = 2;
 }
 
-message ServerUpdate {
-    int32 id = 1;
-    repeated ServerCommand commands = 2;
-    repeated Player players = 3;
-    repeated Text texts = 4;
+message ActionPrediction {
+    fixed32 id = 1;
+    fixed64 timestamp = 2;
+    ActionType type = 3;
+    Float3 action_position = 4;
+    Float3 action_delta = 5;
+}
+
+message ActionResult {
+    fixed32 id = 1;
+    ActionResultType result = 2;
+    Float3 action_position = 3;
+    Float3 action_delta = 4;
 }
 
 message ClientUpdate {
-    int32 id = 1;
-    string nonce = 2;
-    Player player_state = 3;
-    repeated Text texts = 4;
+	fixed32 id = 1;
+	fixed32 received_id = 2;
+    repeated ActionPrediction predictions = 3;
+    bytes replication_data = 4;
+}
+
+message ServerUpdate {
+	fixed32 id = 1;
+	fixed32 received_id = 2;
+	repeated ServerCommand commands = 3;
+    repeated ActionResult action_results = 4;
+    bytes replication_data = 5;
 }
 
 message Update {

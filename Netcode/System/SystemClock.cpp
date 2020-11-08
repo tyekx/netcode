@@ -31,6 +31,12 @@ namespace Netcode {
 	Timestamp SystemClock::GlobalNow() {
 		return Timestamp{ (ClockType::now() - processStartedAt) + theta + (delta / 2) };
 	}
+	
+	[[nodiscard]]
+	Timestamp SystemClock::PredictedGlobalNow()
+	{
+		return GlobalNow() + delta / 2;
+	}
 
 	[[nodiscard]]
 	float SystemClock::GetDeltaTimeInSeconds() {

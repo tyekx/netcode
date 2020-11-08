@@ -239,21 +239,21 @@ class PhysXSystem {
 			return;
 		}
 
-		const ColliderShape & c = *(reinterpret_cast<ColliderShape *>(shape->userData));
+		const ColliderShape & c = *(static_cast<ColliderShape *>(shape->userData));
 
 		BoneData * bd = anim->controller->GetAnimationSet()->GetData() + model->boneDataOffset;
 
 		Netcode::Matrix toRoot = bd->ToRootTransform[c.boneReference];
 		Netcode::Quaternion rotQ = c.localRotation;
 
-		Netcode::Matrix T = Netcode::TranslationMatrix(c.localPosition);
-		Netcode::Matrix R = (Netcode::Matrix)rotQ;
+		const Netcode::Matrix T = Netcode::TranslationMatrix(c.localPosition);
+		const Netcode::Matrix R = static_cast<Netcode::Matrix>(rotQ);
 
 		toRoot = R * T * toRoot.Transpose();
 
-		Netcode::Float4x4 res = toRoot;
+		const Netcode::Float4x4 res = toRoot;
 
-		Netcode::Float3 tr{
+		const Netcode::Float3 tr{
 			res._41,
 			res._42,
 			res._43
@@ -261,7 +261,7 @@ class PhysXSystem {
 
 		rotQ = Netcode::DecomposeRotation(toRoot);
 
-		physx::PxTransform pxT{ ToPxVec3(tr), ToPxQuat(rotQ) };
+		const physx::PxTransform pxT{ ToPxVec3(tr), ToPxQuat(rotQ) };
 		shape->setLocalPose(pxT);
 	}
 
@@ -270,11 +270,11 @@ class PhysXSystem {
 			constexpr static uint32_t SHAPES_BUFFER_SIZE = 8;
 
 			physx::PxShape * shapes[SHAPES_BUFFER_SIZE] = {};
-			uint32_t shapesCount = rigidBody->getNbShapes();
+			const uint32_t shapesCount = rigidBody->getNbShapes();
 
 			uint32_t idx = 0;
 			while(idx < shapesCount) {
-				uint32_t written = rigidBody->getShapes(shapes, SHAPES_BUFFER_SIZE, idx);
+				const uint32_t written = rigidBody->getShapes(shapes, SHAPES_BUFFER_SIZE, idx);
 
 				for(uint32_t i = 0; i < written; ++i) {
 					UpdateShapeLocalPose(shapes[i], model, anim);
@@ -300,6 +300,40 @@ public:
 		if(model->boneData != nullptr) {
 			if(gameObject->HasComponent<Animation>()) {
 				UpdateBoneAttachedShapes(model, collider, gameObject->GetComponent<Animation>());
+			}
+		}
+	}
+};
+
+#include <Netcode/Network/ReplicationContext.h>
+
+class NetworkSystem {
+	Netcode::Network::ReplicationContext * replCtx;
+public:
+	void Run(GameObject * gameObject, int32_t playerId);
+
+	void operator()(GameObject* gameObject, Netw* netwComponent, Script* script, int32_t playerId) {
+		const rapidjson::Document::StringRefType key(gameObject->name.c_str(), gameObject->name.size());
+		
+		if(playerId == 0) { // server sends it
+			// before sending, server needs to authorize every action
+			// therefore the server needs a buffer that holds the unauthorized actions sent by players
+			// use netwComponent->owner
+			// from the authorized actions the server will send replication data of spawning, but the players can only have 1 owned gameobject
+			// on the server. This way the owner uniquely identifies players if the owner is not 0.
+
+			if(netwComponent->owner != 0) {
+				// results are saved into the replicationContext, and a redundancybuffer.
+			}
+			
+			if(replCtx->Push(key)) {
+				script->ReplicateSend(gameObject, replCtx);
+			}
+		} else {
+			if(!netwComponent->HasAuthority(playerId)) { // unauthorized client reads it
+				if(replCtx->Push(key)) {
+					script->ReplicateReceive(gameObject, replCtx);
+				}
 			}
 		}
 	}

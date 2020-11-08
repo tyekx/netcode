@@ -15,6 +15,7 @@ namespace Netcode::Network {
 		Ref<NetcodeService> service;
 		
 	public:
+		
 		virtual ~ServerSession() = default;
 
 		ServerSession(boost::asio::io_context & ioc);
@@ -22,6 +23,10 @@ namespace Netcode::Network {
 		virtual void Start() override;
 
 		virtual void Stop() override;
+
+		virtual boost::asio::io_context & GetIOContext() override {
+			return ioContext;
+		}
 
 		Ref<NetcodeService> GetService() const {
 			return service;

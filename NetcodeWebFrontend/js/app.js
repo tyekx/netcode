@@ -19,6 +19,9 @@ app.service('ApiService', ['$http', function($http) {
         status: function(success, fail) {
             $http.get("api/status").then(success, fail);
         },
+        latestVersion: function (success, fail) {
+            $http.get("api/latest-version").then(success, fail);
+        },
         serversStatus: function(success, fail) {
             $http.get("api/servers-status").then(success, fail);
         },
@@ -54,9 +57,18 @@ app.config(['$routeProvider', '$locationProvider', function($routeProvider, $loc
     .when('/', {  templateUrl: 'public/main.html', controller: 'HomeController' })
     .when('/technical', { templateUrl: 'public/technical.html' })
     .when('/tutorial', { templateUrl: 'public/tutorial.html' })
-    .when('/download', { templateUrl: 'public/download.html' })
+    .when('/download', { templateUrl: 'public/download.html', controller: 'DownloadController' })
     .when('/login', {templateUrl: 'public/login.html'})
     .when('/control-panel', { templateUrl: 'public/controlpanel.html', controller: 'ControlPanelController' });
+}]);
+
+app.controller('DownloadController', ['$scope', 'ApiService', function ($scope, api) {
+    $scope.version = null;
+    api.latestVersion(function (data) {
+        $scope.version = data.data;
+    }, function (data) {
+        console.log("error", data);
+    });
 }]);
 
 app.controller('MainController', ['$scope', 'UserService','ApiService','$cookies', function($scope, us, api, $cookies) {
@@ -167,7 +179,7 @@ app.controller('HomeController', ['$scope', 'ApiService','$timeout','$interval',
         $timeout(hide, 10000);
     }
 
-    $scope.register = function() {
+    $scope.register = () => {
         hide();
         api.register({
             "username": $scope.username,

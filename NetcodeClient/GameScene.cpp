@@ -125,7 +125,7 @@ void GameSceneManager::LoadSceneDetail(const Netcode::URI::Model & uri) {
 		return;
 	}
 
-	ServerAssetConverter converter{ &catalog, &json, &activeScene };
+	ClientAssetConverter converter{ &catalog, &json, &activeScene };
 	converter.ConvertScene();
 	
 	catalog.Reset();

@@ -12,11 +12,93 @@
 #include <Netcode/Network/CompletionToken.h>
 #include <Netcode/Network/Response.hpp>
 #include <Netcode/Network/Cookie.h>
+#include <Netcode/Network/NetworkErrorCode.h>
 #include <Netcode/System/SecureString.h>
-
 #include "Scripts/LocalPlayerWeaponScript.h"
 #include <iomanip>
+#include <openssl/rand.h>
+#include <Netcode/Network/SslUtil.h>
 
+class ServerConnRequestFilter : public nn::FilterBase {
+public:
+	nn::FilterResult Run(Ptr<nn::NetcodeService> service, Ptr<nn::DtlsRoute> route, Netcode::Timestamp timestamp, nn::ControlMessage& cm) override {
+		const np::Control * peerControl = cm.control;
+		if(peerControl->type() != np::CONNECT_REQUEST || !peerControl->has_connect_request()) {
+			return nn::FilterResult::IGNORED;
+		}
+		
+		const np::ConnectRequest * connReq = &peerControl->connect_request();
+
+		if(route == nullptr || route->state != nn::DtlsRouteState::ESTABLISHED) {
+			return nn::FilterResult::CONSUMED;
+		}
+
+		nn::ConnectionStorage* connections = service->GetConnections();
+
+		if(connections->GetConnectionByEndpoint(cm.packet->endpoint) != nullptr) {
+			return nn::FilterResult::CONSUMED;
+		}
+
+		std::string nonce = nn::GenerateNonce();
+
+		if(nonce.empty()) {
+			Log::Error("Failed to generate nonce");
+		}
+
+		// for now accept everything
+		Ref<nn::NetAllocator> alloc = service->MakeAllocator(1024);
+		np::Control * localControl = alloc->MakeProto<np::Control>();
+		localControl->set_sequence(1);
+		localControl->set_type(np::MessageType::CONNECT_RESPONSE);
+		np::ConnectResponse * connResp = localControl->mutable_connect_response();
+		connResp->set_type(connReq->type());
+		connResp->set_current_map("mat_test_map");
+		connResp->set_nonce(std::move(nonce));
+		connResp->set_error_code(0);
+
+		Ref<nn::ConnectionBase> conn = std::make_shared<Connection>(service->GetIOContext());
+		conn->dtlsRoute = route;
+		conn->pmtu = nn::MtuValue{ route->mtu };
+		conn->endpoint = route->endpoint;
+		conn->remoteGameSequence = 0;
+		conn->localControlSequence = 1;
+		conn->localGameSequence = 1;
+		conn->remoteControlSequence = peerControl->sequence();
+
+		nn::ControlMessage localCm;
+		localCm.control = localControl;
+		localCm.allocator = alloc;
+		
+		connections->AddConnection(conn);
+
+		service->Send(alloc, alloc->MakeCompletionToken<nn::TrResult>(), conn->dtlsRoute, localCm, conn->endpoint, conn->pmtu, nn::ResendArgs{ 1000, 3 });
+		
+		return nn::FilterResult::CONSUMED;
+	}
+};
+
+class ServerClockSyncRequestFilter : public nn::FilterBase {
+public:
+	nn::FilterResult Run(Ptr<nn::NetcodeService> service, Ptr<nn::DtlsRoute> route, Netcode::Timestamp timestamp, nn::ControlMessage & cm) override {
+		/*
+		np::Header * header = cm.header;
+		Ref<nn::NetAllocator> alloc = cm.allocator;
+
+		if(header->type() == np::MessageType::CLOCK_SYNC_REQUEST) {
+			np::Header * h = alloc->MakeProto<np::Header>();
+			h->set_sequence(header->sequence());
+			h->unsafe_arena_set_allocated_time_sync(header->unsafe_arena_release_time_sync());
+			h->set_type(np::CLOCK_SYNC_RESPONSE);
+			np::TimeSync * ts = h->mutable_time_sync();
+			ts->set_server_req_reception(Netcode::ConvertTimestampToUInt64(cm.packet->GetTimestamp()));
+			ts->set_server_resp_transmission(Netcode::ConvertTimestampToUInt64(Netcode::SystemClock::LocalNow()));
+			service->Send(std::move(alloc), h, cm.packet->GetEndpoint());
+			return nn::FilterResult::CONSUMED;
+		}*/
+
+		return nn::FilterResult::IGNORED;
+	}
+};
 
 void GameApp::ReloadMap() {
 	GameSceneManager * gsm = Service::Get<GameSceneManager>();
@@ -67,7 +149,7 @@ void GameApp::Render() {
 		graphics->debug->DrawDebugText(fpsValue, Netcode::Float2::Zero);
 	} else {
 		if(i++ > 0 && i % 1024 == 0) {
-			Log::Debug("FPS: {0}", fpsCounter.GetAvgFramesPerSecond(), 0.0);
+			//Log::Debug("FPS: {0}", fpsCounter.GetAvgFramesPerSecond(), 0.0);
 		}
 	}
 	
@@ -225,30 +307,52 @@ static Netcode::ErrorCode ConvertServerData(const std::string & inputString, std
 
 void GameApp::CreateUI() {
 	enum PageEnum {
-		E_LOGIN, E_MAIN, E_OPTIONS, E_SERVER_BROWSER, E_LOADING
+		E_LOGIN, E_MAIN, E_OPTIONS, E_SERVER_BROWSER, E_HOST_SERVER, E_HUD, E_LOADING
 	};
-	/*
-	optionsPage->OnClick.Subscribe([op = optionsPage.get()](Netcode::UI::Control*, Netcode::UI::MouseEventArgs&) -> void {
-		op->AddKillFeedItem(L"Hello eliminated World " + std::to_wstring(rand()));
-	});*/
+
+	renderer.ui_Input = &pageManager;
+
+	clientSession = std::dynamic_pointer_cast<nn::ClientSession>(network->CreateClient());
+	playerConnection = std::make_shared<Connection>(clientSession->GetIOContext());
+
+	serverSession = std::dynamic_pointer_cast<nn::ServerSession>(network->CreateServer());
+	serverSession->Start();
+	auto service = serverSession->GetService();
+	service->AddFilter(std::make_unique<ServerConnRequestFilter>());
+	service->AddFilter(std::make_unique<ServerClockSyncRequestFilter>());
+
+	clientSession->Connect(playerConnection, "localhost", 8889)->Then([](const Netcode::ErrorCode& ec) -> void {
+		Log::Debug("Done: {0}", ec.message());
+	});
+
+	return;
+
+	
+	Ref<HostServerPage> hostServerPage = pageManager.CreatePage<HostServerPage>(*pxService->physics);
+	hostServerPage->InitializeComponents();
+	pageManager.AddPage(hostServerPage);
+	pageManager.NavigateTo(0);
 
 	
 	Ref<LoginPage> loginPage = pageManager.CreatePage<LoginPage>(*pxService->physics);
 	Ref<MainMenuPage> mmPage = pageManager.CreatePage<MainMenuPage>(*pxService->physics);
 	Ref<OptionsPage> optionsPage = pageManager.CreatePage<OptionsPage>(*pxService->physics);
 	Ref<ServerBrowserPage> serverBrowserPage = pageManager.CreatePage<ServerBrowserPage>(*pxService->physics);
+	Ref<HUD> hud = pageManager.CreatePage<HUD>(*pxService->physics);
 	Ref<LoadingPage> loadingPage = pageManager.CreatePage<LoadingPage>(*pxService->physics);
 
 	loginPage->InitializeComponents();
 	mmPage->InitializeComponents();
 	optionsPage->InitializeComponents();
 	serverBrowserPage->InitializeComponents();
+	hud->InitializeComponents();
 	loadingPage->InitializeComponents();
 
 	pageManager.AddPage(loginPage);
 	pageManager.AddPage(mmPage);
 	pageManager.AddPage(optionsPage);
 	pageManager.AddPage(serverBrowserPage);
+	pageManager.AddPage(hud);
 	pageManager.AddPage(loadingPage);
 
 	loginPage->onExitClick = [this]() -> void {
@@ -454,7 +558,7 @@ void GameApp::CreateUI() {
 		mainThreadDispatcher.Post([this, gsd, loadp]() -> void {
 			if(clientSession == nullptr) {
 				clientSession = std::dynamic_pointer_cast<nn::ClientSession>(network->CreateClient());
-				connectionBase = std::make_shared<Netcode::Network::ConnectionBase>();
+				playerConnection = std::make_shared<Connection>(clientSession->GetIOContext());
 			}
 
 			std::string h = (!gsd->hostname.empty()) ? gsd->hostname : gsd->address;
@@ -464,7 +568,7 @@ void GameApp::CreateUI() {
 			pageManager.NavigateTo(E_LOADING);
 			loadp->SetLoader(woss.str());
 
-			clientSession->Connect(connectionBase, std::move(h), gsd->port)->Then([loadp](const Netcode::ErrorCode & ec) -> void {
+			clientSession->Connect(playerConnection, std::move(h), gsd->port)->Then([loadp](const Netcode::ErrorCode & ec) -> void {
 				if(ec) {
 					loadp->SetError(Netcode::Utility::ToWideString(Netcode::ErrorCodeToString(ec)));
 				} else {
@@ -536,6 +640,23 @@ void GameApp::CreateAxisMapping() {
 			if(key == Netcode::KeyCode::F5) {
 				ReloadMap();
 				Log::Debug("Map reloaded");
+			}
+
+			if(key == Netcode::KeyCode::F9) {
+				static uint8_t message[1024];
+				static uint8_t dst[1500];
+				memset(message, 'A', sizeof(message));
+				Netcode::MutableArrayView<uint8_t> dstV { dst, sizeof(dst) };
+				Netcode::ErrorCode ec = nn::SslSend(playerConnection->dtlsRoute->ssl.get(), dstV, Netcode::ArrayView<uint8_t>{ message, sizeof(message) });
+
+				if(ec) {
+					
+				} else {
+					BIO * bio = BIO_new_mem_buf(dstV.Data(), dstV.Size());
+					clientSession->GetService()->Send(nullptr, nullptr, playerConnection->endpoint, nn::ssl_ptr<BIO>{ bio }, 1280);
+					Log::Debug("Punch it chewy");
+				}
+				
 			}
 		}
 

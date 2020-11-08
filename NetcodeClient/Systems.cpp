@@ -117,3 +117,8 @@ void PhysXSystem::Run(GameObject * gameObject) {
 void LightSystem::Run(GameObject * gameObject) {
 	TryInvoke(gameObject, this);
 }
+
+void NetworkSystem::Run(GameObject * gameObject, int32_t playerId)
+{
+	TryInvoke(gameObject, this, playerId);
+}

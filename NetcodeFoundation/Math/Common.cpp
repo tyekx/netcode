@@ -23,11 +23,22 @@ namespace Netcode {
 	const Float4 Float4::UnitW{ 0.0f, 0.0f, 0.0f, 1.0f };
 	const Float4 Float4::Eps{ C_Eps, C_Eps, C_Eps, C_Eps };
 
+	const Float2x2 Float2x2::Zero{
+		0.0f, 0.0f,
+		0.0f, 0.0f
+	};
+
+	const Float2x2 Float2x2::Identity{
+		1.0f, 0.0f,
+		0.0f, 1.0f
+	};
+	
 	const Float4x4 Float4x4::Zero {
 		0.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 0.0f };
+	
 	const Float4x4 Float4x4::Identity{
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f, 0.0f,

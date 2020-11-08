@@ -23,12 +23,14 @@ namespace Netcode::Graphics::DX12 {
 	struct ControlDisplayData {
 		float borderRadius;
 		float borderWidth;
+		int borderType;
+		int backgroundType;
 		Float2 spriteSize;
 		Float2 screenSize;
 		Float2 screenPosition;
+		//Float2 texOffset;
 		Float4 borderColor;
-		int borderType;
-		int backgroundType;
+		//Float2x2 texTransform;
 	};
 
 	Weak<GpuResource> SpriteBatchImpl::indexBuffer{ };
@@ -338,23 +340,26 @@ SpriteBatchImpl::SpriteBatchImpl(const Netcode::Module::IGraphicsModule * graphi
 			}
 
 			Float4 screenSize = renderContext->GetViewport();
-
+			
 			ControlDisplayData controlDisplay;
-			controlDisplay.borderType = static_cast<int>(sprites[0]->borderDesc.type);
-			controlDisplay.backgroundType = static_cast<int>(sprites[0]->spriteDesc.type);
-			controlDisplay.borderColor = sprites[0]->borderDesc.color;
 			controlDisplay.borderRadius = sprites[0]->borderDesc.borderRadius;
 			controlDisplay.borderWidth = sprites[0]->borderDesc.borderWidth;
-			controlDisplay.screenPosition = Float2{ sprites[0]->destination.x, sprites[0]->destination.y };
-			controlDisplay.screenSize = Float2{ screenSize.z, screenSize.w };
+			controlDisplay.borderType = static_cast<int>(sprites[0]->borderDesc.type);
+			controlDisplay.backgroundType = static_cast<int>(sprites[0]->spriteDesc.type);
 			controlDisplay.spriteSize = Float2{ sprites[0]->destination.z, sprites[0]->destination.w };
+			controlDisplay.screenSize = Float2{ screenSize.z, screenSize.w };
+			controlDisplay.screenPosition = Float2{ sprites[0]->destination.x, sprites[0]->destination.y };
+			//controlDisplay.texOffset = Float2::Zero;
+			controlDisplay.borderColor = sprites[0]->borderDesc.color;
+			//controlDisplay.texTransform = Float2x2::Identity;
+			
 
 			cbuffer.transform = mTransformMatrix;
 			if(texture != nullptr) {
 				renderContext->SetShaderResources(0, texture);
 			}
-			renderContext->SetRootConstants(1, &controlDisplay, 14);
-			renderContext->SetRootConstants(2, &cbuffer.transform, 16);
+			renderContext->SetRootConstants(1, &controlDisplay, sizeof(ControlDisplayData) / 4);
+			renderContext->SetRootConstants(2, &cbuffer.transform, sizeof(Float4x4) / 4);
 			renderContext->SetVertexBuffer(vertexBuffer.get());
 			renderContext->DrawIndexed(indexCount, vertexOffset);
 

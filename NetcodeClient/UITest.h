@@ -72,13 +72,13 @@ public:
 
 	Ref<Netcode::UI::Label> loggedInLabel;
 	Ref<Netcode::UI::Button> joinGameBtn;
-	Ref<Netcode::UI::Button> createGameBtn;
+	Ref<Netcode::UI::Button> hostGameBtn;
 	Ref<Netcode::UI::Button> optionsBtn;
 	Ref<Netcode::UI::Button> logoutBtn;
 	Ref<Netcode::UI::Button> exitBtn;
 
 	std::function<void()> onJoinGameClick;
-	std::function<void()> onCreateGameClick;
+	std::function<void()> onHostGameClick;
 	std::function<void()> onOptionsClick;
 	std::function<void()> onLogoutClick;
 	std::function<void()> onExitClick;
@@ -163,6 +163,17 @@ public:
 	}
 
 	void SetLoader(const std::wstring & msg);
+};
+
+class HostServerPage : public PageBase {
+	Ref<Netcode::GpuResource> checkboxTexture;
+public:
+	using PageBase::PageBase;
+	
+	std::function<void()> onCreate;
+	std::function<void()> onBack;
+	
+	virtual void InitializeComponents() override;
 };
 
 class HUD : public PageBase {

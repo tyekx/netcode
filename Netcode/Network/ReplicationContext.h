@@ -8,12 +8,12 @@
 
 namespace Netcode::Network {
 
-	template<typename DocType>
 	class ReplicationContext {
 	public:
-		using AllocType = typename DocType::AllocatorType;
-		using Value = typename DocType::ValueType;
-		using StringKeyType = typename DocType::StringRefType;
+		using DocType = rapidjson::Document;
+		using AllocType = DocType::AllocatorType;
+		using Value = DocType::ValueType;
+		using StringKeyType = DocType::StringRefType;
 	protected:
 		AllocType & allocator;
 		Value * startValue;
@@ -75,24 +75,24 @@ namespace Netcode::Network {
 		}
 
 		// push a Value from an object (creates the entry if it does not exist)
-		ReplicationContext & Push(StringKeyType key, rapidjson::Type type = rapidjson::Type::kObjectType) {
-		  if(scopedValue->IsObject()) {
-			  auto it = scopedValue->FindMember(key);
+		bool Push(StringKeyType key, rapidjson::Type type = rapidjson::Type::kObjectType) {
+			if(scopedValue->IsObject()) {
+				auto it = scopedValue->FindMember(key);
 
-			  if(it != scopedValue->MemberEnd()) {
-				  if(it->value.GetType() == type) {
-					  scopeStack.push_back(scopedValue);
-					  scopedValue = &it->value;
-				  } else throw UndefinedBehaviourException{ "Push(key, type): requested type and existing type mismatch" };
-			  } else {
-				  Value obj{ type };
-				  scopedValue->AddMember(key, obj.Move(), allocator);
-				  scopeStack.push_back(scopedValue);
-				  scopedValue = &scopedValue->FindMember(key)->value;
-			  }
-		  } else throw UndefinedBehaviourException{ "Push(key, type): invoked on a non-object" };
+				if(it != scopedValue->MemberEnd()) {
+					if(it->value.GetType() == type) {
+						scopeStack.push_back(scopedValue);
+						scopedValue = &it->value;
+					} else return false;
+				} else {
+					Value obj{ type };
+					scopedValue->AddMember(key, obj.Move(), allocator);
+					scopeStack.push_back(scopedValue);
+					scopedValue = &scopedValue->FindMember(key)->value;
+				}
+			} else return false;
 
-		  return *this;
+			return false;
 		}
 
 		template<typename T>

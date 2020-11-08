@@ -6,15 +6,116 @@
 #include <Netcode/Logger.h>
 #include <Netcode/Config.h>
 
+#include <openssl/rand.h>
 
+#include "Service.h"
 
 namespace Netcode::Network {
+
+	int VerifyCertificate(int ok, X509_STORE_CTX * ctx) {
+		return 1;
+	}
+
+	constexpr static uint32_t NUM_SECRETS = 8;
+
+	struct CookieSecret {
+		uint8_t data[8];
+
+		CookieSecret() { }
+	};
+
+	static std::unique_ptr<CookieSecret[]> cookieSecrets { nullptr };
+
+	void InitializeSecrets() {
+		cookieSecrets = std::make_unique<CookieSecret[]>(NUM_SECRETS);
+
+		srand(time(0));
+		
+		for(uint32_t i = 0; i < NUM_SECRETS; i++) {
+			int res;
+			do {
+				res = RAND_bytes(cookieSecrets[i].data, sizeof(CookieSecret::data));
+			} while(res == 0);
+
+			if(res == -1) {
+				Log::Error("Failed to generate random number.");
+			}
+		}
+	}
+
+	ArrayView<uint8_t> GetSecret() {
+		return ArrayView<uint8_t>{ cookieSecrets[rand() % NUM_SECRETS].data, sizeof(CookieSecret::data)  };
+	}
+
+	int GenerateCookie(SSL * ssl, unsigned char * cookie, unsigned int * cookie_len) {
+		const UdpPacket * pkt = reinterpret_cast<const UdpPacket*>(SSL_get_ex_data(ssl, 0));
+
+		if(pkt == nullptr) {
+			return -1;
+		}
+
+		UdpEndpoint ep = pkt->GetEndpoint();
+		ArrayView<uint8_t> secret = GetSecret();
+		if(HMAC(EVP_sha256(), secret.Data(), secret.Size(),
+			reinterpret_cast<const unsigned char*>(&ep), ep.size(),
+			cookie, cookie_len) == nullptr) {
+			return -1;
+		}
+
+		return 1;
+	}
+
+	int VerifyCookie(SSL * ssl, const unsigned char * cookie, unsigned int cookieLen)
+	{
+		const UdpPacket * pkt = reinterpret_cast<const UdpPacket *>(SSL_get_ex_data(ssl, 0));
+
+		if(pkt == nullptr) {
+			return -1;
+		}
+		
+		UdpEndpoint ep = pkt->GetEndpoint();
+
+		uint8_t hmac[EVP_MAX_MD_SIZE];
+
+		for(uint32_t i = 0; i < NUM_SECRETS; i++) {
+			uint32_t hmacLen = EVP_MAX_MD_SIZE;
+			if(HMAC(EVP_sha256(), cookieSecrets[i].data, sizeof(CookieSecret::data),
+				reinterpret_cast<const unsigned char *>(&ep), ep.size(),
+				hmac, &hmacLen) == nullptr) {
+				return -1;
+			}
+
+			if(hmacLen == cookieLen && memcmp(hmac, cookie, cookieLen) == 0) {
+				return 1;
+			}
+		}
+
+		return 0;
+	}
 
 	ServerSession::ServerSession(boost::asio::io_context & ioc) : ioContext{ ioc } {
 	}
 
 	void ServerSession::Start() {
 		UdpSocket gameSocket{ ioContext };
+
+		ssl_ptr<SSL_CTX> serverCtx{ SSL_CTX_new(DTLSv1_2_server_method()) };
+
+		int r = SSL_CTX_use_certificate_chain_file(serverCtx.get(), "server.crt");
+		r = SSL_CTX_use_PrivateKey_file(serverCtx.get(), "server.key", SSL_FILETYPE_PEM);
+		r = SSL_CTX_check_private_key(serverCtx.get());
+
+		SSL_CTX_set_verify(serverCtx.get(), SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, VerifyCertificate);
+		SSL_CTX_set_cookie_generate_cb(serverCtx.get(), GenerateCookie);
+		SSL_CTX_set_cookie_verify_cb(serverCtx.get(), VerifyCookie);
+
+		InitializeSecrets();
+
+		SSL_CTX_set_options(serverCtx.get(), SSL_OP_NO_SSLv2 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_3 | SSL_OP_NO_COMPRESSION);
+
+		if(SSL_CTX_set_cipher_list(serverCtx.get(), DTLS_CIPHERS) != 1) {
+			Log::Error("Server: failed to set cipherlist");
+		}
 
 		uint32_t gamePort = Config::Get<uint16_t>(L"network.server.gamePort:u16");
 
@@ -45,7 +146,7 @@ namespace Netcode::Network {
 
 		Log::Info("[Network] [Server] Started on port: {0}", Config::Get<uint16_t>(L"network.server.gamePort:u16"));
 
-		service = std::make_shared<NetcodeService>(ioContext, std::move(gameSocket), static_cast<uint16_t>(iface.mtu));
+		service = std::make_shared<NetcodeService>(ioContext, std::move(gameSocket), static_cast<uint16_t>(iface.mtu), nullptr, std::move(serverCtx));
 		service->Host();
 	}
 

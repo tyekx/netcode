@@ -57,6 +57,28 @@ Route::Get('/api/status', function() use ($user) {
     return Response::JSON($user->ToArray(), 200);
 });
 
+Route::Get('/api/latest-version', function() use ($db) {
+    $resp = $db->get("versions", [
+        "version_major(major) [Int]",
+        "version_minor(minor) [Int]",
+        "version_patch(patch) [Int]",
+        "version_build(build) [Int]",
+        "filepath(path) [String]",
+        "hash_sha1 [String]" => \Medoo\Medoo::raw("HEX(<hash_sha1>)"),
+        "hash_sha256 [String]" => \Medoo\Medoo::raw("HEX(<hash_sha256>)"),
+        "hash_sha512 [String]" => \Medoo\Medoo::raw("HEX(<hash_sha512>)"),
+        "hash_md5 [String]" => \Medoo\Medoo::raw("HEX(<hash_md5>)")
+    ], [
+        "ORDER" => [
+            "version_major" => "DESC",
+            "version_minor" => "DESC",
+            "version_patch" => "DESC",
+            "version_build" => "DESC"
+        ]
+    ]);
+    return Response::JSON($resp, 200);
+});
+
 Route::Get('/api/servers-status', function() use ($db, $user) {
     $json = ServerInstances::GetStatus();
 
@@ -136,11 +158,9 @@ Route::Post('/api/register', function() use ($db, $user) {
         return;
     }
 
-    $salt = Crypt::CreateRandomToken();
+    $saltedPw = Crypt::CreateSaltedPassword($password);
 
-    $saltedPw = Crypt::CreateSaltedPassword($password, $salt);
-
-    $db->insert("users", ["name" => $username, "password" => $saltedPw, "salt" => $salt]);
+    $db->insert("users", ["name" => $username, "password" => $saltedPw]);
 
     Response::EmptyJSON(200);
 });
@@ -166,23 +186,22 @@ Route::Post('/api/login', function() use ($db, $user) {
     $username = JsonPost::Get('username');
     $rawPassword = JsonPost::Get('password');
 
-    $result = $db->select('users', ["id", "salt", "is_banned"], ["name" => $username]);
+    $result = $db->get('users', ["id", "name", "password", "is_banned"], ["name" => $username]);
 
-    $id; $salt; $isBanned;
-    if(count($result) == 1) {
-        $id = $result[0]['id'];
-        $salt = $result[0]['salt'];
-        $isBanned = $result[0]['is_banned'];
+
+
+    $id; $name; $password; $isBanned;
+    if($result != null) {
+        $id = $result['id'];
+        $name = $result['name'];
+        $password = $result['password'];
+        $isBanned = $result['is_banned'];
     } else {
         Response::JSON(["error" => "Invalid login details"], 403);
         return;
     }
 
-    $saltedPassword = Crypt::CreateSaltedPassword($rawPassword, $salt);
-
-    $user = $db->select('users', ["id", "name", "is_banned"], ["name" => $username, "password" => $saltedPassword, "id" => $id]);
-
-    if(count($user) == 1) {
+    if(Crypt::VerifyPassword($rawPassword, $password)) {
         $token = null;
 
         $existingSession = $db->select("sessions", ["id", "hash"], ["user_id" => $id, "expires_at[>]" => \Medoo\Medoo::raw("NOW(6)")]);
@@ -230,19 +249,19 @@ Route::Post('/api/create-session', function() use ($db, $user) {
 
     $maxPlayers = intval(JsonPost::Get('max_players'));
     $port = intval(JsonPost::Get('port'));
-    $interval = intval(JsonPost::Get('interval'));
+    $tickRate = intval(JsonPost::Get('tick_rate'));
 
     if($maxPlayers < 2 || $maxPlayers > 16) {
         Response::JSON(["error" => "Max players must be between 2-16"], 403);
         return;
     }
 
-    if($interval < 1 || $interval > 1000) {
-        Response::JSON(["error" => "Interval must be between 1-1000"], 403);
+    if($tickRate < 1 || $tickRate > 240) {
+        Response::JSON(["error" => "Tick rate must be between 1-240"], 403);
         return;
     }
 
-    $json = ServerInstances::CreateServer($maxPlayers, $port, $user->id, $interval);
+    $json = ServerInstances::CreateServer($maxPlayers, $port, $user->id, $tickRate);
 
     if($json === FALSE) {
         return Response::JSON(["error" => "Could not reach netcode-shell"], 500);
@@ -259,18 +278,25 @@ Route::Post('/api/create-session', function() use ($db, $user) {
 
 Route::Get('/api/list-sessions', function() use ($db) {
    $r = $db->select("game_servers",
-    [ "[>]game_sessions" => ["id" => "game_server_id"], "[><]users" => ["owner_id" => "id"]],
     [
+        "[>]game_sessions" => ["id" => "game_server_id"],
+        "[><]users" => ["owner_id" => "id"],
+        "[><]versions" => ["version_id" => "id"]
+    ],
+    [
+        "game_servers.id [Int]",
         "game_servers.hostname [String]",
         "game_servers.server_ip [String]",
-        "game_servers.control_port [Int]",
         "game_servers.game_port [Int]",
         "game_servers.max_players [Int]",
-        "game_servers.id [Int]",
-        "game_servers.version_major [Int]",
-        "game_servers.version_minor [Int]",
-        "game_servers.version_build [Int]",
         "users.name(owner) [String]",
+        "version" => [
+            "versions.version_major(major) [Int]",
+            "versions.version_minor(minor) [Int]",
+            "versions.version_patch(patch) [Int]",
+            "versions.version_build(build) [Int]",
+            "hash_sha256" => \Medoo\Medoo::raw("HEX(<versions.hash_sha256>)")
+        ],
         "active_players [Int]" => \Medoo\Medoo::raw('SUM(IF(<game_sessions.left_at> IS NULL AND <game_sessions.user_id> IS NOT NULL, 1, 0))')
         /*
         sum those that are null because they have not left the server yet, and not because they got introduced by left join
@@ -283,7 +309,7 @@ Route::Get('/api/list-sessions', function() use ($db) {
             "game_servers.id"
         ]
     ]);
-   Response::Json($r, 200);
+    return Response::Json($r, 200);
 });
 
 Route::Run();

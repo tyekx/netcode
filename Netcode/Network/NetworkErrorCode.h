@@ -38,6 +38,10 @@ namespace Netcode {
 		SERVER_TIMEOUT,
 		SERVER_CLOSED,
 
+		// crypto
+		SSL_ERROR,
+		SSL_CONTINUATION_NEEDED,
+
 		// http
 		BAD_COOKIE
 		
@@ -78,6 +82,8 @@ namespace Netcode {
 				case NetworkErrc::CLIENT_TIMEOUT: return "Client timed out";
 				case NetworkErrc::SERVER_TIMEOUT: return "Server timed out";
 				case NetworkErrc::SERVER_CLOSED: return "Server closed";
+				case NetworkErrc::SSL_ERROR: return "SSL error";
+				case NetworkErrc::SSL_CONTINUATION_NEEDED: return "SSL need more packets";
 				case NetworkErrc::BAD_COOKIE: return "Cookie was not set";
 			}
 

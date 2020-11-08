@@ -2,68 +2,6 @@
 
 #include "../GameObject.h"
 #include <Netcode/MathExt.h>
-#include <Netcode/System/TimeTypes.h>
-
-enum class PredictionType {
-	MOVEMENT, FIRE
-};
-
-struct ClientPredictedFire {
-	Netcode::Float3 position;
-	Netcode::Float3 direction;
-};
-
-struct ClientPredictedMovement {
-	Netcode::Float3 startPosition;
-	Netcode::Float3 delta;
-};
-
-struct ClientPredictedAction {
-	uint32_t id;
-	PredictionType type;
-	Netcode::Timestamp predictionTime;
-
-	union {
-		ClientPredictedMovement movementActionData;
-		ClientPredictedFire fireActionData;
-	};
-};
-
-enum class ReconciliationType {
-	ACCEPTED, REJECTED
-};
-
-struct ServerReconciliation {
-	uint32_t id;
-	ReconciliationType type;
-	ClientPredictedMovement correctedPosition;
-};
-
-class ReconciliationBuffer {
-public:
-	std::vector<ClientPredictedAction> predications;
-
-	void Reconcile(std::vector<ServerReconciliation> reconciliationData) {
-		for(const ClientPredictedAction& pred : predications) {
-			for(const ServerReconciliation& sr : reconciliationData) {
-				if(pred.id == sr.id) {
-					if(sr.type == ReconciliationType::ACCEPTED) {
-						// done
-					}
-
-					if(sr.type == ReconciliationType::REJECTED) {
-						// move character back -> replay actions?
-					}
-				}
-			}
-		}
-	}
-};
-
-class InterpolationDelayBuffer {
-public:
-
-};
 
 class PlayerScript : public ScriptBase {
 protected:
@@ -87,6 +25,7 @@ class LocalPlayerScript : public ScriptBase {
 	float mouseSpeed;
 	Netcode::Float3 gravity;
 	float avatarSpeed;
+	ClientActionBuffer actionBuffer;
 
 	void UpdateLookDirection(float dt) {
 		Netcode::Int2 mouseDelta = Netcode::Input::GetMouseDelta();
@@ -157,7 +96,7 @@ public:
 
 		velocity = velocityVector + gravityDeltaVelocity;
 
-		Netcode::Vector3 movementDelta = movementDeltaSpeedScaled + velocityVector * dt;
+		const Netcode::Vector3 movementDelta = movementDeltaSpeedScaled + velocityVector * dt;
 
 		const physx::PxControllerCollisionFlags moveResult = controller->move(ToPxVec3(movementDelta), 0.0f, dt, physx::PxControllerFilters{});
 
@@ -172,6 +111,13 @@ public:
 			static_cast<float>(footPos.y),
 			static_cast<float>(footPos.z)
 		};
+
+		if(!movementDelta.AllZero()) {
+			ClientPredictedMovement cm;
+			cm.position = transform->position;
+			cm.delta = velocity;
+			actionBuffer.Add(ClientAction::Move(cm));
+		}
 
 		transform->rotation = cameraYawQuat;
 		attachmentTransform->rotation = Netcode::Quaternion{ cameraPitch, 0.0f, 0.0f };

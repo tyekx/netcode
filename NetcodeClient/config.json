@@ -48,6 +48,7 @@
     }
   },
   "network": {
+    "fakeMtu:u32": 1280,
     "web": {
       "hostname:string": "netcode.webs",
       "port:u16": 80
@@ -83,7 +84,7 @@
       },
       "tickIntervalMs:u32": 500,
       "workerThreadCount:u32": 1,
-      "selfAddress:string": "0.0.0.0",
+      "selfAddress:string": "::1",
       "hostname:string": "localhost",
       "ownerId:i32": 1,
       "gracePeriodMs:u32": 10000,

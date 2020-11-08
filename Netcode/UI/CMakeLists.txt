@@ -4,6 +4,7 @@ target_sources(Netcode
 PUBLIC
 	"Button.h"
 	"Common.h"
+	"CheckBox.h"
 	"Input.h"
 	"InputGroup.h"
 	"Label.h"
@@ -21,6 +22,7 @@ PRIVATE
 	"Button.cpp"
 	"Input.cpp"
 	"InputGroup.cpp"
+	"CheckBox.cpp"
 	"Label.cpp"
 	"Page.cpp"
 	"PageManager.cpp"

@@ -19,6 +19,11 @@ PUBLIC
 	"CompletionToken.h"
 	"BasicPacket.hpp"
 	"NetworkErrorCode.h"
+	"Dtls.h"
+	"FragmentStorage.h"
+	"MtuValue.hpp"
+	"SslUtil.h"
+	"Service.h"
 	
 PRIVATE
 	"GameSession.cpp"
@@ -31,6 +36,10 @@ PRIVATE
 	"ServerSession.cpp"
 	"MysqlSession.cpp"
 	"ReplicationContext.cpp"
+	"Dtls.cpp"
+	"FragmentStorage.cpp"
+	"SslUtil.cpp"
+	"Service.cpp"
 )
 
 target_link_libraries(Netcode

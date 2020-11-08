@@ -2,11 +2,14 @@
 
 class Crypt {
     public static function CreateRandomToken() {
-        return hash("sha256", rand() . uniqid() . rand());
+        return bin2hex(random_bytes(32));
     }
 
+    public static function CreateSaltedPassword($rawPassword) {
+        return password_hash($rawPassword, PASSWORD_BCRYPT);
+    }
 
-    public static function CreateSaltedPassword($rawPassword, $salt) {
-        return hash("sha256", $rawPassword . $salt);
+    public static function VerifyPassword($rawPassword, $hash) {
+        return password_verify($rawPassword, $hash);
     }
 }

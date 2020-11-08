@@ -4,7 +4,6 @@
 #include "Cookie.h"
 
 #include <json11.hpp>
-#include <future>
 
 #include <Netcode/Utility.h>
 #include <Netcode/Config.h>

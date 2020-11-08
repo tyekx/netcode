@@ -19,10 +19,171 @@
 #include <Netcode/Animation/Blackboard.h>
 #include <Netcode/Animation/Blender.h>
 #include <Netcode/Graphics/Material.h>
+#include <Netcode/System/TimeTypes.h>
+#include <Netcode/Network/Connection.h>
+
+namespace nn = Netcode::Network;
+namespace np = Netcode::Protocol;
 
 namespace Netcode::Network {
 	class ReplicationContext;
 }
+
+enum class ActionType {
+	MOVEMENT, FIRE, JUMP, SPAWN
+};
+
+struct ClientPredictedFire {
+	Netcode::Float3 position;
+	Netcode::Float3 direction;
+};
+
+struct ClientPredictedMovement {
+	Netcode::Float3 position;
+	Netcode::Float3 delta;
+};
+
+struct ClientAction {
+	static uint32_t idGen;
+	uint32_t id;
+	ActionType type;
+	Netcode::Timestamp timestamp;
+
+	union {
+		ClientPredictedMovement movementActionData;
+		ClientPredictedFire fireActionData;
+	};
+
+	NETCODE_CONSTRUCTORS_ALL(ClientAction);
+
+	static ClientAction Fire(const ClientPredictedFire & fireAction) {
+		ClientAction ca;
+		ca.id = idGen++;
+		ca.timestamp = Netcode::SystemClock::GlobalNow();
+		ca.type = ActionType::FIRE;
+		ca.fireActionData = fireAction;
+		return ca;
+	}
+
+	static ClientAction Move(const ClientPredictedMovement & movementAction) {
+		ClientAction ca;
+		ca.id = idGen++;
+		ca.timestamp = Netcode::SystemClock::GlobalNow();
+		ca.type = ActionType::MOVEMENT;
+		ca.movementActionData = movementAction;
+		return ca;
+	}
+
+	static ClientAction Jump() {
+		ClientAction ca;
+		ca.id = idGen++;
+		ca.timestamp = Netcode::SystemClock::GlobalNow();
+		ca.type = ActionType::JUMP;
+		return ca;
+	}
+
+	static ClientAction Spawn() {
+		ClientAction ca;
+		ca.id = idGen++;
+		ca.timestamp = Netcode::SystemClock::GlobalNow();
+		ca.type = ActionType::SPAWN;
+		return ca;
+	}
+};
+
+class ClientActionBuffer {
+	ClientAction movements;
+	std::vector<ClientAction> otherTypes;
+public:
+
+	ClientActionBuffer() : movements{}, otherTypes{} {
+		movements.id = 0;
+	}
+	// actions that can be merged will be merged here
+	void Add(ClientAction action) {
+		if(action.type == ActionType::MOVEMENT) {
+			movements = action;
+		} else {
+			otherTypes.push_back(action);
+		}
+	}
+
+	void Consume(std::vector<ClientAction> & dstBuffer) {
+		otherTypes.push_back(movements);
+		std::swap(dstBuffer, otherTypes);
+	}
+};
+
+enum class ReconciliationType {
+	ACCEPTED, REJECTED
+};
+
+struct ServerReconciliation {
+	uint32_t id;
+	ReconciliationType type;
+	ClientPredictedMovement correctedPosition;
+};
+
+class ReconciliationBuffer {
+public:
+	std::vector<ClientAction> predictions;
+
+	void Reconcile(const np::ActionResult& actionResult) {
+		for(const ClientAction & ca : predictions) {
+			if(ca.id == actionResult.id()) {
+				if(actionResult.result() == np::ActionResultType::ACCEPTED) {
+					// ok
+				}
+			}
+		}
+	}
+};
+
+class InterpolationDelayBuffer {
+public:
+
+};
+
+
+struct ServerActionBuffer {
+public:
+	const std::vector<ClientAction> & GetActionsFor(int32_t playerId) {
+
+	} 
+
+	void Add(int32_t playerId, ClientAction action) {
+
+	}
+	
+	void Clear() {
+		
+	}
+};
+
+/*
+ * Mitigation for packetloss. This includes every action or result that is not handled yet
+ */
+class RedundancyBuffer {
+public:
+	// everything that is sent to the user in frame N
+	void Add(uint32_t localSequence, ClientAction action) {
+
+	}
+
+	void Add(uint32_t localSequence, ServerReconciliation reconciliation) {
+		
+	}
+
+	// apply the data to the replication context
+	void Apply(nn::ReplicationContext* ctx) {
+		
+	}
+
+	// remove objects that are implicitly confirmed by the remoteSequence.
+	void Confirm(uint32_t confirmedSequence) {
+
+	}
+};
 
 enum AxisEnum : uint32_t {
 	VERTICAL,
@@ -48,13 +209,25 @@ public:
 	virtual void BeginPlay(GameObject * gameObject) { }
 	virtual void EndPlay() { }
 	virtual void Update(float dt) = 0;
-	virtual void ReplicateSend(Netcode::Network::ReplicationContext * ctx) { }
-	virtual void ReplicateReceive(Netcode::Network::ReplicationContext * ctx) { }
+	virtual void ReplicateSend(GameObject * obj, nn::ReplicationContext * ctx) { }
+	virtual void ReplicateReceive(GameObject * obj, nn::ReplicationContext * ctx) { }
 };
 
 COMPONENT_ALIGN class Script {
 public:
 	std::vector<std::unique_ptr<ScriptBase>> scripts;
+
+	void ReplicateSend(GameObject * obj, nn::ReplicationContext * ctx) {
+		for(auto it = std::begin(scripts); it != std::end(scripts); it++) {
+			(*it)->ReplicateSend(obj, ctx);
+		}
+	}
+	
+	void ReplicateReceive(GameObject* obj, nn::ReplicationContext * ctx) {
+		for(auto it = std::begin(scripts); it != std::end(scripts); it++) {
+			(*it)->ReplicateReceive(obj, ctx);
+		}
+	}
 
 	void AddScript(std::unique_ptr<ScriptBase> script) {
 		scripts.emplace_back(std::move(script));
@@ -111,8 +284,9 @@ public:
 	}
 };
 
-COMPONENT_ALIGN class Netw {
+COMPONENT_ALIGN struct Netw {
 	int32_t owner;
+	
 
 	bool HasAuthority(int32_t id) const {
 		return owner == id;

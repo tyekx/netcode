@@ -15,14 +15,10 @@
 
 #include <Netcode/System/SystemClock.h>
 #include "BasicPacket.hpp"
-#include "NetworkErrorCode.h"
+#include "NetworkDecl.h"
 
 namespace Netcode::Network {
 
-	using IpAddress = boost::asio::ip::address;
-	using UdpSocket = boost::asio::ip::udp::socket;
-	using UdpResolver = boost::asio::ip::udp::resolver;
-	using UdpEndpoint = boost::asio::ip::udp::endpoint;
 	namespace Errc = boost::system::errc;
 
 	ErrorCode Bind(const boost::asio::ip::address & selfAddr, UdpSocket & udpSocket, uint32_t & port);

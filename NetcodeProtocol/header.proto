@@ -10,7 +10,7 @@ enum MessageType {
 	CONNECT_RESPONSE = 0x15;
 	DISCONNECT = 0x21;
 	DISCONNECT_NOTIFY = 0x29;
-	HEARTBEAT = 0x30;
+	HEARTBEAT = 0x31;
 	PMTU_DISCOVERY = 0x41;
 	NAT_DISCOVERY_REQUEST = 0x51;
 	NAT_DISCOVERY_RESPONSE = 0x53;
@@ -19,6 +19,7 @@ enum MessageType {
 	CLOCK_SYNC_REQUEST = 0x70;
 	CLOCK_SYNC_RESPONSE = 0x72;
 	GAME = 0x80;
+	UNDEFINED = 0xFE;
 }
 
 enum NatType {
@@ -42,7 +43,7 @@ message TimeSync {
 
 message Endpoint {
 	int32 port = 1;
-	string addr = 2;
+	bytes addr = 2;
 }
 
 message ConnectRequest {
@@ -61,15 +62,14 @@ message ConnectResponse {
 	Endpoint private_endpoint = 6;
 }
 
-message Header {
-	MessageType type = 1;
-	fixed32 sequence = 2;
-
-	oneof HeaderContent {
-		NatType nat_type = 3;
-		TimeSync time_sync = 4;
-		ConnectRequest connect_request = 5;
-		ConnectResponse connect_response = 6;
-		fixed32 mtu_probe_value = 7;
+message Control {
+	fixed32 sequence = 1;
+	MessageType type = 2;
+	oneof ControlContent {
+		ConnectRequest connect_request = 3;
+		ConnectResponse connect_response = 4;
+		TimeSync time_sync = 5;
+		fixed32 mtu_proble_size = 6;
+		NatType nat_type = 7;
 	}
 }

@@ -40,15 +40,13 @@ namespace Netcode::Network {
 		EndpointType endpoint;
 		uint32_t sequence;
 		Timestamp timestamp;
-		FragmentData fragmentData;
-		uint32_t mtu;
 		uint32_t size;
 		uint32_t capacity;
 		uint8_t * data;
 
 		~BasicPacket() noexcept = default;
 
-		BasicPacket() noexcept : endpoint{}, sequence{ 0 }, timestamp{}, fragmentData{}, mtu{}, size{}, capacity{}, data{} {
+		BasicPacket() noexcept : endpoint{}, sequence{ 0 }, timestamp{}, size{}, capacity{}, data{} {
 
 		}
 
@@ -67,10 +65,6 @@ namespace Netcode::Network {
 		}
 
 		[[nodiscard]]
-		uint32_t GetMtu() const noexcept { return mtu; }
-		void SetMtu(uint32_t m) noexcept { mtu = m; }
-
-		[[nodiscard]]
 		uint32_t GetSize() const noexcept { return size; }
 		void SetSize(uint32_t s) noexcept { size = s; }
 
@@ -84,6 +78,7 @@ namespace Netcode::Network {
 
 		[[nodiscard]]
 		const EndpointType & GetEndpoint() const noexcept { return endpoint; }
+		
 		[[nodiscard]]
 		EndpointType & GetEndpoint() noexcept { return endpoint; }
 		void SetEndpoint(const EndpointType & ep) noexcept { endpoint = ep; }
@@ -95,10 +90,6 @@ namespace Netcode::Network {
 
 		[[nodiscard]]
 		uint32_t GetCapacity() const noexcept { return capacity; }
-
-		[[nodiscard]]
-		FragmentData GetFragmentData() const noexcept { return fragmentData; }
-		void SetFragmentData(FragmentData fd) noexcept { fragmentData = fd; }
 
 		[[nodiscard]] // [ data, capacity ]: the entire buffer is writable
 		boost::asio::mutable_buffer GetMutableBuffer() noexcept {
@@ -116,7 +107,7 @@ namespace Netcode::Network {
 		constexpr static uint32_t HEADER_SIZE = 8;
 		constexpr static uint32_t MAX_SIZE = 65535 - HEADER_SIZE;
 		constexpr static uint32_t IPV4_MAX_SIZE = 65535 - HEADER_SIZE - 20;
-		constexpr static uint32_t IPV6_MAX_SIZE = 65535 - HEADER_SIZE - 48;
+		constexpr static uint32_t IPV6_MAX_SIZE = 65535 - HEADER_SIZE - 40;
 
 		using BasicPacket::BasicPacket;
 	};

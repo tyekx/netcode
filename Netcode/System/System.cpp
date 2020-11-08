@@ -1,5 +1,9 @@
 #include "System.h"
+#include <NetcodeFoundation/Platform.h>
+#if defined(NETCODE_OS_WINDOWS)
 #include <Windows.h>
+#endif
+#include <openssl/ssl3.h>
 
 namespace Netcode {
 
@@ -47,6 +51,8 @@ namespace Netcode {
 	
 	void Initialize() {
 		SetTimerResolution();
+		SSL_load_error_strings();
+		OpenSSL_add_ssl_algorithms();
 	}
 
 	/*

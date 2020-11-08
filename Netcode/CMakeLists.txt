@@ -6,6 +6,7 @@ find_package(RapidJSON CONFIG REQUIRED)
 find_package(json11 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS date_time program_options system)
+find_package(OpenSSL REQUIRED)
 
 find_path(PHYSX_INCLUDE_DIR physx/PxScene.h)
 
@@ -35,6 +36,7 @@ PRIVATE
 	Boost::program_options
 	Boost::system
 	Boost::date_time
+	OpenSSL::SSL OpenSSL::Crypto
 	${MYSQL_LIBRARY}
 	${DIRECTXTEX_LIBRARY}
 )

@@ -27,6 +27,9 @@ namespace Netcode {
 
 		[[nodiscard]]
 		static Timestamp GlobalNow();
+
+		[[nodiscard]]
+		static Timestamp PredictedGlobalNow();
 		
 		[[nodiscard]]
 		static float GetDeltaTimeInSeconds();

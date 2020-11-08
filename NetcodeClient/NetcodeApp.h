@@ -28,12 +28,25 @@
 #include <Netcode/System/System.h>
 
 #include <Netcode/Network/ClientSession.h>
+#include <Netcode/Network/ServerSession.h>
+#include <Netcode/Network/Service.h>
 
 using Netcode::Graphics::ResourceType;
 using Netcode::Graphics::ResourceState;
 using Netcode::Graphics::FrameGraphCullMode;
 
 namespace nn = Netcode::Network;
+namespace np = Netcode::Protocol;
+
+struct Connection : public nn::ConnectionBase {
+	RedundancyBuffer redundancyBuffer;
+	GameObject* gameObject;
+	uint32_t localActionIndex;
+	uint32_t remoteActionIndex;
+
+	Connection(boost::asio::io_context & ioc) : nn::ConnectionBase{ ioc },
+		redundancyBuffer{}, gameObject{ nullptr }, localActionIndex{ 0 }, remoteActionIndex{ 0 } { }
+};
 
 class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler {
 public:
@@ -51,12 +64,14 @@ public:
 	Netcode::Physics::PhysX * pxService;
 	GameScene * gameScene;
 	Ref<AnimationSet> ybotAnimationSet;
-	Ref<nn::ConnectionBase> connectionBase;
-	Ref<Netcode::Network::ClientSession> clientSession;
+	Ref<Connection> playerConnection;
+	Ref<nn::ClientSession> clientSession;
+	Ref<nn::ServerSession> serverSession;
 	Netcode::URI::Model mapAsset;
 	Netcode::FrameCounter fpsCounter;
 	std::wstring fpsValue;
 	UserData user;
+	uint32_t processedTick;
 
 	float totalTime;
 
@@ -81,6 +96,55 @@ public:
 	void CreateRemoteAvatar();
 
 	void CreateLocalAvatar();
+
+	bool IncludeNetworkTick() {
+		if(playerConnection == nullptr) {
+			return false;
+		}
+
+		const uint32_t tc = playerConnection->tickCounter.load(std::memory_order_acquire);
+
+		if(processedTick >= tc) {
+			return false;
+		}
+
+		processedTick = tc;
+		return true;
+	}
+
+	ReconciliationBuffer * reconciliationBuffer;
+	RedundancyBuffer * redundancyBuffer;
+
+	void ClientReceiveNetworkUpdate() {
+		std::vector<nn::GameMessage> updates;
+		playerConnection->sharedQueue.GetIncomingPackets(updates);
+
+		if(updates.empty()) {
+			return;
+		}
+
+		for(const nn::GameMessage& gm : updates) {
+			/*
+			if(gm.update->Content_case() == np::Update::ContentCase::kServerUpdate) {
+				const np::ServerUpdate& update = gm.update->server_update();
+				// use this to check for duplication or older packages
+				const uint32_t mid = update.id();
+				redundancyBuffer->Confirm(mid);
+				
+				// use this to erase from redundancy buffer
+				const uint32_t remoteRecvId = update.received_id();
+
+				for(const np::ActionResult& actionResult : update.action_results()) {
+					reconciliationBuffer->Reconcile(actionResult);
+				}
+			}
+			*/
+		}
+	}
+
+	void ClientSendNetworkUpdate() {
+		
+	}
 
 	virtual void OnResized(int w, int h) override {
 		float asp = graphics->GetAspectRatio();
@@ -148,7 +212,19 @@ public:
 			float dt = stopwatch.Restart();
 			Netcode::Input::UpdateAxisMap(dt);
 
+			const bool isNetworkTick = IncludeNetworkTick();
+
+			serverSession->GetService()->RunFilters();
+			
+			if(isNetworkTick) {
+				ClientReceiveNetworkUpdate();
+			}
+			
 			Simulate(dt);
+
+			if(isNetworkTick) {
+				ClientSendNetworkUpdate();
+			}
 
 			Render();
 			
@@ -156,6 +232,8 @@ public:
 
 			window->CompleteFrame();
 
+			Netcode::SleepFor(std::chrono::milliseconds(2));
+			
 			fpsCounter.Update(Netcode::SystemClock::LocalNow() - st);
 		}
 	}

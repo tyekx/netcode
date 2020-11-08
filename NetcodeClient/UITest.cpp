@@ -7,6 +7,7 @@
 #include <Netcode/UI/InputGroup.h>
 #include <Netcode/UI/ScrollViewer.h>
 #include <Netcode/UI/Slider.h>
+#include <Netcode/UI/CheckBox.h>
 
 #include <sstream>
 
@@ -490,8 +491,8 @@ void MainMenuPage::InitializeComponents()
 	loggedInLabel->TextColor(COLOR_ACCENT);
 	loggedInLabel->Font(textFont);
 
-	createGameBtn = CreateButton(L"Create game");
-	createGameBtn->Margin(Netcode::Float4{ 0.0f, 0.0f, 0.0f, 8.0f });
+	hostGameBtn = CreateButton(L"Host game");
+	hostGameBtn->Margin(Netcode::Float4{ 0.0f, 0.0f, 0.0f, 8.0f });
 	
 	joinGameBtn = CreateButton(L"Join game");
 	joinGameBtn->Margin(Netcode::Float4{ 0.0f, 0.0f, 0.0f, 8.0f });
@@ -506,7 +507,7 @@ void MainMenuPage::InitializeComponents()
 
 	buttonField->AddChild(titleLabel);
 	buttonField->AddChild(loggedInLabel);
-	buttonField->AddChild(createGameBtn);
+	buttonField->AddChild(hostGameBtn);
 	buttonField->AddChild(joinGameBtn);
 	buttonField->AddChild(optionsBtn);
 	buttonField->AddChild(logoutBtn);
@@ -518,9 +519,9 @@ void MainMenuPage::InitializeComponents()
 
 	UpdateZIndices();
 
-	createGameBtn->OnClick.Subscribe([this](Control *, ui::MouseEventArgs &) -> void {
-		if(onCreateGameClick) {
-			onCreateGameClick();
+	hostGameBtn->OnClick.Subscribe([this](Control *, ui::MouseEventArgs &) -> void {
+		if(onHostGameClick) {
+			onHostGameClick();
 		}
 	});
 	
@@ -1416,11 +1417,16 @@ void HUD::InitializeComponents()
 	rootPanel->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
 	rootPanel->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
 
+	Ref<ui::Panel> alignmentPanel = controlAllocator.MakeShared<ui::Panel>(eventAllocator, nullptr);
+	alignmentPanel->Sizing(ui::SizingType::INHERITED);
+	alignmentPanel->VerticalContentAlignment(ui::VerticalAnchor::TOP);
+	alignmentPanel->HorizontalContentAlignment(ui::HorizontalAnchor::RIGHT);
+
 	killFeed = controlAllocator.MakeShared<ui::Panel>(eventAllocator, nullptr);
 	killFeed->Sizing(ui::SizingType::FIXED);
 	killFeed->Size(Netcode::Float2{ 480.0f, 160.0f });
-	killFeed->Position(Netcode::Float2{ 0.0f, -200.0f });
-	//killFeed->BackgroundColor(Netcode::Float4{ 0.0f, 0.0f, 0.5f, 1.0f });
+	killFeed->HorizontalContentAlignment(ui::HorizontalAnchor::RIGHT);
+	killFeed->Position(Netcode::Float2{ -20.0f, 20.0f });
 
 	auto font = assets->ImportFont(L"compiled/fonts/titillium14.spritefont");
 
@@ -1438,11 +1444,67 @@ void HUD::InitializeComponents()
 		logBuffer[i].displayedFor = 0.0f;
 		killFeed->AddChild(elim1);
 	}
+
+	alignmentPanel->AddChild(killFeed);
 	
 	rootPanel->AddChild(crosshair);
-	rootPanel->AddChild(killFeed);
+	rootPanel->AddChild(alignmentPanel);
 	rootPanel->AddChild(hitpip);
 	rootPanel->AddChild(elimLabel);
 
+	AddChild(rootPanel);
+}
+
+void HostServerPage::InitializeComponents()
+{
+	PageBase::InitializeComponents();
+	
+	AssetManager * assets = Service::Get<AssetManager>();
+
+	checkboxTexture = assets->ImportTexture2D(L"textures/ui/checkmark.png");
+	Netcode::UInt2 s{ static_cast<uint32_t>(checkboxTexture->GetDesc().width), checkboxTexture->GetDesc().height };
+	Ref<Netcode::ResourceViews> v = assets->CreateTextureRV(checkboxTexture);
+	
+	Ref<ui::Label> titleLabel = controlAllocator.MakeShared<ui::Label>(eventAllocator, CreatePhysxActor());
+	titleLabel->Sizing(ui::SizingType::FIXED);
+	titleLabel->Size(Netcode::Float2{ 400.0f, 100.0f });
+	titleLabel->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
+	titleLabel->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
+	titleLabel->TextColor(COLOR_ACCENT);
+	titleLabel->Font(assets->ImportFont(L"compiled/fonts/titillium48bold.spritefont"));
+	titleLabel->Text(L"Host server");
+	titleLabel->Margin(Netcode::Float4{ 0.0f, 0.0f, 0.0f, 64.0f });
+
+	Ref<ui::CheckBox> checkBox = controlAllocator.MakeShared<ui::CheckBox>(eventAllocator, CreatePhysxActor());
+	checkBox->Sizing(ui::SizingType::FIXED);
+	checkBox->Size(Netcode::Float2{ 40.0f, 40.0f });
+	checkBox->CheckedImage(v, s);
+	checkBox->BackgroundColor(Netcode::Float4{ 1.0f, 0.0f, 0.0f, 1.0f });
+
+	Ref<ui::StackPanel> contentPanel = controlAllocator.MakeShared<ui::StackPanel>(eventAllocator, nullptr);
+	contentPanel->StackDirection(ui::Direction::VERTICAL);
+	contentPanel->Sizing(ui::SizingType::DERIVED);
+
+	Ref<ui::StackPanel> buttonPanel = controlAllocator.MakeShared<ui::StackPanel>(eventAllocator, nullptr);
+	buttonPanel->StackDirection(ui::Direction::HORIZONTAL);
+	buttonPanel->Sizing(ui::SizingType::DERIVED);
+
+	Ref<ui::Button> backBtn = CreateButton(L"Back");
+	backBtn->Margin(Netcode::Float4{ 0.0f, 0.0f, 8.0f, 0.0f });
+	Ref<ui::Button> hostBtn = CreateButton(L"Host");
+	buttonPanel->AddChild(backBtn);
+	buttonPanel->AddChild(hostBtn);
+
+	contentPanel->AddChild(titleLabel);
+	contentPanel->AddChild(checkBox);
+	contentPanel->AddChild(buttonPanel);
+	
+	Ref<ui::Panel> rootPanel = controlAllocator.MakeShared<ui::Panel>(eventAllocator, nullptr);
+	rootPanel->Sizing(ui::SizingType::INHERITED);
+	//rootPanel->BackgroundColor(Netcode::Float4::One);
+	rootPanel->HorizontalContentAlignment(ui::HorizontalAnchor::CENTER);
+	rootPanel->VerticalContentAlignment(ui::VerticalAnchor::MIDDLE);
+
+	rootPanel->AddChild(contentPanel);
 	AddChild(rootPanel);
 }

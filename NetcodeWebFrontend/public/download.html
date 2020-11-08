@@ -1,3 +1,39 @@
-<h2>Download</h2>
+<h2>Download latest version</h2>
 
-<p>Soon TM</p>
+<div ng-if="!version">
+    <p>
+        Fetching data...
+    </p>
+</div>
+
+<div ng-if="version">
+    <p>This is the installer for the client. If you are looking to update your client, use the included updater.</p>
+
+    <table class="netcode-version-table">
+        <tr>
+            <td>Version:</td>
+            <td>{{ version.major }}.{{ version.minor }}.{{ version.patch }}.{{ version.build }}</td>
+        </tr>
+        <tr>
+            <td>MD5:</td>
+            <td class="netcode-bigcell">{{ version.hash_md5 }}</td>
+        </tr>
+        <tr>
+            <td>SHA1:</td>
+            <td class="netcode-bigcell">{{ version.hash_sha1 }}</td>
+        </tr>
+        <tr>
+            <td>SHA256:</td>
+            <td class="netcode-bigcell">{{ version.hash_sha256 }}</td>
+        </tr>
+        <tr>
+            <td>SHA512:</td>
+            <td class="netcode-bigcell">{{ version.hash_sha512 }}</td>
+        </tr>
+    </table>
+    <div class="netcode-input">
+        <a href="{{ version.path }}" target="_blank" class="button">
+            Download
+        </a>
+    </div>
+</div>

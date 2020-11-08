@@ -10,12 +10,14 @@ SamplerState samplerState : register(s0);
 cbuffer ControlDisplayData : register(b0) {
     float borderRadius;
     float borderWidth;
+    int borderType;
+    int backgroundType;
     float2 spriteSize;
     float2 screenSize;
     float2 screenPosition;
+    //float2 texOffset;
     float4 borderColor;
-    int borderType;
-    int backgroundType;
+    //float2x2 texTransform;
 };
 
 float4 SelectBackgroundColor(float2 texCoord, float4 albedoColor) {

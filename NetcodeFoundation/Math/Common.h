@@ -30,7 +30,7 @@ namespace Netcode {
 	constexpr float C_Euler = 2.718281746f;
 
 	using Float = float;
-
+	
 	struct Float2 : public DirectX::XMFLOAT2 {
 		using DirectX::XMFLOAT2::XMFLOAT2;
 
@@ -65,12 +65,28 @@ namespace Netcode {
 	};
 
 	struct Float4x4 : public DirectX::XMFLOAT4X4 {
+		
 		using DirectX::XMFLOAT4X4::XMFLOAT4X4;
 
 		Float4x4(const DirectX::XMFLOAT4X4 & rhs) noexcept : DirectX::XMFLOAT4X4::XMFLOAT4X4(rhs) { }
 
 		static const Float4x4 Zero;
 		static const Float4x4 Identity;
+	};
+
+	struct Float2x2 {
+		float _11;
+		float _12;
+		float _21;
+		float _22;
+
+		Float2x2() : _11{ 1.0f }, _12{ 0.0f }, _21{ 0.0f }, _22{ 1.0f } { }
+		
+		Float2x2(float m00, float m01, float m10, float m11) :
+			_11{ m00 }, _12 { m01 }, _21 { m10 }, _22{ m11 } {}
+
+		static const Float2x2 Zero;
+		static const Float2x2 Identity;
 	};
 
 	using Int = int32_t;

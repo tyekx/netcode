@@ -145,12 +145,10 @@ namespace Netcode::Network {
 		std::string queryValueAddress;
 		std::string queryValuePort;
 
-		void SendConnectRequest(CompletionToken<ErrorCode> mainToken);
-
 		void Tick();
 		
 		void InitTick() {
-			tickTimer.expires_from_now(std::chrono::milliseconds(500));
+			tickTimer.expires_from_now(connection->tickInterval.load(std::memory_order_acquire));
 			tickTimer.async_wait([this](const ErrorCode & ec) -> void {
 				if(ec) {
 					Log::Error("Tick: {0}", ec.message());
@@ -166,128 +164,29 @@ namespace Netcode::Network {
 				}
 			});
 		}
+
+		CompletionToken<TrResult> StartPunchthrough();
+
+		void SendConnectRequest(CompletionToken<ErrorCode> mainToken);
 		
-		void StartConnection(CompletionToken<ErrorCode> mainToken) {
-			if(connection == nullptr) {
-				Log::Error("No connection was set");
-				mainToken->Set(make_error_code(NetworkErrc::ALREADY_CONNECTED));
-				return;
-			}
+		void StartConnection(CompletionToken<ErrorCode> mainToken);
 
-			connection->state = ConnectionState::CONNECTING;
+		void OnHostnameResolved(const UdpResolver::results_type & results, CompletionToken<ErrorCode> mainToken);
 
-			Ref<NetAllocator> alloc = service->MakeSmallAllocator();
-			Protocol::Header* header = alloc->MakeProto<Protocol::Header>();
-			header->set_type(Protocol::MessageType::CONNECT_PUNCHTHROUGH);
-
-			service->Send(std::move(alloc), connection.get(), header)
-				   ->Then([this, mainToken](TrResult tr) mutable -> void {
-				if(tr.errorCode) {
-					connection->state = ConnectionState::INACTIVE;
-					mainToken->Set(tr.errorCode);
-				} else {
-					SendConnectRequest(std::move(mainToken));
-				}
-			});
-		}
-
-		void OnHostnameResolved(const UdpResolver::results_type & results, CompletionToken<ErrorCode> mainToken) {
-			
-			if(results.empty()) {
-				mainToken->Set(make_error_code(NetworkErrc::HOSTNAME_NOT_FOUND));
-				return;
-			}
-			
-			UdpSocket sock{ ioContext };
-
-			connection->state = ConnectionState::CONNECTING;
-			connection->endpoint = *(results.begin());
-			connection->localSequence = 1;
-
-			boost::system::error_code ec;
-			sock.open(connection->endpoint.protocol(), ec);
-
-			if(ec) {
-				Log::Error("Failed to open port");
-				mainToken->Set(make_error_code(NetworkErrc::SOCK_ERROR));
-				connection->state = ConnectionState::INACTIVE;
-				return;
-			}
-
-			auto netInterfaces = GetCompatibleInterfaces(connection->endpoint.address());
-
-			uint32_t linkLocalMtu = 1280;
-
-			if(netInterfaces.empty()) {
-				Log::Warn("No defaultable network interface found");
-			} else {
-				const Interface bestCandidate = netInterfaces.front();
-
-				sock.bind(UdpEndpoint{
-					bestCandidate.address,
-					0
-				}, ec);
-
-				if(ec) {
-					Log::Error("Failed to bind port");
-					mainToken->Set(make_error_code(NetworkErrc::SOCK_ERROR));
-					connection->state = ConnectionState::INACTIVE;
-					return;
-				}
-
-				linkLocalMtu = bestCandidate.mtu;
-
-#if defined(NETCODE_DEBUG)
-				try {
-					uint32_t fakeMtu = Config::Get<uint32_t>(L"network.fakeMtu:u32");
-					if(fakeMtu > 0) {
-						linkLocalMtu = std::min(linkLocalMtu, fakeMtu);
-					}
-				} catch(OutOfRangeException & e) { }
-#endif
-			}
-
-			if(ec) {
-				Log::Error("Failed to 'connect': {0}", ec.message());
-				mainToken->Set(make_error_code(NetworkErrc::SOCK_ERROR));
-				connection->state = ConnectionState::INACTIVE;
-				return;
-			}
-			
-			if(!SetDontFragmentBit(sock)) {
-				Log::Error("Failed to set dont fragment bit");
-				mainToken->Set(make_error_code(NetworkErrc::SOCK_ERROR));
-				connection->state = ConnectionState::INACTIVE;
-				return;
-			}
-			
-			service = std::make_shared<NetcodeService>(ioContext, std::move(sock), static_cast<uint16_t>(linkLocalMtu));
-			service->Host();
-
-			StartConnection(std::move(mainToken));
-
-			InitTick();
-		}
-
-		CompletionToken<ErrorCode> StartHostnameResolution() {
-			CompletionToken<ErrorCode> ct = std::make_shared<CompletionTokenType<ErrorCode>>(&ioContext);
-			connection->state = ConnectionState::RESOLVING;
-			resolver.async_resolve(queryValueAddress, queryValuePort, boost::asio::ip::resolver_base::address_configured,
-				[this, ct](const ErrorCode & ec, UdpResolver::results_type results) mutable -> void {
-				if(ec) {
-					ct->Set(make_error_code(NetworkErrc::HOSTNAME_NOT_FOUND));
-				} else {
-					OnHostnameResolved(std::move(results), std::move(ct));
-				}
-			});
-			return ct;
-		}
+		CompletionToken<ErrorCode> StartHostnameResolution();
 		
 		CompletionToken<ErrorCode> DiscoverPathMtu();
 
+		CompletionToken<DtlsConnectResult> StartDtlsConnection();
+		
 	public:
-		ClientSession(boost::asio::io_context & ioc) : ioContext{ ioc }, resolver{ ioc }, tickTimer{ ioc } {
 
+		
+		ClientSession(boost::asio::io_context & ioc) : ioContext{ ioc }, resolver{ ioc }, tickTimer{ ioc } {
+		}
+
+		virtual boost::asio::io_context & GetIOContext() override {
+			return ioContext;
 		}
 
 		Ref<NetcodeService> GetService() const {
@@ -296,53 +195,10 @@ namespace Netcode::Network {
 		
 		virtual ~ClientSession() = default;
 		
-		void SendDebugFragmentedMessage() {
-			Ref<NetAllocator> alloc = service->MakeLargeAllocator();
-			Protocol::Update * update = alloc->MakeProto<Protocol::Update>();
-
-			Protocol::ClientUpdate * cu = update->mutable_client_update();
-			Protocol::Player * ps = cu->mutable_player_state();
-
-			char * data = alloc->MakeArray<char>(8000);
-			memset(data, 'A', 8000);
-
-			ps->set_replication_data(data, 8000);
-
-			service->Send(std::move(alloc), connection.get(), update)->Then([this](const TrResult & tr) -> void {
-				Log::Debug("Send: {0}", tr.errorCode.message());
-				//SendDebugFragmentedMessage();
-			});
-		}
+		void SendDebugFragmentedMessage();
 
 		virtual void Start() override {
-			Ref<ConnectionBase> c = std::make_shared<ConnectionBase>();
-			c->state = ConnectionState::INACTIVE;
-
-			Connect(std::move(c), "localhost", 8889)->Then([this](const ErrorCode & ec) -> void {
-				Log::Debug("Connect: {0}", ec.message());
-
-				if(ec) {
-					Log::Error("Failed to connect: {0}", ec.message());
-					connection->state = ConnectionState::INACTIVE;
-					return;
-				}
-
-				connection->state = ConnectionState::SYNCHRONIZING;
-
-				Synchronize()->Then([this](const ErrorCode & ec) -> void {
-					if(ec) {
-						Log::Error("Failed to synchronize: {0}", ec.message());
-						connection->state = ConnectionState::INACTIVE;
-						return;
-					}
-
-					connection->state = ConnectionState::ESTABLISHED;
-
-					DiscoverPathMtu()->Then([this](const ErrorCode & ec)-> void {
-						Log::Debug("Pmtu discovery: {0}", ec.message());
-					});
-				});
-			});
+			
 		}
 
 		virtual void Stop() override {
@@ -351,15 +207,7 @@ namespace Netcode::Network {
 
 		virtual CompletionToken<ErrorCode> Synchronize();
 
-		virtual void CloseService() {
-			if(service != nullptr) {
-				boost::system::error_code ec;
-				tickTimer.cancel(ec);
-				service->Close();
-				Netcode::SleepFor(std::chrono::milliseconds(100));
-				service.reset();
-			}
-		}
+		virtual void CloseService();
 		
 		virtual CompletionToken<ErrorCode> Connect(Ref<ConnectionBase> connectionHandle, std::string hostname, uint32_t port) {
 			if(connectionHandle->state != ConnectionState::INACTIVE) {

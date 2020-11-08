@@ -1,5 +1,7 @@
 #pragma once
 
+#include <boost/asio/ip/udp.hpp>
+
 namespace boost::system {
 
 	class error_code;
@@ -38,5 +40,10 @@ namespace Netcode::Network {
 
 	template<typename T>
 	using CompletionToken = std::shared_ptr<CompletionTokenType<T>>;
+
+	using IpAddress = boost::asio::ip::address;
+	using UdpSocket = boost::asio::ip::udp::socket;
+	using UdpResolver = boost::asio::ip::udp::resolver;
+	using UdpEndpoint = boost::asio::ip::udp::endpoint;
 
 }

@@ -13,7 +13,7 @@
 #include "ComponentStorage.hpp"
 #include "Components.h"
 
-using Components_T = std::tuple<Transform, Model, Netcode::Light, Script, Collider>;
+using Components_T = std::tuple<Transform, Model, Netcode::Light, Script, Collider, Netw>;
 using ExtensionComponents_T = std::tuple<Camera, Animation>;
 
 enum class GameObjectFlags : uint32_t {
