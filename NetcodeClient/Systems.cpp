@@ -98,8 +98,8 @@ void TransformSystem::Run(GameObject * gameObject) {
 	TryInvoke(gameObject, this);
 }
 
-void ScriptSystem::Run(GameObject * gameObject, float dt) {
-	TryInvoke(gameObject, this, dt);
+void ScriptSystem::Run(GameObject * gameObject, Netcode::GameClock * clock) {
+	TryInvoke(gameObject, this, clock);
 }
 
 void RenderSystem::Run(GameObject * gameObject) {
@@ -116,9 +116,4 @@ void PhysXSystem::Run(GameObject * gameObject) {
 
 void LightSystem::Run(GameObject * gameObject) {
 	TryInvoke(gameObject, this);
-}
-
-void NetworkSystem::Run(GameObject * gameObject, int32_t playerId)
-{
-	TryInvoke(gameObject, this, playerId);
 }

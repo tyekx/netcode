@@ -18,5 +18,3 @@ physx::PxTransform Transform::WorldToPhysX() const {
 		Netcode::ToPxQuat(worldRotation)
 	};
 }
-
-uint32_t ClientAction::idGen{ 1 };

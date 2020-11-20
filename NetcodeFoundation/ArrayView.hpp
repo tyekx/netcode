@@ -15,14 +15,23 @@ namespace Netcode {
 		~ArrayViewBase() noexcept = default;
 		ArrayViewBase(T * ptr, size_t length) noexcept : beginPtr { ptr }, length{ length } { }
 
-		ArrayViewBase & operator=(const ArrayViewBase &) noexcept = default;
-		ArrayViewBase & operator=(ArrayViewBase &&) noexcept = default;
+		ArrayViewBase<T> & operator=(const ArrayViewBase &) noexcept = default;
+		ArrayViewBase<T> & operator=(ArrayViewBase &&) noexcept = default;
 	};
 
 	template<typename T>
 	class MutableArrayView : public ArrayViewBase<T> {
 	public:
 		using ArrayViewBase<T>::ArrayViewBase;
+
+		MutableArrayView<T> Offset(size_t numElements) const {
+			size_t offset = std::min(this->length, numElements);
+			
+			return MutableArrayView<T>{
+				this->beginPtr + offset,
+				this->length - offset
+			};
+		}
 
 		const T & operator[](size_t idx) const {
 			return this->beginPtr[idx];
@@ -64,6 +73,15 @@ namespace Netcode {
 
 		ArrayView(const MutableArrayView<T> & mutableView) : ArrayViewBase<const T>(mutableView.Data(), mutableView.Size()) { }
 
+		ArrayView<T> Offset(size_t numElements) const {
+			size_t offset = std::min(this->length, numElements);
+			
+			return ArrayView<T>{
+				this->beginPtr + offset,
+				this->length - offset
+			};
+		}
+		
 		const T & operator[](size_t idx) const {
 			return this->beginPtr[idx];
 		}

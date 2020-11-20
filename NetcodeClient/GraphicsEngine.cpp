@@ -93,17 +93,18 @@ void GraphicsEngine::CreateFSQuad() {
 }
 
 void GraphicsEngine::CreateSkinnedGbufferPassPermanentResources() {
-	/*auto ilBuilder = graphics->CreateInputLayoutBuilder();
+	auto ilBuilder = graphics->CreateInputLayoutBuilder();
 	ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 	ilBuilder->AddInputElement("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT);
 	ilBuilder->AddInputElement("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
+	ilBuilder->AddInputElement("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT);
 	ilBuilder->AddInputElement("WEIGHTS", DXGI_FORMAT_R32G32B32_FLOAT);
 	ilBuilder->AddInputElement("BONEIDS", DXGI_FORMAT_R32_UINT);
 	Ref<Netcode::InputLayout> inputLayout = ilBuilder->Build();
 
 	auto shaderBuilder = graphics->CreateShaderBuilder();
 	Ref<Netcode::ShaderBytecode> vs = shaderBuilder->LoadBytecode(L"skinningPass_Vertex.cso");
-	Ref<Netcode::ShaderBytecode> ps = shaderBuilder->LoadBytecode(L"gbufferPass_Pixel.cso");
+	Ref<Netcode::ShaderBytecode> ps = shaderBuilder->LoadBytecode(L"brdfMaterial_Pixel.cso");
 
 	auto rsBuilder = graphics->CreateRootSignatureBuilder();
 	skinnedGbufferPass_RootSignature = rsBuilder->BuildFromShader(vs);
@@ -133,7 +134,7 @@ void GraphicsEngine::CreateSkinnedGbufferPassPermanentResources() {
 	psoBuilder->SetDepthStencilFormat(gbufferPass_DepthStencilFormat);
 	psoBuilder->SetRenderTargetFormats({ DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R32G32B32A32_FLOAT });
 	psoBuilder->SetPrimitiveTopologyType(Netcode::Graphics::PrimitiveTopologyType::TRIANGLE);
-	skinnedGbufferPass_PipelineState = psoBuilder->Build();*/
+	skinnedGbufferPass_PipelineState = psoBuilder->Build();
 }
 
 void GraphicsEngine::CreateSkinningPassPermanentResources() {
@@ -553,6 +554,32 @@ void GraphicsEngine::CreateSkinningPass(Ptr<Netcode::FrameGraphBuilder> frameGra
 	});
 }
 
+void GraphicsEngine::CreatePreGbufferPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder) {
+	frameGraphBuilder->CreateRenderPass("Pre Gbuffer",
+		[&](IResourceContext * context) -> void {
+		context->Writes(nullptr);
+	},
+		[&](IRenderContext* context) -> void {
+		context->ResourceBarrier(gbufferPass_DepthBuffer.get(), ResourceState::PIXEL_SHADER_RESOURCE | ResourceState::DEPTH_READ, ResourceState::DEPTH_WRITE);
+		context->FlushResourceBarriers();
+
+		context->SetRenderTargets(nullptr, gbufferPass_DepthStencilView.get());
+		context->ClearRenderTarget(0);
+		context->ClearDepthStencil();
+	});
+}
+void GraphicsEngine::CreatePostGbufferPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder) {
+	frameGraphBuilder->CreateRenderPass("Pre Gbuffer",
+		[&](IResourceContext * context) -> void {
+		context->Writes(nullptr);
+	},
+		[&](IRenderContext * context) -> void {
+
+		context->ResourceBarrier(gbufferPass_DepthBuffer.get(), ResourceState::DEPTH_WRITE, ResourceState::PIXEL_SHADER_RESOURCE | ResourceState::DEPTH_READ);
+		context->FlushResourceBarriers();
+	});
+}
+
 void GraphicsEngine::CreateSkinnedGbufferPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder) {
 	if(skinnedGbufferPass_Input.empty()) {
 		return;
@@ -566,24 +593,41 @@ void GraphicsEngine::CreateSkinnedGbufferPass(Ptr<Netcode::FrameGraphBuilder> fr
 
 	},
 		[&](IRenderContext * context) -> void {
+			
 		context->SetRootSignature(skinnedGbufferPass_RootSignature.get());
 		context->SetPipelineState(skinnedGbufferPass_PipelineState.get());
-
 		context->SetRenderTargets(nullptr, gbufferPass_DepthStencilView.get());
 		context->SetScissorRect();
 		context->SetViewport();
-		context->ClearRenderTarget(0);
-		context->ClearDepthStencil();
+			
 		context->SetStencilReference(0xFF);
 
 		context->SetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
+		context->SetShaderResources(4, lightingData_StructuredBuffer.get());
+		context->SetShaderResources(5, prefilteredSplitSumViews.get());
 
+		PerObjectData * objectData = nullptr;
+			
 		for(RenderItem & item : skinnedGbufferPass_Input) {
 			if(item.material->GetType() == Netcode::MaterialType::BRDF) {
 				SetMaterialData(item.material.get(), 0, context);
-				context->SetConstants(1, *item.objectData);
+
+				if(objectData != item.objectData) {
+					item.objectData->lightsCount = std::min(sceneLights->size(), 1024ull);
+					item.objectData->lightsOffset = 0;
+					context->SetConstants(1, *item.objectData);
+					objectData = item.objectData;
+				}
+				
 				SetPerFrameCb(context, 2);
-				context->SetConstants(3, *item.debugBoneData);
+
+				auto srv = item.material->GetResourceView(0);
+
+				if(srv != nullptr) {
+					context->SetShaderResources(3, srv.get());
+				}
+				
+				context->SetConstants(6, *item.debugBoneData);
 				//context->SetShaderResources(3, item.boneData, item.boneDataOffset);
 				context->SetVertexBuffer(item.gbuffer.vertexBuffer.get());
 				context->SetIndexBuffer(item.gbuffer.indexBuffer.get());
@@ -606,14 +650,9 @@ void GraphicsEngine::CreateGbufferPass(Ptr<Netcode::FrameGraphBuilder> frameGrap
 		bool isBound = false;
 		void * objectData = nullptr;
 
-		context->ResourceBarrier(gbufferPass_DepthBuffer.get(), ResourceState::PIXEL_SHADER_RESOURCE | ResourceState::DEPTH_READ, ResourceState::DEPTH_WRITE);
-		context->FlushResourceBarriers();
-
 		context->SetRootSignature(gbufferPass_RootSignature.get());
 		context->SetPipelineState(gbufferPass_PipelineState.get());
 		context->SetRenderTargets(nullptr, gbufferPass_DepthStencilView.get());
-		context->ClearRenderTarget(0);
-		context->ClearDepthStencil();
 		context->SetScissorRect();
 		context->SetViewport();
 		context->SetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
@@ -650,9 +689,6 @@ void GraphicsEngine::CreateGbufferPass(Ptr<Netcode::FrameGraphBuilder> frameGrap
 			context->SetIndexBuffer(item.gbuffer.indexBuffer.get());
 			context->DrawIndexed(item.gbuffer.indexCount);
 		}
-
-		context->ResourceBarrier(gbufferPass_DepthBuffer.get(), ResourceState::DEPTH_WRITE, ResourceState::PIXEL_SHADER_RESOURCE | ResourceState::DEPTH_READ);
-		context->FlushResourceBarriers();
 	});
 }
 /*
@@ -899,8 +935,10 @@ void GraphicsEngine::CreateFrameGraph(Ptr<Netcode::FrameGraphBuilder> builder) {
 			std::min(1024ull, sceneLights->size()) * sizeof(Netcode::Light));
 	}
 
+	CreatePreGbufferPass(builder);
 	CreateSkinnedGbufferPass(builder);
 	CreateGbufferPass(builder);
+	CreatePostGbufferPass(builder);
 	//CreateSSAOOcclusionPass(builder);
 	//CreateSSAOBlurPass(builder);
 	//CreateLightingPass(builder);

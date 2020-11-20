@@ -12,87 +12,6 @@
 
 namespace Netcode::Network {
 
-	int VerifyCertificate(int ok, X509_STORE_CTX * ctx) {
-		return 1;
-	}
-
-	constexpr static uint32_t NUM_SECRETS = 8;
-
-	struct CookieSecret {
-		uint8_t data[8];
-
-		CookieSecret() { }
-	};
-
-	static std::unique_ptr<CookieSecret[]> cookieSecrets { nullptr };
-
-	void InitializeSecrets() {
-		cookieSecrets = std::make_unique<CookieSecret[]>(NUM_SECRETS);
-
-		srand(time(0));
-		
-		for(uint32_t i = 0; i < NUM_SECRETS; i++) {
-			int res;
-			do {
-				res = RAND_bytes(cookieSecrets[i].data, sizeof(CookieSecret::data));
-			} while(res == 0);
-
-			if(res == -1) {
-				Log::Error("Failed to generate random number.");
-			}
-		}
-	}
-
-	ArrayView<uint8_t> GetSecret() {
-		return ArrayView<uint8_t>{ cookieSecrets[rand() % NUM_SECRETS].data, sizeof(CookieSecret::data)  };
-	}
-
-	int GenerateCookie(SSL * ssl, unsigned char * cookie, unsigned int * cookie_len) {
-		const UdpPacket * pkt = reinterpret_cast<const UdpPacket*>(SSL_get_ex_data(ssl, 0));
-
-		if(pkt == nullptr) {
-			return -1;
-		}
-
-		UdpEndpoint ep = pkt->GetEndpoint();
-		ArrayView<uint8_t> secret = GetSecret();
-		if(HMAC(EVP_sha256(), secret.Data(), secret.Size(),
-			reinterpret_cast<const unsigned char*>(&ep), ep.size(),
-			cookie, cookie_len) == nullptr) {
-			return -1;
-		}
-
-		return 1;
-	}
-
-	int VerifyCookie(SSL * ssl, const unsigned char * cookie, unsigned int cookieLen)
-	{
-		const UdpPacket * pkt = reinterpret_cast<const UdpPacket *>(SSL_get_ex_data(ssl, 0));
-
-		if(pkt == nullptr) {
-			return -1;
-		}
-		
-		UdpEndpoint ep = pkt->GetEndpoint();
-
-		uint8_t hmac[EVP_MAX_MD_SIZE];
-
-		for(uint32_t i = 0; i < NUM_SECRETS; i++) {
-			uint32_t hmacLen = EVP_MAX_MD_SIZE;
-			if(HMAC(EVP_sha256(), cookieSecrets[i].data, sizeof(CookieSecret::data),
-				reinterpret_cast<const unsigned char *>(&ep), ep.size(),
-				hmac, &hmacLen) == nullptr) {
-				return -1;
-			}
-
-			if(hmacLen == cookieLen && memcmp(hmac, cookie, cookieLen) == 0) {
-				return 1;
-			}
-		}
-
-		return 0;
-	}
-
 	ServerSession::ServerSession(boost::asio::io_context & ioc) : ioContext{ ioc } {
 	}
 
@@ -100,40 +19,54 @@ namespace Netcode::Network {
 		UdpSocket gameSocket{ ioContext };
 
 		ssl_ptr<SSL_CTX> serverCtx{ SSL_CTX_new(DTLSv1_2_server_method()) };
+		//TODO: add DTLS client functionality to server
+		//ssl_ptr<SSL_CTX> clientCtx{ SSL_CTX_new(DTLSv1_2_client_method()) };
+		//TODO load cert and PK file path from configuration
+		//TODO load file into memory
+		//TODO from memory: https://stackoverflow.com/questions/3810058/read-certificate-files-from-memory-instead-of-a-file-using-openssl
+		if(SSL_CTX_use_certificate_chain_file(serverCtx.get(), "server.crt") != 1) {
+			Log::Error("Failed to load server certificate");
+		}
 
-		int r = SSL_CTX_use_certificate_chain_file(serverCtx.get(), "server.crt");
-		r = SSL_CTX_use_PrivateKey_file(serverCtx.get(), "server.key", SSL_FILETYPE_PEM);
-		r = SSL_CTX_check_private_key(serverCtx.get());
+		//TODO from memory: https://stackoverflow.com/questions/11886262/reading-public-private-key-from-memory-with-openssl/11888897
+		if(SSL_CTX_use_PrivateKey_file(serverCtx.get(), "server.key", SSL_FILETYPE_PEM) != 1) {
+			Log::Error("Failed to load server private key");
+		}
 
-		SSL_CTX_set_verify(serverCtx.get(), SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, VerifyCertificate);
-		SSL_CTX_set_cookie_generate_cb(serverCtx.get(), GenerateCookie);
-		SSL_CTX_set_cookie_verify_cb(serverCtx.get(), VerifyCookie);
+		if(SSL_CTX_check_private_key(serverCtx.get()) != 1) {
+			Log::Error("Server private key check failed");
+		}
 
-		InitializeSecrets();
+		SslInitializeCookies();
+		
+		SSL_CTX_set_verify(serverCtx.get(), SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, SslVerifyCertificate);
+		SSL_CTX_set_cookie_generate_cb(serverCtx.get(), SslGenerateCookie);
+		SSL_CTX_set_cookie_verify_cb(serverCtx.get(), SslVerifyCookie);
 
-		SSL_CTX_set_options(serverCtx.get(), SSL_OP_NO_SSLv2 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_3 | SSL_OP_NO_COMPRESSION);
+		constexpr uint32_t SSL_OPTIONS = SSL_OP_NO_SSLv2 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_3 | SSL_OP_NO_COMPRESSION;
+
+		SSL_CTX_set_options(serverCtx.get(), SSL_OPTIONS);
 
 		if(SSL_CTX_set_cipher_list(serverCtx.get(), DTLS_CIPHERS) != 1) {
 			Log::Error("Server: failed to set cipherlist");
 		}
 
-		uint32_t gamePort = Config::Get<uint16_t>(L"network.server.gamePort:u16");
-
+		const uint32_t gracePeriodMs = Config::Get<uint32_t>(L"network.protocol.gracePeriodMs:u32");
+		uint32_t gamePort = Config::Get<uint16_t>(L"network.server.port:u16");
 		std::string selfAddr = Utility::ToNarrowString(Config::Get<std::wstring>(L"network.server.selfAddress:string"));
 
 		boost::system::error_code ec;
-		boost::asio::ip::address addr = boost::asio::ip::address::from_string(selfAddr, ec);
+		IpAddress addr = boost::asio::ip::address::from_string(selfAddr, ec);
+
+		RETURN_ON_ERROR(ec, "Failed to parse supplied IP address: {0}")
 
 		std::vector<Interface> ifaces = GetCompatibleInterfaces(addr);
 
-		if(ifaces.empty()) {
-			Log::Error("[Network] [Server] No interface");
-			return;
-		}
+		RETURN_IF_AND_LOG_ERROR(ifaces.empty(), "No suitable network interface found");
 
 		Interface iface = ifaces.front();
 
-		RETURN_ON_ERROR(ec, "[Network] [Server] invalid configuration value: {0}");
+		RETURN_ON_ERROR(ec, "[Network] [Server] invalid configuration value: {0}")
 
 		Bind(iface.address, gameSocket, gamePort);
 
@@ -142,9 +75,9 @@ namespace Netcode::Network {
 			return;
 		}
 		
-		Config::Set<uint16_t>(L"network.server.gamePort:u16", static_cast<uint16_t>(gamePort));
+		Config::Set<uint16_t>(L"network.server.port:u16", static_cast<uint16_t>(gamePort));
 
-		Log::Info("[Network] [Server] Started on port: {0}", Config::Get<uint16_t>(L"network.server.gamePort:u16"));
+		Log::Info("[Network] [Server] Started on port: {0}", Config::Get<uint16_t>(L"network.server.port:u16"));
 
 		service = std::make_shared<NetcodeService>(ioContext, std::move(gameSocket), static_cast<uint16_t>(iface.mtu), nullptr, std::move(serverCtx));
 		service->Host();
@@ -152,146 +85,8 @@ namespace Netcode::Network {
 
 	void ServerSession::Stop()
 	{
-		
+		service->Close();
+		service.reset();
 	}
-	
-	/*void ServerSession::Update(int32_t subjectId, Protocol::ServerUpdate serverUpdate) {
-		Ref<Connection> conn = connectionStorage.GetConnectionById(subjectId);
-
-		if(conn->liveEndpoint.address().is_unspecified()) {
-			Log::Debug("[Net] [Server] update failed because address is unspecified");
-			return;
-		}
-
-		serverUpdate.set_id(conn->packetSequenceId++);
-		
-		auto packet = storage->GetBuffer();
-
-		if(!serverUpdate.SerializeToArray(packet->GetData(), PACKET_STORAGE_SIZE)) {
-			Log::Error("[Net] [Server] Failed to serialize server update");
-		}
-
-		packet->SetDataSize(serverUpdate.ByteSizeLong());
-		packet->SetEndpoint(conn->liveEndpoint);
-		
-		connection->socket->async_send_to(packet->GetConstBuffer(), packet->GetEndpoint(), 
-			[lifetime = shared_from_this(), packet](const ErrorCode & ec, size_t size) ->void {
-			if(ec) {
-				Log::Error("[Net] [Server] failed to send message to client: {0}", ec.message());
-			} else {
-				//Log::Debug("[---] WRITE {0}: BYTES {1} PORT {2}", static_cast<void *>(packet.get()), static_cast<uint64_t>(size), static_cast<uint64_t>(packet->GetEndpoint().port()));
-			}
-		});
-		
-	}
-
-	void ServerSession::GameSocketReadInit()
-	{
-		auto packet = storage->GetBuffer();
-		packet->SetDataSize(PACKET_STORAGE_SIZE);
-	}
-	
-	void ServerSession::OnGameRead(Ref<UdpPacket> packet) {
-		Protocol::ClientUpdate message;
-
-		if(!message.ParseFromArray(packet->GetData(), packet->GetDataSize())) {
-			Log::Info("[Network] [Server] Failed to parse raw data from game socket, {0} byte(s)", packet->GetDataSize());
-			return;
-		}
-		Ref<Connection> conn = connectionStorage.GetConnectionByEndpoint(packet->GetEndpoint());
-
-		// if connection was not found by endpoint ...
-		if(conn == nullptr) {
-
-			// ... then we require a nonce ...
-			if(!message.nonce().empty()) {
-				conn = connectionStorage.GetConnectionByNonce(message.nonce());
-
-				// ... if we found a connection by nonce ...
-				if(conn != nullptr) {
-
-					// ... then we make sure we have the state required to be here ...
-					if(conn->state == ConnectionState::CONNECTING ||
-					   conn->state == ConnectionState::ESTABLISHED) {
-
-						// ... if the state is acceptable, we check if its the first time this client is handled ...
-						if(conn->liveEndpoint.address().is_unspecified()) {
-							// ... if so, then we proceed it to clock sync ...
-							conn->liveEndpoint = packet->GetEndpoint();
-							conn->state = ConnectionState::SYNCHRONIZING;
-							Log::Debug("[Net] [Server] Player first time here, synchronizing clocks");
-						}
-
-						// ... if its not the first time, than our clocks should be still adequate
-						if(conn->liveEndpoint != packet->GetEndpoint()) {
-							Log::Debug("[Net] [Server] Network change detected");
-							conn->liveEndpoint = packet->GetEndpoint();
-						}
-					}
-				} else {
-					// we have a bad nonce here value here
-					Log::Debug("[Net] [Server] Nonce value was specified but was not found");
-					return;
-				}
-			} else {
-
-				Log::Debug("[Net] [Server] player was not found by active connection, nor supplied a nonce");
-				return; // ... if nonce was not supplied, then we drop the packet
-			}
-		} else {
-			if(conn->state == ConnectionState::SYNCHRONIZING) {
-
-			}
-		}
-
-		if(conn->peerPacketSequenceId < message.id()) {
-			conn->peerPacketSequenceId = message.id();
-			gameQueue.Received(std::move(message));
-		} else {
-			Log::Debug("[Net] [Server] Dropping player packet because it is older or duplicated");
-		}
-		
-	}
-
-	void ServerSession::OnMessageSent(const ErrorCode & ec, std::size_t size)
-	{
-		RETURN_AND_LOG_IF_ABORTED(ec, "[Network] [Server] Write operation aborted");
-
-		if(ec) {
-			Log::Error("[Network] [Server] Failed to send message: {0}", ec.message());
-		} else {
-			Log::Debug("[Network] [Server] Successfully sent {0} byte(s)", size);
-		}
-	}
-	
-	ServerSession::~ServerSession() {
-		ErrorCode ec = db.CloseServer();
-
-		RETURN_ON_ERROR(ec, "[Network] [Server] Failed to close server session, reason: {0}");
-
-		Log::Info("[Network] [Server] Closed gracefully");
-	}
-	
-	ErrorCode ServerSession::ConnectToMysql() {
-		ErrorCode ec = db.Connect();
-
-		if(ec) {
-			return ec;
-		}
-
-		Log::Info("Connected to MySQL db");
-
-
-		ec = db.RegisterServer(1, 8, 500, "::1", 50051, 8888);
-
-		if(ec) {
-			Log::Error("[Net] [Server] failed to register server");
-			return ec;
-		}
-		
-		dbContext.Start(1);
-		
-		return Errc::make_error_code(Errc::success);
-	}*/
 
 }

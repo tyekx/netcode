@@ -16,89 +16,6 @@
 #include <Netcode/System/SecureString.h>
 #include "Scripts/LocalPlayerWeaponScript.h"
 #include <iomanip>
-#include <openssl/rand.h>
-#include <Netcode/Network/SslUtil.h>
-
-class ServerConnRequestFilter : public nn::FilterBase {
-public:
-	nn::FilterResult Run(Ptr<nn::NetcodeService> service, Ptr<nn::DtlsRoute> route, Netcode::Timestamp timestamp, nn::ControlMessage& cm) override {
-		const np::Control * peerControl = cm.control;
-		if(peerControl->type() != np::CONNECT_REQUEST || !peerControl->has_connect_request()) {
-			return nn::FilterResult::IGNORED;
-		}
-		
-		const np::ConnectRequest * connReq = &peerControl->connect_request();
-
-		if(route == nullptr || route->state != nn::DtlsRouteState::ESTABLISHED) {
-			return nn::FilterResult::CONSUMED;
-		}
-
-		nn::ConnectionStorage* connections = service->GetConnections();
-
-		if(connections->GetConnectionByEndpoint(cm.packet->endpoint) != nullptr) {
-			return nn::FilterResult::CONSUMED;
-		}
-
-		std::string nonce = nn::GenerateNonce();
-
-		if(nonce.empty()) {
-			Log::Error("Failed to generate nonce");
-		}
-
-		// for now accept everything
-		Ref<nn::NetAllocator> alloc = service->MakeAllocator(1024);
-		np::Control * localControl = alloc->MakeProto<np::Control>();
-		localControl->set_sequence(1);
-		localControl->set_type(np::MessageType::CONNECT_RESPONSE);
-		np::ConnectResponse * connResp = localControl->mutable_connect_response();
-		connResp->set_type(connReq->type());
-		connResp->set_current_map("mat_test_map");
-		connResp->set_nonce(std::move(nonce));
-		connResp->set_error_code(0);
-
-		Ref<nn::ConnectionBase> conn = std::make_shared<Connection>(service->GetIOContext());
-		conn->dtlsRoute = route;
-		conn->pmtu = nn::MtuValue{ route->mtu };
-		conn->endpoint = route->endpoint;
-		conn->remoteGameSequence = 0;
-		conn->localControlSequence = 1;
-		conn->localGameSequence = 1;
-		conn->remoteControlSequence = peerControl->sequence();
-
-		nn::ControlMessage localCm;
-		localCm.control = localControl;
-		localCm.allocator = alloc;
-		
-		connections->AddConnection(conn);
-
-		service->Send(alloc, alloc->MakeCompletionToken<nn::TrResult>(), conn->dtlsRoute, localCm, conn->endpoint, conn->pmtu, nn::ResendArgs{ 1000, 3 });
-		
-		return nn::FilterResult::CONSUMED;
-	}
-};
-
-class ServerClockSyncRequestFilter : public nn::FilterBase {
-public:
-	nn::FilterResult Run(Ptr<nn::NetcodeService> service, Ptr<nn::DtlsRoute> route, Netcode::Timestamp timestamp, nn::ControlMessage & cm) override {
-		/*
-		np::Header * header = cm.header;
-		Ref<nn::NetAllocator> alloc = cm.allocator;
-
-		if(header->type() == np::MessageType::CLOCK_SYNC_REQUEST) {
-			np::Header * h = alloc->MakeProto<np::Header>();
-			h->set_sequence(header->sequence());
-			h->unsafe_arena_set_allocated_time_sync(header->unsafe_arena_release_time_sync());
-			h->set_type(np::CLOCK_SYNC_RESPONSE);
-			np::TimeSync * ts = h->mutable_time_sync();
-			ts->set_server_req_reception(Netcode::ConvertTimestampToUInt64(cm.packet->GetTimestamp()));
-			ts->set_server_resp_transmission(Netcode::ConvertTimestampToUInt64(Netcode::SystemClock::LocalNow()));
-			service->Send(std::move(alloc), h, cm.packet->GetEndpoint());
-			return nn::FilterResult::CONSUMED;
-		}*/
-
-		return nn::FilterResult::IGNORED;
-	}
-};
 
 void GameApp::ReloadMap() {
 	GameSceneManager * gsm = Service::Get<GameSceneManager>();
@@ -166,18 +83,24 @@ void GameApp::Render() {
 	renderer.Reset();
 }
 
-void GameApp::Simulate(float dt) {
-	totalTime += dt;
-
+void GameApp::Simulate() {
 	movCtrl.Update();
+
+	const float dt = gameClock.FGetDeltaTime();
+	
 	pageManager.Update(dt);
 
-	gameScene->GetPhysXScene()->simulate(dt);
-	gameScene->GetPhysXScene()->fetchResults(true);
+	Netcode::Duration fixedUpdate = gameClock.GetFixedDeltaTime();
+
+	if(fixedUpdate > Netcode::Duration{}) {
+		gameScene->GetPhysXScene()->simulate(std::chrono::duration<float>(fixedUpdate).count());
+		gameScene->GetPhysXScene()->fetchResults(true);
+	}
+
 
 	gameScene->Foreach([this, dt](GameObject * gameObject)->void {
 		if(gameObject->IsActive()) {
-			scriptSystem.Run(gameObject, dt);
+			scriptSystem.Run(gameObject, &gameClock);
 			animSystem.Run(gameObject, dt);
 		}
 	});
@@ -312,18 +235,15 @@ void GameApp::CreateUI() {
 
 	renderer.ui_Input = &pageManager;
 
-	clientSession = std::dynamic_pointer_cast<nn::ClientSession>(network->CreateClient());
-	playerConnection = std::make_shared<Connection>(clientSession->GetIOContext());
+	hostMode = Netcode::Config::Get<HostMode>(L"game.hostMode");
 
-	serverSession = std::dynamic_pointer_cast<nn::ServerSession>(network->CreateServer());
-	serverSession->Start();
-	auto service = serverSession->GetService();
-	service->AddFilter(std::make_unique<ServerConnRequestFilter>());
-	service->AddFilter(std::make_unique<ServerClockSyncRequestFilter>());
-
-	clientSession->Connect(playerConnection, "localhost", 8889)->Then([](const Netcode::ErrorCode& ec) -> void {
-		Log::Debug("Done: {0}", ec.message());
-	});
+	if(hostMode == HostMode::LISTEN || hostMode == HostMode::DEDICATED) {
+		gameServer.Start(network.get());
+	}
+	
+	if(hostMode == HostMode::LISTEN || hostMode == HostMode::CLIENT) {
+		gameClient.Start(network.get(), &gameClock);
+	}
 
 	return;
 
@@ -556,6 +476,7 @@ void GameApp::CreateUI() {
 		}
 
 		mainThreadDispatcher.Post([this, gsd, loadp]() -> void {
+			/*
 			if(clientSession == nullptr) {
 				clientSession = std::dynamic_pointer_cast<nn::ClientSession>(network->CreateClient());
 				playerConnection = std::make_shared<Connection>(clientSession->GetIOContext());
@@ -575,7 +496,7 @@ void GameApp::CreateUI() {
 					loadp->CloseDialog();
 				}
 			});
-			
+			*/
 		});
 	};
 	
@@ -641,23 +562,6 @@ void GameApp::CreateAxisMapping() {
 				ReloadMap();
 				Log::Debug("Map reloaded");
 			}
-
-			if(key == Netcode::KeyCode::F9) {
-				static uint8_t message[1024];
-				static uint8_t dst[1500];
-				memset(message, 'A', sizeof(message));
-				Netcode::MutableArrayView<uint8_t> dstV { dst, sizeof(dst) };
-				Netcode::ErrorCode ec = nn::SslSend(playerConnection->dtlsRoute->ssl.get(), dstV, Netcode::ArrayView<uint8_t>{ message, sizeof(message) });
-
-				if(ec) {
-					
-				} else {
-					BIO * bio = BIO_new_mem_buf(dstV.Data(), dstV.Size());
-					clientSession->GetService()->Send(nullptr, nullptr, playerConnection->endpoint, nn::ssl_ptr<BIO>{ bio }, 1280);
-					Log::Debug("Punch it chewy");
-				}
-				
-			}
 		}
 
 		if(modifiers == Netcode::KeyModifier::CTRL && key == Netcode::KeyCode::C) {
@@ -676,7 +580,6 @@ void GameApp::CreateAxisMapping() {
 
 
 void GameApp::LoadSystems() {
-	Netcode::Initialize();
 	renderer.CreatePermanentResources(graphics.get());
 	animSystem.SetMovementController(&movCtrl);
 	animSystem.renderer = &renderer;
@@ -689,7 +592,7 @@ void GameApp::LoadAssets() {
 	AssetManager * assetManager = Service::Get<AssetManager>();
 
 	CreateLocalAvatar();
-	//CreateRemoteAvatar();
+	CreateRemoteAvatar();
 	
 	{
 		Ref<Netcode::TextureBuilder> textureBuilder = graphics->CreateTextureBuilder();
@@ -718,25 +621,48 @@ void GameApp::CreateRemoteAvatar() {
 
 	GameObject * avatarController = gameScene->Create("remoteAvatarController");
 	GameObject * avatarHitboxes = gameScene->Create("remoteAvatarHitboxes");
+	GameObject * rifle = gameScene->Create("remoteRifle");
 
+	Netcode::Asset::Model * rifleModel = assetManager->Import(L"compiled/models/gun_2.ncasset");
 	Netcode::Asset::Model * avatarModel = assetManager->Import(L"compiled/models/ybot.ncasset");
+	ClientAssetConverter cac{ nullptr, nullptr, nullptr };
+
+	rifle->AddComponent<Transform>();
+	avatarHitboxes->AddComponent<Transform>();
+	Transform * avT = avatarController->AddComponent<Transform>();
+	avT->position = Netcode::Float3{ -120.0f, 0.0f, -60.0f };
+	avT->rotation = Netcode::Quaternion{ 0.0f, Netcode::C_PI, 0.0f };
+	cac.ConvertComponents(avatarHitboxes, avatarModel);
+	cac.ConvertComponents(rifle, rifleModel);
 
 	if(ybotAnimationSet == nullptr) {
 		ybotAnimationSet = std::make_shared<AnimationSet>(graphics.get(), avatarModel->animations, avatarModel->bones);
 	}
-
+	
 	Animation * anim = avatarHitboxes->AddComponent<Animation>();
 	CreateYbotAnimationComponent(avatarModel, anim);
 	anim->blackboard->BindController(&movCtrl);
 	anim->controller = ybotAnimationSet->CreateController();
 
-	Netcode::PxPtr<physx::PxController> pxController = gameScene->CreateController();
+	Transform* rifleT = rifle->GetComponent<Transform>();
+	rifleT->rotation = Netcode::Quaternion{ 0.0f, -Netcode::C_PIDIV2, 0.0f };
+	
+	Script * script = rifle->AddComponent<Script>();
+	std::unique_ptr<SocketScript> ss = std::make_unique<SocketScript>();
+	ss->boneId = 28;
+	ss->anim = anim;
+	ss->offset = Netcode::Float3{ -34.0f, -3.0f, 4.0f };
+	script->AddScript(std::move(ss));
+
+	//Netcode::PxPtr<physx::PxController> pxController = gameScene->CreateController();
 	avatarController->AddComponent<Transform>();
-	avatarController->AddComponent<Script>()->AddScript(std::make_unique<RemotePlayerScript>(std::move(pxController)));
+	//avatarController->AddComponent<Script>()->AddScript(std::make_unique<RemotePlayerScript>(std::move(pxController)));
 	avatarHitboxes->Parent(avatarController);
+	rifle->Parent(avatarHitboxes);
 
 	gameScene->Spawn(avatarController);
 	gameScene->Spawn(avatarHitboxes);
+	gameScene->Spawn(rifle);
 }
 
 void GameApp::CreateLocalAvatar() {
@@ -757,10 +683,6 @@ void GameApp::CreateLocalAvatar() {
 		Transform * wTr = avatarWeapon->AddComponent<Transform>();
 		wTr->rotation = Netcode::Quaternion{ 0.0f, -Netcode::C_PIDIV2, 0.0f };
 		
-		GameObject * debugObject = gameScene->Create("debugHelper");
-		debugObject->AddComponent<Script>()->AddScript(std::make_unique<DebugScript>(&wTr->position.x, &wTr->position.y, &wTr->position.z));
-		gameScene->Spawn(debugObject);
-		
 		AssetManager * assetManager = Service::Get<AssetManager>();
 		ClientAssetConverter cac{ nullptr, nullptr, nullptr };
 		cac.ConvertComponents(avatarWeapon, assetManager->Import(L"compiled/models/gun_2.ncasset"));
@@ -769,7 +691,7 @@ void GameApp::CreateLocalAvatar() {
 	}
 
 	Transform * avatarCamTransform = avatarCamera->AddComponent<Transform>();
-	avatarCamTransform->position.y = 90.0f;
+	avatarCamTransform->position.y = 160.0f;
 
 	Camera * fpsCam = avatarCamera->AddComponent<Camera>();
 	fpsCam->ahead = Netcode::Float3{ 0.0f, 0.0f, 1.0f };
@@ -783,6 +705,9 @@ void GameApp::CreateLocalAvatar() {
 	Netcode::PxPtr<physx::PxController> pxController = gameScene->CreateController();
 
 	Transform * act = avatarRoot->AddComponent<Transform>();
+	Network * nw = avatarRoot->AddComponent<Network>();
+	nw->state = PlayerState::SPECTATOR;
+	nw->owner = 0;
 	act->position = Netcode::Float3{ 0.0f, 0.0f, 200.0f };
 
 	Script * scriptComponent = avatarRoot->AddComponent<Script>();
@@ -794,6 +719,3 @@ void GameApp::CreateLocalAvatar() {
 	gameScene->Spawn(avatarWeaponOffset);
 	gameScene->Spawn(avatarWeapon);
 }
-
-
-

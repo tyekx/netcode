@@ -19,7 +19,7 @@ namespace Netcode::Graphics::DX12 {
 		if(depthEnabled) {
 			vertices[numDepthVertices++] = vertex;
 		} else {
-			vertices[bufferSize - numNoDepthVertices++] = vertex;
+			vertices[bufferSize - 1 - numNoDepthVertices++] = vertex;
 		}
 	}
 
@@ -49,7 +49,7 @@ namespace Netcode::Graphics::DX12 {
 				0,
 				reinterpret_cast<IUnknown **>(dx12Module->commandQueue.GetAddressOf()),
 				1, 0, tmpDev.GetAddressOf(), d11Context.GetAddressOf(), nullptr);
-
+		
 		DX_API("Failed to cast to D3D11on12Device")
 			tmpDev.As(&d11Device);
 		
@@ -150,7 +150,7 @@ namespace Netcode::Graphics::DX12 {
 		}
 
 		if(numNoDepthVertices > 0) {
-			context->CopyConstants(uploadBuffer, vertices.data() + numDepthVertices, numNoDepthVertices * sizeof(PC_Vertex), numDepthVertices * sizeof(PC_Vertex));
+			context->CopyConstants(uploadBuffer, vertices.data() + (bufferSize - numNoDepthVertices), numNoDepthVertices * sizeof(PC_Vertex), numDepthVertices * sizeof(PC_Vertex));
 		}
 	}
 	

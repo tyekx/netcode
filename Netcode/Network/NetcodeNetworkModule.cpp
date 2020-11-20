@@ -9,6 +9,7 @@
 #include <Netcode/Config.h>
 
 #include "Response.hpp"
+#include "MatchmakerSession.h"
 
 namespace Netcode::Module {
 
@@ -28,6 +29,12 @@ namespace Netcode::Module {
 	{
 		context.Start(Config::Get<uint32_t>(L"network.client.workerThreadCount:u32"));
 		return std::make_shared<Network::ClientSession>(context.GetImpl());
+	}
+
+	Ref<Network::MatchmakerSessionBase> NetcodeNetworkModule::CreateMatchmaker()
+	{
+		context.Start(Config::Get<uint32_t>(L"network.client.workerThreadCount:u32"));
+		return std::make_shared<Network::MatchmakerSession>(context.GetImpl());
 	}
 
 	void NetcodeNetworkModule::EraseCookie(const std::string & key)

@@ -49,6 +49,8 @@ namespace Netcode::Network {
 		UdpPacket * packet;
 	};
 
+	struct GameMessage;
+	
 	class FragmentStorage {
 
 		struct FSItem {
@@ -110,36 +112,7 @@ namespace Netcode::Network {
 			}
 		}
 
-		FSItem * DReplace(FSItem ** currentHead, FSItem ** currentTail, FSItem * currentItem, FSItem * newNode) {
-			if(currentItem != nullptr) {
-				newNode->next = currentItem->next;
-				newNode->prev = currentItem->prev;
-			} else {
-				newNode->next = nullptr;
-				newNode->prev = nullptr;
-			}
-
-			if(*currentHead == currentItem) {
-				*currentHead = newNode;
-			}
-
-			if(*currentTail == currentItem) {
-				*currentTail = newNode;
-			}
-
-			if(currentItem->next != nullptr) {
-				currentItem->next->prev = newNode;
-			}
-
-			if(currentItem->prev != nullptr) {
-				currentItem->prev->next = newNode;
-			}
-
-			currentItem->next = nullptr;
-			currentItem->prev = nullptr;
-
-			return newNode;
-		}
+		FSItem * DReplace(FSItem ** currentHead, FSItem ** currentTail, FSItem * currentItem, FSItem * newNode);
 
 		void PushFront(FSItem ** currentHead, FSItem ** currentTail, FSItem * node) {
 			if(*currentHead == nullptr) {
@@ -192,44 +165,9 @@ namespace Netcode::Network {
 			PushFront(&orderedHead, &orderedTail, item);
 		}
 
-		bool FragmentsAreConsistent(FSItem * ptr, uint32_t * dataSize) {
-			int32_t prevIndex = -1;
-			uint32_t expectedSize = ptr->fragment->contentSize;
-			*dataSize = 0;
+		bool FragmentsAreConsistent(FSItem * ptr, uint32_t * dataSize);
 
-			uint32_t dataSizeSum = 0;
-
-			for(FSItem * it = ptr; it != nullptr; it = it->orderedNext) {
-				int32_t currentIndex = it->fragment->header.fragmentIdx;
-
-				if((currentIndex - prevIndex) != 1) {
-					return false;
-				}
-
-				// size should never increase
-				if(expectedSize < it->fragment->contentSize) {
-					return false;
-				}
-
-				// MTU should be constant for a message
-				if(expectedSize != it->fragment->contentSize) {
-					// we allow the last one to fail this check, otherwise we delete
-					if(it->orderedNext != nullptr) {
-						return false;
-					}
-				}
-
-				dataSizeSum += it->fragment->contentSize;
-
-				prevIndex = currentIndex;
-			}
-
-			*dataSize = dataSizeSum;
-
-			return true;
-		}
-
-		void TryReassemble(FSItem * p);
+		GameMessage TryReassemble(FSItem * p);
 
 		void DeleteFragments() {
 			FSItem * it = deletableHead;
@@ -242,39 +180,13 @@ namespace Netcode::Network {
 			deletableHead = nullptr;
 		}
 
-		void CheckFragments() {
-			Timestamp tNow = SystemClock::LocalNow();
-			for(FSItem * it = orderedHead; it != nullptr; it = it->next) {
-				// 1 second old fragments are way too old
-				if((tNow - it->oldest) > std::chrono::seconds(1)) {
-					Erase(&orderedHead, &orderedTail, it);
-					MarkDeletable(it);
-				} else {
-					if(it->linkCount == static_cast<uint32_t>(it->fragment->header.fragmentCount)) {
-						Erase(&orderedHead, &orderedTail, it);
-						TryReassemble(it);
-					}
-				}
-			}
-		}
+		GameMessage CheckFragments();
 
-		void RunDefragmentation(FSItem * it) {
-			OrderedInsert(it);
-
-			// traverses the ordered list for possible reorders
-			CheckFragments();
-
-			// deallocates finalized fragments
-			DeleteFragments();
-		}
+		GameMessage RunDefragmentation(FSItem * it);
 	public:
 		FragmentStorage() : orderedHead{ nullptr }, orderedTail{ nullptr }, deletableHead{ nullptr } { }
 
-		void AddFragment(Ref<NetAllocator> alloc, GameFragment * fragment) {
-			FSItem * node = alloc->Make<FSItem>(std::move(alloc), fragment);
-
-			RunDefragmentation(node);
-		}
+		GameMessage AddFragment(Ref<NetAllocator> alloc, GameFragment * fragment);
 		
 	};
 	

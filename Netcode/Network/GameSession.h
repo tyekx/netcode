@@ -21,6 +21,12 @@ namespace Netcode::Network {
 		virtual void Stop() = 0;
 	};
 
+	class MatchmakerSessionBase : public SessionBase {
+	public:
+		virtual NETCODE_CONSTRUCTORS_NO_COPY(MatchmakerSessionBase);
+
+	};
+
 	class ClientSessionBase : public SessionBase {
 	public:
 		virtual NETCODE_CONSTRUCTORS_NO_COPY(ClientSessionBase);

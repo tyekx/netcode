@@ -44,8 +44,20 @@ namespace Netcode::Network {
 	 * @return zero on error
 	 */
 	uint32_t GetEncryptedPayloadSize(SSL * ssl, uint32_t dtlsPayloadSize);
-	
+
 	std::string Sha256(std::string_view view);
 	std::string GenerateNonce();
+
+	void SslInitializeCookies();
+
+	int32_t SslGenerateCookie(SSL * ssl, uint8_t * cookie, uint32_t * cookieLength);
+	
+	/**
+	 * Suitable for a cookie verification callback
+	 * @note assumes that the SSL_set_ex_data(0, p) was set with an UdpPacket* instance.
+	 */
+	int32_t SslVerifyCookie(SSL * ssl, const uint8_t * cookie, uint32_t cookieLength);
+
+	int32_t SslVerifyCertificate(int32_t ok, X509_STORE_CTX * ctx);
 	
 }

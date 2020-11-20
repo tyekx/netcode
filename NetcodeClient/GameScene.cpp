@@ -36,6 +36,14 @@ GameObject * GameScene::CloneWithHierarchy(GameObject * src)
 	return pThis;
 }
 
+void GameScene::RemoveWithHierarchy(GameObject * obj) {
+	for(GameObject * child : obj->Children()) {
+		RemoveWithHierarchy(child);
+	}
+
+	Remove(obj);
+}
+
 GameObject * GameScene::Clone(GameObject * src) {
 	GameObject * obj = Create();
 
@@ -167,6 +175,7 @@ void GameSceneManager::LoadScene(const Netcode::URI::Model & uri) {
 
 	devCam = activeScene.Create();
 	auto [tr, cam, script] = devCam->AddComponents<Transform, Camera, Script>();
+	tr->position = Netcode::Float3{ -120.0f, 90.0f, -240.0f };
 	script->AddScript(std::make_unique<DevCameraScript>());
 	activeScene.SetCamera(devCam);
 	activeScene.Spawn(devCam);

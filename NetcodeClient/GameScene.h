@@ -107,7 +107,17 @@ public:
 		}
 	}
 
+	void SpawnWithHierarchy(GameObject* obj) {
+		for(GameObject* child: obj->Children()) {
+			SpawnWithHierarchy(child);
+		}
+
+		Spawn(obj);
+	}
+
 	GameObject * CloneWithHierarchy(GameObject * src);
+
+	void RemoveWithHierarchy(GameObject * obj);
 
 	GameObject * Clone(GameObject * src);
 

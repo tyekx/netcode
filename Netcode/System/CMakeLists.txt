@@ -7,9 +7,11 @@ PUBLIC
 	"FpsCounter.h"
 	"System.h"
 	"SecureString.h"
+	"GameClock.h"
 PRIVATE
 	"SystemClock.cpp"
 	"FpsCounter.cpp"
 	"System.cpp"
 	"SecureString.cpp"
+	"GameClock.cpp"
 )

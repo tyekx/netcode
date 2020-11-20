@@ -32,7 +32,8 @@ public:
 
 	}
 
-	virtual void Update(float dt) override {
+	virtual void Update(Netcode::GameClock * clock) override {
+		const float dt = clock->FGetDeltaTime();
 
 		float scale = 0.33f;
 		Netcode::Vector3 mask = Netcode::Float3{ 0.0f, 1.0f, 0.2f };

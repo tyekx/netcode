@@ -64,5 +64,4 @@ message Player {
     Netcode.Protocol.Float3 look_at = 5;
     PlayerDetails details = 6;
     repeated Shot shots = 7;
-    bytes replication_data = 8;
 }

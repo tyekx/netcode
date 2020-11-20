@@ -4,30 +4,33 @@
 #include <Netcode/MathExt.h>
 
 class PlayerScript : public ScriptBase {
-protected:
+public:
 	std::string name;
 	int kills;
 	int deaths;
 	int rtt;
-	Netcode::Float3 position; // IND buffered
-	Netcode::Float3 lookAt;
+	PlayerState state;
+	float cameraPitch;
+	float cameraYaw;
+
+	PlayerScript() : name{}, kills{ 0 }, deaths{ 0 }, rtt{ -1 }, state{ PlayerState::SPECTATOR }, cameraPitch{}, cameraYaw{} {
+		
+	}
 };
 
-class LocalPlayerScript : public ScriptBase {
+class LocalPlayerScript : public PlayerScript {
 	Transform * transform;
 	Transform * attachmentTransform;
 	Camera * camera;
 	Collider * collider;
 	Netcode::PxPtr<physx::PxController> controller;
-	float cameraPitch;
-	float cameraYaw;
 	Netcode::Float3 velocity;
 	float mouseSpeed;
 	Netcode::Float3 gravity;
 	float avatarSpeed;
-	ClientActionBuffer actionBuffer;
 
 	void UpdateLookDirection(float dt) {
+		
 		Netcode::Int2 mouseDelta = Netcode::Input::GetMouseDelta();
 
 		Netcode::Float2 normalizedMouseDelta{ -(float)(mouseDelta.x), -(float)(mouseDelta.y) };
@@ -78,7 +81,8 @@ public:
 		collider = owner->GetComponent<Collider>();
 	}
 
-	virtual void Update(float dt) override {
+	virtual void Update(Netcode::GameClock * gameClock) override {
+		const float dt = gameClock->FGetDeltaTime();
 		UpdateLookDirection(dt);
 
 		Netcode::Quaternion cameraQuat{ cameraPitch, cameraYaw, 0.0f };
@@ -111,13 +115,6 @@ public:
 			static_cast<float>(footPos.y),
 			static_cast<float>(footPos.z)
 		};
-
-		if(!movementDelta.AllZero()) {
-			ClientPredictedMovement cm;
-			cm.position = transform->position;
-			cm.delta = velocity;
-			actionBuffer.Add(ClientAction::Move(cm));
-		}
 
 		transform->rotation = cameraYawQuat;
 		attachmentTransform->rotation = Netcode::Quaternion{ cameraPitch, 0.0f, 0.0f };

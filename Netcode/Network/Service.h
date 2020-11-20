@@ -100,6 +100,7 @@ namespace Netcode::Network {
 		uint32_t receiveFailures;
 
 		DtlsService dtls;
+		
 	public:
 		boost::asio::io_context& GetIOContext() {
 			return ioContext;
@@ -121,31 +122,7 @@ namespace Netcode::Network {
 			filters.emplace_back(std::move(filter));
 		}
 
-		void RunFilters() {
-			std::vector<NoAuthControlMessage> controlMessages;
-
-			controlQueue.GetIncomingPackets(controlMessages);
-
-			Timestamp ts = SystemClock::LocalNow();
-
-			for(NoAuthControlMessage & cm : controlMessages) {
-				for(std::unique_ptr<FilterBase> & f : filters) {
-					if(!f->IsCompleted()) {
-						FilterResult r = f->Run(this, cm.route, ts, cm);
-
-						if(r == FilterResult::CONSUMED) {
-							break;
-						}
-					}
-				}
-			}
-
-			auto it = std::remove_if(std::begin(filters), std::end(filters), [ts](const std::unique_ptr<FilterBase> & f) -> bool {
-				return f->IsCompleted() || f->CheckTimeout(ts);
-			});
-
-			filters.erase(it, std::end(filters));
-		}
+		void RunFilters();
 
 		NetcodeService(boost::asio::io_context & ioContext, NetcodeSocketType::SocketType sock, uint32_t linkLocalMtu, ssl_ptr<SSL_CTX> clientContext, ssl_ptr<SSL_CTX> serverContext) :
 			ioContext{ ioContext },
@@ -155,7 +132,7 @@ namespace Netcode::Network {
 			mtu{ linkLocalMtu },
 			protocolConfig{},
 			receiveFailures{},
-			dtls{ std::move(clientContext), std::move(serverContext) } {
+			dtls{ ioContext, std::move(clientContext), std::move(serverContext) } {
 
 		}
 
@@ -169,12 +146,14 @@ namespace Netcode::Network {
 
 	private:
 		ParseResult HandleRoutedMessage(NetAllocator * alloc, DtlsRoute * route, UdpPacket * pkt);
+		
 		ParseResult HandleAuthenticatedMessage(NetAllocator * alloc, Ref<ConnectionBase> conn, UdpPacket * pkt);
 
 		/**
 		 * @note pkt is used as a fallback if route is null
 		 */
 		Protocol::Control * ReceiveControl(NetAllocator * alloc, DtlsRoute* route, UdpPacket * pkt, ArrayView<uint8_t> source);
+		
 		/**
 		 * @note invokes the other ReceiveControl with pkt->GetData(), pkt->GetSize() as the source view
 		 */
@@ -189,6 +168,8 @@ namespace Netcode::Network {
 		
 	public:
 		ParseResult TryParseMessage(NetAllocator * alloc, UdpPacket * pkt);
+
+		friend class DtlsService;
 
 		void Close() {
 			boost::system::error_code ec;
@@ -256,9 +237,11 @@ namespace Netcode::Network {
 			// alloc, endpoint, ResendArgs is deducable, Mtu is given
 			return Send(cMsg.allocator, cMsg.allocator->MakeCompletionToken<TrResult>(), route, cMsg, route->endpoint, MtuValue{ route->mtu }, protocolConfig.GetArgsFor(cMsg.control->type()));
 		}
-		
-		// main interface for sending updates
-		CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, Protocol::Update * update, ConnectionBase * connection, uint32_t seq);
+
+
+		CompletionToken<TrResult> Send(const GameMessage & gMsg, ConnectionBase * connection);
+
+		//CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, Protocol::Update * update, ConnectionBase * connection, uint32_t seq);
 
 
 		CompletionToken<TrResult> Send(Ref<NetAllocator> allocator, CompletionToken<TrResult> ct, const DtlsRoute * route, ssl_ptr<BIO> wbio) {

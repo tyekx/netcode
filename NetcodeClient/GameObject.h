@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Netcode/System/GameClock.h>
 #include <Netcode/HandleTypes.h>
 #include "ConstantBufferTypes.h"
 #include <vector>
@@ -13,7 +14,7 @@
 #include "ComponentStorage.hpp"
 #include "Components.h"
 
-using Components_T = std::tuple<Transform, Model, Netcode::Light, Script, Collider, Netw>;
+using Components_T = std::tuple<Transform, Model, Netcode::Light, Script, Collider, Network>;
 using ExtensionComponents_T = std::tuple<Camera, Animation>;
 
 enum class GameObjectFlags : uint32_t {

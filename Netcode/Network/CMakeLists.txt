@@ -24,6 +24,7 @@ PUBLIC
 	"MtuValue.hpp"
 	"SslUtil.h"
 	"Service.h"
+	"MatchmakerSession.h"
 	
 PRIVATE
 	"GameSession.cpp"
@@ -40,6 +41,7 @@ PRIVATE
 	"FragmentStorage.cpp"
 	"SslUtil.cpp"
 	"Service.cpp"
+	"MatchmakerSession.cpp"
 )
 
 target_link_libraries(Netcode

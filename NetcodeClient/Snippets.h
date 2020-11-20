@@ -7,3 +7,5 @@
 #include "GameObject.h"
 
 void CreateYbotAnimationComponent(Netcode::Asset::Model * model, Animation * anim);
+
+void DrawDebugCollider(Collider * collider);

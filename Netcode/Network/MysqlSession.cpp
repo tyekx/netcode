@@ -8,6 +8,8 @@
 namespace Netcode::Network {
 
 	struct MysqlSession::detail {
+		boost::asio::io_context & ioContext;
+		boost::asio::strand<boost::asio::io_context::executor_type> strand;
 		uint64_t serverId;
 		std::unique_ptr<mysqlx::Session> session;
 		std::unique_ptr<mysqlx::SqlStatement> queryUserByHash;
@@ -17,16 +19,33 @@ namespace Netcode::Network {
 		std::unique_ptr<mysqlx::SqlStatement> modifyGameSession;
 		std::unique_ptr<mysqlx::SqlStatement> closeRemainingGameSessions;
 		std::unique_ptr<mysqlx::SqlStatement> debugCleanup;
-		std::mutex mutex;
 
-		ErrorCode QueryUserByHash(const std::string & hash, PlayerDbDataRow & output) {
-			std::scoped_lock<std::mutex> lock{ mutex };
+		detail(boost::asio::io_context & ioc) :
+			ioContext{ ioc },
+			strand{ boost::asio::make_strand(ioc) },
+			serverId{} {
+			
+		}
+
+		CompletionToken<QueryUserResult> QueryUserByHash(std::string hash) {
+			CompletionToken<QueryUserResult> token = std::make_shared<CompletionTokenType<QueryUserResult>>(&ioContext);
+
+			boost::asio::post(strand, [this, h = std::move(hash), token]() mutable {
+				token->Set(QueryUserByHashUnsafe(std::move(h)));
+			});
+
+			return token;
+		}
+		
+		QueryUserResult QueryUserByHashUnsafe(std::string hash) {
+			QueryUserResult result;
 			try {
 				queryUserByHash->bind(hash);
 				mysqlx::SqlResult results = queryUserByHash->execute();
 
 				if(results.count() != 1) {
-					return Errc::make_error_code(Errc::result_out_of_range);
+					result.errorCode = Errc::make_error_code(Errc::result_out_of_range);
+					return result;
 				}
 
 				mysqlx::Row row = results.fetchOne();
@@ -36,16 +55,27 @@ namespace Netcode::Network {
 				bool isBanned = (bool)row.get(2);
 				std::string hash = (std::string)row.get(3);
 
-				output = std::tie(userId, name, hash, isBanned);
+				result.playerData = std::tie(userId, name, hash, isBanned);
 			} catch(mysqlx::Error & error) {
 				Log::Error("[MySQL] QueryUserByHash exception: {0}", error.what());
-				return Errc::make_error_code(Errc::host_unreachable);
+				result.errorCode = Errc::make_error_code(Errc::host_unreachable);
+				return result;
 			}
-			return Errc::make_error_code(Errc::success);
+			result.errorCode = Errc::make_error_code(Errc::success);
+			return result;
+		}
+
+		CompletionToken<ErrorCode> CloseServer() {
+			CompletionToken<ErrorCode> token = std::make_shared<CompletionTokenType<ErrorCode>>(&ioContext);
+
+			boost::asio::post(strand, [this, token]() mutable {
+				token->Set(CloseServerUnsafe());
+			});
+
+			return token;
 		}
 		
-		ErrorCode CloseServer() {
-			std::scoped_lock<std::mutex> lock{ mutex };
+		ErrorCode CloseServerUnsafe() {
 			if(serverId == 0) {
 				return Errc::make_error_code(Errc::invalid_argument);
 			}
@@ -66,9 +96,8 @@ namespace Netcode::Network {
 			}
 			return Errc::make_error_code(Errc::success);
 		}
-		ErrorCode CreateGameSession(int playerId) {
-			std::scoped_lock<std::mutex> lock{ mutex };
-
+		
+		ErrorCode CreateGameSessionUnsafe(int playerId) {
 			if(serverId == 0) {
 				return Errc::make_error_code(Errc::invalid_argument);
 			}
@@ -87,7 +116,7 @@ namespace Netcode::Network {
 			}
 			return Errc::make_error_code(Errc::success);
 		}
-		ErrorCode CloseGameSession(int playerId) {
+		ErrorCode CloseGameSessionUnsafe(int playerId) {
 			if(serverId == 0) {
 				return Errc::make_error_code(Errc::invalid_argument);
 			}
@@ -106,9 +135,8 @@ namespace Netcode::Network {
 			return Errc::make_error_code(Errc::success);
 		}
 
-		ErrorCode RegisterServer(int ownerId, uint8_t playerSlots, uint32_t tickIntervalMs, const std::string & serverIp, uint16_t controlPort, uint16_t gamePort)
+		ErrorCode RegisterServerUnsafe(int ownerId, uint8_t playerSlots, uint32_t tickIntervalMs, std::string serverIp, uint16_t controlPort, uint16_t gamePort)
 		{
-			std::scoped_lock<std::mutex> lock{ mutex };
 
 			try {
 				// (owner_id, max_players, interval, status, server_ip, control_port, game_port, major, minor, build)
@@ -139,7 +167,7 @@ namespace Netcode::Network {
 			return Errc::make_error_code(Errc::success);
 		}
 
-		ErrorCode Connect()
+		ErrorCode ConnectUnsafe()
 		{
 			try {
 				mysqlx::SessionSettings settings(
@@ -150,6 +178,12 @@ namespace Netcode::Network {
 					mysqlx::SessionOption::DB, Config::Get<std::wstring>(L"network.database.schema:string"),
 					mysqlx::SessionOption::CONNECT_TIMEOUT, std::chrono::seconds(Config::Get<uint32_t>(L"network.database.timeout:u32"))
 				);
+
+				/*
+				 * select users.id, users.name, game_servers.owner_id, SUM(IF(game_servers.closed_at is null and owner_id is not null, 1, 0))
+				 * as test from users inner join sessions on users.id = sessions.user_id left join game_servers on users.id = game_servers.owner_id
+				 * group by users.id
+				 */
 
 				session = std::make_unique<mysqlx::Session>(settings);
 
@@ -188,18 +222,10 @@ namespace Netcode::Network {
 			return Errc::make_error_code(Errc::success);
 		}
 	};
-	
 
-	void DefaultMysqlCompletionHandler::operator()(ErrorCode errorCode)
+	MysqlSession::MysqlSession(boost::asio::io_context& ioc)
 	{
-		if(errorCode) {
-			Log::Error("[Network] [Database] {0}", errorCode.message());
-		}
-	}
-
-	MysqlSession::MysqlSession()
-	{
-		impl = std::make_unique<detail>();
+		impl = std::make_unique<detail>(ioc);
 	}
 
 	MysqlSession::~MysqlSession()
@@ -207,33 +233,37 @@ namespace Netcode::Network {
 		impl.reset();
 	}
 
-	ErrorCode MysqlSession::QueryUserByHash(const std::string& hash, PlayerDbDataRow & output)
+	CompletionToken<QueryUserResult> MysqlSession::QueryUserByHash(std::string hash)
 	{
-		return impl->QueryUserByHash(hash, output);
+		return impl->QueryUserByHash(std::move(hash));
 	}
 
-	ErrorCode MysqlSession::CloseServer()
+	CompletionToken<ErrorCode> MysqlSession::CloseServer()
 	{
 		return impl->CloseServer();
 	}
 
-	ErrorCode MysqlSession::CreateGameSession(int playerId)
+	CompletionToken<ErrorCode> MysqlSession::CreateGameSession(int playerId)
 	{
-		return impl->CreateGameSession(playerId);
+		//return impl->CreateGameSession(playerId);
+		return nullptr;
 	}
 
-	ErrorCode MysqlSession::CloseGameSession(int playerId)
+	CompletionToken<ErrorCode> MysqlSession::CloseGameSession(int playerId)
 	{
-		return impl->CloseGameSession(playerId);
+		//return impl->CloseGameSession(playerId);
+		return nullptr;
 	}
 	
-	ErrorCode MysqlSession::RegisterServer(int ownerId, uint8_t playerSlots, uint32_t tickIntervalMs, const std::string & serverIp, uint16_t controlPort, uint16_t gamePort)
+	CompletionToken<ErrorCode> MysqlSession::RegisterServer(int ownerId, uint8_t playerSlots, uint32_t tickIntervalMs, const std::string & serverIp, uint16_t controlPort, uint16_t gamePort)
 	{
-		return impl->RegisterServer(ownerId, playerSlots, tickIntervalMs, serverIp, controlPort, gamePort);
+		//return impl->RegisterServer(ownerId, playerSlots, tickIntervalMs, serverIp, controlPort, gamePort);
+		return nullptr;
 	}
 	
-	ErrorCode MysqlSession::Connect()
+	CompletionToken<ErrorCode> MysqlSession::Connect()
 	{
-		return impl->Connect();
+		//return impl->Connect();
+		return nullptr;
 	}
 }

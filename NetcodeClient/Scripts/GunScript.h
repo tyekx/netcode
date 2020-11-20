@@ -29,7 +29,9 @@ public:
 		selfTransform->position = Netcode::Float3{ localPosition.x, localPosition.y, localPosition.z };
 	}
 
-	virtual void Update(float dt) override {
+	virtual void Update(Netcode::GameClock * clock) override {
+		const float dt = clock->FGetDeltaTime();
+		
 		Netcode::Int2 mouseDelta = Netcode::Input::GetMouseDelta();
 
 		Netcode::Float2 normalizedMouseDelta{ -static_cast<float>(mouseDelta.x), -static_cast<float>(mouseDelta.y) };

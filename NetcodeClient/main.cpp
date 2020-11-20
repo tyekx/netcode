@@ -101,9 +101,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	ni::ParseJsonFromFile(doc, configFile.GetFullPath());
 	Netcode::Config::LoadJson(doc);
 
-	if(mainConfig.hostMode != L"listen" && mainConfig.hostMode != L"none" && mainConfig.hostMode != L"dedicated") {
+	if(mainConfig.hostMode != L"listen" && mainConfig.hostMode != L"client" && mainConfig.hostMode != L"dedicated") {
 		ExitWithInitializationError(make_error_code(Netcode::ConfigErrc::INVALID_NETWORK_MODE));
 	}
+
+	LoadVariablesIntoConfig(mainConfig);
 
 	std::wstring_view appDataDirPath = ni::Path::AppData();
 
@@ -139,8 +141,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	Netcode::Config::Set<std::wstring>(L"user.sessionFile:string", sessionFile.GetFullPath());
 	Netcode::Config::Set<Netcode::SecureString>(L"user.session", sessionString);
 	
-	Netcode::Input::Initialize();
-
+	Netcode::Initialize();
+	
 	Netcode::Module::DefaultModuleFactory defModuleFactory;
 	std::unique_ptr<Netcode::Module::AApp> app = std::make_unique<GameApp>();
 	app->Setup(&defModuleFactory);

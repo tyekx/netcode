@@ -429,9 +429,7 @@ namespace Netcode {
 			UndefinedBehaviourAssertion(success == TRUE);
 		}
 
-		void UpdateAxisMap(float dt) {
-			UNREFERENCED_PARAMETER(dt);
-
+		void UpdateAxisMap() {
 			if(axisMap != nullptr) {
 				axisMap->Update(keys.GetView());
 			}
@@ -610,8 +608,8 @@ namespace Netcode {
 		}
 	}
 
-	void Input::UpdateAxisMap(float dt) {
-		instance->UpdateAxisMap(dt);
+	void Input::UpdateAxisMap() {
+		instance->UpdateAxisMap();
 	}
 
 	float Input::GetAxis(uint32_t axis) {

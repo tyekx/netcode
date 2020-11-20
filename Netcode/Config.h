@@ -43,7 +43,7 @@ namespace Netcode {
         };
 
     public:
-        Property() noexcept : stored{ nullptr } {}
+        constexpr Property() noexcept : stored{ nullptr } {}
     	Property(Property&& rhs) noexcept : stored { std::move(rhs.stored) } { }
         Property(const Property & rhs) : stored{ nullptr } {
         	if(rhs.stored) {
@@ -83,6 +83,13 @@ namespace Netcode {
             return dynamic_cast<PropertyContainer<T> &>(*stored).data;
         }
 
+        constexpr bool operator==(std::nullptr_t) const {
+            return stored == nullptr;
+        }
+
+        constexpr bool operator!=(std::nullptr_t) const {
+            return stored != nullptr;
+        }
     };
 
 	class Config {
@@ -97,11 +104,25 @@ namespace Netcode {
 
         static const Property & GetConstProperty(const std::wstring & key);
 
+        static const Property & GetConstOptionalProperty(const std::wstring & key) noexcept;
+		
         static void SetProperty(const std::wstring & key, Property prop);
 
 		template<typename T>
 		static inline const T & Get(const std::wstring & key) {
             return GetConstProperty(key).Get<T>();
+		}
+
+		template<typename T>
+		static const T & GetOptional(const std::wstring & key, const T & fallbackValue) {
+            const Property & prop = GetConstOptionalProperty(key);
+
+			if(prop == nullptr) {
+                return fallbackValue;
+			}
+
+			// might throw an invalid cast exception
+            return prop.Get<T>();
 		}
 
 		template<typename T>

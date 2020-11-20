@@ -21,6 +21,7 @@ namespace Netcode::Network {
 
 	enum class ConnectionState : uint32_t {
 		INACTIVE = 0,
+		TIMEDOUT = 0x2000,
 		RESOLVING = 0x4000,
 		CONNECTING = 0x8000,
 		AUTHENTICATING = 0x8001,
@@ -41,7 +42,11 @@ namespace Netcode::Network {
 	struct ControlMessage;
 
 	struct GameMessage {
-		
+		Ref<NetAllocator> allocator;
+		ArrayView<uint8_t> content;
+		uint32_t sequence;
+
+		GameMessage() : allocator {}, content{ nullptr, 0 }, sequence{ 0 } {}
 	};
 	
 	class ConnectionBase : public std::enable_shared_from_this<ConnectionBase> {
@@ -55,6 +60,7 @@ namespace Netcode::Network {
 		uint32_t localControlSequence;
 		uint32_t remoteGameSequence;
 		uint32_t remoteControlSequence;
+		int32_t id;
 		DtlsRoute * dtlsRoute;
 		FragmentStorage fragmentStorage;
 		boost::asio::strand<boost::asio::io_context::executor_type> strand;
@@ -72,6 +78,7 @@ namespace Netcode::Network {
 			localControlSequence{ 1 },
 			remoteGameSequence{ 0 },
 			remoteControlSequence{ 0 },
+			id{ -1 },
 			dtlsRoute{ nullptr },
 			fragmentStorage{},
 			strand { make_strand(ioc) },
@@ -102,6 +109,34 @@ namespace Netcode::Network {
 
 			connections.erase(it, std::end(connections));
 		}
+
+		/**
+		 * @tparam F a function that takes a T* pointer 
+		 * @tparam T the derived type override
+		 */
+		template<typename T, typename F>
+		void Foreach(F f) {
+			ScopedSharedLock<SlimReadWriteLock> scopedLock{ srwLock };
+
+			for(auto it = std::begin(connections); it != std::end(connections); it++) {
+				ConnectionBase * ptr = it->get();
+				static_assert(std::is_base_of<ConnectionBase, T>::value, "T must be derived from ConnectionBase");
+				f(reinterpret_cast<T *>(ptr));
+			}
+		}
+
+		/**
+		 * @tparam F a function that takes a T* pointer
+		 * @tparam T the derived type override
+		 */
+		template<typename T, typename F>
+		void ForeachUnsafe(F f) {
+			for(auto it = std::begin(connections); it != std::end(connections); it++) {
+				ConnectionBase * ptr = it->get();
+				static_assert(std::is_base_of<ConnectionBase, T>::value, "T must be derived from ConnectionBase");
+				f(reinterpret_cast<T *>(ptr));
+			}
+		}
 		
 		void AddConnection(Ref<ConnectionBase> conn) {
 			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
@@ -119,10 +154,8 @@ namespace Netcode::Network {
 			ScopedSharedLock<SlimReadWriteLock> scopedLock{ srwLock };
 			return static_cast<uint32_t>(connections.size());
 		}
-		
-		Ref<ConnectionBase> GetConnectionByEndpoint(const UdpEndpoint& ep) {
-			ScopedSharedLock<SlimReadWriteLock> scopedLock{ srwLock };
 
+		Ref<ConnectionBase> GetConnectionByEndpointUnsafe(const UdpEndpoint& ep) {
 			auto it = std::find_if(std::begin(connections), std::end(connections), [&ep](const Ref<ConnectionBase> & c)-> bool {
 				return c->endpoint == ep;
 			});
@@ -132,6 +165,12 @@ namespace Netcode::Network {
 			}
 
 			return nullptr;
+		}
+		
+		Ref<ConnectionBase> GetConnectionByEndpoint(const UdpEndpoint& ep) {
+			ScopedSharedLock<SlimReadWriteLock> scopedLock{ srwLock };
+
+			return GetConnectionByEndpointUnsafe(ep);
 		}
 	};
 	
@@ -304,10 +343,11 @@ namespace Netcode::Network {
 				 * Concurrency here does not matter, 2 ACK on the same packet will be silently ignored
 				 */
 				if(!completionToken->IsCompleted()) {
-					/*AckMessage ack;
-					ack.endpoint = packet->GetEndpoint();
-					ack.sequence = packet->GetSequence();
-					pendingTokenStorage->Ack(ack);*/
+					const AckClassification cls = (route != nullptr) ?
+						AckClassification::EXTERNAL_SECURE :
+						AckClassification::EXTERNAL_INSECURE;
+					
+					pendingTokenStorage->Ack(packet->GetSequence(), packet->GetEndpoint(), cls);
 				}
 			});
 		}

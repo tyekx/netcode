@@ -2,7 +2,6 @@
 
 #include <NetcodeFoundation/Math.h>
 
-#include <functional>
 #include <string>
 #include "ConstantBufferTypes.h"
 #include <NetcodeAssetLib/Collider.h>
@@ -21,62 +20,84 @@
 #include <Netcode/Graphics/Material.h>
 #include <Netcode/System/TimeTypes.h>
 #include <Netcode/Network/Connection.h>
+#include "Network/ReplDesc.h"
 
 namespace nn = Netcode::Network;
 namespace np = Netcode::Protocol;
+
+namespace Netcode {
+	class GameClock;
+}
 
 namespace Netcode::Network {
 	class ReplicationContext;
 }
 
 enum class ActionType {
-	MOVEMENT, FIRE, JUMP, SPAWN
+	NOOP = 0, MOVEMENT = 1, SPAWN = 2, JUMP = 3, FIRE = 4, LOOK = 5
 };
 
-struct ClientPredictedFire {
+enum class PlayerState : uint32_t {
+	SPECTATOR, ALIVE, DEAD
+};
+
+struct ClientLookActionData {
+	float pitch;
+	float yaw;
+};
+
+struct ClientFireActionData {
 	Netcode::Float3 position;
 	Netcode::Float3 direction;
 };
 
-struct ClientPredictedMovement {
+struct ClientMovementActionData {
 	Netcode::Float3 position;
-	Netcode::Float3 delta;
 };
 
 struct ClientAction {
-	static uint32_t idGen;
 	uint32_t id;
 	ActionType type;
 	Netcode::Timestamp timestamp;
 
 	union {
-		ClientPredictedMovement movementActionData;
-		ClientPredictedFire fireActionData;
+		ClientLookActionData lookActionData;
+		ClientMovementActionData movementActionData;
+		ClientFireActionData fireActionData;
 	};
 
 	NETCODE_CONSTRUCTORS_ALL(ClientAction);
 
-	static ClientAction Fire(const ClientPredictedFire & fireAction) {
+	static ClientAction Fire(const ClientFireActionData & fireAction) {
 		ClientAction ca;
-		ca.id = idGen++;
+		ca.id = 0;
 		ca.timestamp = Netcode::SystemClock::GlobalNow();
 		ca.type = ActionType::FIRE;
 		ca.fireActionData = fireAction;
 		return ca;
 	}
 
-	static ClientAction Move(const ClientPredictedMovement & movementAction) {
+	static ClientAction Look(const ClientLookActionData & actionData) {
 		ClientAction ca;
-		ca.id = idGen++;
+		ca.id = 0;
+		ca.timestamp = Netcode::SystemClock::GlobalNow();
+		ca.type = ActionType::LOOK;
+		ca.lookActionData = actionData;
+		return ca;
+	}
+
+	static ClientAction Move(const ClientMovementActionData & actionData) {
+		ClientAction ca;
+		ca.id = 0;
 		ca.timestamp = Netcode::SystemClock::GlobalNow();
 		ca.type = ActionType::MOVEMENT;
-		ca.movementActionData = movementAction;
+		ca.movementActionData = actionData;
 		return ca;
 	}
 
 	static ClientAction Jump() {
 		ClientAction ca;
-		ca.id = idGen++;
+		ca.id = 0;
 		ca.timestamp = Netcode::SystemClock::GlobalNow();
 		ca.type = ActionType::JUMP;
 		return ca;
@@ -84,7 +105,7 @@ struct ClientAction {
 
 	static ClientAction Spawn() {
 		ClientAction ca;
-		ca.id = idGen++;
+		ca.id = 0;
 		ca.timestamp = Netcode::SystemClock::GlobalNow();
 		ca.type = ActionType::SPAWN;
 		return ca;
@@ -115,13 +136,37 @@ public:
 };
 
 enum class ReconciliationType {
-	ACCEPTED, REJECTED
+	ACCEPTED, REJECTED, COMMAND
+};
+
+enum class CommandType {
+	NOOP = 0,
+	PLAYER_KICKED = 1,
+	PLAYER_BANNED = 2,
+	PLAYER_CONNECTED = 3,
+	PLAYER_DISCONNECTED = 4,
+	PLAYER_TIMEDOUT = 5,
+	SERVER_CLOSED = 6,
+	CREATE_OBJECT = 7,
+	REMOVE_OBJECT = 8
+};
+
+struct ServerCommand {
+	CommandType type;
+	int32_t subject;
+	int32_t objectType;
+	uint32_t objectId;
 };
 
 struct ServerReconciliation {
 	uint32_t id;
 	ReconciliationType type;
-	ClientPredictedMovement correctedPosition;
+	ActionType actionType;
+
+	union {
+		ClientMovementActionData movementCorrection;
+		ServerCommand command;
+	};
 };
 
 class ReconciliationBuffer {
@@ -160,28 +205,49 @@ public:
 	}
 };
 
+struct RedundancyItem {
+	uint32_t sequence;
+	union {
+		ClientAction action;
+		ServerReconciliation reconciliation;
+	};
+};
+
 /*
  * Mitigation for packetloss. This includes every action or result that is not handled yet
  */
 class RedundancyBuffer {
+	std::vector<RedundancyItem> items;
+	
 public:
-	// everything that is sent to the user in frame N
 	void Add(uint32_t localSequence, ClientAction action) {
-
+		RedundancyItem item = {};
+		item.sequence = localSequence;
+		item.action = action;
+		items.push_back(item);
 	}
 
 	void Add(uint32_t localSequence, ServerReconciliation reconciliation) {
-		
+		RedundancyItem item = {};
+		item.sequence = localSequence;
+		item.reconciliation = reconciliation;
+		items.push_back(item);
 	}
 
-	// apply the data to the replication context
-	void Apply(nn::ReplicationContext* ctx) {
-		
+	const std::vector<RedundancyItem> & GetBuffer() const {
+		return items;
 	}
 
 	// remove objects that are implicitly confirmed by the remoteSequence.
 	void Confirm(uint32_t confirmedSequence) {
-
+		if(items.empty())
+			return;
+		
+		auto it = std::remove_if(std::begin(items), std::end(items), [confirmedSequence](const RedundancyItem & i) -> bool {
+			return i.sequence <= confirmedSequence;
+		});
+		
+		items.erase(it, std::end(items));
 	}
 };
 
@@ -205,32 +271,23 @@ class GameObject;
 class ScriptBase {
 public:
 	virtual ~ScriptBase() = default;
-	virtual void Construction(GameObject * gameObject) { }
+	virtual void Construct(GameObject * gameObject) { }
 	virtual void BeginPlay(GameObject * gameObject) { }
 	virtual void EndPlay() { }
-	virtual void Update(float dt) = 0;
-	virtual void ReplicateSend(GameObject * obj, nn::ReplicationContext * ctx) { }
-	virtual void ReplicateReceive(GameObject * obj, nn::ReplicationContext * ctx) { }
+	virtual void Update(Netcode::GameClock * gameClock) = 0;
 };
 
 COMPONENT_ALIGN class Script {
 public:
 	std::vector<std::unique_ptr<ScriptBase>> scripts;
 
-	void ReplicateSend(GameObject * obj, nn::ReplicationContext * ctx) {
-		for(auto it = std::begin(scripts); it != std::end(scripts); it++) {
-			(*it)->ReplicateSend(obj, ctx);
-		}
-	}
-	
-	void ReplicateReceive(GameObject* obj, nn::ReplicationContext * ctx) {
-		for(auto it = std::begin(scripts); it != std::end(scripts); it++) {
-			(*it)->ReplicateReceive(obj, ctx);
-		}
-	}
-
 	void AddScript(std::unique_ptr<ScriptBase> script) {
 		scripts.emplace_back(std::move(script));
+	}
+
+	template<typename T = ScriptBase>
+	T* GetScript(uint32_t idx) {
+		return dynamic_cast<T *>(scripts[idx].get());
 	}
 
 	void BeginPlay(GameObject * owner) {
@@ -239,9 +296,9 @@ public:
 		}
 	}
 	
-	void Update(float dt) {
+	void Update(Netcode::GameClock * clock) {
 		for(auto it = std::begin(scripts); it != std::end(scripts); it++) {
-			(*it)->Update(dt);
+			(*it)->Update(clock);
 		}
 	}
 };
@@ -284,9 +341,12 @@ public:
 	}
 };
 
-COMPONENT_ALIGN struct Netw {
+COMPONENT_ALIGN struct Network {
+	uint32_t id;
 	int32_t owner;
-	
+	Netcode::Timestamp updatedAt;
+	PlayerState state;
+	Ref<ReplDesc> replDesc;
 
 	bool HasAuthority(int32_t id) const {
 		return owner == id;

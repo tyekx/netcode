@@ -109,8 +109,26 @@ if(valueType == strRep) { \
 		}
 	}
 
+	const Property & Config::GetConstOptionalProperty(const std::wstring & key) noexcept {
+		static Property nullProperty{};
+
+		boost::optional<Ptree&> it = storage.get_child_optional(key);
+
+		if(!it) {
+			return nullProperty;
+		}
+		
+		return it->data();
+	}
+
 	void Config::SetProperty(const std::wstring & key, Property prop) {
-		storage.add(key, std::move(prop));
+		boost::optional<Ptree &> it = storage.get_child_optional(key);
+
+		if(!it) {
+			storage.add(key, std::move(prop));
+		} else {
+			it->data() = prop;
+		}
 	}
 
 }

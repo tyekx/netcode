@@ -149,11 +149,15 @@ private:
 
 	void CreateUIPassPermanentResources();
 
+	void CreatePreGbufferPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder);
+	
 	void CreateSkinningPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder);
 
 	void CreateSkinnedGbufferPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder);
 
 	void CreateGbufferPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder);
+
+	void CreatePostGbufferPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder);
 
 	//void CreateSSAOOcclusionPass(Ptr<Netcode::FrameGraphBuilder> frameGraphBuilder);
 

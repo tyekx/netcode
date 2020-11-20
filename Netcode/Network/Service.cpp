@@ -38,11 +38,6 @@ namespace Netcode::Network {
 	static bool NeedToAck(const Protocol::Control * control) {
 		return (control->type() & 0x1) == 0x1;
 	}
-
-	static uint32_t GetDtlsPacketSize(DtlsRoute* route, uint32_t serializedSize) {
-		//for now just assume everything is over AES128-SHA256
-		return 16u + Utility::Align<uint32_t, 16>(std::max(serializedSize, 32u)) + 32u;
-	}
 	
 	NetcodeService::ParseResult NetcodeService::HandleAuthenticatedMessage(NetAllocator * alloc, Ref<ConnectionBase> conn, UdpPacket * pkt) {
 		post(conn->strand, [this, c = conn, al = alloc->shared_from_this(), pkt]() mutable -> void {
@@ -63,18 +58,27 @@ namespace Netcode::Network {
 					frag->contentSize = static_cast<uint32_t>(destView.Size());
 					frag->record = DtlsRecordLayer::Load(reinterpret_cast<const DtlsRecordLayerWire *>(pkt->GetData()));
 					frag->header = NcGameHeader::Load(reinterpret_cast<const NcCommonHeaderWire *>(pkt->GetData() + MtuValue::DTLS_RL_HEADER_SIZE));
-					c->fragmentStorage.AddFragment(std::move(al), frag);
+					GameMessage gMsg = c->fragmentStorage.AddFragment(std::move(al), frag);
+
+					if(gMsg.allocator != nullptr) {
+						Node<GameMessage> * node = gMsg.allocator->Make<Node<GameMessage>>();
+						node->sequence = gMsg.sequence;
+						node->content = gMsg.content;
+						node->allocator = std::move(gMsg.allocator);
+						c->sharedQueue.Produce(node);
+					}
+					
 					return;
 				}
 
 				Protocol::Control * control = ReceiveControl(al.get(), c->dtlsRoute, pkt, destView);
 
 				if(control != nullptr) {
-					ControlMessage cm;
-					cm.allocator = std::move(al);
-					cm.control = control;
-					cm.packet = pkt;
-					c->sharedControlQueue.Received(std::move(cm));
+					Node<ControlMessage> * node = al->Make<Node<ControlMessage>>();
+					node->allocator = std::move(al);
+					node->control = control;
+					node->packet = pkt;
+					c->sharedControlQueue.Produce(node);
 				}
 			}
 		});
@@ -132,13 +136,12 @@ namespace Netcode::Network {
 		control->set_sequence(seq);
 		control->set_type(Protocol::MessageType::ACKNOWLEDGE);
 
-		ArrayView<uint8_t> serialized = NcSerialize(alloc, control, 512);
+		ArrayView<uint8_t> serialized = NcSerialize(alloc, control, 256);
 
 		if(route != nullptr) {
-			const uint32_t dtlsSize = GetDtlsPacketSize(route, serialized.Size());
 			MutableArrayView<uint8_t> dst{
-				alloc->MakeArray<uint8_t>(dtlsSize),
-				dtlsSize
+				alloc->MakeArray<uint8_t>(256),
+				256
 			};
 			
 			if(!SslSend(route->ssl.get(), dst, serialized)) {
@@ -151,18 +154,48 @@ namespace Netcode::Network {
 		}
 	}
 
+	void NetcodeService::RunFilters() {
+		dtls.AsyncCheckTimeouts();
+
+		Node<NoAuthControlMessage> * head = controlQueue.ConsumeAll();
+
+		Timestamp ts = SystemClock::LocalNow();
+
+		for(Node<NoAuthControlMessage>* it = head; it != nullptr;) {
+			for(std::unique_ptr<FilterBase> & f : filters) {
+				if(!f->IsCompleted()) {
+					FilterResult r = f->Run(this, it->route, ts, *it);
+
+					if(r == FilterResult::CONSUMED) {
+						break;
+					}
+				}
+			}
+
+			Node<NoAuthControlMessage> * tmp = it->next;
+			it->allocator.reset();
+			it = tmp;
+		}
+
+		auto it = std::remove_if(std::begin(filters), std::end(filters), [ts](const std::unique_ptr<FilterBase> & f) -> bool {
+			return f->IsCompleted() || f->CheckTimeout(ts);
+		});
+
+		filters.erase(it, std::end(filters));
+	}
+
 	NetcodeService::ParseResult NetcodeService::HandleRoutedMessage(NetAllocator * alloc, DtlsRoute* route, UdpPacket* pkt) {
 		if(!SslReceive(route->ssl.get(), pkt)) {
 			
 			Protocol::Control * control = ReceiveControl(alloc, route, pkt);
 
 			if(control != nullptr) {
-				NoAuthControlMessage nocm;
-				nocm.route = route;
-				nocm.control = control;
-				nocm.allocator = alloc->shared_from_this();
-				nocm.packet = pkt;
-				controlQueue.Received(std::move(nocm));
+				Node<NoAuthControlMessage> * nocm = alloc->Make<Node<NoAuthControlMessage>>();
+				nocm->route = route;
+				nocm->control = control;
+				nocm->allocator = alloc->shared_from_this();
+				nocm->packet = pkt;
+				controlQueue.Produce(nocm);
 				return ParseResult::TOOK_OWNERSHIP;
 			}
 		}
@@ -186,19 +219,14 @@ namespace Netcode::Network {
 			// not a DTLS header for sure
 			return ParseResult::FAILED;
 		}
+		
+		Ref<ConnectionBase> conn = connectionStorage.GetConnectionByEndpoint(pkt->GetEndpoint());
 
-		DtlsRecordLayer record = DtlsRecordLayer::Load(reinterpret_cast<const DtlsRecordLayerWire *>(data));
-		DtlsRoute * route = dtls.HandlePacket(this, record, alloc, pkt);
-
-		if(route != nullptr) {
-			Ref<ConnectionBase> conn = connectionStorage.GetConnectionByEndpoint(pkt->GetEndpoint());
-
-			if(conn == nullptr) {
-				return HandleRoutedMessage(alloc, route, pkt);
-			}
-
+		if(conn != nullptr) {
 			return HandleAuthenticatedMessage(alloc, std::move(conn), pkt);
 		}
+
+		dtls.AsyncHandlePacket(this, alloc, pkt);
 
 		return ParseResult::TOOK_OWNERSHIP;
 	}
@@ -229,10 +257,6 @@ namespace Netcode::Network {
 				const DtlsRecordLayer recordLayer = DtlsRecordLayer::Load(reinterpret_cast<const DtlsRecordLayerWire *>(view.Data() + offset));
 
 				const uint64_t sendSize = recordLayer.length + DTLS1_RT_HEADER_LENGTH;
-
-				if(recordLayer.contentType != DtlsContentType::HANDSHAKE) {
-					throw UndefinedBehaviourException{ "Only handshake type can be fragmented" };
-				}
 
 				// can we afford to include this?
 				if((sendSizeCandidate + sendSize) > mtu) {
@@ -376,19 +400,21 @@ namespace Netcode::Network {
 		return ct;
 	}
 
-
-	CompletionToken<TrResult> NetcodeService::Send(Ref<NetAllocator> allocator, Protocol::Update * update, ConnectionBase * connection, uint32_t seq) {
+	CompletionToken<TrResult> NetcodeService::Send(const GameMessage & gMsg, ConnectionBase * connection)
+	{
+		Ref<NetAllocator> allocator = gMsg.allocator;
+		const ArrayView<uint8_t> update = gMsg.content;
+		const uint32_t sequence = gMsg.sequence;
 		const UdpEndpoint endpoint = connection->endpoint;
 		const IpAddress address = endpoint.address();
-		
 		const MtuValue pmtu = connection->pmtu;
-
-		const uint32_t dataSize = static_cast<uint32_t>(update->ByteSizeLong());
+		
+		const uint32_t dataSize = static_cast<uint32_t>(update.Size());
 		const uint32_t dtlsPayloadSize = pmtu.GetDtlsPayloadSize(address);
 		const uint32_t encryptedPayloadSize = GetEncryptedPayloadSize(connection->dtlsRoute->ssl.get(), dtlsPayloadSize) - NC_HEADER_SIZE;
 		const uint32_t numFragments = (dataSize + encryptedPayloadSize - 1) / encryptedPayloadSize;
 		const uint32_t wireSize = pmtu.GetUdpPayloadSize(address) * numFragments;
-		
+
 		CompletionToken<TrResult> ct = allocator->MakeCompletionToken<TrResult>();
 
 		if(numFragments == 0) {
@@ -400,16 +426,13 @@ namespace Netcode::Network {
 			ct->Set(TrResult{ make_error_code(NetworkErrc::MESSAGE_TOO_BIG) });
 			return ct;
 		}
-		
+
 		const uint32_t baseOffset = 128 * numFragments;
 
 		UdpPacket * packet = allocator->MakeUdpPacket(Utility::Align<uint32_t, 16>(wireSize + baseOffset));
 		uint8_t * pData = packet->GetData();
 
-		if(!update->SerializeToArray(pData + baseOffset, static_cast<int32_t>(dataSize))) {
-			ct->Set(TrResult{ make_error_code(NetworkErrc::BAD_MESSAGE) });
-			return ct;
-		}
+		memcpy(pData + baseOffset, update.Data(), dataSize);
 
 		uint32_t sourceOffset = baseOffset - NC_HEADER_SIZE;
 		uint32_t destOffset = 0;
@@ -417,10 +440,10 @@ namespace Netcode::Network {
 
 		for(uint32_t i = 0; i < numFragments; i++) {
 			NcGameHeader gameHeader;
-			gameHeader.sequence = seq;
+			gameHeader.sequence = sequence;
 			gameHeader.fragmentCount = static_cast<uint16_t>(numFragments);
 			gameHeader.fragmentIdx = static_cast<uint16_t>(i);
-			gameHeader.Store(reinterpret_cast<NcCommonHeaderWire*>(pData + sourceOffset));
+			gameHeader.Store(reinterpret_cast<NcCommonHeaderWire *>(pData + sourceOffset));
 
 			uint32_t fragmentedDataSize = std::min(dataSize - handledDataSize, encryptedPayloadSize);
 
@@ -435,7 +458,7 @@ namespace Netcode::Network {
 			};
 
 			ErrorCode ec = SslSend(connection->dtlsRoute->ssl.get(), dataDestView, sourceView);
-				
+
 			if(ec) {
 				ct->Set(TrResult{ make_error_code(NetworkErrc::BAD_MESSAGE) });
 				return ct;

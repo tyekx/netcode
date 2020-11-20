@@ -100,6 +100,7 @@ PRIVATE
 add_subdirectory(Shaders)
 add_subdirectory(Scripts)
 add_subdirectory(Asset)
+add_subdirectory(Network)
 
 add_dependencies(NetcodeClient NetcodeClientShaders)
 

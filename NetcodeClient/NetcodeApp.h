@@ -7,7 +7,6 @@
 #include <Netcode/DebugPhysx.h>
 #include <Netcode/MathExt.h>
 #include <Netcode/Modules.h>
-#include <Netcode/Stopwatch.h>
 #include <Netcode/Service.hpp>
 #include <Netcode/UI/PageManager.h>
 
@@ -28,8 +27,9 @@
 #include <Netcode/System/System.h>
 
 #include <Netcode/Network/ClientSession.h>
-#include <Netcode/Network/ServerSession.h>
-#include <Netcode/Network/Service.h>
+
+#include "Network/GameServer.h"
+#include "Network/GameClient.h"
 
 using Netcode::Graphics::ResourceType;
 using Netcode::Graphics::ResourceState;
@@ -38,21 +38,10 @@ using Netcode::Graphics::FrameGraphCullMode;
 namespace nn = Netcode::Network;
 namespace np = Netcode::Protocol;
 
-struct Connection : public nn::ConnectionBase {
-	RedundancyBuffer redundancyBuffer;
-	GameObject* gameObject;
-	uint32_t localActionIndex;
-	uint32_t remoteActionIndex;
-
-	Connection(boost::asio::io_context & ioc) : nn::ConnectionBase{ ioc },
-		redundancyBuffer{}, gameObject{ nullptr }, localActionIndex{ 0 }, remoteActionIndex{ 0 } { }
-};
-
 class GameApp : public Netcode::Module::AApp, Netcode::Module::TAppEventHandler {
 public:
 	Netcode::Dispatcher mainThreadDispatcher;
 	GraphicsEngine renderer;
-	Netcode::Stopwatch stopwatch;
 	Netcode::MovementController movCtrl;
 	TransformSystem transformSystem;
 	ScriptSystem scriptSystem;
@@ -64,16 +53,14 @@ public:
 	Netcode::Physics::PhysX * pxService;
 	GameScene * gameScene;
 	Ref<AnimationSet> ybotAnimationSet;
-	Ref<Connection> playerConnection;
-	Ref<nn::ClientSession> clientSession;
-	Ref<nn::ServerSession> serverSession;
+	GameServer gameServer;
+	GameClient gameClient;
 	Netcode::URI::Model mapAsset;
 	Netcode::FrameCounter fpsCounter;
+	Netcode::GameClock gameClock;
 	std::wstring fpsValue;
 	UserData user;
-	uint32_t processedTick;
-
-	float totalTime;
+	HostMode hostMode;
 
 	void LoadSystems();
 
@@ -83,7 +70,7 @@ public:
 
 	void Render();
 
-	void Simulate(float dt);
+	void Simulate();
 
 	void LoadServices();
 
@@ -96,55 +83,6 @@ public:
 	void CreateRemoteAvatar();
 
 	void CreateLocalAvatar();
-
-	bool IncludeNetworkTick() {
-		if(playerConnection == nullptr) {
-			return false;
-		}
-
-		const uint32_t tc = playerConnection->tickCounter.load(std::memory_order_acquire);
-
-		if(processedTick >= tc) {
-			return false;
-		}
-
-		processedTick = tc;
-		return true;
-	}
-
-	ReconciliationBuffer * reconciliationBuffer;
-	RedundancyBuffer * redundancyBuffer;
-
-	void ClientReceiveNetworkUpdate() {
-		std::vector<nn::GameMessage> updates;
-		playerConnection->sharedQueue.GetIncomingPackets(updates);
-
-		if(updates.empty()) {
-			return;
-		}
-
-		for(const nn::GameMessage& gm : updates) {
-			/*
-			if(gm.update->Content_case() == np::Update::ContentCase::kServerUpdate) {
-				const np::ServerUpdate& update = gm.update->server_update();
-				// use this to check for duplication or older packages
-				const uint32_t mid = update.id();
-				redundancyBuffer->Confirm(mid);
-				
-				// use this to erase from redundancy buffer
-				const uint32_t remoteRecvId = update.received_id();
-
-				for(const np::ActionResult& actionResult : update.action_results()) {
-					reconciliationBuffer->Reconcile(actionResult);
-				}
-			}
-			*/
-		}
-	}
-
-	void ClientSendNetworkUpdate() {
-		
-	}
 
 	virtual void OnResized(int w, int h) override {
 		float asp = graphics->GetAspectRatio();
@@ -159,7 +97,7 @@ public:
 	}
 
 	virtual void AddAppEventHandlers(Netcode::Module::AppEventSystem * eventSystem) override {
-		Netcode::Module::AApp::AddAppEventHandlers(eventSystem);
+		AApp::AddAppEventHandlers(eventSystem);
 
 		eventSystem->AddHandler(this);
 	}
@@ -186,13 +124,14 @@ public:
 
 		AddAppEventHandlers(events.get());
 
-		stopwatch.Start();
+		gameClock.SetFixedUpdateInterval(std::chrono::milliseconds(16));
+		gameClock.SetEpoch(Netcode::SystemClock::LocalNow() - Netcode::Timestamp{});
 
 		LoadServices();
 		LoadSystems();
 		CreateAxisMapping();
+		LoadMap(L"mat_test_map.json");
 		CreateUI();
-		//LoadMap(L"mat_test_map.json");
 	}
 
 	/*
@@ -204,35 +143,38 @@ public:
 		Netcode::Duration d = std::chrono::duration_cast<Netcode::Duration>(std::chrono::duration<double>(targetFrametime));*/
 		
 		while(window->KeepRunning()) {
-			Netcode::Timestamp st = Netcode::SystemClock::LocalNow();
+			auto st = Netcode::SystemClock::LocalNow();
+			
+			gameClock.Tick();
 			
 			window->ProcessMessages();
 			events->Dispatch();
 
-			float dt = stopwatch.Restart();
-			Netcode::Input::UpdateAxisMap(dt);
+			Netcode::Input::UpdateAxisMap();
 
-			const bool isNetworkTick = IncludeNetworkTick();
-
-			serverSession->GetService()->RunFilters();
+			const bool isNetworkTick = gameClient.IncludeNetworkTick();
 			
 			if(isNetworkTick) {
-				ClientReceiveNetworkUpdate();
+				if(gameClient.IsConnected())
+					gameClient.Receive();
 			}
 			
-			Simulate(dt);
+			Simulate();
 
 			if(isNetworkTick) {
-				ClientSendNetworkUpdate();
+				if(gameClient.IsConnected())
+					gameClient.SendDebug();
 			}
 
+			if(isNetworkTick && hostMode == HostMode::LISTEN) {
+				gameServer.Tick();
+			}
+			
 			Render();
 			
 			mainThreadDispatcher.Run();
 
 			window->CompleteFrame();
-
-			Netcode::SleepFor(std::chrono::milliseconds(2));
 			
 			fpsCounter.Update(Netcode::SystemClock::LocalNow() - st);
 		}

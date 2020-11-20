@@ -6,6 +6,10 @@
 #include "HttpSession.h"
 #include "Cookie.h"
 
+namespace Netcode::Network {
+	class MatchmakerSessionBase;
+}
+
 namespace Netcode::Module {
 
 	class NetcodeNetworkModule : public INetworkModule {
@@ -20,6 +24,7 @@ namespace Netcode::Module {
 
 		virtual Ref<Network::ServerSessionBase> CreateServer() override;
 		virtual Ref<Network::ClientSessionBase> CreateClient() override;
+		virtual Ref<Network::MatchmakerSessionBase> CreateMatchmaker();
 		virtual void EraseCookie(const std::string & key) override;
 
 		virtual Network::Cookie GetCookie(const std::string & key) override;

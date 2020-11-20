@@ -48,6 +48,8 @@ namespace Netcode::Network {
 			if(response->error_code() != 0 || response->type() == Protocol::ConnectType::DIRECT) {
 				filterToken->Set(make_error_code(static_cast<NetworkErrc>(response->error_code())));
 				state = FilterState::COMPLETED;
+				connection->id = response->player_id();
+				service->GetConnections()->AddConnection(connection);
 				return FilterResult::CONSUMED;
 			}
 			
@@ -125,7 +127,6 @@ namespace Netcode::Network {
 			if(route != serverConnection->dtlsRoute) {
 				return FilterResult::IGNORED;
 			}
-
 			
 			/*
 			Protocol::Header * header = cm.header;
@@ -261,11 +262,8 @@ namespace Netcode::Network {
 				}
 			});
 
-		ct->Then([this, mainToken](const ErrorCode & ec) {
-			if(ec) {
-				mainToken->Set(ec);
-			}
-			SendDebugFragmentedMessage();
+		ct->Then([mainToken](const ErrorCode & ec) {
+			mainToken->Set(ec);
 		});
 	}
 	
@@ -312,64 +310,6 @@ namespace Netcode::Network {
 				});
 			});
 		});
-
-		/*
-
-
-		Ref<NetAllocator> alloc = service->MakeSmallAllocator();
-		CompletionToken<ErrorCode> ct = alloc->MakeCompletionToken<ErrorCode>();
-		PmtuDiscovery::Start(service.get(), ct, connection, service->GetLinkLocalMtu());
-
-		ct->Then([this, mainToken](const ErrorCode & ec) -> void {
-			if(ec) {
-				mainToken->Set(ec);
-			} else {
-				
-			}
-		});
-
-		service->GetDtls()
-			   ->InitConnect(service.get(), alloc.get(), connection->endpoint)
-			   ->Then([this](const DtlsConnectResult& result) -> void {
-
-			if(result.errorCode) {
-				Log::Error("Failed to connect to DTLS service");
-				return;
-			}
-
-			Ref<NetAllocator> allocator = service->MakeSmallAllocator();
-
-			Protocol::Control * control = allocator->MakeProto<Protocol::Control>();
-			control->set_sequence(connection->localControlSequence++);
-			control->set_type(Protocol::CONNECT_REQUEST);
-			Protocol::ConnectRequest * cr = control->mutable_connect_request();
-			cr->set_type(Protocol::ConnectType::DIRECT);
-			cr->set_query("hello world");
-			
-			ControlMessage cm;
-			cm.connection = connection;
-			cm.connection->dtlsRoute = result.route;
-			cm.control = control;
-			cm.allocator = std::move(allocator);
-
-			service->Send(cm.allocator, cm.allocator->MakeCompletionToken<TrResult>(), cm, connection->endpoint, ResendArgs{ 500, 3 });
-
-			SendDebugFragmentedMessage();
-		});
-		Ref<NetAllocator> alloc = service->MakeSmallAllocator();
-		Protocol::Header* header = alloc->MakeProto<Protocol::Header>();
-		header->set_type(Protocol::MessageType::CONNECT_PUNCHTHROUGH);
-
-		service->Send(std::move(alloc), connection.get(), header)
-		->Then([this, mainToken](TrResult tr) mutable -> void {
-		if(tr.errorCode) {
-		connection->state = ConnectionState::INACTIVE;
-		mainToken->Set(tr.errorCode);
-		} else {
-		SendConnectRequest(std::move(mainToken));
-		}
-		});
-		*/
 	}
 
 	void ClientSession::OnHostnameResolved(const UdpResolver::results_type & results, CompletionToken<ErrorCode> mainToken) {
@@ -486,17 +426,20 @@ namespace Netcode::Network {
 	}
 
 	void ClientSession::SendDebugFragmentedMessage() {
-		Ref<NetAllocator> alloc = service->MakeAllocator(65536 + 2048);
-		Protocol::Update * update = alloc->MakeProto<Protocol::Update>();
-		Protocol::ClientUpdate * cu = update->mutable_client_update();
-		std::string * rd = cu->mutable_replication_data();
+		Ref<NetAllocator> alloc = service->MakeAllocator(1 << 14);
+		uint8_t * data = alloc->MakeArray<uint8_t>(5000);
 
-		rd->resize(5000, 'A');
-		memset(rd->data() + 1188, 'B', 1194);
-		memset(rd->data() + 1188 + 1194, 'C', 1194);
-		memset(rd->data() + 1188 + 2 * 1194, 'D', 1194);
+		memset(data, 'A', 5000);
+		memset(data + 1189, 'B', 1189);
+		memset(data + 2 * 1189, 'C', 1189);
+		memset(data + 3 * 1189, 'D', 1189);
+		
+		GameMessage gm;
+		gm.sequence = connection->localGameSequence++;
+		gm.allocator = std::move(alloc);
+		gm.content = ArrayView<uint8_t>{ data, 5000 };
 
-		service->Send(alloc, update, connection.get(), connection->localGameSequence++);
+		service->Send(gm, connection.get());
 	}
 
 	CompletionToken<ErrorCode> ClientSession::Synchronize() {

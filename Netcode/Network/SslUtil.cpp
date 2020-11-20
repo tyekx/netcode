@@ -81,29 +81,30 @@ namespace Netcode::Network {
 			wbio = BIO_new(BIO_s_mem());
 		}
 
+		BIO_set_mem_eof_return(rbio, -1);
+		BIO_set_mem_eof_return(wbio, -1);
+
 		SSL_set_bio(ssl, rbio, wbio);
 
 		// DTLS listen will try to zero out the 2nd param on failure...
 		sockaddr_storage dummy = {};
 		int lstn = DTLSv1_listen(ssl, reinterpret_cast<BIO_ADDR *>(&dummy));
 
-		BUF_MEM * wb = nullptr;
-		BIO_get_mem_ptr(wbio, &wb);
+		const size_t pendingBytes = BIO_ctrl_pending(wbio);
 
-		if(lstn == 1 && wb->data == nullptr) {
+		if(lstn == 1 && pendingBytes == 0) {
 			return std::error_code{};
 		}
 
-		if(lstn == -1 && wb->data != nullptr &&
-			SSL_get_error(ssl, lstn) == SSL_ERROR_SYSCALL &&
-			ERR_get_error() == 0) {
+		if(lstn == 0 && pendingBytes > 0) {
+			BUF_MEM * wb = nullptr;
+			BIO_get_mem_ptr(wbio, &wb);
 			BIO_up_ref(wbio);
 			*outBio = wbio;
 			SSL_set_bio(ssl, rbio, nullptr);
 			return make_error_code(NetworkErrc::SSL_CONTINUATION_NEEDED);
 		}
 
-		Log::Debug("Unexpected SSL flow");
 		return make_error_code(NetworkErrc::SSL_ERROR);
 	}
 
@@ -316,6 +317,86 @@ namespace Netcode::Network {
 			return std::string{};
 		}
 		return Sha256(randBytes);
+	}
+
+	constexpr static uint32_t NUM_SECRETS = 8;
+
+	struct CookieSecret {
+		uint8_t data[8];
+
+		CookieSecret() { }
+	};
+
+	static std::unique_ptr<CookieSecret[]> cookieSecrets{ nullptr };
+
+	static ArrayView<uint8_t> GetSecret() {
+		return ArrayView<uint8_t>{ cookieSecrets[rand() % NUM_SECRETS].data, sizeof(CookieSecret::data)  };
+	}
+	
+	void SslInitializeCookies() {
+		cookieSecrets = std::make_unique<CookieSecret[]>(NUM_SECRETS);
+
+		srand(time(0));
+
+		for(uint32_t i = 0; i < NUM_SECRETS; i++) {
+			int res;
+			do {
+				res = RAND_bytes(cookieSecrets[i].data, sizeof(CookieSecret::data));
+			} while(res == 0);
+
+			if(res == -1) {
+				Log::Error("Failed to generate random number.");
+			}
+		}
+	}
+
+	int32_t SslGenerateCookie(SSL * ssl, uint8_t * cookie, uint32_t * cookieLength) {
+		const UdpPacket * pkt = reinterpret_cast<const UdpPacket *>(SSL_get_ex_data(ssl, 0));
+
+		if(pkt == nullptr) {
+			return -1;
+		}
+
+		UdpEndpoint ep = pkt->GetEndpoint();
+		ArrayView<uint8_t> secret = GetSecret();
+		if(HMAC(EVP_sha256(), secret.Data(), secret.Size(),
+			reinterpret_cast<const unsigned char *>(&ep), ep.size(),
+			cookie, cookieLength) == nullptr) {
+			return -1;
+		}
+
+		return 1;
+	}
+
+	int32_t SslVerifyCookie(SSL * ssl, const uint8_t * cookie, uint32_t cookieLength) {
+		const UdpPacket * pkt = reinterpret_cast<const UdpPacket *>(SSL_get_ex_data(ssl, 0));
+
+		if(pkt == nullptr) {
+			return -1;
+		}
+
+		UdpEndpoint ep = pkt->GetEndpoint();
+
+		uint8_t hmac[EVP_MAX_MD_SIZE];
+
+		for(uint32_t i = 0; i < NUM_SECRETS; i++) {
+			uint32_t hmacLen = EVP_MAX_MD_SIZE;
+			if(HMAC(EVP_sha256(), cookieSecrets[i].data, sizeof(CookieSecret::data),
+				reinterpret_cast<const unsigned char *>(&ep), ep.size(),
+				hmac, &hmacLen) == nullptr) {
+				return -1;
+			}
+
+			if(hmacLen == cookieLength && memcmp(hmac, cookie, cookieLength) == 0) {
+				return 1;
+			}
+		}
+
+		return 0;
+	}
+
+	int32_t SslVerifyCertificate(int32_t ok, X509_STORE_CTX * ctx) {
+		return 1;
 	}
 
 	std::error_code SslAcceptProceed(SSL * ssl, UdpPacket * receivedPacket, BIO ** outBio)

@@ -3,10 +3,7 @@
 #include <NetcodeFoundation/ErrorCode.h>
 #include <Netcode/HandleDecl.h>
 #include <memory>
-#include <mutex>
 #include <vector>
-#include <map>
-#include <thread>
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
@@ -57,38 +54,65 @@ namespace Netcode::Network {
 	};
 
 	template<typename T>
-	class MessageQueue {
-		std::vector<T> recv;
-		std::vector<T> send;
-		SlimReadWriteLock srwLock;
+	class Node : public T {
 	public:
-		void GetOutgoingPackets(std::vector<T> & swapInto) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+		Node<T> * next;
+		
+		Node() : next { nullptr } { }
 
-			swapInto.reserve(swapInto.size() + send.size());
+		using T::T;
+		using T::operator=;
+	};
 
-			std::move(std::begin(send), std::end(send), std::back_inserter(swapInto));
-			send.clear();
+	/**
+	 * Invasive message queue to avoid list node allocation
+	 * @tparam T will be wrapped into Node<T>
+	 */
+	template<typename T>
+	class MessageQueue {
+		SlimReadWriteLock srwLock;
+		//std::atomic<Node<T>*> head;
+		Node<T> * head;
+
+	public:
+
+		MessageQueue() : srwLock{}, head { nullptr } { }
+
+		Node<T>* ConsumeAll() {
+			ScopedExclusiveLock<SlimReadWriteLock> lock{ srwLock };
+			Node<T> * p = head;
+			head = nullptr;
+			return p;
 		}
 
-		void GetIncomingPackets(std::vector<T> & swapInto) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
+		void Produce(Node<T>* msg) {
+			ScopedExclusiveLock<SlimReadWriteLock> lock{ srwLock };
+			msg->next = head;
+			head = msg;
+		}
+		
+		/*
+		Node<T> * ConsumeAll() {
+			for(;;) {
+				Node<T> * currentHead = head.load(std::memory_order_acquire);
 
-			swapInto.reserve(swapInto.size() + recv.size());
-			
-			std::move(std::begin(recv), std::end(recv), std::back_inserter(swapInto));
-			recv.clear();
+				if(head.compare_exchange_weak(currentHead, nullptr, std::memory_order_release, std::memory_order_relaxed)) {
+					return currentHead;
+				}
+			}
 		}
 
-		void Send(T packet) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-			send.emplace_back(std::move(packet));
-		}
+		void Produce(Node<T> * msg) {
+			for(;;) {
+				Node<T> * currentHead = head.load(std::memory_order_acquire);
 
-		void Received(T packet) {
-			ScopedExclusiveLock<SlimReadWriteLock> scopedLock{ srwLock };
-			recv.emplace_back(std::move(packet));
-		}
+				msg->next = currentHead;
+
+				if(head.compare_exchange_weak(currentHead, msg, std::memory_order_release, std::memory_order_relaxed)) {
+					return;
+				}
+			}
+		}*/
 	};
 
 	// id, name, hash, is_banned

@@ -56,10 +56,11 @@ message ConnectRequest {
 message ConnectResponse {
 	ConnectType type = 1;
 	int32 error_code = 2;
-	string nonce = 3;
-	string current_map = 4;
-	Endpoint public_endpoint = 5;
-	Endpoint private_endpoint = 6;
+	int32 player_id = 3;
+	string nonce = 4;
+	string current_map = 5;
+	Endpoint public_endpoint = 6;
+	Endpoint private_endpoint = 7;
 }
 
 message Control {

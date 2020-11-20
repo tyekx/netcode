@@ -13,7 +13,9 @@ public:
 		rotY = 0.0f;
 	}
 
-	virtual void Update(float dt) override {
+	virtual void Update(Netcode::GameClock * gameClock) override {
+		const float dt = gameClock->FGetDeltaTime();
+		
 		rotY = std::fmodf(rotY + dt, Netcode::C_2PI);
 
 		tr->rotation = Netcode::Quaternion{ 0.0f, rotY, 0.0f };
@@ -63,7 +65,7 @@ public:
 		});
 	}
 
-	virtual void Update(float dt) override {
+	virtual void Update(Netcode::GameClock*) override {
 		
 	}
 };

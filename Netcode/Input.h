@@ -109,7 +109,7 @@ namespace Netcode {
 
 		static void Initialize();
 
-		static void UpdateAxisMap(float dt);
+		static void UpdateAxisMap();
 
 		static float GetAxis(uint32_t axis);
 

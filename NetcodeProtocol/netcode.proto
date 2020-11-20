@@ -6,20 +6,24 @@ package Netcode.Protocol;
 import "shared.proto";
 
 enum CommandType {
-    NO_OP = 0;
+    C_NOOP = 0;
 	PLAYER_KICKED = 1;
 	PLAYER_BANNED = 2;
 	PLAYER_CONNECTED = 3;
 	PLAYER_DISCONNECTED = 4;
 	PLAYER_TIMEDOUT = 5;
 	SERVER_CLOSED = 6;
+    CREATE_OBJECT = 7;
+    REMOVE_OBJECT = 8;
 }
 
 enum ActionType {
-    MOVEMENT = 0;
-    SPAWN = 1;
-    JUMP = 2;
-    FIRE = 3;
+    A_NOOP = 0;
+    MOVEMENT = 1;
+    SPAWN = 2;
+    JUMP = 3;
+    FIRE = 4;
+    LOOK = 5;
 }
 
 enum ActionResultType {
@@ -28,8 +32,11 @@ enum ActionResultType {
 }
 
 message ServerCommand {
-    CommandType type = 1;
-    int32 subject = 2;
+    fixed32 id = 1;
+    CommandType type = 2;
+    int32 subject = 3;
+    int32 object_type = 4;
+    fixed32 object_id = 5;
 }
 
 message ActionPrediction {
@@ -43,15 +50,21 @@ message ActionPrediction {
 message ActionResult {
     fixed32 id = 1;
     ActionResultType result = 2;
-    Float3 action_position = 3;
-    Float3 action_delta = 4;
+    ActionType type = 3;
+    Float3 action_position = 4;
+    Float3 action_delta = 5;
+}
+
+message ReplData {
+    fixed32 object_id = 1;
+    bytes data = 2;
 }
 
 message ClientUpdate {
 	fixed32 id = 1;
 	fixed32 received_id = 2;
     repeated ActionPrediction predictions = 3;
-    bytes replication_data = 4;
+    repeated ReplData replications = 4;
 }
 
 message ServerUpdate {
@@ -59,12 +72,6 @@ message ServerUpdate {
 	fixed32 received_id = 2;
 	repeated ServerCommand commands = 3;
     repeated ActionResult action_results = 4;
-    bytes replication_data = 5;
-}
-
-message Update {
-    oneof Content {
-        ServerUpdate server_update = 1;
-        ClientUpdate client_update = 2;
-    }
+    repeated Player players = 5;
+    repeated ReplData replications = 6;
 }

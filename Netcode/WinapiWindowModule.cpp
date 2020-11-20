@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include <Netcode/Input/Key.h>
+#include <Netcode/Config.h>
 
 using Netcode::Graphics::DisplayMode;
 
@@ -59,21 +60,38 @@ namespace Netcode::Module {
 
 		SetConsoleMode(cWnd, consoleMode | ENABLE_WINDOW_INPUT);
 
-		std::vector<HMONITOR> hMons;
-		hMons.reserve(4);
-		EnumDisplayMonitors(NULL, NULL, &MonitorEnumProc, reinterpret_cast<LPARAM>(&hMons));
+		const bool consoleMaximized = Config::GetOptional<bool>(L"window.debugConsole.maximized:bool", false);
 		
-		// @TODO: move this to configuration
-		int selectedMonitor = 1;
+		if(consoleMaximized) {
+			size_t monitorIndex = Config::GetOptional<uint8_t>(L"window.debugConsole.displayIndex:u8", 0);
 
-		MONITORINFOEX monitorInfoEx = {};
-		monitorInfoEx.cbSize = sizeof(MONITORINFOEX);
+			std::vector<HMONITOR> hMons;
+			hMons.reserve(4);
+			EnumDisplayMonitors(NULL, NULL, &MonitorEnumProc, reinterpret_cast<LPARAM>(&hMons));
 
-		GetMonitorInfoA(hMons[selectedMonitor], &monitorInfoEx);
+			if(!hMons.empty()) {
+				monitorIndex = std::min(monitorIndex, hMons.size() - 1);
 
-		SetWindowPos(cWnd, nullptr, monitorInfoEx.rcMonitor.left, monitorInfoEx.rcMonitor.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+				MONITORINFOEX monitorInfoEx = {};
+				monitorInfoEx.cbSize = sizeof(MONITORINFOEX);
 
-		ShowWindow(cWnd, SW_MAXIMIZE);
+				GetMonitorInfoA(hMons[monitorIndex], &monitorInfoEx);
+
+				SetWindowPos(cWnd, nullptr, monitorInfoEx.rcMonitor.left, monitorInfoEx.rcMonitor.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+
+				ShowWindow(cWnd, SW_MAXIMIZE);
+			} else {
+				Log::Debug("Failed to set fullscreen console position");
+
+				ShowWindow(cWnd, SW_SHOWDEFAULT);
+			}
+		} else {
+			Int2 position = Config::GetOptional(L"window.debugConsole.position:Int2", Int2::Zero);
+			Int2 size = Config::GetOptional(L"window.debugConsole.size:Int2", Int2{ 800,600 });
+			SetWindowPos(cWnd, nullptr, position.x, position.y, size.x, size.y, SWP_NOZORDER);
+
+			ShowWindow(cWnd, SW_SHOWDEFAULT);
+		}
 	}
 
 	void SizingTimerProc(_In_ HWND hwnd, _In_ UINT wmTimer, _In_ UINT_PTR timerPtr, _In_ DWORD timeSinceEpochMs) {
@@ -280,11 +298,22 @@ namespace Netcode::Module {
 		graphics = app->graphics.get();
 
 #if defined(_DEBUG)
-		ShowDebugWindow();
+		constexpr bool showDebugConsoleDefault = true;
+
+		const bool debugConsoleEnabled =
+			Config::GetOptional<bool>(L"window.debugConsole.enabled:bool", showDebugConsoleDefault);
+
+		if(debugConsoleEnabled) {
+			ShowDebugWindow();
+		}
+		
 		Log::Setup(true);
 #else 
 		Log::Setup(false);
 #endif
+		
+		const Int2 windowPosition = Config::GetOptional<Int2>(L"window.position:Int2", Int2{ CW_USEDEFAULT, CW_USEDEFAULT });
+		const Int2 windowSize = Config::GetOptional<Int2>(L"window.size:Int2", Int2{ CW_USEDEFAULT, CW_USEDEFAULT });
 
 		eventSystem = app->events.get();
 
@@ -302,10 +331,10 @@ namespace Netcode::Module {
 		HWND wnd = CreateWindow(windowClassName,
 								"Netcode3D",
 								windowedStyle,
-								CW_USEDEFAULT,
-								CW_USEDEFAULT,
-								CW_USEDEFAULT,
-								CW_USEDEFAULT,
+								windowPosition.x,
+								windowPosition.y,
+								windowSize.x,
+								windowSize.y,
 								NULL,
 								NULL,
 								windowClass.hInstance,

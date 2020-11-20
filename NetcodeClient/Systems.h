@@ -8,6 +8,7 @@
 #include <Netcode/MovementController.h>
 #include <Netcode/Animation/Blender.h>
 #include <Netcode/Animation/IK.h>
+#include "Snippets.h"
 
 class TransformSystem {
 public:
@@ -112,10 +113,10 @@ public:
 
 class ScriptSystem {
 public:
-	void Run(GameObject * gameObject, float dt);
+	void Run(GameObject * gameObject, Netcode::GameClock* clock);
 
-	void operator()(GameObject * gameObject, Script * script, float dt) {
-		script->Update(dt);
+	void operator()(GameObject * gameObject, Script * script, Netcode::GameClock * clock) {
+		script->Update(clock);
 	}
 };
 
@@ -182,10 +183,15 @@ public:
 			BoneData * res = anim->debugBoneData.get();
 
 			auto boneTransforms = anim->blender->GetBoneTransforms();
-
 			for(const Netcode::Animation::IKEffector & effector : anim->effectors) {
 				Netcode::Animation::FABRIK::Run(effector, anim->bones, boneTransforms);
 			}
+
+			GameObject * parent = gameObject->Parent();
+			
+			const Netcode::Float3 parentPos = (parent != nullptr) ?
+				parent->GetComponent<Transform>()->position :
+				Netcode::Float3::Zero;
 
 			Netcode::Quaternion h = anim->headRotation;
 			for(uint32_t i = 0; i < 5; ++i) {
@@ -202,7 +208,7 @@ public:
 				int32_t bid = ike.parentId;
 				while(bid >= 0) {
 					auto wrt = Netcode::Animation::BackwardBounceCCD::GetWorldRT(bid, anim->bones, boneTransforms);
-					renderer->graphics->debug->DrawPoint(wrt.translation, 2.0f);
+					renderer->graphics->debug->DrawPoint(wrt.translation + parentPos, 2.0f, false);
 					bid = anim->bones[bid].parentId;
 				}
 
@@ -216,8 +222,6 @@ public:
 			anim->blender->UpdateMatrices(anim->bones, res->ToRootTransform, res->BindTransform);
 
 			/*
-			
-
 			anim->controller->Animate(blender->GetPlan());
 			int32_t id = anim->controller->GetId();
 
@@ -241,7 +245,7 @@ class PhysXSystem {
 
 		const ColliderShape & c = *(static_cast<ColliderShape *>(shape->userData));
 
-		BoneData * bd = anim->controller->GetAnimationSet()->GetData() + model->boneDataOffset;
+		BoneData * bd = anim->debugBoneData.get();
 
 		Netcode::Matrix toRoot = bd->ToRootTransform[c.boneReference];
 		Netcode::Quaternion rotQ = c.localRotation;
@@ -276,7 +280,7 @@ class PhysXSystem {
 			while(idx < shapesCount) {
 				const uint32_t written = rigidBody->getShapes(shapes, SHAPES_BUFFER_SIZE, idx);
 
-				for(uint32_t i = 0; i < written; ++i) {
+				for(uint32_t i = 0; i < written; i++) {
 					UpdateShapeLocalPose(shapes[i], model, anim);
 				}
 
@@ -297,44 +301,17 @@ public:
 			return;
 		}
 
-		if(model->boneData != nullptr) {
-			if(gameObject->HasComponent<Animation>()) {
-				UpdateBoneAttachedShapes(model, collider, gameObject->GetComponent<Animation>());
-			}
-		}
-	}
-};
+		if(!gameObject->HasComponent<Animation>())
+			return;
 
-#include <Netcode/Network/ReplicationContext.h>
+		Animation * anim = gameObject->GetComponent<Animation>();
 
-class NetworkSystem {
-	Netcode::Network::ReplicationContext * replCtx;
-public:
-	void Run(GameObject * gameObject, int32_t playerId);
-
-	void operator()(GameObject* gameObject, Netw* netwComponent, Script* script, int32_t playerId) {
-		const rapidjson::Document::StringRefType key(gameObject->name.c_str(), gameObject->name.size());
-		
-		if(playerId == 0) { // server sends it
-			// before sending, server needs to authorize every action
-			// therefore the server needs a buffer that holds the unauthorized actions sent by players
-			// use netwComponent->owner
-			// from the authorized actions the server will send replication data of spawning, but the players can only have 1 owned gameobject
-			// on the server. This way the owner uniquely identifies players if the owner is not 0.
-
-			if(netwComponent->owner != 0) {
-				// results are saved into the replicationContext, and a redundancybuffer.
-			}
-			
-			if(replCtx->Push(key)) {
-				script->ReplicateSend(gameObject, replCtx);
-			}
-		} else {
-			if(!netwComponent->HasAuthority(playerId)) { // unauthorized client reads it
-				if(replCtx->Push(key)) {
-					script->ReplicateReceive(gameObject, replCtx);
-				}
-			}
+		if(anim->debugBoneData != nullptr) {
+			UpdateBoneAttachedShapes(model, collider, anim);
+#if defined(DEBUG)
+			// this is a VERY expensive call
+			DrawDebugCollider(collider);
+#endif
 		}
 	}
 };

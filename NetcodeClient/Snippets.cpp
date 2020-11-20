@@ -1,6 +1,7 @@
 #include "Snippets.h"
 #include <Netcode/MovementController.h>
 #include <Netcode/IO/File.h>
+#include "Services.h"
 
 #define CLIP_ARGS(id) id, model->animations[ id ].duration, model->animations[ id ].ticksPerSecond
 
@@ -172,4 +173,55 @@ void CreateYbotAnimationComponent(Netcode::Asset::Model * model, Animation * ani
 			 }
 			 }*/
 		}));
+}
+
+static void DrawDebugColliderShape(const physx::PxTransform & actorPose, physx::PxShape * shape, Netcode::Module::IGraphicsModule * graphics) {
+	const physx::PxGeometryType::Enum type = shape->getGeometryType();
+	const physx::PxTransform localPose = shape->getLocalPose();
+	const physx::PxTransform worldPose = actorPose.transform(localPose);
+	const Netcode::Float3 position = Netcode::ToFloat3(worldPose.p);
+	const Netcode::Quaternion orientation = Netcode::ToQuaternion(worldPose.q);
+	
+	switch(type) {
+		case physx::PxGeometryType::eBOX: 
+			if(physx::PxBoxGeometry box; shape->getBoxGeometry(box)) {
+				graphics->debug->DrawBox(orientation, position, Netcode::ToVec3(box.halfExtents));
+			} break;
+		case physx::PxGeometryType::eCAPSULE: 
+			if(physx::PxCapsuleGeometry capsule; shape->getCapsuleGeometry(capsule)) {
+				graphics->debug->DrawCapsule(orientation, position, capsule.radius, capsule.halfHeight);
+			} break;
+		case physx::PxGeometryType::eSPHERE:
+			if(physx::PxSphereGeometry sphere; shape->getSphereGeometry(sphere)) {
+				graphics->debug->DrawSphere(position, sphere.radius);
+			} break;
+		default: break;
+	}
+}
+
+void DrawDebugCollider(Collider * collider) {
+	Netcode::Module::IGraphicsModule* graphics = Service::Get<Netcode::Module::IGraphicsModule *>();
+
+	if(graphics->debug == nullptr)
+		return;
+
+	if(collider->actor == nullptr)
+		return;
+
+	if(physx::PxRigidDynamic* actor = collider->actor->is<physx::PxRigidDynamic>(); actor != nullptr) {
+		physx::PxTransform pose = actor->getGlobalPose();
+		physx::PxShape * shapes[8] = {};
+		const physx::PxU32 shapesCount = actor->getNbShapes();
+		physx::PxU32 it = 0;
+
+		while(it < shapesCount) {
+			const uint32_t written = actor->getShapes(shapes, 8, it);
+
+			for(uint32_t i = 0; i < written; i++) {
+				DrawDebugColliderShape(pose, shapes[i], graphics);
+			}
+			
+			it += written;
+		}
+	}
 }

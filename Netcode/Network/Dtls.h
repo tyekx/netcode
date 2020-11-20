@@ -39,7 +39,7 @@ namespace Netcode::Network {
 	};
 
 	enum class DtlsRouteState : uint16_t {
-		UNDEFINED, CLIENT_CONNECT, SERVER_ACCEPT, ESTABLISHED
+		UNDEFINED, CLIENT_CONNECT, SERVER_ACCEPT, ESTABLISHED, DISCONNECTED
 	};
 
 	struct DtlsRoute {
@@ -47,11 +47,11 @@ namespace Netcode::Network {
 		Timestamp lastReceivedAt;
 		Timestamp lastResentAt;
 		UdpEndpoint endpoint;
-		DtlsRouteState state;
 		uint16_t mtu;
+		DtlsRouteState state;
 		DtlsRoute * next;
 
-		DtlsRoute() : ssl{}, lastReceivedAt{}, lastResentAt{}, endpoint{}, state{ DtlsRouteState::UNDEFINED }, mtu{ 0 }, next{ nullptr } {}
+		DtlsRoute() : ssl{}, lastReceivedAt{}, lastResentAt{}, endpoint{}, mtu{ 0 }, state{ DtlsRouteState::UNDEFINED }, next{ nullptr } {}
 	};
 
 	class NetAllocator;
@@ -107,16 +107,18 @@ namespace Netcode::Network {
 				return;
 			}
 
+			DtlsRoute * next = route->next;
+
 			route->~DtlsRoute();
 			new (route) DtlsRoute{};
 
 			if(route == head) {
-				head = head->next;
+				head = next;
 			} else {
 				DtlsRoute * prev = head;
 				for(DtlsRoute * it = head->next; it != nullptr; it = it->next) {
 					if(it == route) {
-						prev->next = it->next;
+						prev->next = next;
 						break;
 					}
 					prev = it;
@@ -135,12 +137,21 @@ namespace Netcode::Network {
 	};
 
 	class DtlsService {
+		boost::asio::strand<boost::asio::io_context::executor_type> strand;
 		DtlsRouter router;
 		ssl_ptr<SSL_CTX> clientContext;
 		ssl_ptr<SSL_CTX> serverContext;
 		ssl_ptr<SSL> listener;
 
 		CompletionToken<DtlsConnectResult> pendingConnection;
+
+		DtlsRoute * ServerListen(NetcodeService * service, UdpPacket * packet);
+
+		void ServerAccept(NetcodeService * service, DtlsRoute * route, NetAllocator * alloc, UdpPacket * packet);
+
+		void ClientConnect(NetcodeService * service, DtlsRoute * route, NetAllocator * alloc, UdpPacket * packet);
+		
+		DtlsRoute * HandlePacket(NetcodeService * service, const DtlsRecordLayer & firstRecord, NetAllocator * alloc, UdpPacket * packet);
 	public:
 
 		SSL_CTX* GetServerContext() {
@@ -151,21 +162,21 @@ namespace Netcode::Network {
 			return clientContext.get();
 		}
 
-		DtlsService(ssl_ptr<SSL_CTX> clientContext, ssl_ptr<SSL_CTX> serverContext) :
-			router{}, clientContext{ std::move(clientContext) }, serverContext{ std::move(serverContext) } {
+		DtlsService(boost::asio::io_context& ioc, ssl_ptr<SSL_CTX> clientContext, ssl_ptr<SSL_CTX> serverContext) :
+			strand{ boost::asio::make_strand(ioc) }, router{},
+			clientContext{ std::move(clientContext) }, serverContext{ std::move(serverContext) } {
 
 		}
 
-		DtlsRoute * ServerListen(NetcodeService * service, UdpPacket * packet);
+		/**
+		 * Server side function to check client connections for a timeout.
+		 * Established connections are not timed out by this service.
+		 */
+		void AsyncCheckTimeouts();
 
-		void ServerAccept(NetcodeService * service, DtlsRoute * route, NetAllocator * alloc, UdpPacket * packet);
-
-		void ClientConnect(NetcodeService * service, DtlsRoute * route, NetAllocator * alloc, UdpPacket * packet);
-
-		DtlsRoute * HandlePacket(NetcodeService * service, const DtlsRecordLayer & firstRecord, NetAllocator * alloc, UdpPacket * packet);
+		void AsyncHandlePacket(NetcodeService * service, NetAllocator * alloc, UdpPacket * packet);
 
 		CompletionToken<DtlsConnectResult> InitConnect(NetcodeService * service, NetAllocator * alloc, const UdpEndpoint & target);
-
 	};
 
 }

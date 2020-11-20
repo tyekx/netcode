@@ -4,6 +4,7 @@
 #include <Windows.h>
 #endif
 #include <openssl/ssl3.h>
+#include <Netcode/Input.h>
 
 namespace Netcode {
 
@@ -53,6 +54,7 @@ namespace Netcode {
 		SetTimerResolution();
 		SSL_load_error_strings();
 		OpenSSL_add_ssl_algorithms();
+		Input::Initialize();
 	}
 
 	/*

@@ -133,7 +133,7 @@ namespace Netcode::Animation {
 			}
 			toRootMatrices[i] = toRoot[i].Transpose();
 
-			bindMatrices[i] = bindTrans * bones[i].transform;
+			bindMatrices[i] = (Matrix{ bones[i].transform } * toRoot[i]).Transpose();
 		}
 	}
 }

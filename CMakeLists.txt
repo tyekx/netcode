@@ -170,7 +170,4 @@ add_subdirectory("Netcode")
 add_subdirectory("NetcodeClient")
 add_subdirectory("NetcodeServer")
 add_subdirectory("NetcodeUnitTests")
-
-add_dependencies(Netcode NetcodeProtocol)
-add_dependencies(NetcodeClient Netcode)
-add_dependencies(NetcodeServer Netcode)
+add_subdirectory("NetcodeMatchmaker")

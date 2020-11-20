@@ -13,29 +13,23 @@ namespace Netcode {
 		
 		static Duration theta;
 		static Duration delta;
-		static Duration elapsedTimeSinceLastFrame;
 		static Timestamp currentFrameTimestamp;
 		static Timestamp processStartedAt;
 	public:
 
 		static void SynchronizeClocks(Duration delta, Duration theta);
 
-		static void Tick();
-
+		/**
+		 * Returns a new timestamp
+		 */
 		[[nodiscard]]
 		static Timestamp LocalNow();
 
+		/**
+		 * Returns a new timestamp adjusted to the server's clock
+		 */
 		[[nodiscard]]
 		static Timestamp GlobalNow();
-
-		[[nodiscard]]
-		static Timestamp PredictedGlobalNow();
-		
-		[[nodiscard]]
-		static float GetDeltaTimeInSeconds();
-		
-		[[nodiscard]]
-		static double GetTotalTimeInSeconds();
 	};
 	
 }

@@ -3,19 +3,15 @@
 #include <memory>
 
 #include "NetworkCommon.h"
+#include "CompletionToken.h"
 
 namespace Netcode::Network {
 
-	class DefaultMysqlCompletionHandler {
-	public:
-		void operator()(ErrorCode errorCode);
+	struct QueryUserResult {
+		ErrorCode errorCode;
+		PlayerDbDataRow playerData;
 	};
 
-	/*
-	wrapper for all the mysql statements that will be used during the lifetime of a server,
-	must hide implementation detail because mysqlx library defines "INTERNAL" as a macro and
-	it collides with gRPC.
-	*/
 	class MysqlSession  {
 
 		struct detail;
@@ -23,20 +19,20 @@ namespace Netcode::Network {
 		std::unique_ptr<detail> impl;
 		
 	public:
-		MysqlSession();
+		MysqlSession(boost::asio::io_context& ioc);
 		~MysqlSession();
 
-		ErrorCode QueryUserByHash(const std::string & hash, PlayerDbDataRow & output);
+		CompletionToken<QueryUserResult> QueryUserByHash(std::string hash);
 
-		ErrorCode CloseServer();
+		CompletionToken<ErrorCode> CloseServer();
 
-		ErrorCode CreateGameSession(int playerId);
+		CompletionToken<ErrorCode> CreateGameSession(int playerId);
 
-		ErrorCode CloseGameSession(int playerId);
+		CompletionToken<ErrorCode> CloseGameSession(int playerId);
 
-		ErrorCode RegisterServer(int ownerId, uint8_t playerSlots, uint32_t tickIntervalMs, const std::string & serverIp, uint16_t controlPort, uint16_t gamePort);
+		CompletionToken<ErrorCode> RegisterServer(int ownerId, uint8_t playerSlots, uint32_t tickIntervalMs, const std::string & serverIp, uint16_t controlPort, uint16_t gamePort);
 
-		ErrorCode Connect();
+		CompletionToken<ErrorCode> Connect();
 	};
 
 }

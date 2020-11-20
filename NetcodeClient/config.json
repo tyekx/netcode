@@ -29,7 +29,7 @@
       "enabled:bool": true
     },
     "debug": {
-      "enabled:bool": false,
+      "enabled:bool": true,
       "gpuBasedValidation:bool": false,
       "primitiveBufferDepth:u32": 65536,
       "capsuleSlices:u32": 12,
@@ -59,11 +59,7 @@
         "enabled:bool": true
       },
       "tickIntervalMs:u32": 16,
-      "workerThreadCount:u32": 1,
-      "hostname:string": "localhost",
-      "controlPort:u16": 0,
-      "gamePort:u16": 0,
-      "localPort:u16": 8899
+      "workerThreadCount:u32": 1
     },
     "database": {
       "log": {
@@ -87,10 +83,11 @@
       "selfAddress:string": "::1",
       "hostname:string": "localhost",
       "ownerId:i32": 1,
-      "gracePeriodMs:u32": 10000,
-      "controlPort:u16": 8888,
-      "gamePort:u16": 8889,
+      "port:u16": 8889,
       "playerSlots:u8": 8
+    },
+    "matchmaker": {
+      "port:u16": 25000
     },
     "protocol": {
       "log": {

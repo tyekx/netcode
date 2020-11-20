@@ -406,7 +406,7 @@ GameObject * ClientAssetConverter::ConvertColliderComponent(GameObject * gameObj
 			});
 
 		shape->setQueryFilterData(filterData);
-		shape->userData = nullptr;
+		shape->userData = &netcodeShapes.at(i);
 		actor->attachShape(*shape);
 	}
 
