@@ -15,7 +15,6 @@ struct Connection : public nn::ConnectionBase {
 	uint32_t remoteActionIndex;
 	uint32_t localCommandIndex;
 	uint32_t remoteCommandIndex;
-	Netcode::Duration rtt;
 	// cache members
 	nn::GameMessage message;
 	np::ServerUpdate * serverUpdate;
@@ -24,7 +23,7 @@ struct Connection : public nn::ConnectionBase {
 	Connection(boost::asio::io_context & ioc) : nn::ConnectionBase{ ioc },
 		redundancyBuffer{}, gameObject{ nullptr }, remotePlayerScript{ nullptr },
 		localActionIndex{ 1 }, remoteActionIndex{ 0 }, localCommandIndex{ 1 },
-		remoteCommandIndex{ 0 }, rtt{}, message{}, serverUpdate{ nullptr } { }
+		remoteCommandIndex{ 0 }, message{}, serverUpdate{ nullptr } { }
 };
 
 struct ExtClientAction : public ClientAction {
@@ -46,7 +45,7 @@ public:
 		return current != nullptr;
 	}
 
-	NodeIter & operator++() {
+	NodeIter & operator++(int) {
 		nn::Node<T> * tmp = current->next;
 		current->allocator.reset();
 		current = tmp;
@@ -75,4 +74,4 @@ Netcode::Float3 ConvertFloat3(const np::Float3 & f3);
 
 void ConvertFloat3(np::Float3 * dst, const Netcode::Float3 & src);
 
-GameObject * CreateRemoteAvatar();
+GameObject * CreateRemoteAvatar(Netcode::Duration interpDelay);

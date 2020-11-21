@@ -27,7 +27,7 @@ void ConvertFloat3(np::Float3 * dst, const Netcode::Float3 & src) {
 }
 
 
-GameObject * CreateRemoteAvatar() {
+GameObject * CreateRemoteAvatar(Netcode::Duration interpDelay) {
 	AssetManager * assetManager = Service::Get<AssetManager>();
 	GameSceneManager * gsm = Service::Get<GameSceneManager>();
 	GameScene * gameScene = gsm->GetScene();
@@ -47,7 +47,7 @@ GameObject * CreateRemoteAvatar() {
 	networkComponent->replDesc = CreateRemoteAvatarReplDesc();
 	
 	Netcode::PxPtr<physx::PxController> pxController = gameScene->CreateController();
-	std::unique_ptr<RemotePlayerScript> rps = std::make_unique<RemotePlayerScript>(std::move(pxController));
+	std::unique_ptr<RemotePlayerScript> rps = std::make_unique<RemotePlayerScript>(std::move(pxController), interpDelay);
 	rps->Construct(avatarController);
 	scriptComponent->AddScript(std::move(rps));
 

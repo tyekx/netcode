@@ -5,9 +5,8 @@
 #include <sstream>
 
 class ServerConnRequestFilter : public nn::FilterBase {
-
 public:
-	nn::FilterResult Run(Ptr<nn::NetcodeService> service, Ptr<nn::DtlsRoute> route, Netcode::Timestamp timestamp, nn::ControlMessage & cm) override {
+	nn::FilterResult Run(Ptr<nn::NetcodeService> service, Ptr<nn::DtlsRoute> route, nn::ControlMessage & cm) override {
 		const np::Control * peerControl = cm.control;
 		if(peerControl->type() != np::CONNECT_REQUEST || !peerControl->has_connect_request()) {
 			return nn::FilterResult::IGNORED;
@@ -53,8 +52,9 @@ public:
 		conn->localControlSequence = 1;
 		conn->localGameSequence = 1;
 		conn->remoteControlSequence = peerControl->sequence();
-		conn->state = nn::ConnectionState::ESTABLISHED;
-		conn->gameObject = CreateRemoteAvatar();
+		conn->state = nn::ConnectionState::SYNCHRONIZING;
+		conn->tickInterval = std::chrono::milliseconds(Netcode::Config::Get<uint32_t>(L"network.client.tickIntervalMs:u32"));
+		conn->gameObject = CreateRemoteAvatar(conn->tickInterval);
 
 		connections->ForeachUnsafe<Connection>([&](Connection * existingConn) -> void {
 			Network * nc = existingConn->gameObject->GetComponent<Network>();
@@ -90,8 +90,12 @@ public:
 };
 
 class ServerClockSyncRequestFilter : public nn::FilterBase {
+	Netcode::GameClock * clock;
+	
 public:
-	nn::FilterResult Run(Ptr<nn::NetcodeService> service, Ptr<nn::DtlsRoute> route, Netcode::Timestamp timestamp, nn::ControlMessage & cm) override {
+	ServerClockSyncRequestFilter(Netcode::GameClock* c) : clock{c} { }
+	
+	nn::FilterResult Run(Ptr<nn::NetcodeService> service, Ptr<nn::DtlsRoute> route, nn::ControlMessage & cm) override {
 		np::Control * ctrl = cm.control;
 		
 		if(ctrl->type() != np::MessageType::CLOCK_SYNC_REQUEST ||
@@ -108,10 +112,12 @@ public:
 			return nn::FilterResult::IGNORED;
 
 		ctrl->set_type(np::MessageType::CLOCK_SYNC_RESPONSE);
+		ctrl->set_sequence(conn->localControlSequence++);
+
 		
 		np::TimeSync* timeSync = ctrl->mutable_time_sync();
-		timeSync->set_server_req_reception(Netcode::ConvertTimestampToUInt64(cm.packet->GetTimestamp()));
-		timeSync->set_server_resp_transmission(Netcode::ConvertTimestampToUInt64(Netcode::SystemClock::LocalNow()));
+		timeSync->set_server_req_reception(Netcode::ConvertTimestampToUInt64(cm.packet->GetTimestamp() - clock->GetEpoch()));
+		timeSync->set_server_resp_transmission(Netcode::ConvertTimestampToUInt64(Netcode::SystemClock::LocalNow() - clock->GetEpoch()));
 
 		cm.packet = nullptr;
 		
@@ -145,19 +151,6 @@ static bool ConvertAction(ExtClientAction& dst, const np::ActionPrediction& pred
 		return true;
 	}
 
-	if(type == np::ActionType::LOOK) {
-		if(!pred.has_action_position()) {
-			return false;
-		}
-		dst.timestamp = Netcode::ConvertUInt64ToTimestamp(pred.timestamp());
-		dst.id = pred.id();
-		dst.type = ActionType::LOOK;
-		const Netcode::Float3 f3 = ConvertFloat3(pred.action_position());
-		dst.lookActionData.pitch = f3.x;
-		dst.lookActionData.yaw = f3.y;
-		return true;
-	}
-
 	if(type == np::ActionType::FIRE) {
 		if(!pred.has_action_position() || !pred.has_action_delta()) {
 			return false;
@@ -183,7 +176,7 @@ void GameServer::FetchActions() {
 
 		uint32_t maxActionIndex = 0;
 
-		for(NodeIter<nn::GameMessage> it = node; it != nullptr; ++it) {
+		for(NodeIter<nn::GameMessage> it = node; it != nullptr; it++) {
 			np::ClientUpdate * update = ParseClientUpdate(it.operator->());
 
 			if(update == nullptr)
@@ -222,7 +215,7 @@ void GameServer::FetchActions() {
 	});
 
 	std::sort(std::begin(actions), std::end(actions), [](const ExtClientAction & a, const ExtClientAction & b) -> bool {
-		return a.timestamp < b.timestamp;
+		return (a.timestamp < b.timestamp);
 	});
 }
 
@@ -247,11 +240,6 @@ void GameServer::HandleMovementAction(const ExtClientAction& action) {
 	sr.id = action.id;
 	
 	connection->redundancyBuffer.Add(connection->localGameSequence, sr);
-}
-
-void GameServer::HandleLookAction(const ExtClientAction & action) {
-	Connection * connection = action.owner;
-	RemotePlayerScript * rps = connection->remotePlayerScript;
 }
 
 void GameServer::HandleFireAction(const ExtClientAction& action) {
@@ -315,17 +303,61 @@ void GameServer::DisconnectPlayer(Connection * connection) {
 }
 
 void GameServer::ProcessActions() {
+	Netcode::Timestamp serverTimestamp = gameClock.GetGlobalTime();
+	
 	for(const ExtClientAction& action : actions) {
+		const Netcode::Duration timestampDelta = serverTimestamp - action.timestamp;
+
+		/*
+		 * client is predicting ahead by RTT/2, that means if for some reason the message
+		 * arrives instantly, then the delta can only be at most RTT/2 otherwise the client
+		 * did not report its RTT properly.
+		 *
+		 * The usual delta should be around 0 as it takes the message RTT/2 time to arrive.
+		 *
+		 * if the timestamp delta is less than -historyDuration (usually 1 second), the action
+		 * gets rejected. Movement actions can recover if we have more recent data than the timestamp.
+
+		if(timestampDelta > action.owner->rtt / 2) {
+			// reject
+			continue;
+		}
+
+		// TODO: timestampDelta < historyDuration
+		if(timestampDelta < std::chrono::seconds(1)) {
+			// any action this old are silently dropped
+			continue;
+		}
+		 */
+		
 		switch(action.type) {
 			case ActionType::MOVEMENT: HandleMovementAction(action); break;
 			case ActionType::FIRE: HandleFireAction(action); break;
 			case ActionType::SPAWN: HandleSpawnAction(action); break;
-			case ActionType::LOOK: HandleLookAction(action); break;
 			default: break;
 		}
 	}
 
 	actions.clear();
+}
+
+void GameServer::FetchControlMessages() {
+
+}
+
+void GameServer::ProcessControlMessages() {
+	Netcode::Timestamp timestamp = Netcode::SystemClock::LocalNow();
+	
+	connections->ForeachUnsafe<Connection>([&](Connection * conn) -> void {
+		nn::Node<nn::ControlMessage> * node = conn->sharedControlQueue.ConsumeAll();
+		for(NodeIter<nn::ControlMessage> it = node; it != nullptr; it++) {
+			clockSyncFilter->Run(service.get(), conn->dtlsRoute, *it.operator->());
+		}
+	});
+}
+
+void GameServer::SaveState() {
+
 }
 
 void GameServer::CheckTimeouts() {
@@ -442,11 +474,20 @@ void GameServer::SendServerUpdates() {
 	});
 }
 
+GameServer::GameServer() : serverSession{}, actions{}, service{}, connections{}, clockSyncFilter{}, gameClock{}, nextGameObjectId{ 1 } {
+}
+
+GameServer::~GameServer() {
+	// default is ok
+}
+
 void GameServer::Tick() {
 	
 	FetchActions();
 
 	ProcessActions();
+
+	SaveState();
 
 	FetchControlMessages();
 
@@ -463,7 +504,6 @@ void GameServer::Tick() {
 }
 
 void GameServer::Start(Netcode::Module::INetworkModule* network) {
-	nextGameObjectId = 1;
 	gameClock.SetEpoch(Netcode::SystemClock::LocalNow() - Netcode::Timestamp{});
 	
 	serverSession = std::dynamic_pointer_cast<nn::ServerSession>(network->CreateServer());
@@ -471,7 +511,8 @@ void GameServer::Start(Netcode::Module::INetworkModule* network) {
 	
 	service = serverSession->GetService();
 	service->AddFilter(std::make_unique<ServerConnRequestFilter>());
-	service->AddFilter(std::make_unique<ServerClockSyncRequestFilter>());
+
+	clockSyncFilter = std::make_unique<ServerClockSyncRequestFilter>(&gameClock);
 	
 	connections = service->GetConnections();
 }

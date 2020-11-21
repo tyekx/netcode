@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 namespace Netcode {
 
 	template<typename T>

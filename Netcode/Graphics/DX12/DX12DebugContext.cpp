@@ -91,24 +91,24 @@ namespace Netcode::Graphics::DX12 {
 		graphicsModule = graphics;
 		CreateD2DContext(graphics);
 		
-		Ref<Netcode::InputLayoutBuilder> ilBuilder = graphics->CreateInputLayoutBuilder();
+		Ref<InputLayoutBuilder> ilBuilder = graphics->CreateInputLayoutBuilder();
 		ilBuilder->AddInputElement("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 		ilBuilder->AddInputElement("COLOR", DXGI_FORMAT_R32G32B32_FLOAT);
-		Ref<Netcode::InputLayout> il = ilBuilder->Build();
+		Ref<InputLayout> il = ilBuilder->Build();
 
-		Netcode::DepthStencilDesc depthStencilDesc;
-		Netcode::RasterizerDesc rasterizerDesc;
+		DepthStencilDesc depthStencilDesc;
+		RasterizerDesc rasterizerDesc;
 		rasterizerDesc.antialiasedLineEnable = true;
 		depthStencilDesc.depthWriteMaskZero = true;
 
-		Ref<Netcode::ShaderBuilder> shaderBuilder = graphics->CreateShaderBuilder();
-		Ref<Netcode::ShaderBytecode> vertexShader = shaderBuilder->LoadBytecode(L"Netcode_DebugPrimVS.cso");
-		Ref<Netcode::ShaderBytecode> pixelShader = shaderBuilder->LoadBytecode(L"Netcode_DebugPrimPS.cso");
+		Ref<ShaderBuilder> shaderBuilder = graphics->CreateShaderBuilder();
+		Ref<ShaderBytecode> vertexShader = shaderBuilder->LoadBytecode(L"Netcode_DebugPrimVS.cso");
+		Ref<ShaderBytecode> pixelShader = shaderBuilder->LoadBytecode(L"Netcode_DebugPrimPS.cso");
 
-		Ref<Netcode::RootSignatureBuilder> rootSigBuilder = graphics->CreateRootSignatureBuilder();
+		Ref<RootSignatureBuilder> rootSigBuilder = graphics->CreateRootSignatureBuilder();
 		rootSignature = rootSigBuilder->BuildFromShader(vertexShader);
 
-		Ref<Netcode::GPipelineStateBuilder> gpsoBuilder = graphics->CreateGPipelineStateBuilder();
+		Ref<GPipelineStateBuilder> gpsoBuilder = graphics->CreateGPipelineStateBuilder();
 		gpsoBuilder->SetNumRenderTargets(1);
 		gpsoBuilder->SetRenderTargetFormat(0, graphics->GetBackbufferFormat());
 		gpsoBuilder->SetDepthStencilFormat(graphics->GetDepthStencilFormat());
@@ -135,8 +135,10 @@ namespace Netcode::Graphics::DX12 {
 		gpsoBuilder->SetRootSignature(rootSignature);
 		noDepthPso = gpsoBuilder->Build();
 
-		defaultColor = Config::Get<Float3>(L"graphics.debug.defaultColor:Float3");
-		bufferSize = Config::Get<uint32_t>(L"graphics.debug.primitiveBufferDepth:u32");
+		defaultColor = Config::GetOptional<Float3>(L"graphics.debug.defaultColor:Float3", Float3{0.7f, 0.7f, 0.7f});
+		bufferSize = Config::GetOptional<uint32_t>(L"graphics.debug.primitiveBufferDepth:u32", 65536);
+		capsuleSlices = Config::GetOptional<uint32_t>(L"graphics.debug.capsuleSlices:u32", 8);
+		sphereSlices = Config::GetOptional<uint32_t>(L"graphics.debug.sphereSlices:u32", 8);
 		uploadBuffer = graphics->resources->CreateVertexBuffer(bufferSize * sizeof(PC_Vertex),
 			sizeof(PC_Vertex),
 			ResourceType::PERMANENT_UPLOAD,
@@ -399,7 +401,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void DebugContext::DrawSphere(Vector3 worldPosOrigin, float radius, const Float3 & color, const Float4x4 & transform, bool depthEnabled)
 	{
-		const uint32_t numSlices = Config::Get<uint32_t>(L"graphics.debug.sphereSlices:u32");
+		const uint32_t numSlices = sphereSlices;
 
 		uint32_t numVertices = BasicGeometry::GetSphereWireframeSize(numSlices);
 
@@ -544,7 +546,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void DebugContext::DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, bool depthEnabled)
 	{
-		const uint32_t numSlices = Config::Get<uint32_t>(L"graphics.debug.capsuleSlices:u32");
+		const uint32_t numSlices = capsuleSlices;
 
 		uint32_t numVertices = BasicGeometry::GetCapsuleWireframeSize(numSlices);
 
@@ -565,7 +567,7 @@ namespace Netcode::Graphics::DX12 {
 
 	void DebugContext::DrawCapsule(Quaternion rotation, Vector3 position, float radius, float halfHeight, const Float3 & color, const Float4x4 & transform, bool depthEnabled)
 	{
-		const uint32_t numSlices = Config::Get<uint32_t>(L"graphics.debug.capsuleSlices:u32");
+		const uint32_t numSlices = capsuleSlices;
 
 		uint32_t numVertices = BasicGeometry::GetCapsuleWireframeSize(numSlices);
 

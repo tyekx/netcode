@@ -34,7 +34,7 @@ namespace Netcode::Network {
 }
 
 enum class ActionType {
-	NOOP = 0, MOVEMENT = 1, SPAWN = 2, JUMP = 3, FIRE = 4, LOOK = 5
+	NOOP = 0, MOVEMENT = 1, FIRE = 2, JUMP = 3, SPAWN = 4
 };
 
 enum class PlayerState : uint32_t {
@@ -74,15 +74,6 @@ struct ClientAction {
 		ca.timestamp = Netcode::SystemClock::GlobalNow();
 		ca.type = ActionType::FIRE;
 		ca.fireActionData = fireAction;
-		return ca;
-	}
-
-	static ClientAction Look(const ClientLookActionData & actionData) {
-		ClientAction ca;
-		ca.id = 0;
-		ca.timestamp = Netcode::SystemClock::GlobalNow();
-		ca.type = ActionType::LOOK;
-		ca.lookActionData = actionData;
 		return ca;
 	}
 
@@ -187,22 +178,6 @@ public:
 class InterpolationDelayBuffer {
 public:
 
-};
-
-
-struct ServerActionBuffer {
-public:
-	const std::vector<ClientAction> & GetActionsFor(int32_t playerId) {
-
-	} 
-
-	void Add(int32_t playerId, ClientAction action) {
-
-	}
-	
-	void Clear() {
-		
-	}
 };
 
 struct RedundancyItem {

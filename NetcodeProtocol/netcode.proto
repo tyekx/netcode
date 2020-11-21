@@ -20,10 +20,9 @@ enum CommandType {
 enum ActionType {
     A_NOOP = 0;
     MOVEMENT = 1;
-    SPAWN = 2;
+    FIRE = 2;
     JUMP = 3;
-    FIRE = 4;
-    LOOK = 5;
+    SPAWN = 4;
 }
 
 enum ActionResultType {

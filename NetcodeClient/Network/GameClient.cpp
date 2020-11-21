@@ -5,6 +5,64 @@
 #include "../AnimationSet.h"
 #include <Netcode/MovementController.h>
 
+
+class ClockSyncResponseFilter : public nn::FilterBase {
+	nn::CompletionToken<nn::ClockSyncResult> completionToken;
+	Netcode::GameClock * clock;
+	Netcode::Timestamp createdAt;
+	nn::NtpClockFilter clockFilter;
+	uint32_t numUpdates;
+public:
+	ClockSyncResponseFilter(Netcode::GameClock* clock, nn::CompletionToken<nn::ClockSyncResult> tce) :
+		completionToken{ std::move(tce) }, clock{ clock }, createdAt{ Netcode::SystemClock::LocalNow() }, clockFilter{} {
+		state = nn::FilterState::RUNNING;
+		numUpdates = 0;
+	}
+
+	bool CheckTimeout(Netcode::Timestamp checkAt) override {
+		if((checkAt - createdAt) > std::chrono::seconds(10)) {
+			state = nn::FilterState::COMPLETED;
+			nn::ClockSyncResult csr;
+			csr.errorCode = make_error_code(Netcode::NetworkErrc::RESPONSE_TIMEOUT);
+			csr.delay = 0.0;
+			csr.offset = 0.0;
+			completionToken->Set(csr);
+			return true;
+		}
+		return false;
+	}
+
+	nn::FilterResult Run(Ptr<nn::NetcodeService> service, Ptr<nn::DtlsRoute> route, nn::ControlMessage & cm) override {
+		np::Control * control = cm.control;
+
+		if(control->type() != np::MessageType::CLOCK_SYNC_RESPONSE) {
+			return nn::FilterResult::IGNORED;
+		}
+
+		if(!control->has_time_sync()) {
+			return nn::FilterResult::IGNORED;
+		}
+
+		np::TimeSync * timeSync = control->mutable_time_sync();
+		timeSync->set_client_resp_reception(Netcode::ConvertTimestampToUInt64(cm.packet->GetTimestamp() - clock->GetEpoch()));
+
+		clockFilter.Update(*timeSync);
+
+		numUpdates++;
+
+		if(numUpdates >= 8) {
+			nn::ClockSyncResult csr;
+			csr.errorCode = make_error_code(Netcode::NetworkErrc::SUCCESS);
+			csr.delay = clockFilter.GetDelay();
+			csr.offset = clockFilter.GetOffset();
+			completionToken->Set(csr);
+			state = nn::FilterState::COMPLETED;
+		}
+
+		return nn::FilterResult::CONSUMED;
+	}
+};
+
 static bool ConvertServerReconciliation(ServerReconciliation& dst, const np::ServerCommand& command) {
 	ServerReconciliation sr = {};
 	sr.type = ReconciliationType::COMMAND;
@@ -53,7 +111,7 @@ GameObject* GameClient::ClientCreateRemoteAvatar(int32_t playerId, uint32_t objI
 
 	GameScene * scene = Service::Get<GameSceneManager>()->GetScene();
 	
-	GameObject * gameObject = CreateRemoteAvatar();
+	GameObject * gameObject = CreateRemoteAvatar(playerConnection->tickInterval);
 	GameObject * avatarRifle = scene->Create("remoteRifle");
 
 	Transform * rifleTransform = avatarRifle->AddComponent<Transform>();
@@ -104,7 +162,7 @@ void GameClient::FetchUpdate() {
 		connection->gameObject->HasComponent<Network>() &&
 		connection->gameObject->HasComponent<Transform>());
 
-	for(NodeIter<nn::GameMessage> it = head; it != nullptr; ++it) {
+	for(NodeIter<nn::GameMessage> it = head; it != nullptr; it++) {
 		np::ServerUpdate * serverUpdate = it->allocator->MakeProto<np::ServerUpdate>();
 
 		if(it->sequence <= connection->remoteGameSequence) {
@@ -183,6 +241,8 @@ void GameClient::ProcessUpdate() {
 			}
 		}
 	}
+
+	replicationData.clear();
 }
 
 void GameClient::ProcessCommand(const ServerReconciliation & sr) {
@@ -197,11 +257,13 @@ void GameClient::ProcessCommand(const ServerReconciliation & sr) {
 			if(sr.command.subject == playerConnection->id) {
 				GameObject* obj = playerConnection->gameObject;
 				GameObject * camera = obj->Children().at(0);
+				Log::Debug("Create local avatar: {0}", (int)sr.command.objectId);
 
 				Network * network = obj->GetComponent<Network>();
 				network->id = sr.command.objectId;
 				network->replDesc = CreateLocalAvatarReplDesc(camera->GetComponent<Camera>());
 			} else {
+				Log::Debug("Create remote avatar: {0}", (int)sr.command.objectId);
 				GameObject * obj = ClientCreateRemoteAvatar(sr.command.subject, sr.command.objectId);
 
 				GameScene * scene = Service::Get<GameSceneManager>()->GetScene();
@@ -254,7 +316,9 @@ void GameClient::RemoveRemoteObjectsByOwner(int32_t ownerId) {
 }
 
 bool GameClient::IsConnected() const {
-	return playerConnection != nullptr && playerConnection->state == nn::ConnectionState::ESTABLISHED;
+	return playerConnection != nullptr &&
+		(playerConnection->state == nn::ConnectionState::ESTABLISHED ||
+		playerConnection->state == nn::ConnectionState::SYNCHRONIZING);
 }
 
 bool GameClient::IncludeNetworkTick() {
@@ -263,7 +327,7 @@ bool GameClient::IncludeNetworkTick() {
 	}
 
 	const uint32_t tc = playerConnection->tickCounter.load(std::memory_order_acquire);
-
+	
 	if(processedTick >= tc) {
 		return false;
 	}
@@ -297,48 +361,56 @@ static void AddAction(np::ClientUpdate* update, const RedundancyItem& item) {
 		ConvertFloat3(pos, item.action.fireActionData.position);
 		ConvertFloat3(dir, item.action.fireActionData.direction);
 	}
-
-	if(item.action.type == ActionType::LOOK) {
-		np::Float3 * pos = prediction->mutable_action_position();
-		ConvertFloat3(pos, Netcode::Float3{
-			item.action.lookActionData.pitch,
-			item.action.lookActionData.yaw, 0.0f });
-	}
 }
 
 void GameClient::Send() {
-	Ref<nn::NetcodeService> service = clientSession->GetService();
 	Ref<nn::NetAllocator> alloc = service->MakeAllocator(4096);
-	np::ClientUpdate * update = alloc->MakeProto<np::ClientUpdate>();
+	
+	if(playerConnection->state == nn::ConnectionState::SYNCHRONIZING) {
+		np::Control * control = alloc->MakeProto<np::Control>();
+		control->set_sequence(playerConnection->localControlSequence++);
+		control->set_type(np::MessageType::CLOCK_SYNC_REQUEST);
+		np::TimeSync* ts = control->mutable_time_sync();
+		ts->set_client_req_transmission(Netcode::ConvertTimestampToUInt64(clock->GetLocalTime()));
 
-	update->set_received_id(playerConnection->remoteGameSequence);
+		nn::ControlMessage cm;
+		cm.allocator = std::move(alloc);
+		cm.control = control;
+		cm.packet = nullptr;
+		
+		service->Send(cm, playerConnection->dtlsRoute);
+	} else {
+		np::ClientUpdate * update = alloc->MakeProto<np::ClientUpdate>();
 
-	for(const RedundancyItem& item : playerConnection->redundancyBuffer.GetBuffer()) {
-		AddAction(update, item);
-	}
+		update->set_received_id(playerConnection->remoteGameSequence);
 
-	GameObject * gameObj = playerConnection->gameObject;
-	Network * network = gameObj->GetComponent<Network>();
-
-	if(network->replDesc != nullptr) {
-		std::string binary = ReplicateWrite(gameObj, network);
-
-		if(!binary.empty()) {
-			np::ReplData * rd = update->add_replications();
-			rd->set_object_id(network->id);
-			rd->set_data(std::move(binary));
+		for(const RedundancyItem & item : playerConnection->redundancyBuffer.GetBuffer()) {
+			AddAction(update, item);
 		}
+
+		GameObject * gameObj = playerConnection->gameObject;
+		Network * network = gameObj->GetComponent<Network>();
+		
+		if(network->replDesc != nullptr) {
+			std::string binary = ReplicateWrite(gameObj, network);
+
+			if(!binary.empty()) {
+				np::ReplData * rd = update->add_replications();
+				rd->set_object_id(network->id);
+				rd->set_data(std::move(binary));
+			}
+		}
+
+		uint8_t * data = alloc->MakeArray<uint8_t>(update->ByteSizeLong());
+		update->SerializeToArray(data, static_cast<int32_t>(update->ByteSizeLong()));
+
+		nn::GameMessage gm;
+		gm.sequence = playerConnection->localGameSequence++;
+		gm.content = Netcode::ArrayView<uint8_t>{ data, update->ByteSizeLong() };
+		gm.allocator = alloc;
+
+		service->Send(gm, playerConnection.get());
 	}
-
-	uint8_t * data = alloc->MakeArray<uint8_t>(update->ByteSizeLong());
-	update->SerializeToArray(data, static_cast<int32_t>(update->ByteSizeLong()));
-
-	nn::GameMessage gm;
-	gm.sequence = playerConnection->localGameSequence++;
-	gm.content = Netcode::ArrayView<uint8_t>{ data, update->ByteSizeLong() };
-	gm.allocator = alloc;
-
-	service->Send(gm, playerConnection.get());
 }
 
 void GameClient::SendAction(ClientAction ca) {
@@ -350,24 +422,29 @@ void GameClient::SendAction(ClientAction ca) {
 void GameClient::SendDebug() {
 	static int x = 0;
 
-	if(x == 0) {
-		x++;
-		SendAction(ClientAction::Spawn());
-	} else {
-		Script * script = playerConnection->gameObject->GetComponent<Script>();
-		PlayerScript * playerScript = script->GetScript<PlayerScript>(0);
-		
-		SendAction(ClientAction::Look(ClientLookActionData{
-			playerScript->cameraPitch,
-			playerScript->cameraYaw
-		}));
-		
-		SendAction(ClientAction::Move(ClientMovementActionData{
-			playerConnection->gameObject->GetComponent<Transform>()->position
-		}));
+	if(playerConnection->state == nn::ConnectionState::ESTABLISHED) {
+		if(x == 0) {
+			x++;
+			SendAction(ClientAction::Spawn());
+		} else {
+			Script * script = playerConnection->gameObject->GetComponent<Script>();
+			PlayerScript * playerScript = script->GetScript<PlayerScript>(0);
+
+			SendAction(ClientAction::Move(ClientMovementActionData{
+				playerConnection->gameObject->GetComponent<Transform>()->position
+			}));
+		}
 	}
 
 	Send();
+}
+
+nn::CompletionToken<nn::ClockSyncResult> GameClient::Synchronize() {
+	nn::CompletionToken<nn::ClockSyncResult> ct = std::make_shared<nn::CompletionTokenType<nn::ClockSyncResult>>(&clientSession->GetIOContext());
+
+	service->AddFilter(std::make_unique<ClockSyncResponseFilter>(clock, ct));
+	
+	return ct;
 }
 
 void GameClient::Start(Netcode::Module::INetworkModule * network, Netcode::GameClock* gameClock) {
@@ -380,9 +457,24 @@ void GameClient::Start(Netcode::Module::INetworkModule * network, Netcode::GameC
 	clock = gameClock;
 	playerConnection->gameObject = obj;
 	
+	const uint32_t intervalMs = Netcode::Config::GetOptional<uint32_t>(L"network.client.tickIntervalMs:u32", 250u);
+	playerConnection->tickInterval.store(std::chrono::milliseconds{ intervalMs }, std::memory_order_release);
+	
 	clientSession->Connect(playerConnection, "localhost", 8889)->Then([this](const Netcode::ErrorCode & ec) -> void {
 		Log::Debug("Connection done: {0}", ec.message());
-		//playerConnection->tickInterval.store(std::chrono::microseconds{ 16666 }, std::memory_order_release);
-		playerConnection->state = nn::ConnectionState::ESTABLISHED;
+
+		if(!ec) {
+			playerConnection->state = nn::ConnectionState::SYNCHRONIZING;
+			service = clientSession->GetService();
+			Synchronize()->Then([this](const nn::ClockSyncResult & csr) -> void {
+				if(!csr.errorCode) {
+					playerConnection->rtt = nn::NtpClockFilter::DoubleToDuration(csr.delay);
+					playerConnection->clockOffset = nn::NtpClockFilter::DoubleToDuration(csr.offset);
+					clock->SynchronizeClocks(playerConnection->rtt, playerConnection->clockOffset);
+					playerConnection->state = nn::ConnectionState::ESTABLISHED;
+					Log::Debug("Clock sync RTT: {0} [ms], offset: {1} [ms]", csr.delay, csr.offset);
+				}
+			});
+		}
 	});
 }

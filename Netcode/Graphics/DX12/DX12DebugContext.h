@@ -44,6 +44,8 @@ namespace Netcode::Graphics::DX12 {
 		size_t bufferSize;
 		size_t numNoDepthVertices;
 		size_t numDepthVertices;
+		uint32_t capsuleSlices;
+		uint32_t sphereSlices;
 		std::vector<PC_Vertex> vertices;
 
 		Ref<GpuResource> uploadBuffer;

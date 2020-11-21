@@ -65,33 +65,27 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <CustomBuildStep>
-      <Command>C:\work\vcpkg\installed\x64-windows\tools\protobuf\protoc.exe --proto_path=$(ProjectDir) --cpp_out=$(ProjectDir) shared.proto control.proto client.proto server.proto netcode.proto</Command>
+      <Command>C:\work\vcpkg\installed\x64-windows\tools\protobuf\protoc.exe --proto_path=$(ProjectDir) --cpp_out=$(ProjectDir) shared.proto netcode.proto header.proto</Command>
       <Message>Compiling protobuf</Message>
-      <Outputs>client.pb.cc;client.pb.h;control.pb.cc;control.pb.h;netcode.pb.cc;netcode.pb.h;server.pb.cc;server.pb.h;shared.pb.cc;shared.pb.h</Outputs>
-      <Inputs>client.proto;shared.proto;control.proto;netcode.proto;server.proto</Inputs>
+      <Inputs>shared.proto;header.proto;netcode.proto</Inputs>
       <RootFolder>
       </RootFolder>
+      <Outputs>header.pb.h;header.pb.cc;netcode.pb.h;netcode.pb.cc;shared.pb.h;shared.pb.cc;%(Outputs)</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="client.pb.h" />
-    <ClInclude Include="control.pb.h" />
+    <ClInclude Include="header.pb.h" />
     <ClInclude Include="netcode.pb.h" />
-    <ClInclude Include="server.pb.h" />
     <ClInclude Include="shared.pb.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="client.pb.cc" />
-    <ClCompile Include="control.pb.cc" />
+    <ClCompile Include="header.pb.cc" />
     <ClCompile Include="netcode.pb.cc" />
-    <ClCompile Include="server.pb.cc" />
     <ClCompile Include="shared.pb.cc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="client.proto" />
-    <None Include="control.proto" />
+    <None Include="header.proto" />
     <None Include="netcode.proto" />
-    <None Include="server.proto" />
     <None Include="shared.proto" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

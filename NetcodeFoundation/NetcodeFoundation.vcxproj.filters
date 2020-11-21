@@ -88,6 +88,8 @@
     <ClInclude Include="Sal.h" />
     <ClInclude Include="UriBase.h" />
     <ClInclude Include="Json.h" />
+    <ClInclude Include="ErrorCode.h" />
+    <ClInclude Include="Enum.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Memory\Common.cpp">
@@ -123,6 +125,8 @@
     <ClCompile Include="Exception\Exception.cpp">
       <Filter>Exception</Filter>
     </ClCompile>
+    <ClCompile Include="ErrorCode.cpp" />
+    <ClCompile Include="Json.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Math\README.md">

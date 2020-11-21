@@ -209,7 +209,7 @@ SpriteBatchImpl::SpriteBatchImpl(const Netcode::Module::IGraphicsModule * graphi
 		SortSprites();
 
 		// Walk through the sorted sprite list, looking for adjacent entries that share a texture.
-		Ptr<Netcode::ResourceViews> batchTexture;
+		Ptr<Netcode::ResourceViews> batchTexture = nullptr;
 		Vector2 batchTextureSize = {};
 		BorderDesc batchBorderDesc;
 		SpriteDesc batchSpriteDesc;

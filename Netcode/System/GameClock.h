@@ -19,6 +19,12 @@ namespace Netcode {
 		GameClock();
 		
 		void SetEpoch(Duration duration);
+
+		[[nodiscard]]
+		Duration GetEpoch() const {
+			return epoch;
+		}
+
 		
 		void SynchronizeClocks(Duration delta, Duration theta);
 

@@ -154,34 +154,42 @@ namespace Netcode::Network {
 		}
 	}
 
+	void NetcodeService::ApplyFilters(const std::vector<std::unique_ptr<FilterBase>> & filters, DtlsRoute* route, ControlMessage & cm) {
+		for(const std::unique_ptr<FilterBase>& f: filters) {
+			if(!f->IsCompleted()) {
+				const FilterResult r = f->Run(this, route, cm);
+
+				if(r == FilterResult::CONSUMED) {
+					break;
+				}
+			}
+		}
+	}
+
+	void NetcodeService::CheckFilterCompletion() {
+		Timestamp ts = SystemClock::LocalNow();
+		
+		auto it = std::remove_if(std::begin(filters), std::end(filters), [ts](const std::unique_ptr<FilterBase> & f) -> bool {
+			return f->IsCompleted() || f->CheckTimeout(ts);
+		});
+
+		filters.erase(it, std::end(filters));
+	}
+
 	void NetcodeService::RunFilters() {
 		dtls.AsyncCheckTimeouts();
 
 		Node<NoAuthControlMessage> * head = controlQueue.ConsumeAll();
 
-		Timestamp ts = SystemClock::LocalNow();
-
 		for(Node<NoAuthControlMessage>* it = head; it != nullptr;) {
-			for(std::unique_ptr<FilterBase> & f : filters) {
-				if(!f->IsCompleted()) {
-					FilterResult r = f->Run(this, it->route, ts, *it);
-
-					if(r == FilterResult::CONSUMED) {
-						break;
-					}
-				}
-			}
+			ApplyFilters(filters, it->route, *it);
 
 			Node<NoAuthControlMessage> * tmp = it->next;
 			it->allocator.reset();
 			it = tmp;
 		}
 
-		auto it = std::remove_if(std::begin(filters), std::end(filters), [ts](const std::unique_ptr<FilterBase> & f) -> bool {
-			return f->IsCompleted() || f->CheckTimeout(ts);
-		});
-
-		filters.erase(it, std::end(filters));
+		CheckFilterCompletion();
 	}
 
 	NetcodeService::ParseResult NetcodeService::HandleRoutedMessage(NetAllocator * alloc, DtlsRoute* route, UdpPacket* pkt) {
@@ -212,6 +220,9 @@ namespace Netcode::Network {
 		Protocol::Control * control = ReceiveControl(alloc, nullptr, pkt);
 
 		if(control != nullptr) {
+			if(NeedToAck(control)) {
+				return ParseResult::TOOK_OWNERSHIP;
+			}
 			return ParseResult::COMPLETED;
 		}
 
@@ -374,10 +385,11 @@ namespace Netcode::Network {
 		
 		ArrayView<uint8_t> serializedMessage = NcSerialize(allocator.get(), controlMessage.control, payloadSize);
 
+		UdpPacket * packet = allocator->MakeUdpPacket(serializedMessage.Size() + 128);
+		packet->SetEndpoint(endpoint);
+		packet->SetSequence(controlMessage.control->sequence());
+		
 		if((type & 0x1) == 0x1) {
-			UdpPacket * packet = allocator->MakeUdpPacket(serializedMessage.Size() + 128);
-			packet->SetEndpoint(endpoint);
-			packet->SetSequence(controlMessage.control->sequence());
 			AckClassification ackClass = (route == nullptr) ? AckClassification::EXTERNAL_INSECURE : AckClassification::EXTERNAL_SECURE;
 			WaitableTimer * timer = allocator->Make<WaitableTimer>(ioContext);
 			PendingTokenNode * node = allocator->Make<PendingTokenNode>(ct, timer, packet, ackClass);
@@ -389,8 +401,19 @@ namespace Netcode::Network {
 
 			rc->Attempt();
 		} else {
-			boost::asio::const_buffer constBuffer{ serializedMessage.Data(), serializedMessage.Size() };
-			socket.Send(constBuffer, endpoint, [ct](const ErrorCode & ec, size_t s) -> void {
+
+			if(route != nullptr) {
+				const ErrorCode ec = SslSend(route->ssl.get(), packet, serializedMessage);
+
+				if(ec) {
+					if(ct != nullptr) {
+						ct->Set(TrResult{ ec });
+					}
+					return ct;
+				}
+			}
+			
+			socket.Send(packet->GetConstBuffer(), packet->GetEndpoint(), [ct](const ErrorCode & ec, size_t s) -> void {
 				if(ct != nullptr) {
 					ct->Set(TrResult{ ec, s });
 				}

@@ -30,11 +30,7 @@ namespace Netcode::Network {
 			return false;
 		}
 		
-		FilterResult Run(Ptr<NetcodeService> service, Ptr<DtlsRoute> route, Timestamp ts, ControlMessage& cm) override {
-			if(route != connection->dtlsRoute) {
-				return FilterResult::IGNORED;
-			}
-
+		FilterResult Run(Ptr<NetcodeService> service, Ptr<DtlsRoute> route, ControlMessage& cm) override {
 			if(cm.control->type() != Protocol::MessageType::CONNECT_RESPONSE) {
 				return FilterResult::IGNORED;
 			}
@@ -46,15 +42,19 @@ namespace Netcode::Network {
 			const Protocol::ConnectResponse * response = &cm.control->connect_response();
 
 			if(response->error_code() != 0 || response->type() == Protocol::ConnectType::DIRECT) {
-				filterToken->Set(make_error_code(static_cast<NetworkErrc>(response->error_code())));
+				ErrorCode ec = make_error_code(static_cast<NetworkErrc>(response->error_code()));
+				
+				if(!ec) {
+					connection->id = response->player_id();
+				}
+
 				state = FilterState::COMPLETED;
-				connection->id = response->player_id();
-				service->GetConnections()->AddConnection(connection);
+				filterToken->Set(ec);
+				
 				return FilterResult::CONSUMED;
 			}
 			
 			if(response->type() == Protocol::ConnectType::DEFERRED) {
-				// we are deferred, gotta start connecting to the other endpoint.
 				if(!response->has_public_endpoint()) {
 					return FilterResult::IGNORED;
 				}
@@ -87,74 +87,6 @@ namespace Netcode::Network {
 
 			filterToken->Set(make_error_code(NetworkErrc::BAD_MESSAGE));
 			state = FilterState::COMPLETED;
-			return FilterResult::CONSUMED;
-		}
-	};
-
-	struct ClockSyncResult {
-		double offset;
-		double delay;
-		ErrorCode errorCode;
-	};
-
-	class ClockSyncResponseFilter : public FilterBase {
-		CompletionToken<ClockSyncResult> completionToken;
-		Timestamp createdAt;
-		Ref<ConnectionBase> serverConnection;
-		NtpClockFilter clockFilter;
-		uint32_t numUpdates;
-	public:
-		ClockSyncResponseFilter(Ref<ConnectionBase> serverConnection, CompletionToken<ClockSyncResult> tce) :
-			completionToken{ std::move(tce) }, createdAt{ SystemClock::LocalNow() },  serverConnection{ std::move(serverConnection) }, clockFilter{} {
-			state = FilterState::RUNNING;
-			numUpdates = 0;
-		}
-
-		bool CheckTimeout(Timestamp checkAt) override {
-			if((checkAt - createdAt) > std::chrono::seconds(10)) {
-				state = FilterState::COMPLETED;
-				ClockSyncResult csr;
-				csr.errorCode = make_error_code(NetworkErrc::RESPONSE_TIMEOUT);
-				csr.delay = 0.0;
-				csr.offset = 0.0;
-				completionToken->Set(csr);
-				return true;
-			}
-			return false;
-		}
-		
-		FilterResult Run(Ptr<NetcodeService> service, Ptr<DtlsRoute> route, Timestamp timestamp, ControlMessage& cm) override {
-			if(route != serverConnection->dtlsRoute) {
-				return FilterResult::IGNORED;
-			}
-			
-			/*
-			Protocol::Header * header = cm.header;
-			
-			if(header->type() == Protocol::MessageType::CLOCK_SYNC_RESPONSE) {
-				if(source != serverConnection->endpoint) {
-					return FilterResult::IGNORED;
-				}
-
-				if(!header->has_time_sync()) {
-					return FilterResult::IGNORED;
-				}
-			}
-			header->mutable_time_sync()->set_client_resp_reception(ConvertTimestampToUInt64(cm.packet->GetTimestamp()));
-			
-			clockFilter.Update(header->time_sync());
-			*/
-			numUpdates++;
-
-			if(numUpdates >= 8) {
-				ClockSyncResult csr;
-				csr.errorCode = make_error_code(NetworkErrc::SUCCESS);
-				csr.delay = clockFilter.GetDelay();
-				csr.offset = clockFilter.GetOffset();
-				completionToken->Set(csr);
-				state = FilterState::COMPLETED;
-			}
-			
 			return FilterResult::CONSUMED;
 		}
 	};
@@ -251,8 +183,10 @@ namespace Netcode::Network {
 		cm.allocator = alloc;
 		cm.control = control;
 
+		connection->state = ConnectionState::AUTHENTICATING;
 		CompletionToken<ErrorCode> ct = alloc->MakeCompletionToken<ErrorCode>();
 
+		service->GetConnections()->AddConnection(connection);
 		service->AddFilter(std::make_unique<ClientConnectResponseFilter>(connection, ct));
 
 		service	->Send(alloc, alloc->MakeCompletionToken<TrResult>(), connection->dtlsRoute, cm, connection->endpoint, connection->pmtu, ResendArgs{ 1000, 5 })
@@ -262,7 +196,7 @@ namespace Netcode::Network {
 				}
 			});
 
-		ct->Then([mainToken](const ErrorCode & ec) {
+		ct->Then([this, mainToken](const ErrorCode & ec) {
 			mainToken->Set(ec);
 		});
 	}
@@ -301,7 +235,7 @@ namespace Netcode::Network {
 					const SSL_CIPHER * cipher = SSL_SESSION_get0_cipher(session);
 					char * ptr = SSL_CIPHER_description(cipher, NULL, 0);
 					std::replace(ptr, ptr + strlen(ptr), '\n', '\0');
-					Log::Debug("DTLS session established, used cipher: {0}", static_cast<const char*>(ptr));
+					Log::Debug("Cipher: {0}", static_cast<const char*>(ptr));
 					OPENSSL_free(ptr);
 					
 					connection->dtlsRoute = route;
@@ -370,12 +304,11 @@ namespace Netcode::Network {
 			linkLocalMtu = bestCandidate.mtu;
 
 #if defined(NETCODE_DEBUG)
-			try {
-				uint32_t fakeMtu = Config::Get<uint32_t>(L"network.fakeMtu:u32");
-				if(fakeMtu > 0) {
-					linkLocalMtu = std::min(linkLocalMtu, fakeMtu);
-				}
-			} catch(OutOfRangeException &) { }
+			const uint32_t fakeMtu = Config::GetOptional<uint32_t>(L"network.debugFakeMtu:32", 0);
+			
+			if(fakeMtu > 0) {
+				linkLocalMtu = std::min(linkLocalMtu, fakeMtu);
+			}
 #endif
 		}
 
@@ -395,7 +328,6 @@ namespace Netcode::Network {
 
 		service = std::make_shared<NetcodeService>(ioContext, std::move(sock), static_cast<uint16_t>(linkLocalMtu), std::move(clientCtx), nullptr);
 		service->Host();
-		connection->tickInterval.store(std::chrono::milliseconds(250), std::memory_order_release);
 		connection->tickCounter.store(0, std::memory_order_release);
 
 		StartConnection(std::move(mainToken));
@@ -442,24 +374,6 @@ namespace Netcode::Network {
 		service->Send(gm, connection.get());
 	}
 
-	CompletionToken<ErrorCode> ClientSession::Synchronize() {
-		CompletionToken<ErrorCode> ct = std::make_shared<CompletionTokenType<ErrorCode>>(&ioContext);
-		CompletionToken<ClockSyncResult> syncToken = std::make_shared<CompletionTokenType<ClockSyncResult>>(&ioContext);
-
-		service->AddFilter(std::make_unique<ClockSyncResponseFilter>(connection, syncToken));
-
-		syncToken->Then([this, ct](const ClockSyncResult & cr) -> void {
-			if(cr.errorCode) {
-				Log::Error("Failed to synchronize clock");
-			} else {
-				Log::Debug("Clock sync OK. Offset: {0} Delta: {1}", cr.offset, cr.delay);
-			}
-			ct->Set(cr.errorCode);
-		});
-
-		return ct;
-	}
-
 	void ClientSession::CloseService() {
 		if(service != nullptr) {
 			boost::system::error_code ec;
@@ -471,21 +385,20 @@ namespace Netcode::Network {
 	}
 
 	void ClientSession::Tick() {
-		service->RunFilters();
-
 		if(connection != nullptr) {
-			connection->tickCounter.fetch_add(1, std::memory_order_release);
-			
-			if(connection->state == ConnectionState::SYNCHRONIZING) {
-				/*
-				Ref<NetAllocator> alloc = service->MakeSmallAllocator();
-				Protocol::Header * h = alloc->MakeProto<Protocol::Header>();
-				h->set_type(Protocol::MessageType::CLOCK_SYNC_REQUEST);
-				Protocol::TimeSync * ts = h->mutable_time_sync();
-				ts->set_client_req_transmission(ConvertTimestampToUInt64(SystemClock::LocalNow()));
-				service->Send(std::move(alloc), connection.get(), h);
-				*/
+			Node<ControlMessage> * node = connection->sharedControlQueue.ConsumeAll();
+
+			while(node != nullptr) {
+				service->ApplyFilters(service->GetFilters(), connection->dtlsRoute, *node);
+
+				Node<ControlMessage> * tmp = node->next;
+				node->allocator.reset();
+				node = tmp;
 			}
+
+			service->CheckFilterCompletion();
+			
+			connection->tickCounter.fetch_add(1, std::memory_order_release);
 		}
 	}
 

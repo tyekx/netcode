@@ -70,28 +70,12 @@ namespace Netcode::Network {
 	 */
 	template<typename T>
 	class MessageQueue {
-		SlimReadWriteLock srwLock;
-		//std::atomic<Node<T>*> head;
-		Node<T> * head;
+		std::atomic<Node<T>*> head;
 
 	public:
 
-		MessageQueue() : srwLock{}, head { nullptr } { }
-
-		Node<T>* ConsumeAll() {
-			ScopedExclusiveLock<SlimReadWriteLock> lock{ srwLock };
-			Node<T> * p = head;
-			head = nullptr;
-			return p;
-		}
-
-		void Produce(Node<T>* msg) {
-			ScopedExclusiveLock<SlimReadWriteLock> lock{ srwLock };
-			msg->next = head;
-			head = msg;
-		}
+		MessageQueue() : head { nullptr } { }
 		
-		/*
 		Node<T> * ConsumeAll() {
 			for(;;) {
 				Node<T> * currentHead = head.load(std::memory_order_acquire);
@@ -112,7 +96,7 @@ namespace Netcode::Network {
 					return;
 				}
 			}
-		}*/
+		}
 	};
 
 	// id, name, hash, is_banned

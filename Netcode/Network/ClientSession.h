@@ -85,12 +85,15 @@ namespace Netcode::Network {
 			// accept it as an upgrade
 			lastValidPacket = f0->time;
 		}
-
-		constexpr double DurationToDouble(const Duration & d) {
+	public:
+		constexpr static double DurationToDouble(const Duration & d) {
 			return std::chrono::duration<double, std::milli>(d).count();
 		}
+
+		constexpr static Duration DoubleToDuration(double d) {
+			return std::chrono::duration_cast<Duration>(std::chrono::duration<double, std::milli>(d));
+		}
 		
-	public:
 		NtpClockFilter() : buffer{} {
 			double maxDispersion = DurationToDouble(std::chrono::seconds{ 16 });
 			
@@ -134,6 +137,12 @@ namespace Netcode::Network {
 		
 	};
 
+	struct ClockSyncResult {
+		double offset;
+		double delay;
+		ErrorCode errorCode;
+	};
+
 	class ClientSession : public ClientSessionBase {
 		boost::asio::io_context & ioContext;
 		UdpResolver resolver;
@@ -148,7 +157,7 @@ namespace Netcode::Network {
 		void Tick();
 		
 		void InitTick() {
-			tickTimer.expires_from_now(connection->tickInterval.load(std::memory_order_acquire));
+			tickTimer.expires_after(connection->tickInterval.load(std::memory_order_acquire));
 			tickTimer.async_wait([this](const ErrorCode & ec) -> void {
 				if(ec) {
 					Log::Error("Tick: {0}", ec.message());
@@ -204,8 +213,6 @@ namespace Netcode::Network {
 		virtual void Stop() override {
 
 		}
-
-		virtual CompletionToken<ErrorCode> Synchronize();
 
 		virtual void CloseService();
 		

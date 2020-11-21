@@ -15,44 +15,30 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="client.pb.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="control.pb.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="netcode.pb.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="server.pb.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="shared.pb.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="header.pb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="control.pb.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="netcode.pb.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="server.pb.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="shared.pb.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="client.pb.cc">
+    <ClCompile Include="header.pb.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="control.proto" />
-    <None Include="client.proto" />
     <None Include="netcode.proto" />
-    <None Include="server.proto" />
     <None Include="shared.proto" />
+    <None Include="header.proto" />
   </ItemGroup>
 </Project>

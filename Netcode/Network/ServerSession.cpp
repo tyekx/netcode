@@ -51,7 +51,6 @@ namespace Netcode::Network {
 			Log::Error("Server: failed to set cipherlist");
 		}
 
-		const uint32_t gracePeriodMs = Config::Get<uint32_t>(L"network.protocol.gracePeriodMs:u32");
 		uint32_t gamePort = Config::Get<uint16_t>(L"network.server.port:u16");
 		std::string selfAddr = Utility::ToNarrowString(Config::Get<std::wstring>(L"network.server.selfAddress:string"));
 

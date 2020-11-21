@@ -199,11 +199,11 @@ float4 main(BrdfMaterial_PixelInput input) : SV_Target {
 		float D = D_GGX(NdotH, alphaG);
 		float G = G_SmithGGXCorrelated(NdotL, NdotV, alphaG);
 		float3 F = F_SchlickFresnel(f0, 1.0f, LdotH);
-		float3 Fspec = F * G * D; // / PI 
-		float3 Fdiff = diffuseColor * R_DisneyDiffuse(NdotV, NdotL, LdotH, roughness); // /PI
+		float3 Fspec = F * G * D;
+		float3 Fdiff = diffuseColor * R_DisneyDiffuse(NdotV, NdotL, LdotH, roughness);
 
-		litColor += attenuation * NdotL * l.intensity * (Fdiff + Fspec); // * PI => PI terms cancel
+		litColor += attenuation * NdotL * l.intensity * (Fdiff + Fspec);
 	}
-
+	
 	return float4(litColor + diffuseColor * ambientAccess * perFrame.ambientLightIntensity.xyz, 1.0f);
 }

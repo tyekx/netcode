@@ -4,6 +4,7 @@
 #include <Netcode/Network/ClientSession.h>
 
 class GameClient {
+	Ref<nn::NetcodeService> service;
 	Ref<nn::ClientSession> clientSession;
 	Ref<Connection> playerConnection;
 	Ref<AnimationSet> remoteAvatarAnimationSet;
@@ -23,6 +24,8 @@ class GameClient {
 
 	void RemoveRemoteObjectsByOwner(int32_t ownerId);
 	GameObject* ClientCreateRemoteAvatar(int32_t playerId, uint32_t objId);
+
+	nn::CompletionToken<nn::ClockSyncResult> Synchronize();
 	
 public:
 	void SetClock(Netcode::GameClock* gameClock) {

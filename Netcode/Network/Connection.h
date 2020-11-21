@@ -54,6 +54,8 @@ namespace Netcode::Network {
 		std::atomic<Duration> tickInterval;
 		std::atomic_uint32_t tickCounter;
 		MtuValue pmtu;
+		Duration rtt; // delta
+		Duration clockOffset; // theta
 		UdpEndpoint endpoint;
 		Enum<ConnectionState> state;
 		uint32_t localGameSequence;
@@ -222,7 +224,7 @@ namespace Netcode::Network {
 			return false;
 		}
 
-		virtual FilterResult Run(Ptr<NetcodeService> service, Ptr<DtlsRoute> route, Timestamp timestamp, ControlMessage & cm) {
+		virtual FilterResult Run(Ptr<NetcodeService> service, Ptr<DtlsRoute> route, ControlMessage & cm) {
 			return FilterResult::IGNORED;
 		}
 	};

@@ -73,7 +73,7 @@ namespace Netcode::Network {
 	class NetcodeService {
 	public:
 #if defined(NETCODE_DEBUG)
-		using NetcodeSocketType = BasicSocket<boost::asio::ip::udp::socket, AsioSocketReadWriter<boost::asio::ip::udp::socket>>;
+		using NetcodeSocketType = BasicSocket<boost::asio::ip::udp::socket, DebugAsioSocketReaderWriter<boost::asio::ip::udp::socket>>;
 #else
 		using NetcodeSocketType = SharedUdpSocket;
 #endif
@@ -110,6 +110,10 @@ namespace Netcode::Network {
 			return &connectionStorage;
 		}
 
+		const std::vector<std::unique_ptr<FilterBase>> & GetFilters() const {
+			return filters;
+		}
+
 		UdpEndpoint GetLocalEndpoint() const {
 			return socket.GetSocket().local_endpoint();
 		}
@@ -121,6 +125,10 @@ namespace Netcode::Network {
 		void AddFilter(std::unique_ptr<FilterBase> filter) {
 			filters.emplace_back(std::move(filter));
 		}
+
+		void CheckFilterCompletion();
+		
+		void ApplyFilters(const std::vector<std::unique_ptr<FilterBase>> & filters, DtlsRoute* route, ControlMessage & cm);
 
 		void RunFilters();
 

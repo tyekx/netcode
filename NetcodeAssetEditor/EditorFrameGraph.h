@@ -251,17 +251,17 @@ public:
 		},
 			[this](IRenderContext * ctx) -> void {
 
-			ctx->ResourceBarrier(gbufferPass_DepthStencil, ResourceState::DEPTH_READ, ResourceState::DEPTH_WRITE);
+			ctx->ResourceBarrier(gbufferPass_DepthStencil.get(), ResourceState::DEPTH_READ, ResourceState::DEPTH_WRITE);
 			ctx->FlushResourceBarriers();
 
-			ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencilView);
+			ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencilView.get());
 			ctx->SetScissorRect();
 			ctx->SetViewport();
 			ctx->ClearDepthStencil();
 			ctx->SetStencilReference(0xFF);
 			ctx->SetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
-			ctx->SetRootSignature(gbufferPass_RootSignature);
-			ctx->SetPipelineState(gbufferPass_PipelineState);
+			ctx->SetRootSignature(gbufferPass_RootSignature.get());
+			ctx->SetPipelineState(gbufferPass_PipelineState.get());
 
 			int id = 0;
 
@@ -319,17 +319,17 @@ public:
 				}
 
 				ctx->SetConstants(4, buffer);
-				ctx->SetShaderResources(5, mat->GetResourceView(0));
-				ctx->SetShaderResources(6, prefilteredSplitSumViews);
+				ctx->SetShaderResources(5, mat->GetResourceView(0).get());
+				ctx->SetShaderResources(6, prefilteredSplitSumViews.get());
 
-				ctx->SetVertexBuffer(gb.vertexBuffer);
-				ctx->SetIndexBuffer(gb.indexBuffer);
+				ctx->SetVertexBuffer(gb.vertexBuffer.get());
+				ctx->SetIndexBuffer(gb.indexBuffer.get());
 				ctx->DrawIndexed(gb.indexCount);
 
 				id++;
 			}
 
-			ctx->ResourceBarrier(gbufferPass_DepthStencil, ResourceState::DEPTH_WRITE, ResourceState::DEPTH_READ);
+			ctx->ResourceBarrier(gbufferPass_DepthStencil.get(), ResourceState::DEPTH_WRITE, ResourceState::DEPTH_READ);
 			ctx->FlushResourceBarriers();
 		});
 	}
@@ -341,10 +341,10 @@ public:
 		},
 			[this](IRenderContext * ctx) -> void {
 
-			ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencilView);
+			ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencilView.get());
 			ctx->SetPrimitiveTopology(PrimitiveTopology::POINTLIST);
-			ctx->SetRootSignature(boneVisibilityPass_RootSignature);
-			ctx->SetPipelineState(boneVisibilityPass_PipelineState);
+			ctx->SetRootSignature(boneVisibilityPass_RootSignature.get());
+			ctx->SetPipelineState(boneVisibilityPass_PipelineState.get());
 
 			int i = 0;
 			for(GBuffer & gb : gbufferPass_Input) {
@@ -353,8 +353,8 @@ public:
 				ctx->SetConstants(1, *boneData);
 				ctx->SetConstants(2, *perObjectData);
 				ctx->SetConstants(3, *boneVisibilityData);
-				ctx->SetVertexBuffer(gb.vertexBuffer);
-				ctx->SetIndexBuffer(gb.indexBuffer);
+				ctx->SetVertexBuffer(gb.vertexBuffer.get());
+				ctx->SetIndexBuffer(gb.indexBuffer.get());
 				ctx->DrawIndexed(gb.indexCount);
 			}
 		});
@@ -368,16 +368,16 @@ public:
 		},
 		[this](IRenderContext * ctx) -> void {
 
-			ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencilView);
+			ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencilView.get());
 			ctx->SetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
 			ctx->SetStencilReference(0);
-			ctx->SetRootSignature(envmapPass_RootSignature);
-			ctx->SetPipelineState(envmapPass_PipelineState);
+			ctx->SetRootSignature(envmapPass_RootSignature.get());
+			ctx->SetPipelineState(envmapPass_PipelineState.get());
 
 			ctx->SetConstants(0, *perFrameData);
-			ctx->SetShaderResources(1, prefilteredSplitSumViews);
+			ctx->SetShaderResources(1, prefilteredSplitSumViews.get());
 
-			ctx->SetVertexBuffer(fsQuad.vertexBuffer);
+			ctx->SetVertexBuffer(fsQuad.vertexBuffer.get());
 			ctx->Draw(fsQuad.vertexCount);
 		});
 	}
@@ -406,7 +406,7 @@ public:
 			graphics->debug->UploadResources(ctx);
 		},
 		[this](IRenderContext * ctx) -> void {
-			ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencil);
+			ctx->SetRenderTargets(nullptr, gbufferPass_DepthStencil.get());
 			graphics->debug->Draw(ctx, perFrameData->ViewProj);
 		});
 	}
@@ -496,9 +496,9 @@ public:
 		},
 			[this, SIZE, tempViews, resource](IRenderContext * ctx) -> void {
 
-			ctx->SetPipelineState(IBLPreIntegratePass_PipelineState);
-			ctx->SetRootSignature(IBLPreIntegratePass_RootSignature);
-			ctx->SetShaderResources(0, tempViews);
+			ctx->SetPipelineState(IBLPreIntegratePass_PipelineState.get());
+			ctx->SetRootSignature(IBLPreIntegratePass_RootSignature.get());
+			ctx->SetShaderResources(0, tempViews.get());
 			ctx->Dispatch(SIZE / 8, SIZE / 8, 1);
 
 		});
@@ -508,7 +508,7 @@ public:
 			ctx->Reads(resource.get());
 		},
 			[resource](IRenderContext * ctx) -> void {
-			ctx->ResourceBarrier(resource, ResourceState::UNORDERED_ACCESS, ResourceState::PIXEL_SHADER_RESOURCE);
+			ctx->ResourceBarrier(resource.get(), ResourceState::UNORDERED_ACCESS, ResourceState::PIXEL_SHADER_RESOURCE);
 			ctx->FlushResourceBarriers();
 		});
 
@@ -562,15 +562,15 @@ public:
 			ctx->Writes(texResource.get());
 		},
 			[this, srv, minWidth, mipCount](IRenderContext * ctx) -> void {
-			ctx->SetPipelineState(IBLPreFilterPass_PipelineState);
-			ctx->SetRootSignature(IBLPreFilterPass_RootSignature);
+			ctx->SetPipelineState(IBLPreFilterPass_PipelineState.get());
+			ctx->SetRootSignature(IBLPreFilterPass_RootSignature.get());
 
 			uint32_t groupSize = minWidth / 8;
 			uint32_t numMipLevels = mipCount;
 			ctx->SetRootConstants(2, &numMipLevels, 1, 0);
 			for(uint32_t i = 0; i < mipCount; i++) {
-				ctx->SetShaderResources(0, srv, static_cast<int>(i));
-				ctx->SetShaderResources(1, srv, static_cast<int>(mipCount));
+				ctx->SetShaderResources(0, srv.get(), static_cast<int>(i));
+				ctx->SetShaderResources(1, srv.get(), static_cast<int>(mipCount));
 				ctx->SetRootConstants(2, &i, 1, 1);
 				ctx->Dispatch(groupSize, groupSize, 1);
 				groupSize >>= 1;
@@ -583,7 +583,7 @@ public:
 			ctx->Reads(texResource.get());
 		},
 			[=](IRenderContext * ctx) -> void {
-			ctx->ResourceBarrier(texResource, ResourceState::UNORDERED_ACCESS, ResourceState::PIXEL_SHADER_RESOURCE);
+			ctx->ResourceBarrier(texResource.get(), ResourceState::UNORDERED_ACCESS, ResourceState::PIXEL_SHADER_RESOURCE);
 			ctx->FlushResourceBarriers();
 		});
 

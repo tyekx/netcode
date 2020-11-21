@@ -55,6 +55,9 @@
     <Filter Include="Input">
       <UniqueIdentifier>{d3a57763-4a67-473a-b6f8-d90249415846}</UniqueIdentifier>
     </Filter>
+    <Filter Include="System">
+      <UniqueIdentifier>{27cda512-6b09-48b5-89fb-e1ad004b7f4f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ProgramArgs.h">
@@ -141,33 +144,6 @@
     <ClInclude Include="DestructiveCopyConstructible.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="Network\GameSession.h">
-      <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\HttpSession.h">
-      <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\Macros.h">
-      <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\MysqlSession.h">
-      <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\NetworkCommon.h">
-      <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\ServerSession.h">
-      <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\ClientSession.h">
-      <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\Config.h">
-      <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\Cookie.h">
-      <Filter>Network</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\ResourceEnums.h">
       <Filter>Graphics</Filter>
     </ClInclude>
@@ -182,9 +158,6 @@
     </ClInclude>
     <ClInclude Include="Graphics\ResourceDesc.h">
       <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\NetcodeNetworkModule.h">
-      <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="ConsoleModule.h">
       <Filter>Window</Filter>
@@ -473,12 +446,6 @@
     <ClInclude Include="Input\AxisMapBase.h">
       <Filter>Input</Filter>
     </ClInclude>
-    <ClInclude Include="Network\Response.hpp">
-      <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\NetworkDecl.h">
-      <Filter>Network</Filter>
-    </ClInclude>
     <ClInclude Include="HandleDecl.h">
       <Filter>Modules</Filter>
     </ClInclude>
@@ -487,6 +454,99 @@
     </ClInclude>
     <ClInclude Include="Graphics\DX12\DX12TextureLibrary.h">
       <Filter>Graphics\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="System\Dispatcher.hpp">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\FpsCounter.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\GameClock.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\SecureString.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\System.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\SystemClock.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\TimeTypes.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\NetcodeNetworkModule.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\NetworkCommon.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\NetworkDecl.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\NetworkErrorCode.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\ReplicationContext.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\Response.hpp">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\ServerSession.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\Service.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\Socket.hpp">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\SslUtil.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\BasicPacket.hpp">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\ClientSession.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\CompletionToken.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\Connection.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\Cookie.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\Dtls.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\FragmentStorage.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\GameSession.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\HttpSession.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\Macros.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\MatchmakerSession.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\MtuValue.hpp">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\MysqlSession.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\NetAllocator.h">
+      <Filter>Network</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -529,32 +589,8 @@
     <ClCompile Include="PhysXWrapper.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
-    <ClCompile Include="Network\GameSession.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Network\HttpSession.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Network\MysqlSession.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Network\NetworkCommon.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Network\ServerSession.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Network\ClientSession.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Network\Cookie.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\ResourceEnums.cpp">
       <Filter>Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Network\NetcodeNetworkModule.cpp">
-      <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="ConsoleModule.cpp">
       <Filter>Window</Filter>
@@ -812,6 +848,66 @@
     </ClCompile>
     <ClCompile Include="Graphics\DX12\DX12TextureLibrary.cpp">
       <Filter>Graphics\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="System\FpsCounter.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\GameClock.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\SecureString.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\System.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\SystemClock.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\NetworkCommon.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\ReplicationContext.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\ServerSession.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\Service.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\SslUtil.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\ClientSession.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\Connection.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\Cookie.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\Dtls.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\FragmentStorage.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\GameSession.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\HttpSession.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\MatchmakerSession.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\MysqlSession.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\NetcodeNetworkModule.cpp">
+      <Filter>Network</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

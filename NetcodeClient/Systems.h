@@ -308,7 +308,7 @@ public:
 
 		if(anim->debugBoneData != nullptr) {
 			UpdateBoneAttachedShapes(model, collider, anim);
-#if defined(DEBUG)
+#if defined(NETCODE_DEBUG)
 			// this is a VERY expensive call
 			DrawDebugCollider(collider);
 #endif

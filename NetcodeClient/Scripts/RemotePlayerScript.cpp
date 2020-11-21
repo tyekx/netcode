@@ -34,16 +34,14 @@ void RemotePlayerScript::Update(Netcode::GameClock * clock) {
 		IND_quatCurrent = GetQuatFromAhead(IND_ahead);
 	} else {
 		Netcode::Duration diff = currentTime - network->updatedAt;
-		// TODO: make this the same as the tick interval
-		Netcode::Duration interpDelay = std::chrono::milliseconds(250);
 
 		float t;
 		if(diff < std::chrono::seconds(0)) {
 			t = 0.0f;
-		} else if(diff > interpDelay) {
+		} else if(diff > interpolationDelay) {
 			t = 1.0f;
 		} else {
-			t = std::chrono::duration<float>(diff).count() / std::chrono::duration<float>(interpDelay).count();
+			t = std::chrono::duration<float>(diff).count() / std::chrono::duration<float>(interpolationDelay).count();
 		}
 
 		transform->position = Netcode::Vector3::Lerp(IND_positionOld, IND_position, t);

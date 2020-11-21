@@ -9,6 +9,7 @@ class RemotePlayerScript : public PlayerScript {
 	Transform* transform;
 	Camera * camera;
 	Network * network;
+	Netcode::Duration interpolationDelay;
 	Netcode::Float3 IND_positionOld;
 	Netcode::Float3 IND_aheadOld;
 	Netcode::Quaternion IND_yawQuatOld;
@@ -19,7 +20,12 @@ public:
 	Netcode::Float3 IND_position;
 	Netcode::Float3 IND_ahead;
 	
-	RemotePlayerScript(Netcode::PxPtr<physx::PxController> ctrl) : controller{ std::move(ctrl) } { }
+	RemotePlayerScript(Netcode::PxPtr<physx::PxController> ctrl, const Netcode::Duration & interpDelay) :
+		controller{ std::move(ctrl) },
+		transform{ nullptr },
+		camera { nullptr },
+		network { nullptr },
+		interpolationDelay{ interpDelay } { }
 
 	virtual void Construct(GameObject * gameObject) override;
 	virtual void BeginPlay(GameObject * gameObject) override;
