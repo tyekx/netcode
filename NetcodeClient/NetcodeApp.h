@@ -45,6 +45,7 @@ public:
 	Netcode::MovementController movCtrl;
 	TransformSystem transformSystem;
 	ScriptSystem scriptSystem;
+	ScriptFixedSystem scriptFixedSystem;
 	RenderSystem renderSystem;
 	AnimationSystem animSystem;
 	LightSystem lightSystem;
@@ -79,8 +80,6 @@ public:
 	void CreateAxisMapping();
 
 	void LoadAssets();
-
-	void CreateRemoteAvatar();
 
 	void CreateLocalAvatar();
 
@@ -124,7 +123,6 @@ public:
 
 		AddAppEventHandlers(events.get());
 
-		gameClock.SetFixedUpdateInterval(std::chrono::milliseconds(16));
 		gameClock.SetEpoch(Netcode::SystemClock::LocalNow() - Netcode::Timestamp{});
 
 		LoadServices();
@@ -138,10 +136,6 @@ public:
 	Advance simulation, update modules
 	*/
 	virtual void Run() override {
-		/*double targetFrametime = 1.0 / 144.0;
-
-		Netcode::Duration d = std::chrono::duration_cast<Netcode::Duration>(std::chrono::duration<double>(targetFrametime));*/
-		
 		while(window->KeepRunning()) {
 			auto st = Netcode::SystemClock::LocalNow();
 			
@@ -175,6 +169,8 @@ public:
 			mainThreadDispatcher.Run();
 
 			window->CompleteFrame();
+
+			Sleep(2);
 			
 			fpsCounter.Update(Netcode::SystemClock::LocalNow() - st);
 		}

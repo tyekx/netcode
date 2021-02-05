@@ -92,6 +92,10 @@ GameObject* GameScene::FindByName(const std::string& name) {
 }
 
 physx::PxController * GameScene::CreateController() {
+	return CreateController(controllerManager.Get());
+}
+
+physx::PxController * GameScene::CreateController(physx::PxControllerManager * manager) {
 	auto * pxService = Service::Get<Netcode::Physics::PhysX>();
 	physx::PxCapsuleControllerDesc cd;
 	cd.behaviorCallback = NULL;
@@ -111,7 +115,7 @@ physx::PxController * GameScene::CreateController() {
 	cd.volumeGrowth = 1.5f;
 	cd.height = 80.0f;
 	cd.radius = 60.0f;
-	return controllerManager->createController(cd);
+	return manager->createController(cd);
 }
 
 void GameSceneManager::LoadSceneDetail(const Netcode::URI::Model & uri) {
@@ -175,7 +179,7 @@ void GameSceneManager::LoadScene(const Netcode::URI::Model & uri) {
 
 	devCam = activeScene.Create();
 	auto [tr, cam, script] = devCam->AddComponents<Transform, Camera, Script>();
-	tr->position = Netcode::Float3{ -120.0f, 90.0f, -240.0f };
+	tr->position = Netcode::Float3{ -360.0f, 90.0f, -90.0f };
 	script->AddScript(std::make_unique<DevCameraScript>());
 	activeScene.SetCamera(devCam);
 	activeScene.Spawn(devCam);

@@ -99,6 +99,7 @@ public:
 			std::free(extendedStorage);
 			extendedStorage = nullptr;
 		}
+		signature = 0;
 	}
 
 	ComponentStorage & operator=(ComponentStorage rhs) noexcept {

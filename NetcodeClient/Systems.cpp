@@ -102,6 +102,10 @@ void ScriptSystem::Run(GameObject * gameObject, Netcode::GameClock * clock) {
 	TryInvoke(gameObject, this, clock);
 }
 
+void ScriptFixedSystem::Run(GameObject * gameObject, Netcode::GameClock * clock) {
+	TryInvoke(gameObject, this, clock);
+}
+
 void RenderSystem::Run(GameObject * gameObject) {
 	TryInvoke(gameObject, this);
 }

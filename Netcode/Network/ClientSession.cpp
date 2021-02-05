@@ -396,7 +396,7 @@ namespace Netcode::Network {
 				node = tmp;
 			}
 
-			service->CheckFilterCompletion();
+			service->CheckFilterCompletion(service->GetFilters());
 			
 			connection->tickCounter.fetch_add(1, std::memory_order_release);
 		}

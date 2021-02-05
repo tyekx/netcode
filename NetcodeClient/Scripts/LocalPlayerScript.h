@@ -18,6 +18,9 @@ public:
 	}
 };
 
+class GameScene;
+class GameClient;
+
 class LocalPlayerScript : public PlayerScript {
 	Transform * transform;
 	Transform * attachmentTransform;
@@ -28,25 +31,14 @@ class LocalPlayerScript : public PlayerScript {
 	float mouseSpeed;
 	Netcode::Float3 gravity;
 	float avatarSpeed;
+	Netcode::Duration reloadTimer;
+	Netcode::Duration testAutoFireTimer;
+	GameScene * scene;
+	GameClient * client;
+	bool leftClickHeld;
+	bool debugMoveLeft;
 
-	void UpdateLookDirection(float dt) {
-		
-		Netcode::Int2 mouseDelta = Netcode::Input::GetMouseDelta();
-
-		Netcode::Float2 normalizedMouseDelta{ -(float)(mouseDelta.x), -(float)(mouseDelta.y) };
-		cameraPitch -= mouseSpeed * normalizedMouseDelta.y * dt;
-		cameraPitch = std::clamp(cameraPitch, -(DirectX::XM_PIDIV2 - 0.0001f), (DirectX::XM_PIDIV2 - 0.0001f));
-
-		cameraYaw += mouseSpeed * normalizedMouseDelta.x * dt;
-
-		if(cameraYaw < (-DirectX::XM_PI)) {
-			cameraYaw += DirectX::XM_2PI;
-		}
-
-		if(cameraYaw > (DirectX::XM_PI)) {
-			cameraYaw -= DirectX::XM_2PI;
-		}
-	}
+	void UpdateLookDirection(float dt);
 
 	Netcode::Vector3 GetDirectionalMovement() {
 		float dx = Netcode::Input::GetAxis(AxisEnum::HORIZONTAL);
@@ -63,7 +55,11 @@ class LocalPlayerScript : public PlayerScript {
 
 public:
 
-	LocalPlayerScript(Netcode::PxPtr<physx::PxController> ctrl, GameObject * camObj, GameObject * attachmentNode) {
+	physx::PxController* GetController() {
+		return controller.Get();
+	}
+
+	LocalPlayerScript(Netcode::PxPtr<physx::PxController> ctrl, GameClient * cli, GameObject * camObj, GameObject * attachmentNode) {
 		camera = camObj->GetComponent<Camera>();
 		attachmentTransform = attachmentNode->GetComponent<Transform>();
 		controller = std::move(ctrl);
@@ -73,50 +69,13 @@ public:
 		avatarSpeed = 250.0f;
 		gravity = Netcode::Float3{ 0.0f, -981.0f, 0.0f };
 		velocity = Netcode::Float3{ 0.0f, 0.0f, 0.0f };
+		client = cli;
 	}
 
-	virtual void BeginPlay(GameObject * owner) override {
-		transform = owner->GetComponent<Transform>();
-		controller->setPosition(physx::PxExtendedVec3{ transform->position.x, transform->position.y, transform->position.z });
-		collider = owner->GetComponent<Collider>();
-	}
+	virtual void BeginPlay(GameObject * owner) override;
 
-	virtual void Update(Netcode::GameClock * gameClock) override {
-		const float dt = gameClock->FGetDeltaTime();
-		UpdateLookDirection(dt);
+	void HandleFireInput(Netcode::GameClock * gameClock);
+	virtual void Update(Netcode::GameClock * gameClock) override;
 
-		Netcode::Quaternion cameraQuat{ cameraPitch, cameraYaw, 0.0f };
-		Netcode::Vector3 aheadStart = Netcode::Float3{ 0.0f, 0.0f, 1.0f };
-		camera->ahead = aheadStart.Rotate(cameraQuat).Normalize();
-
-		Netcode::Quaternion cameraYawQuat{ 0.0f, cameraYaw, 0.0f };
-		Netcode::Vector3 lDirectionalMovement = GetDirectionalMovement();
-		Netcode::Vector3 movementDeltaWorldSpace = lDirectionalMovement.Rotate(cameraYawQuat);
-		Netcode::Vector3 movementDeltaSpeedScaled = movementDeltaWorldSpace * avatarSpeed * dt;
-
-		Netcode::Vector3 gravityDeltaVelocity = Netcode::Vector3{ gravity } *dt;
-
-		Netcode::Vector3 velocityVector = velocity;
-
-		velocity = velocityVector + gravityDeltaVelocity;
-
-		const Netcode::Vector3 movementDelta = movementDeltaSpeedScaled + velocityVector * dt;
-
-		const physx::PxControllerCollisionFlags moveResult = controller->move(ToPxVec3(movementDelta), 0.0f, dt, physx::PxControllerFilters{});
-
-		if(moveResult == physx::PxControllerCollisionFlag::eCOLLISION_DOWN) {
-			velocity.y = 0.0f;
-		}
-
-		auto footPos = controller->getFootPosition();
-
-		transform->position = Netcode::Float3{
-			static_cast<float>(footPos.x),
-			static_cast<float>(footPos.y),
-			static_cast<float>(footPos.z)
-		};
-
-		transform->rotation = cameraYawQuat;
-		attachmentTransform->rotation = Netcode::Quaternion{ cameraPitch, 0.0f, 0.0f };
-	}
+	virtual void FixedUpdate(Netcode::GameClock * gameClock) override;
 };

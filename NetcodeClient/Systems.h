@@ -120,6 +120,15 @@ public:
 	}
 };
 
+class ScriptFixedSystem {
+public:
+	void Run(GameObject * gameObject, Netcode::GameClock * clock);
+
+	void operator()(GameObject * gameObject, Script * script, Netcode::GameClock * clock) {
+		script->FixedUpdate(clock);
+	}
+};
+
 class RenderSystem {
 public:
 	GraphicsEngine* renderer;
@@ -192,6 +201,9 @@ public:
 			const Netcode::Float3 parentPos = (parent != nullptr) ?
 				parent->GetComponent<Transform>()->position :
 				Netcode::Float3::Zero;
+			const Netcode::Quaternion parentRot = (parent != nullptr) ?
+				Netcode::Quaternion{ parent->GetComponent<Transform>()->rotation } :
+				Netcode::Quaternion{};
 
 			Netcode::Quaternion h = anim->headRotation;
 			for(uint32_t i = 0; i < 5; ++i) {
@@ -208,14 +220,14 @@ public:
 				int32_t bid = ike.parentId;
 				while(bid >= 0) {
 					auto wrt = Netcode::Animation::BackwardBounceCCD::GetWorldRT(bid, anim->bones, boneTransforms);
-					renderer->graphics->debug->DrawPoint(wrt.translation + parentPos, 2.0f, false);
+					renderer->graphics->debug->DrawPoint(wrt.translation.Rotate(parentRot)  + parentPos, 2.0f, false);
 					bid = anim->bones[bid].parentId;
 				}
 
 				Netcode::Float3 startAt = Netcode::Animation::BackwardBounceCCD::GetP_c(ike, 0, anim->bones, boneTransforms);
-				Netcode::Float3 p1 = Netcode::Animation::BackwardBounceCCD::GetP_e(ike, anim->bones, boneTransforms);
+				Netcode::Vector3 p1 = Netcode::Animation::BackwardBounceCCD::GetP_e(ike, anim->bones, boneTransforms);
 				
-				renderer->graphics->debug->DrawLine(startAt, p1, Netcode::Float3{ 1.0f, 0.5f, 0.2f });
+				renderer->graphics->debug->DrawPoint(p1.Rotate(parentRot) + parentPos, 10.0f, false);
 				renderer->graphics->debug->DrawPoint(Netcode::Float3{ p.x, p.y, p.z }, 5.0f);
 			}
 
@@ -310,7 +322,7 @@ public:
 			UpdateBoneAttachedShapes(model, collider, anim);
 #if defined(NETCODE_DEBUG)
 			// this is a VERY expensive call
-			DrawDebugCollider(collider);
+			//DrawDebugCollider(collider);
 #endif
 		}
 	}

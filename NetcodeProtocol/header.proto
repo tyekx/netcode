@@ -18,6 +18,7 @@ enum MessageType {
 	REG_HOST_RESPONSE = 0x63;
 	CLOCK_SYNC_REQUEST = 0x70;
 	CLOCK_SYNC_RESPONSE = 0x72;
+	CONNECT_DONE = 0x75;
 	GAME = 0x80;
 	UNDEFINED = 0xFE;
 }
@@ -41,6 +42,10 @@ message TimeSync {
 	fixed64 client_resp_reception = 4;
 }
 
+message ConnectDone {
+	fixed64 measured_rtt = 1;
+}
+
 message Endpoint {
 	int32 port = 1;
 	bytes addr = 2;
@@ -61,6 +66,7 @@ message ConnectResponse {
 	string current_map = 5;
 	Endpoint public_endpoint = 6;
 	Endpoint private_endpoint = 7;
+	fixed64 interval = 8;
 }
 
 message Control {
@@ -69,8 +75,9 @@ message Control {
 	oneof ControlContent {
 		ConnectRequest connect_request = 3;
 		ConnectResponse connect_response = 4;
-		TimeSync time_sync = 5;
-		fixed32 mtu_proble_size = 6;
-		NatType nat_type = 7;
+		ConnectDone connect_done = 5;
+		TimeSync time_sync = 6;
+		fixed32 mtu_proble_size = 7;
+		NatType nat_type = 8;
 	}
 }

@@ -60,10 +60,4 @@ public:
 	virtual uint32_t Read(GameObject * gameObject, Netcode::ArrayView<uint8_t> view) = 0;
 };
 
-struct ReplDesc {
-	std::vector<std::unique_ptr<ReplArgumentBase>> arguments;
-};
-
-struct ReplicationSystem {
-	
-};
+using ReplDesc = std::vector<std::unique_ptr<ReplArgumentBase>>;

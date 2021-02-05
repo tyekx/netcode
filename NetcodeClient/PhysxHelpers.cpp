@@ -9,9 +9,13 @@ physx::PxFilterFlags SimulationFilterShader(physx::PxFilterObjectAttributes attr
 	// let triggers through
 	if(physx::PxFilterObjectIsTrigger(attributes0) || physx::PxFilterObjectIsTrigger(attributes1))
 	{
+		constexpr uint32_t NON_INTERACTIBLE =
+			PHYSX_COLLIDER_TYPE_CLIENT_HITBOX |
+			PHYSX_COLLIDER_TYPE_LOCAL_HITBOX |
+			PHYSX_COLLIDER_TYPE_SERVER_HITBOX;
 
-		if((filterData0.word0 & PHYSX_COLLIDER_TYPE_HITBOX) ||
-		   (filterData1.word0 & PHYSX_COLLIDER_TYPE_HITBOX)) {
+		if((filterData0.word0 & NON_INTERACTIBLE) ||
+		   (filterData1.word0 & NON_INTERACTIBLE)) {
 			return physx::PxFilterFlag::eSUPPRESS;
 		}
 
@@ -61,8 +65,8 @@ physx::PxShape * CreateHitboxShapeFromAsset(const ColliderShape & cShape, physx:
 	physx::PxTransform pxT{ ToPxVec3(cShape.localPosition), ToPxQuat(cShape.localRotation) };
 	colliderShape->setLocalPose(pxT);
 	physx::PxFilterData hitboxFilterData;
-	hitboxFilterData.word0 = PHYSX_COLLIDER_TYPE_HITBOX;
-	hitboxFilterData.word1 = PHYSX_COLLIDER_TYPE_HITBOX;
+	hitboxFilterData.word0 = PHYSX_COLLIDER_TYPE_CLIENT_HITBOX;
+	hitboxFilterData.word1 = PHYSX_COLLIDER_TYPE_CLIENT_HITBOX;
 	colliderShape->setQueryFilterData(hitboxFilterData);
 	colliderShape->setSimulationFilterData(hitboxFilterData);
 	colliderShape->userData = nullptr;

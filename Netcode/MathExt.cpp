@@ -2,25 +2,25 @@
 
 namespace Netcode {
 
-	Netcode::Float2 LoadFloat2(const rapidjson::Value & value)
+	Float2 LoadFloat2(const rapidjson::Value & value)
 	{
-		return Netcode::Float2{
+		return Float2{
 			value[0].GetFloat(),
 			value[1].GetFloat()
 		};
 	}
 
-	Netcode::Float3 LoadFloat3(const rapidjson::Value & value)
+	Float3 LoadFloat3(const rapidjson::Value & value)
 	{
-		return Netcode::Float3{
+		return Float3{
 			value[0].GetFloat(),
 			value[1].GetFloat(),
 			value[2].GetFloat()
 		};
 	}
 
-	Netcode::Float4 LoadFloat4(const rapidjson::Value & value) {
-		return Netcode::Float4{
+	Float4 LoadFloat4(const rapidjson::Value & value) {
+		return Float4{
 			value[0].GetFloat(),
 			value[1].GetFloat(),
 			value[2].GetFloat(),
@@ -28,25 +28,25 @@ namespace Netcode {
 		};
 	}
 
-	Netcode::Int2 LoadInt2(const rapidjson::Value & value) {
-		return Netcode::Int2{
+	Int2 LoadInt2(const rapidjson::Value & value) {
+		return Int2{
 			value[0].GetInt(),
 			value[1].GetInt()
 		};
 	}
 
-	Netcode::Int3 LoadInt3(const rapidjson::Value & value)
+	Int3 LoadInt3(const rapidjson::Value & value)
 	{
-		return Netcode::Int3{
+		return Int3{
 			value[0].GetInt(),
 			value[1].GetInt(),
 			value[2].GetInt()
 		};
 	}
 
-	Netcode::Int4 LoadInt4(const rapidjson::Value & value)
+	Int4 LoadInt4(const rapidjson::Value & value)
 	{
-		return Netcode::Int4{
+		return Int4{
 			value[0].GetInt(),
 			value[1].GetInt(),
 			value[2].GetInt(),
@@ -54,25 +54,25 @@ namespace Netcode {
 		};
 	}
 
-	Netcode::UInt2 LoadUInt2(const rapidjson::Value & value) {
-		return Netcode::UInt2{
+	UInt2 LoadUInt2(const rapidjson::Value & value) {
+		return UInt2{
 			value[0].GetUint(),
 			value[1].GetUint()
 		};
 	}
 
-	Netcode::UInt3 LoadUInt3(const rapidjson::Value & value)
+	UInt3 LoadUInt3(const rapidjson::Value & value)
 	{
-		return Netcode::UInt3{
+		return UInt3{
 			value[0].GetUint(),
 			value[1].GetUint(),
 			value[2].GetUint()
 		};
 	}
 
-	Netcode::UInt4 LoadUInt4(const rapidjson::Value & value)
+	UInt4 LoadUInt4(const rapidjson::Value & value)
 	{
-		return Netcode::UInt4{
+		return UInt4{
 			value[0].GetUint(),
 			value[1].GetUint(),
 			value[2].GetUint(),
@@ -80,11 +80,11 @@ namespace Netcode {
 		};
 	}
 
-	physx::PxQuat ToPxQuat(const Netcode::Float4 & q) {
+	physx::PxQuat ToPxQuat(const Float4 & q) {
 		return physx::PxQuat{ q.x, q.y, q.z, q.w };
 	}
 
-	physx::PxVec3 ToPxVec3(const Netcode::Float3 & v) {
+	physx::PxVec3 ToPxVec3(const Float3 & v) {
 		return physx::PxVec3{ v.x, v.y, v.z };
 	}
 
@@ -93,31 +93,35 @@ namespace Netcode {
 		return physx::PxVec3(static_cast<float>(ev.x), static_cast<float>(ev.y), static_cast<float>(ev.z));
 	}
 
-	Netcode::Float3 ToFloat3(const physx::PxVec3 & v) {
-		return Netcode::Float3{ v.x, v.y, v.z };
+	physx::PxExtendedVec3 ToPxExtVec3(const Float3 & v) {
+		return physx::PxExtendedVec3{ v.x, v.y, v.z };
 	}
 
-	Netcode::Float4 ToFloat4(const physx::PxVec4 & v) {
-		return Netcode::Float4{ v.x, v.y, v.z, v.w };
+	Float3 ToFloat3(const physx::PxVec3 & v) {
+		return Float3{ v.x, v.y, v.z };
 	}
 
-	Netcode::Float4 ToFloat4(const physx::PxQuat & q) {
-		return Netcode::Float4{ q.x, q.y, q.z, q.w };
+	Float4 ToFloat4(const physx::PxVec4 & v) {
+		return Float4{ v.x, v.y, v.z, v.w };
 	}
 
-	Netcode::Vector3 ToVec3(const physx::PxVec3 & v) {
+	Float4 ToFloat4(const physx::PxQuat & q) {
+		return Float4{ q.x, q.y, q.z, q.w };
+	}
+
+	Vector3 ToVec3(const physx::PxVec3 & v) {
 		return ToFloat3(v);
 	}
 
-	Netcode::Vector3 ToVec3(const physx::PxExtendedVec3 & ev) {
-		return Netcode::Float3{ static_cast<float>(ev.x), static_cast<float>(ev.y), static_cast<float>(ev.z) };
+	Vector3 ToVec3(const physx::PxExtendedVec3 & ev) {
+		return Float3{ static_cast<float>(ev.x), static_cast<float>(ev.y), static_cast<float>(ev.z) };
 	}
 
-	Netcode::Vector4 ToVec4(const physx::PxVec4 & v) {
+	Vector4 ToVec4(const physx::PxVec4 & v) {
 		return ToFloat4(v);
 	}
 
-	Netcode::Quaternion ToQuaternion(const physx::PxQuat & q) {
+	Quaternion ToQuaternion(const physx::PxQuat & q) {
 		return ToFloat4(q);
 	}
 

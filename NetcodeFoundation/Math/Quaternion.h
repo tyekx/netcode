@@ -67,6 +67,14 @@ namespace Netcode {
 		static Quaternion NC_MATH_CALLCONV FromPitchYawRollVector(Vector3 v) noexcept;
 
 		static Quaternion NC_MATH_CALLCONV FromEulerAngles(const Netcode::Float3 & eulerAngles) noexcept;
+
+		/**
+		 * Returns the shortest arc quaternion that rotates fromVector to toVector.
+		 * @param fallbackAxis used when the vectors are roughly(eps = 0.00001) facing away
+		 *
+		 * @note implementation is similar Ogre3D's which refers Sam Hocevar's article: http://sam.hocevar.net/blog/2014/02/
+		 */
+		static Quaternion NC_MATH_CALLCONV FromRotationBetween(Vector3 fromVector, Vector3 toVector, const Float3 & fallbackAxis) noexcept;
 	};
 
 	

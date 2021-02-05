@@ -11,15 +11,17 @@ namespace Netcode::Physics {
 		foundation.Reset(PxCreateFoundation(PX_PHYSICS_VERSION, allocator, errorCallback));
 
 #if defined(NETCODE_DEBUG)
-		debugger.Reset(PxCreatePvd(*foundation));
-		const int port = 5425;
-		physx::PxPvdTransport * transport = physx::PxDefaultPvdSocketTransportCreate("127.0.0.1", port, 10);
-		bool isDebuggerConnected = debugger->connect(*transport, physx::PxPvdInstrumentationFlag::eDEBUG);
+		if(IsDebuggerPresent()) {
+			debugger.Reset(PxCreatePvd(*foundation));
+			const int port = 5425;
+			physx::PxPvdTransport * transport = physx::PxDefaultPvdSocketTransportCreate("127.0.0.1", port, 10);
+			const bool isDebuggerConnected = debugger->connect(*transport, physx::PxPvdInstrumentationFlag::eDEBUG);
 
-		if(!isDebuggerConnected) {
-			Log::Warn("Failed to connect to PhysX Visual Debugger");
-		} else {
-			Log::Info("Connected to PVD:{0}", port);
+			if(!isDebuggerConnected) {
+				Log::Warn("Failed to connect to PhysX Visual Debugger");
+			} else {
+				Log::Info("Connected to PVD:{0}", port);
+			}
 		}
 #endif
 

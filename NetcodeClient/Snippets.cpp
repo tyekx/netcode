@@ -28,7 +28,7 @@ void CreateYbotAnimationComponent(Netcode::Asset::Model * model, Animation * ani
 	anim->blender = std::make_shared<Netcode::Animation::Blender>();
 
 
-	Netcode::Animation::IKEffector effector;
+	IKEffector effector;
 	effector.position = Netcode::Float3{ 0.0f, 150.0f, -20.0f };
 	effector.offset = Netcode::Float4{ 0.0f, 0.0f, 0.0f, 0.0f };
 	effector.parentId = 4;
@@ -40,14 +40,18 @@ void CreateYbotAnimationComponent(Netcode::Asset::Model * model, Animation * ani
 		{ Netcode::Float3{ 0.0f, 1.0f, 0.0f }, 0.4f }
 	};
 
-	Netcode::Animation::IKEffector lhe;
+	IKEffector lhe = {};
 	lhe.offset = Netcode::Float4{ 0.0f, 0.0f, 0.0f, 0.0f };
 	lhe.parentId = 9;
 	lhe.chainLength = 4;
-
+	
+	IKEffector rhe = {};
+	rhe.offset = Netcode::Float4{ 0.0f, 0.0f, 0.0f, 0.0f };
+	rhe.parentId = 28;
+	rhe.chainLength = 4;
+	
 	anim->effectors = {
-		effector,
-		lhe
+		rhe
 	};
 
 	anim->blackboard = Ref<Blackboard<CtrlType>>(new Blackboard<CtrlType>(

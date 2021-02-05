@@ -166,14 +166,14 @@ namespace Netcode::Network {
 		}
 	}
 
-	void NetcodeService::CheckFilterCompletion() {
+	void NetcodeService::CheckFilterCompletion(std::vector<std::unique_ptr<FilterBase>> & fltrs) {
 		Timestamp ts = SystemClock::LocalNow();
 		
-		auto it = std::remove_if(std::begin(filters), std::end(filters), [ts](const std::unique_ptr<FilterBase> & f) -> bool {
+		auto it = std::remove_if(std::begin(fltrs), std::end(fltrs), [ts](const std::unique_ptr<FilterBase> & f) -> bool {
 			return f->IsCompleted() || f->CheckTimeout(ts);
 		});
 
-		filters.erase(it, std::end(filters));
+		fltrs.erase(it, std::end(fltrs));
 	}
 
 	void NetcodeService::RunFilters() {
@@ -189,7 +189,7 @@ namespace Netcode::Network {
 			it = tmp;
 		}
 
-		CheckFilterCompletion();
+		CheckFilterCompletion(filters);
 	}
 
 	NetcodeService::ParseResult NetcodeService::HandleRoutedMessage(NetAllocator * alloc, DtlsRoute* route, UdpPacket* pkt) {
@@ -492,26 +492,10 @@ namespace Netcode::Network {
 			handledDataSize += fragmentedDataSize;
 		}
 
-		sourceOffset = 0;
-		size_t sentBytes = 0;
-		for(uint32_t i = 0; i < numFragments; i++) {
-			DtlsRecordLayer record = DtlsRecordLayer::Load(reinterpret_cast<const DtlsRecordLayerWire *>(pData + sourceOffset));
+		Ref<DtlsFragmentationContext> ctx = allocator->MakeShared<DtlsFragmentationContext>(
+			&socket, ct, endpoint, ArrayView<uint8_t>{pData, destOffset}, nullptr, mtu.GetDtlsPayloadSize(address));
 
-			const uint32_t wireSize = record.length + MtuValue::DTLS_RL_HEADER_SIZE;
-
-			boost::system::error_code ec;
-			size_t s = socket.GetSocket().send_to(boost::asio::const_buffer{ pData + sourceOffset, wireSize }, connection->endpoint, 0, ec);
-
-			if(ec) {
-				ct->Set(TrResult{ ec });
-				return ct;
-			}
-
-			sentBytes += s;
-			sourceOffset += wireSize;
-		}
-
-		ct->Set(TrResult{ NetworkErrc::SUCCESS, sentBytes });
+		ctx->SendFragment();
 
 		return ct;
 	}

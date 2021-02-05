@@ -39,11 +39,12 @@ namespace Netcode::Network {
 				case Protocol::MessageType::DISCONNECT_NOTIFY: return 9;
 				case Protocol::MessageType::REG_HOST_REQUEST: return 10;
 				case Protocol::MessageType::REG_HOST_RESPONSE: return 11;
+				case Protocol::MessageType::CONNECT_DONE: return 12;
 			}
 		}
 
 		constexpr static ResendArgs args[] = {
-			ResendArgs{ 0, 0 },
+			ResendArgs{ 1000, 3 },
 			ResendArgs{ 60000, 5 },
 			ResendArgs{ 500, 5 },
 			ResendArgs{ 500, 5 },
@@ -53,6 +54,7 @@ namespace Netcode::Network {
 			ResendArgs{ 500, 3 },
 			ResendArgs{ 1000, 5 },
 			ResendArgs{ 1000, 5 },
+			ResendArgs{ 500, 5 },
 			ResendArgs{ 500, 5 },
 			ResendArgs{ 500, 5 },
 		};
@@ -114,6 +116,10 @@ namespace Netcode::Network {
 			return filters;
 		}
 
+		std::vector<std::unique_ptr<FilterBase>> & GetFilters() {
+			return filters;
+		}
+
 		UdpEndpoint GetLocalEndpoint() const {
 			return socket.GetSocket().local_endpoint();
 		}
@@ -126,7 +132,7 @@ namespace Netcode::Network {
 			filters.emplace_back(std::move(filter));
 		}
 
-		void CheckFilterCompletion();
+		void CheckFilterCompletion(std::vector<std::unique_ptr<FilterBase>> & fltrs);
 		
 		void ApplyFilters(const std::vector<std::unique_ptr<FilterBase>> & filters, DtlsRoute* route, ControlMessage & cm);
 

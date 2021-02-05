@@ -4,11 +4,10 @@
 
 #include <NetcodeFoundation/ArrayView.hpp>
 #include <NetcodeAssetLib/Bone.h>
+#include <Netcode/HandleDecl.h>
 
 #include <algorithm>
 #include <vector>
-#include <cstdint>
-#include <DirectXMath.h>
 
 namespace Netcode::Animation {
 
@@ -117,42 +116,7 @@ namespace Netcode::Animation {
 	*/
 	class FABRIK {
 	public:
-		static void Run(IKEffector effector, ArrayView<Asset::Bone> bones, MutableArrayView<BoneTransform> boneTransforms, int32_t maxIterations = 10) {
-			std::vector<BoneTransform> wt;
-			std::vector<float> d;
-			float sumLen = 0.0f;
-
-			int32_t boneId = effector.parentId;
-			for(uint32_t i = 0; i < effector.chainLength; ++i) {
-				wt.push_back(BackwardBounceCCD::GetWorldRT(boneId, bones, boneTransforms));
-				float len = boneTransforms[boneId].translation.Length();
-				sumLen += len;
-				d.push_back(len);
-				boneId = bones[boneId].parentId;
-			}
-
-			Netcode::Vector3 t = effector.position;
-
-			float dist = (wt.back().translation - t).Length();
-			
-			// target is unreachable
-			if(dist > sumLen) {
-				for(uint32_t i = 1; i < effector.chainLength; ++i) {
-					float ri = (t - wt[i].translation).Length();
-					float lambdai = d[i] / ri;
-
-					Vector3 pi1 = wt[i].translation * (1.0f - lambdai) + t * lambdai;
-
-					wt[i - 1].translation = pi1;
-				}
-			}
-			
-			wt.push_back(boneTransforms[0]);
-
-			for(int32_t i = 4; i >= 0; --i) {
-				//wt[i].translation
-			}
-		}
+		static void Run(IKEffector effector, ArrayView<Asset::Bone> bones, MutableArrayView<BoneTransform> boneTransforms, int32_t maxIterations = 10);
 	};
 
 

@@ -4,18 +4,7 @@
   <Type Name="GameObject">
     <DisplayString>{{ Name={ name }, Owner={ parent }, Signature={ components.signature } }}</DisplayString>
     <Expand>
-      <ExpandedItem>(NatvisComponentObject*)(components.storage)</ExpandedItem>
-    </Expand>
-  </Type>
-  <Type Name="NatvisComponentObject">
-    <Expand>
-      <Item Name="[Transform]" Condition="signature &amp; 1">transform</Item>
-      <Item Name="[Model]" Condition="signature &amp; 2">model</Item>
-      <Item Name="[Light]" Condition="signature &amp; 4">light</Item>
-      <Item Name="[Script]" Condition="signature &amp; 8">script</Item>
-      <Item Name="[Collider]" Condition="signature &amp; 16">collider</Item>
-      <Item Name="[Camera]" Condition="signature &amp; 32">((NatvisExtComponentObject*)rawExtended)-&gt;camera</Item>
-      <Item Name="[Animation]" Condition="signature &amp; 64">((NatvisExtComponentObject*)rawExtended)-&gt;animation</Item>
+      <Item Name="[Transform]" Condition="components.signature &amp; 1">(Transform*)components.storage</Item>
     </Expand>
   </Type>
   <Type Name="Netcode::Float2">

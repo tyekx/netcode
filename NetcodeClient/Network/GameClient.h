@@ -7,11 +7,13 @@ class GameClient {
 	Ref<nn::NetcodeService> service;
 	Ref<nn::ClientSession> clientSession;
 	Ref<Connection> playerConnection;
-	Ref<AnimationSet> remoteAvatarAnimationSet;
 	std::vector<ServerReconciliation> reconciliations;
 	std::vector<GameObject *> remoteObjects;
 	std::vector<ReplData> replicationData;
 	Netcode::GameClock * clock;
+	ScoreboardScript * scoreboard;
+	LocalPlayerScript * localPlayerScript;
+	GameScene * gameScene;
 	uint32_t processedTick;
 
 	void FetchUpdate();
@@ -26,6 +28,7 @@ class GameClient {
 	GameObject* ClientCreateRemoteAvatar(int32_t playerId, uint32_t objId);
 
 	nn::CompletionToken<nn::ClockSyncResult> Synchronize();
+	nn::CompletionToken<nn::TrResult> ConnectionDone();
 	
 public:
 	void SetClock(Netcode::GameClock* gameClock) {

@@ -3,7 +3,7 @@
 
 namespace Netcode {
 
-	GameClock::GameClock() : fixedUpdateInterval{}, fixedUpdateCache{}, fixedUpdateAcc{},
+	GameClock::GameClock() : fixedUpdateInterval{ std::chrono::milliseconds(16) }, fixedUpdateCache{}, fixedUpdateAcc{},
 		deltaTime{}, deltaRtt{}, thetaClockOffset{}, totalTimeSinceEpoch{},
 		epoch{}, localFrameTimestamp{}, globalFrameTimestamp{} {
 
@@ -43,6 +43,11 @@ namespace Netcode {
 	[[nodiscard]]
 	Duration GameClock::GetDeltaTime() const {
 		return deltaTime;
+	}
+
+	[[nodiscard]]
+	float GameClock::FGetFixedDeltaTime() const {
+		return std::chrono::duration<float>(fixedUpdateCache).count();
 	}
 
 	// in seconds

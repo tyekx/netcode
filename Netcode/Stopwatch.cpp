@@ -1,25 +1,30 @@
 #include "Stopwatch.h"
+#include "System/SystemClock.h"
 
-void Netcode::Stopwatch::Start() {
-	timestampStart = clock_type::now();
-}
+namespace Netcode {
 
-void Netcode::Stopwatch::Stop() {
-	timestampEnd = clock_type::now();
-}
+	void Stopwatch::Start() {
+		start = SystemClock::LocalNow();
+	}
 
-float Netcode::Stopwatch::Restart() {
-	Stop();
-	float value = GetElapsedSeconds();
-	Start();
-	return value;
-}
+	void Stopwatch::Stop() {
+		end = SystemClock::LocalNow();
+	}
 
-void Netcode::Stopwatch::Reset() {
-	Start();
-	Stop();
-}
+	float Stopwatch::Restart() {
+		Stop();
+		float value = FGetElapsedSeconds();
+		Start();
+		return value;
+	}
 
-float Netcode::Stopwatch::GetElapsedSeconds() {
-	return std::chrono::duration<float>(timestampEnd - timestampStart).count();
+	void Stopwatch::Reset() {
+		Start();
+		Stop();
+	}
+
+	float Stopwatch::FGetElapsedSeconds() {
+		return std::chrono::duration<float>(end - start).count();
+	}
+
 }

@@ -3,6 +3,7 @@
 #include <utility>
 #include "NetworkDecl.h"
 #include <Netcode/Config.h>
+#include "Connection.h"
 
 namespace Netcode::Network {
 

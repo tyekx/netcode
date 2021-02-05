@@ -2,10 +2,23 @@
 #include "../Services.h"
 #include "../GameScene.h"
 #include <Netcode/Network/Service.h>
+#include <Netcode/Network/ClientSession.h>
+#include <Netcode/Stopwatch.h>
 #include <sstream>
+#include <fstream>
+
+using Netcode::Float3;
+using Netcode::Vector3;
+using Netcode::Quaternion;
+
+static PerfData perfCurrent{};
 
 class ServerConnRequestFilter : public nn::FilterBase {
 public:
+	GameServer * server;
+
+	ServerConnRequestFilter(GameServer * srv) : server{srv} {}
+	
 	nn::FilterResult Run(Ptr<nn::NetcodeService> service, Ptr<nn::DtlsRoute> route, nn::ControlMessage & cm) override {
 		const np::Control * peerControl = cm.control;
 		if(peerControl->type() != np::CONNECT_REQUEST || !peerControl->has_connect_request()) {
@@ -54,33 +67,14 @@ public:
 		conn->remoteControlSequence = peerControl->sequence();
 		conn->state = nn::ConnectionState::SYNCHRONIZING;
 		conn->tickInterval = std::chrono::milliseconds(Netcode::Config::Get<uint32_t>(L"network.client.tickIntervalMs:u32"));
-		conn->gameObject = CreateRemoteAvatar(conn->tickInterval);
-
-		connections->ForeachUnsafe<Connection>([&](Connection * existingConn) -> void {
-			Network * nc = existingConn->gameObject->GetComponent<Network>();
-			ServerReconciliation sr;
-			sr.type = ReconciliationType::COMMAND;
-			sr.actionType = ActionType::NOOP;
-			sr.id = conn->localCommandIndex++;
-			sr.command.type = CommandType::CREATE_OBJECT;
-			sr.command.subject = existingConn->id;
-			sr.command.objectId = nc->id;
-			sr.command.objectType = REPL_TYPE_REMOTE_AVATAR;
-			conn->redundancyBuffer.Add(conn->localGameSequence, sr);
-		});
 		
 		connResp->set_player_id(conn->id);
-
-		std::ostringstream oss;
-		oss << "p:" << conn->id;
-		conn->gameObject->name = oss.str();
-		conn->remotePlayerScript =
-			dynamic_cast<RemotePlayerScript *>(conn->gameObject->GetComponent<Script>()->GetScript(0));
 		
 		nn::ControlMessage localCm;
 		localCm.control = localControl;
 		localCm.allocator = alloc;
 
+		server->OnPlayerConnected(conn.get());
 		connections->AddConnection(conn);
 
 		service->Send(alloc, alloc->MakeCompletionToken<nn::TrResult>(), conn->dtlsRoute, localCm, conn->endpoint, conn->pmtu, nn::ResendArgs{ 1000, 3 });
@@ -90,13 +84,49 @@ public:
 };
 
 class ServerClockSyncRequestFilter : public nn::FilterBase {
+	Netcode::Timestamp startedAt;
 	Netcode::GameClock * clock;
+	GameServer * server;
+	Connection * connection;
+	bool isDone;
+
+	nn::FilterResult HandleConnectDone(np::Control* ctrl) {
+		if(isDone)
+			return nn::FilterResult::IGNORED;
+		
+		if(!ctrl->has_connect_done())
+			return nn::FilterResult::IGNORED;
+
+		const Netcode::Duration rtt{ ctrl->connect_done().measured_rtt() };
+
+		connection->rtt = rtt;
+		connection->state = nn::ConnectionState::ESTABLISHED;
+		isDone = true;
+		server->OnPlayerJoined(connection);
+
+		return nn::FilterResult::CONSUMED;
+	}
 	
 public:
-	ServerClockSyncRequestFilter(Netcode::GameClock* c) : clock{c} { }
+	ServerClockSyncRequestFilter(GameServer * srv, Connection * conn) :
+		clock{ &srv->gameClock }, server{ srv }, connection{ conn }, isDone{false} {
+		startedAt = Netcode::SystemClock::LocalNow();
+	}
+
+	bool CheckTimeout(Netcode::Timestamp checkAt) override {
+		return (checkAt - startedAt) > std::chrono::seconds(10);
+	}
+
+	bool IsCompleted() const override {
+		return isDone;
+	}
 	
 	nn::FilterResult Run(Ptr<nn::NetcodeService> service, Ptr<nn::DtlsRoute> route, nn::ControlMessage & cm) override {
 		np::Control * ctrl = cm.control;
+
+		if(ctrl->type() == np::MessageType::CONNECT_DONE) {
+			return HandleConnectDone(ctrl);
+		}
 		
 		if(ctrl->type() != np::MessageType::CLOCK_SYNC_REQUEST ||
 		   !ctrl->has_time_sync()) {
@@ -118,7 +148,7 @@ public:
 		np::TimeSync* timeSync = ctrl->mutable_time_sync();
 		timeSync->set_server_req_reception(Netcode::ConvertTimestampToUInt64(cm.packet->GetTimestamp() - clock->GetEpoch()));
 		timeSync->set_server_resp_transmission(Netcode::ConvertTimestampToUInt64(Netcode::SystemClock::LocalNow() - clock->GetEpoch()));
-
+		
 		cm.packet = nullptr;
 		
 		service->Send(cm, route);
@@ -167,34 +197,98 @@ static bool ConvertAction(ExtClientAction& dst, const np::ActionPrediction& pred
 	return false;
 }
 
-void GameServer::FetchActions() {
-	connections->ForeachUnsafe<Connection>([&](Connection * conn) -> void {
-		nn::Node<nn::GameMessage> * node = conn->sharedQueue.ConsumeAll();
+void GameServer::OnPlayerConnected(Connection* connection) {
+	
+	GameObject* gameObj = CreateRemoteAvatar(connection->tickInterval, controllerManager.Get());
+	Network* network = gameObj->GetComponent<Network>();
+	network->replDesc = CreateRemoteAvatarReplDesc();
+	network->owner = connection->id;
 
-		if(node == nullptr)
+	std::ostringstream oss;
+	oss << "p:" << connection->id;
+	gameObj->name = oss.str();
+	RemotePlayerScript* rps = gameObj->GetComponent<Script>()->GetScript<RemotePlayerScript>(0);
+	physx::PxActor* actor = rps->GetController()->getActor();
+
+	Netcode::UndefinedBehaviourAssertion(actor->getScene() == pxScene);
+	
+	pxScene->removeActor(*actor);
+	rps->serverHistory = std::make_unique<HistoryBuffer<ServerFrameData>>(128);
+
+	
+	connection->gameObject = gameObj;
+	connection->remotePlayerScript = rps;
+	connection->filters.emplace_back(std::make_unique<ServerClockSyncRequestFilter>(this, connection));
+}
+
+void GameServer::OnPlayerJoined(Connection * connection) {
+	PlayerStatEntry pse;
+	pse.name = "TestName";
+	pse.kills = 0;
+	pse.deaths = 0;
+	pse.id = connection->id;
+	pse.ping = static_cast<int32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(connection->rtt).count());
+
+	scoreboard->stats.push_back(pse);
+
+	Log::Debug("PlayerJoined");
+	
+	connections->ForeachUnsafe<Connection>([&](Connection * existingConn) -> void {
+		Network * nc = existingConn->gameObject->GetComponent<Network>();
+
+		const ServerCommand cmd = ServerCommand::CreateObject(existingConn->id, REPL_TYPE_REMOTE_AVATAR, nc->id);
+		connection->redundancyBuffer.Add(connection->localGameSequence,
+			ServerReconciliation::CreateCommand(connection->localCommandIndex++, cmd));
+	});
+	
+	Network * networkComponent = scoreboardObject->GetComponent<Network>();
+	const ServerCommand spawnCmd = ServerCommand::CreateObject(0, REPL_TYPE_SCOREBOARD, networkComponent->id);
+	const ServerReconciliation sr = ServerReconciliation::CreateCommand(connection->localCommandIndex++, spawnCmd);
+	connection->redundancyBuffer.Add(connection->localGameSequence, sr);
+}
+
+void GameServer::FetchActions() {
+	Netcode::Stopwatch sw;
+	sw.Start();
+	
+	connections->ForeachUnsafe<Connection>([&](Connection * conn) -> void {
+		nn::Node<nn::GameMessage> * nodes = conn->sharedQueue.ConsumeAll();
+
+		if(nodes == nullptr)
 			return;
 
-		uint32_t maxActionIndex = 0;
-
-		for(NodeIter<nn::GameMessage> it = node; it != nullptr; it++) {
+		for(NodeIter<nn::GameMessage> it = nodes; it != nullptr; it++) {
+			Netcode::Stopwatch perfUpdateSw;
+			perfUpdateSw.Start();
 			np::ClientUpdate * update = ParseClientUpdate(it.operator->());
+			perfUpdateSw.Stop();
 
+			perfCurrent.parseTime += perfUpdateSw.GetElapsedDuration();
+			
 			if(update == nullptr)
 				continue;
 
+			const uint32_t firstActionIndex = conn->remoteActionIndex;
+			uint32_t maxActionIndex = conn->remoteActionIndex;
 			for(const np::ActionPrediction & pred : update->predictions()) {
 				ExtClientAction ca;
 
 				if(!ConvertAction(ca, pred))
 					continue;
 
-				if(conn->remoteActionIndex >= ca.id)
+				/*this assumes the predictions are in order*/
+				if(maxActionIndex >= ca.id) {
+					if(ca.id > firstActionIndex) {
+						Log::Debug("dropping action because it was a duplicate or in invalid order");
+					}
 					continue;
+				}
 
 				maxActionIndex = std::max(maxActionIndex, ca.id);
 				
 				ca.owner = conn;
 				actions.emplace_back(ca);
+				conn->remoteActionIndex = maxActionIndex;
 			}
 
 			for(const np::ReplData& rd : update->replications()) {
@@ -205,61 +299,254 @@ void GameServer::FetchActions() {
 			}
 			
 			conn->redundancyBuffer.Confirm(update->received_id());
-			conn->remoteGameSequence = std::max(conn->remoteGameSequence, node->sequence);
-		}
+			conn->remoteGameSequence = std::max(conn->remoteGameSequence, it->sequence);
 
-		if(maxActionIndex > 0) {
-			conn->dtlsRoute->lastReceivedAt = std::max(conn->dtlsRoute->lastReceivedAt, Netcode::SystemClock::LocalNow());
-			conn->remoteActionIndex = std::max(conn->remoteActionIndex, maxActionIndex);
+			if(maxActionIndex > 0) {
+				conn->dtlsRoute->lastReceivedAt = std::max(conn->dtlsRoute->lastReceivedAt, Netcode::SystemClock::LocalNow());
+				conn->remoteActionIndex = std::max(conn->remoteActionIndex, maxActionIndex);
+			}
 		}
 	});
 
 	std::sort(std::begin(actions), std::end(actions), [](const ExtClientAction & a, const ExtClientAction & b) -> bool {
 		return (a.timestamp < b.timestamp);
 	});
-}
 
-using Netcode::Vector3;
+	sw.Stop();
+	perfCurrent.receiveTime = sw.GetElapsedDuration();
+}
 
 void GameServer::HandleMovementAction(const ExtClientAction& action) {
 	Connection * connection = action.owner;
 	GameObject * gameObject = connection->gameObject;
+	RemotePlayerScript * rps = connection->remotePlayerScript;
 	Transform * transform = gameObject->GetComponent<Transform>();
+	Network * network = gameObject->GetComponent<Network>();
 
+	if(network->state != PlayerState::ALIVE) {
+		ServerReconciliation sr = {};
+		sr.actionType = action.type;
+		sr.id = action.id;
+		sr.type = ReconciliationType::REJECTED;
+		connection->redundancyBuffer.Add(connection->localGameSequence, sr);
+		Log::Debug("Rejecting movement because player is not alive");
+		return;
+	}
+
+	Netcode::Stopwatch perfMovementSw; perfMovementSw.Start();
+	
 	const Vector3 position = transform->position;
 	const Vector3 predictedPosition = action.movementActionData.position;
 
-	// TODO calculate delta and delta time to compare
+	physx::PxController* controller = rps->GetController();
 
-	// always accept for now
-	transform->position = predictedPosition;
+	Vector3 displacement = predictedPosition - position;
+	const Netcode::Timestamp currentTimestamp = gameClock.GetGlobalTime();
+	Netcode::Duration deltaTime = currentTimestamp - rps->serverLastUpdate;
+	const float dt = std::chrono::duration<float>(deltaTime).count();
+	rps->serverLastUpdate = currentTimestamp;
+
+	if(deltaTime > Netcode::Duration{}) {
+		physx::PxFilterData fd;
+		fd.word0 = PHYSX_COLLIDER_TYPE_WORLD | PHYSX_COLLIDER_TYPE_KILLZONE | PHYSX_COLLIDER_TYPE_SERVER_HITBOX;
+		fd.word1 = PHYSX_COLLIDER_TYPE_SERVER_HITBOX;
+		physx::PxControllerFilters filters;
+		filters.mFilterData = &fd;
+
+		controller->move(ToPxVec3(displacement), 0.1f, dt, filters);
+	}
+
+	const Vector3 footPos = Netcode::ToFloat3(Netcode::ToPxVec3(controller->getFootPosition()));
+	const Vector3 positionDelta = predictedPosition - footPos;
+
+	transform->position = footPos;
 
 	ServerReconciliation sr = {};
-	sr.type = ReconciliationType::ACCEPTED;
 	sr.actionType = action.type;
 	sr.id = action.id;
 	
+	// 40 unit diff is fine
+	if(positionDelta.LengthSq() > 1600.0f) {
+		sr.type = ReconciliationType::REJECTED;
+		sr.movementCorrection.position = transform->position;
+	} else {
+		sr.type = ReconciliationType::ACCEPTED;
+	}
+	
 	connection->redundancyBuffer.Add(connection->localGameSequence, sr);
+
+	perfMovementSw.Stop();
+
+	perfCurrent.movementTime += perfMovementSw.GetElapsedDuration();
 }
 
-void GameServer::HandleFireAction(const ExtClientAction& action) {
+void GameServer::HandleFireAction(const ExtClientAction & action) {
+
+	Netcode::Stopwatch perfReconSw; perfReconSw.Start();
 	Connection * connection = action.owner;
 	GameObject * gameObject = connection->gameObject;
 	Transform * transform = gameObject->GetComponent<Transform>();
-
-	const Vector3 source = action.fireActionData.position;
-	// TODO check if source is plausible
-
-	const Netcode::Timestamp timestamp = action.timestamp;
-	// theta, delta is needed.
+	Network * network = gameObject->GetComponent<Network>();
+	physx::PxController * shooterCtrl = connection->remotePlayerScript->GetController();
 	
-	// its rewind time!
+	const Vector3 rayOrigin = action.fireActionData.position;
+	const Vector3 dir = action.fireActionData.direction;
+	const float dirLen = dir.Length();
+
+	// generous epsilon
+	if(dirLen < 0.75f || dirLen > 1.25f) {
+		Log::Debug("Dir vector length is invalid");
+		return;
+	}
+
+	const Vector3 rayDir = dir / dirLen;
+
+	const Netcode::Timestamp globalTime = gameClock.GetGlobalTime();
+	const Netcode::Timestamp timestamp = action.timestamp;
+	const Netcode::Duration ind = connection->tickInterval.load();
+	const Netcode::Duration delta = std::clamp<Netcode::Duration>(timestamp - globalTime, -ind, ind);
+	const Netcode::Duration td = std::clamp<Netcode::Duration>(connection->rtt / 2 + ind,
+		Netcode::Duration{},
+		std::chrono::milliseconds(100));
+
+	ServerReconciliation sr;
+	sr.type = ReconciliationType::ACCEPTED;
+	sr.actionType = action.type;
+	sr.id = action.id;
+	connection->redundancyBuffer.Add(connection->localGameSequence, sr);
+
+	// might be in an invalid state
+	if(network->state != PlayerState::ALIVE)
+		return;
+
+	// no need to check if the player is alone
+	if(connections->GetConnectionCount() <= 1)
+		return;
+
+	Netcode::Timestamp reconstructionTime = globalTime - delta - td;
+	pxScene->removeActor(*shooterCtrl->getActor());
+	network->state = PlayerState::DISABLED;
+	
+	connections->ForeachUnsafe<Connection>([&](Connection * conn) -> void {
+		if(connection == conn)
+			return;
+
+		Network * netw = conn->gameObject->GetComponent<Network>();
+		RemotePlayerScript * rps = conn->remotePlayerScript;
+		physx::PxController * ctrl = rps->GetController();
+
+		if(netw->state != PlayerState::ALIVE && netw->state != PlayerState::DISABLED)
+			return;
+
+		Netcode::Stopwatch perfPosCalcSw; perfPosCalcSw.Start();
+
+		auto [p1, p0] = rps->serverHistory->FindAt(reconstructionTime);
+
+		if((p0 == nullptr || p0->value.state == PlayerState::DEAD) || (p1 == nullptr || p1->value.state == PlayerState::DEAD)) {
+			netw->state = PlayerState::DISABLED;
+			Netcode::Stopwatch perfManipSw; perfManipSw.Start();
+			pxScene->removeActor(*ctrl->getActor());
+			perfManipSw.Stop();
+			perfCurrent.numPxManip++;
+			perfCurrent.pxSceneManipTime += perfManipSw.GetElapsedDuration();
+			return;
+		}
+
+		if(netw->state == PlayerState::DISABLED) {
+			netw->state = PlayerState::ALIVE;
+			Netcode::Stopwatch perfManipSw; perfManipSw.Start();
+			pxScene->addActor(*ctrl->getActor());
+			perfManipSw.Stop();
+			perfCurrent.numPxManip++;
+			perfCurrent.pxSceneManipTime += perfManipSw.GetElapsedDuration();
+			return;
+		}
+
+		Netcode::Timestamp t1 = p1->timestamp;
+		Netcode::Timestamp t0 = p0->timestamp;
+
+		Netcode::Duration frameDuration = t1 - t0;
+		Netcode::Duration relativeDuration = reconstructionTime - t0;
+
+		const float lerpArg = std::clamp(std::chrono::duration<float>(relativeDuration).count() /
+			std::chrono::duration<float>(frameDuration).count(),
+			0.0f,
+			1.0f);
+
+		const Float3 reconstructedPos = Vector3::Lerp(p0->value.position, p1->value.position, lerpArg);
+
+		perfPosCalcSw.Stop();
+	
+		perfCurrent.numPosCalc++;
+		perfCurrent.posCalcTime += perfPosCalcSw.GetElapsedDuration();
+
+		Netcode::Stopwatch perfPoseSw; perfPoseSw.Start();
+		ctrl->setFootPosition(Netcode::ToPxExtVec3(reconstructedPos));
+		perfPoseSw.Stop();
+
+		perfCurrent.numPxPose++;
+		perfCurrent.pxScenePoseTime += perfPoseSw.GetElapsedDuration();
+	});
+
+	physx::PxRaycastBuffer hit;
+	physx::PxQueryFilterData fd;
+	fd.flags |= physx::PxQueryFlag::eANY_HIT;
+	fd.data.word0 = PHYSX_COLLIDER_TYPE_LOCAL_HITBOX;
+	fd.data.word1 = PHYSX_COLLIDER_TYPE_WORLD | PHYSX_COLLIDER_TYPE_SERVER_HITBOX;
+	fd.data.word2 = 0;
+	fd.data.word3 = 0;
+
+	if(!pxScene->raycast(ToPxVec3(rayOrigin), ToPxVec3(rayDir), 10000.0f, hit, physx::PxHitFlag::eDEFAULT, fd)) {
+		//Log::Debug("SRV: missed everything");
+	} else {
+		if(hit.hasBlock) {
+			physx::PxFilterData hitFilter = hit.block.shape->getQueryFilterData();
+
+			if(hitFilter.word0 & PHYSX_COLLIDER_TYPE_WORLD) {
+				//Log::Debug("SRV: environment hit");
+			} else {
+				//Log::Debug("SRV: player hit");
+			}
+		}
+	}
+
+	/* restore physx scene */
+	pxScene->addActor(*shooterCtrl->getActor());
+	
+
+	connections->ForeachUnsafe<Connection>([&](Connection * conn) -> void {
+		Network * netw = conn->gameObject->GetComponent<Network>();
+		Transform * tr = conn->gameObject->GetComponent<Transform>();
+		physx::PxController * remCtrl = conn->remotePlayerScript->GetController();
+
+		if(netw->state == PlayerState::DISABLED) {
+			netw->state = PlayerState::ALIVE;
+			perfCurrent.numPxManip++;
+			Netcode::Stopwatch addSw; addSw.Start();
+			pxScene->addActor(*remCtrl->getActor());
+			addSw.Stop();
+			perfCurrent.pxSceneManipTime += addSw.GetElapsedDuration();
+		}
+
+		perfCurrent.numPxPose++;
+		Netcode::Stopwatch manipSw; manipSw.Start();
+		remCtrl->setFootPosition(ToPxExtVec3(tr->position));
+		manipSw.Stop();
+		perfCurrent.pxScenePoseTime += manipSw.GetElapsedDuration();
+	});
+
+	perfReconSw.Stop();
+	perfCurrent.numShots++;
+	perfCurrent.reconstrTime += perfReconSw.GetElapsedDuration();
 }
 
 void GameServer::HandleSpawnAction(const ExtClientAction& action) {
 	Connection * connection = action.owner;
 	GameObject * gameObject = connection->gameObject;
+	RemotePlayerScript * rps = connection->remotePlayerScript;
+	Transform * transform = gameObject->GetComponent<Transform>();
 	Network * networkComponent = gameObject->GetComponent<Network>();
+	Camera * camera = gameObject->GetComponent<Camera>();
 
 	ServerReconciliation sr = {};
 	sr.id = action.id;
@@ -269,6 +556,7 @@ void GameServer::HandleSpawnAction(const ExtClientAction& action) {
 	if(networkComponent->state != PlayerState::ALIVE) {
 		networkComponent->state = PlayerState::ALIVE;
 		sr.type = ReconciliationType::ACCEPTED;
+		pxScene->addActor(*rps->GetController()->getActor());
 	}
 	
 	connection->redundancyBuffer.Add(connection->localGameSequence, sr);
@@ -279,12 +567,23 @@ void GameServer::HandleSpawnAction(const ExtClientAction& action) {
 		csr.type = ReconciliationType::COMMAND;
 		csr.actionType = ActionType::NOOP;
 		csr.command.type = CommandType::CREATE_OBJECT;
-		csr.command.objectId = this->nextGameObjectId++;
+		csr.command.objectId = nextGameObjectId++;
+		csr.command.objectType = REPL_TYPE_REMOTE_AVATAR;
 		csr.command.subject = connection->id;
 		networkComponent->id = csr.command.objectId;
+		rps->serverLastUpdate = gameClock.GetGlobalTime();
+
+		int value = (int)connections->GetConnectionCount();
+
+		const SpawnPoint sp = spawnPoints[value];
+		transform->position = sp.position;
+		camera->ahead = Vector3{ Float3::UnitZ }.Rotate(sp.rotation);
+		rps->GetController()->setFootPosition(ToPxExtVec3(transform->position));
+		csr.replData = ReplicateWrite(gameObject, networkComponent);
 
 		connections->ForeachUnsafe<Connection>([&](Connection * conn) -> void {
 			csr.id = conn->localCommandIndex++;
+			Log::Debug("Sending spawn to: {0}", conn->id);
 			conn->redundancyBuffer.Add(conn->localGameSequence, csr);
 		});
 	}
@@ -295,14 +594,16 @@ void GameServer::DisconnectPlayer(Connection * connection) {
 	
 	connections->RemoveConnection(lifetime);
 
-	GameSceneManager * gsm = Service::Get<GameSceneManager>();
-	gsm->GetScene()->RemoveWithHierarchy(connection->gameObject);
+	pxScene->removeActor(*connection->remotePlayerScript->GetController()->getActor());
+	gameScene->RemoveWithHierarchy(connection->gameObject);
 	connection->gameObject = nullptr;
 	connection->remotePlayerScript = nullptr;
 	connection->dtlsRoute->state = Netcode::Network::DtlsRouteState::DISCONNECTED;
 }
 
 void GameServer::ProcessActions() {
+	Netcode::Stopwatch sw;
+	sw.Start();
 	Netcode::Timestamp serverTimestamp = gameClock.GetGlobalTime();
 	
 	for(const ExtClientAction& action : actions) {
@@ -329,6 +630,10 @@ void GameServer::ProcessActions() {
 			continue;
 		}
 		 */
+
+		if(action.id > action.owner->remoteActionIndex) {
+			
+		}
 		
 		switch(action.type) {
 			case ActionType::MOVEMENT: HandleMovementAction(action); break;
@@ -339,6 +644,10 @@ void GameServer::ProcessActions() {
 	}
 
 	actions.clear();
+
+	sw.Stop();
+
+	perfCurrent.processTime = sw.GetElapsedDuration();
 }
 
 void GameServer::FetchControlMessages() {
@@ -350,14 +659,25 @@ void GameServer::ProcessControlMessages() {
 	
 	connections->ForeachUnsafe<Connection>([&](Connection * conn) -> void {
 		nn::Node<nn::ControlMessage> * node = conn->sharedControlQueue.ConsumeAll();
+		
 		for(NodeIter<nn::ControlMessage> it = node; it != nullptr; it++) {
-			clockSyncFilter->Run(service.get(), conn->dtlsRoute, *it.operator->());
+			service->ApplyFilters(conn->filters, conn->dtlsRoute, *it.operator->());
 		}
+
+		service->CheckFilterCompletion(conn->filters);
 	});
 }
 
 void GameServer::SaveState() {
+	Netcode::Timestamp serverTime = gameClock.GetGlobalTime();
 
+	connections->ForeachUnsafe<Connection>([&](Connection * conn) -> void {
+		GameObject* obj = conn->gameObject;
+		Transform * transform = obj->GetComponent<Transform>();
+		Network * netw = obj->GetComponent<Network>();
+		conn->remotePlayerScript->serverHistory->Insert(serverTime,
+			ServerFrameData{ transform->position, netw->state });
+	});
 }
 
 void GameServer::CheckTimeouts() {
@@ -398,30 +718,51 @@ void GameServer::CheckTimeouts() {
 }
 
 static void AddActionResult(np::ServerUpdate* su, const RedundancyItem& item) {
-	if(item.reconciliation.type != ReconciliationType::COMMAND) {
+	const ServerReconciliation & recon = std::get<ServerReconciliation>(item.storage);
+	
+	if(recon.type != ReconciliationType::COMMAND) {
 		np::ActionResult * ar = su->add_action_results();
 
-		np::ActionResultType result = (item.reconciliation.type == ReconciliationType::ACCEPTED) ?
+		np::ActionResultType result = (recon.type == ReconciliationType::ACCEPTED) ?
 			np::ActionResultType::ACCEPTED : np::ActionResultType::REJECTED;
 		
-		ar->set_type(static_cast<np::ActionType>(item.reconciliation.actionType));
+		ar->set_type(static_cast<np::ActionType>(recon.actionType));
 		ar->set_result(result);
-		ar->set_id(item.reconciliation.id);
+		ar->set_id(recon.id);
 
-		if(item.reconciliation.actionType == ActionType::MOVEMENT &&
-		   item.reconciliation.type == ReconciliationType::REJECTED) {
-			ConvertFloat3(ar->mutable_action_position(), item.reconciliation.movementCorrection.position);
+		if(recon.actionType == ActionType::MOVEMENT &&
+			recon.type == ReconciliationType::REJECTED) {
+			ConvertFloat3(ar->mutable_action_position(), recon.movementCorrection.position);
+		}
+
+		if(recon.actionType == ActionType::SPAWN &&
+			recon.type == ReconciliationType::ACCEPTED) {
+			ConvertFloat3(ar->mutable_action_position(), recon.movementCorrection.position);
 		}
 	}
 
-	if(item.reconciliation.type == ReconciliationType::COMMAND) {
+	if(recon.type == ReconciliationType::COMMAND) {
 		np::ServerCommand * command = su->add_commands();
-		command->set_id(item.reconciliation.id);
-		command->set_type(static_cast<np::CommandType>(item.reconciliation.command.type));
-		command->set_subject(item.reconciliation.command.subject);
-		command->set_object_id(item.reconciliation.command.objectId);
-		command->set_object_type(item.reconciliation.command.objectType);
+		command->set_id(recon.id);
+		command->set_type(static_cast<np::CommandType>(recon.command.type));
+		command->set_subject(recon.command.subject);
+		command->set_object_id(recon.command.objectId);
+		command->set_object_type(recon.command.objectType);
+		command->set_repl_data(recon.replData);
 	}
+}
+
+static void ReplicateGameObject(np::ServerUpdate* su, GameObject* obj) {
+	Network * network = obj->GetComponent<Network>();
+
+	std::string binary = ReplicateWrite(obj, network);
+
+	if(binary.empty())
+		return;
+
+	np::ReplData * replData = su->add_replications();
+	replData->set_object_id(network->id);
+	replData->set_data(std::move(binary));
 }
 
 void GameServer::BuildServerUpdates() {
@@ -433,23 +774,21 @@ void GameServer::BuildServerUpdates() {
 		np::ServerUpdate* su = allocator->MakeProto<np::ServerUpdate>();
 
 		su->set_received_id(conn->remoteGameSequence);
-
+		
 		for(const RedundancyItem& item : conn->redundancyBuffer.GetBuffer()) {
 			AddActionResult(su, item);
 		}
 
 		connections->ForeachUnsafe<Connection>([&](Connection * inner) -> void {
-			Network* network = inner->gameObject->GetComponent<Network>();
-
-			std::string binary = ReplicateWrite(inner->gameObject, network);
-
-			if(binary.empty())
-				return;
-			
-			np::ReplData* replData = su->add_replications();
-			replData->set_object_id(network->id);
-			replData->set_data(std::move(binary));
+			ReplicateGameObject(su, inner->gameObject);
 		});
+
+		if(scoreboardReplInterval < Netcode::Duration{}) {
+			if(!scoreboard->stats.empty()) {
+				ReplicateGameObject(su, scoreboardObject);
+				scoreboardReplInterval = std::chrono::seconds(1);
+			}
+		}
 		
 		conn->serverUpdate = su;
 		conn->message.allocator = std::move(allocator);
@@ -474,14 +813,19 @@ void GameServer::SendServerUpdates() {
 	});
 }
 
-GameServer::GameServer() : serverSession{}, actions{}, service{}, connections{}, clockSyncFilter{}, gameClock{}, nextGameObjectId{ 1 } {
-}
-
-GameServer::~GameServer() {
-	// default is ok
+GameServer::GameServer() : serverSession{}, actions{}, service{}, connections{}, gameClock{}, nextGameObjectId{ 1 } {
 }
 
 void GameServer::Tick() {
+	gameClock.Tick();
+	Netcode::Duration dt = gameClock.GetDeltaTime();
+	scoreboardReplInterval -= dt;
+
+	perfCurrent.timestamp = gameClock.GetGlobalTime();
+
+	Netcode::Stopwatch sw;
+	
+	sw.Start();
 	
 	FetchActions();
 
@@ -500,19 +844,89 @@ void GameServer::Tick() {
 	SendServerUpdates();
 
 	service->RunFilters();
-	
+
+	sw.Stop();
+
+	static bool written = false;
+
+	perfCurrent.frameTime = sw.GetElapsedDuration();
+	if((gameClock.GetLocalTime() - Netcode::Timestamp{}) > std::chrono::seconds(10)) {
+		if(!written) {
+			perf.emplace_back(perfCurrent);
+		}
+	}
+
+	perfCurrent = PerfData{};
+	if(!written && (gameClock.GetLocalTime() - Netcode::Timestamp{} > std::chrono::seconds(130))) {
+		std::ofstream ofs{ "perf.csv" };
+		
+		const uint32_t intervalMs = Netcode::Config::GetOptional<uint32_t>(L"network.client.tickIntervalMs:u32", 250u);
+
+		ofs << R"("timestamp","players","interval[ms]","frametime[ns]","recv[ns]","parse[ns]","proc[ns]","move[ns]","reconst[ns]",)";
+		ofs << R"("numPosCalc","sumPosCalc[ns]","numPxManip","sumPxManip[ns]","numPxPose","sumPxPose[ns]")" << std::endl;
+		
+		for(const PerfData& p : perf) {
+			ofs << std::chrono::duration<double>(p.timestamp - Netcode::Timestamp{}).count() << ",";
+			ofs << connections->GetConnectionCount() << ",";
+			ofs << std::chrono::milliseconds{ intervalMs }.count() << ",";
+			ofs << p.frameTime.count() << ",";
+			ofs << p.receiveTime.count() << ",";
+			ofs << p.parseTime.count() << ",";
+			ofs << p.processTime.count() << ",";
+			ofs << p.movementTime.count() << ",";
+			ofs << p.reconstrTime.count() << ",";
+			ofs << p.numPosCalc << ",";
+			ofs << p.posCalcTime.count() << ",";
+			ofs << p.numPxManip << ",";
+			ofs << p.pxSceneManipTime.count() << ",";
+			ofs << p.numPxPose << ",";
+			ofs << p.pxScenePoseTime.count() << std::endl;
+		}
+
+		ofs.close();
+
+		Log::Debug("CSV saved");
+		written = true;
+	}
 }
 
 void GameServer::Start(Netcode::Module::INetworkModule* network) {
 	gameClock.SetEpoch(Netcode::SystemClock::LocalNow() - Netcode::Timestamp{});
+
+	perf.reserve(16384);
 	
 	serverSession = std::dynamic_pointer_cast<nn::ServerSession>(network->CreateServer());
 	serverSession->Start();
 	
 	service = serverSession->GetService();
-	service->AddFilter(std::make_unique<ServerConnRequestFilter>());
-
-	clockSyncFilter = std::make_unique<ServerClockSyncRequestFilter>(&gameClock);
+	service->AddFilter(std::make_unique<ServerConnRequestFilter>(this));
 	
 	connections = service->GetConnections();
+
+	scoreboardObject = CreateScoreboard(nextGameObjectId++);
+	scoreboard = scoreboardObject->GetComponent<Script>()->GetScript<ScoreboardScript>(0);
+	scoreboardReplInterval = std::chrono::seconds(1);
+
+	gameScene = Service::Get<GameSceneManager>()->GetScene();
+	pxScene = gameScene->GetPhysXScene();
+	controllerManager = PxCreateControllerManager(*pxScene);
+	
+	/*
+	 * For now initialize spawn points here
+	 */
+	spawnPoints = {
+		SpawnPoint{ Float3{ 1000.0f, 200.0f, 0.0f }, Quaternion{} },
+		SpawnPoint{ Float3{ 500.0f, 200.0f, 0.0f }, Quaternion{} },
+		SpawnPoint{ Float3{ 0.0f, 200.0f, 0.0f }, Quaternion{} },
+		SpawnPoint{ Float3{ -500.0f, 200.0f, 0.0f }, Quaternion{} },
+		SpawnPoint{ Float3{ -1000.0f, 200.0f, 0.0f }, Quaternion{} },
+		SpawnPoint{ Float3{ -1500.0f, 200.0f, 0.0f }, Quaternion{} },
+		SpawnPoint{ Float3{ -2000.0f, 200.0f, 0.0f }, Quaternion{} },
+	};
+
+	if(spawnPoints.empty()) {
+		spawnPoints.push_back(SpawnPoint{ Float3::Zero, Quaternion{} });
+	}
+	
+	uniformIntDistribution = std::uniform_int_distribution<int>{ 0, static_cast<int>(spawnPoints.size() - 1) };
 }

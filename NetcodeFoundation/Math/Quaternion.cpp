@@ -16,7 +16,23 @@ namespace Netcode {
 			Netcode::C_PI / 180.0f,
 		};
 
-		return Netcode::Quaternion::FromPitchYawRollVector(constant * eulerAngles);
+		return FromPitchYawRollVector(constant * eulerAngles);
+	}
+	
+	Quaternion NC_MATH_CALLCONV Quaternion::FromRotationBetween(Vector3 fromVector, Vector3 toVector, const Float3 & fallbackAxis) noexcept {
+		const float uvLen = sqrtf(fromVector.Dot(fromVector) * toVector.Dot(toVector));
+		float realPart = uvLen + fromVector.Dot(toVector);
+
+		Float3 axis;
+		constexpr float epsilon = 0.00001f;
+		if(realPart < epsilon * uvLen) {
+			realPart = 0.0f;
+			axis = fallbackAxis;
+		} else {
+			axis = fromVector.Cross(toVector);
+		}
+
+		return Quaternion{ Float4{ axis.x, axis.y, axis.z, realPart } }.Normalize();
 	}
 
 }

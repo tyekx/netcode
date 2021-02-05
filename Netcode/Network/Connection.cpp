@@ -12,13 +12,14 @@ namespace Netcode::Network {
 				if(prev == nullptr) {
 					head = iter->next;
 				} else {
-					prev = iter->next;
+					prev->next = iter->next;
 				}
 
 				TrResult tr;
 				iter->token->Set(TrResult{ make_error_code(NetworkErrc::SUCCESS), iter->packet->GetSize() });
 				iter->timer->cancel();
 				CompletionToken<TrResult> tmpToken = std::move(iter->token);
+				return;
 			}
 
 			prev = iter;

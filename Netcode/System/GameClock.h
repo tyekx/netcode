@@ -43,6 +43,9 @@ namespace Netcode {
 		Duration GetDeltaTime() const;
 
 		[[nodiscard]]
+		float FGetFixedDeltaTime() const;
+		
+		[[nodiscard]]
 		float FGetDeltaTime() const;
 
 		[[nodiscard]]

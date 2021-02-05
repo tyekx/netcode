@@ -11,4 +11,5 @@ PRIVATE
 	GameServer.cpp
 	NetwUtil.h
 	NetwUtil.cpp
+	NetwDecl.h
 )

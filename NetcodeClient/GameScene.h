@@ -169,7 +169,11 @@ public:
 	}
 
 
+	physx::PxControllerManager* GetControllerManager() {
+		return controllerManager.Get();
+	}
 	physx::PxController * CreateController();
+	static physx::PxController * CreateController(physx::PxControllerManager * manager);
 };
 
 class GameSceneManager {

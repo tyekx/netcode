@@ -36,6 +36,7 @@ message ServerCommand {
     int32 subject = 3;
     int32 object_type = 4;
     fixed32 object_id = 5;
+    bytes repl_data = 6;
 }
 
 message ActionPrediction {

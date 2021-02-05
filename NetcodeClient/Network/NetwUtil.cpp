@@ -1,6 +1,7 @@
 #include "NetwUtil.h"
 #include "../Services.h"
 #include "ReplArguments.hpp"
+#include "../Asset/ClientConverters.h"
 
 np::ClientUpdate * ParseClientUpdate(nn::GameMessage * message) {
 	if(message == nullptr) {
@@ -26,40 +27,45 @@ void ConvertFloat3(np::Float3 * dst, const Netcode::Float3 & src) {
 	dst->set_z(src.z);
 }
 
+GameObject * CreateScoreboard(uint32_t id) {
+	GameScene * scene = Service::Get<GameSceneManager>()->GetScene();
+	GameObject * object = scene->Create("Scoreboard");
+	Network * networkComponent = object->AddComponent<Network>();
+	Script * script = object->AddComponent<Script>();
+	std::unique_ptr<ScoreboardScript> ss = std::make_unique<ScoreboardScript>();
+	networkComponent->id = id;
+	networkComponent->owner = 0;
+	networkComponent->replDesc = CreateScoreboardReplDesc(ss.get());
+	script->AddScript(std::move(ss));
+	return object;
+}
 
-GameObject * CreateRemoteAvatar(Netcode::Duration interpDelay) {
-	AssetManager * assetManager = Service::Get<AssetManager>();
-	GameSceneManager * gsm = Service::Get<GameSceneManager>();
-	GameScene * gameScene = gsm->GetScene();
+GameObject * CreateRemoteAvatar(Netcode::Duration interpDelay, physx::PxControllerManager * controllerManager) {
+	GameScene * gameScene = Service::Get<GameSceneManager>()->GetScene();
 	
-	GameObject * avatarController = gameScene->Create();
-	GameObject * avatarHitboxes = gameScene->Create("remoteAvatarHitboxes");
-
-	avatarController->AddComponent<Transform>();
-	Script * scriptComponent = avatarController->AddComponent<Script>();
-	Network * networkComponent = avatarController->AddComponent<Network>();
-	Camera * cameraComponent = avatarController->AddComponent<Camera>();
-	cameraComponent->ahead = Netcode::Float3::UnitZ;
-	cameraComponent->up = Netcode::Float3::UnitY;
-	networkComponent->state = PlayerState::SPECTATOR;
-	networkComponent->owner = -1;
-	networkComponent->id = 0;
-	networkComponent->replDesc = CreateRemoteAvatarReplDesc();
+	GameObject * avatarController = gameScene->Create("remoteAvatarCtrl");
 	
-	Netcode::PxPtr<physx::PxController> pxController = gameScene->CreateController();
+	auto [ctrlTransform, ctrlScript, ctrlNetwork, ctrlCamera] = avatarController->AddComponents<Transform, Script, Network, Camera>();
+	
+	ctrlCamera->ahead = Netcode::Float3::UnitZ;
+	ctrlCamera->up = Netcode::Float3::UnitY;
+	
+	ctrlNetwork->state = PlayerState::SPECTATOR;
+	ctrlNetwork->owner = -1;
+	ctrlNetwork->id = 0;
+	
+	Netcode::PxPtr<physx::PxController> pxController = GameScene::CreateController(controllerManager);
+	
 	std::unique_ptr<RemotePlayerScript> rps = std::make_unique<RemotePlayerScript>(std::move(pxController), interpDelay);
 	rps->Construct(avatarController);
-	scriptComponent->AddScript(std::move(rps));
-
-	avatarController->AddChild(avatarHitboxes);
-	//Netcode::Asset::Model * avatarModel = assetManager->Import(L"compiled/models/ybot.ncasset");
+	ctrlScript->AddScript(std::move(rps));
 
 	return avatarController;
 }
 
 std::string ReplicateWrite(GameObject * gameObject, Network * networkComponent) {
 	uint32_t requiredSize = 0;
-	for(std::unique_ptr<ReplArgumentBase> & arg : networkComponent->replDesc->arguments) {
+	for(std::unique_ptr<ReplArgumentBase> & arg : networkComponent->replDesc) {
 		requiredSize += arg->GetReplicatedSize(gameObject);
 	}
 
@@ -74,7 +80,7 @@ std::string ReplicateWrite(GameObject * gameObject, Network * networkComponent) 
 		binary.size()
 	};
 	
-	for(std::unique_ptr<ReplArgumentBase> & arg : networkComponent->replDesc->arguments) {
+	for(std::unique_ptr<ReplArgumentBase> & arg : networkComponent->replDesc) {
 		const uint32_t writtenSize = arg->Write(gameObject, view);
 
 		if(writtenSize == 0)
@@ -87,9 +93,12 @@ std::string ReplicateWrite(GameObject * gameObject, Network * networkComponent) 
 }
 
 void ReplicateRead(GameObject* gameObject, Network * networkComponent, const std::string & content, Netcode::GameClock * clock, int32_t connectionId, ActorType actor) {
+	if(content.empty())
+		return;
+	
 	Netcode::ArrayView<uint8_t> src{ reinterpret_cast<const uint8_t *>(content.data()), content.size() };
 
-	for(std::unique_ptr<ReplArgumentBase> & arg : networkComponent->replDesc->arguments) {
+	for(std::unique_ptr<ReplArgumentBase> & arg : networkComponent->replDesc) {
 		const uint32_t replicatedSize = arg->QueryReplicatedSize(src);
 		const ReplType type = arg->GetType();
 
@@ -123,23 +132,29 @@ void ReplicateRead(GameObject* gameObject, Network * networkComponent, const std
 	}
 }
 
-Ref<ReplDesc> CreateLocalAvatarReplDesc(Camera* cameraComponent) {
-	Ref<ReplDesc> replDesc = std::make_shared<ReplDesc>();
-	replDesc->arguments.emplace_back(ReplicateAsIsFromComponent(ReplType::CLIENT_PREDICTED, &Transform::position));
-	replDesc->arguments.emplace_back(ReplicateAsIsFromState(ReplType::DEFAULT, cameraComponent, &Camera::ahead));
+ReplDesc CreateLocalAvatarReplDesc(Camera* cameraComponent) {
+	ReplDesc replDesc;
+	replDesc.emplace_back(ReplicateAsIsFromComponent(ReplType::CLIENT_PREDICTED, &Transform::position));
+	replDesc.emplace_back(ReplicateAsIsFromState(ReplType::DEFAULT, cameraComponent, &Camera::ahead));
 	return replDesc;
 }
 
-Ref<ReplDesc> ClientCreateRemoteAvatarReplDesc(RemotePlayerScript * rps) {
-	Ref<ReplDesc> replDesc = std::make_shared<ReplDesc>();
-	replDesc->arguments.emplace_back(ReplicateAsIsFromState(ReplType::CLIENT_PREDICTED, rps, &RemotePlayerScript::IND_position));
-	replDesc->arguments.emplace_back(ReplicateAsIsFromState(ReplType::DEFAULT, rps, &RemotePlayerScript::IND_ahead));
+ReplDesc CreateScoreboardReplDesc(ScoreboardScript * scoreboard) {
+	ReplDesc replDesc;
+	replDesc.emplace_back(ReplicateAsIsFromState(ReplType::DEFAULT, scoreboard, &ScoreboardScript::stats));
 	return replDesc;
 }
 
-Ref<ReplDesc> CreateRemoteAvatarReplDesc() {
-	Ref<ReplDesc> replDesc = std::make_shared<ReplDesc>();
-	replDesc->arguments.emplace_back(ReplicateAsIsFromComponent(ReplType::CLIENT_PREDICTED, &Transform::position));
-	replDesc->arguments.emplace_back(ReplicateAsIsFromComponent(ReplType::DEFAULT, &Camera::ahead));
+ReplDesc ClientCreateRemoteAvatarReplDesc(RemotePlayerScript * rps) {
+	ReplDesc replDesc;
+	replDesc.emplace_back(ReplicateAsIsFromState(ReplType::CLIENT_PREDICTED, rps, &RemotePlayerScript::IND_position));
+	replDesc.emplace_back(ReplicateAsIsFromState(ReplType::DEFAULT, rps, &RemotePlayerScript::IND_ahead));
+	return replDesc;
+}
+
+ReplDesc CreateRemoteAvatarReplDesc() {
+	ReplDesc replDesc;
+	replDesc.emplace_back(ReplicateAsIsFromComponent(ReplType::CLIENT_PREDICTED, &Transform::position));
+	replDesc.emplace_back(ReplicateAsIsFromComponent(ReplType::DEFAULT, &Camera::ahead));
 	return replDesc;
 }

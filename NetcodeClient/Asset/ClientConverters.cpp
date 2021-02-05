@@ -367,7 +367,7 @@ GameObject * ClientAssetConverter::ConvertColliderComponent(GameObject * gameObj
 
 		if(netcodeCollider->boneReference >= 0 && netcodeCollider->boneReference < 0x7F) {
 			shapeFlags = physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eTRIGGER_SHAPE | physx::PxShapeFlag::eVISUALIZATION;
-			filterData.word0 = PHYSX_COLLIDER_TYPE_HITBOX;
+			filterData.word0 = PHYSX_COLLIDER_TYPE_CLIENT_HITBOX;
 		} else {
 			shapeFlags = physx::PxShapeFlag::eSCENE_QUERY_SHAPE | physx::PxShapeFlag::eSIMULATION_SHAPE | physx::PxShapeFlag::eVISUALIZATION;
 			filterData.word0 = PHYSX_COLLIDER_TYPE_WORLD;

@@ -21,6 +21,7 @@
 #include <Netcode/System/TimeTypes.h>
 #include <Netcode/Network/Connection.h>
 #include "Network/ReplDesc.h"
+#include <variant>
 
 namespace nn = Netcode::Network;
 namespace np = Netcode::Protocol;
@@ -38,7 +39,10 @@ enum class ActionType {
 };
 
 enum class PlayerState : uint32_t {
-	SPECTATOR, ALIVE, DEAD
+	SPECTATOR,
+	ALIVE,
+	DEAD,
+	DISABLED /* server value */
 };
 
 struct ClientLookActionData {
@@ -147,17 +151,36 @@ struct ServerCommand {
 	int32_t subject;
 	int32_t objectType;
 	uint32_t objectId;
+
+	static ServerCommand CreateObject(int32_t ownerId, int32_t type, uint32_t objId) {
+		ServerCommand scmd;
+		scmd.objectType = type;
+		scmd.subject = ownerId;
+		scmd.objectId = objId;
+		scmd.type = CommandType::CREATE_OBJECT;
+		return scmd;
+	}
 };
 
 struct ServerReconciliation {
 	uint32_t id;
 	ReconciliationType type;
 	ActionType actionType;
+	std::string replData;
 
 	union {
 		ClientMovementActionData movementCorrection;
 		ServerCommand command;
 	};
+
+	static ServerReconciliation CreateCommand(uint32_t cmdId, ServerCommand cmd) {
+		ServerReconciliation sr;
+		sr.id = cmdId;
+		sr.type = ReconciliationType::COMMAND;
+		sr.actionType = ActionType::NOOP;
+		sr.command = cmd;
+		return sr;
+	}
 };
 
 class ReconciliationBuffer {
@@ -175,17 +198,9 @@ public:
 	}
 };
 
-class InterpolationDelayBuffer {
-public:
-
-};
-
 struct RedundancyItem {
 	uint32_t sequence;
-	union {
-		ClientAction action;
-		ServerReconciliation reconciliation;
-	};
+	std::variant<ClientAction, ServerReconciliation> storage;
 };
 
 /*
@@ -198,14 +213,14 @@ public:
 	void Add(uint32_t localSequence, ClientAction action) {
 		RedundancyItem item = {};
 		item.sequence = localSequence;
-		item.action = action;
+		item.storage.emplace<ClientAction>(action);
 		items.push_back(item);
 	}
 
 	void Add(uint32_t localSequence, ServerReconciliation reconciliation) {
 		RedundancyItem item = {};
 		item.sequence = localSequence;
-		item.reconciliation = reconciliation;
+		item.storage.emplace<ServerReconciliation>(std::move(reconciliation));
 		items.push_back(item);
 	}
 
@@ -223,6 +238,91 @@ public:
 		});
 		
 		items.erase(it, std::end(items));
+	}
+};
+
+template<typename T>
+struct HistoryItem {
+	Netcode::Timestamp timestamp;
+	T value;
+};
+
+template<typename T>
+class HistoryBuffer {
+
+	std::unique_ptr<HistoryItem<T>[]> data;
+	int32_t index;
+	int32_t size;
+	int32_t capacity;
+
+	int32_t Increment() {
+		const int32_t idx = index;
+		index++;
+		if(index >= capacity) {
+			index = 0;
+		}
+
+		if(size < capacity) {
+			size += 1;
+		}
+		return idx;
+	}
+	
+public:
+	HistoryBuffer(int32_t numElements) : data{}, index { 0 }, capacity{ numElements }, size{ 0 } {
+		data = std::make_unique<HistoryItem<T>[]>(numElements);
+	}
+	
+	void Insert(Netcode::Timestamp timestamp, const T& value) {
+		const int32_t idx = Increment();
+		
+		data[idx] = HistoryItem<T>{
+			timestamp,
+			value
+		};
+	}
+
+	/*
+	 * Possible return values:
+	 * - no intersection: { nullptr, nullptr }
+	 * - only newer items: { ptr, nullptr }
+	 * - has expected intersection: { ptr, ptr }
+	 *
+	 * should never return: { nullptr, ptr }
+	 */
+	std::pair<const HistoryItem<T>*, const HistoryItem<T> *> FindAt(const Netcode::Timestamp& timestamp) {
+		const HistoryItem<T> * first = nullptr;
+		const HistoryItem<T> * last = nullptr;
+
+		if(size > 0) {
+
+			int32_t idx = index - 1;
+			for(int32_t i = 0; i < size; i++, idx--) {
+				// underflow case
+				if(idx < 0) {
+					idx += capacity;
+				}
+
+				const HistoryItem<T> * bufferItem = data.get() + idx;
+
+				if(bufferItem->timestamp > timestamp) {
+					first = bufferItem;
+				}
+				
+				if(bufferItem->timestamp <= timestamp) {
+					last = bufferItem;
+					// even the first item is older, therefore nothing was found
+					if(first == nullptr) {
+						last = nullptr;
+					}
+					// older ones down the road, no reason to keep searching
+					break;
+				}
+			}
+			
+		}
+
+		return std::pair<const HistoryItem<T> *, const HistoryItem<T>*>{ first, last };
 	}
 };
 
@@ -249,7 +349,8 @@ public:
 	virtual void Construct(GameObject * gameObject) { }
 	virtual void BeginPlay(GameObject * gameObject) { }
 	virtual void EndPlay() { }
-	virtual void Update(Netcode::GameClock * gameClock) = 0;
+	virtual void Update(Netcode::GameClock * gameClock) { }
+	virtual void FixedUpdate(Netcode::GameClock * gameClock) { }
 };
 
 COMPONENT_ALIGN class Script {
@@ -274,6 +375,12 @@ public:
 	void Update(Netcode::GameClock * clock) {
 		for(auto it = std::begin(scripts); it != std::end(scripts); it++) {
 			(*it)->Update(clock);
+		}
+	}
+
+	void FixedUpdate(Netcode::GameClock * clock) {
+		for(auto it = std::begin(scripts); it != std::end(scripts); it++) {
+			(*it)->FixedUpdate(clock);
 		}
 	}
 };
@@ -321,7 +428,7 @@ COMPONENT_ALIGN struct Network {
 	int32_t owner;
 	Netcode::Timestamp updatedAt;
 	PlayerState state;
-	Ref<ReplDesc> replDesc;
+	ReplDesc replDesc;
 
 	bool HasAuthority(int32_t id) const {
 		return owner == id;

@@ -34,11 +34,11 @@ protected:
 	std::vector<GameObject *> children;
 	uint32_t flags;
 
-	inline void AddChildDetail(GameObject * child) {
+	void AddChildDetail(GameObject * child) {
 		children.push_back(child);
 	}
 
-	inline void RemoveChildDetail(GameObject * child) {
+	void RemoveChildDetail(GameObject * child) {
 		auto it = std::find(std::begin(children), std::end(children), child);
 		if(it != std::end(children)) {
 			children.erase(it);
@@ -48,7 +48,7 @@ protected:
 public:
 	std::string name;
 
-	inline SignatureType GetSignature() const {
+	SignatureType GetSignature() const {
 		return components.signature;
 	}
 
@@ -137,19 +137,4 @@ public:
 			flags &= ~(static_cast<uint32_t>(GameObjectFlags::ENABLED));
 		}
 	}
-};
-
-class NatvisComponentObject {
-	Transform transform;
-	Model model;
-	Netcode::Light light;
-	Script script;
-	Collider collider;
-	void * rawExtended;
-	SignatureType signature;
-};
-
-class NatvisExtComponentObject {
-	Camera camera;
-	Animation animation;
 };

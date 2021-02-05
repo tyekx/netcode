@@ -5,9 +5,11 @@
 #include "GameObject.h"
 
 #define PHYSX_COLLIDER_TYPE_WORLD 1
-#define PHYSX_COLLIDER_TYPE_HITBOX 2
-#define PHYSX_COLLIDER_TYPE_KILLZONE 4
-#define PHYSX_COLLIDER_TYPE_UI 8
+#define PHYSX_COLLIDER_TYPE_LOCAL_HITBOX 2
+#define PHYSX_COLLIDER_TYPE_CLIENT_HITBOX 4
+#define PHYSX_COLLIDER_TYPE_SERVER_HITBOX 8
+#define PHYSX_COLLIDER_TYPE_KILLZONE 16
+#define PHYSX_COLLIDER_TYPE_UI 32
 
 class HitscanQueryFilter : physx::PxQueryFilterCallback {
 	virtual physx::PxQueryHitType::Enum preFilter(
@@ -25,9 +27,6 @@ class HitscanQueryFilter : physx::PxQueryFilterCallback {
 	}
 };
 
-/*
-dont use any global memory
-*/
 physx::PxFilterFlags SimulationFilterShader(
 	physx::PxFilterObjectAttributes attributes0, physx::PxFilterData filterData0,
 	physx::PxFilterObjectAttributes attributes1, physx::PxFilterData filterData1,

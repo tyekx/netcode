@@ -4,9 +4,16 @@
 #include <Netcode/Network/ReplicationContext.h>
 #include "LocalPlayerScript.h"
 
+
+struct ServerFrameData {
+	Netcode::Float3 position;
+	PlayerState state;
+};
+
 class RemotePlayerScript : public PlayerScript {
 	Netcode::PxPtr<physx::PxController> controller;
 	Transform* transform;
+	Transform * rifleOriginTransform;
 	Camera * camera;
 	Network * network;
 	Netcode::Duration interpolationDelay;
@@ -19,6 +26,13 @@ class RemotePlayerScript : public PlayerScript {
 public:
 	Netcode::Float3 IND_position;
 	Netcode::Float3 IND_ahead;
+	
+	Netcode::Timestamp serverLastUpdate;
+	std::unique_ptr<HistoryBuffer<ServerFrameData>> serverHistory;
+
+	physx::PxController* GetController() {
+		return controller.Get();
+	}
 	
 	RemotePlayerScript(Netcode::PxPtr<physx::PxController> ctrl, const Netcode::Duration & interpDelay) :
 		controller{ std::move(ctrl) },

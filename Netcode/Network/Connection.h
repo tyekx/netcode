@@ -1,7 +1,6 @@
 #pragma once
 
 #include "NetworkCommon.h"
-#include <Netcode/System/SystemClock.h>
 #include <NetcodeProtocol/header.pb.h>
 #include <NetcodeProtocol/netcode.pb.h>
 #include <Netcode/Utility.h>
@@ -16,6 +15,7 @@
 #include "FragmentStorage.h"
 #include "SslUtil.h"
 #include <Netcode/System/SecureString.h>
+#include <Netcode/System/TimeTypes.h>
 
 namespace Netcode::Network {
 
@@ -36,7 +36,7 @@ namespace Netcode::Network {
 	};
 
 	NETCODE_ENUM_CLASS_OPERATORS(ConnectionState)
-	
+
 	using WaitableTimer = boost::asio::basic_waitable_timer<ClockType>;
 	
 	struct ControlMessage;

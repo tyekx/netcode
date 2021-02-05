@@ -68,6 +68,7 @@ static bool ConvertServerReconciliation(ServerReconciliation& dst, const np::Ser
 	sr.type = ReconciliationType::COMMAND;
 	sr.actionType = ActionType::NOOP;
 	sr.id = command.id();
+	sr.replData = command.repl_data();
 	sr.command.type = static_cast<CommandType>(command.type());
 	sr.command.subject = command.subject();
 	sr.command.objectId = command.object_id();
@@ -107,47 +108,35 @@ static bool ConvertServerReconciliation(ServerReconciliation& dst, const np::Act
 }
 
 GameObject* GameClient::ClientCreateRemoteAvatar(int32_t playerId, uint32_t objId) {
-	static Netcode::MovementController movCtrl;
-
+	AssetManager * assetManager = Service::Get<AssetManager>();
 	GameScene * scene = Service::Get<GameSceneManager>()->GetScene();
 	
-	GameObject * gameObject = CreateRemoteAvatar(playerConnection->tickInterval);
-	GameObject * avatarRifle = scene->Create("remoteRifle");
+	GameObject * avatarCtrl = CreateRemoteAvatar(playerConnection->tickInterval, scene->GetControllerManager());
+	GameObject * rifleOrigin = scene->Create("remoteRifleOrigin");
+	GameObject * rifle = scene->Create("remoteRifle");
+	
+	rifleOrigin->AddComponent<Transform>();
 
-	Transform * rifleTransform = avatarRifle->AddComponent<Transform>();
+	Netcode::Asset::Model * avatarModel = assetManager->Import(L"placeholder_avatar.ncasset");
+	Netcode::Asset::Model * rifleModel = assetManager->Import(L"compiled/models/gun_2.ncasset");
+	
+	auto [rifleTransform, rifleScript] = rifle->AddComponents<Transform, Script>();
 	rifleTransform->rotation = Netcode::Quaternion{ 0.0f, -Netcode::C_PIDIV2, 0.0f };
-
-	Network * network = gameObject->GetComponent<Network>();
-	network->owner = playerId;
-	network->replDesc = ClientCreateRemoteAvatarReplDesc(gameObject->GetComponent<Script>()->GetScript<RemotePlayerScript>(0));
-	network->id = objId;
+	rifleTransform->position = Netcode::Float3{ 0.0f, -3.5f, 34.0f };
 	
 	ClientAssetConverter cac{ nullptr, nullptr, nullptr };
-	AssetManager * assetManager = Service::Get<AssetManager>();
-	Netcode::Asset::Model * ncModel = assetManager->Import(L"compiled/models/ybot.ncasset");
-	Netcode::Asset::Model * rifleModel = assetManager->Import(L"compiled/models/gun_2.ncasset");
-	cac.ConvertComponents(gameObject, ncModel);
-	cac.ConvertComponents(avatarRifle, rifleModel);
+	cac.ConvertComponents(rifle, rifleModel);
+	cac.ConvertComponents(avatarCtrl, avatarModel);
 
-	if(remoteAvatarAnimationSet == nullptr) {
-		remoteAvatarAnimationSet = std::make_shared<AnimationSet>(Service::Get<Netcode::Module::IGraphicsModule *>(), ncModel->animations, ncModel->bones);
-	}
-	
-	Animation * anim = gameObject->AddComponent<Animation>();
-	CreateYbotAnimationComponent(ncModel, anim);
-	anim->blackboard->BindController(&movCtrl);
-	anim->controller = remoteAvatarAnimationSet->CreateController();
+	Network * network = avatarCtrl->GetComponent<Network>();
+	network->owner = playerId;
+	network->replDesc = ClientCreateRemoteAvatarReplDesc(avatarCtrl->GetComponent<Script>()->GetScript<RemotePlayerScript>(0));
+	network->id = objId;
 
-	Script * script = avatarRifle->AddComponent<Script>();
-	std::unique_ptr<SocketScript> ss = std::make_unique<SocketScript>();
-	ss->boneId = 28;
-	ss->anim = anim;
-	ss->offset = Netcode::Float3{ -34.0f, -3.0f, 4.0f };
-	script->AddScript(std::move(ss));
+	avatarCtrl->AddChild(rifleOrigin);
+	rifleOrigin->AddChild(rifle);
 
-	gameObject->AddChild(avatarRifle);
-
-	return gameObject;
+	return avatarCtrl;
 }
 
 void GameClient::FetchUpdate() {
@@ -166,10 +155,12 @@ void GameClient::FetchUpdate() {
 		np::ServerUpdate * serverUpdate = it->allocator->MakeProto<np::ServerUpdate>();
 
 		if(it->sequence <= connection->remoteGameSequence) {
+			//Log::Debug("Dropping packed because its sequence is too low");
 			continue;
 		}
 		
 		if(!serverUpdate->ParseFromArray(it->content.Data(), static_cast<int32_t>(it->content.Size()))) {
+			Log::Debug("Failed to parse from array");
 			continue;
 		}
 
@@ -201,6 +192,7 @@ void GameClient::FetchUpdate() {
 		}
 
 		connection->dtlsRoute->lastReceivedAt = Netcode::SystemClock::LocalNow();
+		
 		connection->redundancyBuffer.Confirm(serverUpdate->received_id());
 		connection->remoteGameSequence = std::max(connection->remoteGameSequence, it->sequence);
 	}
@@ -254,6 +246,8 @@ void GameClient::ProcessCommand(const ServerReconciliation & sr) {
 		}
 
 		if(sr.command.type == CommandType::CREATE_OBJECT) {
+			GameScene * scene = Service::Get<GameSceneManager>()->GetScene();
+			
 			if(sr.command.subject == playerConnection->id) {
 				GameObject* obj = playerConnection->gameObject;
 				GameObject * camera = obj->Children().at(0);
@@ -262,13 +256,37 @@ void GameClient::ProcessCommand(const ServerReconciliation & sr) {
 				Network * network = obj->GetComponent<Network>();
 				network->id = sr.command.objectId;
 				network->replDesc = CreateLocalAvatarReplDesc(camera->GetComponent<Camera>());
-			} else {
-				Log::Debug("Create remote avatar: {0}", (int)sr.command.objectId);
-				GameObject * obj = ClientCreateRemoteAvatar(sr.command.subject, sr.command.objectId);
+				network->state = PlayerState::DEAD;
 
-				GameScene * scene = Service::Get<GameSceneManager>()->GetScene();
-				scene->SpawnWithHierarchy(obj);
-				remoteObjects.emplace_back(obj);
+				Transform * transform = obj->GetComponent<Transform>();
+				
+				ReplicateRead(obj, network, sr.replData, clock, playerConnection->id, ActorType::CLIENT);
+
+				physx::PxController* ctrl = localPlayerScript->GetController();
+				ctrl->setFootPosition(ToPxExtVec3(transform->position));
+			} else {
+				
+				if(sr.command.objectType == REPL_TYPE_REMOTE_AVATAR) {
+					Log::Debug("Create remote avatar: {0}", (int)sr.command.objectId);
+					GameObject * obj = ClientCreateRemoteAvatar(sr.command.subject, sr.command.objectId);
+					ReplicateRead(obj, obj->GetComponent<Network>(), sr.replData, clock, playerConnection->id, ActorType::CLIENT);
+					scene->SpawnWithHierarchy(obj);
+					remoteObjects.emplace_back(obj);
+				}
+
+				if(sr.command.objectType == REPL_TYPE_SCOREBOARD) {
+					if(scoreboard == nullptr) {
+						Log::Debug("Create scoreboard: {0}", (int)sr.command.objectId);
+						GameObject* sco = CreateScoreboard(sr.command.objectId);
+
+						scoreboard = sco->GetComponent<Script>()
+										->GetScript<ScoreboardScript>(0);
+
+						remoteObjects.push_back(sco);
+						
+						scene->Spawn(sco);
+					}
+				}
 			}
 		}
 	}
@@ -288,13 +306,20 @@ void GameClient::ProcessResult(const ServerReconciliation & sr) {
 		if(sr.type == ReconciliationType::ACCEPTED) {
 			netw->state = PlayerState::ALIVE;
 			transform->position = sr.movementCorrection.position;
+			
+			gameScene->SpawnWithHierarchy(gameObject);
+			physx::PxController * ctrl = localPlayerScript->GetController();
+			gameScene->GetPhysXScene()->addActor(*ctrl->getActor());
+			ctrl->setFootPosition(ToPxExtVec3(transform->position));
 		}
 	}
 
 	// handle movement rejection
 	if(sr.actionType == ActionType::MOVEMENT) {
 		if(sr.type == ReconciliationType::REJECTED) {
+			Log::Debug("Correction");
 			transform->position = sr.movementCorrection.position;
+			localPlayerScript->GetController()->setFootPosition(ToPxExtVec3(transform->position));
 		}
 	}
 }
@@ -345,21 +370,23 @@ void GameClient::Receive() {
 }
 
 static void AddAction(np::ClientUpdate* update, const RedundancyItem& item) {
+	const ClientAction & action = std::get<ClientAction>(item.storage);
+	
 	np::ActionPrediction* prediction = update->add_predictions();
-	prediction->set_type(static_cast<np::ActionType>(item.action.type));
-	prediction->set_timestamp(Netcode::ConvertTimestampToUInt64(item.action.timestamp));
-	prediction->set_id(item.action.id);
+	prediction->set_type(static_cast<np::ActionType>(action.type));
+	prediction->set_timestamp(Netcode::ConvertTimestampToUInt64(action.timestamp));
+	prediction->set_id(action.id);
 
-	if(item.action.type == ActionType::MOVEMENT) {
+	if(action.type == ActionType::MOVEMENT) {
 		np::Float3* pos = prediction->mutable_action_position();
-		ConvertFloat3(pos, item.action.movementActionData.position);
+		ConvertFloat3(pos, action.movementActionData.position);
 	}
 
-	if(item.action.type == ActionType::FIRE) {
+	if(action.type == ActionType::FIRE) {
 		np::Float3 * pos = prediction->mutable_action_position();
 		np::Float3 * dir = prediction->mutable_action_delta();
-		ConvertFloat3(pos, item.action.fireActionData.position);
-		ConvertFloat3(dir, item.action.fireActionData.direction);
+		ConvertFloat3(pos, action.fireActionData.position);
+		ConvertFloat3(dir, action.fireActionData.direction);
 	}
 }
 
@@ -391,7 +418,7 @@ void GameClient::Send() {
 		GameObject * gameObj = playerConnection->gameObject;
 		Network * network = gameObj->GetComponent<Network>();
 		
-		if(network->replDesc != nullptr) {
+		if(!network->replDesc.empty()) {
 			std::string binary = ReplicateWrite(gameObj, network);
 
 			if(!binary.empty()) {
@@ -410,6 +437,9 @@ void GameClient::Send() {
 		gm.allocator = alloc;
 
 		service->Send(gm, playerConnection.get());
+
+		playerConnection->serverUpdate = nullptr;
+		playerConnection->message = nn::GameMessage{};
 	}
 }
 
@@ -447,12 +477,28 @@ nn::CompletionToken<nn::ClockSyncResult> GameClient::Synchronize() {
 	return ct;
 }
 
+nn::CompletionToken<nn::TrResult> GameClient::ConnectionDone() {
+	Ref<nn::NetAllocator> alloc = service->MakeAllocator(2048);
+	np::Control * control = alloc->MakeProto<np::Control>();
+	control->set_type(np::MessageType::CONNECT_DONE);
+	control->set_sequence(playerConnection->localControlSequence++);
+	control->mutable_connect_done()->set_measured_rtt(playerConnection->rtt.count());
+
+	nn::ControlMessage cm;
+	cm.allocator = std::move(alloc);
+	cm.control = control;
+	return service->Send(cm, playerConnection->dtlsRoute);
+}
+
 void GameClient::Start(Netcode::Module::INetworkModule * network, Netcode::GameClock* gameClock) {
 	clientSession = std::dynamic_pointer_cast<nn::ClientSession>(network->CreateClient());
 	playerConnection = std::make_shared<Connection>(clientSession->GetIOContext());
+	scoreboard = nullptr;
 
-	GameSceneManager* gsm = Service::Get<GameSceneManager>();
-	GameObject* obj = gsm->GetScene()->FindByName("localAvatarRoot");
+	gameScene = Service::Get<GameSceneManager>()->GetScene();
+	GameObject* obj = gameScene->FindByName("localAvatarRoot");
+
+	localPlayerScript = obj->GetComponent<Script>()->GetScript<LocalPlayerScript>(0);
 
 	clock = gameClock;
 	playerConnection->gameObject = obj;
@@ -461,20 +507,33 @@ void GameClient::Start(Netcode::Module::INetworkModule * network, Netcode::GameC
 	playerConnection->tickInterval.store(std::chrono::milliseconds{ intervalMs }, std::memory_order_release);
 	
 	clientSession->Connect(playerConnection, "localhost", 8889)->Then([this](const Netcode::ErrorCode & ec) -> void {
-		Log::Debug("Connection done: {0}", ec.message());
-
-		if(!ec) {
-			playerConnection->state = nn::ConnectionState::SYNCHRONIZING;
-			service = clientSession->GetService();
-			Synchronize()->Then([this](const nn::ClockSyncResult & csr) -> void {
-				if(!csr.errorCode) {
-					playerConnection->rtt = nn::NtpClockFilter::DoubleToDuration(csr.delay);
-					playerConnection->clockOffset = nn::NtpClockFilter::DoubleToDuration(csr.offset);
-					clock->SynchronizeClocks(playerConnection->rtt, playerConnection->clockOffset);
-					playerConnection->state = nn::ConnectionState::ESTABLISHED;
-					Log::Debug("Clock sync RTT: {0} [ms], offset: {1} [ms]", csr.delay, csr.offset);
-				}
-			});
+		if(ec) {
+			Log::Error("Failed to connect: {0}", ec.message());
+			return;
 		}
+		
+		playerConnection->state = nn::ConnectionState::SYNCHRONIZING;
+		service = clientSession->GetService();
+		Synchronize()->Then([this](const nn::ClockSyncResult & csr) -> void {
+			if(csr.errorCode) {
+				Log::Error("Failed to synchronize: {0}", csr.errorCode.message());
+				return;
+			}
+			
+			playerConnection->rtt = nn::NtpClockFilter::DoubleToDuration(csr.delay);
+			playerConnection->clockOffset = nn::NtpClockFilter::DoubleToDuration(csr.offset);
+			clock->SynchronizeClocks(playerConnection->rtt, playerConnection->clockOffset);
+
+			ConnectionDone()->Then([this](const nn::TrResult & tr) -> void {
+				if(tr.errorCode) {
+					Log::Error("Failed to send connection done: {0}", tr.errorCode.message());
+					return;
+				}
+				
+				playerConnection->state = nn::ConnectionState::ESTABLISHED;
+
+				Log::Debug("Connection established");
+			});
+		});
 	});
 }

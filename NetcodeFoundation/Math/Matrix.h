@@ -37,6 +37,22 @@ namespace Netcode {
 			DirectX::XMStoreFloat4x4A(&a, mat);
 			return a;
 		}
+
+		// rotation matrix along X axis
+		static Matrix Pitch(float radians) noexcept {
+			return DirectX::XMMatrixRotationX(radians);
+		}
+
+		// rotation matrix along Y axis
+		static Matrix Yaw(float radians) noexcept {
+			return DirectX::XMMatrixRotationY(radians);
+		}
+
+		// rotation matrix along Z axis
+		static Matrix Roll(float radians) noexcept {
+			return DirectX::XMMatrixRotationZ(radians);
+		}
+		
 	};
 
 }

@@ -13,7 +13,7 @@ void DevCameraScript::BeginPlay(GameObject * gameObject) {
 	camera->farPlane = 10000.0f;
 	mouseSpeed = 1.0f;
 
-	cameraYaw = Netcode::C_PI;
+	cameraYaw = -Netcode::C_PIDIV2;
 }
 
 void DevCameraScript::Update(Netcode::GameClock* clock) {
@@ -56,7 +56,7 @@ void DevCameraScript::Update(Netcode::GameClock* clock) {
 	transform->position = devCamPos + devCamVec * cameraSpeed * dt;
 
 	Netcode::Vector3 aheadStart = Netcode::Float3{ 0.0f, 0.0f, -1.0f };
-	Netcode::Quaternion cameraQuat = DirectX::XMQuaternionRotationRollPitchYaw(cameraPitch, cameraYaw, 0.0f);
+	Netcode::Quaternion cameraQuat = Netcode::Quaternion{ cameraPitch, cameraYaw, 0.0f };
 
 	camera->ahead = aheadStart.Rotate(cameraQuat).Normalize();
 }

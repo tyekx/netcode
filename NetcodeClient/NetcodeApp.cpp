@@ -95,15 +95,31 @@ void GameApp::Simulate() {
 	if(fixedUpdate > Netcode::Duration{}) {
 		gameScene->GetPhysXScene()->simulate(std::chrono::duration<float>(fixedUpdate).count());
 		gameScene->GetPhysXScene()->fetchResults(true);
+
+		gameScene->Foreach([this](GameObject * gameObject)->void {
+			if(gameObject->IsDeletable()) {
+				gameScene->Remove(gameObject);
+				return;
+			}
+			
+			if(gameObject->IsActive()) {
+				scriptFixedSystem.Run(gameObject, &gameClock);
+				scriptSystem.Run(gameObject, &gameClock);
+				animSystem.Run(gameObject, gameClock.FGetFixedDeltaTime());
+			}
+		});
+	} else {
+		gameScene->Foreach([this](GameObject * gameObject)->void {
+			if(gameObject->IsDeletable()) {
+				gameScene->Remove(gameObject);
+				return;
+			}
+			
+			if(gameObject->IsActive()) {
+				scriptSystem.Run(gameObject, &gameClock);
+			}
+		});
 	}
-
-
-	gameScene->Foreach([this, dt](GameObject * gameObject)->void {
-		if(gameObject->IsActive()) {
-			scriptSystem.Run(gameObject, &gameClock);
-			animSystem.Run(gameObject, dt);
-		}
-	});
 }
 
 void GameApp::LoadServices() {
@@ -244,14 +260,16 @@ void GameApp::CreateUI() {
 	if(hostMode == HostMode::LISTEN || hostMode == HostMode::CLIENT) {
 		gameClient.Start(network.get(), &gameClock);
 	}
+	//Ref<HUD> dbHud = pageManager.CreatePage<HUD>(*pxService->physics);
+	//dbHud->InitializeComponents();
+	//pageManager.AddPage(dbHud);
+	//pageManager.NavigateTo(0);
 
 	return;
-
 	
-	Ref<HostServerPage> hostServerPage = pageManager.CreatePage<HostServerPage>(*pxService->physics);
-	hostServerPage->InitializeComponents();
-	pageManager.AddPage(hostServerPage);
-	pageManager.NavigateTo(0);
+	//Ref<HostServerPage> dbHostServerPage = pageManager.CreatePage<HostServerPage>(*pxService->physics);
+	//dbHostServerPage->InitializeComponents();
+	//pageManager.AddPage(dbHostServerPage);
 
 	
 	Ref<LoginPage> loginPage = pageManager.CreatePage<LoginPage>(*pxService->physics);
@@ -260,6 +278,7 @@ void GameApp::CreateUI() {
 	Ref<ServerBrowserPage> serverBrowserPage = pageManager.CreatePage<ServerBrowserPage>(*pxService->physics);
 	Ref<HUD> hud = pageManager.CreatePage<HUD>(*pxService->physics);
 	Ref<LoadingPage> loadingPage = pageManager.CreatePage<LoadingPage>(*pxService->physics);
+	Ref<HostServerPage> hostServerPage = pageManager.CreatePage<HostServerPage>(*pxService->physics);
 
 	loginPage->InitializeComponents();
 	mmPage->InitializeComponents();
@@ -267,6 +286,7 @@ void GameApp::CreateUI() {
 	serverBrowserPage->InitializeComponents();
 	hud->InitializeComponents();
 	loadingPage->InitializeComponents();
+	hostServerPage->InitializeComponents();
 
 	pageManager.AddPage(loginPage);
 	pageManager.AddPage(mmPage);
@@ -274,6 +294,7 @@ void GameApp::CreateUI() {
 	pageManager.AddPage(serverBrowserPage);
 	pageManager.AddPage(hud);
 	pageManager.AddPage(loadingPage);
+	pageManager.AddPage(hostServerPage);
 
 	loginPage->onExitClick = [this]() -> void {
 		mainThreadDispatcher.Post([this]() -> void {
@@ -592,7 +613,6 @@ void GameApp::LoadAssets() {
 	AssetManager * assetManager = Service::Get<AssetManager>();
 
 	CreateLocalAvatar();
-	CreateRemoteAvatar();
 	
 	{
 		Ref<Netcode::TextureBuilder> textureBuilder = graphics->CreateTextureBuilder();
@@ -611,58 +631,16 @@ void GameApp::LoadAssets() {
 	}
 
 	{
-		auto planeActor = physx::PxCreatePlane(*pxService->physics, physx::PxPlane{ 0.0f, 1.0f, 0.0f, 0.0f }, *pxService->defaultMaterial);
+		physx::PxRigidStatic* planeActor = physx::PxCreatePlane(*pxService->physics, physx::PxPlane{ 0.0f, 1.0f, 0.0f, 0.0f }, *pxService->defaultMaterial);
+		physx::PxShape * shape;
+		planeActor->getShapes(&shape, 1);
+		physx::PxFilterData fd;
+		fd.word0 = PHYSX_COLLIDER_TYPE_WORLD;
+		fd.word1 = PHYSX_COLLIDER_TYPE_CLIENT_HITBOX | PHYSX_COLLIDER_TYPE_SERVER_HITBOX | PHYSX_COLLIDER_TYPE_LOCAL_HITBOX | PHYSX_COLLIDER_TYPE_WORLD;
+		shape->setQueryFilterData(fd);
+		
 		gameScene->SpawnPhysxActor(planeActor);
 	}
-}
-
-void GameApp::CreateRemoteAvatar() {
-	AssetManager * assetManager = Service::Get<AssetManager>();
-
-	GameObject * avatarController = gameScene->Create("remoteAvatarController");
-	GameObject * avatarHitboxes = gameScene->Create("remoteAvatarHitboxes");
-	GameObject * rifle = gameScene->Create("remoteRifle");
-
-	Netcode::Asset::Model * rifleModel = assetManager->Import(L"compiled/models/gun_2.ncasset");
-	Netcode::Asset::Model * avatarModel = assetManager->Import(L"compiled/models/ybot.ncasset");
-	ClientAssetConverter cac{ nullptr, nullptr, nullptr };
-
-	rifle->AddComponent<Transform>();
-	avatarHitboxes->AddComponent<Transform>();
-	Transform * avT = avatarController->AddComponent<Transform>();
-	avT->position = Netcode::Float3{ -120.0f, 0.0f, -60.0f };
-	avT->rotation = Netcode::Quaternion{ 0.0f, Netcode::C_PI, 0.0f };
-	cac.ConvertComponents(avatarHitboxes, avatarModel);
-	cac.ConvertComponents(rifle, rifleModel);
-
-	if(ybotAnimationSet == nullptr) {
-		ybotAnimationSet = std::make_shared<AnimationSet>(graphics.get(), avatarModel->animations, avatarModel->bones);
-	}
-	
-	Animation * anim = avatarHitboxes->AddComponent<Animation>();
-	CreateYbotAnimationComponent(avatarModel, anim);
-	anim->blackboard->BindController(&movCtrl);
-	anim->controller = ybotAnimationSet->CreateController();
-
-	Transform* rifleT = rifle->GetComponent<Transform>();
-	rifleT->rotation = Netcode::Quaternion{ 0.0f, -Netcode::C_PIDIV2, 0.0f };
-	
-	Script * script = rifle->AddComponent<Script>();
-	std::unique_ptr<SocketScript> ss = std::make_unique<SocketScript>();
-	ss->boneId = 28;
-	ss->anim = anim;
-	ss->offset = Netcode::Float3{ -34.0f, -3.0f, 4.0f };
-	script->AddScript(std::move(ss));
-
-	//Netcode::PxPtr<physx::PxController> pxController = gameScene->CreateController();
-	avatarController->AddComponent<Transform>();
-	//avatarController->AddComponent<Script>()->AddScript(std::make_unique<RemotePlayerScript>(std::move(pxController)));
-	avatarHitboxes->Parent(avatarController);
-	rifle->Parent(avatarHitboxes);
-
-	gameScene->Spawn(avatarController);
-	gameScene->Spawn(avatarHitboxes);
-	gameScene->Spawn(rifle);
 }
 
 void GameApp::CreateLocalAvatar() {
@@ -701,21 +679,21 @@ void GameApp::CreateLocalAvatar() {
 	fpsCam->up = Netcode::Float3{ 0.0f, 1.0f, 0.0f };
 
 	avatarAttachmentNode->AddComponent<Transform>();
-
 	Netcode::PxPtr<physx::PxController> pxController = gameScene->CreateController();
+	gameScene->GetPhysXScene()->removeActor(*pxController->getActor());
 
 	Transform * act = avatarRoot->AddComponent<Transform>();
 	Network * nw = avatarRoot->AddComponent<Network>();
 	nw->state = PlayerState::SPECTATOR;
 	nw->owner = 0;
-	act->position = Netcode::Float3{ 0.0f, 0.0f, 200.0f };
+	act->position = Netcode::Float3{ 0.0f, 0.0f, 0.0f };
 
 	Script * scriptComponent = avatarRoot->AddComponent<Script>();
-	scriptComponent->AddScript(std::make_unique<LocalPlayerScript>(std::move(pxController), avatarCamera, avatarAttachmentNode));
+	scriptComponent->AddScript(std::make_unique<LocalPlayerScript>(std::move(pxController), &gameClient, avatarCamera, avatarAttachmentNode));
 
-	gameScene->Spawn(avatarRoot);
-	gameScene->Spawn(avatarCamera);
-	gameScene->Spawn(avatarAttachmentNode);
-	gameScene->Spawn(avatarWeaponOffset);
-	gameScene->Spawn(avatarWeapon);
+	//gameScene->Spawn(avatarRoot);
+	//gameScene->Spawn(avatarCamera);
+	//gameScene->Spawn(avatarAttachmentNode);
+	//gameScene->Spawn(avatarWeaponOffset);
+	//gameScene->Spawn(avatarWeapon);
 }
